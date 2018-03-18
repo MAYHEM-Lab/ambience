@@ -1,7 +1,7 @@
-#include "ft.hpp"
+#include "tos/ft.hpp"
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "semaphore.hpp"
+#include "tos/semaphore.hpp"
 
 ft::semaphore timer_sem(0);
 

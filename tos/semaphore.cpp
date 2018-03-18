@@ -1,4 +1,4 @@
-#include "semaphore.hpp"
+#include "tos/semaphore.hpp"
 
 #include <util/atomic.h>
 

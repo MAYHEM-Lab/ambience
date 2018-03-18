@@ -1,7 +1,7 @@
 #include <setjmp.h>
-#include "ft.hpp"
-#include "thread_info.hpp"
-#include "scheduler.hpp"
+#include "tos/ft.hpp"
+#include "tos/thread_info.hpp"
+#include "tos/scheduler.hpp"
 
 namespace ft
 {

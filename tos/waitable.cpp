@@ -1,5 +1,5 @@
-#include "waitable.hpp"
-#include "scheduler.hpp"
+#include "tos/waitable.hpp"
+#include "tos/scheduler.hpp"
 
 namespace ft
 {
