@@ -1,5 +1,5 @@
-#include "tos.h"
-#include "tos/semaphore.hpp"
+#include <tos.hpp>
+#include <tos/semaphore.hpp>
 
 ft::semaphore other_sem(0);
 
