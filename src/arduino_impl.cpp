@@ -4,6 +4,8 @@
 
 #include <util/atomic.h>
 #include "tos/atomic.hpp"
+#include "tos/ft.hpp"
+#include "tos/thread_info.hpp"
 
 namespace ft
 {
@@ -38,4 +40,14 @@ namespace tos
 	template class atomic<int>;
 	template class atomic<unsigned int>;
 	template class atomic<long>;
+}
+
+// the optional arduino yield thing
+extern "C" void yield()
+{
+	if (!ft::self())
+	{
+		return;
+	}
+	ft::this_thread::yield();
 }
