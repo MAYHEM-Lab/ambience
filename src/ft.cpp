@@ -110,7 +110,9 @@ namespace ft
   
     // this is the actual entry point of the thread
     // will be called when scheduled
+    
     impl::set_stack_ptr(cur_thread->stack + stack_size);
+    //SP = reinterpret_cast<uint16_t>(cur_thread->stack + stack_size);
     cur_thread->entry();
     this_thread::exit(nullptr);
   }
