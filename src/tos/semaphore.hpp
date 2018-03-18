@@ -1,6 +1,7 @@
 #pragma once
 
 #include "waitable.hpp"
+#include "atomic.hpp"
 
 namespace ft
 {
@@ -12,7 +13,7 @@ namespace ft
 
     semaphore(int n) : m_count(n) {}
   private:
-    int m_count;
+    tos::atomic<int> m_count;
     waitable m_wait;
   };
 }
