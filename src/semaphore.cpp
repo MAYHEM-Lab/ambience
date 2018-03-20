@@ -3,12 +3,12 @@
 
 namespace ft
 {
-  void semaphore::up()
+  void semaphore::up() noexcept
   {
     ++m_count;
     m_wait.signal_one();
   }
-  void semaphore::down()
+  void semaphore::down() noexcept
   {
     --m_count;
     if (m_count < 0)

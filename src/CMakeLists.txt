@@ -20,14 +20,21 @@ set(TOS_CORE_SRCS
 
 if (ARDUINO_FOUND)
     generate_arduino_library(tos_core
-            SRCS ${TOS_CORE_SRCS} arduino_impl.cpp
+            SRCS ${TOS_CORE_SRCS}
             HDRS ${TOS_CORE_HDRS}
             BOARD uno)
-	target_compile_options(tos_core PUBLIC -fno-threadsafe-statics -Wall -Wextra)
-	target_compile_definitions(tos_core PUBLIC ARDUINO_CMAKE)
 else()
-    add_library(tos_core ${TOS_CORE_SRC} ${TOS_CORE_HDRS})
+    add_library(tos_core ${TOS_CORE_SRCS} ${TOS_CORE_HDRS})
 endif()
 
 target_compile_features(tos_core PUBLIC cxx_std_14)
+target_compile_options(tos_core PUBLIC -fno-threadsafe-statics -Wall -Wextra)
 target_include_directories(tos_core PUBLIC ".")
+
+if (ARDUINO_FOUND)
+	add_subdirectory(arch/arduino)
+	target_link_libraries(tos_core arduino_impl)
+else()
+	add_subdirectory(arch/x86)
+	target_link_libraries(tos_core PUBLIC x86_impl)
+endif()

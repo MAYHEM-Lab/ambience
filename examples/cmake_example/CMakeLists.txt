@@ -6,7 +6,7 @@ set(example_BOARD uno)
 
 set(example_SRCS main.cpp)
 
-set(example_PORT /dev/ttyUSB1)
+set(example_PORT /dev/ttyUSB0)
 
 generate_arduino_firmware(example
         LIBS tos_core

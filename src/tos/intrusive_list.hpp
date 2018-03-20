@@ -172,6 +172,13 @@ namespace ft
 
     template<class T>
     void intrusive_list<T>::pop_front() {
+        if (m_size == 1)
+        {
+            m_head = nullptr;
+            m_tail = nullptr;
+            m_size = 0;
+            return;
+        }
         auto head = m_head;
         m_head = head->next;
         m_head->prev = nullptr;

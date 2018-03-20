@@ -8,10 +8,10 @@ namespace ft
   class semaphore
   {
   public:
-    void up();
-    void down();
+    void up() noexcept;
+    void down() noexcept;
 
-    semaphore(int n) : m_count(n) {}
+    semaphore(int n) noexcept : m_count(n) {}
   private:
     tos::atomic<int> m_count;
     waitable m_wait;
