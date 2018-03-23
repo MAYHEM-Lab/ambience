@@ -9,22 +9,22 @@ set(TOS_CORE_HEADERS
 	tos/thread_info.hpp
 	tos/timer.hpp
 	tos/waitable.hpp
+    tos/system.hpp
 )
 
 set(TOS_CORE_SRCS
 	ft.cpp
 	semaphore.cpp
 	timer.cpp
-	waitable.cpp
-)
+	waitable.cpp)
 
 if (ARDUINO_FOUND)
     generate_arduino_library(tos_core
             SRCS ${TOS_CORE_SRCS}
-            HDRS ${TOS_CORE_HDRS}
+            HDRS ${TOS_CORE_HEADERS}
             BOARD uno)
 else()
-    add_library(tos_core ${TOS_CORE_SRCS} ${TOS_CORE_HDRS})
+    add_library(tos_core ${TOS_CORE_SRCS} ${TOS_CORE_HEADERS})
 endif()
 
 target_compile_features(tos_core PUBLIC cxx_std_14)

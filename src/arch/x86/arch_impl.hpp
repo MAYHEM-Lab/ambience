@@ -2,7 +2,9 @@
 // Created by fatih on 3/20/18.
 //
 
-#ifndef TOS_ARCH_IMPL_HPP
-#define TOS_ARCH_IMPL_HPP
+#pragma once
 
-#endif //TOS_ARCH_IMPL_HPP
+namespace tos
+{
+
+}

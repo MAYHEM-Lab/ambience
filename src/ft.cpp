@@ -1,5 +1,6 @@
 #include <setjmp.h>
 #include <stdlib.h>
+#include <iostream>
 #include "tos/ft.hpp"
 #include "tos/thread_info.hpp"
 #include "tos/scheduler.hpp"
@@ -16,7 +17,7 @@ void tos_shutdown();
 enum return_codes {
     none = 0,
     yield,
-    wait,
+    do_wait,
     do_exit
 };
 
@@ -47,7 +48,7 @@ namespace ft {
     void wait_yield() {
         if (setjmp(cur_thread->buffer) == 0) {
             // yielded
-            longjmp(global_one, return_codes::wait);
+            longjmp(global_one, return_codes::do_wait);
         } else {
             // We're back to this thread, upon returning from
             // yield, control will be back to the thread
@@ -55,6 +56,7 @@ namespace ft {
     }
 
     void thread_exit() {
+        // no need to save the current context
         longjmp(global_one, return_codes::do_exit);
     }
 
@@ -67,7 +69,7 @@ namespace ft {
     int capacity = 0;
 
     void start(void (*t_start)()) {
-        int index;
+        int index = 0;
         if (capacity == num_threads) {
             auto new_one = new thread_info *[capacity + 1];
             for (int i = 0; i < num_threads; ++i) {
@@ -86,7 +88,7 @@ namespace ft {
             }
         }
 
-        constexpr auto stack_size = 256;
+        constexpr auto stack_size = 256 * 1024;
 
         auto thread = new thread_info();
         num_threads++;
@@ -97,12 +99,18 @@ namespace ft {
 
         run_queue.push_back(*thread);
 
+        /*
+         * save the current processor state as the
+         * threads current state
+         * we'll pick it up from here when it's
+         * scheduled
+         */
         if (setjmp(thread->buffer) == 0) {
             //done
             return;
         }
 
-        // this is the actual entry point of the thread
+        // this is the actual entry point of the thread.
         // will be called when scheduled
 
         tos_set_stack_ptr((void *) ((uintptr_t) cur_thread->stack + stack_size));
@@ -137,7 +145,7 @@ namespace ft {
             case yield:
                 cur_thread = nullptr;
                 break;
-            case wait:
+            case do_wait:
                 // nothing
                 break;
             case do_exit:
