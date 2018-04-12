@@ -14,30 +14,35 @@
 #include <tos/intrusive_ptr.hpp>
 
 ft::semaphore timer_sem(0);
-void send_usart(const char *x);
 
 void hello_task()
 {
     tos::gpio gp;
     gp.set_pin_mode(13, tos::gpio::pin_mode_t::out);
-    char buf[3];
-    buf[1] = 0;
+    char buf;
     while (true) {
-        //timer_sem.down();
-        read_usart(buf, 1);
-        gp.write(13, true);
-        send_usart(buf);
-        //send_usart(" On\n");
-
-        //timer_sem.down();
-        read_usart(buf, 1);
-        gp.write(13, false);
-        send_usart(buf);
-        //send_usart(" Off\n");
+        read_usart(&buf, 1);
+        if (buf == '1')
+        {
+            gp.write(13, true);
+            write_usart("On\n");
+        }
+        else
+        {
+            gp.write(13, false);
+            write_usart("Off\n");
+        }
     }
 }
 
-void write_task();
+void tick_task()
+{
+    while (true)
+    {
+        timer_sem.down();
+        write_usart("Tick\n");
+    }
+}
 
 int total = 0;
 ISR(TIMER1_OVF_vect)
@@ -64,7 +69,7 @@ void initUSART()
     using namespace tos;
 
     tos::avr_usart0::set_baud_rate(9600);
-    //tos::avr_usart0::set_2x_rate();
+    tos::avr_usart0::set_2x_rate();
     tos::avr_usart0::set_control(usart_modes::async, usart_parity::disabled, usart_stop_bit::one);
 
     tos::avr_usart0::enable();
@@ -73,7 +78,8 @@ void initUSART()
 int main()
 {
     ft::start(hello_task);
-    ft::start(write_task);
+    ft::start(tick_task);
+
     timer1_init();
     initUSART();
     sei();

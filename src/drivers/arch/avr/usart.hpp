@@ -54,4 +54,6 @@ namespace tos
         avr_usart0() = default;
     };
 }
+
 size_t read_usart(char* buf, size_t len);
+void write_usart(const char *x);

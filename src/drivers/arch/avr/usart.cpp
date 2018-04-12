@@ -21,7 +21,7 @@ namespace tos {
     }
 
     void avr_usart0::enable() {
-        UCSR0B |= (1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0) | (1 << TXCIE0);
+        UCSR0B |= (1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0);// | (1 << TXCIE0);
     }
 
     void avr_usart0::disable() {
@@ -50,7 +50,7 @@ public:
         m_begin = (m_begin + 1) % len;
     }
 
-    volatile T& front()
+    T& front()
     {
         return m_store[m_begin];
     }
@@ -63,16 +63,12 @@ private:
 struct open_state
 {
     /**
-     * Synchronizes single character writes to
-     * the USART register
+     * Synchronizes the availabilty of the write buffer
      */
-    ft::semaphore tx_avail{1};
-
-    /**
-     * Synchronizes the availabilty of a write buffer
-     */
-    ft::semaphore have_write{0};
+    ft::semaphore have_write{1};
     const char* volatile write = nullptr;
+
+    ft::semaphore write_done{0};
 
     ringbuf<char, 32> read_buf;
     ft::semaphore have_data{0};
@@ -86,9 +82,14 @@ open_state* create()
 
 open_state* state = create();
 
-void send_usart(const char *x)
+void write_usart(const char *x)
 {
+    state->have_write.down();
+
     state->write = x;
+    UCSR0B |= (1<<UDRIE0); // enable empty buffer interrupt, ISR will send the data
+    state->write_done.down();
+
     state->have_write.up();
 }
 
@@ -106,30 +107,14 @@ size_t read_usart(char* buf, size_t len)
     return total;
 }
 
-void write_task() {
-    while (true) {
-        state->have_write.down();
-
-        //UCSR0B |= (1<<UDRIE0);
-        while (*state->write) {
-            state->tx_avail.down();
-            UDR0 = *state->write;
-            ++state->write;
-        }
-    }
-}
-
 ISR (USART_UDRE_vect) {
     UDR0 = *state->write;
     ++state->write;
 
     if (!*state->write) {
         UCSR0B &= ~(1 << UDRIE0);
+        state->write_done.up();
     }
-}
-
-ISR (USART_TX_vect) {
-    state->tx_avail.up();
 }
 
 ISR (USART_RX_vect) {
