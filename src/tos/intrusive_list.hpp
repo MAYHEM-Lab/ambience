@@ -85,7 +85,7 @@ namespace ft
         using iterator_t = intrusive_list_iterator<T>;
 
         size_t size() { return m_size; }
-        bool empty() { return m_head == nullptr; }
+        bool empty() { return m_size == 0; }
 
         void push_back(T& t);
         void push_front(T& t);
