@@ -11,9 +11,9 @@ namespace ft
     void up() noexcept;
     void down() noexcept;
 
-    semaphore(int n) noexcept : m_count(n) {}
+    semaphore(uint8_t n) noexcept : m_count(n) {}
   private:
-    tos::atomic<int> m_count;
+    tos::atomic<uint8_t> m_count;
     waitable m_wait;
   };
 }

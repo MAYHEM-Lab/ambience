@@ -39,13 +39,13 @@ namespace tos
     template <class T>
     void atomic<T>::add(const T& t)
 
-        asm("lock addl %0, (%1)": : "r"(t), "r"(&m_t) : "memory");
+        asm("lock addb %0, (%1)": : "r"(t), "r"(&m_t) : "memory");
         //m_t += t;
     }
 
-    //template class atomic<char>;
+    template class atomic<uint8_t>;
     //template class atomic<short>;
-    template class atomic<int>;
+    //template class atomic<int>;
     //template class atomic<unsigned int>;
     //template class atomic<long>;
 }

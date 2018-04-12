@@ -65,7 +65,7 @@ struct open_state
     /**
      * Synchronizes the availabilty of the write buffer
      */
-    ft::semaphore have_write{1};
+     tos::mutex write_avail;
     const char* volatile write = nullptr;
 
     ft::semaphore write_done{0};
@@ -84,13 +84,11 @@ open_state* state = create();
 
 void write_usart(const char *x)
 {
-    state->have_write.down();
+    tos::lock_guard<tos::mutex> lg{state->write_avail};
 
     state->write = x;
     UCSR0B |= (1<<UDRIE0); // enable empty buffer interrupt, ISR will send the data
     state->write_done.down();
-
-    state->have_write.up();
 }
 
 size_t read_usart(char* buf, size_t len)

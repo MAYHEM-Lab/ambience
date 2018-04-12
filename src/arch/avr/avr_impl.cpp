@@ -90,7 +90,7 @@ namespace tos
         }
     }
 
-    template class atomic<char>;
+    template class atomic<uint8_t>;
     template class atomic<short>;
     template class atomic<int>;
     template class atomic<unsigned int>;
