@@ -74,6 +74,13 @@ void tos_shutdown()
 
 namespace tos
 {
+    void init()
+    {
+    }
+}
+
+namespace tos
+{
     template <class T>
     void atomic<T>::add(const T& t)
     {

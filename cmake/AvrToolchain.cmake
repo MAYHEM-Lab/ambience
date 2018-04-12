@@ -3,7 +3,6 @@ set(CMAKE_SYSTEM_PROCESSOR avr)
 
 set(CMAKE_SYSROOT "sysroot")
 
-include(CMakeForceCompiler)
 set(CMAKE_C_COMPILER avr-gcc)
 set(CMAKE_CXX_COMPILER avr-g++)
 

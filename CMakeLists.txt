@@ -6,10 +6,12 @@ if (TOS_ARDUINO)
 elseif(TOS_AVR)
     set(AVR_CPU atmega328p)
     set(CMAKE_TOOLCHAIN_FILE cmake/AvrToolchain.cmake)
-    set(CMAKE_CXX_FLAGS -DF_CPU=16000000UL)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DF_CPU=16000000UL")
 endif()
 
 project(tos)
+
+message(STATUS "${CMAKE_CXX_FLAGS}")
 
 add_subdirectory(src)
 

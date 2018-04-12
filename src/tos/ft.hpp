@@ -2,7 +2,7 @@
 namespace ft
 {
   using entry_t = void (*)();
-  void start(entry_t);
+  void start(entry_t) __attribute__((visibility("default")));
   void schedule();
 
   namespace this_thread

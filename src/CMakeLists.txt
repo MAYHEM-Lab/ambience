@@ -16,7 +16,7 @@ set(TOS_CORE_SRCS
 	ft.cpp
 	semaphore.cpp
 	timer.cpp
-	waitable.cpp tos/char_stream.hpp tos/print.hpp tos/utility.hpp tos/type_traits.hpp print.cpp tos/chrono.hpp)
+	waitable.cpp tos/char_stream.hpp tos/print.hpp tos/utility.hpp tos/type_traits.hpp print.cpp tos/chrono.hpp tos/mutex.hpp tos/intrusive_ptr.hpp)
 
 if (ARDUINO_FOUND)
     generate_arduino_library(tos_core
@@ -40,7 +40,7 @@ elseif(TOS_AVR)
 	add_subdirectory(arch/avr)
 	add_subdirectory(drivers/arch/avr)
 	target_link_libraries(tos_core PUBLIC avr_impl)
-	target_link_libraries(tos_core PUBLIC avr_gpio)
+	target_link_libraries(tos_core PUBLIC avr_gpio avr_usart)
 else()
 	add_subdirectory(arch/x86)
 	target_link_libraries(tos_core PUBLIC x86_impl)

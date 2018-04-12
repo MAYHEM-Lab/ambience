@@ -13,5 +13,4 @@ namespace tos
 namespace tos
 {
     template <class T> T* open();
-    template <class T> T* open(const char*);
 }
