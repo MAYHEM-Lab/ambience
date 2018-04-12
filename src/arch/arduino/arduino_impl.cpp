@@ -7,10 +7,15 @@
 #endif
 #include <Arduino.h>
 
+#undef putc
+
 #include <util/atomic.h>
 #include "tos/atomic.hpp"
 #include "tos/ft.hpp"
 #include "tos/thread_info.hpp"
+#include <tos/char_stream.hpp>
+
+#include <tos_arch.hpp>
 
 #include <string.h>
 
@@ -27,7 +32,6 @@ extern "C"
     // Function Pototype
     void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
 
-
     // Function Implementation
     void wdt_init(void)
     {
@@ -36,7 +40,9 @@ extern "C"
 
         return;
     }
-	void tos_set_stack_ptr(void* ptr)
+
+	void tos_set_stack_ptr(void* ptr) __attribute__((naked));
+    void tos_set_stack_ptr(void* ptr)
 	{
 		// return address is in the stack
 		// if we just change the stack pointer
@@ -86,6 +92,36 @@ namespace tos
 	template class atomic<int>;
 	template class atomic<unsigned int>;
 	template class atomic<long>;
+}
+
+class serial_adapter
+		: public tos::char_ostream
+{
+public:
+	explicit serial_adapter(unsigned long baud)
+	{
+		Serial.begin(baud);
+	}
+	int write(const char* buf, size_t sz) override
+	{
+		return Serial.write(buf, sz);
+	}
+	void putc(char c) override
+	{
+		Serial.write(c);
+	}
+};
+
+namespace tos
+{
+	namespace arch
+	{
+		char_ostream* debug_stream()
+		{
+			static serial_adapter ser(9600);
+			return &ser;
+		}
+	}
 }
 
 // the optional arduino yield thing

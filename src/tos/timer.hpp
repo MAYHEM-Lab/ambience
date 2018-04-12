@@ -1,15 +1,14 @@
 #pragma once
 
-namespace fs
-{
-  class timer
-  {
-  public:
-    void sleep(long milliseconds);
-  private:
-    void start(long mil);
-    void stop();
-    long m_millis;
-  };
+namespace fs {
+    class timer
+    {
+    public:
+        void start(long mil);
+        void stop();
+
+    private:
+        long m_millis;
+    };
 }
 

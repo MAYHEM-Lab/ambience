@@ -8,6 +8,8 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <tos/char_stream.hpp>
+#include <iostream>
 
 extern "C"
 {
@@ -33,7 +35,7 @@ extern "C"
 
     void* tos_stack_alloc(size_t size)
     {
-        return aligned_alloc(16, size);
+        return malloc(size);
     }
 
     void tos_stack_free(void* data)
@@ -52,7 +54,7 @@ namespace tos
 {
     template <class T>
     void atomic<T>::add(const T& t)
-    {
+
         asm("lock addl %0, (%1)": : "r"(t), "r"(&m_t) : "memory");
         //m_t += t;
     }
@@ -64,12 +66,28 @@ namespace tos
     //template class atomic<long>;
 }
 
-// the optional arduino yield thing
-extern "C" void yield()
+class io_stream : public tos::char_ostream
 {
-    if (!ft::self())
+public:
+    int write(const char* buf, size_t sz) override
+	{
+	    std::cout.write(buf, sz);
+	    return sz;
+	}
+	void putc(char c) override
+	{
+	    std::cout << c;
+	}
+};
+
+namespace tos
+{
+    namespace arch
     {
-        return;
+        char_ostream* debug_stream()
+        {
+            static io_stream str;
+            return &str;
+        }
     }
-    ft::this_thread::yield();
 }

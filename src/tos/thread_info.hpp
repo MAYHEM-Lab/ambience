@@ -10,7 +10,7 @@ namespace ft
     char id;
     void* stack;
     void (*entry)();
-    jmp_buf buffer;
+    jmp_buf context;
   };
 
   thread_info* self();
