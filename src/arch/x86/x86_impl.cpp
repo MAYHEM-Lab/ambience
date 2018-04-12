@@ -11,22 +11,6 @@
 
 extern "C"
 {
-    /*void tos_set_stack_ptr(void* ptr)
-    {
-        // return address is in the stack
-        // if we just change the stack pointer
-        // we can't return to the caller
-        // copying the last 10 bytes from the original
-        // stack to this stack so that we'll be able
-        // to return
-
-        uintptr_t sp;
-        asm("movq %%rsp, %0" : "=r"(sp) :);
-        memcpy(ptr - 10, (void*)sp, 10);
-        sp = reinterpret_cast<uintptr_t >(ptr - 10);
-        asm("movq %0, %%rsp" : : "r"(sp) : "%rsp");
-    }*/
-
     void tos_power_down()
     {
     }
