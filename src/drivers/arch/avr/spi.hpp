@@ -27,21 +27,31 @@ uint8_t spi_read_byte();
 void begin_spi_transaction();
 void end_spi_transaction();
 
-struct spi_guard
+struct spi_transaction
 {
 public:
-    spi_guard() {
+    spi_transaction() : m_omit{false} {
         begin_spi_transaction();
     }
-    ~spi_guard()
+
+    ~spi_transaction()
     {
-        end_spi_transaction();
+        if (!m_omit)
+        {
+            end_spi_transaction();
+        }
     }
 
-    spi_guard(const spi_guard&) = delete;
-    spi_guard(spi_guard&&) = delete;
-    spi_guard& operator=(const spi_guard&) = delete;
-    spi_guard& operator=(spi_guard&&) = delete;
+    spi_transaction(spi_transaction&& rhs) noexcept : m_omit(false)
+    {
+        rhs.m_omit = true;
+    }
+
+    spi_transaction(const spi_transaction&) = delete;
+    spi_transaction& operator=(const spi_transaction&) = delete;
+    spi_transaction& operator=(spi_transaction&&) = delete;
+private:
+    bool m_omit;
 };
 
 }

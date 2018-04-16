@@ -9,3 +9,7 @@ target_include_directories(avr_usart PUBLIC .)
 add_library(avr_spi spi.hpp spi.cpp)
 target_link_libraries(avr_spi PUBLIC tos_core avr_gpio)
 target_include_directories(avr_spi PUBLIC .)
+
+add_library(avr_timer timer.hpp timer.cpp)
+target_link_libraries(avr_timer PUBLIC tos_core)
+target_include_directories(avr_timer PUBLIC .)

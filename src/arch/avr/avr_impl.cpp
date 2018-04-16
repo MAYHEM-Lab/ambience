@@ -13,6 +13,8 @@
 
 #include <tos_arch.hpp>
 
+#include <stdlib.h>
+
 #include <string.h>
 
 extern "C"
@@ -74,13 +76,6 @@ void tos_shutdown()
 
 namespace tos
 {
-    void init()
-    {
-    }
-}
-
-namespace tos
-{
     template <class T>
     void atomic<T>::add(const T& t)
     {
@@ -108,34 +103,38 @@ public:
 char buf[sizeof(ft::thread_info) * 2];
 int index = 0;
 
-void* operator new(size_t)
+void* operator new(size_t sz)
 {
-    return buf + index++ * sizeof(ft::thread_info);
+    return malloc(sz);
 }
 
-void* operator new[](size_t)
+void* operator new[](size_t sz)
 {
-    return buf + index++ * sizeof(ft::thread_info);
+    return malloc(sz);
 }
 
 extern "C" void __cxa_pure_virtual()
 {
-
 }
 
-void operator delete[](void*)
+void operator delete[](void* ptr)
 {
-
+    free(ptr);
 }
 
-void operator delete(void*)
+void operator delete(void* ptr)
 {
-
+    free(ptr);
 }
 
-void operator delete(void*, size_t)
+void operator delete(void* ptr, size_t)
 {
+    free(ptr);
+}
 
+void operator delete[](void* ptr, size_t)
+{
+    free(ptr);
 }
 
 namespace tos

@@ -89,7 +89,7 @@ namespace avr
     }
 
     void spi_write_byte(uint8_t d) {
-        spi_guard tr;
+        spi_transaction tr;
         spi_put_byte(d);
     }
 
