@@ -34,7 +34,7 @@ struct spi_ctrl
 
     void init_master() volatile {
         master_slave = 1;
-        clk_rate = 0b01;
+        clk_rate = 0b11;
     }
 
     void init_slave() volatile {
@@ -81,18 +81,31 @@ namespace avr
 
     static ft::semaphore spi_block {0};
 
-    void spi_write_byte(uint8_t d) {
-        gp.write(ports::B, 2, false);
-        SPDR = d;
+    uint8_t spi_put_byte(uint8_t b)
+    {
+        SPDR = b;
         spi_block.down();
-        //while(!(SPSR & (1<<SPIF)));
-        gp.write(ports::B, 2, true);
+        return SPDR;
+    }
+
+    void spi_write_byte(uint8_t d) {
+        spi_guard tr;
+        spi_put_byte(d);
     }
 
     uint8_t spi_read_byte() {
-        //while(!(SPSR & (1<<SPIF)));
         spi_block.down();
         return SPDR;
+    }
+
+    void begin_spi_transaction()
+    {
+        gp.write(ports::B, 2, false);
+    }
+
+    void end_spi_transaction()
+    {
+        gp.write(ports::B, 2, true);
     }
 }
 }
