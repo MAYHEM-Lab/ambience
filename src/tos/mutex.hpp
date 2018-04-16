@@ -24,7 +24,7 @@ namespace tos
     class lock_guard
     {
     public:
-        lock_guard(MutexT& mtx) : m_mtx(mtx) { m_mtx.lock(); }
+        explicit lock_guard(MutexT& mtx) : m_mtx(mtx) { m_mtx.lock(); }
         ~lock_guard() { m_mtx.unlock(); }
 
         lock_guard(const lock_guard&) = delete;

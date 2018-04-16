@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <tos/char_stream.hpp>
 
 namespace tos
 {
@@ -40,7 +41,7 @@ namespace tos
 /**
  * This class manages the AVR USART0 device
  */
-    class avr_usart0
+    class usart0
     {
     public:
         static void set_baud_rate(uint16_t);
@@ -51,9 +52,18 @@ namespace tos
         static void set_control(usart_modes, usart_parity, usart_stop_bit);
 
     private:
-        avr_usart0() = default;
+        usart0() = default;
+    };
+
+    class usart final : public tos::char_iostream
+    {
+    public:
+        int read(char *buf, size_t sz) override;
+
+        char getc() override;
+
+        int write(const char *buf, size_t sz) override;
+
+        void putc(char c) override;
     };
 }
-
-size_t read_usart(char* buf, size_t len);
-void write_usart(const char *x);

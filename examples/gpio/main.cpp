@@ -14,23 +14,25 @@
 #include <tos/intrusive_ptr.hpp>
 
 ft::semaphore timer_sem(0);
+tos::usart usart;
 
 void hello_task()
 {
     tos::gpio gp;
-    gp.set_pin_mode(13, tos::gpio::pin_mode_t::out);
+    gp.set_pin_mode(tos::avr::ports::B, 5, tos::avr::gpio::pin_mode_t::out);
     char buf;
     while (true) {
-        read_usart(&buf, 1);
+
+        usart.read(&buf, 1);
         if (buf == '1')
         {
-            gp.write(13, true);
-            write_usart("On\n");
+            gp.write(tos::avr::ports::B, 5, true);
+            println(usart, "On");
         }
         else
         {
-            gp.write(13, false);
-            write_usart("Off\n");
+            gp.write(tos::avr::ports::B, 5, false);
+            println(usart, "Off");
         }
     }
 }
@@ -40,7 +42,7 @@ void tick_task()
     while (true)
     {
         timer_sem.down();
-        write_usart("Tick\n");
+        println(usart, "Tick");
     }
 }
 
@@ -68,11 +70,11 @@ void initUSART()
 {
     using namespace tos;
 
-    tos::avr_usart0::set_baud_rate(9600);
-    tos::avr_usart0::set_2x_rate();
-    tos::avr_usart0::set_control(usart_modes::async, usart_parity::disabled, usart_stop_bit::one);
+    tos::usart0::set_baud_rate(9600);
+    tos::usart0::set_2x_rate();
+    tos::usart0::set_control(usart_modes::async, usart_parity::disabled, usart_stop_bit::one);
 
-    tos::avr_usart0::enable();
+    tos::usart0::enable();
 }
 
 int main()

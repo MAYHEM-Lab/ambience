@@ -90,11 +90,7 @@ namespace tos
         }
     }
 
-    template class atomic<uint8_t>;
-    template class atomic<short>;
-    template class atomic<int>;
-    template class atomic<unsigned int>;
-    template class atomic<long>;
+    template class atomic<int8_t>;
 }
 
 class null_stream : public tos::char_ostream

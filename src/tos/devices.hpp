@@ -7,7 +7,7 @@
 
 namespace tos
 {
-    using gpio = avr_gpio;
+    using gpio = avr::gpio;
 }
 
 namespace tos
