@@ -70,11 +70,36 @@ namespace sd
         while (avr::spi_put_byte(0xFF) != 0xFE);
         for (int i = 0; i < 512; ++i)
         {
-            print(comm, (char)avr::spi_put_byte(0xFF));
+            print_hex(avr::spi_put_byte(0xFF));
+            print(comm, " ");
+            //print(comm, (char)avr::spi_put_byte(0xFF));
         }
+        println(comm, "");
         avr::spi_put_byte(0xFF);
         avr::spi_put_byte(0xFF);
         avr::spi_put_byte(0xFF);
+    }
+
+    void sd_read(void* to, uint32_t blk, uint16_t offset = 0)
+    {
+        auto target = reinterpret_cast<uint8_t*>(to);
+        exec_cmd(0x40 + 17, blk, 0xFF);
+        while (avr::spi_put_byte(0xFF) != 0x00);
+        while (avr::spi_put_byte(0xFF) != 0xFE);
+        int i;
+        for (i = 0; i < offset; ++i)
+        {
+            avr::spi_put_byte(0xFF);
+        }
+        for (; i < 512; ++i)
+        {
+            *target = avr::spi_put_byte(0xFF);
+            ++target;
+        }
+        for (int j = 0; j < 3; ++j)
+        {
+            avr::spi_put_byte(0xFF);
+        }
     }
 
     bool init_sd()
@@ -82,19 +107,19 @@ namespace sd
         int i;
         for (i = 0; i < 10; ++i)
         {
-            if (read_8(exec_cmd(0x40, 0x00000000, 0x95)) == 0x01) break;
+            if (read_8(exec_cmd(0x40 + 0, 0x00000000, 0x95)) == 0x01) break;
             _delay_ms(100);
         }
         if (i == 10) return false;
         for (i = 0; i < 10; ++i)
         {
-            if (read_8(exec_cmd(0x48, 0x000001AA, 0x87)) == 0xAA) break;
+            if (read_8(exec_cmd(0x40 + 8, 0x000001AA, 0x87)) == 0xAA) break;
             _delay_ms(100);
         }
         if (i == 10) return false;
         for (i = 0; i < 10; ++i)
         {
-            if (read_8(exec_cmd(0x40 + 55, 0x0)) != 0xFF && read_8(exec_cmd(0x69, 0x40000000)) == 0x00) break;
+            if (read_8(exec_cmd(0x40 + 55, 0x0)) != 0xFF && read_8(exec_cmd(0x40 + 41, 0x40000000)) == 0x00) break;
             _delay_ms(100);
         }
         return i != 10;
@@ -125,14 +150,14 @@ void main_task()
     }
 
     using namespace tos::sd;
-    read_8(tos::sd::exec_cmd(0x50, 0x00000200, 0xFF));
+    read_8(tos::sd::exec_cmd(0x40 + 16, 0x00000200, 0xFF));
     while (true)
     {
         auto c = comm.getc();
         switch (c)
         {
         case '5':
-            read_sector(exec_cmd(0x51, (comm.getc() - '0') * 512));
+            read_sector(exec_cmd(0x40 + 17, comm.getc() - '0'));
             break;
         }
     }
