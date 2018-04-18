@@ -1,7 +1,7 @@
 #include "tos/waitable.hpp"
 #include "tos/scheduler.hpp"
 
-namespace ft
+namespace tos
 {
   void waitable::wait()
   {

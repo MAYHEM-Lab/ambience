@@ -8,39 +8,41 @@
 #include <gpio.hpp>
 #include <tos/semaphore.hpp>
 
-struct spi_ctrl
-{
-    uint8_t clk_rate : 2;
-    uint8_t clk_phase : 1;
-    uint8_t clk_polarity : 1;
-    uint8_t master_slave : 1;
-    uint8_t data_order : 1;
-    uint8_t spi_enable : 1;
-    uint8_t spi_int_en : 1;
-
-    void enable() volatile
+namespace {
+    struct spi_ctrl
     {
-        PRR &= ~(1 << PRSPI);
-        spi_enable = true;
-        spi_int_en = true;
-    }
+        uint8_t clk_rate : 2;
+        uint8_t clk_phase : 1;
+        uint8_t clk_polarity : 1;
+        uint8_t master_slave : 1;
+        uint8_t data_order : 1;
+        uint8_t spi_enable : 1;
+        uint8_t spi_int_en : 1;
 
-    void disable() volatile
-    {
-        PRR |= (1 << PRSPI);
-        spi_enable = false;
-        spi_int_en = false;
-    }
+        void enable() volatile
+        {
+            PRR &= ~(1 << PRSPI);
+            spi_enable = true;
+            spi_int_en = true;
+        }
 
-    void init_master() volatile {
-        master_slave = 1;
-        clk_rate = 0b11;
-    }
+        void disable() volatile
+        {
+            PRR |= (1 << PRSPI);
+            spi_enable = false;
+            spi_int_en = false;
+        }
 
-    void init_slave() volatile {
-        master_slave = 0;
-    }
-};
+        void init_master() volatile {
+            master_slave = 1;
+            clk_rate = 0b11;
+        }
+
+        void init_slave() volatile {
+            master_slave = 0;
+        }
+    };
+}
 
 static_assert(sizeof(spi_ctrl) == 1, "");
 
@@ -71,41 +73,28 @@ namespace avr
         control_reg().init_slave();
     }
 
+    static tos::semaphore spi_block {0};
+
+    uint8_t spi0::exchange(uint8_t byte) {
+        SPDR = byte;
+        spi_block.down();
+        return SPDR;
+    }
+
+    void spi0::select_slave(uint8_t pin) {
+        gp.write(ports::B, 2, false);
+    }
+
+    void spi0::deselect_slave(uint8_t pin) {
+        gp.write(ports::B, 2, true);
+    }
+
     void spi0::enable() {
         control_reg().enable();
     }
 
     void spi0::disable() {
         control_reg().disable();
-    }
-
-    static ft::semaphore spi_block {0};
-
-    uint8_t spi_put_byte(uint8_t b)
-    {
-        SPDR = b;
-        spi_block.down();
-        return SPDR;
-    }
-
-    void spi_write_byte(uint8_t d) {
-        spi_transaction tr;
-        spi_put_byte(d);
-    }
-
-    uint8_t spi_read_byte() {
-        spi_block.down();
-        return SPDR;
-    }
-
-    void begin_spi_transaction()
-    {
-        gp.write(ports::B, 2, false);
-    }
-
-    void end_spi_transaction()
-    {
-        gp.write(ports::B, 2, true);
     }
 }
 }

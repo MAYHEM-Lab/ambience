@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-namespace ft
+namespace tos
 {
     template <class T> class intrusive_list;
     template <class T> class intrusive_list_iterator;

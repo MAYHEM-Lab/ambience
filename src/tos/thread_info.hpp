@@ -2,7 +2,7 @@
 #include "intrusive_list.hpp"
 #include <setjmp.h>
 
-namespace ft
+namespace tos
 {
   struct thread_info 
     : public list_node<thread_info>

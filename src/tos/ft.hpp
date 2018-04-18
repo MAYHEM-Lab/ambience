@@ -1,8 +1,8 @@
 #pragma once
-namespace ft
+namespace tos
 {
   using entry_t = void (*)();
-  void start(entry_t) __attribute__((visibility("default")));
+  void launch(entry_t) __attribute__((visibility("default")));
   void schedule();
 
   namespace this_thread

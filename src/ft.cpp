@@ -6,31 +6,25 @@
 
 #include <tos/print.hpp>
 #include <tos_arch.hpp>
+#include <tos/arch.hpp>
 
-extern "C"
-{
-void tos_set_stack_ptr(void* ptr);
-void tos_power_down();
-void* tos_stack_alloc(size_t size);
-void tos_stack_free(void*);
-void tos_shutdown();
+namespace tos {
+    namespace {
+        struct scheduler
+        {
+            thread_info** threads = nullptr;
+            int num_threads = 0;
+            int capacity = 0;
+            jmp_buf main_context{};
+
+            void start(void (* t_start)());
+
+            void schedule();
+        };
+    }
 }
 
-namespace ft {
-    struct scheduler
-    {
-        thread_info** threads = nullptr;
-        int num_threads = 0;
-        int capacity = 0;
-        jmp_buf main_context{};
-
-        void start(void (* t_start)());
-
-        void schedule();
-    };
-}
-
-namespace ft {
+namespace tos {
     enum class return_codes : uint8_t
     {
         saved = 0,
@@ -40,13 +34,13 @@ namespace ft {
         scheduled
     };
 
-    [[noreturn]] void switch_context(jmp_buf& j, return_codes rc)
+    [[noreturn]] static void switch_context(jmp_buf& j, return_codes rc)
     {
         longjmp(j, static_cast<int>(rc));
     }
 }
 
-namespace ft {
+namespace tos {
     scheduler sc;
     intrusive_list<thread_info> run_queue;
 
@@ -85,7 +79,7 @@ namespace ft {
         }
     }
 
-    void thread_exit()
+    static void thread_exit()
     {
         // no need to save the current context
         switch_context(sc.main_context, return_codes::do_exit);
@@ -96,7 +90,7 @@ namespace ft {
         return cur_thread;
     }
 
-    void start(entry_t e)
+    void launch(entry_t e)
     {
         sc.start(e);
     }
@@ -191,7 +185,7 @@ namespace ft {
             // run it
             cur_thread = &run_queue.front();
             run_queue.pop_front();
-            println(*tos::arch::debug_stream(), "scheduling ", int(cur_thread->id));
+            //println(*tos::arch::debug_stream(), "scheduling ", int(cur_thread->id));
             switch_context(cur_thread->context, return_codes::scheduled);
         case return_codes::yield:
             cur_thread = nullptr;

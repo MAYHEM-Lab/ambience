@@ -6,8 +6,9 @@
 #include <drivers/arch/avr/usart.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
-#include <avr/interrupt.h>
-#include <avr/delay.h>
+#include <tos/arch.hpp>
+#include <drivers/spi_sd.hpp>
+#include <drivers/gpio.hpp>
 
 tos::usart comm;
 void print_hex(unsigned char n) {
@@ -22,154 +23,57 @@ void print_hex(unsigned char n) {
         comm.putc('A' + ((n>>4)&15) - 10);
 }
 
-namespace tos
-{
-namespace sd
-{
-    void sd_delay()
-    {
-        //avr::spi_transaction tr;
-
-        for (int i = 0; i < 10; ++i)
-        {
-            avr::spi_put_byte(0xFF);
-        }
-    }
-
-    avr::spi_transaction exec_cmd(uint8_t cmd, uint32_t arg, uint8_t crc = 0xFF)
-    {
-        avr::spi_transaction tr;
-
-        avr::spi_put_byte(cmd);
-        avr::spi_put_byte(arg >> 24); // MSB first
-        avr::spi_put_byte(arg >> 16);
-        avr::spi_put_byte(arg >> 8);
-        avr::spi_put_byte(arg);
-        avr::spi_put_byte(crc);
-
-        return tr;
-    }
-
-    uint8_t read_8(avr::spi_transaction&& tr)
-    {
-        uint8_t ret = 0xFF;
-        uint8_t buf[8];
-        for (int i = 0; i < 8; ++i)
-        {
-            buf[i] = avr::spi_put_byte(0xFF);
-            if (buf[i] != 0xFF) ret = buf[i];
-        }
-
-        print_hex(ret);
-        return ret;
-    }
-
-    void read_sector(avr::spi_transaction&& tr)
-    {
-        while (avr::spi_put_byte(0xFF) != 0x00);
-        while (avr::spi_put_byte(0xFF) != 0xFE);
-        for (int i = 0; i < 512; ++i)
-        {
-            print_hex(avr::spi_put_byte(0xFF));
-            print(comm, " ");
-            //print(comm, (char)avr::spi_put_byte(0xFF));
-        }
-        println(comm, "");
-        avr::spi_put_byte(0xFF);
-        avr::spi_put_byte(0xFF);
-        avr::spi_put_byte(0xFF);
-    }
-
-    void sd_read(void* to, uint32_t blk, uint16_t offset = 0)
-    {
-        auto target = reinterpret_cast<uint8_t*>(to);
-        exec_cmd(0x40 + 17, blk, 0xFF);
-        while (avr::spi_put_byte(0xFF) != 0x00);
-        while (avr::spi_put_byte(0xFF) != 0xFE);
-        int i;
-        for (i = 0; i < offset; ++i)
-        {
-            avr::spi_put_byte(0xFF);
-        }
-        for (; i < 512; ++i)
-        {
-            *target = avr::spi_put_byte(0xFF);
-            ++target;
-        }
-        for (int j = 0; j < 3; ++j)
-        {
-            avr::spi_put_byte(0xFF);
-        }
-    }
-
-    bool init_sd()
-    {
-        int i;
-        for (i = 0; i < 10; ++i)
-        {
-            if (read_8(exec_cmd(0x40 + 0, 0x00000000, 0x95)) == 0x01) break;
-            _delay_ms(100);
-        }
-        if (i == 10) return false;
-        for (i = 0; i < 10; ++i)
-        {
-            if (read_8(exec_cmd(0x40 + 8, 0x000001AA, 0x87)) == 0xAA) break;
-            _delay_ms(100);
-        }
-        if (i == 10) return false;
-        for (i = 0; i < 10; ++i)
-        {
-            if (read_8(exec_cmd(0x40 + 55, 0x0)) != 0xFF && read_8(exec_cmd(0x40 + 41, 0x40000000)) == 0x00) break;
-            _delay_ms(100);
-        }
-        return i != 10;
-    }
-}
-}
-
 void main_task()
 {
-    tos::usart0::set_baud_rate(9600);
-    tos::usart0::set_2x_rate();
-    tos::usart0::set_control(tos::usart_modes::async, tos::usart_parity::disabled, tos::usart_stop_bit::one);
-    tos::usart0::enable();
+    tos::avr::usart0::set_baud_rate(9600);
+    tos::avr::usart0::set_2x_rate();
+    tos::avr::usart0::set_control(tos::usart_modes::async, tos::usart_parity::disabled, tos::usart_stop_bit::one);
+    tos::avr::usart0::enable();
 
     println(comm, "Hi from master!");
 
     tos::avr::spi0::init_master();
     tos::avr::spi0::enable();
-    tos::sd::sd_delay();
 
-    if (!tos::sd::init_sd())
+    tos::spi_sd_card sd{2};
+    if (!sd.init())
     {
-        println(comm, "fuck");
+        println(comm, "that didn't work");
     }
     else
     {
         println(comm, "ready");
     }
 
-    using namespace tos::sd;
-    read_8(tos::sd::exec_cmd(0x40 + 16, 0x00000200, 0xFF));
+    uint8_t buf[20];
     while (true)
     {
-        auto c = comm.getc();
-        switch (c)
+        auto cmd = comm.getc();
+        switch (cmd)
         {
-        case '5':
-            read_sector(exec_cmd(0x40 + 17, comm.getc() - '0'));
+        case '6':
+        {
+            auto blk = comm.getc() - '0';
+            auto off = comm.getc() - '0';
+            sd.read(buf, blk, 20, off);
+            for (auto c : buf) {
+                print_hex(c);
+                print(comm, " ");
+            }
+            println(comm, "");
             break;
+        }
         }
     }
 }
 
 int main()
 {
-    ft::start(main_task);
-    sei();
+    tos::launch(main_task);
+    tos::enable_interrupts();
 
     while(true)
     {
-        ft::schedule();
+        tos::schedule();
     }
 }

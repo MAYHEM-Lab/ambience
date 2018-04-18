@@ -32,15 +32,17 @@ namespace tos
         two = 0b1
     };
 
-    constexpr uint8_t usart_control(usart_modes mode, usart_parity parity, usart_stop_bit stop)
-    {
-        // only support 8 bit chars atm
-        return ((uint8_t)mode << 6) | ((uint8_t)parity << 4) | ((uint8_t)stop << 3) | (0b11 << 1);
-    }
-
 /**
  * This class manages the AVR USART0 device
  */
+ namespace avr
+ {
+     constexpr uint8_t usart_control(usart_modes mode, usart_parity parity, usart_stop_bit stop)
+     {
+         // only support 8 bit chars atm
+         return ((uint8_t)mode << 6) | ((uint8_t)parity << 4) | ((uint8_t)stop << 3) | (0b11 << 1);
+     }
+
     class usart0
     {
     public:
@@ -54,6 +56,7 @@ namespace tos
     private:
         usart0() = default;
     };
+ }
 
     class usart final : public tos::char_iostream
     {

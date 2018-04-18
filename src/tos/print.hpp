@@ -10,24 +10,55 @@
 
 namespace tos
 {
+    char* itoa(int i, int base);
+}
+
+namespace tos
+{
+    template <class CharOstreamT>
+    void print(CharOstreamT& ostr, char c) {
+        ostr.putc(c);
+    }
+
     /**
      * Prints the given null terminated string to the output stream
      * @param ostr The output stream
      * @param str A null terminated string
      */
-    void print(char_ostream& ostr, const char* str);
-
-    inline void print(char_ostream& ostr, char c) {
-        ostr.putc(c);
+    template <class CharOstreamT>
+    void print(CharOstreamT & ostr, const char *str) {
+        while (*str)
+        {
+            print(ostr, *str++);
+        }
     }
 
-    void print(char_ostream& ostr, int32_t i);
-    void print(char_ostream& ostr, int16_t i);
+    template <class CharOstreamT>
+    void print(CharOstreamT & ostr, int16_t x) {
+        print(ostr, itoa(x, 10));
+    }
 
-    void print(char_ostream& ostr, bool b);
+    template <class CharOstreamT>
+    void print(CharOstreamT & ostr, int32_t x) {
+        print(ostr, itoa(x, 10));
+    }
 
-    void print(char_ostream& ostr, uintptr_t);
-    void print(char_ostream& ostr, void* p);
+    template <class CharOstreamT>
+    void print(CharOstreamT & ostr, void *p) {
+        print(ostr, reinterpret_cast<uintptr_t>(p));
+    }
+
+    template <class CharOstreamT>
+    void print(CharOstreamT & ostr, uintptr_t ptr) {
+        print(ostr, '0');
+        print(ostr, 'x');
+        print(ostr, itoa(ptr, 16));
+    }
+
+    template <class CharOstreamT>
+    void print(CharOstreamT &ostr, bool b) {
+        print(ostr, b ? "true" : "false");
+    }
 
     /**
      * Prints the given arguments with the given separator in between
@@ -44,8 +75,8 @@ namespace tos
      * @param ts Rest of the parameters
      * @param sep Separator
      */
-    template<class T1, class T2, class... Ts>
-    void print(char_ostream& ostr, T1&& t1, T2&& t2, Ts&&... ts, char sep = ' ')
+    template<class CharOstreamT, class T1, class T2, class... Ts>
+    void print(CharOstreamT& ostr, T1&& t1, T2&& t2, Ts&&... ts, char sep = ' ')
     {
         print(ostr, forward<T1>(t1));
         print(ostr, sep);
@@ -56,8 +87,8 @@ namespace tos
         (void)_;
     }
 
-    template <class... T>
-    void println(char_ostream& ostr, T&&... t)
+    template <class CharOstreamT, class... T>
+    void println(CharOstreamT& ostr, T&&... t)
     {
         print(ostr, forward<T>(t)...);
         print(ostr, '\n');

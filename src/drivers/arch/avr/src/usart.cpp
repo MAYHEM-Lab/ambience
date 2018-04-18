@@ -10,26 +10,28 @@
 #include <tos/mutex.hpp>
 
 namespace tos {
-    void usart0::set_baud_rate(uint16_t baud) {
-        const uint16_t prescale = F_CPU / (baud * 16UL) - 1;
-        UBRR0L = (uint8_t) (prescale & 0xff);
-        UBRR0H = (uint8_t) (prescale >> 8);
-    }
+    namespace avr {
+        void usart0::set_baud_rate(uint16_t baud) {
+            const uint16_t prescale = F_CPU / (baud * 16UL) - 1;
+            UBRR0L = (uint8_t) (prescale & 0xff);
+            UBRR0H = (uint8_t) (prescale >> 8);
+        }
 
-    void usart0::set_2x_rate() {
-        UCSR0A |= (1 << U2X0);
-    }
+        void usart0::set_2x_rate() {
+            UCSR0A |= (1 << U2X0);
+        }
 
-    void usart0::enable() {
-        UCSR0B |= (1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0);// | (1 << TXCIE0);
-    }
+        void usart0::enable() {
+            UCSR0B |= (1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0);// | (1 << TXCIE0);
+        }
 
-    void usart0::disable() {
-        UCSR0B &= ~((1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0) | (1 << TXCIE0));
-    }
+        void usart0::disable() {
+            UCSR0B &= ~((1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0) | (1 << TXCIE0));
+        }
 
-    void usart0::set_control(usart_modes m, usart_parity p, usart_stop_bit s) {
-        UCSR0C = usart_control(m, p, s);
+        void usart0::set_control(usart_modes m, usart_parity p, usart_stop_bit s) {
+            UCSR0C = usart_control(m, p, s);
+        }
     }
 }
 
@@ -66,10 +68,10 @@ struct open_state {
     const char *volatile write = nullptr;
     uint16_t len = 0;
 
-    ft::semaphore write_done{0};
+    tos::semaphore write_done{0};
 
     ringbuf<char, 32> read_buf;
-    ft::semaphore have_data{0};
+    tos::semaphore have_data{0};
 };
 
 open_state *create() {

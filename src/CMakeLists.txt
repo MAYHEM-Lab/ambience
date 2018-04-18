@@ -10,13 +10,18 @@ set(TOS_CORE_HEADERS
 	tos/timer.hpp
 	tos/waitable.hpp
     tos/system.hpp
-		tos/devices.hpp)
+	tos/devices.hpp tos/promise.hpp tos/chrono.hpp tos/mutex.hpp
+	tos/intrusive_ptr.hpp tos/char_stream.hpp tos/utility.hpp tos/arch.hpp tos/type_traits.hpp)
 
 set(TOS_CORE_SRCS
 	ft.cpp
 	semaphore.cpp
 	timer.cpp
-	waitable.cpp tos/char_stream.hpp tos/print.hpp tos/utility.hpp tos/type_traits.hpp print.cpp tos/chrono.hpp tos/mutex.hpp tos/intrusive_ptr.hpp)
+	waitable.cpp)
+
+add_library(tos_print tos/print.hpp print.cpp)
+target_compile_features(tos_print PUBLIC cxx_std_14)
+target_include_directories(tos_print PUBLIC ".")
 
 if (ARDUINO_FOUND)
     generate_arduino_library(tos_core
@@ -33,14 +38,13 @@ target_include_directories(tos_core PUBLIC ".")
 
 if (TOS_ARDUINO)
 	add_subdirectory(arch/arduino)
-	add_subdirectory(drivers/arch/avr)
+	add_subdirectory(drivers)
 	target_link_libraries(tos_core arduino_impl)
 	target_link_libraries(tos_core avr_gpio)
 elseif(TOS_AVR)
 	add_subdirectory(arch/avr)
-	add_subdirectory(drivers/arch/avr)
+	add_subdirectory(drivers)
 	target_link_libraries(tos_core PUBLIC avr_impl)
-	target_link_libraries(tos_core PUBLIC avr_gpio avr_usart avr_spi)
 else()
 	add_subdirectory(arch/x86)
 	target_link_libraries(tos_core PUBLIC x86_impl)

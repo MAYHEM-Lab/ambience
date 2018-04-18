@@ -45,22 +45,22 @@ namespace tos
             {
                 switch (port)
                 {
-
                     case ports::B: return DDRB;
                     case ports::C: return DDRC;
                     case ports::D: return DDRD;
                 }
+                return DDRB;
             }
 
             static constexpr auto& get_port(ports port)
             {
                 switch (port)
                 {
-
                     case ports::B: return PORTB;
                     case ports::C: return PORTC;
                     case ports::D: return PORTD;
                 }
+                return PORTB;
             }
         }
 

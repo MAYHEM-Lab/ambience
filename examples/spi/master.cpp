@@ -24,17 +24,17 @@ void master_task()
     while (true)
     {
         char c = comm.getc();
-        tos::avr::spi_write_byte(c);
+        tos::avr::spi_put_byte(c);
     }
 }
 
 int main()
 {
-    ft::start(master_task);
+    tos::launch(master_task);
     sei();
 
     while(true)
     {
-        ft::schedule();
+        tos::schedule();
     }
 }

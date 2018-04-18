@@ -72,6 +72,16 @@ void tos_shutdown()
 {
     soft_reset();
 }
+
+void tos_enable_interrupts()
+{
+    sei();
+}
+
+void tos_disable_interrupts()
+{
+    cli();
+}
 }
 
 namespace tos
@@ -88,19 +98,7 @@ namespace tos
     template class atomic<int8_t>;
 }
 
-class null_stream : public tos::char_ostream
-{
-public:
-    int write(const char* buf, size_t sz) override
-	{
-		return sz;
-	}
-	void putc(char c) override
-	{
-	}
-};
-
-char buf[sizeof(ft::thread_info) * 2];
+char buf[sizeof(tos::thread_info) * 2];
 int index = 0;
 
 void* operator new(size_t sz)
@@ -135,16 +133,4 @@ void operator delete(void* ptr, size_t)
 void operator delete[](void* ptr, size_t)
 {
     free(ptr);
-}
-
-namespace tos
-{
-    namespace arch
-    {
-        char_ostream* debug_stream()
-        {
-            static null_stream str;
-            return &str;
-        }
-    }
 }

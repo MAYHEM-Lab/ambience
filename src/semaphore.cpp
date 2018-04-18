@@ -1,7 +1,7 @@
 #include "tos/semaphore.hpp"
 #include "tos/atomic.hpp"
 
-namespace ft
+namespace tos
 {
   void semaphore::up() noexcept
   {

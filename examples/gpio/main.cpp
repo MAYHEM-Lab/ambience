@@ -13,7 +13,7 @@
 #include <avr/interrupt.h>
 #include <tos/intrusive_ptr.hpp>
 
-ft::semaphore timer_sem(0);
+tos::semaphore timer_sem(0);
 tos::usart usart;
 
 void hello_task()
@@ -79,8 +79,8 @@ void initUSART()
 
 int main()
 {
-    ft::start(hello_task);
-    ft::start(tick_task);
+    tos::launch(hello_task);
+    tos::launch(tick_task);
 
     timer1_init();
     initUSART();
@@ -88,6 +88,6 @@ int main()
 
     while (true)
     {
-        ft::schedule();
+        tos::schedule();
     }
 }

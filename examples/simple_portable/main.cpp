@@ -8,13 +8,13 @@
 #include <tos/print.hpp>
 #include <tos/devices.hpp>
 
-ft::semaphore sem(0);
+tos::semaphore sem(0);
 
 void hello_task()
 {
     while (true) {
         sem.down();
-        println(*tos::arch::debug_stream(), ft::this_thread::get_id(), ": hello");
+        //println(*tos::arch::debug_stream(), tos::this_thread::get_id(), ": hello");
     }
 }
 
@@ -23,19 +23,19 @@ void yo_task()
     for (int i = 0; i < 100; ++i)
     {
         sem.up();
-        println(*tos::arch::debug_stream(), ft::this_thread::get_id(), ": yo");
-        ft::this_thread::yield();
+        //println(*tos::arch::debug_stream(), tos::this_thread::get_id(), ": yo");
+        tos::this_thread::yield();
     }
 }
 
 int main()
 {
-    ft::start(hello_task);
-    ft::start(yo_task);
+    tos::launch(hello_task);
+    tos::launch(yo_task);
 
     while (true)
     {
-        ft::schedule();
+        tos::schedule();
         //using namespace std::chrono_literals;
         //std::this_thread::sleep_for(500ms);
     }

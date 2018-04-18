@@ -2,7 +2,7 @@
 
 #include "thread_info.hpp"
 
-namespace ft
+namespace tos
 {
   struct waitable
   {

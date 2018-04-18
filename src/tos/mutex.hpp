@@ -17,7 +17,7 @@ namespace tos
         void unlock() { m_sem.up(); }
 
     private:
-        ft::semaphore m_sem;
+        tos::semaphore m_sem;
     };
 
     template <class MutexT>

@@ -23,18 +23,18 @@ void slave_task()
 
     while (true)
     {
-        char c = tos::avr::spi_read_byte();
+        char c = tos::avr::spi_put_byte(0xFF);
         comm.putc(c);
     }
 }
 
 int main()
 {
-    ft::start(slave_task);
+    tos::launch(slave_task);
     sei();
 
     while(true)
     {
-        ft::schedule();
+        tos::schedule();
     }
 }

@@ -3,7 +3,7 @@
 #include "waitable.hpp"
 #include "atomic.hpp"
 
-namespace ft
+namespace tos
 {
   class semaphore
   {
