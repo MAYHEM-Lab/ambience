@@ -47,8 +47,7 @@ void main_task()
     println(comm, device_descr.name());
     println(comm, "Hi from master!");
 
-    auto spi = open(tos::devs::spi<0>);
-    spi->init_master();
+    auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);
     spi->enable();
 
     tos::spi_sd_card sd{2};

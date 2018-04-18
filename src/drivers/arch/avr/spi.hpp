@@ -30,10 +30,26 @@ namespace avr {
     };
 }
 
-inline avr::spi0* open_impl(tos::devs::spi_t<0>)
+struct spi_mode
 {
+    struct slave_t {};
+    struct master_t {};
+
+    static constexpr slave_t slave{};
+    static constexpr master_t master{};
+};
+
+inline avr::spi0* open_impl(tos::devs::spi_t<0>, spi_mode::master_t)
+{
+    avr::spi0::init_master();
     return nullptr;
 }
+
+    inline avr::spi0* open_impl(tos::devs::spi_t<0>, spi_mode::slave_t)
+    {
+        avr::spi0::init_slave();
+        return nullptr;
+    }
 
 template <class T>
 struct spi_transaction
