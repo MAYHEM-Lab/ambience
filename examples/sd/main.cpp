@@ -9,6 +9,7 @@
 #include <tos/arch.hpp>
 #include <drivers/spi_sd.hpp>
 #include <drivers/gpio.hpp>
+#include <tos/devices.hpp>
 
 tos::usart comm;
 void print_hex(unsigned char n) {
@@ -23,17 +24,32 @@ void print_hex(unsigned char n) {
         comm.putc('A' + ((n>>4)&15) - 10);
 }
 
+struct
+{
+    static constexpr const char* vendor()
+    {
+        return "atmel";
+    }
+    static constexpr const char* name()
+    {
+        return "atmega328";
+    }
+} device_descr;
+
 void main_task()
 {
-    tos::avr::usart0::set_baud_rate(9600);
-    tos::avr::usart0::set_2x_rate();
-    tos::avr::usart0::set_control(tos::usart_modes::async, tos::usart_parity::disabled, tos::usart_stop_bit::one);
-    tos::avr::usart0::enable();
+    auto usart = open(tos::devs::usart<0>);
+    usart->set_baud_rate(19200);
+    usart->set_control(tos::usart_modes::async, tos::usart_parity::disabled, tos::usart_stop_bit::one);
+    usart->enable();
 
+    println(comm, device_descr.vendor());
+    println(comm, device_descr.name());
     println(comm, "Hi from master!");
 
-    tos::avr::spi0::init_master();
-    tos::avr::spi0::enable();
+    auto spi = open(tos::devs::spi<0>);
+    spi->init_master();
+    spi->enable();
 
     tos::spi_sd_card sd{2};
     if (!sd.init())
