@@ -41,7 +41,7 @@ public:
         }
     }
 
-    spi_transaction(spi_transaction&& rhs) noexcept : m_omit(false)
+    spi_transaction(spi_transaction&& rhs) noexcept : m_omit(false), m_pin{rhs.m_pin}
     {
         rhs.m_omit = true;
     }
