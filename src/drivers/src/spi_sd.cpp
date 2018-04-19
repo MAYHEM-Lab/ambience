@@ -13,9 +13,9 @@ namespace tos
 
 namespace tos
 {
-    static spi_transaction exec_cmd(uint8_t cmd, uint32_t arg, uint8_t crc = 0xFF)
+    static spi_transaction<avr::spi0> exec_cmd(uint8_t cmd, uint32_t arg, uint8_t crc = 0xFF)
     {
-        spi_transaction tr{2};
+        spi_transaction<avr::spi0> tr{2};
 
         tr.exchange(cmd);
         tr.exchange(arg >> 24); // MSB first
@@ -27,7 +27,7 @@ namespace tos
         return tr;
     }
 
-    static uint8_t read_8(spi_transaction&& tr)
+    static uint8_t read_8(spi_transaction<avr::spi0>&& tr)
     {
         uint8_t ret = 0xFF;
 

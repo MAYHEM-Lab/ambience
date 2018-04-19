@@ -11,14 +11,19 @@
 
 namespace tos {
     namespace avr {
-        void usart0::set_baud_rate(uint16_t baud) {
+        static void set_raw_baud_rate(uint16_t baud) {
             const uint16_t prescale = F_CPU / (baud * 16UL) - 1;
             UBRR0L = (uint8_t) (prescale & 0xff);
             UBRR0H = (uint8_t) (prescale >> 8);
         }
 
-        void usart0::set_2x_rate() {
+        static void set_2x_rate() {
             UCSR0A |= (1 << U2X0);
+        }
+
+        void usart0::set_baud_rate(uint32_t baud) {
+            set_2x_rate();
+            set_raw_baud_rate(baud / 2);
         }
 
         void usart0::enable() {

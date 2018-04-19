@@ -15,6 +15,5 @@ namespace tos
     {
     public:
         void set_clk_rate();
-
     };
 }
