@@ -7,10 +7,11 @@
 #include <tos/char_stream.hpp>
 #include <stdint.h>
 #include <tos/utility.hpp>
+#include <string.h>
 
 namespace tos
 {
-    char* itoa(int i, int base);
+    char* itoa(int32_t i, int base);
 }
 
 namespace tos
@@ -27,10 +28,8 @@ namespace tos
      */
     template <class CharOstreamT>
     void print(CharOstreamT & ostr, const char *str) {
-        while (*str)
-        {
-            print(ostr, *str++);
-        }
+        auto len = strlen(str);
+        ostr.write(str, len);
     }
 
     template <class CharOstreamT>

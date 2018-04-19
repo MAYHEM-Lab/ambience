@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <tos/devices.hpp>
+#include <drivers/common/spi.hpp>
 
 namespace tos {
     namespace avr {
@@ -31,19 +32,6 @@ namespace tos {
         };
     }
 
-    struct spi_mode
-    {
-        struct slave_t
-        {
-        };
-        struct master_t
-        {
-        };
-
-        static constexpr slave_t slave{};
-        static constexpr master_t master{};
-    };
-
     inline avr::spi0* open_impl(tos::devs::spi_t<0>, spi_mode::master_t)
     {
         avr::spi0::init_master();
@@ -55,43 +43,4 @@ namespace tos {
         avr::spi0::init_slave();
         return nullptr;
     }
-
-    template<class T>
-    struct spi_transaction
-    {
-    public:
-        explicit spi_transaction(uint8_t pin)
-                :m_omit{false}, m_pin{pin}
-        {
-            T::select_slave(pin);
-        }
-
-        ~spi_transaction()
-        {
-            if (!m_omit) {
-                T::deselect_slave(m_pin);
-            }
-        }
-
-        spi_transaction(spi_transaction&& rhs) noexcept
-                :m_omit(false), m_pin{rhs.m_pin}
-        {
-            rhs.m_omit = true;
-        }
-
-        uint8_t exchange(uint8_t byte)
-        {
-            return T::exchange(byte);
-        }
-
-        spi_transaction(const spi_transaction&) = delete;
-
-        spi_transaction& operator=(const spi_transaction&) = delete;
-
-        spi_transaction& operator=(spi_transaction&&) = delete;
-
-    private:
-        bool m_omit;
-        uint8_t m_pin;
-    };
 }

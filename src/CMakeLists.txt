@@ -7,8 +7,7 @@ set(TOS_CORE_HEADERS
 	tos/scheduler.hpp
 	tos/semaphore.hpp
 	tos/thread_info.hpp
-	tos/timer.hpp
-	tos/waitable.hpp
+        tos/waitable.hpp
     tos/system.hpp
 	tos/devices.hpp tos/promise.hpp tos/chrono.hpp tos/mutex.hpp
 	tos/intrusive_ptr.hpp tos/char_stream.hpp tos/utility.hpp tos/arch.hpp tos/type_traits.hpp)
@@ -16,8 +15,7 @@ set(TOS_CORE_HEADERS
 set(TOS_CORE_SRCS
 	ft.cpp
 	semaphore.cpp
-	timer.cpp
-	waitable.cpp)
+        waitable.cpp)
 
 add_library(tos_print tos/print.hpp print.cpp)
 target_compile_features(tos_print PUBLIC cxx_std_14)

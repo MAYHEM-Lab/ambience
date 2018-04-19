@@ -7,9 +7,12 @@
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/arch.hpp>
-#include <drivers/spi_sd.hpp>
-#include <drivers/gpio.hpp>
+#include <drivers/common/spi_sd.hpp>
+#include <drivers/common/gpio.hpp>
+#include <drivers/common/spi.hpp>
 #include <tos/devices.hpp>
+#include <drivers/arch/avr/timer.hpp>
+#include <tos/waitable.hpp>
 
 tos::usart comm;
 void print_hex(unsigned char n) {
@@ -24,17 +27,39 @@ void print_hex(unsigned char n) {
         comm.putc('A' + ((n>>4)&15) - 10);
 }
 
-struct
+template <class T>
+class software_timer
 {
-    static constexpr const char* vendor()
+public:
+    void sleep(uint32_t microsecs)
     {
-        return "atmel";
+
     }
-    static constexpr const char* name()
+
+private:
+    T m_hw_timer;
+    tos::intrusive_list<tos::thread_info> sleepers;
+};
+
+void tick_task()
+{
+    auto tmr = open(tos::devs::timer<1>);
+    //tmr->disable();
+    tmr->set_frequency(1000);
+    tmr->enable();
+
+    uint16_t ticks = 0;
+    while (true)
     {
-        return "atmega328";
+        tmr->block();
+        ticks++;
+        if (ticks == 1000)
+        {
+            println(comm, "Tick!", (int32_t)tmr->get_ticks());
+            ticks = 0;
+        }
     }
-} device_descr;
+}
 
 void main_task()
 {
@@ -43,8 +68,6 @@ void main_task()
     usart->set_control(tos::usart_modes::async, tos::usart_parity::disabled, tos::usart_stop_bit::one);
     usart->enable();
 
-    println(comm, device_descr.vendor());
-    println(comm, device_descr.name());
     println(comm, "Hi from master!");
 
     auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);
@@ -60,6 +83,7 @@ void main_task()
         println(comm, "ready");
     }
 
+    auto tmr = open(tos::devs::timer<1>);
     uint8_t buf[20];
     while (true)
     {
@@ -75,7 +99,7 @@ void main_task()
                 print_hex(c);
                 print(comm, " ");
             }
-            println(comm, "");
+            println(comm, tmr->get_ticks());
             break;
         }
         }
@@ -85,6 +109,7 @@ void main_task()
 int main()
 {
     tos::launch(main_task);
+    tos::launch(tick_task);
     tos::enable_interrupts();
 
     while(true)

@@ -2,7 +2,7 @@
 // Created by fatih on 4/15/18.
 //
 
-#include <spi.hpp>
+#include <drivers/common/spi.hpp>
 #include <usart.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
