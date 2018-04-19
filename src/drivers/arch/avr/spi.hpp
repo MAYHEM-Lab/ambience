@@ -7,43 +7,48 @@
 #include <stdint.h>
 #include <tos/devices.hpp>
 
-namespace tos
-{
-namespace avr {
-    class spi0 {
-    public:
-        static void init_master();
+namespace tos {
+    namespace avr {
+        class spi0
+        {
+        public:
+            static void init_master();
 
-        static void init_slave();
+            static void init_slave();
 
-        static void enable();
+            static void enable();
 
-        static void disable();
+            static void disable();
 
-        static uint8_t exchange(uint8_t byte);
+            static uint8_t exchange(uint8_t byte);
 
-        static void select_slave(uint8_t pin);
-        static void deselect_slave(uint8_t pin);
+            static void select_slave(uint8_t pin);
 
-    private:
-        spi0() = default;
+            static void deselect_slave(uint8_t pin);
+
+        private:
+            spi0() = default;
+        };
+    }
+
+    struct spi_mode
+    {
+        struct slave_t
+        {
+        };
+        struct master_t
+        {
+        };
+
+        static constexpr slave_t slave{};
+        static constexpr master_t master{};
     };
-}
 
-struct spi_mode
-{
-    struct slave_t {};
-    struct master_t {};
-
-    static constexpr slave_t slave{};
-    static constexpr master_t master{};
-};
-
-inline avr::spi0* open_impl(tos::devs::spi_t<0>, spi_mode::master_t)
-{
-    avr::spi0::init_master();
-    return nullptr;
-}
+    inline avr::spi0* open_impl(tos::devs::spi_t<0>, spi_mode::master_t)
+    {
+        avr::spi0::init_master();
+        return nullptr;
+    }
 
     inline avr::spi0* open_impl(tos::devs::spi_t<0>, spi_mode::slave_t)
     {
@@ -51,37 +56,42 @@ inline avr::spi0* open_impl(tos::devs::spi_t<0>, spi_mode::master_t)
         return nullptr;
     }
 
-template <class T>
-struct spi_transaction
-{
-public:
-    explicit spi_transaction(uint8_t pin) : m_omit{false}, m_pin{pin} {
-        T::select_slave(pin);
-    }
-
-    ~spi_transaction()
+    template<class T>
+    struct spi_transaction
     {
-        if (!m_omit)
+    public:
+        explicit spi_transaction(uint8_t pin)
+                :m_omit{false}, m_pin{pin}
         {
-            T::deselect_slave(m_pin);
+            T::select_slave(pin);
         }
-    }
 
-    spi_transaction(spi_transaction&& rhs) noexcept : m_omit(false), m_pin{rhs.m_pin}
-    {
-        rhs.m_omit = true;
-    }
+        ~spi_transaction()
+        {
+            if (!m_omit) {
+                T::deselect_slave(m_pin);
+            }
+        }
 
-    uint8_t exchange(uint8_t byte)
-    {
-        return T::exchange(byte);
-    }
+        spi_transaction(spi_transaction&& rhs) noexcept
+                :m_omit(false), m_pin{rhs.m_pin}
+        {
+            rhs.m_omit = true;
+        }
 
-    spi_transaction(const spi_transaction&) = delete;
-    spi_transaction& operator=(const spi_transaction&) = delete;
-    spi_transaction& operator=(spi_transaction&&) = delete;
-private:
-    bool m_omit;
-    uint8_t m_pin;
-};
+        uint8_t exchange(uint8_t byte)
+        {
+            return T::exchange(byte);
+        }
+
+        spi_transaction(const spi_transaction&) = delete;
+
+        spi_transaction& operator=(const spi_transaction&) = delete;
+
+        spi_transaction& operator=(spi_transaction&&) = delete;
+
+    private:
+        bool m_omit;
+        uint8_t m_pin;
+    };
 }

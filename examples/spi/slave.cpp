@@ -13,10 +13,10 @@ void slave_task()
     tos::avr::spi0::init_slave();
     tos::avr::spi0::enable();
 
-    tos::usart0::set_baud_rate(9600);
-    tos::usart0::set_2x_rate();
-    tos::usart0::set_control(tos::usart_modes::async, tos::usart_parity::disabled, tos::usart_stop_bit::one);
-    tos::usart0::enable();
+    tos::avr::usart0::set_baud_rate(9600);
+    tos::avr::usart0::set_2x_rate();
+    tos::avr::usart0::set_control(tos::usart_modes::async, tos::usart_parity::disabled, tos::usart_stop_bit::one);
+    tos::avr::usart0::enable();
     tos::usart comm;
 
     println(comm, "Hi from slave!");
