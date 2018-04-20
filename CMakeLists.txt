@@ -3,7 +3,7 @@ project(tvm)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_library(tvm include/tvm/meta.hpp include/tvm/tvm_types.hpp include/tvm/vm_state.hpp include/tvm/traits.hpp src/tests.cpp include/tvm/instr_traits.hpp include/tvm/decoding.hpp include/tvm/execution.hpp)
+add_library(tvm include/tvm/meta.hpp include/tvm/tvm_types.hpp include/tvm/vm_state.hpp include/tvm/traits.hpp src/tests.cpp include/tvm/instr_traits.hpp include/tvm/decoding.hpp include/tvm/execution.hpp include/tvm/isa.hpp)
 target_include_directories(tvm PUBLIC "include")
 
 add_executable(ti src/main.cpp include/tvm/instructions.hpp)

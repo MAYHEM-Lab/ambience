@@ -8,33 +8,26 @@
 #include <tvm/decoding.hpp>
 #include <tvm/execution.hpp>
 #include <tvm/instructions.hpp>
+#include <tvm/isa.hpp>
 
 #include <byteswap.h>
 #include <unordered_map>
 
-struct isa
-: ins<0x01, add>,
-  ins<0x02, mov>
-{};
+using ISA = list <ins<0x01, add>, ins<0x02, mov>>;
 
 constexpr executor get_executor(opcode_t c)
 {
-    switch (c.opcode)
-    {
-        case 0x01: return decode_execute<add>();
-        case 0x02: return decode_execute<mov>();
-        default:
-            return nullptr;
-    }
+    constexpr auto lookup = gen_lookup<ISA>::value();
+    return lookup[c.opcode];
 }
 
-uint8_t exec_one(vm_state *state, uint32_t instr)
+constexpr uint8_t exec_one(vm_state *state, uint32_t instr)
 {
     return get_executor(get_opcode(instr))(state, instr);
 }
 
 template <class Instrs>
-void exec(const Instrs& prog)
+constexpr uint16_t exec(const Instrs& prog)
 {
     auto* pos = prog;
     vm_state state{};
@@ -52,17 +45,18 @@ void exec(const Instrs& prog)
     pos += exec_one(&state, load());
     pos += exec_one(&state, load());
     pos += exec_one(&state, load());
-    std::cout << state.registers[0] << '\n';
+    return state.registers[0];
 }
 
 int main() {
-    uint8_t prog[12] = {
+    constexpr uint8_t prog[12] = {
             0x4, 0x0, 0x0, 0x40, // mov %r0, 2
             0x4, 0x20, 0x0, 0x80, // mov %r1, 4
             0x2, 0x2, 0x0, 0x0 // add %r0, %r1
     };
 
-    exec(prog);
+    constexpr auto res = exec(prog);
+    std::cout << res << '\n';
 
     return 0;
 }
