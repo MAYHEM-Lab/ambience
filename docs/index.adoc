@@ -1,0 +1,8 @@
+= TOS
+
+[abstract]
+Operating system for internet of things
+
+---
+<<reference/devices.adoc#, Devices>>
+

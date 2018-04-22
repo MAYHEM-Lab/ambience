@@ -1,4 +1,7 @@
 #pragma once
+
+#include <stdint.h>
+
 namespace tos
 {
   using entry_t = void (*)();
@@ -11,5 +14,7 @@ namespace tos
     void yield();
     void exit(void* res = nullptr);
   }
+
+  uint8_t runnable_count();
 }
 

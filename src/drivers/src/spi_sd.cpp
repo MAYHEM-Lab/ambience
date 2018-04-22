@@ -15,7 +15,7 @@ namespace tos
 {
     static spi_transaction<avr::spi0> exec_cmd(uint8_t cmd, uint32_t arg, uint8_t crc = 0xFF)
     {
-        spi_transaction<avr::spi0> tr{2};
+        spi_transaction<avr::spi0> tr{pin_id{2}};
 
         tr.exchange(cmd);
         tr.exchange(arg >> 24); // MSB first
@@ -40,7 +40,7 @@ namespace tos
         return ret;
     }
 
-    spi_sd_card::spi_sd_card(uint8_t spi_pin) : m_spi_pin{spi_pin} {
+    spi_sd_card::spi_sd_card(pin_id spi_pin) : m_spi_pin{spi_pin} {
     }
 
     bool spi_sd_card::init() {

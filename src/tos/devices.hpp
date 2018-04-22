@@ -39,9 +39,4 @@ namespace tos
         return open_impl(t, tos::forward<ArgTs>(args)...);
     }
 
-    namespace devs
-    {
-        template <int N> using usart_t = dev<struct _usart_t, N>;
-        template <int N> static constexpr usart_t<N> usart{};
-    }
 }

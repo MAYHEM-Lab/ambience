@@ -20,6 +20,22 @@ namespace tos {
             static uint16_t get_ticks();
 
             static void block();
+
+            static void set_callback(void(*)(void*), void*);
+        };
+        class timer0 {
+          public:
+            static void set_frequency(uint16_t hertz);
+
+            static void enable();
+
+            static void disable();
+
+            static uint8_t get_ticks();
+
+            static void block();
+
+            static void set_callback(void(*)(void*), void*);
         };
     }
 

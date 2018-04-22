@@ -8,26 +8,9 @@
 #include <stddef.h>
 #include <tos/devices.hpp>
 #include <tos/char_stream.hpp>
+#include <drivers/common/usart.hpp>
 
 namespace tos {
-    enum class usart_modes : uint8_t {
-        async = 0,
-        sync = 0b01,
-        reserved = 0b10,
-        spi_master = 0b11
-    };
-
-    enum class usart_parity : uint8_t {
-        disabled = 0,
-        reserved = 0b01,
-        even = 0b10,
-        odd = 0b11
-    };
-
-    enum class usart_stop_bit : uint8_t {
-        one = 0b0,
-        two = 0b1
-    };
 
 /**
  * This class manages the AVR USART0 device
@@ -43,18 +26,20 @@ namespace tos {
             static void enable();
 
             static void disable();
+            static void set_baud_rate(usart_baud_rate);
 
-            static void set_baud_rate(uint32_t);
-
-            static void set_control(usart_modes, usart_parity, usart_stop_bit);
+            static void options(usart_modes, usart_parity, usart_stop_bit);
 
         private:
             usart0() = default;
         };
+
+        void write_sync(const char* x, size_t len);
     }
 
-    avr::usart0* open_impl(devs::usart_t<0>)
+    inline avr::usart0* open_impl(devs::usart_t<0>, usart_baud_rate rate)
     {
+        avr::usart0::set_baud_rate(rate);
         return nullptr;
     }
 

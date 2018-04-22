@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <common/gpio.hpp>
 
 namespace tos
 {
@@ -12,7 +13,7 @@ namespace tos
     struct spi_transaction
     {
     public:
-        explicit spi_transaction(uint8_t pin)
+        explicit spi_transaction(pin_id pin)
                 :m_omit{false}, m_pin{pin}
         {
             T::select_slave(pin);
@@ -44,7 +45,7 @@ namespace tos
 
     private:
         bool m_omit;
-        uint8_t m_pin;
+        pin_id m_pin;
     };
 
     struct spi_mode

@@ -12,6 +12,7 @@
 #include <tos/char_stream.hpp>
 
 #include <tos_arch.hpp>
+#include <tos/arch.hpp>
 
 #include <stdlib.h>
 

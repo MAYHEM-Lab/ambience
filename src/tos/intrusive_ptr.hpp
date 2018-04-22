@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <fcntl.h>
-
 namespace tos
 {
     template <class T>
@@ -21,17 +19,17 @@ namespace tos
             intrusive_ref(m_ptr);
         }
 
-        intrusive_ptr(const intrusive_ptr& rhs) : m_ptr(rhs.m_ptr)
+        intrusive_ptr(const intrusive_ptr& rhs) noexcept : m_ptr(rhs.m_ptr)
         {
             intrusive_ref(m_ptr);
         }
 
-        intrusive_ptr(intrusive_ptr&& rhs) : m_ptr(rhs.m_ptr)
+        intrusive_ptr(intrusive_ptr&& rhs) noexcept : m_ptr(rhs.m_ptr)
         {
             rhs.m_ptr = nullptr;
         }
 
-        intrusive_ptr&operator=(const intrusive_ptr& rhs)
+        intrusive_ptr&operator=(const intrusive_ptr& rhs) noexcept
         {
             reset();
             intrusive_ref(m_ptr);
@@ -40,7 +38,7 @@ namespace tos
             return *this;
         }
 
-        intrusive_ptr&operator=(intrusive_ptr&& rhs)
+        intrusive_ptr&operator=(intrusive_ptr&& rhs) noexcept
         {
             reset();
             m_ptr = rhs.m_ptr;

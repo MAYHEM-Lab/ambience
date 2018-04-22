@@ -29,6 +29,7 @@ namespace tos
     template <class CharOstreamT>
     void print(CharOstreamT & ostr, const char *str) {
         auto len = strlen(str);
+        if (len == 0) return;
         ostr.write(str, len);
     }
 
@@ -75,8 +76,9 @@ namespace tos
      * @param sep Separator
      */
     template<class CharOstreamT, class T1, class T2, class... Ts>
-    void print(CharOstreamT& ostr, T1&& t1, T2&& t2, Ts&&... ts, char sep = ' ')
+    void print(CharOstreamT& ostr, T1&& t1, T2&& t2, Ts&&... ts)
     {
+        constexpr auto sep = ' ';
         print(ostr, forward<T1>(t1));
         print(ostr, sep);
         print(ostr, forward<T2>(t2));

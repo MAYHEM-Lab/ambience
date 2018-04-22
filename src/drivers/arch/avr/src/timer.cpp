@@ -5,11 +5,14 @@
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <timer.hpp>
-#include <tos/semaphore.hpp>
+#include <tos/event.hpp>
 #include <util/atomic.h>
+#include <tos/semaphore.hpp>
 
-static tos::semaphore block{0};
-uint16_t cnt = 0;
+static tos::event block;
+static uint16_t cnt = 0;
+static void(*tcb)(void*);
+static void* userdata;
 
 namespace tos
 {
@@ -27,6 +30,12 @@ namespace tos
             TCNT1 = cnt;
         }
 
+        void timer1::set_callback(void (*cb)(void*), void* userdata)
+        {
+            tcb = cb;
+            ::userdata = userdata;
+        }
+
         void timer1::enable() {
             PRR &= ~(1 << PRTIM1);
         }
@@ -36,14 +45,14 @@ namespace tos
         }
 
         void timer1::block() {
-            ::block.down();
+            ::block.wait();
         }
 
         uint16_t timer1::get_ticks() {
             // TODO: should this be atomic?
 
             uint16_t res;
-            ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+            //ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
             {
                 res = TCNT1;
             }
@@ -54,6 +63,7 @@ namespace tos
 
 ISR(TIMER1_OVF_vect)
 {
-    block.up();
+    block.fire();
+    if (tcb) tcb(userdata);
     TCNT1 = cnt;
 }

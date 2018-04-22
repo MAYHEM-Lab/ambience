@@ -6,7 +6,9 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <gpio.hpp>
+#include <tos/event.hpp>
 #include <tos/semaphore.hpp>
+#include <drivers/common/gpio.hpp>
 
 namespace {
     struct spi_ctrl
@@ -73,7 +75,7 @@ namespace avr
         control_reg().init_slave();
     }
 
-    static tos::semaphore spi_block {0};
+    static tos::semaphore spi_block{0};
 
     uint8_t spi0::exchange(uint8_t byte) {
         SPDR = byte;
@@ -81,11 +83,11 @@ namespace avr
         return SPDR;
     }
 
-    void spi0::select_slave(uint8_t pin) {
+    void spi0::select_slave(pin_id pin) {
         gp.write(ports::B, 2, false);
     }
 
-    void spi0::deselect_slave(uint8_t pin) {
+    void spi0::deselect_slave(pin_id pin) {
         gp.write(ports::B, 2, true);
     }
 

@@ -27,19 +27,8 @@ void print_hex(unsigned char n) {
         comm.putc('A' + ((n>>4)&15) - 10);
 }
 
-template <class T>
-class software_timer
-{
-public:
-    void sleep(uint32_t microsecs)
-    {
-
-    }
-
-private:
-    T m_hw_timer;
-    tos::intrusive_list<tos::thread_info> sleepers;
-};
+int32_t x_ticks = 0;
+uint16_t ticks = 0;
 
 void tick_task()
 {
@@ -47,15 +36,21 @@ void tick_task()
     //tmr->disable();
     tmr->set_frequency(1000);
     tmr->enable();
+    tmr->set_callback([](void* d)
+    {
+        x_ticks++;
+    }, nullptr);
 
-    uint16_t ticks = 0;
     while (true)
     {
+        //println(comm, "Blocking...");
         tmr->block();
+        //println(comm, "Hi!");
         ticks++;
         if (ticks == 1000)
         {
-            println(comm, "Tick!", (int32_t)tmr->get_ticks());
+            println(comm, "Tick!");
+            //println(comm, "Tick!", (int32_t)tmr->get_ticks());
             ticks = 0;
         }
     }
@@ -63,9 +58,13 @@ void tick_task()
 
 void main_task()
 {
-    auto usart = open(tos::devs::usart<0>);
-    usart->set_baud_rate(19200);
-    usart->set_control(tos::usart_modes::async, tos::usart_parity::disabled, tos::usart_stop_bit::one);
+    using namespace tos::tos_literals;
+
+    auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
+    usart->options(
+            tos::usart_modes::async,
+            tos::usart_parity::disabled,
+            tos::usart_stop_bit::one);
     usart->enable();
 
     println(comm, "Hi from master!");
@@ -73,7 +72,7 @@ void main_task()
     auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);
     spi->enable();
 
-    tos::spi_sd_card sd{2};
+    auto sd = open(tos::devs::sd, 2_pin);
     if (!sd.init())
     {
         println(comm, "that didn't work");
@@ -83,7 +82,6 @@ void main_task()
         println(comm, "ready");
     }
 
-    auto tmr = open(tos::devs::timer<1>);
     uint8_t buf[20];
     while (true)
     {
@@ -99,7 +97,12 @@ void main_task()
                 print_hex(c);
                 print(comm, " ");
             }
-            println(comm, tmr->get_ticks());
+            println(comm, "");
+            break;
+        }
+        case '1':
+        {
+            println(comm, "state:", (int32_t)ticks, (int32_t)x_ticks, (int32_t)tos::runnable_count());
             break;
         }
         }
@@ -108,9 +111,10 @@ void main_task()
 
 int main()
 {
+    tos::enable_interrupts();
+
     tos::launch(main_task);
     tos::launch(tick_task);
-    tos::enable_interrupts();
 
     while(true)
     {

@@ -2,6 +2,10 @@
 // Created by Mehmet Fatih BAKIR on 29/03/2018.
 //
 
+#pragma once
+
+#include <stdint.h>
+
 namespace tos
 {
     struct pin_id
@@ -9,8 +13,11 @@ namespace tos
         uint8_t pin;
     };
 
-    constexpr pin_id operator""_pin(unsigned long long pin)
+    namespace tos_literals
     {
-        return {(uint8_t)pin};
+        constexpr pin_id operator""_pin(unsigned long long pin)
+        {
+            return {(uint8_t)pin};
+        }
     }
 }

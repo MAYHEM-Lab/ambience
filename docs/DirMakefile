@@ -1,0 +1,10 @@
+all: entries
+
+SRC = $(wildcard *.adoc)
+OBJ = $(patsubst %.adoc, $(BUILD)/%.html, $(SRC))
+
+entries: $(OBJ)
+
+$(BUILD)/%.html: %.adoc
+	asciidoctor $< $(ADOC_FLAGS)  -o $@
+

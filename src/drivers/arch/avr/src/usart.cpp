@@ -21,9 +21,9 @@ namespace tos {
             UCSR0A |= (1 << U2X0);
         }
 
-        void usart0::set_baud_rate(uint32_t baud) {
+        void usart0::set_baud_rate(usart_baud_rate baud) {
             set_2x_rate();
-            set_raw_baud_rate(baud / 2);
+            set_raw_baud_rate(baud.rate / 2);
         }
 
         void usart0::enable() {
@@ -34,7 +34,7 @@ namespace tos {
             UCSR0B &= ~((1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0) | (1 << TXCIE0));
         }
 
-        void usart0::set_control(usart_modes m, usart_parity p, usart_stop_bit s) {
+        void usart0::options(usart_modes m, usart_parity p, usart_stop_bit s) {
             UCSR0C = usart_control(m, p, s);
         }
     }
@@ -85,6 +85,26 @@ open_state *create() {
 }
 
 open_state *state = create();
+
+static void put_sync(const char data)
+{
+    while (!( UCSR0A & (1<<UDRE0)));                // wait while register is free
+    UDR0 = data;                                   // load data in the register
+}
+
+namespace tos
+{
+    namespace avr
+    {
+        void write_sync(const char* x, size_t len)
+        {
+            while (*x)
+            {
+                put_sync(*x++);
+            }
+        }
+    }
+}
 
 static void write_usart(const char* x, size_t len)
 {

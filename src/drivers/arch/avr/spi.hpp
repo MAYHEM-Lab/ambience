@@ -23,9 +23,9 @@ namespace tos {
 
             static uint8_t exchange(uint8_t byte);
 
-            static void select_slave(uint8_t pin);
+            static void select_slave(pin_id pin);
 
-            static void deselect_slave(uint8_t pin);
+            static void deselect_slave(pin_id pin);
 
         private:
             spi0() = default;

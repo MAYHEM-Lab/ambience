@@ -15,7 +15,7 @@ void slave_task()
 
     tos::avr::usart0::set_baud_rate(9600);
     tos::avr::usart0::set_2x_rate();
-    tos::avr::usart0::set_control(tos::usart_modes::async, tos::usart_parity::disabled, tos::usart_stop_bit::one);
+    tos::avr::usart0::options(tos::usart_modes::async, tos::usart_parity::disabled, tos::usart_stop_bit::one);
     tos::avr::usart0::enable();
     tos::usart comm;
 

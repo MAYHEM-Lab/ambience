@@ -1,4 +1,4 @@
-project(tos C CXX)
+project(tos)
 
 set(TOS_CORE_HEADERS 
 	tos/atomic.hpp
@@ -7,15 +7,22 @@ set(TOS_CORE_HEADERS
 	tos/scheduler.hpp
 	tos/semaphore.hpp
 	tos/thread_info.hpp
-        tos/waitable.hpp
-    tos/system.hpp
-	tos/devices.hpp tos/promise.hpp tos/chrono.hpp tos/mutex.hpp
-	tos/intrusive_ptr.hpp tos/char_stream.hpp tos/utility.hpp tos/arch.hpp tos/type_traits.hpp)
+    tos/waitable.hpp
+	tos/devices.hpp 
+	tos/promise.hpp 
+	tos/chrono.hpp 
+	tos/mutex.hpp
+	tos/intrusive_ptr.hpp 
+	tos/char_stream.hpp 
+	tos/utility.hpp 
+	tos/arch.hpp 
+	tos/type_traits.hpp
+		tos/event.hpp)
 
 set(TOS_CORE_SRCS
 	ft.cpp
 	semaphore.cpp
-        waitable.cpp)
+	arch.cpp)
 
 add_library(tos_print tos/print.hpp print.cpp)
 target_compile_features(tos_print PUBLIC cxx_std_14)

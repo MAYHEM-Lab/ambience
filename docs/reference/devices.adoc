@@ -1,0 +1,17 @@
+= Devices
+
+== List of Devices
+
+=== Core devices
+
+1. Timers
+2. USART
+3. SPI
+4. I2C
+
+== API
+
+----
+auto timer = tos::open(tos::devs::timer<0>);
+----
+
