@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <tos/devices.hpp>
 
 namespace tos
 {

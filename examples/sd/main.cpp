@@ -43,14 +43,11 @@ void tick_task()
 
     while (true)
     {
-        //println(comm, "Blocking...");
         tmr->block();
-        //println(comm, "Hi!");
         ticks++;
         if (ticks == 1000)
         {
             println(comm, "Tick!");
-            //println(comm, "Tick!", (int32_t)tmr->get_ticks());
             ticks = 0;
         }
     }

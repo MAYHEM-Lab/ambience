@@ -10,7 +10,7 @@
 
 extern "C"
 {
-void tos_set_stack_ptr(void* ptr);
+//void tos_set_stack_ptr(void* ptr);
 void tos_power_down();
 void* tos_stack_alloc(size_t size);
 void tos_stack_free(void*);

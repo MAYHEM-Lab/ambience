@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <tos/devices.hpp>
 #include <common/gpio.hpp>
 
 namespace tos
@@ -50,12 +51,8 @@ namespace tos
 
     struct spi_mode
     {
-        struct slave_t
-        {
-        };
-        struct master_t
-        {
-        };
+        struct slave_t {};
+        struct master_t {};
 
         static constexpr slave_t slave{};
         static constexpr master_t master{};

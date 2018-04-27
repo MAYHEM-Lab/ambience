@@ -57,7 +57,7 @@ void tos_power_down()
 {
 }
 
-char stack[256 * 2];
+alignas(16) char stack[256 * 2];
 int stack_index = 0;
 void* tos_stack_alloc(size_t size)
 {
@@ -98,9 +98,6 @@ namespace tos
 
     template class atomic<int8_t>;
 }
-
-char buf[sizeof(tos::thread_info) * 2];
-int index = 0;
 
 void* operator new(size_t sz)
 {

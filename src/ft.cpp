@@ -3,6 +3,11 @@
 #include "tos/ft.hpp"
 #include "tos/thread_info.hpp"
 #include "tos/scheduler.hpp"
+extern "C"
+{
+#include "../../esp-open-sdk/sdk/include/osapi.h"
+
+}
 
 #include <tos/print.hpp>
 #include <tos_arch.hpp>
@@ -141,11 +146,12 @@ namespace tos {
             }
         }
 
-        constexpr auto stack_size = 256;
+        constexpr auto stack_size = 1024;
 
         auto thread = new thread_info();
         num_threads++;
         thread->stack = tos_stack_alloc(stack_size);
+        os_printf("orig sp: %p\n", thread->stack + stack_size);
         thread->entry = t_start;
         thread->id = num_threads;
         threads[index] = thread;
@@ -179,6 +185,8 @@ namespace tos {
         tos_set_stack_ptr((void*) ((uintptr_t) cur_thread->stack+stack_size));
 
         tos::enable_interrupts();
+
+        os_printf("sp: %p\n", read_sp());
         cur_thread->entry();
         this_thread::exit(nullptr);
     }
@@ -197,7 +205,7 @@ namespace tos {
     {
         if (num_threads==0) {
             // no thread left, potentially a bug
-            tos::avr::write_sync("reboot\n", 8);
+            //tos::avr::write_sync("reboot\n", 8);
             tos_shutdown();
         }
 
