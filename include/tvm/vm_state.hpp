@@ -5,9 +5,8 @@
 #pragma once
 
 #include <stdint.h>
-#include <array>
 
 struct vm_state
 {
-    std::array<uint16_t, 16> registers;
+    uint16_t registers[16];
 };

@@ -5,7 +5,6 @@
 #pragma once
 
 #include <tvm/instr_traits.hpp>
-#include <tuple>
 
 template <class T, size_t Offset>
 constexpr T decode_one(uint32_t instr)

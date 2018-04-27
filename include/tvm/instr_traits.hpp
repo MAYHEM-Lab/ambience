@@ -6,20 +6,27 @@
 
 #include <tvm/traits.hpp>
 #include <type_traits>
-#include <utility>
+#include <stddef.h>
+#include <tvm/tvm_types.hpp>
 
-template <class... T>
-constexpr uint8_t instruction_len_bits(list<T...>)
+constexpr uint8_t instruction_len_bits(list<>)
 {
-    return (7 + ... + operand_size_v<T>);
+    return 0;
+}
+
+template <class T, class... Tail>
+constexpr uint8_t instruction_len_bits(list<T, Tail...>)
+{
+    return operand_size_v<T> + instruction_len_bits(list<Tail...>{});
+    //return (7 + ... + operand_size_v<T>);
 }
 
 template <class T>
 constexpr uint8_t instruction_len_bits()
 {
-    using traits = function_traits<T>;
+    using traits = functor_traits<T>;
     using args = tail_t<typename traits::arg_ts>;
-    return instruction_len_bits(args{});
+    return instruction_len_bits(args{}) + operand_size_v<opcode_t>;
 }
 
 template <class T>
@@ -79,7 +86,7 @@ struct offsets<list<U, K, T...>>
     using type = typename merge<last_v<remain> + operand_traits<K>::size, remain>::type;
 };
 
-template <auto> struct instr_name;
+template <class> struct instr_name;
 
-template <auto Fun>
-inline constexpr auto& instr_name_v = instr_name<Fun>::value;
+template <class Fun>
+constexpr auto&& instr_name_v = instr_name<Fun>::value();

@@ -5,7 +5,11 @@
 #pragma once
 
 #include <type_traits>
+#include <tuple>
 
+template <class T> struct ctype{
+    using type = T;
+};
 template <class...> struct list {};
 
 template <class...> struct tail;
@@ -23,7 +27,7 @@ struct function_traits<RetT(*)(ArgTs...)>
 {
     using ret_t = RetT;
     using arg_ts = list<clean_t<ArgTs>...>;
-    static inline constexpr auto arg_len = sizeof...(ArgTs);
+    static constexpr auto arg_len = sizeof...(ArgTs);
 };
 
 template<class RetT, class... ArgTs>
@@ -31,21 +35,66 @@ struct function_traits<RetT(&)(ArgTs...)>
 {
     using ret_t = RetT;
     using arg_ts = list<clean_t<ArgTs>...>;
-    static inline constexpr auto arg_len = sizeof...(ArgTs);
+    static constexpr auto arg_len = sizeof...(ArgTs);
 };
 
-template <auto, auto> struct ins {
+template <class RetT, class ClassT, class... ArgTs>
+struct function_traits<RetT (ClassT::*)(ArgTs...)>
+{
+    using ret_t = RetT;
+    using arg_ts = list<clean_t<ArgTs>...>;
+    static constexpr auto arg_len = sizeof...(ArgTs);
+};
+
+template <class T>
+struct functor_traits
+        : function_traits<decltype(&T::operator())>
+{
+};
+
+template <class RetT, class...ArgTs>
+struct functor_traits<RetT(&)(ArgTs...)>
+        : function_traits<RetT(&)(ArgTs...)>
+{
+};
+
+template <class RetT, class...ArgTs>
+struct functor_traits<RetT(*)(ArgTs...)>
+        : function_traits<RetT(*)(ArgTs...)>
+{
+};
+
+template <uint8_t, class> struct ins {
 
 };
 
-template <auto opcode, auto X>
+template <uint8_t opcode, class X>
 constexpr auto get_by_code(const ins<opcode, X>&)
 {
-    return X;
+    return ctype<X>{};
 }
 
-template <auto X, auto opcode>
+template <class X, uint8_t opcode>
 constexpr auto get_by_fun(const ins<opcode, X>&)
 {
     return opcode;
+}
+
+namespace detail {
+    template <class F, class AddT, class Tuple, std::size_t... I>
+    constexpr decltype(auto) apply_impl(F&& f, AddT&& a, Tuple&& t, std::index_sequence<I...>)
+    {
+        return std::forward<F>(f)(std::forward<AddT>(a), std::get<I>(std::forward<Tuple>(t))...);
+    }
+}  // namespace detail
+
+template< class T >
+constexpr std::size_t tuple_size_v = std::tuple_size<T>::value;
+
+template <class F, class AddT, class Tuple>
+constexpr decltype(auto) apply(F&& f, AddT&& a, Tuple&& t)
+{
+    return detail::apply_impl(
+            std::forward<F>(f), std::forward<AddT>(a), std::forward<Tuple>(t),
+            std::make_index_sequence<tuple_size_v<std::remove_reference_t<Tuple>>>{});
 }

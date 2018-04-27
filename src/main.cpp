@@ -15,10 +15,10 @@
 
 using ISA = list <ins<0x01, add>, ins<0x02, mov>>;
 
-constexpr executor get_executor(opcode_t c)
+constexpr tvm::executor get_executor(opcode_t c)
 {
-    constexpr auto lookup = gen_lookup<ISA>::value();
-    return lookup[c.opcode];
+    constexpr auto lookup = tvm::gen_lookup<ISA>::value();
+    return lookup.data[c.opcode];
 }
 
 constexpr uint8_t exec_one(vm_state *state, uint32_t instr)
@@ -26,25 +26,24 @@ constexpr uint8_t exec_one(vm_state *state, uint32_t instr)
     return get_executor(get_opcode(instr))(state, instr);
 }
 
+constexpr auto load(const uint8_t* p) {
+    uint32_t res = 0;
+    res |= *p++; res <<= 8;
+    res |= *p++; res <<= 8;
+    res |= *p++; res <<= 8;
+    res |= *p++;
+    return res;
+};
+
 template <class Instrs>
 constexpr uint16_t exec(const Instrs& prog)
 {
     auto* pos = prog;
     vm_state state{};
 
-    auto load = [&pos]{
-        auto p = pos;
-        uint32_t res = 0;
-        res |= *p++; res <<= 8;
-        res |= *p++; res <<= 8;
-        res |= *p++; res <<= 8;
-        res |= *p++;
-        return res;
-    };
-
-    pos += exec_one(&state, load());
-    pos += exec_one(&state, load());
-    pos += exec_one(&state, load());
+    pos += exec_one(&state, load(pos));
+    pos += exec_one(&state, load(pos));
+    pos += exec_one(&state, load(pos));
     return state.registers[0];
 }
 

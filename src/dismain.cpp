@@ -6,7 +6,7 @@
 #include <tvm/traits.hpp>
 #include <tvm/instr_traits.hpp>
 #include <tvm/decoding.hpp>
-#include <tvm/execution.hpp>
+#include <tvm/disassemble.hpp>
 #include <tvm/instructions.hpp>
 
 #include <byteswap.h>

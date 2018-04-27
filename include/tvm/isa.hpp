@@ -5,34 +5,40 @@
 #pragma once
 
 #include <tvm/meta.hpp>
-#include <algorithm>
 #include <tvm/execution.hpp>
 
-template <class...>
-struct max_opcode;
-
-template <auto ... opcodes, auto... Ts>
-struct max_opcode<list<ins<opcodes, Ts>...>>
+namespace tvm
 {
-static constexpr auto value = std::max(opcodes...);
-};
+    template<class...>
+    struct max_opcode;
 
-template <class...>
-struct gen_lookup;
-
-template <auto ... opcodes, auto... Ts>
-struct gen_lookup<list<ins<opcodes, Ts>...>>
-{
-using ListT = list<ins<opcodes, Ts>...>;
-
-static constexpr auto value()
-{
-    std::array<executor, max_opcode<ListT>::value + 1> lookup{};
-    auto assign = [&](auto opc, auto fun)
-    {
-        lookup[opc] = fun;
+    template<uint8_t... opcodes, class... Ts>
+    struct max_opcode<list<ins<opcodes, Ts>...>> {
+        static constexpr auto value = std::max(opcodes...);
     };
-    auto _ = std::initializer_list<int>{ (assign(opcodes, decode_execute<Ts>()), 0)... };
-    return lookup;
+
+    template<class...>
+    struct gen_lookup;
+
+    template<class T, size_t sz>
+    struct array {
+        T data[sz];
+    };
+
+    template<uint8_t ... opcodes, class... Ts>
+    struct gen_lookup<list<ins<opcodes, Ts>...>> {
+        using ListT = list<ins<opcodes, Ts>...>;
+
+        static constexpr auto value() {
+            array<executor, max_opcode<ListT>::value + 1> lookup{};
+            auto _ = std::initializer_list<int>{(assign(lookup, opcodes, decode_execute<Ts>()), 0)...};
+            return lookup;
+        }
+
+    private:
+        template<class ArrT, class OpcT, class FunT>
+        static constexpr auto assign(ArrT &&t, OpcT &&opc, FunT &&fun) {
+            t.data[opc] = std::forward<FunT>(fun);
+        }
+    };
 }
-};
