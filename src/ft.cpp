@@ -3,16 +3,10 @@
 #include "tos/ft.hpp"
 #include "tos/thread_info.hpp"
 #include "tos/scheduler.hpp"
-extern "C"
-{
-#include "../../esp-open-sdk/sdk/include/osapi.h"
-
-}
 
 #include <tos/print.hpp>
 #include <tos_arch.hpp>
 #include <tos/arch.hpp>
-#include <drivers/arch/avr/usart.hpp>
 
 namespace tos {
     namespace {
@@ -151,7 +145,6 @@ namespace tos {
         auto thread = new thread_info();
         num_threads++;
         thread->stack = tos_stack_alloc(stack_size);
-        os_printf("orig sp: %p\n", thread->stack + stack_size);
         thread->entry = t_start;
         thread->id = num_threads;
         threads[index] = thread;
@@ -186,7 +179,6 @@ namespace tos {
 
         tos::enable_interrupts();
 
-        os_printf("sp: %p\n", read_sp());
         cur_thread->entry();
         this_thread::exit(nullptr);
     }
