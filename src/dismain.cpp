@@ -6,16 +6,13 @@
 #include <tvm/traits.hpp>
 #include <tvm/instr_traits.hpp>
 #include <tvm/decoding.hpp>
-#include <tvm/disassemble.hpp>
+#include <tvm/dis/disassemble.hpp>
 #include <tvm/instructions.hpp>
 
 #include <byteswap.h>
 #include <unordered_map>
 
-struct isa
-        : ins<0x01, add>,
-          ins<0x02, mov>
-{};
+using ISA = list <ins<0x01, add>, ins<0x02, mov>>;
 
 std::ostream& operator<<(std::ostream& os, const reg_ind_t<>& a)
 {

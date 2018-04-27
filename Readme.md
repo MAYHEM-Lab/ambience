@@ -6,8 +6,7 @@ for resource constrained embedded systems applications.
 ---
 
 tvm is quite heavy on the template metaprogramming side and
-requires a C++17 compiler. Could be backported in the future.
-
+requires a C++14 compiler. 
 ---
 
 ## Building

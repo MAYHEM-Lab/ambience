@@ -48,21 +48,15 @@ struct function_traits<RetT (ClassT::*)(ArgTs...)>
 
 template <class T>
 struct functor_traits
-        : function_traits<decltype(&T::operator())>
-{
-};
+        : function_traits<decltype(&T::operator())> {};
 
 template <class RetT, class...ArgTs>
 struct functor_traits<RetT(&)(ArgTs...)>
-        : function_traits<RetT(&)(ArgTs...)>
-{
-};
+        : function_traits<RetT(&)(ArgTs...)> {};
 
 template <class RetT, class...ArgTs>
 struct functor_traits<RetT(*)(ArgTs...)>
-        : function_traits<RetT(*)(ArgTs...)>
-{
-};
+        : function_traits<RetT(*)(ArgTs...)> {};
 
 template <uint8_t, class> struct ins {
 
