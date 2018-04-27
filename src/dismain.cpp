@@ -9,7 +9,6 @@
 #include <tvm/dis/disassemble.hpp>
 #include <tvm/instructions.hpp>
 
-#include <byteswap.h>
 #include <unordered_map>
 
 using ISA = list <ins<0x01, add>, ins<0x02, mov>>;

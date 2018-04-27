@@ -82,7 +82,7 @@ namespace tvm::as
             return true;
         };
 
-        auto begin = get_stream().tellg() - 1;
+        auto begin = size_t(get_stream().tellg()) - 1U;
         auto len = 1;
 
         bool has_dot = false;
@@ -118,7 +118,7 @@ namespace tvm::as
             return isalnum(elem) || elem == '_';
         };
 
-        auto begin = get_stream().tellg() - 1;
+        auto begin = size_t(get_stream().tellg()) - 1;
         auto len = 1;
 
         while (can_be_in_name(next = get_stream().get()))
@@ -131,7 +131,7 @@ namespace tvm::as
 
     token scanner::next_token()
     {
-        auto began = get_stream().tellg();
+        auto began = size_t(get_stream().tellg());
         auto len = 0;
 
         auto next = get_stream().get();

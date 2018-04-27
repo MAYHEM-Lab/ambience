@@ -6,8 +6,9 @@ add_library(tvm_core include/tvm/meta.hpp include/tvm/tvm_types.hpp include/tvm/
         include/tvm/decoding.hpp include/tvm/execution.hpp include/tvm/isa.hpp)
 target_include_directories(tvm_core PUBLIC "include")
 target_compile_features(tvm_core PUBLIC cxx_std_14)
+target_compile_options(tvm_core PUBLIC "-Wno-c++11-narrowing")
 
-add_library(tvm_disas include/tvm/dis/disassemble.hpp)
+add_library(tvm_disas include/tvm/dis/disassemble.hpp src/stub.cpp)
 target_link_libraries(tvm_disas PUBLIC tvm_core)
 target_compile_features(tvm_disas PUBLIC cxx_std_17)
 
