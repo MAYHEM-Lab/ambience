@@ -29,6 +29,9 @@ namespace tvm::as
             return blk_comment{tok};
         case token_types::name:
             return parse_instruction();
+        case token_types::new_line:
+            ++m_pos;
+            return parse_entity();
         default:
             throw parse_error("bad");
         }
@@ -104,7 +107,11 @@ namespace tvm::as
             return parse_label();
         }
         catch (...) {}
-        return parse_register();
+        try {
+            return parse_register();
+        }
+        catch (...) {}
+        throw missing_operand_error("can't parse operand");
     }
 
     operands parser::parse_operands()
@@ -112,14 +119,18 @@ namespace tvm::as
         operands res;
         while (true)
         {
-            try
-            {
-                res.push_back(parse_operand());
-            }
-            catch (parse_error& err)
+            res.push_back(parse_operand());
+            auto next = *m_pos;
+            if (next.type == token_types::new_line ||
+                next.type == token_types::line_comment)
             {
                 break;
             }
+            if (next.type != token_types::comma)
+            {
+                throw missing_comma_error("Expected comma between operands");
+            }
+            ++m_pos;
         }
         return res;
     }

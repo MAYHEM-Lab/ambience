@@ -21,6 +21,7 @@ namespace tvm::as
             case '\'': return token_types::single_quote;
             case '\"': return token_types::double_quote;
             case '%' : return token_types::percent;
+            case '\n': return token_types::new_line;
             case std::istream::traits_type::eof(): return token_types::eof;
             default: return token_types::invalid;
         }
@@ -46,7 +47,6 @@ namespace tvm::as
     bool scanner::is_whitespace(char next) const
     {
         switch(next){
-            case '\n':
             case '\t':
             case ' ':
                 return true;
@@ -134,9 +134,10 @@ namespace tvm::as
         auto begin = size_t(get_stream().tellg()) - 1;
         auto len = 1;
 
-        while (can_be_in_name(next = get_stream().get()))
+        while (can_be_in_name(next = get_stream().peek()))
         {
             len++;
+            get_stream().seekg(1, std::ios::cur);
         }
 
         return { token_types::name, (int32_t)begin, uint16_t(len) };
@@ -188,6 +189,15 @@ namespace tvm::as
                     get_stream().seekg(1, std::ios::cur);
                     ++len;
                 }
+            }
+        }
+
+        if (tok_type == token_types::new_line)
+        {
+            // many new line characters count as a single new line token
+            while ((next = get_stream().peek()) == '\n')
+            {
+                get_stream().seekg(1, std::ios::cur);
             }
         }
 

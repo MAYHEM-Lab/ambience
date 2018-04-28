@@ -26,6 +26,7 @@ namespace tvm::as
         integer_literal, // 42
         float_literal, // 3.14
 
+        new_line,
         eof,
 
         line_comment, // //like this

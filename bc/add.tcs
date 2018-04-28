@@ -2,6 +2,6 @@
  * Sample program that adds two integers
  */
 
-movi %r0, 2 // x = 2
-movi %r1, 4 // y = 4
-add %r0, %r1 // x += y
+movi %r0, 2     // x = 2
+movi %r1, 4     // y = 4
+add %r0, %r1    // x += y

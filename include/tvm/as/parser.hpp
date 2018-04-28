@@ -16,6 +16,18 @@ namespace tvm::as
         parse_error(const std::string& err) : runtime_error(err) {}
     };
 
+    class missing_comma_error : public parse_error
+    {
+    public:
+        using parse_error::parse_error;
+    };
+
+    class missing_operand_error : public parse_error
+    {
+    public:
+        using parse_error::parse_error;
+    };
+
     class parser
     {
     public:
