@@ -25,6 +25,11 @@ void print_instr(tvm::instr_data& inst)
     {
         std::cout << "\tOp: " << (int)opc.type << " " << (int)opc.bits << " bits" << '\n';
     }
+    for (auto off : inst.get_offsets())
+    {
+        std::cout << "\t" << off;
+    }
+    std::cout << '\n';
 }
 
 int main()
@@ -44,12 +49,12 @@ int main()
     auto parsed = p.parse_program();
     std::cout << parsed.size() << '\n';
 
-    //tvm::as::codegen dg{parsed, isa_descr};
-    //dg.generate();
+    tvm::as::codegen dg{parsed, isa_descr};
+    dg.generate();
 
-    for (auto& elem : parsed)
+    /*for (auto& elem : parsed)
     {
         mpark::visit(tvm::as::print_ast{std::cout, 0}, elem);
         std::cout << '\n';
-    }
+    }*/
 }

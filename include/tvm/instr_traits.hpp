@@ -94,6 +94,27 @@ struct offsets<list<U, K, T...>>
     using type = typename merge<last_v<remain> + operand_traits<K>::size, remain>::type;
 };
 
+template <size_t... offsets, int index>
+constexpr size_t offset_at(std::index_sequence<offsets...>, std::integral_constant<int, index>)
+{
+    return 0;
+};
+
+template <size_t... offsets>
+constexpr std::array<size_t, sizeof...(offsets)> to_array(std::index_sequence<offsets...>)
+{
+    return { offsets... };
+};
+
+template <class T, int OpInd>
+constexpr auto get_operand_offset()
+{
+    using traits = functor_traits<T>;
+    using args = tail_t<typename traits::arg_ts>;
+    using offsets_ = offsets<args>;
+    return offset_at(typename offsets_::type{}, std::integral_constant<int, OpInd>{});
+};
+
 template <class> struct instr_name;
 
 template <class Fun>

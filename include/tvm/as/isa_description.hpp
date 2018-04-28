@@ -12,14 +12,16 @@ namespace tvm {
 
     enum class operand_type
     {
+        error,
         reg,
         literal
     };
 
     struct operand_description
     {
-        operand_type type;
-        uint8_t bits;
+        operand_type type = operand_type::error;
+        uint8_t bits = 0;
+        uint8_t offset = 0;
     };
 
     template<uint8_t N>
@@ -55,8 +57,13 @@ namespace tvm {
 
         virtual int32_t operand_count() const = 0;
 
+        virtual uint8_t get_size() const = 0;
+
         virtual std::vector<operand_description>
         get_operands() const = 0;
+
+        virtual std::vector<size_t>
+        get_offsets() const = 0;
 
         virtual ~instr_data() = default;
     };
@@ -75,6 +82,10 @@ namespace tvm {
             return instr_name_v<T>;
         }
 
+        uint8_t get_size() const override {
+            return instruction_len<T>();
+        }
+
         int32_t operand_count() const override
         {
             return ::operand_count<T>();
@@ -85,6 +96,14 @@ namespace tvm {
             using traits = functor_traits<T>;
             using args = tail_t<typename traits::arg_ts>;
             return get_descrs(args{});
+        }
+
+        std::vector<size_t> get_offsets() const override {
+            using traits = functor_traits<T>;
+            using args = tail_t<typename traits::arg_ts>;
+            using offsets_t = offsets<args>;
+            auto arr = to_array(typename offsets_t::type{});
+            return std::vector<size_t>(arr.begin(), arr.end());
         }
     };
 
