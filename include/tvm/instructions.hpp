@@ -35,3 +35,18 @@ struct instr_name<movi>
 {
     static constexpr auto value() { return "movi"; }
 };
+
+
+struct exit_ins
+{
+    constexpr void operator()(vm_state* state)
+    {
+        state->registers[15] = 0xDEAD;
+    }
+};
+
+template<>
+struct instr_name<exit_ins>
+{
+    static constexpr auto value() { return "exit"; }
+};

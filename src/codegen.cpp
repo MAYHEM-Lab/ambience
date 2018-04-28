@@ -8,9 +8,10 @@
 using namespace tvm::as;
 struct codegen_visitor
 {
-    codegen_visitor(const tvm::isa_description& d) : m_descr{d} {}
+    codegen_visitor(const tvm::isa_description& d, std::ostream& os) : m_descr{d}, m_os{os} {}
 protected:
     const tvm::isa_description& m_descr;
+    std::ostream& m_os;
 };
 
 bool type_check(const tvm::instr_data& id, const instruction& ins)
@@ -104,14 +105,16 @@ struct entity_visitor : codegen_visitor
         for (int i = i_descr->operand_count() - 1; i >= 0; --i)
         {
             uint32_t val = mpark::visit(operand_visitor{}, ops[i]);
-            std::cout << "put " << int(operands[i].bits) << " bits of " << val << " at " << offsets[i] << '\n';
             result = accum(result, val, offsets[i], operands[i].bits);
             end = offsets[i] + operands[i].bits;
         }
-        std::cout << "put " << 7 << " bits of " << int(i_descr->get_opcode()) << " at " << end << '\n';
         result = accum(result, i_descr->get_opcode(), end, 7);
         result <<= 32 - (end + 7);
-        std::cout << std::hex << result << std::dec << '\n';
+        auto ptr = reinterpret_cast<const char*>(&result);
+        for (int i = 0; i < i_descr->get_size(); ++i)
+        {
+            m_os.write(ptr + 3 - i, 1);
+        }
     }
 
     template <class T>
@@ -123,11 +126,13 @@ namespace tvm::as
     codegen::codegen(program p, isa_description d) :
         m_prog(std::move(p)), m_descr(std::move(d)) { }
 
-    void codegen::generate()
+    void codegen::generate(std::ostream& out)
     {
         for (auto& e : m_prog)
         {
-            mpark::visit(entity_visitor{m_descr}, e);
+            mpark::visit(entity_visitor{m_descr, out}, e);
         }
+        uint32_t zeros = 0;
+        out.write(reinterpret_cast<const char*>(&zeros), 4);
     }
 }

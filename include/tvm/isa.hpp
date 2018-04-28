@@ -6,6 +6,7 @@
 
 #include <tvm/meta.hpp>
 #include <tvm/execution.hpp>
+#include <algorithm>
 
 namespace tvm
 {
@@ -14,7 +15,7 @@ namespace tvm
 
     template<uint8_t... opcodes, class... Ts>
     struct max_opcode<list<ins<opcodes, Ts>...>> {
-        static constexpr auto value = std::max(opcodes...);
+        static constexpr auto value = std::max(std::initializer_list<uint8_t>{opcodes...});
     };
 
     template<class...>

@@ -60,6 +60,12 @@ constexpr uint8_t offset_bits()
 template<class...>
 struct offsets;
 
+template <>
+struct offsets<list<>>
+{
+    using type = std::index_sequence <>;
+};
+
 template <class T>
 struct offsets<list<T>>
 {

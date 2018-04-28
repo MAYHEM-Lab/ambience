@@ -10,7 +10,7 @@
 
 namespace tvm::as
 {
-    class parse_error : std::runtime_error
+    class parse_error : public std::runtime_error
     {
     public:
         parse_error(const std::string& err) : runtime_error(err) {}

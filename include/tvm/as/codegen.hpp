@@ -6,6 +6,7 @@
 
 #include <tvm/as/grammar.hpp>
 #include <tvm/as/isa_description.hpp>
+#include <ostream>
 
 namespace tvm::as
 {
@@ -19,7 +20,7 @@ namespace tvm::as
     public:
         codegen(program, isa_description);
 
-        void generate();
+        void generate(std::ostream&);
 
     private:
         program m_prog;

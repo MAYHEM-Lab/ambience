@@ -33,7 +33,7 @@ namespace tvm::as
             ++m_pos;
             return parse_entity();
         default:
-            throw parse_error("bad");
+            throw parse_error("Unexpected token in file");
         }
     }
 
@@ -119,8 +119,15 @@ namespace tvm::as
         operands res;
         while (true)
         {
-            res.push_back(parse_operand());
             auto next = *m_pos;
+            if (next.type == token_types::new_line ||
+                next.type == token_types::line_comment)
+            {
+                ++m_pos;
+                break;
+            }
+            res.push_back(parse_operand());
+            next = *m_pos;
             if (next.type == token_types::new_line ||
                 next.type == token_types::line_comment)
             {

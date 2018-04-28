@@ -12,7 +12,7 @@
 #include <tvm/as/isa_description.hpp>
 #include <tvm/as/codegen.hpp>
 
-using ISA = list <ins<0x01, add>, ins<0x02, movi>>;
+using ISA = list <ins<0x01, add>, ins<0x02, movi>, ins<0x03, exit_ins>>;
 using isa_t = isa_map<ISA>;
 static constexpr isa_t isa{};
 
@@ -34,10 +34,10 @@ void print_instr(tvm::instr_data& inst)
 
 int main()
 {
-    for (auto& [name, id] : isa_descr)
+    /*for (auto& [name, id] : isa_descr)
     {
         print_instr(*id);
-    }
+    }*/
 
     std::ifstream prog("../bc/add.tcs");
     tvm::as::scanner s{prog};
@@ -47,10 +47,11 @@ int main()
 
     // TODO: where do commas go?
     auto parsed = p.parse_program();
-    std::cout << parsed.size() << '\n';
+    //std::cout << parsed.size() << '\n';
 
+    std::ofstream res("a.out", std::ios::binary);
     tvm::as::codegen dg{parsed, isa_descr};
-    dg.generate();
+    dg.generate(res);
 
     /*for (auto& elem : parsed)
     {

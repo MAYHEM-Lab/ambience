@@ -11,8 +11,10 @@
 #include <tvm/isa.hpp>
 
 #include <unordered_map>
+#include <fstream>
+#include <vector>
 
-using ISA = list <ins<0x01, add>, ins<0x02, movi>>;
+using ISA = list <ins<0x01, add>, ins<0x02, movi>, ins<0x03, exit_ins>>;
 
 constexpr tvm::executor get_executor(opcode_t c)
 {
@@ -40,20 +42,25 @@ constexpr uint16_t exec(const Instrs& prog)
     auto* pos = prog;
     vm_state state{};
 
-    pos += exec_one(&state, load(pos));
-    pos += exec_one(&state, load(pos));
-    pos += exec_one(&state, load(pos));
+    while (state.registers[15] != 0xDEAD)
+    {
+        pos += exec_one(&state, load(pos));
+    }
     return state.registers[0];
 }
 
 int main() {
-    constexpr uint8_t prog[12] = {
-            0x4, 0x00, 0x00, 0x40, // mov %r0, 2
-            0x4, 0x20, 0x00, 0x80, // mov %r1, 4
-            0x2, 0x02, 0x00, 0x00 // add %r0, %r1
+    std::ifstream in("a.out", std::ios::binary);
+    std::vector<uint8_t> contents((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+
+    constexpr uint8_t prog[14] = {
+            0x04, 0x00, 0x00, 0x40, // mov %r0, 2
+            0x04, 0x20, 0x00, 0x80, // mov %r1, 4
+            0x02, 0x02,             // add %r0, %r1
+            0x06, 0x00, 0x00, 0x00  // exit
     };
 
-    constexpr auto res = exec(prog);
+    auto res = exec(contents.data());
     std::cout << res << '\n';
 
     return 0;
