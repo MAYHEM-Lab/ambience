@@ -22,7 +22,7 @@ struct instr_name<add>
     static constexpr auto value() { return "add"; }
 };
 
-struct mov
+struct movi
 {
     constexpr void operator()(vm_state* state, reg_ind_t<> r1, operand_t<16> op)
     {
@@ -31,7 +31,7 @@ struct mov
 };
 
 template<>
-struct instr_name<mov>
+struct instr_name<movi>
 {
-    static constexpr auto value() { return "mov"; }
+    static constexpr auto value() { return "movi"; }
 };

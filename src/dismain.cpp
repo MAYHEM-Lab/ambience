@@ -11,7 +11,7 @@
 
 #include <unordered_map>
 
-using ISA = list <ins<0x01, add>, ins<0x02, mov>>;
+using ISA = list <ins<0x01, add>, ins<0x02, movi>>;
 
 std::ostream& operator<<(std::ostream& os, const reg_ind_t<>& a)
 {
@@ -40,7 +40,7 @@ constexpr printer get_printer(opcode_t c)
     switch (c.opcode)
     {
         case 0x01: return print_args<add>();
-        case 0x02: return print_args<mov>();
+        case 0x02: return print_args<movi>();
         default:
             return nullptr;
     }

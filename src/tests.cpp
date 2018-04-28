@@ -18,4 +18,4 @@ static_assert(decode(list<opcode_t>{}, 0xFF) == std::tuple<opcode_t>{ {0x7F} }, 
 static_assert(decode(list<opcode_t, reg_ind_t<>>{}, 0xFF) == std::tuple<opcode_t, reg_ind_t<>>{ {0x0F}, {0x0F} }, "");
 
 static_assert(instruction_len<add>() == 2, "");
-static_assert(instruction_len<mov>() == 4, "");
+static_assert(instruction_len<movi>() == 4, "");

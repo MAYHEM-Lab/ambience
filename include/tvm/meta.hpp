@@ -16,6 +16,28 @@ template <class...> struct tail;
 template <class T, class... Ts> struct tail<list<T, Ts...>> { using type = list<Ts...>; };
 template <class... Ts> using tail_t = typename tail<Ts...>::type;
 
+template <class... Ts>
+constexpr auto len(list<Ts...>)
+{
+    return sizeof...(Ts);
+}
+template <int, class...> struct type_at;
+
+template <class Front, class... Ts>
+struct type_at<0, list<Front, Ts...>>
+{
+    using type = Front;
+};
+
+template <int i, class... Ts>
+struct type_at<i, list<Ts...>>
+{
+    using type = typename type_at <i - 1, tail_t<list<Ts...>>>::type;
+};
+
+template<int i, class... Ts>
+using type_at_t = typename type_at<i, Ts...>::type;
+
 template <class T>
 using clean_t = std::remove_const_t<std::remove_reference_t<T>>;
 
@@ -73,6 +95,15 @@ constexpr auto get_by_fun(const ins<opcode, X>&)
 {
     return opcode;
 }
+
+template <class... Instrs>
+struct isa_map : Instrs...
+{};
+
+template <class... Instrs>
+struct isa_map<list<Instrs...>> : Instrs...
+{};
+
 
 namespace detail {
     template <class F, class AddT, class Tuple, std::size_t... I>

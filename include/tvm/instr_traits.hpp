@@ -30,6 +30,14 @@ constexpr uint8_t instruction_len_bits()
 }
 
 template <class T>
+constexpr int8_t operand_count()
+{
+    using traits = functor_traits<T>;
+    using args = tail_t<typename traits::arg_ts>;
+    return len(args{});
+}
+
+template <class T>
 constexpr T ceil(float num)
 {
     return (static_cast<float>(static_cast<int32_t>(num)) == num)
@@ -90,3 +98,11 @@ template <class> struct instr_name;
 
 template <class Fun>
 constexpr auto&& instr_name_v = instr_name<Fun>::value();
+
+template <class T, int OpInd>
+constexpr auto get_operand_at()
+{
+    using traits = functor_traits<T>;
+    using args = tail_t<typename traits::arg_ts>;
+    return ctype<type_at_t<OpInd + 1, args>>{};
+}

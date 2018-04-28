@@ -8,18 +8,13 @@ namespace tvm::as
 {
     enum class token_types
     {
-        comma, // ,
-        colon, // :
-        question, // ?
-
-        dot, // .
-
-        semicolon, // ;
-
-        plus, // +
-        minus, // -
         slash, // /
         star, // *
+
+        comma, // ,
+        colon, // :
+
+        dot, // .
 
         percent, // %
 

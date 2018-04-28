@@ -13,21 +13,34 @@ namespace tvm::as
     {
         switch (next)
         {
-            case '+': return token_types::plus;
-            case '-': return token_types::minus;
             case '/': return token_types::slash;
             case '*': return token_types::star;
             case '.': return token_types::dot;
             case ',': return token_types::comma;
             case ':': return token_types::colon;
-            case ';': return token_types::semicolon;
             case '\'': return token_types::single_quote;
             case '\"': return token_types::double_quote;
-            case '?' : return token_types::question;
             case '%' : return token_types::percent;
             case std::istream::traits_type::eof(): return token_types::eof;
             default: return token_types::invalid;
         }
+    }
+
+    token_types scanner::try_tokenize(token_types current, char next, std::integral_constant<int, 2>) const
+    {
+        auto next_one = try_tokenize(next);
+        switch(current)
+        {
+        case token_types::slash: {
+            switch (next_one) {
+            case token_types::slash:
+                return token_types::line_comment;
+            case token_types::star:
+                return token_types::block_comment;
+            }
+        }
+        }
+        return token_types::invalid;
     }
 
     bool scanner::is_whitespace(char next) const
@@ -154,6 +167,29 @@ namespace tvm::as
         }
 
         token_types tok_type = try_tokenize(next);
+
+        if (tok_type != token_types::invalid && tok_type != token_types::eof)
+        {
+            ++len;
+            auto peek = get_stream().peek();
+            auto trynext = try_tokenize(tok_type, peek, std::integral_constant<int, 2>{});
+
+            if (trynext != token_types::invalid) {
+                tok_type = trynext;
+                get_stream().seekg(1, std::ios::cur);
+                ++len;
+
+                auto peek = get_stream().peek();
+                trynext = try_tokenize(tok_type, peek, std::integral_constant<int, 3>{});
+
+                if (trynext != token_types::invalid)
+                {
+                    tok_type = trynext;
+                    get_stream().seekg(1, std::ios::cur);
+                    ++len;
+                }
+            }
+        }
 
         if (tok_type == token_types::percent)
         {

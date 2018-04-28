@@ -12,7 +12,7 @@
 
 #include <unordered_map>
 
-using ISA = list <ins<0x01, add>, ins<0x02, mov>>;
+using ISA = list <ins<0x01, add>, ins<0x02, movi>>;
 
 constexpr tvm::executor get_executor(opcode_t c)
 {

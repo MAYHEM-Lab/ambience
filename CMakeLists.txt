@@ -12,7 +12,7 @@ add_library(tvm_disas include/tvm/dis/disassemble.hpp src/stub.cpp)
 target_link_libraries(tvm_disas PUBLIC tvm_core)
 target_compile_features(tvm_disas PUBLIC cxx_std_17)
 
-add_library(tvm_as include/tvm/as/scanner.hpp include/tvm/as/tokens.hpp src/scanner.cpp include/tvm/as/token.hpp)
+add_library(tvm_as include/tvm/as/scanner.hpp include/tvm/as/tokens.hpp src/scanner.cpp include/tvm/as/token.hpp include/tvm/as/parser.hpp src/parser.cpp include/tvm/as/ast_printer.hpp include/tvm/as/isa_description.hpp include/tvm/as/codegen.hpp src/codegen.cpp)
 target_link_libraries(tvm_as PUBLIC tvm_core)
 target_compile_features(tvm_as PUBLIC cxx_std_17)
 
@@ -24,6 +24,6 @@ add_executable(tdis src/dismain.cpp)
 target_link_libraries(tdis PUBLIC tvm_core tvm_disas)
 target_compile_features(tdis PUBLIC cxx_std_17)
 
-add_executable(tas src/tasmain.cpp)
+add_executable(tas src/tasmain.cpp include/tvm/as/grammar.hpp)
 target_link_libraries(tas PUBLIC tvm_core tvm_as)
 target_compile_features(tas PUBLIC cxx_std_17)

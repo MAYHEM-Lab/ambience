@@ -33,7 +33,7 @@ namespace tvm::as
         std::istream& get_stream() { return *m_src; }
 
         token_types try_tokenize(char next) const;
-        token_types try_tokenize(token_types current, char next, std::integral_constant<int, 2>) const { return token_types::invalid; }
+        token_types try_tokenize(token_types current, char next, std::integral_constant<int, 2>) const;
         token_types try_tokenize(token_types current, char next, std::integral_constant<int, 3>) const { return token_types::invalid; }
 
         bool is_whitespace(char) const;
