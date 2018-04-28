@@ -7,6 +7,7 @@
 #include <tvm/traits.hpp>
 #include <type_traits>
 #include <stddef.h>
+#include <array>
 #include <tvm/tvm_types.hpp>
 
 constexpr uint8_t instruction_len_bits(list<>)

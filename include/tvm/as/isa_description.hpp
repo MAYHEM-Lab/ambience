@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <tvm/tvm_types.hpp>
 #include <tvm/instr_traits.hpp>
+#include <array>
 
 namespace tvm {
 

@@ -6,7 +6,12 @@
 
 #include <stdint.h>
 
+struct proc_flags
+{
+};
+
 struct vm_state
 {
     uint16_t registers[16];
+    uint16_t pc;
 };
