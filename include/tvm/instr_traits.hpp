@@ -19,7 +19,6 @@ template <class T, class... Tail>
 constexpr uint8_t instruction_len_bits(list<T, Tail...>)
 {
     return operand_size_v<T> + instruction_len_bits(list<Tail...>{});
-    //return (7 + ... + operand_size_v<T>);
 }
 
 template <class T>
@@ -27,7 +26,7 @@ constexpr uint8_t instruction_len_bits()
 {
     using traits = functor_traits<T>;
     using args = tail_t<typename traits::arg_ts>;
-    return instruction_len_bits(args{}) + operand_size_v<opcode_t>;
+    return instruction_len_bits(args{}) + operand_size_v<opcode_t<7>>;
 }
 
 template <class T>

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <tvm/instr_traits.hpp>
+#include <tuple>
 
 template <class T, size_t Offset>
 constexpr T decode_one(uint32_t instr)
@@ -26,7 +27,8 @@ constexpr auto decode(list<T...>, uint32_t instr)
     return decode_impl<T...>(instr, typename offsets<list<T...>>::type{});
 }
 
-inline constexpr opcode_t get_opcode(uint32_t instr)
+template <uint8_t N = 7>
+inline constexpr opcode_t<N> get_opcode(uint32_t instr)
 {
-    return { instr >> 25U };
+    return { instr >> (32U - N) };
 }

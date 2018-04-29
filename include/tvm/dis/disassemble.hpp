@@ -5,7 +5,7 @@
 
 #include <tvm/vm_state.hpp>
 #include <tvm/instr_traits.hpp>
-#include <tvm/decoding.hpp>
+#include <tvm/exec/decoding.hpp>
 #include <ostream>
 
 using printer = uint8_t(*)(std::ostream&, uint32_t);

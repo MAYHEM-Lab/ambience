@@ -34,18 +34,12 @@ void print_instr(tvm::instr_data& inst)
 
 int main()
 {
-    /*for (auto& [name, id] : isa_descr)
-    {
-        print_instr(*id);
-    }*/
-
     std::ifstream prog("../bc/add.tcs");
     tvm::as::scanner s{prog};
 
     std::ifstream dup("../bc/add.tcs");
     tvm::as::parser p{ dup, s.begin() };
 
-    // TODO: where do commas go?
     auto parsed = p.parse_program();
     //std::cout << parsed.size() << '\n';
 

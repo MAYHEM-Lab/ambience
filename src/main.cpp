@@ -5,18 +5,18 @@
 #include <tvm/tvm_types.hpp>
 #include <tvm/traits.hpp>
 #include <tvm/instr_traits.hpp>
-#include <tvm/decoding.hpp>
-#include <tvm/execution.hpp>
+#include <tvm/exec/decoding.hpp>
+#include <tvm/exec/execution.hpp>
 #include <tvm/instructions.hpp>
-#include <tvm/isa.hpp>
+#include <tvm/exec/isa.hpp>
 
-#include <unordered_map>
 #include <fstream>
 #include <vector>
 
 using ISA = list <ins<0x01, add>, ins<0x02, movi>, ins<0x03, exit_ins>>;
 
-constexpr tvm::executor get_executor(opcode_t c)
+template <uint8_t N>
+constexpr tvm::executor get_executor(opcode_t<N> c)
 {
     constexpr auto lookup = tvm::gen_lookup<ISA>::value();
     return lookup.data[c.opcode];

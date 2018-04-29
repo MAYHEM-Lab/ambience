@@ -133,6 +133,12 @@ namespace tvm {
         {
             return m_instrs.end();
         }
+
+        uint8_t get_opcode_size() const
+        {
+            return 7;
+        }
+
     private:
         instr_data_map m_instrs;
     };

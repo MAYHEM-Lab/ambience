@@ -5,7 +5,7 @@
 #include <tvm/tvm_types.hpp>
 #include <tvm/traits.hpp>
 #include <tvm/instr_traits.hpp>
-#include <tvm/decoding.hpp>
+#include <tvm/exec/decoding.hpp>
 #include <tvm/dis/disassemble.hpp>
 #include <tvm/instructions.hpp>
 
@@ -35,7 +35,8 @@ void print (std::ostream& os, const std::tuple<T...>& _tup)
     print(os, _tup, std::make_index_sequence<sizeof...(T)>());
 }
 
-constexpr printer get_printer(opcode_t c)
+template <uint8_t N>
+constexpr printer get_printer(opcode_t<N> c)
 {
     switch (c.opcode)
     {
@@ -48,7 +49,7 @@ constexpr printer get_printer(opcode_t c)
 
 uint8_t disas_one(std::ostream& os, uint32_t instr)
 {
-    return get_printer(get_opcode(instr))(os, instr);
+    return get_printer(get_opcode<7>(instr))(os, instr);
 }
 
 template <class Instrs>

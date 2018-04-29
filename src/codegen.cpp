@@ -108,8 +108,8 @@ struct entity_visitor : codegen_visitor
             result = accum(result, val, offsets[i], operands[i].bits);
             end = offsets[i] + operands[i].bits;
         }
-        result = accum(result, i_descr->get_opcode(), end, 7);
-        result <<= 32 - (end + 7);
+        result = accum(result, i_descr->get_opcode(), end, m_descr.get_opcode_size());
+        result <<= 32 - (end + m_descr.get_opcode_size());
         auto ptr = reinterpret_cast<const char*>(&result);
         for (int i = 0; i < i_descr->get_size(); ++i)
         {
