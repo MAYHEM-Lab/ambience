@@ -3,7 +3,7 @@ project(tvm)
 
 add_library(tvm_core include/tvm/meta.hpp include/tvm/tvm_types.hpp include/tvm/vm_state.hpp
         include/tvm/operand_traits.hpp src/tests.cpp include/tvm/instr_traits.hpp
-        include/tvm/exec/decoding.hpp include/tvm/exec/execution.hpp include/tvm/exec/isa.hpp include/tvm/vm_traits.hpp)
+        include/tvm/exec/decoding.hpp include/tvm/exec/execution.hpp include/tvm/exec/isa.hpp include/tvm/vm_traits.hpp include/tvm/util/array.hpp)
 target_include_directories(tvm_core PUBLIC "include")
 target_compile_features(tvm_core PUBLIC cxx_std_14)
 target_compile_options(tvm_core PUBLIC "-Wno-c++11-narrowing")
@@ -12,18 +12,18 @@ add_library(tvm_disas include/tvm/dis/disassemble.hpp src/stub.cpp)
 target_link_libraries(tvm_disas PUBLIC tvm_core)
 target_compile_features(tvm_disas PUBLIC cxx_std_17)
 
-add_library(tvm_as include/tvm/as/scanner.hpp include/tvm/as/tokens.hpp src/scanner.cpp include/tvm/as/token.hpp include/tvm/as/parser.hpp src/parser.cpp include/tvm/as/ast_printer.hpp include/tvm/as/isa_description.hpp include/tvm/as/codegen.hpp src/codegen.cpp)
+add_library(tvm_as include/tvm/as/scanner.hpp include/tvm/as/tokens.hpp src/as/scanner.cpp include/tvm/as/token.hpp include/tvm/as/parser.hpp src/as/parser.cpp include/tvm/as/ast_printer.hpp include/tvm/as/isa_description.hpp include/tvm/as/codegen.hpp src/as/codegen.cpp)
 target_link_libraries(tvm_as PUBLIC tvm_core)
 target_compile_features(tvm_as PUBLIC cxx_std_17)
 
-add_executable(ti src/main.cpp include/tvm/instructions.hpp)
+add_executable(ti src/exec/main.cpp include/tvm/instructions.hpp)
 target_link_libraries(ti PUBLIC tvm_core)
 target_compile_features(ti PUBLIC cxx_std_14)
 
-add_executable(tdis src/dismain.cpp)
+add_executable(tdis src/dis/dismain.cpp)
 target_link_libraries(tdis PUBLIC tvm_core tvm_disas)
 target_compile_features(tdis PUBLIC cxx_std_17)
 
-add_executable(tas src/tasmain.cpp include/tvm/as/grammar.hpp)
+add_executable(tas src/as/tasmain.cpp include/tvm/as/grammar.hpp)
 target_link_libraries(tas PUBLIC tvm_core tvm_as)
 target_compile_features(tas PUBLIC cxx_std_17)

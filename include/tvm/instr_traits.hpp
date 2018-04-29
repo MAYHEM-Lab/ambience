@@ -7,8 +7,8 @@
 #include <tvm/operand_traits.hpp>
 #include <type_traits>
 #include <stddef.h>
-#include <array>
 #include <tvm/tvm_types.hpp>
+#include <tvm/util/array.hpp>
 
 namespace tvm {
     constexpr uint8_t instruction_len_bits(list<>)
@@ -107,8 +107,8 @@ namespace tvm {
     };
 
     template<size_t... offsets>
-    constexpr std::array<size_t, sizeof...(offsets)> to_array(std::index_sequence<offsets...>) {
-        return {offsets...};
+    constexpr array<size_t, sizeof...(offsets)> to_array(std::index_sequence<offsets...>) {
+        return {{offsets...}};
     };
 
     template<class T, int OpInd>

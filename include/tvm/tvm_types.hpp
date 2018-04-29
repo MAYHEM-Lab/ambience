@@ -12,13 +12,13 @@ namespace tvm
     template <uint8_t sz>
     struct opcode_t
     {
-        uint8_t opcode : sz;
+        uint32_t opcode : sz;
     };
 
     template <uint8_t sz = 4>
     struct reg_ind_t
     {
-        uint8_t index : sz;
+        uint32_t index : sz;
     };
 
     template <uint8_t sz>

@@ -18,7 +18,7 @@ using ISA = tvm::list <tvm::ins<0x01, add>, tvm::ins<0x02, movi>, tvm::ins<0x03,
 template <uint8_t N>
 constexpr tvm::executor get_executor(tvm::opcode_t<N> c)
 {
-    constexpr auto lookup = tvm::gen_lookup<ISA>::value();
+    constexpr auto lookup = tvm::generate_decode_lookup<ISA>::value();
     return lookup.data[c.opcode];
 }
 
