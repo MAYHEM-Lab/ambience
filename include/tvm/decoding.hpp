@@ -6,27 +6,30 @@
 
 #include <tvm/instr_traits.hpp>
 
-template <class T, size_t Offset>
-constexpr T decode_one(uint32_t instr)
+namespace tvm
 {
-    using traits = operand_traits<T>;
-    constexpr auto mask = (1U << traits::size) - 1U;
-    return T{ (instr >> Offset) & mask };
-}
+    template <class T, size_t Offset>
+    constexpr T decode_one(uint32_t instr)
+    {
+        using traits = operand_traits<T>;
+        constexpr auto mask = (1U << traits::size) - 1U;
+        return T{ (instr >> Offset) & mask };
+    }
 
-template <class... T, size_t... Is>
-constexpr std::tuple<T...> decode_impl(uint32_t instr, std::index_sequence<Is...>)
-{
-    return { decode_one<T, Is>(instr)... };
-}
+    template <class... T, size_t... Is>
+    constexpr std::tuple<T...> decode_impl(uint32_t instr, std::index_sequence<Is...>)
+    {
+        return { decode_one<T, Is>(instr)... };
+    }
 
-template <class... T>
-constexpr auto decode(list<T...>, uint32_t instr)
-{
-    return decode_impl<T...>(instr, typename offsets<list<T...>>::type{});
-}
+    template <class... T>
+    constexpr auto decode(list<T...>, uint32_t instr)
+    {
+        return decode_impl<T...>(instr, typename offsets<list<T...>>::type{});
+    }
 
-inline constexpr opcode_t get_opcode(uint32_t instr)
-{
-    return { instr >> 25U };
+    inline constexpr opcode_t get_opcode(uint32_t instr)
+    {
+        return { instr >> 25U };
+    }
 }

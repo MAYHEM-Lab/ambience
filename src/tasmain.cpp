@@ -12,8 +12,8 @@
 #include <tvm/as/isa_description.hpp>
 #include <tvm/as/codegen.hpp>
 
-using ISA = list <ins<0x01, add>, ins<0x02, movi>, ins<0x03, exit_ins>>;
-using isa_t = isa_map<ISA>;
+using ISA = tvm::list <tvm::ins<0x01, add>, tvm::ins<0x02, movi>, tvm::ins<0x03, exit_ins>>;
+using isa_t = tvm::isa_map<ISA>;
 static constexpr isa_t isa{};
 
 auto isa_descr = tvm::describe(ISA{});

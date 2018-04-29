@@ -89,7 +89,7 @@ namespace tvm {
 
         int32_t operand_count() const override
         {
-            return ::operand_count<T>();
+            return tvm::operand_count<T>();
         }
 
         std::vector<operand_description> get_operands() const override

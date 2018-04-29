@@ -6,12 +6,15 @@
 
 #include <stdint.h>
 
-struct proc_flags
+namespace tvm
 {
-};
+    struct proc_flags
+    {
+    };
 
-struct vm_state
-{
-    uint16_t registers[16];
-    uint16_t pc;
-};
+    struct vm_state
+    {
+        uint16_t registers[16];
+        uint16_t pc;
+    };
+}

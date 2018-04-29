@@ -7,7 +7,10 @@
 #include <stdint.h>
 #include <tvm/meta.hpp>
 
-template <class> struct operand_traits;
+namespace tvm
+{
+    template <class> struct operand_traits;
 
-template <class T>
-constexpr uint8_t operand_size_v = operand_traits<T>::size;
+    template <class T>
+    constexpr uint8_t operand_size_v = operand_traits<T>::size;
+}

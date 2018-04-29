@@ -14,17 +14,17 @@
 #include <fstream>
 #include <vector>
 
-using ISA = list <ins<0x01, add>, ins<0x02, movi>, ins<0x03, exit_ins>>;
+using ISA = tvm::list <tvm::ins<0x01, add>, tvm::ins<0x02, movi>, tvm::ins<0x03, exit_ins>>;
 
-constexpr tvm::executor get_executor(opcode_t c)
+constexpr tvm::executor get_executor(tvm::opcode_t c)
 {
     constexpr auto lookup = tvm::gen_lookup<ISA>::value();
     return lookup.data[c.opcode];
 }
 
-constexpr uint8_t exec_one(vm_state *state, uint32_t instr)
+constexpr uint8_t exec_one(tvm::vm_state *state, uint32_t instr)
 {
-    return get_executor(get_opcode(instr))(state, instr);
+    return get_executor(tvm::get_opcode(instr))(state, instr);
 }
 
 struct ptr_fetcher
@@ -36,7 +36,7 @@ struct ptr_fetcher
 struct executor
 {
     ptr_fetcher m_fetcher;
-    vm_state m_state;
+    tvm::vm_state m_state;
 
     constexpr executor(ptr_fetcher fetcher)
             : m_fetcher(std::move(fetcher)), m_state{}
