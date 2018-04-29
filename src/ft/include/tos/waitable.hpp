@@ -1,8 +1,8 @@
 #pragma once
 
-#include "thread_info.hpp"
-#include "tos/scheduler.hpp"
-#include <tos/arch.hpp>
+#include <tos/thread_info.hpp>
+#include <tos/scheduler.hpp>
+#include <tos/interrupt.hpp>
 
 namespace tos {
     struct waitable

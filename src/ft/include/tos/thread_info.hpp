@@ -1,5 +1,6 @@
 #pragma once
-#include "intrusive_list.hpp"
+
+#include <tos/intrusive_list.hpp>
 #include <setjmp.h>
 
 namespace tos

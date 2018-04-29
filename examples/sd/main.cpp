@@ -4,7 +4,7 @@
 
 #include <drivers/arch/avr/spi.hpp>
 #include <drivers/arch/avr/usart.hpp>
-#include <tos/ft.hpp>
+#include <ft/include/tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/arch.hpp>
 #include <drivers/common/spi_sd.hpp>

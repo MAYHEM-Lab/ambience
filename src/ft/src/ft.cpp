@@ -1,12 +1,11 @@
 #include <setjmp.h>
 #include <stdlib.h>
-#include "tos/ft.hpp"
-#include "tos/thread_info.hpp"
-#include "tos/scheduler.hpp"
+#include <tos/ft.hpp>
+#include <tos/thread_info.hpp>
+#include <tos/scheduler.hpp>
 
-#include <tos/print.hpp>
 #include <tos_arch.hpp>
-#include <tos/arch.hpp>
+#include <tos/interrupt.hpp>
 
 namespace tos {
     namespace {

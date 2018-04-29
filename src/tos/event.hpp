@@ -1,7 +1,6 @@
 #pragma once
 
-#include "waitable.hpp"
-#include "atomic.hpp"
+#include <tos/waitable.hpp>
 
 namespace tos {
     class event

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "waitable.hpp"
-#include "atomic.hpp"
 
 namespace tos {
     class semaphore

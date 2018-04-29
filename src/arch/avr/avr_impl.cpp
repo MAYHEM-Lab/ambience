@@ -6,11 +6,6 @@
 #include <avr/wdt.h>
 #include <util/atomic.h>
 
-#include "tos/atomic.hpp"
-#include "tos/ft.hpp"
-#include "tos/thread_info.hpp"
-#include <tos/char_stream.hpp>
-
 #include <tos_arch.hpp>
 #include <tos/arch.hpp>
 
@@ -83,20 +78,6 @@ void tos_disable_interrupts()
 {
     cli();
 }
-}
-
-namespace tos
-{
-    template <class T>
-    void atomic<T>::add(const T& t)
-    {
-        ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-        {
-            m_t += t;
-        }
-    }
-
-    template class atomic<int8_t>;
 }
 
 void* operator new(size_t sz)

@@ -11,8 +11,8 @@
 
 #include <util/atomic.h>
 #include "tos/atomic.hpp"
-#include "tos/ft.hpp"
-#include "tos/thread_info.hpp"
+#include "ft/include/tos/ft.hpp"
+#include "ft/include/tos/thread_info.hpp"
 #include <tos/char_stream.hpp>
 
 #include <tos_arch.hpp>

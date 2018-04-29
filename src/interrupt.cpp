@@ -1,4 +1,4 @@
-#include <tos/arch.hpp>
+#include <tos/interrupt.hpp>
 
 namespace tos
 {

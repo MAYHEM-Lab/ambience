@@ -2,7 +2,7 @@
 // Created by fatih on 3/20/18.
 //
 
-#include <tos/ft.hpp>
+#include <ft/include/tos/ft.hpp>
 #include <tos/semaphore.hpp>
 #include <tos_arch.hpp>
 #include <tos/print.hpp>

@@ -4,7 +4,7 @@
 
 #include <drivers/common/spi.hpp>
 #include <usart.hpp>
-#include <tos/ft.hpp>
+#include <ft/include/tos/ft.hpp>
 #include <tos/print.hpp>
 #include <avr/interrupt.h>
 

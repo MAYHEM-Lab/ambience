@@ -1,13 +1,10 @@
 //
 // Created by fatih on 3/20/18.
 //
-#include <tos/char_stream.hpp>
 
-namespace tos
+#pragma once
+
+extern "C"
 {
-    namespace arch
-    {
-        char_ostream* debug_stream();
-    }
+    void tos_set_stack_ptr(void*);
 }
-
