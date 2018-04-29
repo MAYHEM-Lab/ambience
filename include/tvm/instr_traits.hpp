@@ -11,84 +11,94 @@
 #include <tvm/tvm_types.hpp>
 
 namespace tvm {
-    constexpr uint8_t instruction_len_bits(list<>) {
+    constexpr uint8_t instruction_len_bits(list<>)
+    {
         return 0;
     }
 
-    template<class T, class... Tail>
-    constexpr uint8_t instruction_len_bits(list<T, Tail...>) {
-        return operand_size_v < T > +instruction_len_bits(list < Tail... > {});
-        //return (7 + ... + operand_size_v<T>);
+    template <class T, class... Tail>
+    constexpr uint8_t instruction_len_bits(list<T, Tail...>)
+    {
+        return operand_size_v<T> + instruction_len_bits(list<Tail...>{});
     }
 
-    template<class T>
-    constexpr uint8_t instruction_len_bits() {
+    template <class T>
+    constexpr uint8_t instruction_len_bits()
+    {
         using traits = functor_traits<T>;
         using args = tail_t<typename traits::arg_ts>;
-        return instruction_len_bits(args{}) + operand_size_v<opcode_t>;
+        return instruction_len_bits(args{}) + operand_size_v<opcode_t<7>>;
     }
 
-    template<class T>
-    constexpr int8_t operand_count() {
+    template <class T>
+    constexpr int8_t operand_count()
+    {
         using traits = functor_traits<T>;
         using args = tail_t<typename traits::arg_ts>;
         return len(args{});
     }
 
-    template<class T>
-    constexpr T ceil(float num) {
+    template <class T>
+    constexpr T ceil(float num)
+    {
         return (static_cast<float>(static_cast<int32_t>(num)) == num)
                ? static_cast<int32_t>(num)
                : static_cast<int32_t>(num) + ((num > 0) ? 1 : 0);
     }
 
-    template<class T>
-    constexpr uint8_t instruction_len() {
+    template <class T>
+    constexpr uint8_t instruction_len()
+    {
         return ceil<uint8_t>(instruction_len_bits<T>() / 8.f);
     }
 
-    template<class T>
-    constexpr uint8_t offset_bits() {
+    template <class T>
+    constexpr uint8_t offset_bits()
+    {
         return instruction_len<T>() * 8 - instruction_len_bits<T>();
     }
 
     template<class...>
     struct offsets;
 
-    template<>
-    struct offsets<list<>> {
-        using type = std::index_sequence<>;
+    template <>
+    struct offsets<list<>>
+    {
+        using type = std::index_sequence <>;
     };
 
-    template<class T>
-    struct offsets<list<T>> {
-        using type = std::index_sequence<0>;
+    template <class T>
+    struct offsets<list<T>>
+    {
+        using type = std::index_sequence <0>;
     };
 
-    template<class>
+    template <class>
     struct last_t;
 
-    template<size_t Last, size_t... rest>
-    struct last_t<std::index_sequence<Last, rest...>> {
+    template <size_t Last, size_t... rest>
+    struct last_t<std::index_sequence<Last, rest...>>
+    {
         static constexpr auto val = Last;
     };
 
-    template<class T>
+    template <class T>
     constexpr auto last_v = last_t<T>::val;
 
-    template<size_t, class>
+    template <size_t, class>
     struct merge;
 
-    template<size_t top, size_t... rem>
-    struct merge<top, std::index_sequence<rem...>> {
+    template <size_t top, size_t... rem>
+    struct merge<top, std::index_sequence<rem...>>
+    {
         using type = std::index_sequence<top, rem...>;
     };
 
-    template<class... T, class U, class K>
-    struct offsets<list < U, K, T...>>
+    template <class... T, class U, class K>
+    struct offsets<list<U, K, T...>>
     {
-    using remain = typename offsets<list < K, T...>>::type;
-    using type = typename merge<last_v<remain> + operand_traits<K>::size, remain>::type;
+        using remain = typename offsets<list<K, T...>>::type;
+        using type = typename merge<last_v<remain> + operand_traits<K>::size, remain>::type;
     };
 
     template<size_t... offsets, int index>

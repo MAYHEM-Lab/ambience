@@ -9,9 +9,11 @@
 
 namespace tvm
 {
+
+    template <uint8_t sz = 7>
     struct opcode_t
     {
-        uint8_t opcode : 7;
+        uint8_t opcode : sz;
     };
 
     template <uint8_t sz = 4>
@@ -38,18 +40,20 @@ namespace tvm
         static constexpr auto size = N;
     };
 
-    template <>
-    struct operand_traits<opcode_t>
+    template <uint8_t N>
+    struct operand_traits<opcode_t<N>>
     {
-        static constexpr auto size = 7;
+        static constexpr auto size = N;
     };
 
-    inline constexpr bool operator==(const opcode_t& a, const opcode_t& b)
+    template <uint8_t N>
+    inline constexpr bool operator==(const opcode_t<N>& a, const opcode_t<N>& b)
     {
         return a.opcode == b.opcode;
     }
 
-    inline constexpr bool operator==(const reg_ind_t<>& a, const reg_ind_t<>& b)
+    template <uint8_t N>
+    inline constexpr bool operator==(const reg_ind_t<N>& a, const reg_ind_t<N>& b)
     {
         return a.index == b.index;
     }
