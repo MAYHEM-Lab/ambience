@@ -3,7 +3,7 @@
 #include <tvm/meta.hpp>
 #include <tvm/vm_state.hpp>
 #include <tvm/tvm_types.hpp>
-#include <tvm/traits.hpp>
+#include <tvm/operand_traits.hpp>
 #include <tvm/instr_traits.hpp>
 #include <tvm/exec/decoding.hpp>
 #include <tvm/exec/execution.hpp>

@@ -3,7 +3,7 @@
 #include <tvm/meta.hpp>
 #include <tvm/vm_state.hpp>
 #include <tvm/tvm_types.hpp>
-#include <tvm/traits.hpp>
+#include <tvm/operand_traits.hpp>
 #include <tvm/instr_traits.hpp>
 #include <tvm/exec/decoding.hpp>
 #include <tvm/dis/disassemble.hpp>
@@ -52,7 +52,7 @@ constexpr tvm::dis::printer get_printer(tvm::opcode_t<N>  c)
 
 uint8_t disas_one(std::ostream& os, uint32_t instr)
 {
-    return get_printer(tvm::get_opcode<7>(instr))(os, instr);
+    return get_printer(tvm::get_opcode<tvm::opcode_len_v<>>(instr))(os, instr);
 }
 
 template <class Instrs>

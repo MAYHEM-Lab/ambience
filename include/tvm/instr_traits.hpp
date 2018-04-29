@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <tvm/traits.hpp>
+#include <tvm/operand_traits.hpp>
 #include <type_traits>
 #include <stddef.h>
 #include <array>
@@ -22,12 +22,12 @@ namespace tvm {
         return operand_size_v<T> + instruction_len_bits(list<Tail...>{});
     }
 
-    template <class T>
+    template <class T, uint8_t N>
     constexpr uint8_t instruction_len_bits()
     {
         using traits = functor_traits<T>;
         using args = tail_t<typename traits::arg_ts>;
-        return instruction_len_bits(args{}) + operand_size_v<opcode_t<7>>;
+        return instruction_len_bits(args{}) + operand_size_v<opcode_t<N>>;
     }
 
     template <class T>
@@ -46,16 +46,16 @@ namespace tvm {
                : static_cast<int32_t>(num) + ((num > 0) ? 1 : 0);
     }
 
-    template <class T>
+    template <class T, uint8_t N>
     constexpr uint8_t instruction_len()
     {
-        return ceil<uint8_t>(instruction_len_bits<T>() / 8.f);
+        return ceil<uint8_t>(instruction_len_bits<T, N>() / 8.f);
     }
 
-    template <class T>
+    template <class T, uint8_t N>
     constexpr uint8_t offset_bits()
     {
-        return instruction_len<T>() * 8 - instruction_len_bits<T>();
+        return instruction_len<T, N>() * 8 - instruction_len_bits<T, N>();
     }
 
     template<class...>
@@ -129,7 +129,7 @@ namespace tvm {
     constexpr auto get_operand_at() {
         using traits = functor_traits<T>;
         using args = tail_t<typename traits::arg_ts>;
-        return ctype < type_at_t < OpInd + 1, args >> {};
+        return identity < type_at_t < OpInd + 1, args >> {};
     }
 
 }

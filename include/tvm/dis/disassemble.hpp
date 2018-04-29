@@ -7,6 +7,7 @@
 #include <tvm/instr_traits.hpp>
 #include <tvm/exec/decoding.hpp>
 #include <ostream>
+#include <tvm/vm_traits.hpp>
 
 //TODO: remove this
 template<class... T>
@@ -24,8 +25,8 @@ namespace tvm::dis
         using args_t = tail_t<typename traits::arg_ts>;
 
         return [](std::ostream& os, uint32_t instr){
-            auto len = instruction_len<T>();
-            auto shift = (offset_bits<T>() + (4 - len) * 8);
+            auto len = instruction_len<T, opcode_len_v<>>();
+            auto shift = (offset_bits<T, opcode_len_v<>>() + (4 - len) * 8);
             auto args = decode(args_t{}, instr >> shift);
             os << instr_name_v<fun> << " ";
             print (os, args);

@@ -5,12 +5,11 @@
 #pragma once
 
 #include <stdint.h>
-#include <tvm/traits.hpp>
+#include <tvm/operand_traits.hpp>
 
 namespace tvm
 {
-
-    template <uint8_t sz = 7>
+    template <uint8_t sz>
     struct opcode_t
     {
         uint8_t opcode : sz;

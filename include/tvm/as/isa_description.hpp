@@ -8,6 +8,7 @@
 #include <tvm/tvm_types.hpp>
 #include <tvm/instr_traits.hpp>
 #include <array>
+#include <tvm/vm_traits.hpp>
 
 namespace tvm {
 
@@ -26,7 +27,7 @@ namespace tvm {
     };
 
     template<uint8_t N>
-    constexpr operand_description get_descr(ctype<reg_ind_t<N>>)
+    constexpr operand_description get_descr(identity<reg_ind_t<N>>)
     {
         operand_description res;
         res.bits = N;
@@ -35,7 +36,7 @@ namespace tvm {
     }
 
     template<uint8_t N>
-    constexpr operand_description get_descr(ctype<operand_t<N>>)
+    constexpr operand_description get_descr(identity<operand_t<N>>)
     {
         operand_description res;
         res.bits = N;
@@ -46,7 +47,7 @@ namespace tvm {
     template<class... Ts>
     std::vector<operand_description> get_descrs(list<Ts...>)
     {
-        return {get_descr(ctype<Ts>{})...};
+        return {get_descr(identity<Ts>{})...};
     }
 
     class instr_data
@@ -84,7 +85,7 @@ namespace tvm {
         }
 
         uint8_t get_size() const override {
-            return instruction_len<T>();
+            return instruction_len<T, opcode_len_v<>>();
         }
 
         int32_t operand_count() const override
@@ -136,7 +137,7 @@ namespace tvm {
 
         uint8_t get_opcode_size() const
         {
-            return 7;
+            return opcode_len_v<>;
         }
 
     private:

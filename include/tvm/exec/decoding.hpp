@@ -22,11 +22,10 @@ namespace tvm {
 
     template<class... T>
     constexpr auto decode(list<T...>, uint32_t instr) {
-        return decode_impl<T...>(instr, typename offsets<list < T...>>
-        ::type{});
+        return decode_impl<T...>(instr, typename offsets<list < T...>>::type{});
     }
 
-    template<uint8_t N = 7>
+    template<uint8_t N>
     inline constexpr opcode_t <N> get_opcode(uint32_t instr) {
         return {instr >> (32U - N)};
     }
