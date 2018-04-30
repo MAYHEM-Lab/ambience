@@ -40,4 +40,4 @@ jobs:
       - run:
           working_directory: build/
           name: Build Project
-          command: ninja
+          command: ninja sdcard
