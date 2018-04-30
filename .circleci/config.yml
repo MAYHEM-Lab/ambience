@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  x86:
     docker:
       - image: ubuntu:bionic
     steps:
@@ -16,6 +16,27 @@ jobs:
             CXX: g++-7
           name: Generate Project
           command: mkdir build && cd build && cmake -G Ninja -DTOS_X86=ON ..
+      - run:
+          working_directory: build/
+          name: Build Project
+          command: ninja
+  avr:
+    docker:
+      - image: ubuntu:bionic
+    steps:
+      - checkout
+      - run:
+          name: Update apt
+          command: apt-get update
+      - run:
+          name: Install Toolchain
+          command: apt-get install -y gcc-avr cmake ninja-build
+      - run:
+          environment:
+            CXX: avr-g++
+            CC: avr-gcc
+          name: Generate Project
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_AVR=ON ..
       - run:
           working_directory: build/
           name: Build Project
