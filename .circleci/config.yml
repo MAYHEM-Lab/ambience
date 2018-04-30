@@ -10,7 +10,10 @@ jobs:
           command: apt-get update
       - run:
           name: Install Toolchain
-          command: apt-get install g++-7 cmake ninja
+          command: apt-get install g++-7 cmake ninja-build
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake ..
+          command: mkdir build && cd build && cmake -DTOS_X86=ON ..
+      - run:
+          name: Build Project
+          command: ninja
