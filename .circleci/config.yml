@@ -36,7 +36,7 @@ jobs:
             CXX: avr-g++
             CC: avr-gcc
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_AVR=ON ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_AVR=ON .. && cmake ..
       - run:
           working_directory: build/
           name: Build Project
