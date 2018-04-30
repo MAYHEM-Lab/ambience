@@ -2,15 +2,12 @@ version: 2
 jobs:
   build:
     docker:
-      - image: debian:stretch
+      - image: ubuntu:bionic
     steps:
       - checkout
       - run:
-          name: List
-          command: ls
+          name: Install Toolchain
+          command: apt-get install g++-7 cmake ninja
       - run:
-          name: Greeting
-          command: echo Hello, world.
-      - run:
-          name: Print the Current Time
-          command: date
+          name: Generate Project
+          command: mkdir build && cd build && cmake ..
