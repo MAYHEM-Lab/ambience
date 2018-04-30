@@ -9,6 +9,7 @@
 #include <tos/devices.hpp>
 #include <tos/char_stream.hpp>
 #include <drivers/common/usart.hpp>
+#include <drivers/common/tty.hpp>
 
 namespace tos {
 
@@ -53,4 +54,9 @@ namespace tos {
 
         void putc(char c);
     };
+
+    inline auto open_impl(devs::tty_t<0>)
+    {
+        return new usart{};
+    }
 }

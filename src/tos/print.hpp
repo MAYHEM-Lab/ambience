@@ -92,7 +92,7 @@ namespace tos
     void println(CharOstreamT& ostr, T&&... t)
     {
         print(ostr, forward<T>(t)...);
-        print(ostr, '\n');
+        print(ostr, "\n");
     }
 }
 

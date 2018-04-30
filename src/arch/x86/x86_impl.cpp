@@ -26,4 +26,14 @@ extern "C"
     {
         exit(1);
     }
+
+    void tos_enable_interrupts()
+    {
+
+    }
+
+    void tos_disable_interrupts()
+    {
+
+    }
 }

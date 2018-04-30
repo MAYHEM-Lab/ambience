@@ -1,6 +1,5 @@
 project(tos)
 
-
 set(TOS_CORE_HEADERS
 	tos/devices.hpp
 	tos/promise.hpp 
@@ -9,7 +8,6 @@ set(TOS_CORE_HEADERS
 	tos/utility.hpp 
 	tos/arch.hpp
 	tos/type_traits.hpp tos/event.hpp)
-
 
 add_library(tos_print tos/print.hpp print.cpp)
 target_compile_options(tos_print PUBLIC -std=gnu++14)

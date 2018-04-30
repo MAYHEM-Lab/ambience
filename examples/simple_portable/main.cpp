@@ -2,28 +2,33 @@
 // Created by fatih on 3/20/18.
 //
 
-#include <ft/include/tos/ft.hpp>
+#include <tos/ft.hpp>
 #include <tos/semaphore.hpp>
-#include <tos_arch.hpp>
 #include <tos/print.hpp>
-#include <tos/devices.hpp>
+
+#include <drivers/common/tty.hpp>
+
+//#include <drivers/arch/avr/usart.hpp>
+#include <drivers/arch/x86/stdio.hpp>
 
 tos::semaphore sem(0);
 
 void hello_task()
 {
+    auto tty = tos::open(tos::devs::tty<0>);
     while (true) {
         sem.down();
-        //println(*tos::arch::debug_stream(), tos::this_thread::get_id(), ": hello");
+        tos::println(*tty, tos::this_thread::get_id(), ": hello");
     }
 }
 
 void yo_task()
 {
+    auto tty = tos::open(tos::devs::tty<0>);
     for (int i = 0; i < 100; ++i)
     {
         sem.up();
-        //println(*tos::arch::debug_stream(), tos::this_thread::get_id(), ": yo");
+        tos::println(*tty, tos::this_thread::get_id(), ": yo");
         tos::this_thread::yield();
     }
 }
@@ -36,7 +41,5 @@ int main()
     while (true)
     {
         tos::schedule();
-        //using namespace std::chrono_literals;
-        //std::this_thread::sleep_for(500ms);
     }
 }

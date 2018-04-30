@@ -4,6 +4,8 @@ if (TOS_AVR)
     add_subdirectory(arch/avr)
 elseif(TOS_ESP)
     add_subdirectory(arch/lx106)
+elseif(TOS_X86)
+    add_subdirectory(arch/x86)
 endif()
 
 add_library(tos_spi_sd src/spi_sd.cpp common/spi_sd.hpp)
@@ -19,3 +21,6 @@ target_include_directories(tos_usart PUBLIC .)
 
 add_library(tos_gpio common/gpio.hpp src/stub.cpp)
 target_include_directories(tos_gpio PUBLIC .)
+
+add_library(tos_tty common/tty.hpp src/stub.cpp)
+target_include_directories(tos_tty PUBLIC .)
