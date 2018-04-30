@@ -3,24 +3,26 @@
 #include <tvm/meta.hpp>
 #include <tvm/vm_state.hpp>
 #include <tvm/tvm_types.hpp>
-#include <tvm/traits.hpp>
+#include <tvm/operand_traits.hpp>
 #include <tvm/instr_traits.hpp>
 #include <tvm/exec/decoding.hpp>
 #include <tvm/dis/disassemble.hpp>
 #include <tvm/instructions.hpp>
 
 #include <unordered_map>
+#include <vector>
+#include <fstream>
 
-using ISA = list <ins<0x01, add>, ins<0x02, movi>>;
+using ISA = tvm::list <tvm::ins<0x01, add>, tvm::ins<0x02, movi>, tvm::ins<0x03, exit_ins>>;
 
-std::ostream& operator<<(std::ostream& os, const reg_ind_t<>& a)
+std::ostream& operator<<(std::ostream& os, const tvm::reg_ind_t<>& a)
 {
     return os << "%r" << (int)a.index;
 }
 
-std::ostream& operator<<(std::ostream& os, const operand_t<16>& a)
+std::ostream& operator<<(std::ostream& os, const tvm::operand_t<16>& a)
 {
-    return os << '$' << a.operand;
+    return os << a.operand;
 }
 
 template<class TupType, size_t... I>
@@ -36,12 +38,13 @@ void print (std::ostream& os, const std::tuple<T...>& _tup)
 }
 
 template <uint8_t N>
-constexpr printer get_printer(opcode_t<N> c)
+constexpr tvm::dis::printer get_printer(tvm::opcode_t<N>  c)
 {
     switch (c.opcode)
     {
-        case 0x01: return print_args<add>();
-        case 0x02: return print_args<movi>();
+        case 0x01: return tvm::dis::print_args<add>();
+        case 0x02: return tvm::dis::print_args<movi>();
+        case 0x03: return tvm::dis::print_args<exit_ins>();
         default:
             return nullptr;
     }
@@ -49,14 +52,14 @@ constexpr printer get_printer(opcode_t<N> c)
 
 uint8_t disas_one(std::ostream& os, uint32_t instr)
 {
-    return get_printer(get_opcode<7>(instr))(os, instr);
+    return get_printer(tvm::get_opcode<tvm::opcode_len_v<>>(instr))(os, instr);
 }
 
 template <class Instrs>
 void disas(const Instrs& prog)
 {
     auto* pos = prog;
-    vm_state state{};
+    tvm::vm_state state{};
 
     auto load = [&pos]{
         auto p = pos;
@@ -77,13 +80,16 @@ void disas(const Instrs& prog)
 }
 
 int main() {
+    std::ifstream in("a.out", std::ios::binary);
+    std::vector<uint8_t> contents((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+
     uint8_t prog[12] = {
             0x4, 0x0, 0x0, 0x40, // mov %r0, 2
             0x4, 0x20, 0x0, 0x80, // mov %r1, 4
             0x2, 0x2, 0x0, 0x0 // add %r0, %r1
     };
 
-    disas(prog);
+    disas(contents.data());
 
     return 0;
 }

@@ -64,7 +64,7 @@ namespace tvm::as
         {
         case token_types::integer_literal:
             ++m_pos;
-            return float_lit{ tok, std::stoll(read_tok(tok)) };
+            return int_lit{ tok, std::stoull(read_tok(tok)) };
         case token_types::float_literal:
             ++m_pos;
             return float_lit{ tok, std::stof(read_tok(tok)) };

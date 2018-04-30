@@ -6,6 +6,7 @@
 
 #include <tvm/meta.hpp>
 #include <tvm/exec/execution.hpp>
+#include <tvm/util/array.hpp>
 #include <algorithm>
 
 namespace tvm
@@ -13,26 +14,25 @@ namespace tvm
     template<class...>
     struct max_opcode;
 
+    /**
+     * This metafunction calculates the maximum opcode from an ISA description list
+     * @tparam list<Instructions...> list of instructions
+     */
     template<uint8_t... opcodes, class... Ts>
     struct max_opcode<list<ins<opcodes, Ts>...>> {
         static constexpr auto value = std::max(std::initializer_list<uint8_t>{opcodes...});
     };
 
     template<class...>
-    struct gen_lookup;
-
-    template<class T, size_t sz>
-    struct array {
-        T data[sz];
-    };
+    struct generate_decode_lookup;
 
     template<uint8_t ... opcodes, class... Ts>
-    struct gen_lookup<list<ins<opcodes, Ts>...>> {
+    struct generate_decode_lookup<list<ins<opcodes, Ts>...>> {
         using ListT = list<ins<opcodes, Ts>...>;
 
         static constexpr auto value() {
-            array<executor, max_opcode<ListT>::value + 1> lookup{};
-            auto _ = std::initializer_list<int>{(assign(lookup, opcodes, decode_execute<Ts>()), 0)...};
+            tvm::array<executor, max_opcode<ListT>::value + 1> lookup{};
+            auto _ = std::initializer_list<int>{(assign(lookup, opcodes, get_executor<Ts>()), 0)...};
             return lookup;
         }
 

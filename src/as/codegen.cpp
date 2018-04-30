@@ -55,8 +55,7 @@ struct operand_visitor
 
     uint32_t operator()(const literal& l)
     {
-        auto res = mpark::visit(literal_visitor{}, l);
-        return res;
+        return mpark::visit(literal_visitor{}, l);
     }
 
     uint32_t operator()(const register_& r)

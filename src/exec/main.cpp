@@ -3,7 +3,7 @@
 #include <tvm/meta.hpp>
 #include <tvm/vm_state.hpp>
 #include <tvm/tvm_types.hpp>
-#include <tvm/traits.hpp>
+#include <tvm/operand_traits.hpp>
 #include <tvm/instr_traits.hpp>
 #include <tvm/exec/decoding.hpp>
 #include <tvm/exec/execution.hpp>
@@ -13,18 +13,19 @@
 #include <fstream>
 #include <vector>
 
-using ISA = list <ins<0x01, add>, ins<0x02, movi>, ins<0x03, exit_ins>>;
+using ISA = tvm::list <tvm::ins<0x01, add>, tvm::ins<0x02, movi>, tvm::ins<0x03, exit_ins>>;
 
 template <uint8_t N>
-constexpr tvm::executor get_executor(opcode_t<N> c)
+constexpr tvm::executor get_executor(tvm::opcode_t<N> c)
 {
-    constexpr auto lookup = tvm::gen_lookup<ISA>::value();
+    constexpr auto lookup = tvm::generate_decode_lookup<ISA>::value();
     return lookup.data[c.opcode];
 }
 
-constexpr uint8_t exec_one(vm_state *state, uint32_t instr)
+template <uint8_t N>
+constexpr uint8_t exec_one(tvm::vm_state *state, uint32_t instr)
 {
-    return get_executor(get_opcode(instr))(state, instr);
+    return get_executor(tvm::get_opcode<N>(instr))(state, instr);
 }
 
 struct ptr_fetcher
@@ -36,7 +37,7 @@ struct ptr_fetcher
 struct executor
 {
     ptr_fetcher m_fetcher;
-    vm_state m_state;
+    tvm::vm_state m_state;
 
     constexpr executor(ptr_fetcher fetcher)
             : m_fetcher(std::move(fetcher)), m_state{}
@@ -59,7 +60,7 @@ constexpr uint32_t ptr_fetcher::fetch(uint16_t pc)
 
 constexpr void executor::exec_one()
 {
-    m_state.pc += ::exec_one(&m_state, m_fetcher.fetch(m_state.pc));
+    m_state.pc += ::exec_one<7>(&m_state, m_fetcher.fetch(m_state.pc));
 }
 
 constexpr void executor::exec()

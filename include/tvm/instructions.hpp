@@ -10,28 +10,28 @@
 
 struct add
 {
-    constexpr void operator()(vm_state* state, reg_ind_t<> r1, reg_ind_t<> r2)
+    constexpr void operator()(tvm::vm_state* state, tvm::reg_ind_t<> r1, tvm::reg_ind_t<> r2)
     {
         state->registers[r1.index] += state->registers[r2.index];
     }
 };
 
 template<>
-struct instr_name<add>
+struct tvm::instr_name<add>
 {
     static constexpr auto value() { return "add"; }
 };
 
 struct movi
 {
-    constexpr void operator()(vm_state* state, reg_ind_t<> r1, operand_t<16> op)
+    constexpr void operator()(tvm::vm_state* state, tvm::reg_ind_t<> r1, tvm::operand_t<16> op)
     {
         state->registers[r1.index] = (uint16_t)op.operand;
     }
 };
 
 template<>
-struct instr_name<movi>
+struct tvm::instr_name<movi>
 {
     static constexpr auto value() { return "movi"; }
 };
@@ -39,14 +39,14 @@ struct instr_name<movi>
 
 struct exit_ins
 {
-    constexpr void operator()(vm_state* state)
+    constexpr void operator()(tvm::vm_state* state)
     {
         state->registers[15] = 0xDEAD;
     }
 };
 
 template<>
-struct instr_name<exit_ins>
+struct tvm::instr_name<exit_ins>
 {
     static constexpr auto value() { return "exit"; }
 };
