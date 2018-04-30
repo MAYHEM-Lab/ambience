@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  x86_build:
     docker:
       - image: ubuntu:bionic
     steps:
@@ -20,7 +20,7 @@ jobs:
           working_directory: build/
           name: Build Project
           command: ninja
-  build:
+  avr_build:
     docker:
       - image: ubuntu:bionic
     steps:
@@ -41,3 +41,9 @@ jobs:
           working_directory: build/
           name: Build Project
           command: ninja sdcard
+workflows:
+  version: 2
+  all_platforms:
+    jobs:
+      - x86_build
+      - avr_build
