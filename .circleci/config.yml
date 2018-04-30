@@ -30,7 +30,7 @@ jobs:
           command: apt-get update
       - run:
           name: Install Toolchain
-          command: apt-get install -y gcc-avr cmake ninja-build
+          command: apt-get install -y gcc-avr cmake ninja-build avr-libc
       - run:
           environment:
             CXX: avr-g++
