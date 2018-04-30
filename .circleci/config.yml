@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  x86:
+  build:
     docker:
       - image: ubuntu:bionic
     steps:
@@ -20,7 +20,7 @@ jobs:
           working_directory: build/
           name: Build Project
           command: ninja
-  avr:
+  build:
     docker:
       - image: ubuntu:bionic
     steps:
