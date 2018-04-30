@@ -12,8 +12,10 @@ jobs:
           name: Install Toolchain
           command: apt-get install -y g++-7 cmake ninja-build
       - run:
+          environment: CXX=g++-7
           name: Generate Project
-          command: mkdir build && cd build && CXX=g++-7 cmake -DTOS_X86=ON ..
+          command: mkdir build && cd build && cmake -DTOS_X86=ON ..
       - run:
+          working_directory: build/
           name: Build Project
           command: ninja
