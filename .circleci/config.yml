@@ -15,7 +15,7 @@ jobs:
           environment:
             CXX: g++-7
           name: Generate Project
-          command: mkdir build && cd build && cmake -DTOS_X86=ON ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_X86=ON ..
       - run:
           working_directory: build/
           name: Build Project
