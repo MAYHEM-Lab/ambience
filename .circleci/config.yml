@@ -6,6 +6,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Update apt
+          command: apt-get update
+      - run:
           name: Install Toolchain
           command: apt-get install g++-7 cmake ninja
       - run:
