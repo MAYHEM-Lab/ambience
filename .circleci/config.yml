@@ -12,6 +12,9 @@ jobs:
           name: Install Toolchain
           command: apt-get install -y g++-7 cmake ninja-build
       - run:
+          name: Set CXX
+          command: export CXX=g++-7
+      - run:
           name: Generate Project
           command: mkdir build && cd build && cmake -DTOS_X86=ON ..
       - run:
