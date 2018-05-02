@@ -77,10 +77,17 @@ namespace avr
 
     static tos::semaphore spi_block{0};
 
+    static uint8_t *buffer_begin, *buffer_end;
     uint8_t spi0::exchange(uint8_t byte) {
-        SPDR = byte;
+        exchange_many(&byte, 1);
+        return byte;
+    }
+
+    void spi0::exchange_many(uint8_t *buffer, uint16_t len) {
+        buffer_begin = buffer;
+        buffer_end = buffer + len;
+        SPDR = *buffer_begin;
         spi_block.down();
-        return SPDR;
     }
 
     void spi0::select_slave(pin_id pin) {
@@ -102,5 +109,11 @@ namespace avr
 }
 
 ISR (SPI_STC_vect) {
-    tos::avr::spi_block.up();
+    *tos::avr::buffer_begin++ = SPDR;
+    if (tos::avr::buffer_begin == tos::avr::buffer_end)
+    {
+        tos::avr::spi_block.up();
+        return;
+    }
+    SPDR = *tos::avr::buffer_begin;
 }

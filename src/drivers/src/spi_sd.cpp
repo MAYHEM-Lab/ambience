@@ -88,11 +88,8 @@ namespace tos
         }
 
         auto target = reinterpret_cast<uint8_t*>(to);
-        for (; i < len + offset; ++i)
-        {
-            *target = tr.exchange(0xFF);
-            ++target;
-        }
+        tr.exchange_many(target, len);
+        i += len;
 
         for (; i < 512 + 3; ++i) // is the 3 fixed?
         {

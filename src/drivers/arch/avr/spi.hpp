@@ -22,6 +22,7 @@ namespace tos {
             static void disable();
 
             static uint8_t exchange(uint8_t byte);
+            static void exchange_many(uint8_t* buffer, uint16_t len);
 
             static void select_slave(pin_id pin);
 
