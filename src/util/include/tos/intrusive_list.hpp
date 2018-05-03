@@ -76,7 +76,7 @@ namespace tos
     {
         T* m_head;
         T* m_tail;
-        uint32_t m_size;
+        size_t m_size;
 
     public:
 

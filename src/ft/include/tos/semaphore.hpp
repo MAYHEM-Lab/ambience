@@ -17,7 +17,13 @@ namespace tos {
     private:
         int8_t m_count;
         waitable m_wait;
+
+        friend int8_t get_count(const semaphore& s)
+        {
+            return s.m_count;
+        }
     };
+
 }
 
 namespace tos {

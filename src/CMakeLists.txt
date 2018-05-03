@@ -13,7 +13,7 @@ add_library(tos_print tos/print.hpp print.cpp)
 target_compile_options(tos_print PUBLIC -std=gnu++14)
 target_include_directories(tos_print PUBLIC ".")
 
-add_library(tos_core stub.cpp ${TOS_CORE_HEADERS})
+add_library(tos_core stub.cpp ${TOS_CORE_HEADERS} tos_init.cpp)
 target_compile_options(tos_core PUBLIC -fno-threadsafe-statics -Wall -Wextra -std=gnu++14)
 target_include_directories(tos_core PUBLIC ".")
 

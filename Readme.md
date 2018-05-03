@@ -3,7 +3,7 @@
 
 Tos is a cooperative multitasking library operating system.
 
-Current targets:
+Supported targets:
 + AVR (atmega328p)
 + Xtensa (lx106)
 + x86 (Only user space)

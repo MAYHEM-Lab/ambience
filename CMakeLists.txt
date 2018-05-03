@@ -30,6 +30,8 @@ elseif(TOS_ESP)
 elseif(TOS_X86)
     add_subdirectory(examples/simple_portable)
     #add_subdirectory(apps/cspot_lite)
+
+    add_subdirectory(tests)
 endif()
 
 set(include_dest "include/tos")
