@@ -22,8 +22,12 @@ namespace tos {
         {
             return s.m_count;
         }
-    };
 
+        friend const waitable& get_waiters(const semaphore& s)
+        {
+            return s.m_wait;
+        }
+    };
 }
 
 namespace tos {

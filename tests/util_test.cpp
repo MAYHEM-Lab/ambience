@@ -8,7 +8,7 @@
 
 TEST_CASE("base ring buffer", "[base_ring_buf]")
 {
-    tos::base_ring_buf rb{ 4 };
+    tos::ring_buf rb{ 4 };
     REQUIRE(rb.capacity() == 4);
     REQUIRE(rb.push() == 0);    REQUIRE(rb.size() == 1);
     REQUIRE(rb.push() == 1);    REQUIRE(rb.size() == 2);

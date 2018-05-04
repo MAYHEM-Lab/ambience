@@ -9,25 +9,21 @@
 
 namespace tos
 {
+    template <class T>
     class base_ring_buf
     {
     public:
         explicit base_ring_buf(size_t sz)
-                : m_cap{sz}, m_read{0}, m_put{int8_t(sz)} {}
+                : m_cap{sz} {}
 
         size_t push()
         {
-            m_put.down();
-            auto res = (m_begin + size()) % m_cap;
-            m_read.up();
-            return res;
+            return (m_begin + get_size()) % m_cap;
         }
 
         void pop()
         {
-            m_read.down();
             m_begin = (m_begin + 1) % m_cap;
-            m_put.up();
         }
 
         size_t capacity() const
@@ -40,14 +36,74 @@ namespace tos
             return (m_begin + index) % m_cap;
         }
 
+    private:
+        size_t get_size() const
+        {
+            return static_cast<const T*>(this)->size();
+        }
+
+        size_t m_begin = 0;
+        size_t m_cap;
+    };
+
+    class sync_ring_buf
+            : public base_ring_buf<sync_ring_buf>
+    {
+    public:
+        explicit sync_ring_buf(size_t cap) : base_ring_buf{cap}, m_read{0}, m_put{cap} {}
+
         size_t size() const
         {
             return get_count(m_read);
         }
 
+        using base_ring_buf::capacity;
+        using base_ring_buf::translate;
+
+        size_t push()
+        {
+            m_put.down();
+            auto res = base_ring_buf::push();
+            m_read.up();
+            return res;
+        }
+
+        void pop()
+        {
+            m_read.down();
+            base_ring_buf::pop();
+            m_put.up();
+        }
+
     private:
-        size_t m_begin = 0;
         tos::semaphore m_read, m_put;
-        const size_t m_cap;
+    };
+
+    class ring_buf
+            : public base_ring_buf<ring_buf>
+    {
+    public:
+        explicit ring_buf(size_t cap) : base_ring_buf{cap}, m_sz{0} {}
+
+        size_t size() const { return m_sz; }
+
+        using base_ring_buf::capacity;
+        using base_ring_buf::translate;
+
+        size_t push()
+        {
+            auto res = base_ring_buf::push();
+            m_sz++;
+            return res;
+        }
+
+        void pop()
+        {
+            base_ring_buf::pop();
+            m_sz--;
+        }
+
+    private:
+        size_t m_sz;
     };
 }
