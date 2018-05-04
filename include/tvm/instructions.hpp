@@ -36,6 +36,52 @@ struct tvm::instr_name<movi>
     static constexpr auto value() { return "movi"; }
 };
 
+struct movr
+{
+    constexpr void operator()(tvm::vm_state* state, tvm::reg_ind_t<4> r1, tvm::reg_ind_t<4> r2)
+    {
+        state->registers[r1.index] = state->registers[r2.index];
+    }
+};
+
+template<>
+struct tvm::instr_name<movr>
+{
+    static constexpr auto value() { return "movr"; }
+};
+
+struct jump
+{
+    constexpr void operator()(tvm::vm_state* state, tvm::operand_t<16> abs)
+    {
+        state->pc = abs.operand - 3;
+    }
+};
+
+template <>
+struct tvm::instr_name<jump>
+{
+    static constexpr auto value() { return "jump"; }
+};
+
+struct branch_if_eq
+{
+    constexpr void operator()(tvm::vm_state* state,
+            tvm::reg_ind_t<4> a, tvm::reg_ind_t<4> b,
+            tvm::operand_t<16> addr)
+    {
+        if (state->registers[a.index] == state->registers[b.index])
+        {
+            state->pc = addr.operand - 4;
+        }
+    }
+};
+
+template<>
+struct tvm::instr_name<branch_if_eq>
+{
+    static constexpr auto value() { return "beq"; }
+};
 
 struct exit_ins
 {

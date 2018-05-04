@@ -162,7 +162,7 @@ namespace tvm::as
             return tokenize_name(next);
         }
 
-        if (isalnum(next) && !isalpha(next))
+        if (next == '-' || (isalnum(next) && !isalpha(next)))
         {
             return tokenize_number(next);
         }

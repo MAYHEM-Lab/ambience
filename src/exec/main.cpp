@@ -13,7 +13,14 @@
 #include <fstream>
 #include <vector>
 
-using ISA = tvm::list <tvm::ins<0x01, add>, tvm::ins<0x02, movi>, tvm::ins<0x03, exit_ins>>;
+using ISA = tvm::list <
+        tvm::ins<0x01, add>,
+        tvm::ins<0x02, movi>,
+        tvm::ins<0x03, jump>,
+        tvm::ins<0x04, branch_if_eq>,
+        tvm::ins<0x05, exit_ins>,
+        tvm::ins<0x06, movr>
+    >;
 
 template <uint8_t N>
 constexpr tvm::executor get_executor(tvm::opcode_t<N> c)

@@ -10,6 +10,7 @@ namespace tvm
 {
     struct proc_flags
     {
+
     };
 
     struct vm_state

@@ -12,7 +12,14 @@
 #include <tvm/as/isa_description.hpp>
 #include <tvm/as/codegen.hpp>
 
-using ISA = tvm::list <tvm::ins<0x01, add>, tvm::ins<0x02, movi>, tvm::ins<0x03, exit_ins>>;
+using ISA = tvm::list <
+        tvm::ins<0x01, add>,
+        tvm::ins<0x02, movi>,
+        tvm::ins<0x03, jump>,
+        tvm::ins<0x04, branch_if_eq>,
+        tvm::ins<0x05, exit_ins>,
+        tvm::ins<0x06, movr>
+    >;
 using isa_t = tvm::isa_map<ISA>;
 static constexpr isa_t isa{};
 
@@ -34,10 +41,10 @@ void print_instr(tvm::instr_data& inst)
 
 int main()
 {
-    std::ifstream prog("../bc/add.tcs");
+    std::ifstream prog("../bc/loop.tcs");
     tvm::as::scanner s{prog};
 
-    std::ifstream dup("../bc/add.tcs");
+    std::ifstream dup("../bc/loop.tcs");
     tvm::as::parser p{ dup, s.begin() };
 
     auto parsed = p.parse_program();
@@ -46,10 +53,11 @@ int main()
     std::ofstream res("a.out", std::ios::binary);
     tvm::as::codegen dg{parsed, isa_descr};
     dg.generate(res);
+    return 0;
 
-    /*for (auto& elem : parsed)
+    for (auto& elem : parsed)
     {
         mpark::visit(tvm::as::print_ast{std::cout, 0}, elem);
         std::cout << '\n';
-    }*/
+    }
 }

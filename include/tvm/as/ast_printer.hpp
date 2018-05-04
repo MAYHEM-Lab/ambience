@@ -40,7 +40,7 @@ namespace tvm::as {
         void operator()(const tvm::as::int_lit& l)
         {
             indent();
-            m_os << l.val;
+            m_os << std::hex << l.val << std::dec;
         }
 
         void operator()(const tvm::as::float_lit& l)
