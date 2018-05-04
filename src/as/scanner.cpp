@@ -159,7 +159,14 @@ namespace tvm::as
         if ((bool)isalpha(next))
         {
             // maybe a name or keyword
-            return tokenize_name(next);
+            auto res = tokenize_name(next);
+            if (get_stream().peek() == ':')
+            {
+                get_stream().seekg(1, std::ios::cur);
+                res.type = token_types::label_name;
+                res.length += 1;
+            }
+            return res;
         }
 
         if (next == '-' || (isalnum(next) && !isalpha(next)))

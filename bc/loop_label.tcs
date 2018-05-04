@@ -1,4 +1,4 @@
-    movi    %r0, 10
+    movi    %r0, 12
     movi    %r1, 0
     movi    %r2, 0
 loop:

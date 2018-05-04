@@ -32,6 +32,8 @@ namespace tvm::as
         case token_types::new_line:
             ++m_pos;
             return parse_entity();
+        case token_types::label_name:
+            return parse_label();
         default:
             throw parse_error("Unexpected token in file");
         }
@@ -82,7 +84,9 @@ namespace tvm::as
         }
         ++m_pos;
 
-        return { tok, read_tok(tok) };
+        auto name = read_tok(tok);
+        name.pop_back();
+        return { tok, name };
     }
 
     register_ parser::parse_register()
@@ -104,7 +108,7 @@ namespace tvm::as
         }
         catch (...) {}
         try {
-            return parse_label();
+            return parse_name();
         }
         catch (...) {}
         try {

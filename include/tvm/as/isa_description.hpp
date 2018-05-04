@@ -61,6 +61,8 @@ namespace tvm {
 
         virtual uint8_t get_size() const = 0;
 
+        virtual uint8_t get_size_bits() const = 0;
+
         virtual std::vector<operand_description>
         get_operands() const = 0;
 
@@ -86,6 +88,10 @@ namespace tvm {
 
         uint8_t get_size() const override {
             return instruction_len<T, opcode_len_v<>>();
+        }
+
+        uint8_t get_size_bits() const override {
+            return instruction_len_bits<T, opcode_len_v<>>();
         }
 
         int32_t operand_count() const override

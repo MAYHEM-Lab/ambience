@@ -41,10 +41,10 @@ void print_instr(tvm::instr_data& inst)
 
 int main()
 {
-    std::ifstream prog("../bc/loop.tcs");
+    std::ifstream prog("../bc/loop_label.tcs");
     tvm::as::scanner s{prog};
 
-    std::ifstream dup("../bc/loop.tcs");
+    std::ifstream dup("../bc/loop_label.tcs");
     tvm::as::parser p{ dup, s.begin() };
 
     auto parsed = p.parse_program();
