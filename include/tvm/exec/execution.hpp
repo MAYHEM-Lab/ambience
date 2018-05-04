@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <tvm/vm_state.hpp>
 #include <tvm/instr_traits.hpp>
 #include <tvm/exec/decoding.hpp>
 #include <tvm/vm_traits.hpp>

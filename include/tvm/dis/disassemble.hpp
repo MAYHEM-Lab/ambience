@@ -3,7 +3,6 @@
 //
 #pragma once
 
-#include <tvm/vm_state.hpp>
 #include <tvm/instr_traits.hpp>
 #include <tvm/exec/decoding.hpp>
 #include <ostream>

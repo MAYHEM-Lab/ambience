@@ -1,16 +1,16 @@
 //
-// Created by fatih on 4/19/18.
+// Created by Mehmet Fatih BAKIR on 04/05/2018.
 //
 
 #pragma once
 
-#include <tvm/vm_state.hpp>
+#include "vm_state.hpp"
 #include <tvm/tvm_types.hpp>
 #include <tvm/instr_traits.hpp>
 
 struct add
 {
-    constexpr void operator()(tvm::vm_state* state, tvm::reg_ind_t<> r1, tvm::reg_ind_t<> r2)
+    constexpr void operator()(svm::vm_state* state, tvm::reg_ind_t<> r1, tvm::reg_ind_t<> r2)
     {
         state->registers[r1.index] += state->registers[r2.index];
     }
@@ -24,7 +24,7 @@ struct tvm::instr_name<add>
 
 struct movi
 {
-    constexpr void operator()(tvm::vm_state* state, tvm::reg_ind_t<> r1, tvm::operand_t<16> op)
+    constexpr void operator()(svm::vm_state* state, tvm::reg_ind_t<> r1, tvm::operand_t<16> op)
     {
         state->registers[r1.index] = (uint16_t)op.operand;
     }
@@ -38,7 +38,7 @@ struct tvm::instr_name<movi>
 
 struct movr
 {
-    constexpr void operator()(tvm::vm_state* state, tvm::reg_ind_t<4> r1, tvm::reg_ind_t<4> r2)
+    constexpr void operator()(svm::vm_state* state, tvm::reg_ind_t<4> r1, tvm::reg_ind_t<4> r2)
     {
         state->registers[r1.index] = state->registers[r2.index];
     }
@@ -52,7 +52,7 @@ struct tvm::instr_name<movr>
 
 struct jump
 {
-    constexpr void operator()(tvm::vm_state* state, tvm::address_t<16> abs)
+    constexpr void operator()(svm::vm_state* state, tvm::address_t<16> abs)
     {
         state->pc = abs.addr - 3;
     }
@@ -66,7 +66,7 @@ struct tvm::instr_name<jump>
 
 struct branch_if_eq
 {
-    constexpr void operator()(tvm::vm_state* state,
+    constexpr void operator()(svm::vm_state* state,
             tvm::reg_ind_t<4> a, tvm::reg_ind_t<4> b,
             tvm::address_t<16> addr)
     {
@@ -85,7 +85,7 @@ struct tvm::instr_name<branch_if_eq>
 
 struct exit_ins
 {
-    constexpr void operator()(tvm::vm_state* state)
+    constexpr void operator()(svm::vm_state* state)
     {
         state->registers[15] = 0xDEAD;
     }
