@@ -82,8 +82,7 @@ namespace tos {
 
     void wait_yield()
     {
-        //tos::avr::write_sync("wait\n", 6);
-        tos::disable_interrupts();
+        //tos::disable_interrupts();
         if (setjmp(cur_thread->context)==(int) return_codes::saved) {
             // yielded
             switch_context(sc.main_context, return_codes::do_wait);
@@ -139,7 +138,7 @@ namespace tos {
             }
         }
 
-        constexpr auto stack_size = 256;
+        constexpr auto stack_size = 4096;
 
         auto thread = new thread_info();
         num_threads++;

@@ -38,7 +38,7 @@ namespace tos {
     {
         tos::disable_interrupts();
         --m_count;
-        if (m_count<0) {
+        if (m_count < 0) {
             m_wait.wait();
         }
         else {
