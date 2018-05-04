@@ -25,16 +25,30 @@ bool type_check(const tvm::instr_data& id, const instruction& ins)
     const auto& args = id.get_operands();
     for (int i = 0; i < args.size(); ++i)
     {
-        if (args[i].type == tvm::operand_type::reg && !mpark::get_if<register_>(&ops[i]))
+        switch (args[i].type)
         {
-            throw codegen_error("operand types do not match!");
+        case tvm::operand_type::reg:
+            if (!mpark::get_if<register_>(&ops[i]))
+            {
+                throw codegen_error("operand types do not match!");
+                return false;
+            }
+            break;
+        case tvm::operand_type::literal:
+            if (!mpark::get_if<literal>(&ops[i]))
+            {
+                throw codegen_error("operand types do not match!");
+                return false;
+            }
+            break;
+        case tvm::operand_type::address:
+            if (!mpark::get_if<literal>(&ops[i]) && !mpark::get_if<name>(&ops[i]))
+            {
+                throw codegen_error("operand types do not match!");
+            }
+            break;
         }
-        else if (args[i].type == tvm::operand_type::literal
-                && !mpark::get_if<literal>(&ops[i])
-                && !mpark::get_if<name>(&ops[i]))
-        {
-            throw codegen_error("operand types do not match!");
-        }
+
         //TODO: if types match, make sure sizes match too!
     }
     return true;

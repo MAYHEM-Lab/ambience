@@ -16,7 +16,8 @@ namespace tvm {
     {
         error,
         reg,
-        literal
+        literal,
+        address
     };
 
     struct operand_description
@@ -25,6 +26,15 @@ namespace tvm {
         uint8_t bits = 0;
         uint8_t offset = 0;
     };
+
+    template<uint8_t N>
+    constexpr operand_description get_descr(identity<address_t<N>>)
+    {
+        operand_description res;
+        res.bits = N;
+        res.type = operand_type::address;
+        return res;
+    }
 
     template<uint8_t N>
     constexpr operand_description get_descr(identity<reg_ind_t<N>>)

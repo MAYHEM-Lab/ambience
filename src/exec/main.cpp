@@ -22,17 +22,17 @@ using ISA = tvm::list <
         tvm::ins<0x06, movr>
     >;
 
-template <uint8_t N>
-constexpr tvm::executor get_executor(tvm::opcode_t<N> c)
+template <class VmT, uint8_t N>
+constexpr tvm::executor<VmT> get_executor(tvm::opcode_t<N> c)
 {
-    constexpr auto lookup = tvm::generate_decode_lookup<ISA>::value();
+    constexpr auto lookup = tvm::generate_decode_lookup<VmT, ISA>::value();
     return lookup.data[c.opcode];
 }
 
-template <uint8_t N>
-constexpr uint8_t exec_one(tvm::vm_state *state, uint32_t instr)
+template <uint8_t N, class VmT>
+constexpr uint8_t exec_one(VmT *state, uint32_t instr)
 {
-    return get_executor(tvm::get_opcode<N>(instr))(state, instr);
+    return get_executor<VmT>(tvm::get_opcode<N>(instr))(state, instr);
 }
 
 struct ptr_fetcher

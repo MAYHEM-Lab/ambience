@@ -52,9 +52,9 @@ struct tvm::instr_name<movr>
 
 struct jump
 {
-    constexpr void operator()(tvm::vm_state* state, tvm::operand_t<16> abs)
+    constexpr void operator()(tvm::vm_state* state, tvm::address_t<16> abs)
     {
-        state->pc = abs.operand - 3;
+        state->pc = abs.addr - 3;
     }
 };
 
@@ -68,11 +68,11 @@ struct branch_if_eq
 {
     constexpr void operator()(tvm::vm_state* state,
             tvm::reg_ind_t<4> a, tvm::reg_ind_t<4> b,
-            tvm::operand_t<16> addr)
+            tvm::address_t<16> addr)
     {
         if (state->registers[a.index] == state->registers[b.index])
         {
-            state->pc = addr.operand - 4;
+            state->pc = addr.addr - 4;
         }
     }
 };
