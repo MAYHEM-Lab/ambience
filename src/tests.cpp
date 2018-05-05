@@ -5,7 +5,6 @@
 #include <tvm/instr_traits.hpp>
 #include <tvm/tvm_types.hpp>
 #include <tvm/exec/decoding.hpp>
-#include <tvm/instructions.hpp>
 
 namespace tvm
 {
@@ -18,7 +17,4 @@ namespace tvm
 
     static_assert(decode(list<opcode_t<7>>{}, 0xFF) == std::tuple<opcode_t<7>>{ {0x7F} }, "");
     static_assert(decode(list<opcode_t<7>, reg_ind_t<>>{}, 0xFF) == std::tuple<opcode_t<7>, reg_ind_t<>>{ {0x0F}, {0x0F} }, "");
-
-    static_assert(instruction_len<add, 7>() == 2, "");
-    static_assert(instruction_len<movi, 7>() == 4, "");
 }

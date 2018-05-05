@@ -4,17 +4,17 @@
 
 #pragma once
 
-#include <tvm/vm_state.hpp>
 #include <tvm/instr_traits.hpp>
 #include <tvm/exec/decoding.hpp>
 #include <tvm/vm_traits.hpp>
 
 namespace tvm
 {
-    using executor = uint8_t(*)(vm_state*, uint32_t);
+    template <class VmT>
+    using executor = uint8_t(*)(VmT*, uint32_t);
 
-    template <class T>
-    constexpr uint8_t executor_impl(vm_state* vm, uint32_t instr)
+    template <class VmT, class T>
+    constexpr uint8_t executor_impl(VmT* vm, uint32_t instr)
     {
         using traits = functor_traits<T>;
         using args_t = tail_t<typename traits::arg_ts>;
@@ -28,9 +28,9 @@ namespace tvm
         return len;
     }
 
-    template <class T>
-    constexpr executor get_executor()
+    template <class VmT, class T>
+    constexpr executor<VmT> get_executor()
     {
-        return &executor_impl<T>;
+        return &executor_impl<VmT, T>;
     }
 }

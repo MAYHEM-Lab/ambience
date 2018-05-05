@@ -44,6 +44,7 @@ namespace tvm::as
 
         std::string name;
     };
+
     struct register_ {
         token t;
 
@@ -64,12 +65,20 @@ namespace tvm::as
         token t;
     };
 
+    struct type_name
+    {
+        token t;
+
+        std::string name;
+    };
+
     using literal = sum<int_lit, float_lit>;
-    using operand = sum<literal, label, register_>;
+
+    using operand = sum<literal, name, register_>;
     using operands = many<operand>;
     using instruction = prod<name, operands>;
 
-    using entity = sum<instruction, blk_comment, line_comment>;
+    using entity = sum<instruction, blk_comment, line_comment, label>;
 
     using program = many<entity>;
 }

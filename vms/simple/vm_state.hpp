@@ -1,17 +1,13 @@
 //
-// Created by fatih on 4/19/18.
+// Created by Mehmet Fatih BAKIR on 04/05/2018.
 //
 
 #pragma once
 
 #include <stdint.h>
 
-namespace tvm
+namespace svm
 {
-    struct proc_flags
-    {
-    };
-
     struct vm_state
     {
         uint16_t registers[16];

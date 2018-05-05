@@ -83,12 +83,23 @@ namespace tvm::as
 
     token scanner::tokenize_number(char next)
     {
-        auto can_be_in_number = [this](char elem){
+        auto can_be_in_number = [this](char elem, bool hex = false){
             if (!isalnum(elem) && try_tokenize(elem) != token_types::dot){
                 return false;
             }
-            if (isalpha(elem))
+            if (isalpha(elem) && elem != 'x')
             {
+                if (hex)
+                {
+                    if (elem >= 'A' && elem <= 'F')
+                    {
+                        return true;
+                    }
+                    if (elem >= 'a' && elem <= 'f')
+                    {
+                        return true;
+                    }
+                }
                 return false;
             }
 
@@ -100,11 +111,16 @@ namespace tvm::as
 
         bool has_dot = false;
         bool one_dot = false;
-        while (can_be_in_number(next = get_stream().peek()))
+        bool is_hex = false;
+        while (can_be_in_number(next = get_stream().peek(), is_hex))
         {
             get_stream().get();
             len++;
-            if (try_tokenize(next) == token_types::dot)
+            if (next == 'x')
+            {
+                is_hex = true;
+            }
+            else if (try_tokenize(next) == token_types::dot)
             {
                 has_dot = true;
                 if (!one_dot)
@@ -159,10 +175,17 @@ namespace tvm::as
         if ((bool)isalpha(next))
         {
             // maybe a name or keyword
-            return tokenize_name(next);
+            auto res = tokenize_name(next);
+            if (get_stream().peek() == ':')
+            {
+                get_stream().seekg(1, std::ios::cur);
+                res.type = token_types::label_name;
+                res.length += 1;
+            }
+            return res;
         }
 
-        if (isalnum(next) && !isalpha(next))
+        if (next == '-' || (isalnum(next) && !isalpha(next)))
         {
             return tokenize_number(next);
         }

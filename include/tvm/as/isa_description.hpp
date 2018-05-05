@@ -16,7 +16,8 @@ namespace tvm {
     {
         error,
         reg,
-        literal
+        literal,
+        address
     };
 
     struct operand_description
@@ -25,6 +26,15 @@ namespace tvm {
         uint8_t bits = 0;
         uint8_t offset = 0;
     };
+
+    template<uint8_t N>
+    constexpr operand_description get_descr(identity<address_t<N>>)
+    {
+        operand_description res;
+        res.bits = N;
+        res.type = operand_type::address;
+        return res;
+    }
 
     template<uint8_t N>
     constexpr operand_description get_descr(identity<reg_ind_t<N>>)
@@ -61,6 +71,8 @@ namespace tvm {
 
         virtual uint8_t get_size() const = 0;
 
+        virtual uint8_t get_size_bits() const = 0;
+
         virtual std::vector<operand_description>
         get_operands() const = 0;
 
@@ -86,6 +98,10 @@ namespace tvm {
 
         uint8_t get_size() const override {
             return instruction_len<T, opcode_len_v<>>();
+        }
+
+        uint8_t get_size_bits() const override {
+            return instruction_len_bits<T, opcode_len_v<>>();
         }
 
         int32_t operand_count() const override

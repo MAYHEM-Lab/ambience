@@ -26,13 +26,13 @@ namespace tvm
     template<class...>
     struct generate_decode_lookup;
 
-    template<uint8_t ... opcodes, class... Ts>
-    struct generate_decode_lookup<list<ins<opcodes, Ts>...>> {
+    template<class VmT, uint8_t ... opcodes, class... Ts>
+    struct generate_decode_lookup<VmT, list<ins<opcodes, Ts>...>> {
         using ListT = list<ins<opcodes, Ts>...>;
 
         static constexpr auto value() {
-            tvm::array<executor, max_opcode<ListT>::value + 1> lookup{};
-            auto _ = std::initializer_list<int>{(assign(lookup, opcodes, get_executor<Ts>()), 0)...};
+            tvm::array<executor<VmT>, max_opcode<ListT>::value + 1> lookup{};
+            auto _ = std::initializer_list<int>{(assign(lookup, opcodes, get_executor<VmT, Ts>()), 0)...};
             return lookup;
         }
 

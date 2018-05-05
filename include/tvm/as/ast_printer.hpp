@@ -40,7 +40,7 @@ namespace tvm::as {
         void operator()(const tvm::as::int_lit& l)
         {
             indent();
-            m_os << l.val;
+            m_os << std::hex << l.val << std::dec;
         }
 
         void operator()(const tvm::as::float_lit& l)
@@ -60,7 +60,7 @@ namespace tvm::as {
             m_os << "Reg(" << reg.name << ")";
         }
 
-        void operator()(const tvm::as::label& lbl)
+        void operator()(const tvm::as::name& lbl)
         {
             indent();
             m_os << "Label(" << lbl.name << ")";
@@ -103,11 +103,10 @@ namespace tvm::as {
             }
         }
 
-        template<class T>
-        void operator()(const T& other)
+        void operator()(const tvm::as::label& label)
         {
             indent();
-            m_os << "other";
+            m_os << "Label(" << label.name << ")";
         }
     };
 }

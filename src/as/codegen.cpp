@@ -25,18 +25,55 @@ bool type_check(const tvm::instr_data& id, const instruction& ins)
     const auto& args = id.get_operands();
     for (int i = 0; i < args.size(); ++i)
     {
-        if (args[i].type == tvm::operand_type::reg && !mpark::get_if<register_>(&ops[i]))
+        switch (args[i].type)
         {
-            throw codegen_error("operand types do not match!");
+        case tvm::operand_type::reg:
+            if (!mpark::get_if<register_>(&ops[i]))
+            {
+                throw codegen_error("operand types do not match!");
+                return false;
+            }
+            break;
+        case tvm::operand_type::literal:
+            if (!mpark::get_if<literal>(&ops[i]))
+            {
+                throw codegen_error("operand types do not match!");
+                return false;
+            }
+            break;
+        case tvm::operand_type::address:
+            if (!mpark::get_if<literal>(&ops[i]) && !mpark::get_if<name>(&ops[i]))
+            {
+                throw codegen_error("operand types do not match!");
+            }
+            break;
         }
-        else if (args[i].type == tvm::operand_type::literal && !mpark::get_if<literal>(&ops[i]))
-        {
-            throw codegen_error("operand types do not match!");
-        }
+
         //TODO: if types match, make sure sizes match too!
     }
     return true;
 }
+
+std::unordered_map<std::string, uint16_t> symbols;
+struct missing_info
+{
+    tvm::as::instruction at;
+    std::string label;
+};
+std::unordered_map<uint16_t, missing_info> missing;
+
+enum class operand_type
+{
+    label,
+    literal,
+    reg
+};
+
+struct operand_result
+{
+    operand_type type;
+    uint32_t value;
+};
 
 struct operand_visitor
 {
@@ -53,20 +90,27 @@ struct operand_visitor
         }
     };
 
-    uint32_t operator()(const literal& l)
+    operand_result operator()(const literal& l)
     {
-        return mpark::visit(literal_visitor{}, l);
+        return { operand_type::literal, mpark::visit(literal_visitor{}, l) };
     }
 
-    uint32_t operator()(const register_& r)
+    operand_result operator()(const register_& r)
     {
         auto num = r.name.substr(2);
-        return std::stoul(num);
+        return { operand_type::reg, std::stoul(num) };
     }
 
-    uint32_t operator()(const label&)
+    operand_result operator()(const name& n)
     {
-        return 0;
+        //std::cout << "name: " << n.name << '\n';
+        auto res = 0;
+        auto it = symbols.find(n.name);
+        if (it != symbols.end())
+        {
+            res = it->second;
+        }
+        return { operand_type::label, res };
     }
 };
 
@@ -100,14 +144,24 @@ struct entity_visitor : codegen_visitor
         uint32_t result = 0;
         auto operands = i_descr->get_operands();
         auto offsets = i_descr->get_offsets();
+        auto bits = i_descr->get_size_bits();
         auto end = 0;
+        result = accum(result, i_descr->get_opcode(),
+                bits - m_descr.get_opcode_size(), m_descr.get_opcode_size());
         for (int i = i_descr->operand_count() - 1; i >= 0; --i)
         {
-            uint32_t val = mpark::visit(operand_visitor{}, ops[i]);
+            operand_result r = mpark::visit(operand_visitor{}, ops[i]);
+            auto val = r.value;
+            if (r.type == operand_type::label && val == 0)
+            {
+                // we have a missing label
+                missing[m_os.tellp()] = { ins, mpark::get<tvm::as::name>(ops[i]).name };
+                m_os.seekp(i_descr->get_size(), std::ios::cur);
+                return;
+            }
             result = accum(result, val, offsets[i], operands[i].bits);
             end = offsets[i] + operands[i].bits;
         }
-        result = accum(result, i_descr->get_opcode(), end, m_descr.get_opcode_size());
         result <<= 32 - (end + m_descr.get_opcode_size());
         auto ptr = reinterpret_cast<const char*>(&result);
         for (int i = 0; i < i_descr->get_size(); ++i)
@@ -116,8 +170,13 @@ struct entity_visitor : codegen_visitor
         }
     }
 
-    template <class T>
-    void operator()(const T&){}
+    void operator()(const tvm::as::label& lbl)
+    {
+        symbols[lbl.name] = uint16_t(m_os.tellp());
+    }
+
+    void operator()(const tvm::as::blk_comment&) {}
+    void operator()(const tvm::as::line_comment&) {}
 };
 
 namespace tvm::as
@@ -127,11 +186,28 @@ namespace tvm::as
 
     void codegen::generate(std::ostream& out)
     {
+        auto vis = entity_visitor{m_descr, out};
         for (auto& e : m_prog)
         {
-            mpark::visit(entity_visitor{m_descr, out}, e);
+            mpark::visit(vis, e);
         }
         uint32_t zeros = 0;
         out.write(reinterpret_cast<const char*>(&zeros), 4);
+
+        auto miss = std::move(missing);
+        for (auto& [off, ins] : miss)
+        {
+            out.seekp(off, std::ios::beg);
+            vis(ins.at);
+        }
+
+        for (auto& [off, ins] : missing)
+        {
+            std::cerr << "undefined symbol: " << ins.label << '\n';
+        }
+        if (!missing.empty())
+        {
+            throw codegen_error("undefined symbols exist");
+        }
     }
 }

@@ -27,8 +27,20 @@ namespace tvm
         uint32_t operand : sz;
     };
 
+    template <uint8_t sz>
+    struct address_t
+    {
+        uint32_t addr : sz;
+    };
+
     template <uint8_t N>
     struct operand_traits<operand_t<N>>
+    {
+        static constexpr auto size = N;
+    };
+
+    template <uint8_t N>
+    struct operand_traits<address_t<N>>
     {
         static constexpr auto size = N;
     };

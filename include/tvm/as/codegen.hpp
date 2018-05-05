@@ -22,6 +22,7 @@ namespace tvm::as
 
         void generate(std::ostream&);
 
+        const isa_description& get_isa() const;
     private:
         program m_prog;
         isa_description m_descr;
