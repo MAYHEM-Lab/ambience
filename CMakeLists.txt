@@ -3,7 +3,7 @@ project(tvm)
 
 add_library(tvm_core include/tvm/meta.hpp include/tvm/tvm_types.hpp include/tvm/vm_state.hpp
         include/tvm/operand_traits.hpp src/tests.cpp include/tvm/instr_traits.hpp
-        include/tvm/exec/decoding.hpp include/tvm/exec/execution.hpp include/tvm/exec/isa.hpp include/tvm/vm_traits.hpp include/tvm/util/array.hpp)
+        include/tvm/exec/decoding.hpp include/tvm/exec/execution.hpp include/tvm/exec/isa.hpp include/tvm/vm_traits.hpp include/tvm/util/array.hpp include/tvm/util/tuple.hpp)
 target_include_directories(tvm_core PUBLIC "include")
 target_compile_features(tvm_core PUBLIC cxx_std_14)
 target_compile_options(tvm_core PUBLIC "-Wno-c++11-narrowing")

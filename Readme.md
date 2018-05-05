@@ -1,12 +1,15 @@
 # tVM
 
 tvm is a lightweight and efficient byte code virtual machine 
-for resource constrained embedded systems applications.
+infrastructure for resource constrained embedded systems 
+applications.
 
 ---
 
-tvm is quite heavy on the template metaprogramming side and
-requires a C++14 compiler. 
+tvm is quite heavy on the template metaprogramming side.
+Thus, the parts require quite recent compilers. The runtime
+can be compiled with C++14 compilers, however the assembler
+and the disassembler require C++17 compilers.
 
 ---
 
@@ -35,23 +38,30 @@ make
 
 ## ISA
 
-`tvm` ISA supports variable length instructions up to 4 bytes.
+tvm is a VM infrastructure and doesn't directly define an ISA or an
+ABI for anything. Users can define and implement their own ISA on top
+of what tvm provides.
 
-+ `mov %register, $literal`: 
-loads the given immediate value to the register
+Implementing instructions is quite simple. Every instruction is implemented
+in terms of a C++ function object type. Since C++14 doesn't support `auto` template
+arguments, free standing functions do not work.
 
-+ `add %reg1, %reg2`:
-adds reg2 to reg1
+An example instruction implementation looks like this:
 
-## ABI
+```cpp
+// add %r0, %r1 // adds r1 to r0
 
-### Return values
-Return values are returned via `%r0` register.
+struct add
+{
+    constexpr void operator()(vm_state* state, reg_ind_t<4> to, reg_ind_t<4> from)
+    {
+        state->registers[to.ind] += state->registers[from.ind];
+    }
+};
 
-```
-add(a, b):
-    pop %r0
-    pop %r1
-    add %r0, %r1
-    ret
+/**
+ * This is required for the assembler and the disassembler and is not needed
+ * for the runtime.
+ */
+template<> struct instr_name<add> { static constexpr auto value() { return "add"; } }
 ```
