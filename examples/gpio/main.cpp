@@ -8,30 +8,35 @@
 #include <tos/print.hpp>
 #include <tos/devices.hpp>
 
-#include <usart.hpp>
+#include <drivers/arch/avr/usart.hpp>
 
 #include <avr/interrupt.h>
 #include <tos/intrusive_ptr.hpp>
+#include <drivers/arch/avr/gpio.hpp>
 
 tos::semaphore timer_sem(0);
 tos::usart usart;
 
 void hello_task()
 {
-    tos::gpio gp;
-    gp.set_pin_mode(tos::avr::ports::B, 5, tos::avr::gpio::pin_mode_t::out);
+    using namespace tos::tos_literals;
+    tos::avr::gpio gp;
+    gp.set_pin_mode(13_pin, tos::pin_mode_t::out);
+    auto p = 13_pin;
+    println(usart, "Pin: ", (int)p.pin);
+    gp.write(13_pin, false);
     char buf;
     while (true) {
 
         usart.read(&buf, 1);
         if (buf == '1')
         {
-            gp.write(tos::avr::ports::B, 5, true);
+            gp.write(13_pin, true);
             println(usart, "On");
         }
         else
         {
-            gp.write(tos::avr::ports::B, 5, false);
+            gp.write(13_pin, false);
             println(usart, "Off");
         }
     }
@@ -68,23 +73,25 @@ void timer1_init()
 
 void initUSART()
 {
-    using namespace tos;
+    using namespace tos::tos_literals;
 
-    tos::usart0::set_baud_rate(9600);
-    tos::usart0::set_2x_rate();
-    tos::usart0::set_control(usart_modes::async, usart_parity::disabled, usart_stop_bit::one);
-
-    tos::usart0::enable();
+    auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
+    usart->options(
+            tos::usart_modes::async,
+            tos::usart_parity::disabled,
+            tos::usart_stop_bit::one);
+    usart->enable();
 }
 
 int main()
 {
+    tos::enable_interrupts();
+
     tos::launch(hello_task);
     tos::launch(tick_task);
 
     timer1_init();
     initUSART();
-    sei();
 
     while (true)
     {

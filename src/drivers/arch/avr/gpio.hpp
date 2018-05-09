@@ -12,19 +12,20 @@ namespace tos
     struct pin_t
     {
         decltype((PORTD))& port;
+        decltype((PORTB))& dir;
         uint8_t pin;
     };
 
     inline pin_t from_gpio_num(uint16_t gpio) {
         if (gpio < 8) {
-            return {PORTD, uint8_t(gpio)};
+            return {PORTD, DDRD, uint8_t(gpio)};
         } else if (gpio < 14) {
-            return {PORTB, uint8_t(gpio - 8)};
+            return {PORTB, DDRB, uint8_t(gpio - 8)};
         } else if (gpio < 20) {
-            return {PORTC, uint8_t(gpio - 14)};
+            return {PORTC, DDRC, uint8_t(gpio - 14)};
         }
         // TODO: report error
-        return {PORTD, 0};
+        return {PORTD, DDRD, 0};
     }
 
     namespace tos_literals
@@ -35,14 +36,14 @@ namespace tos
         }
     }
 
+    enum class pin_mode_t
+    {
+        out,
+        in
+    };
+
     namespace avr
     {
-        enum class pin_mode_t
-        {
-            out,
-            in
-        };
-
         class gpio
         {
         public:
@@ -67,11 +68,11 @@ namespace tos
         {
             if (mode == pin_mode_t::out)
             {
-                pin.port |= (1 << pin.pin);
+                pin.dir |= (1 << pin.pin);
             }
             else // if (mode == pin_mode_t::in)
             {
-                pin.port &= ~(1 << pin.pin);
+                pin.dir &= ~(1 << pin.pin);
             }
         }
 
