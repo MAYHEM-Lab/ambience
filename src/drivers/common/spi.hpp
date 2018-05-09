@@ -20,7 +20,7 @@ namespace tos
     struct spi_transaction
     {
     public:
-        explicit spi_transaction(pin_id pin)
+        explicit spi_transaction(typename T::gpio_type::pin_type pin)
                 :m_omit{false}, m_pin{pin}
         {
             T::select_slave(pin);
@@ -57,7 +57,7 @@ namespace tos
 
     private:
         bool m_omit;
-        pin_id m_pin;
+        typename T::gpio_type::pin_type m_pin;
     };
 
     struct spi_mode

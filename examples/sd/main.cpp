@@ -70,7 +70,7 @@ void main_task()
     auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);
     spi->enable();
 
-    auto sd = open(tos::devs::sd, 2_pin);
+    auto sd = open(tos::devs::sd, 10_pin);
     if (!sd.init())
     {
         println(comm, "that didn't work");
