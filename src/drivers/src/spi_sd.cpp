@@ -41,7 +41,8 @@ namespace tos
         return ret;
     }
 
-    spi_sd_card::spi_sd_card(pin_t spi_pin) : m_spi_pin{spi_pin} {
+    spi_sd_card::spi_sd_card(pin_t spi_pin)
+            : m_spi_pin{spi_pin} {
     }
 
     bool spi_sd_card::init() {
@@ -65,7 +66,11 @@ namespace tos
         if (i == 10) return false;
         for (i = 0; i < 10; ++i)
         {
-            if (read_8(exec_cmd(m_spi_pin, 0x40 + 55, 0x0)) != 0xFF && read_8(exec_cmd(m_spi_pin,0x40 + 41, 0x40000000)) == 0x00) break;
+            if (read_8(exec_cmd(m_spi_pin, 0x40 + 55, 0x0)) != 0xFF
+                && read_8(exec_cmd(m_spi_pin,0x40 + 41, 0x40000000)) == 0x00)
+            {
+                break;
+            }
             _delay_ms(100);
         }
         if (i == 10) return false;
@@ -99,7 +104,7 @@ namespace tos
     }
 
     csd_t spi_sd_card::read_csd() {
-        auto tr = exec_cmd(m_spi_pin,0x40 + 9, 0, 0xFF);
+        auto tr = exec_cmd(m_spi_pin, 0x40 + 9, 0, 0xFF);
 
         while (tr.exchange(0xFF) != 0x00);
         while (tr.exchange(0xFF) != 0xFE);
