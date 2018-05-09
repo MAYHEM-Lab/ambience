@@ -8,16 +8,9 @@
 
 namespace tos
 {
-    struct pin_id
-    {
-        uint8_t pin;
-    };
-
+    struct pin_t;
     namespace tos_literals
     {
-        constexpr pin_id operator""_pin(unsigned long long pin)
-        {
-            return {(uint8_t)pin};
-        }
+        pin_t operator""_pin(unsigned long long pin);
     }
 }

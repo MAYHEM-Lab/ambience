@@ -7,12 +7,15 @@
 #include <stdint.h>
 #include <tos/devices.hpp>
 #include <drivers/common/spi.hpp>
+#include "gpio.hpp"
 
 namespace tos {
     namespace avr {
         class spi0
         {
         public:
+            using gpio_type = avr::gpio;
+
             static void init_master();
 
             static void init_slave();
@@ -24,9 +27,9 @@ namespace tos {
             static uint8_t exchange(uint8_t byte);
             static void exchange_many(uint8_t* buffer, uint16_t len);
 
-            static void select_slave(pin_id pin);
+            static void select_slave(pin_t pin);
 
-            static void deselect_slave(pin_id pin);
+            static void deselect_slave(pin_t pin);
 
         private:
             spi0() = default;

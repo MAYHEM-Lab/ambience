@@ -59,19 +59,21 @@ namespace avr
 {
     static gpio gp;
     void spi0::init_master() {
-        gp.set_pin_mode(ports::B, 5, gpio::pin_mode_t::out); // SCK
-        gp.set_pin_mode(ports::B, 4, gpio::pin_mode_t::in); // MISO
-        gp.set_pin_mode(ports::B, 3, gpio::pin_mode_t::out); // MOSI
-        gp.set_pin_mode(ports::B, 2, gpio::pin_mode_t::out); // SS
-        gp.write(ports::B, 2, true);
+        using namespace tos::tos_literals;
+        gp.set_pin_mode(13_pin, pin_mode_t::out); // SCK
+        gp.set_pin_mode(12_pin, pin_mode_t::in); // MISO
+        gp.set_pin_mode(11_pin, pin_mode_t::out); // MOSI
+        gp.set_pin_mode(10_pin, pin_mode_t::out); // SS
+        gp.write(10_pin, true);
         control_reg().init_master();
     }
 
     void spi0::init_slave() {
-        gp.set_pin_mode(ports::B, 5, gpio::pin_mode_t::in); // SCK
-        gp.set_pin_mode(ports::B, 4, gpio::pin_mode_t::out); // MISO
-        gp.set_pin_mode(ports::B, 3, gpio::pin_mode_t::in); // MOSI
-        gp.set_pin_mode(ports::B, 2, gpio::pin_mode_t::in); // SS
+        using namespace tos::tos_literals;
+        gp.set_pin_mode(13_pin, pin_mode_t::in); // SCK
+        gp.set_pin_mode(12_pin, pin_mode_t::out); // MISO
+        gp.set_pin_mode(11_pin, pin_mode_t::in); // MOSI
+        gp.set_pin_mode(10_pin, pin_mode_t::in); // SS
         control_reg().init_slave();
     }
 
@@ -90,12 +92,12 @@ namespace avr
         spi_block.down();
     }
 
-    void spi0::select_slave(pin_id pin) {
-        gp.write(ports::B, 2, false);
+    void spi0::select_slave(pin_t pin) {
+        gp.write(pin, false);
     }
 
-    void spi0::deselect_slave(pin_id pin) {
-        gp.write(ports::B, 2, true);
+    void spi0::deselect_slave(pin_t pin) {
+        gp.write(pin, true);
     }
 
     void spi0::enable() {
