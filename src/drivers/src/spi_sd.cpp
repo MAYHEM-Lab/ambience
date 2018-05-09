@@ -2,7 +2,7 @@
 // Created by fatih on 4/17/18.
 //
 
-#include <common/spi_sd.hpp>
+#include <common/sd/spi_sd.hpp>
 #include <util/delay.h>
 #include <arch/avr/spi.hpp>
 
@@ -95,5 +95,24 @@ namespace tos
         {
             tr.exchange(0xFF);
         }
+    }
+
+    csd_t spi_sd_card::read_csd() {
+        auto tr = exec_cmd(0x40 + 9, 0, 0xFF);
+
+        while (tr.exchange(0xFF) != 0x00);
+        while (tr.exchange(0xFF) != 0xFE);
+
+        csd_t res{};
+        auto res_ptr = reinterpret_cast<uint8_t*>(&res);
+        for (int i = 0; i < 16; ++i)
+        {
+            res_ptr[i] = tr.exchange(0xFF);
+        }
+
+        tr.exchange(0xFF);
+        tr.exchange(0xFF);
+        tr.exchange(0xFF);
+        return res;
     }
 }

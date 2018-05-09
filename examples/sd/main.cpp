@@ -7,12 +7,13 @@
 #include <ft/include/tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/arch.hpp>
-#include <drivers/common/spi_sd.hpp>
+#include <drivers/common/sd/spi_sd.hpp>
 #include <drivers/common/gpio.hpp>
 #include <drivers/common/spi.hpp>
 #include <tos/devices.hpp>
 #include <drivers/arch/avr/timer.hpp>
 #include <tos/waitable.hpp>
+#include <stdlib.h>
 
 tos::usart comm;
 void print_hex(unsigned char n) {
@@ -78,6 +79,10 @@ void main_task()
     {
         println(comm, "ready");
     }
+
+    auto csd = sd.read_csd();
+    char sbuf[32];
+    println(comm, "we have ", ultoa(get_blk_count(csd), sbuf, 10), " blocks");
 
     uint8_t buf[20];
     while (true)

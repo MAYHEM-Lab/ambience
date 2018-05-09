@@ -9,7 +9,7 @@ elseif(TOS_X86)
 endif()
 
 if (NOT TOS_X86)
-    add_library(tos_spi_sd src/spi_sd.cpp common/spi_sd.hpp)
+    add_library(tos_spi_sd src/spi_sd.cpp common/sd/spi_sd.hpp common/sd/sd_info.hpp)
     target_link_libraries(tos_spi_sd PUBLIC tos_core tos_spi tos_gpio)
     target_include_directories(tos_spi_sd PRIVATE .)
 
