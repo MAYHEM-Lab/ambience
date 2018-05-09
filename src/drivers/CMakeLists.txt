@@ -22,6 +22,14 @@ if (NOT TOS_X86)
 
     add_library(tos_gpio common/gpio.hpp src/stub.cpp)
     target_include_directories(tos_gpio PUBLIC .)
+
+    add_library(tos_dht22 common/dht22.hpp src/dht22.cpp)
+    target_link_libraries(tos_dht22 PUBLIC tos_core tos_gpio tos_clock)
+    target_include_directories(tos_dht22 PUBLIC .)
+
+    add_library(tos_clock common/system_clock.hpp)
+    target_link_libraries(tos_clock PUBLIC tos_core)
+    target_include_directories(tos_dht22 PUBLIC .)
 endif()
 
 add_library(tos_tty common/tty.hpp src/stub.cpp)

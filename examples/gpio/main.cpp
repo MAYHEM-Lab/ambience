@@ -17,10 +17,10 @@
 tos::semaphore timer_sem(0);
 tos::usart usart;
 
+tos::avr::gpio gp;
 void hello_task()
 {
     using namespace tos::tos_literals;
-    tos::avr::gpio gp;
     gp.set_pin_mode(13_pin, tos::pin_mode_t::out);
     auto p = 13_pin;
     println(usart, "Pin: ", (int)p.pin);
@@ -44,10 +44,15 @@ void hello_task()
 
 void tick_task()
 {
+    using namespace tos::tos_literals;
+    auto p = 8_pin;
+    println(usart, "Pin: ", (int)p.pin);
+    println(usart, "Port: ", (void*)&p.port->data);
+    gp.set_pin_mode(8_pin, tos::pin_mode_t::in_pullup);
     while (true)
     {
         timer_sem.down();
-        println(usart, "Tick");
+        println(usart, "Tick", (int)gp.read(8_pin));
     }
 }
 
