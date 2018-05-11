@@ -29,6 +29,10 @@ namespace tos
         intrusive_list_iterator&operator--();
 
         bool operator!=(const intrusive_list_iterator&);
+        bool operator==(const intrusive_list_iterator& rhs)
+        {
+            return !(*this != rhs);
+        }
     private:
         friend class intrusive_list<T>;
         explicit intrusive_list_iterator(T* p) : m_curr(p) {}
@@ -96,6 +100,8 @@ namespace tos
         const T& front() const;
         const T& back() const;
 
+        void insert(iterator_t at, T& t);
+
         void pop_front();
 
         iterator_t erase(iterator_t);
@@ -148,6 +154,30 @@ namespace tos
         m_head = &t;
         t.prev = nullptr;
         ++m_size;
+    }
+
+    template<class T>
+    void intrusive_list<T>::insert(intrusive_list::iterator_t at, T& t)
+    {
+        if (at == begin())
+        {
+            push_front(t);
+            return;
+        }
+        else if (at == end())
+        {
+            push_back(t);
+            return;
+        }
+
+        t.prev = at->prev;
+        at->prev = &t;
+        t.next = &(*at);
+
+        if (t.prev)
+        {
+            t.prev->next = &t;
+        }
     }
 
     template<class T>

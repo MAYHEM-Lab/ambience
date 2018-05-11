@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <drivers/common/timer.hpp>
+#include <tos/function_ref.hpp>
 
 namespace tos {
     namespace avr {
@@ -19,9 +20,7 @@ namespace tos {
 
             static uint16_t get_ticks();
 
-            static void block();
-
-            static void set_callback(void(*)(void*), void*);
+            static void set_callback(const function_ref<void()>&);
         };
         class timer0 {
           public:

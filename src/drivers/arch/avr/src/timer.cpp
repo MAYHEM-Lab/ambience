@@ -9,10 +9,8 @@
 #include <util/atomic.h>
 #include <tos/semaphore.hpp>
 
-static tos::event block;
 static uint16_t cnt = 0;
-static void(*tcb)(void*);
-static void* userdata;
+static tos::function_ref<void()> tcb;
 
 namespace tos
 {
@@ -30,10 +28,9 @@ namespace tos
             TCNT1 = cnt;
         }
 
-        void timer1::set_callback(void (*cb)(void*), void* userdata)
+        void timer1::set_callback(const function_ref<void()>& cb)
         {
             tcb = cb;
-            ::userdata = userdata;
         }
 
         void timer1::enable() {
@@ -42,10 +39,6 @@ namespace tos
 
         void timer1::disable() {
             PRR |= (1 << PRTIM1);
-        }
-
-        void timer1::block() {
-            ::block.wait();
         }
 
         uint16_t timer1::get_ticks() {
@@ -63,7 +56,6 @@ namespace tos
 
 ISR(TIMER1_OVF_vect)
 {
-    block.fire();
-    if (tcb) tcb(userdata);
     TCNT1 = cnt;
+    if (tcb) tcb();
 }

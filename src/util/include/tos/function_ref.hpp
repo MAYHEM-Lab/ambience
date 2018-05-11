@@ -17,10 +17,12 @@ namespace tos
     public:
         using funptr_t = RetT(*)(ArgTs..., void*);
 
-        function_ref() = default;
+        function_ref() : fun(nullptr) {}
 
-        explicit function_ref(funptr_t ptr, void* data = nullptr)
+        function_ref(funptr_t ptr, void* data)
                 : fun(ptr), data(data) {}
+
+        explicit function_ref(funptr_t ptr) : fun(ptr), data(nullptr) {}
 
         template <class T>
         function_ref(T& func) : fun([](ArgTs&&... args, void* data) {
@@ -31,6 +33,11 @@ namespace tos
         RetT operator()(ArgTs&&... args)
         {
             return fun(tos::forward<ArgTs>(args)..., data);
+        }
+
+        explicit operator bool()
+        {
+            return fun != nullptr;
         }
 
     private:

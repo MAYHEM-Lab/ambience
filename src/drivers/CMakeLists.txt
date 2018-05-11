@@ -27,9 +27,9 @@ if (NOT TOS_X86)
     target_link_libraries(tos_dht22 PUBLIC tos_core tos_gpio tos_clock)
     target_include_directories(tos_dht22 PUBLIC .)
 
-    add_library(tos_clock common/system_clock.hpp)
-    target_link_libraries(tos_clock PUBLIC tos_core)
-    target_include_directories(tos_dht22 PUBLIC .)
+    add_library(tos_alarm common/alarm.hpp)
+    target_link_libraries(tos_alarm PUBLIC tos_core)
+    target_include_directories(tos_alarm PUBLIC .)
 
     add_library(tos_eeprom common/eeprom.hpp common/eeprom.hpp)
     target_link_libraries(tos_eeprom PUBLIC tos_core)
