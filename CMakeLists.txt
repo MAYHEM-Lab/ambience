@@ -29,7 +29,7 @@ elseif(TOS_AVR)
     add_subdirectory(examples/ota)
     add_subdirectory(examples/int)
 
-if (IS_DIRECTORY "apps/tvm")
+if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/tvm")
     add_subdirectory(apps/tvm)
 endif()
 elseif(TOS_ESP)
