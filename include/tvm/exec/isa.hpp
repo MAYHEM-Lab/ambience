@@ -7,7 +7,11 @@
 #include <tvm/meta.hpp>
 #include <tvm/exec/execution.hpp>
 #include <tvm/util/array.hpp>
+#ifdef TOS
+#include <tos/algorithm.hpp>
+#else
 #include <algorithm>
+#endif
 
 namespace tvm
 {
@@ -20,7 +24,12 @@ namespace tvm
      */
     template<uint8_t... opcodes, class... Ts>
     struct max_opcode<list<ins<opcodes, Ts>...>> {
+#ifndef TOS
         static constexpr auto value = std::max(std::initializer_list<uint8_t>{opcodes...});
+#else
+        static constexpr uint8_t ops[] = { opcodes... };
+        static constexpr auto value = tos::max_range(ops, ops + sizeof...(opcodes));
+#endif
     };
 
     template<class...>
@@ -32,14 +41,14 @@ namespace tvm
 
         static constexpr auto value() {
             tvm::array<executor<VmT>, max_opcode<ListT>::value + 1> lookup{};
-            auto _ = std::initializer_list<int>{(assign(lookup, opcodes, get_executor<VmT, Ts>()), 0)...};
+            int _[] {(assign(lookup, opcodes, get_executor<VmT, Ts>()), 0)...};
             return lookup;
         }
 
     private:
         template<class ArrT, class OpcT, class FunT>
         static constexpr auto assign(ArrT &&t, OpcT &&opc, FunT &&fun) {
-            t.data[opc] = std::forward<FunT>(fun);
+            t.data[opc] = forward<FunT>(fun);
         }
     };
 }

@@ -8,8 +8,30 @@
 
 #pragma once
 
-#include <type_traits>
+#ifdef TOS
+#include <tos/tuple.hpp>
+#include <tos/type_traits.hpp>
+    using tos::tuple;
+    using tos::index_sequence;
+    using tos::integral_constant;
+    using tos::remove_const_t;
+    using tos::get;
+    using tos::remove_reference_t;
+    using tos::forward;
+    using tos::tuple_size;
+    using tos::make_index_sequence;
+#else
 #include <tuple>
+    using std::tuple;
+    using std::index_sequence;
+    using std::integral_constant;
+    using std::remove_const_t;
+    using std::get;
+    using std::remove_reference_t;
+    using std::forward;
+    using std::tuple_size;
+    using std::make_index_sequence;
+#endif
 
 namespace tvm
 {
@@ -76,7 +98,7 @@ namespace tvm
     using type_at_t = typename type_at<i, Ts...>::type;
 
     template <class T>
-    using clean_t = std::remove_const_t<std::remove_reference_t<T>>;
+    using clean_t = remove_const_t<remove_reference_t<T>>;
 
     namespace detail
     {
@@ -142,21 +164,21 @@ namespace tvm
     {};
 
     namespace detail {
-        template <class F, class AddT, class Tuple, std::size_t... I>
-        constexpr decltype(auto) apply_impl(F&& f, AddT&& a, Tuple&& t, std::index_sequence<I...>)
+        template <class F, class AddT, class Tuple, size_t... I>
+        constexpr decltype(auto) apply_impl(F&& f, AddT&& a, Tuple&& t, index_sequence<I...>)
         {
-            return std::forward<F>(f)(std::forward<AddT>(a), std::get<I>(std::forward<Tuple>(t))...);
+            return forward<F>(f)(forward<AddT>(a), get<I>(forward<Tuple>(t))...);
         }
     }
 
     template< class T >
-    constexpr std::size_t tuple_size_v = std::tuple_size<T>::value;
+    constexpr size_t tuple_size_v = tuple_size<T>::value;
 
     template <class F, class AddT, class Tuple>
     constexpr decltype(auto) apply(F&& f, AddT&& a, Tuple&& t)
     {
         return detail::apply_impl(
-                std::forward<F>(f), std::forward<AddT>(a), std::forward<Tuple>(t),
-                std::make_index_sequence<tuple_size_v<std::remove_reference_t<Tuple>>>{});
+                forward<F>(f), forward<AddT>(a), forward<Tuple>(t),
+                make_index_sequence<tuple_size_v<remove_reference_t<Tuple>>>());
     }
 }

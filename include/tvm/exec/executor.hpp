@@ -5,6 +5,12 @@
 #pragma once
 
 #include <tvm/exec/isa.hpp>
+#ifdef TOS
+#include <tos/utility.hpp>
+using tos::move;
+#else
+using std::move;
+#endif
 
 namespace tvm
 {
@@ -28,7 +34,7 @@ struct vm_executor
     VmT m_state;
 
     constexpr vm_executor(FetchT fetcher)
-            : m_fetcher(std::move(fetcher)), m_state{}
+            : m_fetcher(move(fetcher)), m_state{}
     {}
 
     constexpr void exec_one();

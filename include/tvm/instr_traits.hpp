@@ -5,12 +5,23 @@
 #pragma once
 
 #include <tvm/operand_traits.hpp>
-#include <type_traits>
 #include <stddef.h>
 #include <tvm/tvm_types.hpp>
 #include <tvm/util/array.hpp>
+#ifdef TOS
+#include <tos/utility.hpp>
+    using tos::tuple;
+    using tos::index_sequence;
+    using tos::integral_constant;
+#else
+#include <utility>
+    using std::tuple;
+    using std::index_sequence;
+    using std::integral_constant;
+#endif
 
-namespace tvm {
+namespace tvm
+{
     constexpr uint8_t instruction_len_bits(list<>)
     {
         return 0;
@@ -64,20 +75,20 @@ namespace tvm {
     template <>
     struct offsets<list<>>
     {
-        using type = std::index_sequence <>;
+        using type = index_sequence <>;
     };
 
     template <class T>
     struct offsets<list<T>>
     {
-        using type = std::index_sequence <0>;
+        using type = index_sequence <0>;
     };
 
     template <class>
     struct last_t;
 
     template <size_t Last, size_t... rest>
-    struct last_t<std::index_sequence<Last, rest...>>
+    struct last_t<index_sequence<Last, rest...>>
     {
         static constexpr auto val = Last;
     };
@@ -89,9 +100,9 @@ namespace tvm {
     struct merge;
 
     template <size_t top, size_t... rem>
-    struct merge<top, std::index_sequence<rem...>>
+    struct merge<top, index_sequence<rem...>>
     {
-        using type = std::index_sequence<top, rem...>;
+        using type = index_sequence<top, rem...>;
     };
 
     template <class... T, class U, class K>
@@ -102,12 +113,12 @@ namespace tvm {
     };
 
     template<size_t... offsets, int index>
-    constexpr size_t offset_at(std::index_sequence<offsets...>, std::integral_constant<int, index>) {
+    constexpr size_t offset_at(index_sequence<offsets...>, integral_constant<int, index>) {
         return 0;
     };
 
     template<size_t... offsets>
-    constexpr array<size_t, sizeof...(offsets)> to_array(std::index_sequence<offsets...>) {
+    constexpr array<size_t, sizeof...(offsets)> to_array(index_sequence<offsets...>) {
         return {{offsets...}};
     };
 
@@ -116,7 +127,7 @@ namespace tvm {
         using traits = functor_traits<T>;
         using args = tail_t<typename traits::arg_ts>;
         using offsets_ = offsets<args>;
-        return offset_at(typename offsets_::type{}, std::integral_constant<int, OpInd>{});
+        return offset_at(typename offsets_::type{}, integral_constant<int, OpInd>{});
     };
 
     template<class>
@@ -131,5 +142,4 @@ namespace tvm {
         using args = tail_t<typename traits::arg_ts>;
         return identity < type_at_t < OpInd + 1, args >> {};
     }
-
 }
