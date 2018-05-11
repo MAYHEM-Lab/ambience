@@ -1,12 +1,15 @@
 # tVM
 
 tvm is a lightweight and efficient byte code virtual machine 
-for resource constrained embedded systems applications.
+infrastructure for resource constrained embedded systems 
+applications.
 
 ---
 
-tvm is quite heavy on the template metaprogramming side and
-requires a C++14 compiler. 
+tvm is quite heavy on the template metaprogramming side.
+Thus, the parts require quite recent compilers. The runtime
+can be compiled with C++14 compilers, however the assembler
+and the disassembler require C++17 compilers.
 
 ---
 
