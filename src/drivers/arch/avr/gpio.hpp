@@ -6,6 +6,9 @@
 
 #include <stdint.h>
 #include <avr/io.h>
+#include <tos/function_ref.hpp>
+#include <avr/interrupt.h>
+#include <common/gpio.hpp>
 
 namespace tos
 {
@@ -71,6 +74,13 @@ namespace tos
         in_pullup
     };
 
+    enum class pin_change
+    {
+        falling = 2,
+        rising = 3,
+        any = 1
+    };
+
     namespace avr
     {
         class gpio
@@ -80,15 +90,22 @@ namespace tos
             using pin_type = pin_t;
 
             void set_pin_mode(pin_t, pin_mode_t);
+
             void write(pin_t, digital_io_t);
+
             digital_io_t read(const pin_t&);
+
+            void attach_interrupt(const pin_t& pin, pin_change p, function_ref<void()> fun);
         };
+    }
+
+    inline avr::gpio* open_impl(devs::gpio_t)
+    {
+        return nullptr;
     }
 }
 
 ///// Implementation
-
-#include <drivers/common/gpio.hpp>
 
 namespace tos
 {
@@ -126,7 +143,18 @@ namespace tos
         {
             uint8_t port = pin.port->pin;
             return port & (1 << pin.pin);
-            return bool((pin.port->data >> pin.pin) & 1U);
+        }
+
+        extern tos::function_ref<void()> exint_handlers[2];
+        inline void gpio::attach_interrupt(const pin_t& pin, pin_change p, tos::function_ref<void()> handler)
+        {
+            if (pin.port != ports::D()) return;
+            if (pin.pin != 2 && pin.pin != 3) return;
+            auto mask = uint8_t(p);
+            mask <<= ((pin.pin-2) * 2);
+            exint_handlers[pin.pin - 2] = handler;
+            EICRA |= mask;
+            EIMSK |= (1 << (pin.pin-2));
         }
     }
 }

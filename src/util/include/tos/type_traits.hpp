@@ -15,6 +15,16 @@ namespace tos
     using remove_reference_t = typename remove_reference<T>::type;
 
     template <class T>
+    struct remove_const { using type = T; };
+
+    template <class T>
+    struct remove_const<const T> { using type = T; };
+
+    template <class T>
+    using remove_const_t = typename remove_const<T>::type;
+
+
+    template <class T>
     struct is_lvalue_reference
     {
         static constexpr bool value = false;

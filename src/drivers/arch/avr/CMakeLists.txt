@@ -1,5 +1,5 @@
-
 add_library(avr_gpio gpio.hpp src/gpio.cpp)
+target_link_libraries(avr_gpio PUBLIC tos_util tos_gpio tos_core)
 target_include_directories(avr_gpio PUBLIC .)
 
 add_library(avr_usart src/usart.cpp usart.hpp)

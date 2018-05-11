@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <drivers/common/dht22.hpp>
 #include <util/delay.h>
+#include <avr/boot.h>
 
 tos::usart comm;
 
@@ -62,10 +63,11 @@ void tick_task()
         if (ticks == 2000)
         {
             char b[32];
-            println(comm, "Tick!", int(d.read11(8_pin)), dtostrf(d.temperature, 2, 2, b));
-            println(comm, "Humidity: ", dtostrf(d.humidity, 2, 2, b));
+            d.read11(8_pin);
+            println(comm, "Temperature:", dtostrf(d.temperature, 2, 2, b));
+            println(comm, "Humidity:", dtostrf(d.humidity, 2, 2, b));
             auto st = GetTemp();
-            println(comm, "Internal: ", dtostrf(st, 2, 2, b));
+            println(comm, "Internal:", dtostrf(st, 2, 2, b));
             ticks = 0;
         }
     }

@@ -3,3 +3,4 @@ avrbuild
 cmake-build-*
 .idea
 *build*/
+apps/*
