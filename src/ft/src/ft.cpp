@@ -138,7 +138,7 @@ namespace tos {
             }
         }
 
-        constexpr auto stack_size = 256;
+        constexpr auto stack_size = 512;
 
         auto thread = new thread_info();
         num_threads++;

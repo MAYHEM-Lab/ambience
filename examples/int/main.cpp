@@ -17,8 +17,6 @@
 
 tos::usart comm;
 
-tos::event pinsem;
-
 void tick_task()
 {
     using namespace tos::tos_literals;
@@ -32,9 +30,12 @@ void tick_task()
     auto g = tos::open(tos::devs::gpio);
     g->set_pin_mode(2_pin, tos::pin_mode_t::in_pullup);
 
-    g->attach_interrupt(2_pin, tos::pin_change::falling, {nullptr, [](void*){
+    tos::event pinsem;
+    auto handler = [&]{
         pinsem.fire();
-    }});
+    };
+
+    g->attach_interrupt(2_pin, tos::pin_change::falling, handler);
 
     tos::tuple<int, bool> tp {3, 1};
 

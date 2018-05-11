@@ -16,12 +16,25 @@ namespace tos
     {
     public:
         using funptr_t = RetT(*)(ArgTs..., void*);
-        void* data;
-        funptr_t fun;
+
+        function_ref() = default;
+
+        explicit function_ref(funptr_t ptr, void* data = nullptr)
+                : fun(ptr), data(data) {}
+
+        template <class T>
+        function_ref(T& func) : fun([](ArgTs&&... args, void* data) {
+            auto& foo = *static_cast<const T*>(data);
+            foo(forward<ArgTs>(args)...);
+        }), data(&func) {}
 
         RetT operator()(ArgTs&&... args)
         {
             return fun(tos::forward<ArgTs>(args)..., data);
         }
+
+    private:
+        funptr_t fun;
+        void* data;
     };
 }
