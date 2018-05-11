@@ -30,6 +30,10 @@ if (NOT TOS_X86)
     add_library(tos_clock common/system_clock.hpp)
     target_link_libraries(tos_clock PUBLIC tos_core)
     target_include_directories(tos_dht22 PUBLIC .)
+
+    add_library(tos_eeprom common/eeprom.hpp common/eeprom.hpp)
+    target_link_libraries(tos_eeprom PUBLIC tos_core)
+    target_include_directories(tos_eeprom PUBLIC .)
 endif()
 
 add_library(tos_tty common/tty.hpp src/stub.cpp)

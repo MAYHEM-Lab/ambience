@@ -11,6 +11,11 @@ namespace tos
         return a < b ? b : a;
     }
 
+    template <class T>
+    constexpr T min(const T &a, const T &b) {
+        return a > b ? b : a;
+    }
+
     template <class ItT>
     constexpr auto max_range(ItT begin, ItT end) -> remove_reference_t<decltype(*begin)>
     {

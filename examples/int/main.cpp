@@ -13,6 +13,7 @@
 #include <tos/event.hpp>
 
 #include <tos/tuple.hpp>
+#include <drivers/arch/avr/eeprom.hpp>
 
 tos::usart comm;
 
@@ -37,11 +38,17 @@ void tick_task()
 
     tos::tuple<int, bool> tp {3, 1};
 
+    auto eeprom = tos::open(tos::devs::eeprom<0>);
+    int num = 0;
+    eeprom->read(0, &num, sizeof num);
+
     println(comm, "Hello", tos::get<0>(tp), tos::get<1>(tp));
     while (true)
     {
         pinsem.wait();
-        println(comm, "Pin Change!");
+        ++num;
+        eeprom->write(0, &num, sizeof num);
+        println(comm, "Pin Change!", num);
     }
 }
 

@@ -13,3 +13,7 @@ target_include_directories(avr_spi PUBLIC .)
 add_library(avr_timer timer.hpp src/timer.cpp)
 target_link_libraries(avr_timer PUBLIC tos_core)
 target_include_directories(avr_timer PUBLIC .)
+
+add_library(avr_eeprom eeprom.hpp src/eeprom.cpp)
+target_link_libraries(avr_eeprom PUBLIC tos_core tos_eeprom)
+target_include_directories(avr_eeprom PUBLIC .)
