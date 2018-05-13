@@ -24,7 +24,7 @@ if (NOT TOS_X86)
     target_include_directories(tos_gpio PUBLIC .)
 
     add_library(tos_dht22 common/dht22.hpp src/dht22.cpp)
-    target_link_libraries(tos_dht22 PUBLIC tos_core tos_gpio tos_clock)
+    target_link_libraries(tos_dht22 PUBLIC tos_core tos_gpio)
     target_include_directories(tos_dht22 PUBLIC .)
 
     add_library(tos_alarm common/alarm.hpp)

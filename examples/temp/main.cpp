@@ -14,6 +14,8 @@
 #include <drivers/common/dht22.hpp>
 #include <util/delay.h>
 #include <avr/boot.h>
+#include <tos/event.hpp>
+#include <drivers/common/alarm.hpp>
 
 tos::usart comm;
 
@@ -42,34 +44,33 @@ void tick_task()
             tos::usart_parity::disabled,
             tos::usart_stop_bit::one);
     usart->enable();
-    auto tmr = open(tos::devs::timer<1>);
-    //tmr->disable();
-    tmr->set_frequency(1000);
-    tmr->enable();
-    tmr->set_callback([](void* d)
-    {
-        x_ticks++;
-    }, nullptr);
 
     tos::dht d{};
     auto p = 8_pin;
     tos::avr::gpio g;
     g.set_pin_mode(p, tos::pin_mode_t::in_pullup);
 
+    g.set_pin_mode(2_pin, tos::pin_mode_t::in_pullup);
+
+    tos::event temp_int;
+    auto inthandler = [&]{
+        temp_int.fire();
+    };
+
+    g.attach_interrupt(2_pin, tos::pin_change::falling, inthandler);
+
+    auto tmr = open(tos::devs::timer<1>);
+    tos::alarm<tos::remove_reference_t<decltype(*tmr)>> alarm{*tmr};
     while (true)
     {
-        tmr->block();
-        ticks++;
-        if (ticks == 2000)
-        {
-            char b[32];
-            d.read11(8_pin);
-            println(comm, "Temperature:", dtostrf(d.temperature, 2, 2, b));
-            println(comm, "Humidity:", dtostrf(d.humidity, 2, 2, b));
-            auto st = GetTemp();
-            println(comm, "Internal:", dtostrf(st, 2, 2, b));
-            ticks = 0;
-        }
+        temp_int.wait();
+        char b[32];
+        d.read11(8_pin);
+        println(comm, "Temperature:", dtostrf(d.temperature, 2, 2, b));
+        println(comm, "Humidity:", dtostrf(d.humidity, 2, 2, b));
+        auto st = GetTemp();
+        println(comm, "Internal:", dtostrf(st, 2, 2, b));
+        alarm.sleep_for({ 100 });
     }
 }
 
