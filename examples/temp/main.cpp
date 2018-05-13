@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <drivers/common/dht22.hpp>
 #include <util/delay.h>
-#include <avr/boot.h>
 #include <tos/event.hpp>
 #include <drivers/common/alarm.hpp>
 
@@ -54,10 +53,12 @@ void tick_task()
 
     tos::event temp_int;
     auto inthandler = [&]{
-        temp_int.fire();
+        temp_int.fire_isr();
     };
 
-    g.attach_interrupt(2_pin, tos::pin_change::falling, inthandler);
+    EIMSK = 0;
+    EICRA = 0;
+    g.attach_interrupt(2_pin, tos::pin_change::low, inthandler);
 
     auto tmr = open(tos::devs::timer<1>);
     tos::alarm<tos::remove_reference_t<decltype(*tmr)>> alarm{*tmr};

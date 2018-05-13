@@ -13,6 +13,9 @@
 
 #include <string.h>
 
+#include <avr/power.h>
+#include <avr/sleep.h>
+
 extern "C"
 {
 #define soft_reset()        \
@@ -50,6 +53,10 @@ void tos_set_stack_ptr(void* ptr)
 
 void tos_power_down()
 {
+    /*set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
+    sleep_cpu();
+    sleep_disable();*/
 }
 
 alignas(16) char stack[256 * 2];

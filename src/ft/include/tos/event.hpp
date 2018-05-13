@@ -13,6 +13,11 @@ namespace tos {
         explicit event() noexcept
         { }
 
+        void fire_isr() noexcept
+        {
+            m_wait.signal_all();
+        }
+
     private:
         waitable m_wait;
     };

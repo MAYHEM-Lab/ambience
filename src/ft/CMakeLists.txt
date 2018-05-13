@@ -7,6 +7,7 @@ add_library(tos_ft
         include/tos/semaphore.hpp
         include/tos/scheduler.hpp
         include/tos/waitable.hpp
+        include/tos/event.hpp
         src/ft.cpp
         src/semaphore.cpp)
 

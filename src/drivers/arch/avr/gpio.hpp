@@ -78,7 +78,8 @@ namespace tos
     {
         falling = 2,
         rising = 3,
-        any = 1
+        any = 1,
+        low = 0
     };
 
     namespace avr
