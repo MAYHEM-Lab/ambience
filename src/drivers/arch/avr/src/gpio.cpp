@@ -4,6 +4,7 @@
 
 #include <avr/interrupt.h>
 #include <gpio.hpp>
+#include <avr/sleep.h>
 
 namespace tos
 {
@@ -15,6 +16,8 @@ namespace tos
 
 ISR(INT0_vect)
 {
+    sleep_disable();
+
     tos::avr::exint_handlers[0]();
 }
 

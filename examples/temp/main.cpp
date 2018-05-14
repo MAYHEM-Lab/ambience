@@ -37,6 +37,7 @@ double GetTemp(void)
 void tick_task()
 {
     using namespace tos::tos_literals;
+
     auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
     usart->options(
             tos::usart_modes::async,
@@ -45,9 +46,9 @@ void tick_task()
     usart->enable();
 
     tos::dht d{};
-    auto p = 8_pin;
+
     tos::avr::gpio g;
-    g.set_pin_mode(p, tos::pin_mode_t::in_pullup);
+    g.set_pin_mode(8_pin, tos::pin_mode_t::in_pullup);
 
     g.set_pin_mode(2_pin, tos::pin_mode_t::in_pullup);
 
@@ -56,8 +57,6 @@ void tick_task()
         temp_int.fire_isr();
     };
 
-    EIMSK = 0;
-    EICRA = 0;
     g.attach_interrupt(2_pin, tos::pin_change::low, inthandler);
 
     auto tmr = open(tos::devs::timer<1>);
@@ -66,7 +65,8 @@ void tick_task()
     {
         temp_int.wait();
         char b[32];
-        d.read11(8_pin);
+        auto res = d.read11(8_pin);
+        println(comm, res);
         println(comm, "Temperature:", dtostrf(d.temperature, 2, 2, b));
         println(comm, "Humidity:", dtostrf(d.humidity, 2, 2, b));
         auto st = GetTemp();
@@ -77,6 +77,8 @@ void tick_task()
 
 int main()
 {
+    using namespace tos::tos_literals;
+
     tos::enable_interrupts();
 
     tos::launch(tick_task);

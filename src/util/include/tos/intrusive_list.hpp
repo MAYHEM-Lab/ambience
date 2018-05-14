@@ -178,6 +178,7 @@ namespace tos
         {
             t.prev->next = &t;
         }
+        ++m_size;
     }
 
     template<class T>

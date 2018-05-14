@@ -34,11 +34,13 @@ namespace tos
         }
 
         void timer1::enable() {
+            tos::busy();
             PRR &= ~(1 << PRTIM1);
         }
 
         void timer1::disable() {
             PRR |= (1 << PRTIM1);
+            tos::unbusy();
         }
 
         uint16_t timer1::get_ticks() {

@@ -27,7 +27,7 @@ namespace tos {
         }
 
         void usart0::enable() {
-            UCSR0B |= (1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0);// | (1 << TXCIE0);
+            UCSR0B |= (1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0) | (1 << TXCIE0);
         }
 
         void usart0::disable() {
@@ -88,8 +88,8 @@ open_state *state = create();
 
 static void put_sync(const char data)
 {
-    while (!( UCSR0A & (1<<UDRE0)));                // wait while register is free
-    UDR0 = data;                                   // load data in the register
+    while (!(UCSR0A & (1<<UDRE0)));
+    UDR0 = data;
 }
 
 namespace tos
@@ -112,8 +112,10 @@ static void write_usart(const char* x, size_t len)
 
     state->len = len;
     state->write = x;
+    tos::busy(); // We'll block, keep mcu awake
     UCSR0B |= (1 << UDRIE0); // enable empty buffer interrupt, ISR will send the data
     state->write_done.down();
+    tos::unbusy();
 }
 
 static size_t read_usart(char *buf, size_t len) {
@@ -150,19 +152,25 @@ namespace tos
     }
 }
 
+ISR (USART_TX_vect)
+{
+    state->write_done.up_isr();
+}
+
 ISR (USART_UDRE_vect) {
+    if (state->len == 0) {
+        UCSR0B &= ~(1 << UDRIE0);
+        return;
+    }
+
     UDR0 = *state->write;
     ++state->write;
 
     state->len--;
-    if (state->len == 0) {
-        UCSR0B &= ~(1 << UDRIE0);
-        state->write_done.up();
-    }
 }
 
 ISR (USART_RX_vect) {
     auto byte = UDR0;
     state->read_buf.push_back(byte);
-    state->have_data.up();
+    state->have_data.up_isr();
 }

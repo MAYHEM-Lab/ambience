@@ -35,7 +35,7 @@ namespace tos
     class dht
     {
     public:
-        dht() { _disableIRQ = false; };
+        dht() { _disableIRQ = true; };
         // return values:
         // DHTLIB_OK
         // DHTLIB_ERROR_CHECKSUM

@@ -56,15 +56,22 @@ namespace tos
             s.ev.wait();
         }
 
+
+        constexpr milliseconds min_resolution() const { return { 1 }; }
+
+    private:
+
         void start()
         {
             m_timer->set_frequency(1000);
             m_timer->enable();
         }
 
-        constexpr milliseconds min_resolution() const { return { 1 }; }
+        void stop()
+        {
+            m_timer->disable();
+        }
 
-    private:
         void tick_handler()
         {
             auto& front = m_sleepers.front();

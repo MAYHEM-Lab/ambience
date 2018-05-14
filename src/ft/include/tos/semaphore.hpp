@@ -10,6 +10,12 @@ namespace tos {
 
         void down() noexcept;
 
+        void up_isr() noexcept
+        {
+            ++m_count;
+            m_wait.signal_one();
+        }
+
         explicit semaphore(int8_t n) noexcept
                 :m_count(n)
         { }

@@ -15,6 +15,7 @@ namespace tos {
             int num_threads = 0;
             int capacity = 0;
             jmp_buf main_context{};
+            uint8_t busy = 0;
 
             void start(void (* t_start)());
 
@@ -176,7 +177,6 @@ namespace tos {
         tos_set_stack_ptr((void*) ((uintptr_t) cur_thread->stack+stack_size));
 
         tos::enable_interrupts();
-
         cur_thread->entry();
         this_thread::exit(nullptr);
     }
@@ -191,6 +191,9 @@ namespace tos {
         return run_queue.size();
     }
 
+    void busy() { sc.busy++; }
+    void unbusy() { sc.busy--; }
+
     void scheduler::schedule()
     {
         if (num_threads==0) {
@@ -203,7 +206,14 @@ namespace tos {
             /*
              * there's no thread to run right now
              */
-            return tos_power_down();
+
+            if (sc.busy > 0)
+            {
+                return;
+            }
+
+            tos_power_down();
+            return;
         }
 
         // interrupts are disabled during a context switch

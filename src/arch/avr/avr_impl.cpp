@@ -15,6 +15,7 @@
 
 #include <avr/power.h>
 #include <avr/sleep.h>
+#include <util/delay.h>
 
 extern "C"
 {
@@ -38,25 +39,14 @@ void wdt_init(void)
     return;
 }
 
-void tos_set_stack_ptr(void* ptr) __attribute__((naked));
-void tos_set_stack_ptr(void* ptr)
-{
-    // return address is in the stack
-    // if we just change the stack pointer
-    // we can't return to the caller
-    // copying the last 10 bytes from the original
-    // stack to this stack so that we'll be able
-    // to return
-    memcpy(ptr - 10, (void*)SP, 10);
-    SP = reinterpret_cast<uint16_t>(ptr - 10);
-}
 
 void tos_power_down()
 {
-    /*set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
+    //sleep_bod_disable();
     sleep_cpu();
-    sleep_disable();*/
+    sleep_disable();
 }
 
 alignas(16) char stack[256 * 2];
