@@ -55,7 +55,7 @@ namespace tos {
         void putc(char c);
     };
 
-    inline auto open_impl(devs::tty_t<0>)
+    inline usart* open_impl(devs::tty_t<0>)
     {
         return new usart{};
     }

@@ -55,16 +55,18 @@ namespace tos {
 namespace tos {
     scheduler sc;
     intrusive_list<thread_info> run_queue;
-
-    thread_info* cur_thread = nullptr;
+    namespace impl
+    {
+        thread_info* cur_thread = nullptr;
+    }
 
     namespace this_thread {
         void yield()
         {
             tos::disable_interrupts();
-            if (setjmp(cur_thread->context)==(int) return_codes::saved) {
+            if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
                 // yielded
-                make_runnable(cur_thread);
+                make_runnable(impl::cur_thread);
                 switch_context(sc.main_context, return_codes::yield);
             }
             else {
@@ -74,17 +76,12 @@ namespace tos {
             }
         }
 
-        int get_id()
-        {
-            if (!cur_thread) return -1;
-            return cur_thread->id;
-        }
     }
 
     void wait_yield()
     {
         //tos::disable_interrupts();
-        if (setjmp(cur_thread->context)==(int) return_codes::saved) {
+        if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
             // yielded
             switch_context(sc.main_context, return_codes::do_wait);
         }
@@ -100,11 +97,6 @@ namespace tos {
         tos::disable_interrupts();
         // no need to save the current context
         switch_context(sc.main_context, return_codes::do_exit);
-    }
-
-    thread_info* self()
-    {
-        return cur_thread;
     }
 
     void launch(entry_t e)
@@ -145,7 +137,6 @@ namespace tos {
         num_threads++;
         thread->stack = tos_stack_alloc(stack_size);
         thread->entry = t_start;
-        thread->id = num_threads;
         threads[index] = thread;
 
         run_queue.push_back(*thread);
@@ -174,10 +165,10 @@ namespace tos {
          * not sure if doing this with such a function call will
          * be portable in all ABIs
          */
-        tos_set_stack_ptr((void*) ((uintptr_t) cur_thread->stack+stack_size));
+        tos_set_stack_ptr((void*) ((uintptr_t) impl::cur_thread->stack+stack_size));
 
         tos::enable_interrupts();
-        cur_thread->entry();
+        impl::cur_thread->entry();
         this_thread::exit(nullptr);
     }
 
@@ -223,12 +214,12 @@ namespace tos {
         switch (why) {
         case return_codes::saved:
             // run it
-            cur_thread = &run_queue.front();
+            impl::cur_thread = &run_queue.front();
             run_queue.pop_front();
             // thread should enable interrupts
-            switch_context(cur_thread->context, return_codes::scheduled);
+            switch_context(impl::cur_thread->context, return_codes::scheduled);
         case return_codes::yield:
-            cur_thread = nullptr;
+            impl::cur_thread = nullptr;
             tos::enable_interrupts();
             break;
         case return_codes::do_wait:
@@ -236,10 +227,10 @@ namespace tos {
             tos::enable_interrupts();
             break;
         case return_codes::do_exit:
-            tos_stack_free(cur_thread->stack);
-            delete cur_thread;
+            tos_stack_free(impl::cur_thread->stack);
+            delete impl::cur_thread;
             num_threads--;
-            cur_thread = nullptr;
+            impl::cur_thread = nullptr;
             tos::enable_interrupts();
             break;
         case return_codes::scheduled:

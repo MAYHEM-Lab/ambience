@@ -9,7 +9,6 @@
 #include <drivers/common/gpio.hpp>
 #include <tos/devices.hpp>
 #include <drivers/arch/avr/timer.hpp>
-#include <tos/waitable.hpp>
 #include <stdlib.h>
 #include <drivers/common/dht22.hpp>
 #include <util/delay.h>

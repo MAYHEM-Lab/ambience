@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tos/thread_info.hpp>
+#include <tos/ft.hpp>
 #include <tos/scheduler.hpp>
 #include <tos/interrupt.hpp>
 

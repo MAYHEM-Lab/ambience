@@ -5,6 +5,7 @@
 #pragma once
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <string.h>
 
 extern "C"
@@ -18,7 +19,19 @@ extern "C"
         // copying the last 10 bytes from the original
         // stack to this stack so that we'll be able
         // to return
-        memcpy(ptr - 10, (void*)SP, 10);
-        SP = reinterpret_cast<uint16_t>(ptr - 10);
+        //memcpy(ptr - 10, (void*)SP, 10);
+        SP = reinterpret_cast<uint16_t>(ptr/* - 10*/);
+    }
+
+    inline void tos_enable_interrupts() __attribute__((always_inline));
+    inline void tos_enable_interrupts()
+    {
+        sei();
+    }
+
+    inline void tos_disable_interrupts() __attribute__((always_inline));
+    inline void tos_disable_interrupts()
+    {
+        cli();
     }
 }

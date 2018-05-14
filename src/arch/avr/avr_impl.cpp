@@ -65,16 +65,6 @@ void tos_shutdown()
 {
     soft_reset();
 }
-
-void tos_enable_interrupts()
-{
-    sei();
-}
-
-void tos_disable_interrupts()
-{
-    cli();
-}
 }
 
 void* operator new(size_t sz)

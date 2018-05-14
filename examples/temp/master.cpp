@@ -35,7 +35,7 @@ void tick_task()
 
     while (true)
     {
-        alarm.sleep_for({ 20000 });
+        alarm.sleep_for({ 5000 });
         g->write(8_pin, false);
         alarm.sleep_for({ 20 });
         g->write(8_pin, true);
