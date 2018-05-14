@@ -6,6 +6,7 @@
 
 #include <tos_arch.hpp>
 #include <tos/interrupt.hpp>
+#include <tos/new.hpp>
 
 namespace tos {
     namespace {
@@ -133,9 +134,10 @@ namespace tos {
 
         constexpr auto stack_size = 512;
 
-        auto thread = new thread_info();
+        auto stack = tos_stack_alloc(stack_size);
+        auto thread = new (stack + stack_size - sizeof(thread_info)) thread_info();
         num_threads++;
-        thread->stack = tos_stack_alloc(stack_size);
+        thread->stack = stack;
         thread->entry = t_start;
         threads[index] = thread;
 
@@ -165,7 +167,8 @@ namespace tos {
          * not sure if doing this with such a function call will
          * be portable in all ABIs
          */
-        tos_set_stack_ptr((void*) ((uintptr_t) impl::cur_thread->stack+stack_size));
+        tos_set_stack_ptr((void*) ((uintptr_t) impl::cur_thread->stack +
+                stack_size-sizeof(thread_info)));
 
         tos::enable_interrupts();
         impl::cur_thread->entry();
@@ -227,11 +230,15 @@ namespace tos {
             tos::enable_interrupts();
             break;
         case return_codes::do_exit:
-            tos_stack_free(impl::cur_thread->stack);
-            delete impl::cur_thread;
-            num_threads--;
+        {
+            auto stack_ptr = impl::cur_thread->stack;
+            impl::cur_thread->~thread_info();
             impl::cur_thread = nullptr;
+            tos_stack_free(stack_ptr);
+            //delete impl::cur_thread;
+            num_threads--;
             tos::enable_interrupts();
+        }
             break;
         case return_codes::scheduled:
             break;
