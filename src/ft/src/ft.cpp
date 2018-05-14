@@ -132,7 +132,7 @@ namespace tos {
             }
         }
 
-        constexpr auto stack_size = 512;
+        constexpr auto stack_size = 256;
 
         auto stack = tos_stack_alloc(stack_size);
         auto thread = new (stack + stack_size - sizeof(thread_info)) thread_info();
