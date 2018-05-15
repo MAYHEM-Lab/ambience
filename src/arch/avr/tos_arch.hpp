@@ -19,8 +19,8 @@ extern "C"
         // copying the last 10 bytes from the original
         // stack to this stack so that we'll be able
         // to return
-        //memcpy(ptr - 10, (void*)SP, 10);
-        SP = reinterpret_cast<uint16_t>(ptr/* - 10*/);
+        memcpy(ptr - 2, (void*)SP, 2);
+        SP = reinterpret_cast<uint16_t>(ptr - 2);
     }
 
     inline void tos_enable_interrupts() __attribute__((always_inline));

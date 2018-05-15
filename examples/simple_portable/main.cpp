@@ -9,28 +9,38 @@
 #include <drivers/common/tty.hpp>
 
 #include <drivers/arch/avr/usart.hpp>
+#include <ft/include/tos/mutex.hpp>
 //#include <drivers/arch/x86/stdio.hpp>
 
 tos::semaphore sem(0);
 
+tos::mutex m;
 void hello_task()
 {
     auto tty = tos::open(tos::devs::tty<0>);
+    m.lock();
+    tos::println(*tty, tos::this_thread::get_id().id, tos::self()->stack, (void*)SP);
+    m.unlock();
     while (true) {
         sem.down();
+        m.lock();
         tos::println(*tty, tos::this_thread::get_id().id, ": hello");
+        m.unlock();
     }
 }
-
-template <class> class p;
 
 void yo_task()
 {
     auto tty = tos::open(tos::devs::tty<0>);
+    m.lock();
+    tos::println(*tty, tos::this_thread::get_id().id, tos::self()->stack, (void*)SP);
+    m.unlock();
     for (int i = 0; i < 100; ++i)
     {
         sem.up();
-        tos::println(*tty, tos::this_thread::get_id().id, ": yo");
+        m.lock();
+        tos::println(*tty, tos::this_thread::get_id().id, ": yo", i);
+        m.unlock();
         tos::this_thread::yield();
     }
 }
