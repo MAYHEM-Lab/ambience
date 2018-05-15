@@ -7,10 +7,7 @@ namespace tos {
     struct thread_info
             : public list_node<thread_info>
     {
-        void* stack;
-
         void (* entry)();
-
         jmp_buf context;
     };
 }

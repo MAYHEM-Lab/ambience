@@ -15,11 +15,12 @@
 tos::semaphore sem(0);
 
 tos::mutex m;
+void hello_task() __attribute__((OS_task));
 void hello_task()
 {
     auto tty = tos::open(tos::devs::tty<0>);
     m.lock();
-    tos::println(*tty, tos::this_thread::get_id().id, tos::self()->stack, (void*)SP);
+    tos::println(*tty, tos::this_thread::get_id().id, (void*)SP);
     m.unlock();
     while (true) {
         sem.down();
@@ -29,11 +30,12 @@ void hello_task()
     }
 }
 
+void yo_task() __attribute__((OS_task));
 void yo_task()
 {
     auto tty = tos::open(tos::devs::tty<0>);
     m.lock();
-    tos::println(*tty, tos::this_thread::get_id().id, tos::self()->stack, (void*)SP);
+    tos::println(*tty, tos::this_thread::get_id().id, (void*)SP);
     m.unlock();
     for (int i = 0; i < 100; ++i)
     {

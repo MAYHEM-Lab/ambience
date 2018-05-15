@@ -14,6 +14,7 @@
 #include <drivers/arch/avr/timer.hpp>
 #include <tos/waitable.hpp>
 #include <stdlib.h>
+#include <drivers/common/alarm.hpp>
 
 tos::usart comm;
 void print_hex(unsigned char n) {
@@ -28,29 +29,18 @@ void print_hex(unsigned char n) {
         comm.putc('A' + ((n>>4)&15) - 10);
 }
 
-int32_t x_ticks = 0;
 uint16_t ticks = 0;
+int32_t x_ticks = 0;
 
 void tick_task()
 {
     auto tmr = open(tos::devs::timer<1>);
-    //tmr->disable();
-    tmr->set_frequency(1000);
-    tmr->enable();
-    tmr->set_callback([](void* d)
-    {
-        x_ticks++;
-    }, nullptr);
+    tos::alarm<tos::remove_reference_t<decltype(*tmr)>> alarm{*tmr};
 
     while (true)
     {
-        tmr->block();
-        ticks++;
-        if (ticks == 1000)
-        {
-            println(comm, "Tick!");
-            ticks = 0;
-        }
+        alarm.sleep_for({ 1000 });
+        println(comm, "Tick!");
     }
 }
 

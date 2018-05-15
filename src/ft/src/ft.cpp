@@ -110,6 +110,7 @@ namespace tos {
         sc.schedule();
     }
 
+    constexpr auto stack_size = 256;
     void scheduler::start(void (* t_start)())
     {
         int index = 0;
@@ -132,12 +133,11 @@ namespace tos {
             }
         }
 
-        constexpr auto stack_size = 256;
-
-        auto stack = tos_stack_alloc(stack_size);
-        auto thread = new (stack + stack_size - sizeof(thread_info)) thread_info();
+        const auto stack = static_cast<char*>(tos_stack_alloc(stack_size));
+        const auto t_ptr = stack + stack_size - sizeof(thread_info);
+        auto thread = new (t_ptr) thread_info();
         num_threads++;
-        thread->stack = stack;
+        //thread->stack = stack;
         thread->entry = t_start;
         threads[index] = thread;
 
@@ -167,8 +167,7 @@ namespace tos {
          * not sure if doing this with such a function call will
          * be portable in all ABIs
          */
-        tos_set_stack_ptr((void*) ((uintptr_t) impl::cur_thread->stack +
-                stack_size-sizeof(thread_info)));
+        tos_set_stack_ptr((void*) ((uintptr_t) reinterpret_cast<char*>(impl::cur_thread)));
 
         tos::enable_interrupts();
         impl::cur_thread->entry();
@@ -231,7 +230,7 @@ namespace tos {
             break;
         case return_codes::do_exit:
         {
-            auto stack_ptr = impl::cur_thread->stack;
+            auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread) + sizeof(thread_info) - stack_size;
             impl::cur_thread->~thread_info();
             impl::cur_thread = nullptr;
             tos_stack_free(stack_ptr);

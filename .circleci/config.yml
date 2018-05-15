@@ -40,7 +40,11 @@ jobs:
       - run:
           working_directory: build/
           name: Build Project
-          command: ninja sdcard
+          command: ninja temp
+      - run:
+          working_directory: build/
+          name: Build Project
+          command: ninja temp_master
 workflows:
   version: 2
   all_platforms:

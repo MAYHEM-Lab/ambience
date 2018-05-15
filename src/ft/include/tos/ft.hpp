@@ -42,7 +42,7 @@ namespace tos
         inline task_id_t get_id()
         {
             if (!impl::cur_thread) return {static_cast<uintptr_t>(-1)};
-            return {reinterpret_cast<uintptr_t>(impl::cur_thread->stack) };
+            return {reinterpret_cast<uintptr_t>(impl::cur_thread) };
         }
     }
 }
