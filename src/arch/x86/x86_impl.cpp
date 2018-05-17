@@ -22,7 +22,7 @@ extern "C"
         free(data);
     }
 
-    void tos_shutdown()
+    void tos_reboot()
     {
         exit(1);
     }

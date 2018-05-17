@@ -7,7 +7,9 @@ namespace tos {
     struct thread_info
             : public list_node<thread_info>
     {
-        void (* entry)();
+        using entry_point_t = void(*)();
+
+        entry_point_t entry;
         jmp_buf context;
     };
 }

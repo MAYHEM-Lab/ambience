@@ -43,7 +43,6 @@ namespace tos {
     inline void waitable::wait()
     {
         add(*self());
-        //tos::enable_interrupts();
         wait_yield();
     }
 

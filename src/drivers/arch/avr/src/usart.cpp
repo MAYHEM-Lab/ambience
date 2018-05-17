@@ -79,7 +79,7 @@ struct open_state {
     tos::semaphore have_data{0};
 };
 
-open_state *create() {
+static open_state *create() {
     static open_state state;
     return &state;
 }

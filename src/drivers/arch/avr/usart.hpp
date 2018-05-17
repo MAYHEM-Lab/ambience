@@ -57,6 +57,7 @@ namespace tos {
 
     inline usart* open_impl(devs::tty_t<0>)
     {
-        return new usart{};
+        static usart u;
+        return &u;
     }
 }

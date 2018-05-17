@@ -2,8 +2,6 @@ project(tos)
 
 set(TOS_CORE_HEADERS
 	tos/devices.hpp
-	tos/promise.hpp 
-	tos/chrono.hpp 
 	tos/char_stream.hpp
 	tos/arch.hpp
     )

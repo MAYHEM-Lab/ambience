@@ -8,15 +8,12 @@ namespace tos {
     public:
         void fire() noexcept;
 
+        void fire_isr() noexcept;
+
         void wait() noexcept;
 
         explicit event() noexcept
         { }
-
-        void fire_isr() noexcept
-        {
-            m_wait.signal_all();
-        }
 
     private:
         waitable m_wait;
@@ -27,13 +24,18 @@ namespace tos {
     inline void event::fire() noexcept
     {
         tos::int_guard ig;
-        m_wait.signal_all();
+        fire_isr();
     }
 
     inline void event::wait() noexcept
     {
-        tos::disable_interrupts();
+        tos::int_guard ig;
         m_wait.wait();
+    }
+
+    inline void event::fire_isr() noexcept
+    {
+        m_wait.signal_all();
     }
 }
 

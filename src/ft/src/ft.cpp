@@ -7,16 +7,16 @@
 #include <tos_arch.hpp>
 #include <tos/interrupt.hpp>
 #include <tos/new.hpp>
+#include <tos/memory.hpp>
 
 namespace tos {
     namespace {
         struct scheduler
         {
-            thread_info** threads = nullptr;
-            int num_threads = 0;
-            int capacity = 0;
             jmp_buf main_context{};
+            int8_t  num_threads = 0;
             uint8_t busy = 0;
+            intrusive_list<thread_info> run_queue;
 
             void start(void (* t_start)());
 
@@ -26,27 +26,6 @@ namespace tos {
 }
 
 namespace tos {
-    enum class return_codes : uint8_t
-    {
-        saved = 0,
-        /**
-         * a running thread yielded
-         */
-        yield,
-        /**
-         * a running thread is waiting on something
-         */
-        do_wait,
-        /**
-         * a thread exited
-         */
-        do_exit,
-        /**
-         * the thread was assigned the cpu
-         */
-        scheduled
-    };
-
     [[noreturn]] static void switch_context(jmp_buf& j, return_codes rc)
     {
         longjmp(j, static_cast<int>(rc));
@@ -55,7 +34,6 @@ namespace tos {
 
 namespace tos {
     scheduler sc;
-    intrusive_list<thread_info> run_queue;
     namespace impl
     {
         thread_info* cur_thread = nullptr;
@@ -64,16 +42,10 @@ namespace tos {
     namespace this_thread {
         void yield()
         {
-            tos::disable_interrupts();
+            tos::int_guard ig;
             if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
-                // yielded
                 make_runnable(impl::cur_thread);
                 switch_context(sc.main_context, return_codes::yield);
-            }
-            else {
-                tos::enable_interrupts();
-                // We're back to this thread, upon returning from
-                // yield, control will be back to the thread
             }
         }
 
@@ -81,26 +53,21 @@ namespace tos {
 
     void wait_yield()
     {
-        //tos::disable_interrupts();
         if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
-            // yielded
             switch_context(sc.main_context, return_codes::do_wait);
-        }
-        else {
-            tos::enable_interrupts();
-            // We're back to this thread, upon returning from
-            // yield, control will be back to the thread
         }
     }
 
     static void thread_exit()
     {
         tos::disable_interrupts();
-        // no need to save the current context
+
+        // no need to save the current context, we'll exit
+
         switch_context(sc.main_context, return_codes::do_exit);
     }
 
-    void launch(entry_t e)
+    void launch(thread_info::entry_point_t e)
     {
         sc.start(e);
     }
@@ -113,59 +80,42 @@ namespace tos {
     constexpr auto stack_size = 256;
     void scheduler::start(void (* t_start)())
     {
-        int index = 0;
-        if (capacity==num_threads) {
-            auto new_one = new thread_info* [capacity+1];
-            for (int i = 0; i<num_threads; ++i) {
-                new_one[i] = threads[i];
-            }
-            delete threads;
-            threads = new_one;
-            capacity++;
-            index = num_threads;
-        }
-        else {
-            for (auto t = threads; t!=threads+capacity; ++t) {
-                if (t==nullptr) {
-                    index = t-threads;
-                    break;
-                }
-            }
-        }
-
         const auto stack = static_cast<char*>(tos_stack_alloc(stack_size));
         const auto t_ptr = stack + stack_size - sizeof(thread_info);
+
+        /**
+         * Thread info objects are placed at the top of the stack. This
+         * allows us to create threads without any memory allocation in
+         * the case the stack is provided by the user.
+         */
         auto thread = new (t_ptr) thread_info();
-        num_threads++;
-        //thread->stack = stack;
+
+        // Can we get rid of storing the entry point? Maybe in the stack?
         thread->entry = t_start;
-        threads[index] = thread;
 
+        // New threads are runnable by default.
         run_queue.push_back(*thread);
+        num_threads++;
 
-        tos::disable_interrupts();
-
-        /*
+        /**
          * save the current processor state as the
          * threads current state
          * we'll pick it up from here when it's
          * scheduled
          */
+        tos::disable_interrupts();
         if (setjmp(thread->context)==(int) return_codes::saved) {
             //done
             tos::enable_interrupts();
             return;
         }
 
-        // this is the actual entry point of the thread.
-        // will be called when scheduled
-
-        /*
+        /**
+         * this is the actual entry point of the thread.
+         * will be called when scheduled
+         *
          * set the stack pointer so the new thread will have an
          * independent execution context
-         *
-         * not sure if doing this with such a function call will
-         * be portable in all ABIs
          */
         tos_set_stack_ptr((void*) ((uintptr_t) reinterpret_cast<char*>(impl::cur_thread)));
 
@@ -181,7 +131,7 @@ namespace tos {
 
     uint8_t runnable_count()
     {
-        return run_queue.size();
+        return sc.run_queue.size();
     }
 
     void busy() { sc.busy++; }
@@ -189,14 +139,14 @@ namespace tos {
 
     void scheduler::schedule()
     {
+        // TODO: remove these to let the caller decide
         if (num_threads==0) {
             // no thread left, potentially a bug
-            //tos::avr::write_sync("reboot\n", 8);
-            tos_shutdown();
+            tos_reboot();
         }
 
         if (run_queue.empty()) {
-            /*
+            /**
              * there's no thread to run right now
              */
 
@@ -210,43 +160,35 @@ namespace tos {
         }
 
         // interrupts are disabled during a context switch
-        tos::disable_interrupts();
+        tos::int_guard ig;
         auto why = static_cast<return_codes>(setjmp(sc.main_context));
 
         switch (why) {
         case return_codes::saved:
-            // run it
+        {
             impl::cur_thread = &run_queue.front();
             run_queue.pop_front();
-            // thread should enable interrupts
+
             switch_context(impl::cur_thread->context, return_codes::scheduled);
-        case return_codes::yield:
-            impl::cur_thread = nullptr;
-            tos::enable_interrupts();
-            break;
-        case return_codes::do_wait:
-            // nothing
-            tos::enable_interrupts();
-            break;
+        }
         case return_codes::do_exit:
         {
-            auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread) + sizeof(thread_info) - stack_size;
-            impl::cur_thread->~thread_info();
-            impl::cur_thread = nullptr;
+            auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
+                    + sizeof(thread_info) - stack_size;
+            std::destroy_at(impl::cur_thread);
             tos_stack_free(stack_ptr);
-            //delete impl::cur_thread;
             num_threads--;
-            tos::enable_interrupts();
         }
-            break;
-        case return_codes::scheduled:
+        default:
             break;
         }
+
+        impl::cur_thread = nullptr;
     }
 
     void make_runnable(thread_info* t)
     {
-        run_queue.push_back(*t);
+        sc.run_queue.push_back(*t);
     }
 }
 

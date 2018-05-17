@@ -13,4 +13,4 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 set(CMAKE_C_FLAGS "-mmcu=${AVR_CPU} ${CMAKE_C_FLAGS} -Wall -Wextra -ffreestanding")
 set(CMAKE_CXX_FLAGS "-mmcu=${AVR_CPU} ${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections -std=c++14 -Wall -Wextra -fno-unwind-tables -ffreestanding -fno-exceptions -fno-rtti -fno-threadsafe-statics")
-set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections")
+set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections -fno-threadsafe-statics")
