@@ -10,8 +10,8 @@
 
 extern "C"
 {
-    void tos_set_stack_ptr(void* ptr) __attribute__((always_inline));
-    inline void tos_set_stack_ptr(void* ptr)
+    void tos_set_stack_ptr(char* ptr) __attribute__((always_inline));
+    inline void tos_set_stack_ptr(char* ptr)
     {
         // return address is in the stack
         // if we just change the stack pointer

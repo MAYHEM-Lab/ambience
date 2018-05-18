@@ -14,14 +14,13 @@
 #include <util/delay.h>
 #include <tos/event.hpp>
 #include <drivers/common/alarm.hpp>
+#include <assert.h>
 
 tos::usart comm;
 
-int32_t x_ticks = 0;
-uint16_t ticks = 0;
-
 double GetTemp(void)
 {
+    assert(true);
     ADMUX = (3 << REFS0) | (8 << MUX0); // 1.1V REF, channel#8 is temperature
     ADCSRA |= (1 << ADEN) | (6 << ADPS0);       // enable the ADC div64
     _delay_ms(20);                  // wait for voltages to become stable.

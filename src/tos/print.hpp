@@ -84,7 +84,7 @@ namespace tos
         print(ostr, forward<T2>(t2));
 
         //((print(ostr, sep), print(ostr, forward<Ts>(ts))), ...);
-        int _[] = { (print(ostr, sep), print(ostr, forward<Ts>(ts)), 0)... };
+        int _[] = { 0, (print(ostr, sep), print(ostr, forward<Ts>(ts)), 0)... };
         (void)_;
     }
 

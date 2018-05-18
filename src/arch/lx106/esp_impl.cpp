@@ -2,8 +2,6 @@
 // Created by fatih on 4/26/18.
 //
 
-#include <tos.hpp>
-
 extern "C"
 {
 #include "ets_sys.h"
@@ -14,6 +12,8 @@ extern "C"
 #include <xtensa/config/core-isa.h>
 #include <user_interface.h>
 }
+
+#include <tos/ft.hpp>
 
 extern "C"
 {
@@ -34,7 +34,7 @@ void tos_stack_free(void* data)
     //delete[] (char*)data;
 }
 
-void tos_shutdown()
+void tos_reboot()
 {
 }
 
@@ -54,38 +54,8 @@ void tos_disable_interrupts()
 }
 }
 
-void* operator new(size_t sz)
-{
-    return os_malloc(sz);
-}
-
-void* operator new[](size_t sz)
-{
-    return os_malloc(sz);
-}
-
 extern "C" void __cxa_pure_virtual()
 {
-}
-
-void operator delete[](void* ptr)
-{
-    os_free(ptr);
-}
-
-void operator delete(void* ptr)
-{
-    os_free(ptr);
-}
-
-void operator delete(void* ptr, size_t)
-{
-    os_free(ptr);
-}
-
-void operator delete[](void* ptr, size_t)
-{
-    os_free(ptr);
 }
 
 void tos_init();

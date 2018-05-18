@@ -59,7 +59,7 @@ namespace tos
     auto make_integer_sequence() -> generate_sequence<T, N>
     {
         return {};
-    };
+    }
 
     template <size_t... N>
     using index_sequence = integer_sequence<size_t, N...>;

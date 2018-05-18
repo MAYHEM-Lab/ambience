@@ -36,7 +36,7 @@ extern "C"
 static ring_buffer_t *rxBuff;
 #endif
 
-extern UartDevice    UartDev;
+extern UartDevice UartDev;
 
 /* Local variables */
 static uint8 uart_recvTaskPrio = 0;

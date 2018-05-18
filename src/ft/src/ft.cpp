@@ -117,7 +117,7 @@ namespace tos {
          * set the stack pointer so the new thread will have an
          * independent execution context
          */
-        tos_set_stack_ptr((void*) ((uintptr_t) reinterpret_cast<char*>(impl::cur_thread)));
+        tos_set_stack_ptr((char*) ((uintptr_t) reinterpret_cast<char*>(impl::cur_thread)));
 
         tos::enable_interrupts();
         impl::cur_thread->entry();

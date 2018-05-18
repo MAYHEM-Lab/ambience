@@ -2,7 +2,6 @@
 // Created by fatih on 4/26/18.
 //
 
-#include <tos.hpp>
 extern "C"
 {
 #include "ets_sys.h"
@@ -13,6 +12,7 @@ extern "C"
 #include <drivers/arch/lx106/usart.hpp>
 #include <arch/lx106/tos_arch.hpp>
 #include <tos/devices.hpp>
+#include <tos/ft.hpp>
 
 static const int pin = 2;
 
