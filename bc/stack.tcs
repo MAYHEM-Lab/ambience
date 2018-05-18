@@ -1,0 +1,21 @@
+    movi    %r1, 30
+
+    /*
+     * %r[0, 8) are caller saved
+     */
+
+    call fun
+    exit
+
+fun:
+    movi    %r0, 0 // retval
+    movi    %r2, 0
+    beq     %r1, %r2, ret
+    push    %r1
+    movi    %r2, -1
+    add     %r1, %r2
+    call    fun
+    pop     %r1
+    add     %r0, %r1
+ret:
+    ret

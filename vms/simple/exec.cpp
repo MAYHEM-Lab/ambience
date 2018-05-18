@@ -28,6 +28,8 @@ constexpr uint32_t ptr_fetcher::fetch(uint16_t pc)
     return res;
 }
 
+char tvm_stack[128];
+
 int main(int argc, char** argv) {
     std::ifstream in(argv[1], std::ios::binary);
     std::vector<uint8_t> contents((std::istreambuf_iterator<char>(in)),
@@ -35,6 +37,9 @@ int main(int argc, char** argv) {
 
     ptr_fetcher fetch{contents.data()};
     tvm::vm_executor<ptr_fetcher, svm::vm_state, svm::ISA> exec(fetch);
+    exec.m_state.stack_begin = (uint16_t*)tvm_stack;
+    exec.m_state.stack_cur = (uint16_t*)tvm_stack;
+    exec.m_state.stack_end = (uint16_t*)(tvm_stack + 128);
     exec.exec();
 
     std::cout << exec.m_state.registers[0] << '\n';

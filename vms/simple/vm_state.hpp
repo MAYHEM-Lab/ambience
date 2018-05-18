@@ -10,7 +10,11 @@ namespace svm
 {
     struct vm_state
     {
-        uint16_t registers[16];
+        uint16_t registers[15];
         uint16_t pc;
+
+        uint16_t* stack_begin;
+        uint16_t* stack_cur;
+        uint16_t* stack_end;
     };
 }

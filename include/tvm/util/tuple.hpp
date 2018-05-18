@@ -6,11 +6,15 @@
 
 namespace tvm
 {
-
     template <int N, class T>
     struct tuple_node
     {
         T t;
     };
 
+    template <class... T>
+    struct tuple
+    {
+
+    };
 }

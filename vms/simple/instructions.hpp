@@ -16,24 +16,12 @@ struct add
     }
 };
 
-template<>
-struct tvm::instr_name<add>
-{
-    static constexpr auto value() { return "add"; }
-};
-
 struct movi
 {
     constexpr void operator()(svm::vm_state* state, tvm::reg_ind_t<> r1, tvm::operand_t<16> op)
     {
         state->registers[r1.index] = (uint16_t)op.operand;
     }
-};
-
-template<>
-struct tvm::instr_name<movi>
-{
-    static constexpr auto value() { return "movi"; }
 };
 
 struct movr
@@ -44,12 +32,6 @@ struct movr
     }
 };
 
-template<>
-struct tvm::instr_name<movr>
-{
-    static constexpr auto value() { return "movr"; }
-};
-
 struct jump
 {
     constexpr void operator()(svm::vm_state* state, tvm::address_t<16> abs)
@@ -58,10 +40,12 @@ struct jump
     }
 };
 
-template <>
-struct tvm::instr_name<jump>
+struct jumpi
 {
-    static constexpr auto value() { return "jump"; }
+    constexpr void operator()(svm::vm_state* state, tvm::reg_ind_t<4> reg)
+    {
+        state->pc = state->registers[reg.index] - 2;
+    }
 };
 
 struct branch_if_eq
@@ -77,22 +61,143 @@ struct branch_if_eq
     }
 };
 
-template<>
-struct tvm::instr_name<branch_if_eq>
-{
-    static constexpr auto value() { return "beq"; }
-};
-
 struct exit_ins
 {
     constexpr void operator()(svm::vm_state* state)
     {
-        state->registers[15] = 0xDEAD;
+        state->registers[14] = 0xDEAD;
     }
 };
 
-template<>
-struct tvm::instr_name<exit_ins>
+struct syscall
 {
-    static constexpr auto value() { return "exit"; }
+    constexpr void operator()(svm::vm_state* state)
+    {
+        // syscall id is in r0
+        auto sys_index = state->registers[0];
+    }
 };
+
+struct push
+{
+    constexpr void operator()(svm::vm_state* state, tvm::reg_ind_t<4> reg)
+    {
+        if (state->stack_cur == state->stack_end)
+        {
+            state->registers[14] = 0xDEAD;
+            return;
+        }
+
+        *state->stack_cur++ = reg.index == 15 ? state->pc : state->registers[reg.index];
+    }
+};
+
+struct pop
+{
+    constexpr void operator()(svm::vm_state* state, tvm::reg_ind_t<4> reg)
+    {
+        if (state->stack_cur == state->stack_begin)
+        {
+            state->registers[14] = 0xDEAD;
+            return;
+        }
+        state->registers[reg.index] = *--state->stack_cur;
+    }
+};
+
+struct call
+{
+    constexpr void operator()(svm::vm_state* state, tvm::address_t<16> abs)
+    {
+        if (state->stack_cur == state->stack_end)
+        {
+            state->registers[14] = 0xDEAD;
+            return;
+        }
+
+        *state->stack_cur++ = state->pc + 3;
+        state->pc = abs.addr - 3;
+    }
+};
+
+struct ret
+{
+    constexpr void operator()(svm::vm_state* state)
+    {
+        if (state->stack_cur == state->stack_begin)
+        {
+            state->registers[14] = 0xDEAD;
+            return;
+        }
+
+        state->pc = *--state->stack_cur - 1;
+    }
+};
+
+namespace tvm
+{
+    template<>
+    struct instr_name<movi>
+    {
+        static constexpr auto value() { return "movi"; }
+    };
+
+    template<>
+    struct instr_name<add>
+    {
+        static constexpr auto value() { return "add"; }
+    };
+
+    template<>
+    struct instr_name<movr>
+    {
+        static constexpr auto value() { return "movr"; }
+    };
+
+    template <>
+    struct instr_name<jump>
+    {
+        static constexpr auto value() { return "jump"; }
+    };
+
+    template <>
+    struct instr_name<jumpi>
+    {
+        static constexpr auto value() { return "jumpi"; }
+    };
+
+    template <>
+    struct instr_name<call>
+    {
+        static constexpr auto value() { return "call"; }
+    };
+
+    template <>
+    struct instr_name<ret>
+    {
+        static constexpr auto value() { return "ret"; }
+    };
+    template<>
+    struct instr_name<branch_if_eq>
+    {
+        static constexpr auto value() { return "beq"; }
+    };
+
+    template<>
+    struct instr_name<exit_ins>
+    {
+        static constexpr auto value() { return "exit"; }
+    };
+
+    template<>
+    struct instr_name<push>
+    {
+        static constexpr auto value() { return "push"; }
+    };
+
+    template<>
+    struct instr_name<pop>
+    {
+        static constexpr auto value() { return "pop"; }
+    };
+}

@@ -30,6 +30,9 @@ constexpr uint32_t ptr_fetcher::fetch(uint16_t pc)
 }
 
 tos::usart comm;
+
+char tvm_stack[128];
+
 void tvm_task()
 {
     using namespace tos::tos_literals;
@@ -39,6 +42,7 @@ void tvm_task()
             tos::usart_parity::disabled,
             tos::usart_stop_bit::one);
     usart->enable();
+
     uint8_t data[] = {
             0x04, 0x00, 0x00, 0xA0, 0x04, 0x20, 0x01, 0x40, 0x02, 0x02, 0x04, 0x20, 0x01, 0x00, 0x02, 0x02,
             0x0A, 0x00, 0x00, 0x00, 0x00
@@ -46,6 +50,9 @@ void tvm_task()
     ptr_fetcher fetch{data};
 
     tvm::vm_executor<ptr_fetcher, svm::vm_state, svm::ISA> exec(fetch);
+    exec.m_state.stack_begin = (uint16_t*)tvm_stack;
+    exec.m_state.stack_cur = (uint16_t*)tvm_stack;
+    exec.m_state.stack_end = (uint16_t*)(tvm_stack + 128);
     exec.exec();
 
     println(comm, "Result:", (int)exec.m_state.registers[0]);

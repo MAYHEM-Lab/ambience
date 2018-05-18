@@ -14,6 +14,11 @@ namespace svm
         tvm::ins<0x03, jump>,
         tvm::ins<0x04, branch_if_eq>,
         tvm::ins<0x05, exit_ins>,
-        tvm::ins<0x06, movr>
+        tvm::ins<0x06, movr>,
+        tvm::ins<0x07, push>,
+        tvm::ins<0x08, pop>,
+        tvm::ins<0x09, call>,
+        tvm::ins<0x0A, jumpi>,
+        tvm::ins<0x0B, ret>
     >;
 }
