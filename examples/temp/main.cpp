@@ -16,8 +16,6 @@
 #include <drivers/common/alarm.hpp>
 #include <assert.h>
 
-tos::usart comm;
-
 double GetTemp(void)
 {
     assert(true);
@@ -42,6 +40,7 @@ void tick_task()
             tos::usart_parity::disabled,
             tos::usart_stop_bit::one);
     usart->enable();
+    auto comm = open(tos::devs::tty<0>, usart);
 
     tos::dht d{};
 
@@ -64,11 +63,11 @@ void tick_task()
         temp_int.wait();
         char b[32];
         auto res = d.read11(8_pin);
-        println(comm, res);
-        println(comm, "Temperature:", dtostrf(d.temperature, 2, 2, b));
-        println(comm, "Humidity:", dtostrf(d.humidity, 2, 2, b));
+        tos::println(*usart, res);
+        tos::println(*comm, "Temperature:", dtostrf(d.temperature, 2, 2, b));
+        tos::println(*comm, "Humidity:", dtostrf(d.humidity, 2, 2, b));
         auto st = GetTemp();
-        println(comm, "Internal:", dtostrf(st, 2, 2, b));
+        tos::println(*comm, "Internal:", dtostrf(st, 2, 2, b));
         alarm.sleep_for({ 100 });
     }
 }

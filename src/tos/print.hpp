@@ -18,7 +18,7 @@ namespace tos
 {
     template <class CharOstreamT>
     void print(CharOstreamT& ostr, char c) {
-        ostr.putc(c);
+        ostr.write(&c, 1);
     }
 
     /**

@@ -9,37 +9,6 @@
 #include <tos/semaphore.hpp>
 #include <tos/mutex.hpp>
 
-namespace tos {
-    namespace avr {
-        static void set_raw_baud_rate(uint16_t baud) {
-            const uint16_t prescale = F_CPU / (baud * 16UL) - 1;
-            UBRR0L = (uint8_t) (prescale & 0xff);
-            UBRR0H = (uint8_t) (prescale >> 8);
-        }
-
-        static void set_2x_rate() {
-            UCSR0A |= (1 << U2X0);
-        }
-
-        void usart0::set_baud_rate(usart_baud_rate baud) {
-            set_2x_rate();
-            set_raw_baud_rate(baud.rate / 2);
-        }
-
-        void usart0::enable() {
-            UCSR0B |= (1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0) | (1 << TXCIE0);
-        }
-
-        void usart0::disable() {
-            UCSR0B &= ~((1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0) | (1 << TXCIE0));
-        }
-
-        void usart0::options(usart_modes m, usart_parity p, usart_stop_bit s) {
-            UCSR0C = usart_control(m, p, s);
-        }
-    }
-}
-
 template<class T, size_t len>
 struct ringbuf {
 public:
@@ -78,6 +47,50 @@ struct open_state {
     ringbuf<char, 32> read_buf;
     tos::semaphore have_data{0};
 };
+
+static void write_usart(const char* x, size_t len);
+static size_t read_usart(char *buf, size_t len);
+extern open_state *state;
+
+namespace tos {
+    namespace avr {
+        static void set_raw_baud_rate(uint16_t baud) {
+            const uint16_t prescale = F_CPU / (baud * 16UL) - 1;
+            UBRR0L = (uint8_t) (prescale & 0xff);
+            UBRR0H = (uint8_t) (prescale >> 8);
+        }
+
+        static void set_2x_rate() {
+            UCSR0A |= (1 << U2X0);
+        }
+
+        void usart0::set_baud_rate(usart_baud_rate baud) {
+            set_2x_rate();
+            set_raw_baud_rate(baud.rate / 2);
+        }
+
+        void usart0::enable() {
+            UCSR0B |= (1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0) | (1 << TXCIE0);
+        }
+
+        void usart0::disable() {
+            UCSR0B &= ~((1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0) | (1 << TXCIE0));
+        }
+
+        void usart0::options(usart_modes m, usart_parity p, usart_stop_bit s) {
+            UCSR0C = usart_control(m, p, s);
+        }
+
+        int usart0::read(char *buf, size_t sz) {
+            return read_usart(buf, sz);
+        }
+
+        int usart0::write(const char *buf, size_t sz) {
+            write_usart(buf, sz);
+            return sz - state->len;
+        }
+    }
+}
 
 static open_state *create() {
     static open_state state;
@@ -118,7 +131,8 @@ static void write_usart(const char* x, size_t len)
     tos::unbusy();
 }
 
-static size_t read_usart(char *buf, size_t len) {
+static size_t read_usart(char *buf, size_t len)
+{
     size_t total = 0;
     while (state && total < len) {
         state->have_data.down();
@@ -128,28 +142,6 @@ static size_t read_usart(char *buf, size_t len) {
         ++total;
     }
     return total;
-}
-
-namespace tos
-{
-    int usart::read(char *buf, size_t sz) {
-        return read_usart(buf, sz);
-    }
-
-    char usart::getc() {
-        char x;
-        read(&x, 1);
-        return x;
-    }
-
-    int usart::write(const char *buf, size_t sz) {
-        write_usart(buf, sz);
-        return sz - state->len;
-    }
-
-    void usart::putc(char c) {
-        write(&c, 1);
-    }
 }
 
 ISR (USART_TX_vect)

@@ -31,6 +31,10 @@ namespace tos {
 
             static void options(usart_modes, usart_parity, usart_stop_bit);
 
+            static int read(char *buf, size_t sz);
+
+            static int write(const char *buf, size_t sz);
+
         private:
             usart0() = default;
         };
@@ -44,20 +48,15 @@ namespace tos {
         return nullptr;
     }
 
+    template <class BaseUsartT>
     class usart final {
     public:
-        int read(char *buf, size_t sz);
-
-        char getc();
-
-        int write(const char *buf, size_t sz);
-
-        void putc(char c);
+        int read(char *buf, size_t sz) { return BaseUsartT::read(buf, sz); }
+        int write(const char *buf, size_t sz) { return BaseUsartT::write(buf, sz); }
     };
 
-    inline usart* open_impl(devs::tty_t<0>)
+    inline usart<avr::usart0>* open_impl(devs::tty_t<0>, avr::usart0*)
     {
-        static usart u;
-        return &u;
+        return nullptr;
     }
 }

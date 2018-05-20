@@ -59,3 +59,44 @@ TEST_CASE("insert at end", "[intrusive_list]")
     REQUIRE(&foos.front() == &a);
     REQUIRE(&foos.back() == &a);
 }
+
+TEST_CASE("insert in middle", "[intrusive_list]")
+{
+    using namespace tos;
+    intrusive_list<foo> foos;
+
+    foo a { 3 };
+    foo b { 4 };
+    foo c { 5 };
+
+    foos.push_back(a);
+    foos.push_back(c);
+    REQUIRE(foos.size() == 2);
+    REQUIRE(&foos.front() == &a);
+    REQUIRE(&foos.back() == &c);
+
+    foos.insert(++foos.begin(), b);
+    REQUIRE(&*(++foos.begin()) == &b);
+}
+
+TEST_CASE("pop back", "[intrusive_list]")
+{
+    using namespace tos;
+    intrusive_list<foo> foos;
+
+    foo a { 3 };
+    foo b { 4 };
+    foo c { 5 };
+
+    foos.push_back(a);
+    foos.push_back(b);
+    foos.push_back(c);
+
+    REQUIRE(&foos.back() == &c);
+    foos.pop_back();
+    REQUIRE(&foos.back() == &b);
+    foos.pop_back();
+    REQUIRE(&foos.back() == &a);
+    foos.pop_back();
+    REQUIRE(foos.empty());
+}

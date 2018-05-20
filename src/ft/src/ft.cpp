@@ -25,7 +25,8 @@ namespace tos {
     }
 }
 
-namespace tos {
+namespace tos
+{
     [[noreturn]] static void switch_context(jmp_buf& j, return_codes rc)
     {
         longjmp(j, static_cast<int>(rc));
@@ -39,7 +40,8 @@ namespace tos {
         thread_info* cur_thread = nullptr;
     }
 
-    namespace this_thread {
+    namespace this_thread
+    {
         void yield()
         {
             tos::int_guard ig;
@@ -48,7 +50,6 @@ namespace tos {
                 switch_context(sc.main_context, return_codes::yield);
             }
         }
-
     }
 
     void wait_yield()

@@ -80,16 +80,29 @@ namespace tos
     {
         T* m_head;
         T* m_tail;
-        size_t m_size;
 
     public:
 
-        intrusive_list() : m_head(nullptr), m_tail(nullptr), m_size(0) {}
+        intrusive_list() : m_head(nullptr), m_tail(nullptr) {}
 
         using iterator_t = intrusive_list_iterator<T>;
 
-        size_t size() { return m_size; }
-        bool empty() { return m_size == 0; }
+        /**
+         * Returns the number of elements in the list
+         * Traverses the whole list, prefer `empty` if possible
+         * @return number of elements
+         */
+        size_t size() {
+            size_t sz {0};
+            for (auto it = m_head; it; it = it->next, ++sz);
+            return sz;
+        }
+
+        /**
+         * Returns whether the list is empty or not
+         * @return list contains any elements
+         */
+        bool empty() { return m_head == nullptr; }
 
         void push_back(T& t);
         void push_front(T& t);
@@ -102,7 +115,13 @@ namespace tos
 
         void insert(iterator_t at, T& t);
 
+        void pop_back();
         void pop_front();
+
+        /**
+         * Removes all elements from the container
+         */
+        void clear();
 
         iterator_t erase(iterator_t);
 
@@ -137,7 +156,6 @@ namespace tos
         }
         m_tail = &t;
         t.next = nullptr;
-        ++m_size;
     }
 
     template <class T>
@@ -153,7 +171,6 @@ namespace tos
         }
         m_head = &t;
         t.prev = nullptr;
-        ++m_size;
     }
 
     template<class T>
@@ -178,7 +195,6 @@ namespace tos
         {
             t.prev->next = &t;
         }
-        ++m_size;
     }
 
     template<class T>
@@ -202,18 +218,33 @@ namespace tos
     }
 
     template<class T>
-    void intrusive_list<T>::pop_front() {
-        if (m_size == 1)
+    void intrusive_list<T>::clear() {
+        m_head = nullptr;
+        m_tail = nullptr;
+    }
+
+    template<class T>
+    void intrusive_list<T>::pop_back() {
+        if (m_head == m_tail)
         {
-            m_head = nullptr;
-            m_tail = nullptr;
-            m_size = 0;
+            clear();
+            return;
+        }
+        auto tail = m_tail;
+        m_tail = tail->prev;
+        m_tail->next = nullptr;
+    }
+
+    template<class T>
+    void intrusive_list<T>::pop_front() {
+        if (m_head == m_tail)
+        {
+            clear();
             return;
         }
         auto head = m_head;
         m_head = head->next;
         m_head->prev = nullptr;
-        m_size--;
     }
 
     template<class T>
@@ -237,7 +268,6 @@ namespace tos
             ptr->next->prev = ptr->prev;
         }
 
-        m_size--;
         return iterator_t{ptr->next};
     }
 }
