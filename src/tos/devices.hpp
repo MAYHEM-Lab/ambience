@@ -38,5 +38,4 @@ namespace tos
         static_assert(open_impl_exists<T,ArgTs...>{}, "Can't open that device");
         return open_impl(t, tos::forward<ArgTs>(args)...);
     }
-
 }

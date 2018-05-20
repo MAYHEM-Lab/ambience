@@ -14,14 +14,13 @@
 #include <util/delay.h>
 #include <tos/event.hpp>
 #include <drivers/common/alarm.hpp>
-#include <assert.h>
 
-double GetTemp(void)
+template <class AlarmT>
+double GetTemp(AlarmT&& alarm)
 {
-    assert(true);
     ADMUX = (3 << REFS0) | (8 << MUX0); // 1.1V REF, channel#8 is temperature
     ADCSRA |= (1 << ADEN) | (6 << ADPS0);       // enable the ADC div64
-    _delay_ms(20);                  // wait for voltages to become stable.
+    alarm.sleep_for({20});
     ADCSRA |= (1 << ADSC);      // Start the ADC
 
     while (ADCSRA & (1 << ADSC));       // Detect end-of-conversion
@@ -30,7 +29,7 @@ double GetTemp(void)
     return (ADCW - 324.31) / 1.22;
 }
 
-void tick_task()
+void main_task()
 {
     using namespace tos::tos_literals;
 
@@ -66,7 +65,7 @@ void tick_task()
         tos::println(*usart, res);
         tos::println(*comm, "Temperature:", dtostrf(d.temperature, 2, 2, b));
         tos::println(*comm, "Humidity:", dtostrf(d.humidity, 2, 2, b));
-        auto st = GetTemp();
+        auto st = GetTemp(alarm);
         tos::println(*comm, "Internal:", dtostrf(st, 2, 2, b));
         alarm.sleep_for({ 100 });
     }
@@ -74,11 +73,9 @@ void tick_task()
 
 int main()
 {
-    using namespace tos::tos_literals;
-
     tos::enable_interrupts();
 
-    tos::launch(tick_task);
+    tos::launch(main_task);
 
     while(true)
     {

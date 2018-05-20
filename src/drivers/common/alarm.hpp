@@ -83,7 +83,7 @@ namespace tos
             }
             if (m_sleepers.empty())
             {
-                m_timer->disable();
+                stop();
             }
         }
 
