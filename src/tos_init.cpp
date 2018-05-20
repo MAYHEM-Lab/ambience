@@ -3,7 +3,6 @@
 //
 
 #include <tos/ft.hpp>
-void init_task();
 
 namespace tos
 {

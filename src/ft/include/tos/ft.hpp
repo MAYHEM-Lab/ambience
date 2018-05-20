@@ -8,7 +8,7 @@ namespace tos {
      * This struct represents a unique identifier for every
      * **running** task in the system.
      */
-    struct task_id_t
+    struct thread_id_t
     {
         uintptr_t id;
     };
@@ -21,7 +21,7 @@ namespace tos {
         /**
          * Returns the identifier of the current task
          */
-        task_id_t get_id();
+        thread_id_t get_id();
 
         /**
          * Give control of the CPU back to the scheduler
@@ -30,8 +30,6 @@ namespace tos {
 
         void exit(void* res = nullptr);
     }
-
-    uint8_t runnable_count();
 
     enum class return_codes : uint8_t;
 
@@ -47,7 +45,7 @@ namespace tos {
 
 namespace tos {
     namespace this_thread {
-        inline task_id_t get_id()
+        inline thread_id_t get_id()
         {
             if (!impl::cur_thread) return {static_cast<uintptr_t>(-1)};
             return {reinterpret_cast<uintptr_t>(impl::cur_thread)};

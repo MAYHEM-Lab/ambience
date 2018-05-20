@@ -129,11 +129,6 @@ namespace tos {
         thread_exit();
     }
 
-    uint8_t runnable_count()
-    {
-        return sc.run_queue.size();
-    }
-
     void busy() { sc.busy++; }
     void unbusy() { sc.busy--; }
 
