@@ -20,7 +20,7 @@ namespace tos {
 
             void start(void (* t_start)());
 
-            void schedule();
+            exit_reason schedule();
         };
     }
 }
@@ -73,9 +73,9 @@ namespace tos {
         sc.start(e);
     }
 
-    void schedule()
+    exit_reason schedule()
     {
-        sc.schedule();
+        return sc.schedule();
     }
 
     constexpr auto stack_size = 256;
@@ -106,7 +106,6 @@ namespace tos {
          */
         tos::disable_interrupts();
         if (setjmp(thread->context)==(int) return_codes::saved) {
-            //done
             tos::enable_interrupts();
             return;
         }
@@ -133,53 +132,58 @@ namespace tos {
     void busy() { sc.busy++; }
     void unbusy() { sc.busy--; }
 
-    void scheduler::schedule()
+    exit_reason scheduler::schedule()
     {
-        // TODO: remove these to let the caller decide
-        if (num_threads==0) {
-            // no thread left, potentially a bug
-            tos_reboot();
-        }
-
-        if (run_queue.empty()) {
-            /**
-             * there's no thread to run right now
-             */
-
-            if (sc.busy > 0)
-            {
-                return;
+        while (true)
+        {
+            if (num_threads==0) {
+                // no thread left, potentially a bug
+                return exit_reason::restart;
             }
 
-            tos_power_down();
-            return;
-        }
+            /**
+             * We must disable interrupts before we look at the run_queue and sc.busy.
+             * An interrupt might occur between the former and the latter and we can
+             * power down even though there's something to run.
+             */
+            tos::int_guard ig;
+            if (run_queue.empty()) {
+                /**
+                 * there's no thread to run right now
+                 */
 
-        // interrupts are disabled during a context switch
-        tos::int_guard ig;
-        auto why = static_cast<return_codes>(setjmp(sc.main_context));
+                if (sc.busy > 0)
+                {
+                    return exit_reason::idle;
+                }
 
-        switch (why) {
-        case return_codes::saved:
-        {
-            impl::cur_thread = &run_queue.front();
-            run_queue.pop_front();
+                return exit_reason::power_down;
+            }
 
-            switch_context(impl::cur_thread->context, return_codes::scheduled);
-        }
-        case return_codes::do_exit:
-        {
-            auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
-                    + sizeof(thread_info) - stack_size;
-            std::destroy_at(impl::cur_thread);
-            tos_stack_free(stack_ptr);
-            num_threads--;
-        }
-        default:
-            break;
-        }
+            auto why = static_cast<return_codes>(setjmp(sc.main_context));
 
-        impl::cur_thread = nullptr;
+            switch (why) {
+            case return_codes::saved:
+            {
+                impl::cur_thread = &run_queue.front();
+                run_queue.pop_front();
+
+                switch_context(impl::cur_thread->context, return_codes::scheduled);
+            }
+            case return_codes::do_exit:
+            {
+                auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
+                        + sizeof(thread_info) - stack_size;
+                std::destroy_at(impl::cur_thread);
+                tos_stack_free(stack_ptr);
+                num_threads--;
+            }
+            default:
+                break;
+            }
+
+            impl::cur_thread = nullptr;
+        }
     }
 
     void make_runnable(thread_info* t)

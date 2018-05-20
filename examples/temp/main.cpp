@@ -79,6 +79,9 @@ int main()
 
     while(true)
     {
-        tos::schedule();
+        auto res = tos::schedule();
+        if (res == tos::exit_reason::restart) tos_reboot();
+        if (res == tos::exit_reason::power_down) tos_power_down();
+        if (res == tos::exit_reason::idle);
     }
 }

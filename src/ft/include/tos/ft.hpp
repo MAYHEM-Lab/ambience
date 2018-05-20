@@ -15,7 +15,29 @@ namespace tos {
 
     void launch(thread_info::entry_point_t);
 
-    void schedule();
+    /**
+     * This enumeration denotes why the scheduler returned
+     */
+    enum class exit_reason
+    {
+        /**
+         * All threads are blocked, however there are
+         * busy threads. System should wait for any interrupt.
+         */
+        idle,
+        /**
+         * All threads are blocked, and the system isn't busy.
+         * We can go to the lowest possible power state.
+         */
+        power_down,
+        /**
+         * All threads exited. Usually denotes a bug, system
+         * should restart.
+         */
+        restart
+    };
+
+    exit_reason schedule();
 
     namespace this_thread {
         /**
