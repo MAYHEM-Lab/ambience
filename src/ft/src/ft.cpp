@@ -141,6 +141,7 @@ namespace tos {
             tos_reboot();
         }
 
+        tos::int_guard ig;
         if (run_queue.empty()) {
             /**
              * there's no thread to run right now
@@ -155,8 +156,6 @@ namespace tos {
             return;
         }
 
-        // interrupts are disabled during a context switch
-        tos::int_guard ig;
         auto why = static_cast<return_codes>(setjmp(sc.main_context));
 
         switch (why) {
