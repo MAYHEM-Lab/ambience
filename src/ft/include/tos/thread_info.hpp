@@ -2,6 +2,7 @@
 
 #include <tos/intrusive_list.hpp>
 #include <setjmp.h>
+#include <tos/utility.hpp>
 
 namespace tos {
     struct thread_info
@@ -11,6 +12,9 @@ namespace tos {
 
         entry_point_t entry;
         jmp_buf context;
+
+    public:
+        explicit thread_info(entry_point_t pt) : entry{tos::move(pt)} {}
     };
 }
 

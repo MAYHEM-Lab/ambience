@@ -84,26 +84,12 @@ namespace tos {
         const auto stack = static_cast<char*>(tos_stack_alloc(stack_size));
         const auto t_ptr = stack + stack_size - sizeof(thread_info);
 
-        /**
-         * Thread info objects are placed at the top of the stack. This
-         * allows us to create threads without any memory allocation in
-         * the case the stack is provided by the user.
-         */
-        auto thread = new (t_ptr) thread_info();
-
-        // Can we get rid of storing the entry point? Maybe in the stack?
-        thread->entry = t_start;
+        auto thread = new (t_ptr) thread_info(t_start);
 
         // New threads are runnable by default.
         run_queue.push_back(*thread);
         num_threads++;
 
-        /**
-         * save the current processor state as the
-         * threads current state
-         * we'll pick it up from here when it's
-         * scheduled
-         */
         tos::disable_interrupts();
         if (setjmp(thread->context)==(int) return_codes::saved) {
             tos::enable_interrupts();

@@ -75,6 +75,15 @@ namespace tos
         return *this;
     }
 
+    /**
+     * This class represents a non-owning doubly linked list
+     *
+     * Objects that are stored in an intrusive_list are not owned
+     * by the list and thus must be allocated and deallocated by
+     * the user.
+     *
+     * @tparam T type of the objects to be stored in the list
+     */
     template <class T>
     class intrusive_list
     {
