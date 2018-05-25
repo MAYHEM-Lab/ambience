@@ -8,7 +8,7 @@ import time
 with serial.Serial(sys.argv[2], 19200) as ser:
     time.sleep(2)
     sz = os.stat(sys.argv[1]).st_size
-    ser.write(bytes([ord('p'), sz]))
+    ser.write(bytes([ord('p'), int(sys.argv[3]), sz]))
     print(ser.readline())
     print(ser.readline())
 

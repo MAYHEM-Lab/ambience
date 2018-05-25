@@ -58,12 +58,8 @@ void tvm_task()
     }
 }
 
-static uint8_t prog[128] =
-        {0x04, 0x00, 0x00, 0xA0, 0x04,
-         0x20, 0x01, 0x40, 0x02, 0x02,
-         0x04, 0x20, 0x01, 0x00, 0x02,
-         0x02, 0x0A, 0x00, 0x00, 0x00,
-         0x00};
+static uint8_t index = -1;
+static uint8_t prog[128];
 
 void main_task()
 {
@@ -76,7 +72,6 @@ void main_task()
     usart->enable();
 
     auto eeprom = open(tos::devs::eeprom<0>);
-    eeprom->read(0, prog, 128);
 
     while (true)
     {
@@ -85,6 +80,13 @@ void main_task()
 
         if (buffer[0] == 'x')
         {
+            usart->read(buffer);
+            auto wi = uint8_t(buffer[0] - '0');
+            if (index != wi);
+            {
+                eeprom->read(wi * 128, prog, 128);
+                index = wi;
+            }
             fetch = ptr_fetcher{prog};
             wait.up();
 
@@ -99,6 +101,8 @@ void main_task()
         {
             tos::println(*usart, "send");
             usart->read(buffer);
+            auto wi = uint8_t(buffer[0] - '0');
+            usart->read(buffer);
             if (buffer[0] > 128)
             {
                 tos::println(*usart, "too large");
@@ -106,7 +110,8 @@ void main_task()
             }
             tos::println(*usart, "ok");
             usart->read({ (char*)prog, buffer[0] });
-            eeprom->write(0, prog, 128);
+            index = wi;
+            eeprom->write(wi * 128, prog, 128);
             tos::println(*usart, "okay");
         }
     }
