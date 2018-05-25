@@ -115,12 +115,12 @@ namespace tvm
     template<size_t... offsets, int index>
     constexpr size_t offset_at(index_sequence<offsets...>, integral_constant<int, index>) {
         return 0;
-    };
+    }
 
     template<size_t... offsets>
     constexpr array<size_t, sizeof...(offsets)> to_array(index_sequence<offsets...>) {
         return {{offsets...}};
-    };
+    }
 
     template<class T, int OpInd>
     constexpr auto get_operand_offset() {
@@ -128,7 +128,7 @@ namespace tvm
         using args = tail_t<typename traits::arg_ts>;
         using offsets_ = offsets<args>;
         return offset_at(typename offsets_::type{}, integral_constant<int, OpInd>{});
-    };
+    }
 
     template<class>
     struct instr_name;
