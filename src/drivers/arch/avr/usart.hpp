@@ -10,6 +10,7 @@
 #include <tos/char_stream.hpp>
 #include <drivers/common/usart.hpp>
 #include <drivers/common/tty.hpp>
+#include <tos/span.hpp>
 
 namespace tos {
 
@@ -33,9 +34,10 @@ namespace tos {
 
             static int read(char *buf, size_t sz);
 
-            static int write(const char *buf, size_t sz);
+            static int write(span<const char> buf);
 
         private:
+
             usart0() = default;
         };
 

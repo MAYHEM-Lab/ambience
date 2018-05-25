@@ -30,6 +30,7 @@ elseif(TOS_AVR)
     add_subdirectory(examples/ota)
     add_subdirectory(examples/int)
     add_subdirectory(examples/simple_portable)
+    add_subdirectory(examples/nrf24)
 
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/tvm")
         add_subdirectory(apps/tvm)

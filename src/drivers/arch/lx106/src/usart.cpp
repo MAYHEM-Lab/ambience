@@ -84,11 +84,9 @@ void UART_SetBaudrate(uint8 uart_no,uint32 baud_rate)
 }
 
 void UART_SetStopBits(uint8 uart_no, UartStopBitsNum bit_num) {
-
 }
 
 void UART_SetParity(uint8 uart_no, UartParityMode Parity_mode) {
-
 }
 
 

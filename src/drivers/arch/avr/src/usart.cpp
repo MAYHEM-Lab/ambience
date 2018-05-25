@@ -48,7 +48,7 @@ struct open_state {
     tos::semaphore have_data{0};
 };
 
-static void write_usart(const char* x, size_t len);
+static void write_usart(tos::span<const char>);
 static size_t read_usart(char *buf, size_t len);
 extern open_state *state;
 
@@ -85,9 +85,9 @@ namespace tos {
             return read_usart(buf, sz);
         }
 
-        int usart0::write(const char *buf, size_t sz) {
-            write_usart(buf, sz);
-            return sz - state->len;
+        int usart0::write(span<const char> buf) {
+            write_usart(buf);
+            return buf.size() - state->len;
         }
     }
 }
@@ -119,12 +119,12 @@ namespace tos
     }
 }
 
-static void write_usart(const char* x, size_t len)
+static void write_usart(tos::span<const char> buf)
 {
     tos::lock_guard<tos::mutex> lg{state->write_avail};
 
-    state->len = len;
-    state->write = x;
+    state->len = buf.size();
+    state->write = buf.data();
     tos::busy(); // We'll block, keep mcu awake
     UCSR0B |= (1 << UDRIE0); // enable empty buffer interrupt, ISR will send the data
     state->write_done.down();
