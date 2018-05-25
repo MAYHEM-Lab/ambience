@@ -134,6 +134,24 @@ struct ret
     }
 };
 
+struct read_byte
+{
+    void operator()(svm::vm_state* state, tvm::reg_ind_t<4> to, tvm::reg_ind_t<4> reg)
+    {
+        auto ptr = reinterpret_cast<uint8_t*>(state->registers[reg.index]);
+        state->registers[to.index] = *ptr;
+    }
+};
+
+struct read_word
+{
+    void operator()(svm::vm_state* state, tvm::reg_ind_t<4> to, tvm::reg_ind_t<4> reg)
+    {
+        auto ptr = reinterpret_cast<uint16_t*>(state->registers[reg.index]);
+        state->registers[to.index] = *ptr;
+    }
+};
+
 namespace tvm
 {
     template<>
@@ -199,5 +217,17 @@ namespace tvm
     struct instr_name<pop>
     {
         static constexpr auto value() { return "pop"; }
+    };
+
+    template<>
+    struct instr_name<read_byte>
+    {
+        static constexpr auto value() { return "rb"; }
+    };
+
+    template<>
+    struct instr_name<read_word>
+    {
+        static constexpr auto value() { return "rw"; }
     };
 }

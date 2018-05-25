@@ -19,6 +19,8 @@ namespace svm
         tvm::ins<0x08, pop>,
         tvm::ins<0x09, call>,
         tvm::ins<0x0A, jumpi>,
-        tvm::ins<0x0B, ret>
+        tvm::ins<0x0B, ret>,
+        tvm::ins<0x0C, read_byte>,
+        tvm::ins<0x0D, read_word>
     >;
 }
