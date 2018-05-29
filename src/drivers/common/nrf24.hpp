@@ -10,10 +10,11 @@
 #include <util/delay.h>
 #include <tos/algorithm.hpp>
 #include "spi.hpp"
+#include <avr/pgmspace.h>
 
 namespace tos
 {
-    enum class nrf24_speeds
+    enum class nrf24_speeds : uint8_t
     {
         s_2_mbits,
         s_1_mbits,
@@ -41,12 +42,18 @@ namespace tos
             REUSE_TX_PL  = 0xE3,
             RF24_NOP = 0xFF
         };
+    }
+
+    enum class nrf24_addr_width : uint8_t
+    {
+        w_3_bytes = 0b01,
+        w_4_bytes = 0b10,
+        w_5_bytes = 0b11
     };
 
     class nrf24
     {
     public:
-
         struct channel_t { uint8_t channel; };
         struct reg_id_t { uint8_t reg; };
 
@@ -67,15 +74,31 @@ namespace tos
         void power_down();
         void power_up();
 
+        void set_power_level(nrf24_power);
+
+        size_t get_next_length() const;
+
+        void set_addr_width(nrf24_addr_width);
+        nrf24_addr_width get_addr_width() const;
+
+        void open_read_pipe(uint8_t num, span<const uint8_t> addr);
+        void open_write_pipe(span<const uint8_t> addr);
+
+        void start_listening();
+
     private:
-        uint8_t read_reg(reg_id_t reg, span<char> buf) const;
+        uint8_t read_reg(reg_id_t reg, span<uint8_t> buf) const;
         uint8_t read_reg(reg_id_t reg) const;
 
         uint8_t write_reg(reg_id_t reg, uint8_t val);
+        uint8_t write_reg(reg_id_t reg, span<const uint8_t> val);
 
         uint8_t write_cmd(nrf24_mnemonics::mnemonics cmd);
 
         spi_transaction<tos::avr::spi0> begin_transaction() const;
+
+        void enable_chip();
+        void disable_chip();
 
         void flush_rx();
         void flush_tx();
@@ -88,6 +111,7 @@ namespace tos
     namespace regs
     {
         static constexpr nrf24::reg_id_t config{0x00};
+        static constexpr nrf24::reg_id_t EN_RXADDR {0x02};
         static constexpr nrf24::reg_id_t setup_aw{0x03};
         static constexpr nrf24::reg_id_t setup_retr{0x04};
         static constexpr nrf24::reg_id_t rf_ch{0x05};
@@ -95,6 +119,14 @@ namespace tos
         static constexpr nrf24::reg_id_t nrf_status{0x07};
         static constexpr nrf24::reg_id_t feature{0x1D};
         static constexpr nrf24::reg_id_t dynpd{0x1C};
+
+        template <uint8_t N>
+        static constexpr nrf24::reg_id_t RX_ADDR_P {0x0A + N};
+
+        static constexpr nrf24::reg_id_t TX_ADDR {0x10};
+
+        template <uint8_t N>
+        static constexpr nrf24::reg_id_t RX_PW_P {0x11 + N};
     }
 }
 
@@ -108,9 +140,9 @@ namespace tos
         static constexpr auto ARD = 4;
         static constexpr auto ARC = 0;
 
-        static constexpr auto enable_dyn_pay = 2;
-        static constexpr auto enable_ack_pay = 1;
-        static constexpr auto enable_dyn_ack = 0;
+        static constexpr auto EN_DPL = 2;
+        static constexpr auto EN_ACK_PAY = 1;
+        static constexpr auto EN_DYN_ACK = 0;
 
         template <uint8_t N>
         static constexpr auto DPL_P = N;
@@ -122,6 +154,9 @@ namespace tos
         static constexpr auto PWR_UP = 1;
 
         static constexpr auto PRIM_RX = 0;
+
+        template <uint8_t N>
+        static constexpr auto ERX_P = N;
     }
 
     static tos::avr::gpio g;
@@ -179,7 +214,7 @@ namespace tos
     inline void nrf24::enable_dyn_payloads() {
         using namespace bits;
 
-        write_reg(regs::feature, read_reg(regs::feature) | (1 << enable_dyn_pay));
+        write_reg(regs::feature, read_reg(regs::feature) | (1 << EN_ACK_PAY));
         write_reg(regs::dynpd, read_reg(regs::dynpd) | 1 << DPL_P<5> | 1 << DPL_P<4> | 1 << DPL_P<3> |
                                                        1 << DPL_P<2> | 1 << DPL_P<1> | 1 << DPL_P<0>);
     }
@@ -232,5 +267,73 @@ namespace tos
 
     inline void nrf24::flush_tx() {
         write_cmd(nrf24_mnemonics::FLUSH_TX);
+    }
+
+    inline size_t nrf24::get_next_length() const {
+        auto trans = begin_transaction();
+        trans.exchange(nrf24_mnemonics::R_RX_PL_WID);
+        return trans.exchange(0xff);
+    }
+
+    inline void nrf24::set_addr_width(nrf24_addr_width w) {
+        write_reg(regs::setup_aw, static_cast<uint8_t>(w));
+    }
+
+    inline nrf24_addr_width nrf24::get_addr_width() const {
+        return static_cast<nrf24_addr_width>(read_reg(regs::setup_aw) & 0b11);
+    }
+
+
+    inline void nrf24::open_read_pipe(uint8_t num, span<const uint8_t> addr)
+    {
+        using namespace regs;
+        using namespace bits;
+
+        static constexpr reg_id_t child_pipe[] PROGMEM =
+        {
+            RX_ADDR_P<0>, RX_ADDR_P<1>, RX_ADDR_P<2>, RX_ADDR_P<3>, RX_ADDR_P<4>, RX_ADDR_P<5>
+        };
+
+        static constexpr reg_id_t child_payload_size[] PROGMEM =
+        {
+            RX_PW_P<0>, RX_PW_P<1>, RX_PW_P<2>, RX_PW_P<3>, RX_PW_P<4>, RX_PW_P<5>
+        };
+        static constexpr uint8_t child_pipe_enable[] PROGMEM =
+        {
+            ERX_P<0>, ERX_P<1>, ERX_P<2>, ERX_P<3>, ERX_P<4>, ERX_P<5>
+        };
+
+        if (num >= 2)
+        {
+            write_reg(reg_id_t{pgm_read_byte(&child_pipe[num])}, addr[0]);
+        }
+        else
+        {
+            write_reg(reg_id_t{pgm_read_byte(&child_pipe[num])}, addr);
+        }
+
+        write_reg(reg_id_t{pgm_read_byte(&child_payload_size[num])}, 32);
+
+        write_reg(EN_RXADDR, read_reg(EN_RXADDR) | (1 << (pgm_read_byte(&child_pipe_enable[num]))));
+    }
+
+    inline void nrf24::start_listening() {
+        write_reg(regs::config, read_reg(regs::config) | (1 << bits::PRIM_RX));
+        write_reg(regs::nrf_status, 1 << bits::RX_DR | 1 << bits::TX_DS | 1 << bits::MAX_RT);
+
+        enable_chip();
+
+        if (read_reg(regs::feature) & (1 << bits::EN_ACK_PAY))
+        {
+            flush_tx();
+        }
+    }
+
+    inline void nrf24::enable_chip() {
+        g.write(m_ce_pin, true);
+    }
+
+    inline void nrf24::disable_chip() {
+        g.write(m_ce_pin, false);
     }
 }

@@ -22,6 +22,20 @@ namespace tos
         T* data() { return m_base; }
         const T* data() const { return m_base; }
 
+        T& operator[](size_t ind) {
+            return m_base[ind];
+        }
+
+        const T& operator[](size_t ind) const {
+            return m_base[ind];
+        }
+
+        T* begin() { return m_base; }
+        T* end() { return m_base + m_len; }
+
+        const T* begin() const { return m_base; }
+        const T* end() const { return m_base + m_len; }
+
     private:
         T* m_base;
         size_t m_len;

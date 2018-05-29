@@ -19,15 +19,22 @@ namespace tos
         return res;
     }
 
-    uint8_t nrf24::read_reg(nrf24::reg_id_t reg, span<char> b) const {
+    uint8_t nrf24::write_reg(nrf24::reg_id_t reg, span<const uint8_t> val) {
+        auto trans = begin_transaction();
+        auto res = trans.exchange(nrf24_mnemonics::write_reg | (reg_mask & reg.reg));
+        for (auto byte : val)
+        {
+            trans.exchange(byte);
+        }
+        return res;
+    }
+
+    uint8_t nrf24::read_reg(nrf24::reg_id_t reg, span<uint8_t> b) const {
         auto trans = begin_transaction();
         auto res = trans.exchange(nrf24_mnemonics::read_reg | (reg_mask & reg.reg));
-        auto len = b.size();
-        auto buf = b.data();
-        while (len --> 0)
+        for (auto& byte : b)
         {
-            *buf = trans.exchange(0xff);
-            ++buf;
+            byte = trans.exchange(0xff);
         }
         return res;
     }

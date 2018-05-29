@@ -29,13 +29,20 @@ void nrf_task()
     tos::nrf24 nrf(8_pin, 10_pin, 2_pin);
 
     tos::println(*usart, "is connected:", nrf.is_connected());
-    tos::println(*usart, "set_speed(250kbs):", nrf.set_speed(tos::nrf24_speeds::s_250_kbits));
+    tos::println(*usart, "set_speed(250kbs):", nrf.set_speed(tos::nrf24_speeds::s_1_mbits));
     tos::println(*usart, "set_retries(15, 5):", nrf.set_retries(5, 15));
 
     nrf.set_channel({ 100 });
     tos::println(*usart, "channel:", nrf.get_channel().channel);
 
+    nrf.set_addr_width(tos::nrf24_addr_width::w_5_bytes);
+    tos::println(*usart, "width: ", (uint8_t)nrf.get_addr_width());
+
+    uint8_t addr[] = { '1', 'N', 'o', 'd', 'e' };
+    nrf.open_read_pipe(0, addr);
+
     while(true){
+        tos::println(*usart, "psize", nrf.get_next_length());
         tos::this_thread::yield();
     }
 }
