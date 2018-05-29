@@ -20,6 +20,12 @@ namespace tos
             static void set_baud_rate(usart_baud_rate);
 
             static void options(usart_modes, usart_parity, usart_stop_bit);
+
+            static int read(char *buf, size_t sz);
+
+            static int write(const char *buf, size_t sz)
+            {
+            }
         };
     }
 

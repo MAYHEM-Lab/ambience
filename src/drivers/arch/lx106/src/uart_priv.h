@@ -144,15 +144,6 @@ typedef struct {
     int                      buff_uart_no;  //indicate which uart use tx/rx buffer
 } UartDevice;
 
-void uart_init(UartBautRate uart0_br, UartBautRate uart1_br);
-void uart0_sendStr(const char *str);
-
-
-///////////////////////////////////////
-#define UART_FIFO_LEN  128  //define the tx fifo length
-#define UART_TX_EMPTY_THRESH_VAL 0x10
-
-
 struct UartBuffer{
     uint32     UartBuffSize;
     uint8     *pUartBuff;
@@ -178,10 +169,9 @@ typedef enum {
     BLOCK = 1,
 } TCPState;
 
-//void ICACHE_FLASH_ATTR uart_test_rx();
-STATUS uart_tx_one_char(uint8 uart, uint8 TxChar);
+
 STATUS uart_tx_one_char_no_wait(uint8 uart, uint8 TxChar);
-void  uart1_sendStr_no_wait(const char *str);
+
 struct UartBuffer*  Uart_Buf_Init();
 
 
@@ -196,13 +186,16 @@ void  Uart_rx_buff_enq();
 #endif
 void  uart_rx_intr_enable(uint8 uart_no);
 void  uart_rx_intr_disable(uint8 uart_no);
-void uart0_tx_buffer(uint8 *buf, uint16 len);
 
+
+void ICACHE_FLASH_ATTR
+inline uart0_tx_buffer(uint8 *buf, uint16 len);
 //==============================================
 #define FUNC_UART0_CTS 4
 #define FUNC_U0CTS                      4
 #define FUNC_U1TXD_BK                   2
 #define UART_LINE_INV_MASK  (0x3f<<19)
+
 void UART_SetWordLength(uint8 uart_no, UartBitsNum4Char len);
 void UART_SetStopBits(uint8 uart_no, UartStopBitsNum bit_num);
 void UART_SetLineInverse(uint8 uart_no, UART_LineLevelInverse inverse_mask);

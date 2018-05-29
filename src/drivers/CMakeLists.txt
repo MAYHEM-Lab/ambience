@@ -34,6 +34,10 @@ if (NOT TOS_X86)
     add_library(tos_eeprom common/eeprom.hpp common/eeprom.hpp)
     target_link_libraries(tos_eeprom PUBLIC tos_core)
     target_include_directories(tos_eeprom PUBLIC .)
+
+    add_library(tos_nrf24 common/nrf24.hpp src/nrf24.cpp)
+    target_link_libraries(tos_nrf24 PUBLIC tos_core)
+    target_include_directories(tos_nrf24 PUBLIC .)
 endif()
 
 add_library(tos_tty common/tty.hpp src/stub.cpp)

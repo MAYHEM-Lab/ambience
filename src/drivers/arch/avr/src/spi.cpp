@@ -37,7 +37,8 @@ namespace {
 
         void init_master() volatile {
             master_slave = 1;
-            clk_rate = 0b11;
+            clk_rate = 0b00;
+            SPSR = 0;
         }
 
         void init_slave() volatile {
