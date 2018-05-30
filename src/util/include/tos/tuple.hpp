@@ -44,6 +44,6 @@ template <size_t I, class T>
     T& get(tuple_elem<T, I>& elem)
     {
         return elem.t;
-    };
+    }
 }
 

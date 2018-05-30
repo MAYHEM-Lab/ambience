@@ -14,6 +14,7 @@
 #include <util/delay.h>
 #include <tos/event.hpp>
 #include <drivers/common/alarm.hpp>
+#include <avr/io.h>
 
 template <class AlarmT>
 double GetTemp(AlarmT&& alarm)

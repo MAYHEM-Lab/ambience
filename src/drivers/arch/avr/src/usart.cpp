@@ -49,8 +49,14 @@ struct open_state {
 };
 
 static void write_usart(tos::span<const char>);
-static size_t read_usart(char *buf, size_t len);
-extern open_state *state;
+static size_t read_usart(tos::span<char>);
+
+static open_state *create() {
+    static open_state state;
+    return &state;
+}
+
+static open_state *state = create();
 
 namespace tos {
     namespace avr {
@@ -81,8 +87,8 @@ namespace tos {
             UCSR0C = usart_control(m, p, s);
         }
 
-        int usart0::read(char *buf, size_t sz) {
-            return read_usart(buf, sz);
+        int usart0::read(span<char> buf) {
+            return read_usart(buf);
         }
 
         int usart0::write(span<const char> buf) {
@@ -92,12 +98,6 @@ namespace tos {
     }
 }
 
-static open_state *create() {
-    static open_state state;
-    return &state;
-}
-
-open_state *state = create();
 
 static void put_sync(const char data)
 {
@@ -131,9 +131,12 @@ static void write_usart(tos::span<const char> buf)
     tos::unbusy();
 }
 
-static size_t read_usart(char *buf, size_t len)
+static size_t read_usart(tos::span<char> b)
 {
     size_t total = 0;
+    auto len = b.size();
+    auto buf = b.data();
+    tos::busy();
     while (state && total < len) {
         state->have_data.down();
         *buf = state->read_buf.front();
@@ -141,6 +144,7 @@ static size_t read_usart(char *buf, size_t len)
         ++buf;
         ++total;
     }
+    tos::unbusy();
     return total;
 }
 
