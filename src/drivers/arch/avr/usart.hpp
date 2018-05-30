@@ -53,11 +53,11 @@ namespace tos {
     template <class BaseUsartT>
     class usart final {
     public:
-        int read(char *buf, size_t sz) { return BaseUsartT::read(buf, sz); }
-        int write(const char *buf, size_t sz) { return BaseUsartT::write(buf, sz); }
+        int read(span<char> buf) { return BaseUsartT::read(buf); }
+        int write(span<const char> buf) { return BaseUsartT::write(buf); }
     };
 
-    inline usart<avr::usart0>* open_impl(devs::tty_t<0>, avr::usart0*)
+    inline usart<avr::usart0>* open_impl(devs::tty_t<0>)
     {
         return nullptr;
     }

@@ -6,10 +6,4 @@
 
 namespace tos
 {
-    void initialize()
-    {
-        // do initialization
-
-        //tos::launch(init_task);
-    }
 }

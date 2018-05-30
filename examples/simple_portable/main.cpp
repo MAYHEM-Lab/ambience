@@ -5,6 +5,7 @@
 #include <tos/ft.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/print.hpp>
+#include <tos/compiler.hpp>
 
 #include <drivers/common/tty.hpp>
 
@@ -15,12 +16,12 @@
 tos::semaphore sem(0);
 
 tos::mutex m;
-void hello_task() __attribute__((OS_task));
+void hello_task() TOS_TASK;
 void hello_task()
 {
     auto tty = tos::open(tos::devs::tty<0>);
     m.lock();
-    tos::println(*tty, tos::this_thread::get_id().id, (void*)SP);
+    tos::println(*tty, tos::this_thread::get_id().id);
     m.unlock();
     while (true) {
         sem.down();
@@ -30,13 +31,13 @@ void hello_task()
     }
 }
 
-void yo_task() __attribute__((OS_task));
+void yo_task() TOS_TASK;
 void yo_task()
 {
     auto tty = tos::open(tos::devs::tty<0>);
     {
         tos::lock_guard<tos::mutex> lock{m};
-        tos::println(*tty, tos::this_thread::get_id().id, (void*)SP);
+        tos::println(*tty, tos::this_thread::get_id().id);
     }
 
     for (int i = 0; i < 100; ++i)
@@ -50,7 +51,7 @@ void yo_task()
     }
 }
 
-int main()
+void tos_main()
 {
     using namespace tos::tos_literals;
 
@@ -61,13 +62,6 @@ int main()
             tos::usart_stop_bit::one);
     usart->enable();
 
-    tos::enable_interrupts();
-
     tos::launch(hello_task);
     tos::launch(yo_task);
-
-    while (true)
-    {
-        tos::schedule();
-    }
 }
