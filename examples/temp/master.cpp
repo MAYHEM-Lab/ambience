@@ -24,8 +24,6 @@ void tick_task()
             tos::usart_stop_bit::one);
     usart->enable();
 
-    auto comm = open(tos::devs::tty<0>, usart);
-
     auto g = tos::open(tos::devs::gpio);
     g->set_pin_mode(8_pin, tos::pin_mode_t::out);
     g->write(8_pin, true);

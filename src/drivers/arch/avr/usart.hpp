@@ -32,7 +32,7 @@ namespace tos {
 
             static void options(usart_modes, usart_parity, usart_stop_bit);
 
-            static int read(char *buf, size_t sz);
+            static int read(span<char> buf);
 
             static int write(span<const char> buf);
 

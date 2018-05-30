@@ -6,7 +6,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <common/eeprom.hpp>
+#include <drivers/common/eeprom.hpp>
 
 namespace tos
 {
@@ -20,7 +20,7 @@ namespace tos
         };
     }
 
-    avr::eeprom* open_impl(devs::eeprom_t<0>)
+    inline avr::eeprom* open_impl(devs::eeprom_t<0>)
     {
         return nullptr;
     }
