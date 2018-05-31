@@ -28,9 +28,6 @@ namespace tos
     {
     public:
         explicit alarm(T& t) : m_timer(&t) {
-            m_timer->set_callback({[](void* data){
-                static_cast<alarm*>(data)->tick_handler();
-            }, this});
         }
 
         void sleep_for(milliseconds dur)
@@ -56,13 +53,15 @@ namespace tos
             s.ev.wait();
         }
 
-
         constexpr milliseconds min_resolution() const { return { 1 }; }
 
     private:
 
         void start()
         {
+            m_timer->set_callback({[](void* data){
+                static_cast<alarm*>(data)->tick_handler();
+            }, this});
             m_timer->set_frequency(1000);
             m_timer->enable();
         }
@@ -90,4 +89,16 @@ namespace tos
         intrusive_list<sleeper> m_sleepers;
         T* m_timer;
     };
+
+    namespace devs
+    {
+        using alarm_t = tos::dev<struct alarm_t_, 0>;
+        static constexpr alarm_t alarm{};
+    }
+
+    template <class T>
+    auto open_impl(devs::alarm_t, T& tmr)
+    {
+        return alarm<tos::remove_reference_t<T>>{tmr};
+    }
 }

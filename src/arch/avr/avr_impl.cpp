@@ -11,6 +11,8 @@
 #include <avr/power.h>
 #include <avr/sleep.h>
 #include <tos/init.hpp>
+#include <tos/compiler.hpp>
+#include <tos/ft.hpp>
 
 extern "C"
 {
@@ -19,14 +21,6 @@ extern "C"
     {
         MCUSR = 0;
         wdt_disable();
-    }
-
-    void tos_power_down()
-    {
-        set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-        sleep_enable();
-        sleep_cpu();
-        sleep_disable();
     }
 
     alignas(16) char stack[256*2];
@@ -39,19 +33,36 @@ extern "C"
     void tos_stack_free(void*)
     {
     }
-
-    void tos_reboot()
-    {
-        wdt_enable(WDTO_15MS);
-        for (;;);
-    }
-
-    void __cxa_pure_virtual()
-    {
-    }
 }
 
+void tos_main();
+
+static void reboot()
+{
+    wdt_enable(WDTO_15MS);
+    for (;;);
+}
+
+static void power_down(int mode)
+{
+    set_sleep_mode(mode);
+    sleep_enable();
+    sleep_cpu();
+    sleep_disable();
+}
+
+int main() TOS_MAIN NORETURN;
 int main()
 {
-    tos::kernel_main();
+    tos::enable_interrupts();
+
+    tos_main();
+
+    while (true)
+    {
+        auto res = tos::schedule();
+        if (res == tos::exit_reason::restart) reboot();
+        if (res == tos::exit_reason::power_down) power_down(SLEEP_MODE_PWR_DOWN);
+        if (res == tos::exit_reason::idle) power_down(SLEEP_MODE_IDLE);
+    }
 }

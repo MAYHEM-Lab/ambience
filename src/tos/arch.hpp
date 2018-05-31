@@ -8,10 +8,8 @@
 
 extern "C"
 {
-void tos_power_down();
 void* tos_stack_alloc(size_t size);
 void tos_stack_free(void*);
-void tos_reboot();
 void tos_enable_interrupts();
 void tos_disable_interrupts();
 }
