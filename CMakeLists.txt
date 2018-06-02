@@ -11,6 +11,8 @@ elseif(TOS_AVR)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DF_CPU=16000000UL")
 elseif(TOS_ESP)
     set(CMAKE_TOOLCHAIN_FILE cmake/lx106Toolchain.cmake)
+elseif(TOS_ARM)
+    set(CMAKE_TOOLCHAIN_FILE cmake/ArmToolchain.cmake)
 endif()
 
 project(tos)
