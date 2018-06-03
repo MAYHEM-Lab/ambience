@@ -1,6 +1,5 @@
 .idea/
 cmake-build-*
 build/
-docs/
 html/
 latex/
