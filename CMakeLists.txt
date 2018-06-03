@@ -50,6 +50,8 @@ elseif(TOS_X86)
     endif()
 
     add_subdirectory(tests)
+elseif(TOS_ARM)
+    add_subdirectory(examples/nrf52)
 endif()
 
 set(include_dest "include/tos")

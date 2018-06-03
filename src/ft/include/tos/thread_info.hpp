@@ -10,7 +10,7 @@ namespace tos {
     {
         using entry_point_t = void(*)();
 
-        entry_point_t entry;
+        volatile entry_point_t entry;
         jmp_buf context;
 
     public:

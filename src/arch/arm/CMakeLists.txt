@@ -1,7 +1,10 @@
 project(tos CXX ASM)
 
-add_library(arm_impl arm_impl.cpp tos_arch.hpp)
+add_library(arm_impl arm_impl.cpp tos_arch.hpp sdk_config.h startup.S ${SDK_ROOT}/modules/nrfx/mdk/system_nrf52.c)
 target_include_directories(arm_impl PRIVATE "../../")
 target_include_directories(arm_impl PUBLIC ".")
 target_compile_options(arm_impl PUBLIC "-std=c++14")
+target_compile_definitions(arm_impl PUBLIC __HEAP_SIZE=8192 __STACK_SIZE=2048)
 target_link_libraries(arm_impl PUBLIC tos_core)
+target_link_libraries(arm_impl PUBLIC "--specs=nano.specs -lc -lnosys -lm -T${CMAKE_CURRENT_SOURCE_DIR}/nrf52_s132_2.0.1.ld")
+set_target_properties(arm_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/nrf52_s132_2.0.1.ld)

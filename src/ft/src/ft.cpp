@@ -8,6 +8,7 @@
 #include <tos/interrupt.hpp>
 #include <tos/new.hpp>
 #include <tos/memory.hpp>
+#include <nrf_delay.h>
 
 namespace tos {
     namespace {
@@ -33,11 +34,15 @@ namespace tos
     }
 }
 
+void ledOn(uint32_t pin);
+void ledOff(uint32_t pin);
+
+void led1_task();
 namespace tos {
     scheduler sc;
     namespace impl
     {
-        thread_info* cur_thread = nullptr;
+        volatile thread_info* cur_thread = nullptr;
     }
 
     namespace this_thread
@@ -45,8 +50,8 @@ namespace tos {
         void yield()
         {
             tos::int_guard ig;
-            if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
-                make_runnable(impl::cur_thread);
+            if (setjmp(const_cast<thread_info*>(impl::cur_thread)->context)==(int) return_codes::saved) {
+                make_runnable(const_cast<thread_info*>(impl::cur_thread));
                 switch_context(sc.main_context, return_codes::yield);
             }
         }
@@ -54,7 +59,7 @@ namespace tos {
 
     void wait_yield()
     {
-        if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
+        if (setjmp(const_cast<thread_info*>(impl::cur_thread)->context)==(int) return_codes::saved) {
             switch_context(sc.main_context, return_codes::do_wait);
         }
     }
@@ -78,7 +83,7 @@ namespace tos {
         return sc.schedule();
     }
 
-    constexpr auto stack_size = 256;
+    constexpr auto stack_size = 512;
     void scheduler::start(void (* t_start)())
     {
         const auto stack = static_cast<char*>(tos_stack_alloc(stack_size));
@@ -103,10 +108,35 @@ namespace tos {
          * set the stack pointer so the new thread will have an
          * independent execution context
          */
-        tos_set_stack_ptr((char*) ((uintptr_t) reinterpret_cast<char*>(impl::cur_thread)));
+        auto stck = (uintptr_t) reinterpret_cast<volatile void*>(impl::cur_thread);
+
+        if ((stck % 8) == 0)
+        {
+            ledOn(19);
+            nrf_delay_ms(1000);
+            ledOff(19);
+            nrf_delay_ms(1000);
+        }
+
+        tos_set_stack_ptr((char*)stck);
+
+        ledOn(19);
+        nrf_delay_ms(1000);
+        ledOff(19);
+        nrf_delay_ms(1000);
 
         tos::enable_interrupts();
+        ledOn(19);
+        nrf_delay_ms(1000);
+        ledOff(19);
+        nrf_delay_ms(1000);
+
         impl::cur_thread->entry();
+
+        ledOn(19);
+        nrf_delay_ms(1000);
+        ledOff(19);
+        nrf_delay_ms(1000);
         this_thread::exit(nullptr);
     }
 
@@ -154,11 +184,11 @@ namespace tos {
                 impl::cur_thread = &run_queue.front();
                 run_queue.pop_front();
 
-                switch_context(impl::cur_thread->context, return_codes::scheduled);
+                switch_context(const_cast<thread_info*>(impl::cur_thread)->context, return_codes::scheduled);
             }
             case return_codes::do_exit:
             {
-                auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
+                auto stack_ptr = reinterpret_cast<char*>(const_cast<thread_info*>(impl::cur_thread))
                         + sizeof(thread_info) - stack_size;
                 std::destroy_at(impl::cur_thread);
                 tos_stack_free(stack_ptr);
