@@ -73,6 +73,8 @@ void main_task()
 
     auto eeprom = open(tos::devs::eeprom<0>);
 
+    tos::println(*usart, "hello");
+
     while (true)
     {
         char buffer[1];
@@ -117,14 +119,7 @@ void main_task()
     }
 }
 
-int main() {
-    tos::enable_interrupts();
-
+void tos_main() {
     tos::launch(tvm_task);
     tos::launch(main_task);
-
-    while(true)
-    {
-        tos::schedule();
-    }
 }
