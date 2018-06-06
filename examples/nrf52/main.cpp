@@ -91,20 +91,22 @@ namespace tos
 
 tos::semaphore sem{0};
 
+auto g = tos::open(tos::devs::gpio);
+
 void led1_task()
 {
     using namespace tos;
-    tos::arm::gpio::write(17, digital::low);
+    g->write(17, digital::low);
     while (true)
     {
-        tos::arm::gpio::write(17, digital::high);
+        g->write(17, digital::high);
         for (int i = 0; i < 1000; ++i)
         {
             nrf_delay_us(100);
             tos::this_thread::yield();
         }
 
-        tos::arm::gpio::write(17, digital::low);
+        g->write(17, digital::low);
         for (int i = 0; i < 1000; ++i)
         {
             nrf_delay_us(100);
@@ -116,14 +118,14 @@ void led1_task()
 void led2_task()
 {
     using namespace tos;
-    tos::arm::gpio::write(19, digital::low);
+    g->write(19, digital::low);
     while (true)
     {
         sem.down();
-        tos::arm::gpio::write(19, digital::high);
+        g->write(19, digital::high);
 
         sem.down();
-        tos::arm::gpio::write(19, digital::low);
+        g->write(19, digital::low);
     }
 }
 
@@ -142,8 +144,6 @@ void tos_main()
     conf.pselrxd = 8;
     conf.pseltxd = 6;
     conf.p_context = nullptr;
-
-    auto g = tos::open(tos::devs::gpio);
 
     g->set_pin_mode(17, pin_mode::out);
     g->set_pin_mode(19, pin_mode::out);

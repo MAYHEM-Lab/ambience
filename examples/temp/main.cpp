@@ -58,7 +58,7 @@ void main_task()
 
     auto tmr = open(tos::devs::timer<1>);
     auto alarm = open(tos::devs::alarm, *tmr);
-    
+
     while (true)
     {
         temp_int.wait();
