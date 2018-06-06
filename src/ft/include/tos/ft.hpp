@@ -56,12 +56,12 @@ namespace tos {
     enum class return_codes : uint8_t;
 
     namespace impl {
-        extern volatile thread_info* cur_thread;
+        extern thread_info* cur_thread;
     }
 
     inline thread_info* self()
     {
-        return const_cast<thread_info*>(impl::cur_thread);
+        return impl::cur_thread;
     }
 }
 
