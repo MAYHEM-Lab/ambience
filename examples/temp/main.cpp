@@ -15,6 +15,7 @@
 #include <tos/event.hpp>
 #include <drivers/common/alarm.hpp>
 #include <avr/io.h>
+#include <tos/compiler.hpp>
 
 template <class AlarmT>
 double GetTemp(AlarmT&& alarm)
@@ -40,49 +41,39 @@ void main_task()
             tos::usart_parity::disabled,
             tos::usart_stop_bit::one);
     usart->enable();
-    auto comm = open(tos::devs::tty<0>, usart);
 
     tos::dht d{};
 
-    tos::avr::gpio g;
-    g.set_pin_mode(8_pin, tos::pin_mode_t::in_pullup);
+    auto g = tos::open(tos::devs::gpio);
+    g->set_pin_mode(8_pin, tos::pin_mode_t::in_pullup);
 
-    g.set_pin_mode(2_pin, tos::pin_mode_t::in_pullup);
+    g->set_pin_mode(2_pin, tos::pin_mode_t::in_pullup);
 
     tos::event temp_int;
     auto inthandler = [&]{
         temp_int.fire_isr();
     };
 
-    g.attach_interrupt(2_pin, tos::pin_change::low, inthandler);
+    g->attach_interrupt(2_pin, tos::pin_change::low, inthandler);
 
     auto tmr = open(tos::devs::timer<1>);
-    tos::alarm<tos::remove_reference_t<decltype(*tmr)>> alarm{*tmr};
+    auto alarm = open(tos::devs::alarm, *tmr);
+
     while (true)
     {
         temp_int.wait();
         char b[32];
         auto res = d.read11(8_pin);
         tos::println(*usart, res);
-        tos::println(*comm, "Temperature:", dtostrf(d.temperature, 2, 2, b));
-        tos::println(*comm, "Humidity:", dtostrf(d.humidity, 2, 2, b));
+        tos::println(*usart, "Temperature:", dtostrf(d.temperature, 2, 2, b));
+        tos::println(*usart, "Humidity:", dtostrf(d.humidity, 2, 2, b));
         auto st = GetTemp(alarm);
-        tos::println(*comm, "Internal:", dtostrf(st, 2, 2, b));
+        tos::println(*usart, "Internal:", dtostrf(st, 2, 2, b));
         alarm.sleep_for({ 100 });
     }
 }
 
-int main()
+void tos_main()
 {
-    tos::enable_interrupts();
-
     tos::launch(main_task);
-
-    while(true)
-    {
-        auto res = tos::schedule();
-        if (res == tos::exit_reason::restart) tos_reboot();
-        if (res == tos::exit_reason::power_down) tos_power_down();
-        if (res == tos::exit_reason::idle);
-    }
 }

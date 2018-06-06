@@ -35,7 +35,7 @@ extern "C"
     }
 }
 
-void tos_main();
+extern void tos_main();
 
 static void reboot()
 {
@@ -51,8 +51,7 @@ static void power_down(int mode)
     sleep_disable();
 }
 
-int main() TOS_MAIN NORETURN;
-int main()
+int TOS_MAIN NORETURN main()
 {
     tos::enable_interrupts();
 
