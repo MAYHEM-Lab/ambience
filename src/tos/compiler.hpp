@@ -8,3 +8,5 @@
 #define NORETURN __attribute__((noreturn))
 #define TOS_TASK __attribute__((OS_task))
 #define ALWAYS_INLINE __attribute__((always_inline))
+
+#define TOS_EXPORT __attribute__((visibility("default")))

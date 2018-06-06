@@ -29,7 +29,7 @@ void tick_task()
     g->write(8_pin, true);
 
     auto tmr = open(tos::devs::timer<1>);
-    tos::alarm<tos::remove_reference_t<decltype(*tmr)>> alarm{*tmr};
+    auto alarm = open(tos::devs::alarm, *tmr);
 
     while (true)
     {
@@ -40,14 +40,7 @@ void tick_task()
     }
 }
 
-int main()
+void tos_main()
 {
-    tos::enable_interrupts();
-
     tos::launch(tick_task);
-
-    while(true)
-    {
-        tos::schedule();
-    }
 }
