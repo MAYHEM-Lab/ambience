@@ -57,7 +57,7 @@ void main_task()
     g.attach_interrupt(2_pin, tos::pin_change::low, inthandler);
 
     auto tmr = open(tos::devs::timer<1>);
-    tos::alarm<tos::remove_reference_t<decltype(*tmr)>> alarm{*tmr};
+    auto alarm = open(tos::devs::alarm, *tmr);
     while (true)
     {
         temp_int.wait();

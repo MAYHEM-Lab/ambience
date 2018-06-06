@@ -42,7 +42,7 @@ namespace tos {
     scheduler sc;
     namespace impl
     {
-        volatile thread_info* cur_thread = nullptr;
+        thread_info* cur_thread = nullptr;
     }
 
     namespace this_thread
@@ -50,8 +50,8 @@ namespace tos {
         void yield()
         {
             tos::int_guard ig;
-            if (setjmp(const_cast<thread_info*>(impl::cur_thread)->context)==(int) return_codes::saved) {
-                make_runnable(const_cast<thread_info*>(impl::cur_thread));
+            if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
+                make_runnable(impl::cur_thread);
                 switch_context(sc.main_context, return_codes::yield);
             }
         }
@@ -59,7 +59,7 @@ namespace tos {
 
     void wait_yield()
     {
-        if (setjmp(const_cast<thread_info*>(impl::cur_thread)->context)==(int) return_codes::saved) {
+        if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
             switch_context(sc.main_context, return_codes::do_wait);
         }
     }
@@ -108,7 +108,7 @@ namespace tos {
          * set the stack pointer so the new thread will have an
          * independent execution context
          */
-        auto stck = (uintptr_t) reinterpret_cast<volatile void*>(impl::cur_thread);
+        auto stck = reinterpret_cast<uintptr_t>(impl::cur_thread);
 
         if ((stck % 8) == 0)
         {
@@ -184,11 +184,11 @@ namespace tos {
                 impl::cur_thread = &run_queue.front();
                 run_queue.pop_front();
 
-                switch_context(const_cast<thread_info*>(impl::cur_thread)->context, return_codes::scheduled);
+                switch_context(impl::cur_thread->context, return_codes::scheduled);
             }
             case return_codes::do_exit:
             {
-                auto stack_ptr = reinterpret_cast<char*>(const_cast<thread_info*>(impl::cur_thread))
+                auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
                         + sizeof(thread_info) - stack_size;
                 std::destroy_at(impl::cur_thread);
                 tos_stack_free(stack_ptr);
