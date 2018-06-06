@@ -71,7 +71,8 @@ namespace tos
     {
         out,
         in,
-        in_pullup
+        in_pullup,
+        in_pulldown
     };
 
     enum class pin_change

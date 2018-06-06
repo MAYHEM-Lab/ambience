@@ -8,7 +8,6 @@
 #include <tos/interrupt.hpp>
 #include <tos/new.hpp>
 #include <tos/memory.hpp>
-#include <nrf_delay.h>
 
 namespace tos {
     namespace {
@@ -108,35 +107,12 @@ namespace tos {
          * set the stack pointer so the new thread will have an
          * independent execution context
          */
-        auto stck = (uintptr_t) reinterpret_cast<volatile void*>(impl::cur_thread);
-
-        if ((stck % 8) == 0)
-        {
-            ledOn(19);
-            nrf_delay_ms(1000);
-            ledOff(19);
-            nrf_delay_ms(1000);
-        }
+        auto stck = reinterpret_cast<uintptr_t>(impl::cur_thread);
 
         tos_set_stack_ptr((char*)stck);
 
-        ledOn(19);
-        nrf_delay_ms(1000);
-        ledOff(19);
-        nrf_delay_ms(1000);
-
         tos::enable_interrupts();
-        ledOn(19);
-        nrf_delay_ms(1000);
-        ledOff(19);
-        nrf_delay_ms(1000);
-
         impl::cur_thread->entry();
-
-        ledOn(19);
-        nrf_delay_ms(1000);
-        ledOff(19);
-        nrf_delay_ms(1000);
         this_thread::exit(nullptr);
     }
 

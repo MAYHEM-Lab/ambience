@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <tos/ft.hpp>
+#include <nrf52.h>
+#include <nrf.h>
 
 extern "C"
 {
@@ -25,6 +27,16 @@ void tos_main();
 int main()
 {
    // tos::enable_interrupts();
+
+    NRF_CLOCK->LFCLKSRC = (uint32_t)((CLOCK_LFCLKSRC_SRC_Xtal << CLOCK_LFCLKSRC_SRC_Pos) & CLOCK_LFCLKSRC_SRC_Msk);
+    NRF_CLOCK->TASKS_LFCLKSTART = 1UL;
+
+    // RTC1 could be enabled by bootloader. Disable it
+    NVIC_DisableIRQ(RTC1_IRQn);
+    NRF_RTC1->EVTENCLR    = RTC_EVTEN_COMPARE0_Msk;
+    NRF_RTC1->INTENCLR    = RTC_INTENSET_COMPARE0_Msk;
+    NRF_RTC1->TASKS_STOP  = 1;
+    NRF_RTC1->TASKS_CLEAR = 1;
 
     tos_main();
 
