@@ -1,7 +1,7 @@
 #include <setjmp.h>
 #include <stdlib.h>
 #include <tos/ft.hpp>
-#include <tos/thread_info.hpp>
+#include <tos/tcb.hpp>
 #include <tos/scheduler.hpp>
 
 #include <tos_arch.hpp>
@@ -16,7 +16,7 @@ namespace tos {
             jmp_buf main_context{};
             int8_t  num_threads = 0;
             uint8_t busy = 0;
-            intrusive_list<thread_info> run_queue;
+            intrusive_list<tcb> run_queue;
 
             void start(void (* t_start)());
 
@@ -37,7 +37,7 @@ namespace tos {
     scheduler sc;
     namespace impl
     {
-        thread_info* cur_thread = nullptr;
+        tcb* cur_thread = nullptr;
     }
 
     namespace this_thread
@@ -68,7 +68,7 @@ namespace tos {
         switch_context(sc.main_context, return_codes::do_exit);
     }
 
-    void launch(thread_info::entry_point_t e)
+    void launch(tcb::entry_point_t e)
     {
         sc.start(e);
     }
@@ -82,9 +82,9 @@ namespace tos {
     void scheduler::start(void (* t_start)())
     {
         const auto stack = static_cast<char*>(tos_stack_alloc(stack_size));
-        const auto t_ptr = stack + stack_size - sizeof(thread_info);
+        const auto t_ptr = stack + stack_size - sizeof(tcb);
 
-        auto thread = new (t_ptr) thread_info(t_start);
+        auto thread = new (t_ptr) tcb(t_start);
 
         // New threads are runnable by default.
         run_queue.push_back(*thread);
@@ -159,7 +159,7 @@ namespace tos {
             case return_codes::do_exit:
             {
                 auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
-                        + sizeof(thread_info) - stack_size;
+                        + sizeof(tcb) - stack_size;
                 std::destroy_at(impl::cur_thread);
                 tos_stack_free(stack_ptr);
                 num_threads--;
@@ -172,7 +172,7 @@ namespace tos {
         }
     }
 
-    void make_runnable(thread_info* t)
+    void make_runnable(tcb* t)
     {
         sc.run_queue.push_back(*t);
     }

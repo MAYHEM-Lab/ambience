@@ -34,8 +34,8 @@ namespace tos {
 
     private:
 
-        void add(thread_info& t);
-        intrusive_list<thread_info> m_waiters;
+        void add(tcb& t);
+        intrusive_list<tcb> m_waiters;
     };
 }
 
@@ -46,7 +46,7 @@ namespace tos {
         wait_yield();
     }
 
-    inline void waitable::add(thread_info& t)
+    inline void waitable::add(tcb& t)
     {
         m_waiters.push_back(t);
     }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "thread_info.hpp"
+#include "tcb.hpp"
 
 namespace tos {
     /**
@@ -13,7 +13,7 @@ namespace tos {
         uintptr_t id;
     };
 
-    void launch(thread_info::entry_point_t);
+    void launch(tcb::entry_point_t);
 
     /**
      * This enumeration denotes why the scheduler returned
@@ -56,10 +56,10 @@ namespace tos {
     enum class return_codes : uint8_t;
 
     namespace impl {
-        extern thread_info* cur_thread;
+        extern tcb* cur_thread;
     }
 
-    inline thread_info* self()
+    inline tcb* self()
     {
         return impl::cur_thread;
     }

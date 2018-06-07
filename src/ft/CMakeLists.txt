@@ -2,7 +2,7 @@ project(tos)
 
 add_library(tos_ft
         include/tos/ft.hpp
-        include/tos/thread_info.hpp
+        include/tos/tcb.hpp
         include/tos/mutex.hpp
         include/tos/semaphore.hpp
         include/tos/scheduler.hpp
