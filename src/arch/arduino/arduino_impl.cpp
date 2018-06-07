@@ -12,7 +12,7 @@
 #include <util/atomic.h>
 #include "tos/atomic.hpp"
 #include "ft/include/tos/ft.hpp"
-#include "ft/include/tos/thread_info.hpp"
+#include "ft/include/tos/tcb.hpp"
 #include <tos/char_stream.hpp>
 
 #include <tos_arch.hpp>
