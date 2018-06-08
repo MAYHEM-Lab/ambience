@@ -162,7 +162,7 @@ namespace tos
     static tos::avr::gpio g;
     inline nrf24::nrf24(pin_t ce, pin_t cs, pin_t interrupt)
             : m_cs_pin{cs}, m_ce_pin{ce}, m_int_pin{interrupt} {
-        g.set_pin_mode(ce, tos::pin_mode_t::out);
+        g.set_pin_mode(ce, tos::pin_mode::out);
         g.write(ce, false);
 
         // TODO: use an alarm here

@@ -50,12 +50,12 @@ void main_task()
 
     auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
     usart->options(
-            tos::usart_modes::async,
+            tos::avr::usart_modes::async,
             tos::usart_parity::disabled,
             tos::usart_stop_bit::one);
     usart->enable();
 
-    println(comm, "Hi from master!");
+    tos::println(*usart, "Hi from master!");
 
     auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);
     spi->enable();
@@ -63,16 +63,16 @@ void main_task()
     auto sd = open(tos::devs::sd, 10_pin);
     if (!sd.init())
     {
-        println(comm, "that didn't work");
+        tos::println(*usart, "that didn't work");
     }
     else
     {
-        println(comm, "ready");
+        tos::println(*usart, "ready");
     }
 
     auto csd = sd.read_csd();
     char sbuf[32];
-    println(comm, "we have ", ultoa(get_blk_count(csd), sbuf, 10), " blocks");
+    tos::println(*usart, "we have ", ultoa(get_blk_count(csd), sbuf, 10), " blocks");
 
     uint8_t buf[20];
     while (true)
@@ -82,34 +82,27 @@ void main_task()
         {
         case '6':
         {
-            auto blk = comm.getc() - '0';
+            auto blk = usart->getc() - '0';
             auto off = comm.getc() - '0';
             sd.read(buf, blk, 20, off);
             for (auto c : buf) {
                 print_hex(c);
-                print(comm, " ");
+                tos::println(*usart, " ");
             }
-            println(comm, "");
+            tos::println(*usart, "");
             break;
         }
         case '1':
         {
-            println(comm, "state:", (int32_t)ticks, (int32_t)x_ticks, (int32_t)tos::runnable_count());
+            tos::println(*usart, "state:", (int32_t)ticks, (int32_t)x_ticks);
             break;
         }
         }
     }
 }
 
-int main()
+void tos_main()
 {
-    tos::enable_interrupts();
-
     tos::launch(main_task);
     tos::launch(tick_task);
-
-    while(true)
-    {
-        tos::schedule();
-    }
 }

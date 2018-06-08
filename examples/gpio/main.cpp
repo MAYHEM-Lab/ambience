@@ -13,31 +13,34 @@
 #include <avr/interrupt.h>
 #include <tos/intrusive_ptr.hpp>
 #include <drivers/arch/avr/gpio.hpp>
+#include <drivers/arch/avr/timer.hpp>
+#include <drivers/common/alarm.hpp>
 
-tos::semaphore timer_sem(0);
-tos::usart usart;
+auto gp = open(tos::devs::gpio);
 
-tos::avr::gpio gp;
+using namespace tos::tos_literals;
+auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
+
 void hello_task()
 {
     using namespace tos::tos_literals;
-    gp.set_pin_mode(13_pin, tos::pin_mode_t::out);
+    gp->set_pin_mode(13_pin, tos::pin_mode::out);
     auto p = 13_pin;
-    println(usart, "Pin: ", (int)p.pin);
-    gp.write(13_pin, false);
+    tos::println(*usart, "Pin: ", (int)p.pin);
+    gp->write(13_pin, false);
     char buf;
     while (true) {
 
-        usart.read(&buf, 1);
+        usart->read({&buf ,1});
         if (buf == '1')
         {
-            gp.write(13_pin, true);
-            println(usart, "On");
+            gp->write(13_pin, true);
+            tos::println(*usart, "On");
         }
         else
         {
-            gp.write(13_pin, false);
-            println(usart, "Off");
+            gp->write(13_pin, false);
+            tos::println(*usart, "Off");
         }
     }
 }
@@ -46,60 +49,28 @@ void tick_task()
 {
     using namespace tos::tos_literals;
     auto p = 8_pin;
-    println(usart, "Pin: ", (int)p.pin);
-    println(usart, "Port: ", (void*)&p.port->data);
-    gp.set_pin_mode(8_pin, tos::pin_mode_t::in_pullup);
+    tos::println(*usart, "Pin: ", (int)p.pin);
+    tos::println(*usart, "Port: ", (uintptr_t)&p.port->data);
+    gp->set_pin_mode(8_pin, tos::pin_mode::in_pullup);
+
+    auto tmr = open(tos::devs::timer<1>);
+    auto alarm = open(tos::devs::alarm, *tmr);
+
     while (true)
     {
-        timer_sem.down();
-        println(usart, "Tick", (int)gp.read(8_pin));
+        alarm.sleep_for({ 1000 });
+        tos::println(*usart, "Tick", (int)gp->read(8_pin));
     }
 }
 
-int total = 0;
-ISR(TIMER1_OVF_vect)
+void tos_main()
 {
-    total ++;
-    if (total % 1000 == 0)
-    {
-        timer_sem.up();
-    }
-    TCNT1 = 49536;
-}
-
-void timer1_init()
-{
-    TCCR1A = 0;
-    TCCR1B = (1 << CS10); // no pre scaler
-    TIMSK1 |= (1 << TOIE1);
-    // initialize counter
-    TCNT1 = 0;
-}
-
-void initUSART()
-{
-    using namespace tos::tos_literals;
-
-    auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
     usart->options(
-            tos::usart_modes::async,
+            tos::avr::usart_modes::async,
             tos::usart_parity::disabled,
             tos::usart_stop_bit::one);
     usart->enable();
-}
-
-int main()
-{
-    tos::enable_interrupts();
 
     tos::launch(hello_task);
     tos::launch(tick_task);
-
-    timer1_init();
-    initUSART();
-
-    while (true)
-    {
-        tos::schedule();
-    }
 }

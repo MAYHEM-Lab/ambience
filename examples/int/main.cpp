@@ -15,20 +15,18 @@
 #include <tos/tuple.hpp>
 #include <drivers/arch/avr/eeprom.hpp>
 
-tos::usart comm;
-
 void tick_task()
 {
     using namespace tos::tos_literals;
     auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
     usart->options(
-            tos::usart_modes::async,
+            tos::avr::usart_modes::async,
             tos::usart_parity::disabled,
             tos::usart_stop_bit::one);
     usart->enable();
 
     auto g = tos::open(tos::devs::gpio);
-    g->set_pin_mode(2_pin, tos::pin_mode_t::in_pullup);
+    g->set_pin_mode(2_pin, tos::pin_mode::in_pullup);
 
     tos::event pinsem;
     auto handler = [&]{
@@ -43,24 +41,17 @@ void tick_task()
     int num = 0;
     eeprom->read(0, &num, sizeof num);
 
-    println(comm, "Hello", tos::get<0>(tp), tos::get<1>(tp));
+    tos::println(*usart, "Hello", tos::get<0>(tp), tos::get<1>(tp));
     while (true)
     {
         pinsem.wait();
         ++num;
         eeprom->write(0, &num, sizeof num);
-        println(comm, "Pin Change!", num);
+        tos::println(*usart, "Pin Change!", num);
     }
 }
 
-int main()
+void tos_main()
 {
-    tos::enable_interrupts();
-
     tos::launch(tick_task);
-
-    while(true)
-    {
-        tos::schedule();
-    }
 }
