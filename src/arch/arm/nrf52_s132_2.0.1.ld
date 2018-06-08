@@ -1,6 +1,6 @@
 /* Linker script to configure memory regions. */
 
-SEARCH_DIR(/Users/fatih/tos/src/arch/arm/)
+SEARCH_DIR(/home/fatih/tos/src/arch/arm/)
 GROUP(-lgcc -lc -lnosys)
 
 MEMORY
