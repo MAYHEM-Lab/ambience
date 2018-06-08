@@ -25,7 +25,7 @@ void tick_task()
     usart->enable();
 
     auto g = tos::open(tos::devs::gpio);
-    g->set_pin_mode(8_pin, tos::pin_mode_t::out);
+    g->set_pin_mode(8_pin, tos::pin_mode::out);
     g->write(8_pin, true);
 
     auto tmr = open(tos::devs::timer<1>);

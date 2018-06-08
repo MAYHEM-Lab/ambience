@@ -11,10 +11,10 @@ namespace tos
     class mutex
     {
     public:
-        mutex() : m_sem(1) {}
+        mutex() noexcept : m_sem(1) {}
 
-        void lock() { m_sem.down(); }
-        void unlock() { m_sem.up(); }
+        void lock() noexcept { m_sem.down(); }
+        void unlock() noexcept { m_sem.up(); }
 
     private:
         tos::semaphore m_sem;
@@ -24,7 +24,7 @@ namespace tos
     class lock_guard
     {
     public:
-        explicit lock_guard(MutexT& mtx) : m_mtx(mtx) { m_mtx.lock(); }
+        explicit lock_guard(MutexT& mtx) noexcept : m_mtx(mtx) { m_mtx.lock(); }
         ~lock_guard() { m_mtx.unlock(); }
 
         lock_guard(const lock_guard&) = delete;

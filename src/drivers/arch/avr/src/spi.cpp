@@ -61,20 +61,20 @@ namespace avr
     static gpio gp;
     void spi0::init_master() {
         using namespace tos::tos_literals;
-        gp.set_pin_mode(13_pin, pin_mode_t::out); // SCK
-        gp.set_pin_mode(12_pin, pin_mode_t::in); // MISO
-        gp.set_pin_mode(11_pin, pin_mode_t::out); // MOSI
-        gp.set_pin_mode(10_pin, pin_mode_t::out); // SS
+        gp.set_pin_mode(13_pin, pin_mode::out); // SCK
+        gp.set_pin_mode(12_pin, pin_mode::in); // MISO
+        gp.set_pin_mode(11_pin, pin_mode::out); // MOSI
+        gp.set_pin_mode(10_pin, pin_mode::out); // SS
         gp.write(10_pin, true);
         control_reg().init_master();
     }
 
     void spi0::init_slave() {
         using namespace tos::tos_literals;
-        gp.set_pin_mode(13_pin, pin_mode_t::in); // SCK
-        gp.set_pin_mode(12_pin, pin_mode_t::out); // MISO
-        gp.set_pin_mode(11_pin, pin_mode_t::in); // MOSI
-        gp.set_pin_mode(10_pin, pin_mode_t::in); // SS
+        gp.set_pin_mode(13_pin, pin_mode::in); // SCK
+        gp.set_pin_mode(12_pin, pin_mode::out); // MISO
+        gp.set_pin_mode(11_pin, pin_mode::in); // MOSI
+        gp.set_pin_mode(10_pin, pin_mode::in); // SS
         control_reg().init_slave();
     }
 

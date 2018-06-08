@@ -47,7 +47,7 @@ namespace tos
         uint8_t pin;
     };
 
-    inline pin_t from_gpio_num(uint16_t gpio) {
+    inline constexpr pin_t from_gpio_num(uint16_t gpio) {
         if (gpio < 8) {
             return { avr::ports::D(), uint8_t(gpio) };
         } else if (gpio < 14) {
@@ -67,14 +67,6 @@ namespace tos
         }
     }
 
-    enum class pin_mode_t
-    {
-        out,
-        in,
-        in_pullup,
-        in_pulldown
-    };
-
     enum class pin_change
     {
         falling = 2,
@@ -91,13 +83,20 @@ namespace tos
             using digital_io_t = bool;
             using pin_type = pin_t;
 
-            void set_pin_mode(pin_t, pin_mode_t);
+            static void set_pin_mode(pin_t, pin_mode::input_t);
+            static void set_pin_mode(pin_t, pin_mode::output_t);
+            static void set_pin_mode(pin_t, pin_mode::in_pullup_t);
 
-            void write(pin_t, digital_io_t);
+            /**
+             * Atmega328p doesn't have pulldown resistors
+             */
+            static void set_pin_mode(pin_t, pin_mode::in_pulldown_t) = delete;
 
-            digital_io_t read(const pin_t&);
+            static void write(pin_t, digital_io_t);
 
-            void attach_interrupt(const pin_t& pin, pin_change p, function_ref<void()> fun);
+            static digital_io_t read(const pin_t&);
+
+            static void attach_interrupt(const pin_t& pin, pin_change p, function_ref<void()> handler);
         };
     }
 
@@ -113,21 +112,20 @@ namespace tos
 {
     namespace avr
     {
-        inline void gpio::set_pin_mode(pin_t pin, pin_mode_t mode)
+        inline void gpio::set_pin_mode(pin_t pin, pin_mode::input_t)
         {
-            if (mode == pin_mode_t::out)
-            {
-                pin.port->dir |= (1 << pin.pin);
-            }
-            else if (mode == pin_mode_t::in)
-            {
-                pin.port->dir &= ~(1 << pin.pin);
-            }
-            else // if (mode == pin_mode_t::in_pullup)
-            {
-                set_pin_mode(pin, pin_mode_t::in);
-                write(pin, true);
-            }
+            pin.port->dir &= ~(1 << pin.pin);
+        }
+
+        inline void gpio::set_pin_mode(pin_t pin, pin_mode::output_t)
+        {
+            pin.port->dir |= (1 << pin.pin);
+        }
+
+        inline void gpio::set_pin_mode(pin_t pin, pin_mode::in_pullup_t)
+        {
+            set_pin_mode(pin, pin_mode::in);
+            write(pin, true);
         }
 
         inline void gpio::write(pin_t pin, gpio::digital_io_t what)

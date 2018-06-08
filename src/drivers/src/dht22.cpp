@@ -102,7 +102,7 @@ namespace tos
         leadingZeroBits = 40 - leadingZeroBits;
 
         // REQUEST SAMPLE
-        g.set_pin_mode(pin, pin_mode_t::out);
+        g.set_pin_mode(pin, pin_mode::out);
         g.write(pin, false);
         //pinMode(pin, OUTPUT);
         //digitalWrite(pin, LOW); // T-be
@@ -110,7 +110,7 @@ namespace tos
         else _delay_us(wakeupDelay * 1000UL);
         // digitalWrite(pin, HIGH); // T-go
         //pinMode(pin, INPUT);
-        g.set_pin_mode(pin, pin_mode_t::in);
+        g.set_pin_mode(pin, pin_mode::in);
 
         uint16_t loopCount = DHTLIB_TIMEOUT * 2;  // 200uSec max
         // while(digitalRead(pin) == HIGH)

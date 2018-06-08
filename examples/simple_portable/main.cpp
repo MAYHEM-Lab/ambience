@@ -16,23 +16,24 @@
 tos::semaphore sem(0);
 
 tos::mutex m;
-void hello_task() TOS_TASK;
-void hello_task()
+void TOS_TASK hello_task()
 {
     auto tty = tos::open(tos::devs::tty<0>);
-    m.lock();
-    tos::println(*tty, tos::this_thread::get_id().id);
-    m.unlock();
+    {
+        tos::lock_guard<tos::mutex> lock{m};
+        tos::println(*tty, tos::this_thread::get_id().id);
+    }
+
     while (true) {
         sem.down();
-        m.lock();
-        tos::println(*tty, tos::this_thread::get_id().id, ": hello");
-        m.unlock();
+        {
+            tos::lock_guard<tos::mutex> lock{m};
+            tos::println(*tty, tos::this_thread::get_id().id, ": hello");
+        }
     }
 }
 
-void yo_task() TOS_TASK;
-void yo_task()
+void TOS_TASK yo_task()
 {
     auto tty = tos::open(tos::devs::tty<0>);
     {
@@ -57,7 +58,7 @@ void tos_main()
 
     auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
     usart->options(
-            tos::usart_modes::async,
+            tos::avr::usart_modes::async,
             tos::usart_parity::disabled,
             tos::usart_stop_bit::one);
     usart->enable();

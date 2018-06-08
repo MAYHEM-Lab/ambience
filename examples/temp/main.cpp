@@ -45,9 +45,9 @@ void main_task()
     tos::dht d{};
 
     auto g = tos::open(tos::devs::gpio);
-    g->set_pin_mode(8_pin, tos::pin_mode_t::in_pullup);
+    g->set_pin_mode(8_pin, tos::pin_mode::in_pullup);
 
-    g->set_pin_mode(2_pin, tos::pin_mode_t::in_pullup);
+    g->set_pin_mode(2_pin, tos::pin_mode::in_pullup);
 
     tos::event temp_int;
     auto inthandler = [&]{

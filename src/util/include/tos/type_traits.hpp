@@ -55,10 +55,10 @@ namespace tos
     template<class T, T v>
     struct integral_constant {
         static constexpr T value = v;
-        typedef T value_type;
+        using value_type = T;
         typedef integral_constant type; // using injected-class-name
         constexpr operator value_type() const noexcept { return value; }
-        constexpr value_type operator()() const noexcept { return value; } //since c++14
+        constexpr value_type operator()() const noexcept { return value; }
     };
 
     template <bool B>

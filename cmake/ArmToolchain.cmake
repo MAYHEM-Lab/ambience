@@ -21,7 +21,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TOS_COMMON_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOS_COMMON_FLAGS} -std=c++14 -pedantic -fno-unwind-tables -fno-exceptions -fno-rtti -fno-threadsafe-statics")
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections -fno-threadsafe-statics ${TOS_NRF52_FLAGS}")
 
-set(SDK_ROOT /home/fatih/Downloads/nRF5_SDK_15.0.0_a53641a)
+set(SDK_ROOT /Users/fatih/Downloads/nRF5_SDK_15.0.0_a53641a)
 
 include_directories(${SDK_ROOT}/components/toolchain/cmsis/include/)
 include_directories(${SDK_ROOT}/integration/nrfx)

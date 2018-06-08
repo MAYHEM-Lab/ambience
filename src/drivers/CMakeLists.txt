@@ -6,6 +6,8 @@ elseif(TOS_ESP)
     add_subdirectory(arch/lx106)
 elseif(TOS_X86)
     add_subdirectory(arch/x86)
+elseif(TOS_ARM)
+    add_subdirectory(arch/nrf52)
 endif()
 
 if (NOT TOS_X86)

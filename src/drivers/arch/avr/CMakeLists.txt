@@ -17,3 +17,6 @@ target_include_directories(avr_timer PUBLIC .)
 add_library(avr_eeprom eeprom.hpp src/eeprom.cpp)
 target_link_libraries(avr_eeprom PUBLIC tos_core tos_eeprom)
 target_include_directories(avr_eeprom PUBLIC .)
+
+add_library(avr_drivers)
+target_link_libraries(avr_drivers PUBLIC avr_gpio avr_usart avr_spi avr_timer avr_eeprom)

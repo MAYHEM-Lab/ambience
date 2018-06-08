@@ -18,7 +18,7 @@ namespace tos {
             uint8_t busy = 0;
             intrusive_list<tcb> run_queue;
 
-            void start(void (* t_start)());
+            void start(tcb::entry_point_t);
 
             exit_reason schedule();
         };
@@ -33,10 +33,6 @@ namespace tos
     }
 }
 
-void ledOn(uint32_t pin);
-void ledOff(uint32_t pin);
-
-void led1_task();
 namespace tos {
     scheduler sc;
     namespace impl
@@ -82,8 +78,8 @@ namespace tos {
         return sc.schedule();
     }
 
-    constexpr auto stack_size = 512;
-    void scheduler::start(void (* t_start)())
+    constexpr auto stack_size = 256;
+    void scheduler::start(tcb::entry_point_t t_start)
     {
         const auto stack = static_cast<char*>(tos_stack_alloc(stack_size));
         const auto t_ptr = stack + stack_size - sizeof(tcb);
@@ -107,9 +103,7 @@ namespace tos {
          * set the stack pointer so the new thread will have an
          * independent execution context
          */
-        auto stck = reinterpret_cast<uintptr_t>(impl::cur_thread);
-
-        tos_set_stack_ptr((char*)stck);
+        tos_set_stack_ptr((char*) ((uintptr_t) reinterpret_cast<char*>(impl::cur_thread)));
 
         tos::enable_interrupts();
         impl::cur_thread->entry();
