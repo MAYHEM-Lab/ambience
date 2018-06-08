@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <tos/devices.hpp>
+#include <tos/ct_map.hpp>
 
 namespace tos
 {
@@ -16,7 +17,7 @@ namespace tos
         odd = 0b11
     };
 
-    namespace usart
+    namespace uart
     {
         struct stop_bit_1_t {};
         struct stop_bit_2_t {};
@@ -35,39 +36,22 @@ namespace tos
         uint32_t rate;
     };
 
-    template <uint8_t req = 0>
-    class usart_config_t
+    template <class...> struct pair_t {};
+    struct usart_key_policy
     {
-        enum
-        {
-            baud = 1, parity = 2, stop = 4
-        };
-    public:
+        static constexpr auto m = make_map()
+                .add<pair_t<usart_baud_rate, usart_baud_rate>>(tos::true_type{})
+                .add<pair_t<usart_parity, usart_parity>>(tos::true_type{})
+                .add<pair_t<usart_stop_bit, usart_stop_bit>>(tos::true_type{});
 
-        constexpr usart_config_t<req | baud>
-        set(usart_baud_rate br) &&
-        {
-            return { br, m_par, m_sb };
+        template <class KeyT, class ValT>
+        static constexpr auto validate(ct<KeyT>, ct<ValT>) {
+            constexpr auto x = tos::false_type{};
+            return get_or<pair_t<KeyT, ValT>>(x, m);
         }
-
-        constexpr usart_config_t<req | parity>
-        set(usart_parity par) &&
-        {
-            return { m_br, par, m_sb };
-        }
-
-        constexpr usart_config_t<req | stop>
-        set(usart_stop_bit sb) &&
-        {
-            return { m_br, m_par, sb };
-        }
-
-        usart_baud_rate m_br;
-        usart_parity m_par;
-        usart_stop_bit m_sb;
     };
 
-    usart_config_t<0> usart_config() { return {}; }
+    constexpr inline ct_map<usart_key_policy> usart_config() { return ct_map<usart_key_policy>{}; }
 
     namespace tos_literals
     {

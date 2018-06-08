@@ -47,7 +47,7 @@ namespace tos
         uint8_t pin;
     };
 
-    inline constexpr pin_t from_gpio_num(uint16_t gpio) {
+    inline pin_t from_gpio_num(uint16_t gpio) {
         if (gpio < 8) {
             return { avr::ports::D(), uint8_t(gpio) };
         } else if (gpio < 14) {

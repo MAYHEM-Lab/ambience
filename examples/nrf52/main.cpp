@@ -61,12 +61,12 @@ void tos_main()
     using namespace tos_literals;
     constexpr nrfx_uarte_t uart { NRF_UARTE0, NRFX_UARTE0_INST_IDX };
 
-    auto usconf = usart_config()
-        .set(115200_baud_rate)
-        .set(usart_parity::disabled)
-        .set(usart_stop_bit::one);
+    constexpr auto usconf = usart_config()
+        .add(115200_baud_rate)
+        .add(usart_parity::disabled)
+        .add(usart_stop_bit::one);
 
-    arm::uart u{usconf, 8, 6};
+    arm::uart u{ usconf, 8, 6 };
 
     nrfx_uarte_config_t conf{};
 
