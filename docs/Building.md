@@ -12,6 +12,7 @@ You'll need:
 mkdir avr_build
 cd avr_build
 cmake -DTOS_AVR=ON ..
+cmake -DTOS_AVR=ON ..
 cd examples/simple_portable
 make
 avr-objcopy -O ihex -R .eeprom simple_portable app.hex
