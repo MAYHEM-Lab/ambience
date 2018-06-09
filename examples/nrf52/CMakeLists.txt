@@ -1,3 +1,16 @@
-add_executable(nrf52_blink main.cpp ${SDK_ROOT}/modules/nrfx/drivers/src/nrfx_uarte.c ${SDK_ROOT}/modules/nrfx/drivers/src/nrfx_uart.c)
-target_link_libraries(nrf52_blink PUBLIC tos_core)
-target_compile_definitions(nrf52_blink PUBLIC NRFX_UARTE_ENABLED=1 NRFX_UARTE0_ENABLED=1 UART_LEGACY_SUPPORT=0 NRFX_UART_ENABLED=0)
+add_executable(nrf52_blink main.cpp)
+target_link_libraries(nrf52_blink PUBLIC tos_core nrf52_drivers)
+
+add_custom_command(
+    TARGET nrf52_blink POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} ./nrf52_blink${CMAKE_EXECUTABLE_SUFFIX} -O binary ./app.bin
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Convert to binary image"
+)
+
+add_custom_command(
+    TARGET nrf52_blink POST_BUILD
+    COMMAND size ./nrf52_blink${CMAKE_EXECUTABLE_SUFFIX}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Calculate size"
+)

@@ -43,7 +43,7 @@ namespace tos
         };
     }
 
-    arm::gpio* open_impl(devs::gpio_t)
+    inline arm::gpio* open_impl(devs::gpio_t)
     {
         arm::gpio::init();
         return nullptr;

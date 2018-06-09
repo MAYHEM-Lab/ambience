@@ -6,6 +6,8 @@
 
 #include "gpio.hpp"
 #include <drivers/common/usart.hpp>
+#include <tos/mutex.hpp>
+#include <tos/span.hpp>
 
 namespace tos
 {
@@ -19,12 +21,28 @@ namespace tos
         class uart
         {
         public:
-            constexpr uart(usart_constraint, gpio::pin_t rx, gpio::pin_t tx) noexcept
-            {
-            }
+            explicit uart(usart_constraint&& config, gpio::pin_t rx = 8, gpio::pin_t tx = 6) noexcept;
+
+            uart(const uart&) = delete;
+            uart(uart&&);
+
+            void write(span<const char> buf);
+            void read(span<char> buf);
 
         private:
 
+            void handle_callback(const void *p_event);
+
+            tos::mutex m_write_busy;
+            tos::semaphore m_write_sync;
+
+            tos::mutex m_read_busy;
+            tos::semaphore m_read_sync;
         };
+    }
+
+    inline arm::uart open_impl(devs::usart_t<0>, arm::usart_constraint&& c)
+    {
+        return arm::uart{ tos::move(c) };
     }
 }

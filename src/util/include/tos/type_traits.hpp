@@ -52,6 +52,9 @@ namespace tos
     template<class T>
     struct enable_if<true, T> { typedef T type; };
 
+    template <bool B, class T = void>
+    using enable_if_t = typename enable_if<B, T>::type;
+
     template<class T, T v>
     struct integral_constant {
         static constexpr T value = v;
@@ -66,6 +69,12 @@ namespace tos
 
     using true_type = bool_constant<true>;
     using false_type = bool_constant<false>;
+
+    template <class A, class B>
+    struct is_same : tos::false_type {};
+
+    template <class T>
+    struct is_same<T, T> : tos::true_type {};
 
     template< class... >
     using void_t = void;

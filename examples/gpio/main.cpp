@@ -25,8 +25,6 @@ void hello_task()
 {
     using namespace tos::tos_literals;
     gp->set_pin_mode(13_pin, tos::pin_mode::out);
-    auto p = 13_pin;
-    tos::println(*usart, "Pin: ", (int)p.pin);
     gp->write(13_pin, false);
     char buf;
     while (true) {
@@ -48,9 +46,6 @@ void hello_task()
 void tick_task()
 {
     using namespace tos::tos_literals;
-    auto p = 8_pin;
-    tos::println(*usart, "Pin: ", (int)p.pin);
-    tos::println(*usart, "Port: ", (uintptr_t)&p.port->data);
     gp->set_pin_mode(8_pin, tos::pin_mode::in_pullup);
 
     auto tmr = open(tos::devs::timer<1>);

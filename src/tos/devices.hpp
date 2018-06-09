@@ -15,8 +15,6 @@ namespace tos
      */
     template <class T, int N> struct dev {};
 
-    template<class... Ts> auto open_impl(Ts&&...);
-
     namespace details {
         template <class, class, class... Args>
         struct open_impl_exists : tos::false_type {};
