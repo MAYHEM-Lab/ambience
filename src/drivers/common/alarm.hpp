@@ -30,7 +30,7 @@ namespace tos
         explicit alarm(T& t) : m_timer(&t) {
         }
 
-        void sleep_for(milliseconds dur)
+        void  sleep_for(milliseconds dur)
         {
             sleeper s { uint16_t(dur.val) };
             {
@@ -78,7 +78,7 @@ namespace tos
             if (front.sleep_ticks == 0)
             {
                 m_sleepers.pop_front();
-                front.ev.fire();
+                front.ev.fire_isr();
             }
             if (m_sleepers.empty())
             {

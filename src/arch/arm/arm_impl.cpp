@@ -7,6 +7,7 @@
 #include <tos/ft.hpp>
 #include <nrf52.h>
 #include <nrf.h>
+#include <tos/interrupt.hpp>
 
 extern "C"
 {
@@ -26,7 +27,7 @@ void tos_main();
 
 int main()
 {
-   // tos::enable_interrupts();
+    tos::enable_interrupts();
 
     NRF_CLOCK->LFCLKSRC = (uint32_t)((CLOCK_LFCLKSRC_SRC_Xtal << CLOCK_LFCLKSRC_SRC_Pos) & CLOCK_LFCLKSRC_SRC_Msk);
     NRF_CLOCK->TASKS_LFCLKSTART = 1UL;
@@ -43,8 +44,8 @@ int main()
     while (true)
     {
         auto res = tos::schedule();
-        if (res == tos::exit_reason::restart);// reboot();
-        if (res == tos::exit_reason::power_down);// power_down(SLEEP_MODE_PWR_DOWN);
-        if (res == tos::exit_reason::idle);// power_down(SLEEP_MODE_IDLE);
+        if (res == tos::exit_reason::restart) NVIC_SystemReset();// reboot();
+        if (res == tos::exit_reason::power_down) __WFI();// power_down(SLEEP_MODE_PWR_DOWN);
+        if (res == tos::exit_reason::idle) __WFE();// power_down(SLEEP_MODE_IDLE);
     }
 }

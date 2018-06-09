@@ -31,6 +31,8 @@ namespace tos
                 auto self = static_cast<uart*>(p_context);
                 self->handle_callback(p_event);
             });
+
+            tos::refresh_interrupts();
         }
 
         void uart::handle_callback(const void *event) {
@@ -38,11 +40,11 @@ namespace tos
 
             if (p_event->type == NRFX_UARTE_EVT_TX_DONE)
             {
-                m_write_sync.up();
+                m_write_sync.up_isr();
             }
             else if (p_event->type == NRFX_UARTE_EVT_RX_DONE)
             {
-                m_read_sync.up();
+                m_read_sync.up_isr();
             }
         }
 

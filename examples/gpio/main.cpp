@@ -18,8 +18,15 @@
 
 auto gp = open(tos::devs::gpio);
 
+using namespace tos;
 using namespace tos::tos_literals;
-auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
+
+constexpr auto usconf = tos::usart_config()
+        .add(115200_baud_rate)
+        .add(usart_parity::disabled)
+        .add(usart_stop_bit::one);
+
+auto usart = open(tos::devs::usart<0>, usconf);
 
 void hello_task()
 {
@@ -60,12 +67,6 @@ void tick_task()
 
 void tos_main()
 {
-    usart->options(
-            tos::avr::usart_modes::async,
-            tos::usart_parity::disabled,
-            tos::usart_stop_bit::one);
-    usart->enable();
-
     tos::launch(hello_task);
     tos::launch(tick_task);
 }

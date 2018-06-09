@@ -30,6 +30,12 @@ namespace tos {
             return ((uint8_t) mode << 6) | ((uint8_t) parity << 4) | ((uint8_t) stop << 3) | (0b11 << 1);
         }
 
+        using usart_constraint =
+        ct_map<usart_key_policy,
+                el_t<usart_baud_rate, const usart_baud_rate&>,
+                el_t<usart_parity, const usart_parity&>,
+                el_t<usart_stop_bit, const usart_stop_bit&>>;
+
         class usart0 {
         public:
             static void enable();
@@ -51,20 +57,18 @@ namespace tos {
         void write_sync(const char* x, size_t len);
     }
 
-    inline avr::usart0* open_impl(devs::usart_t<0>, usart_baud_rate rate)
+    inline avr::usart0* open_impl(devs::usart_t<0>, avr::usart_constraint&& rate)
     {
-        avr::usart0::set_baud_rate(rate);
+        avr::usart0::set_baud_rate(get<usart_baud_rate>(rate));
+        avr::usart0::options(
+                tos::avr::usart_modes::async,
+                get<usart_parity>(rate),
+                get<usart_stop_bit>(rate));
+        avr::usart0::enable();
         return nullptr;
     }
 
-    template <class BaseUsartT>
-    class usart final {
-    public:
-        int read(span<char> buf) { return BaseUsartT::read(buf); }
-        int write(span<const char> buf) { return BaseUsartT::write(buf); }
-    };
-
-    inline usart<avr::usart0>* open_impl(devs::tty_t<0>)
+    inline avr::usart0* open_impl(devs::tty_t<0>)
     {
         return nullptr;
     }

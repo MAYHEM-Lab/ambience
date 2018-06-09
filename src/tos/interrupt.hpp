@@ -29,6 +29,17 @@ namespace tos {
         }
     }
 
+    inline void refresh_interrupts()
+    {
+        if (detail::disable_depth > 0) {
+            tos_disable_interrupts();
+        }
+        else
+        {
+            tos_enable_interrupts();
+        }
+    }
+
     struct int_guard
     {
     public:

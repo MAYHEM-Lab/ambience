@@ -18,26 +18,25 @@
 #include <algorithm>
 #include <tos/print.hpp>
 
-namespace {
-    tos::semaphore sem{0};
+#include <drivers/arch/nrf52/timer.hpp>
+#include <drivers/common/alarm.hpp>
 
+namespace {
     auto g = tos::open(tos::devs::gpio);
 
     void led1_task() {
         using namespace tos;
+
+        arm::timer0 tmr;
+        auto alarm = open(devs::alarm, tmr);
+
         g->write(17, digital::low);
         while (true) {
             g->write(17, digital::high);
-            for (int i = 0; i < 1000; ++i) {
-                nrf_delay_us(100);
-                tos::this_thread::yield();
-            }
+            alarm.sleep_for({ 100 });
 
             g->write(17, digital::low);
-            for (int i = 0; i < 1000; ++i) {
-                nrf_delay_us(100);
-                tos::this_thread::yield();
-            }
+            alarm.sleep_for({ 100 });
         }
     }
 

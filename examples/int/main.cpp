@@ -17,13 +17,16 @@
 
 void tick_task()
 {
+    using namespace tos;
     using namespace tos::tos_literals;
-    auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
-    usart->options(
-            tos::avr::usart_modes::async,
-            tos::usart_parity::disabled,
-            tos::usart_stop_bit::one);
-    usart->enable();
+
+    constexpr auto usconf = tos::usart_config()
+            .add(115200_baud_rate)
+            .add(usart_parity::disabled)
+            .add(usart_stop_bit::one);
+
+    auto usart = open(tos::devs::usart<0>, usconf);
+
 
     auto g = tos::open(tos::devs::gpio);
     g->set_pin_mode(2_pin, tos::pin_mode::in_pullup);
