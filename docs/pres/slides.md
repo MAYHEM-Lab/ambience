@@ -11,7 +11,7 @@ A VM infrastructure for embedded systems
 + Embedded systems primer & motivation
 + Goals and non-goals
 + Implementation
-+ Results
++ Some Numbers
 + Demo
 
 ---
@@ -234,9 +234,30 @@ Completely standard C++14, uses no platform specific features.
 
 If it runs C++14, it can run Tvm. Even at compile time!
 
+Tested ones:
+
++ x86
++ avr (atmega328p ie. Arduinos)
++ arm (Cortex M4, Cortex M3)
++ xtensa (Lx106)
+
 ---
 
-# How much memory does it use?
+# How much memory?
+
+| Instruction | Program Memory | Instruction | Program Memory |
+| ----------- | :------------: | ----------- | :------------: |
+| add         | 80             | read_byte   | 76             |
+| movi        | 62             | read_word   | 76             |
+| jump        | 28             | read_temp   | 70             |
+| beq         | 110            | Total ins   | 952            |
+| exit        | 14             | Everything  | 1524           |
+| movr        | 70             |
+| push        | 102            |
+| pop         | 86             |
+| call        | 72             |
+| jumpi       | 60             |
+| ret         | 46             |
 
 ---
 
