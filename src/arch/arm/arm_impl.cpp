@@ -29,8 +29,25 @@ int main()
 {
     tos::enable_interrupts();
 
-    NRF_CLOCK->LFCLKSRC = (uint32_t)((CLOCK_LFCLKSRC_SRC_Xtal << CLOCK_LFCLKSRC_SRC_Pos) & CLOCK_LFCLKSRC_SRC_Msk);
-    NRF_CLOCK->TASKS_LFCLKSTART = 1UL;
+    /* Start 16 MHz crystal oscillator */
+    NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+    NRF_CLOCK->TASKS_HFCLKSTART    = 1;
+
+    /* Wait for the external oscillator to start up */
+    while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0)
+    {
+        // Do nothing.
+    }
+
+    /* Start low frequency crystal oscillator for app_timer(used by bsp)*/
+    NRF_CLOCK->LFCLKSRC            = (CLOCK_LFCLKSRC_SRC_Xtal << CLOCK_LFCLKSRC_SRC_Pos);
+    NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
+    NRF_CLOCK->TASKS_LFCLKSTART    = 1;
+
+    while (NRF_CLOCK->EVENTS_LFCLKSTARTED == 0)
+    {
+        // Do nothing.
+    }
 
     // RTC1 could be enabled by bootloader. Disable it
     NVIC_DisableIRQ(RTC1_IRQn);

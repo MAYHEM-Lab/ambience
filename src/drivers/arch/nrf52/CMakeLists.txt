@@ -15,5 +15,12 @@ target_link_libraries(nrf52_timer PUBLIC tos_core)
 target_include_directories(nrf52_timer PUBLIC .)
 target_compile_definitions(nrf52_timer PRIVATE NRFX_TIMER_ENABLED=1 NRFX_TIMER0_ENABLED=1 TIMER_LEGACY_SUPPORT=0)
 
+add_library(nrf52_radio radio.hpp src/radio.cpp
+        ${SDK_ROOT}/components/drivers_nrf/radio_config/radio_config.c src/sdk_config.h)
+target_link_libraries(nrf52_timer PUBLIC tos_core)
+target_include_directories(nrf52_radio PUBLIC .)
+target_include_directories(nrf52_radio PRIVATE src/)
+target_include_directories(nrf52_radio PRIVATE ${SDK_ROOT}/components/drivers_nrf/radio_config)
+
 add_library(nrf52_drivers)
-target_link_libraries(nrf52_drivers PUBLIC nrf52_gpio nrf52_usart nrf52_timer)
+target_link_libraries(nrf52_drivers PUBLIC nrf52_gpio nrf52_usart nrf52_timer nrf52_radio)

@@ -20,6 +20,7 @@
 
 #include <drivers/arch/nrf52/timer.hpp>
 #include <drivers/common/alarm.hpp>
+#include <drivers/arch/nrf52/radio.hpp>
 
 namespace {
     auto g = tos::open(tos::devs::gpio);
@@ -52,13 +53,21 @@ namespace {
 
         g->write(19, digital::low);
 
+        arm::radio rad;
+
         char x;
+        uint32_t i = 0;
         while (true) {
             usart.read({&x, 1});
             g->write(19, digital::high);
-
-            usart.read({&x, 1});
-            g->write(19, digital::low);
+            if (x == 'r')
+            {
+                tos::println(usart, (int32_t)rad.receive());
+            }
+            else if (x == 't')
+            {
+                rad.transmit(++i);
+            }
         }
     }
 }
