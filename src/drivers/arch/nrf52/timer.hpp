@@ -35,4 +35,9 @@ namespace tos
             uint32_t m_ticks;
         };
     }
+
+    inline arm::timer0 open_impl(devs::timer_t<0>)
+    {
+        return arm::timer0{};
+    }
 }

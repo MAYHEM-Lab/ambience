@@ -12,6 +12,13 @@ namespace tos
 {
     namespace arm
     {
+        struct radio_data
+        {
+            tos::semaphore ready{0};
+        };
+
+        static radio_data data;
+
         radio::radio()
         {
             radio_configure();
@@ -48,18 +55,20 @@ namespace tos
 
         uint32_t radio::receive()
         {
-            uint32_t data{};
+            volatile uint32_t data{};
             NRF_RADIO->PACKETPTR = reinterpret_cast<uint32_t>(&data);
             uint32_t result = 0;
 
+            NRF_RADIO->INTENSET = RADIO_INTENSET_READY_Msk;
+
+            enable_interrupts();
+
             NRF_RADIO->EVENTS_READY = 0U;
-            // Enable radio and wait for ready
             NRF_RADIO->TASKS_RXEN = 1U;
 
-            while (NRF_RADIO->EVENTS_READY == 0U)
-            {
-                // wait
-            }
+            tos::arm::data.ready.down();
+            disable_interrupts();
+
             NRF_RADIO->EVENTS_END = 0U;
             // Start listening and wait for address received event
             NRF_RADIO->TASKS_START = 1U;
@@ -74,6 +83,7 @@ namespace tos
             {
                 result = data;
             }
+
             NRF_RADIO->EVENTS_DISABLED = 0U;
             // Disable radio
             NRF_RADIO->TASKS_DISABLE = 1U;
@@ -83,6 +93,28 @@ namespace tos
                 // wait
             }
             return result;
+        }
+
+        void radio::enable_interrupts() {
+            NVIC_SetPriority(RADIO_IRQn, 1);
+            NVIC_ClearPendingIRQ(RADIO_IRQn);
+            NVIC_EnableIRQ(RADIO_IRQn);
+        }
+
+        void radio::disable_interrupts() {
+            NVIC_DisableIRQ(RADIO_IRQn);
+        }
+    }
+}
+
+extern "C"
+{
+    void RADIO_IRQHandler(void)
+    {
+        if (NRF_RADIO->EVENTS_READY && (NRF_RADIO->INTENSET & RADIO_INTENSET_READY_Msk))
+        {
+            tos::arm::data.ready.up_isr();
+            NRF_RADIO->EVENTS_READY = 0;
         }
     }
 }

@@ -18,6 +18,11 @@ namespace tos
             void transmit(uint32_t data);
 
             uint32_t receive();
+
+        private:
+
+            void enable_interrupts();
+            void disable_interrupts();
         };
     }
 }
