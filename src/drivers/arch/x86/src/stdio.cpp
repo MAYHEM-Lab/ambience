@@ -9,14 +9,14 @@ namespace tos
 {
     namespace x86
     {
-        void stdio::write(const char* data, int len)
+        void stdio::write(span<const char> buf)
         {
-            std::cout.write(data, len);
+            std::cout.write(buf.data(), buf.size());
         }
 
-        int stdio::read(char* data, int len)
+        int stdio::read(span<char> buf)
         {
-            return std::cin.readsome(data, len);
+            return std::cin.readsome(buf.data(), buf.size());
         }
 
         void stdio::putc(char c)

@@ -37,7 +37,6 @@ void task()
 
     auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
     usart->options(
-            tos::usart_modes::async,
             tos::usart_parity::disabled,
             tos::usart_stop_bit::one);
     usart->enable();

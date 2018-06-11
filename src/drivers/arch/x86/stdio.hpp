@@ -5,6 +5,8 @@
 #pragma once
 
 #include <drivers/common/tty.hpp>
+#include <drivers/common/usart.hpp>
+#include <tos/span.hpp>
 
 namespace tos
 {
@@ -14,9 +16,15 @@ namespace tos
         {
         public:
             static void putc(char);
-            static void write(const char* data, int len);
-            static int read(char* data, int len);
+            static void write(span<const char> buf);
+            static int read(span<char> buf);
         };
+    }
+
+    template <class T>
+    inline x86::stdio* open_impl(devs::usart_t<0>, T)
+    {
+        return nullptr;
     }
 
     inline x86::stdio* open_impl(devs::tty_t<0>)

@@ -37,6 +37,8 @@ add_library(tos_arch tos/arch.hpp stub.cpp)
 target_link_libraries(tos_arch PUBLIC ${TOS_ARCH_NAME}_impl)
 
 target_link_libraries(tos_core PUBLIC tos_ft tos_arch tos_interrupt)
+target_compile_definitions(tos_core PUBLIC TOS_ARCH_${TOS_ARCH_NAME})
+message(STATUS "TOS_ARCH_${TOS_ARCH_NAME}")
 
 add_subdirectory(util)
 add_subdirectory(ft)

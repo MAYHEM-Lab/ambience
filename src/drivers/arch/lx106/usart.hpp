@@ -19,7 +19,7 @@ namespace tos
             static void disable();
             static void set_baud_rate(usart_baud_rate);
 
-            static void options(usart_modes, usart_parity, usart_stop_bit);
+            static void options(usart_parity, usart_stop_bit);
 
             static int read(char *buf, size_t sz);
 
@@ -51,7 +51,7 @@ namespace tos
             ::UART_SetBaudrate(0, baud.rate);
         }
 
-        void uart0::options(usart_modes mode, usart_parity parity, usart_stop_bit stop) {
+        void uart0::options(usart_parity parity, usart_stop_bit stop) {
             auto cvt_par = [](usart_parity p)
             {
                 switch (p)

@@ -8,10 +8,17 @@
 #include <tos/compiler.hpp>
 
 #include <drivers/common/tty.hpp>
+#include <drivers/common/usart.hpp>
 
+#ifdef TOS_ARCH_avr
 #include <drivers/arch/avr/usart.hpp>
+#elif defined(TOS_ARCH_x86)
+#include <drivers/arch/x86/stdio.hpp>
+#elif defined(TOS_ARCH_arm)
+#include <drivers/arch/nrf52/usart.hpp>
+#endif
+
 #include <tos/mutex.hpp>
-//#include <drivers/arch/x86/stdio.hpp>
 
 tos::semaphore sem(0);
 

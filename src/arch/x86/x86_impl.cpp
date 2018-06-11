@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <iostream>
+#include <tos/interrupt.hpp>
+#include <tos/ft.hpp>
 
 extern "C"
 {
@@ -35,5 +37,19 @@ extern "C"
     void tos_disable_interrupts()
     {
 
+    }
+}
+
+void tos_main();
+
+int main()
+{
+    tos::enable_interrupts();
+
+    tos_main();
+
+    while (true)
+    {
+        auto res = tos::schedule();
     }
 }
