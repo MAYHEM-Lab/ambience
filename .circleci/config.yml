@@ -9,8 +9,8 @@ jobs:
           name: Update apt
           command: apt-get update
       - run:
-          name: Install unzip
-          command: apt-get install -y unzip
+          name: Install unzip wget
+          command: apt-get install -y unzip wget ninja-build cmake
       - run:
           name: Download toolchain
           command: wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2
