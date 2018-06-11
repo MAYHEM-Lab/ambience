@@ -10,7 +10,7 @@ add_custom_command(
 
 add_custom_command(
     TARGET nrf52_blink POST_BUILD
-    COMMAND size ./nrf52_blink${CMAKE_EXECUTABLE_SUFFIX}
+    COMMAND ${CMAKE_SIZE} ./nrf52_blink${CMAKE_EXECUTABLE_SUFFIX}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Calculate size"
 )

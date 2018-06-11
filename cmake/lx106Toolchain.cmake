@@ -3,6 +3,7 @@ set(CMAKE_SYSTEM_PROCESSOR xtensa)
 
 set(CMAKE_C_COMPILER /home/fatih/esp-open-sdk/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc)
 set(CMAKE_CXX_COMPILER /home/fatih/esp-open-sdk/xtensa-lx106-elf/bin/xtensa-lx106-elf-g++)
+set(CMAKE_SIZE /home/fatih/esp-open-sdk/xtensa-lx106-elf/bin/xtensa-lx106-elf-size)
 set(CMAKE_SYSROOT "sysroot")
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
