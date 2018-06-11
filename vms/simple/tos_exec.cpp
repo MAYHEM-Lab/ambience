@@ -63,13 +63,15 @@ static uint8_t prog[128];
 
 void main_task()
 {
+    using namespace tos;
     using namespace tos::tos_literals;
-    auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
-    usart->options(
-            tos::usart_modes::async,
-            tos::usart_parity::disabled,
-            tos::usart_stop_bit::one);
-    usart->enable();
+
+    constexpr auto usconf = tos::usart_config()
+            .add(19200_baud_rate)
+            .add(usart_parity::disabled)
+            .add(usart_stop_bit::one);
+
+    auto usart = open(tos::devs::usart<0>, usconf);
 
     auto eeprom = open(tos::devs::eeprom<0>);
 
@@ -83,12 +85,14 @@ void main_task()
         if (buffer[0] == 'x')
         {
             usart->read(buffer);
+
             auto wi = uint8_t(buffer[0] - '0');
             if (index != wi);
             {
                 eeprom->read(wi * 128, prog, 128);
                 index = wi;
             }
+
             fetch = ptr_fetcher{prog};
             wait.up();
 
@@ -103,13 +107,16 @@ void main_task()
         {
             tos::println(*usart, "send");
             usart->read(buffer);
+
             auto wi = uint8_t(buffer[0] - '0');
             usart->read(buffer);
-            if (buffer[0] > 128)
+
+            if (uint8_t (buffer[0]) > 128)
             {
                 tos::println(*usart, "too large");
                 continue;
             }
+
             tos::println(*usart, "ok");
             usart->read({ (char*)prog, buffer[0] });
             index = wi;
