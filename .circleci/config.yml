@@ -8,7 +8,7 @@ jobs:
       - run:
           name: Update apt
           command: apt-get update
-      -run:
+      - run:
           name: Install unzip
           command: apt-get install -y unzip
       - run:
