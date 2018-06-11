@@ -8,8 +8,6 @@ set(CMAKE_SYSROOT "sysroot")
 
 set(CMAKE_C_COMPILER ${tools}/bin/arm-none-eabi-gcc)
 set(CMAKE_CXX_COMPILER ${tools}/bin/arm-none-eabi-g++)
-set(CMAKE_AR  "${tools}/bin/arm-none-eabi-gcc-ar")
-set(CMAKE_RANLIB "${tools}/bin/arm-none-eabi-gcc-ranlib")
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
