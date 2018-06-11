@@ -33,7 +33,7 @@ jobs:
           working_directory: build/
           name: Build Project
           command: ninja
-  x86_build
+  x86_build:
     docker:
       - image: ubuntu:bionic
     steps:
