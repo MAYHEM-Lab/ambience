@@ -34,7 +34,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "CFLAGS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "CXXFLAGS")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING "")
 
-set(SDK_ROOT /home/fatih/Downloads/nRF5_SDK_15.0.0_a53641a)
+set(SDK_ROOT /opt/x-tools/nRF5_SDK_15.0.0_a53641a)
 
 include_directories(${SDK_ROOT}/components/toolchain/cmsis/include/)
 include_directories(${SDK_ROOT}/integration/nrfx)
