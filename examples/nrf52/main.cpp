@@ -62,16 +62,21 @@ namespace {
             g->write(19, digital::high);
             if (x == 'r')
             {
-                auto res = rad.receive();
-                tos::println(usart, (int32_t)res);
-                rad.transmit(res);
+                for (int j = 0; j < 50; ++j)
+                {
+                    auto res = rad.receive();
+                    tos::println(usart, (int32_t)res);
+                    rad.transmit(res);
+                }
             }
             else if (x == 't')
             {
-                auto s = ++i;
-                rad.transmit(s);
-                auto r = rad.receive();
-                tos::println(usart, "sent", (int32_t)s, "got", (int32_t) r);
+                for (int j = 0; j < 50; ++j) {
+                    auto s = ++i;
+                    rad.transmit(s);
+                    auto r = rad.receive();
+                    tos::println(usart, "sent", (int32_t) s, "got", (int32_t) r);
+                }
             }
         }
     }

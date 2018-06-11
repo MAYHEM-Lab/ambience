@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <nrf52.h>
 #include <mdk/nrf.h>
+#include <tos/semaphore.hpp>
 
 namespace tos
 {
@@ -15,6 +16,8 @@ namespace tos
         struct radio_data
         {
             tos::semaphore ready{0};
+            tos::semaphore disabled{0};
+            tos::semaphore end{0};
         };
 
         static radio_data data;
@@ -22,35 +25,33 @@ namespace tos
         radio::radio()
         {
             radio_configure();
+
+            NRF_RADIO->INTENSET =
+                    RADIO_INTENSET_READY_Msk
+                    | RADIO_INTENCLR_END_Msk
+                    | RADIO_INTENCLR_DISABLED_Msk;
+
+            this->enable_interrupts();
         }
 
         void radio::transmit(uint32_t data)
         {
             NRF_RADIO->PACKETPTR = reinterpret_cast<uint32_t>(&data);
-            // send the packet:
+
             NRF_RADIO->EVENTS_READY = 0U;
             NRF_RADIO->TASKS_TXEN   = 1;
 
-            while (NRF_RADIO->EVENTS_READY == 0U)
-            {
-                // wait
-            }
+            tos::arm::data.ready.down();
+
             NRF_RADIO->EVENTS_END  = 0U;
             NRF_RADIO->TASKS_START = 1U;
 
-            while (NRF_RADIO->EVENTS_END == 0U)
-            {
-                // wait
-            }
+            tos::arm::data.end.down();
 
             NRF_RADIO->EVENTS_DISABLED = 0U;
-            // Disable radio
             NRF_RADIO->TASKS_DISABLE = 1U;
 
-            while (NRF_RADIO->EVENTS_DISABLED == 0U)
-            {
-                // wait
-            }
+            tos::arm::data.disabled.down();
         }
 
         uint32_t radio::receive()
@@ -59,40 +60,31 @@ namespace tos
             NRF_RADIO->PACKETPTR = reinterpret_cast<uint32_t>(&data);
             uint32_t result = 0;
 
-            NRF_RADIO->INTENSET = RADIO_INTENSET_READY_Msk;
-
-            enable_interrupts();
-
             NRF_RADIO->EVENTS_READY = 0U;
             NRF_RADIO->TASKS_RXEN = 1U;
 
             tos::arm::data.ready.down();
-            disable_interrupts();
 
             NRF_RADIO->EVENTS_END = 0U;
-            // Start listening and wait for address received event
             NRF_RADIO->TASKS_START = 1U;
 
-            // Wait for end of packet or buttons state changed
-            while (NRF_RADIO->EVENTS_END == 0U)
-            {
-                // wait
-            }
+            tos::arm::data.end.down();
 
             if (NRF_RADIO->CRCSTATUS == 1U)
             {
                 result = data;
             }
 
+            disable_radio();
+
+            return result;
+        }
+
+        void radio::disable_radio() {
             NRF_RADIO->EVENTS_DISABLED = 0U;
-            // Disable radio
             NRF_RADIO->TASKS_DISABLE = 1U;
 
-            while (NRF_RADIO->EVENTS_DISABLED == 0U)
-            {
-                // wait
-            }
-            return result;
+            tos::arm::data.disabled.down();
         }
 
         void radio::enable_interrupts() {
@@ -115,6 +107,16 @@ extern "C"
         {
             tos::arm::data.ready.up_isr();
             NRF_RADIO->EVENTS_READY = 0;
+        }
+        else if (NRF_RADIO->EVENTS_DISABLED && (NRF_RADIO->INTENSET & RADIO_INTENSET_DISABLED_Msk))
+        {
+            tos::arm::data.disabled.up_isr();
+            NRF_RADIO->EVENTS_DISABLED = 0;
+        }
+        else if (NRF_RADIO->EVENTS_END && (NRF_RADIO->INTENSET & RADIO_INTENCLR_END_Msk))
+        {
+            tos::arm::data.end.up_isr();
+            NRF_RADIO->EVENTS_END = 0;
         }
     }
 }

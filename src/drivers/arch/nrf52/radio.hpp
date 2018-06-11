@@ -23,6 +23,8 @@ namespace tos
 
             void enable_interrupts();
             void disable_interrupts();
+
+            void disable_radio();
         };
     }
 }
