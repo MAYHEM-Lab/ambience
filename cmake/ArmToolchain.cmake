@@ -1,5 +1,3 @@
-include (CMakeForceCompiler)
-
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
@@ -8,6 +6,7 @@ set(CMAKE_SYSROOT "sysroot")
 
 set(CMAKE_C_COMPILER ${tools}/bin/arm-none-eabi-gcc)
 set(CMAKE_CXX_COMPILER ${tools}/bin/arm-none-eabi-g++)
+set(CMAKE_SIZE ${tools}/bin/arm-none-eabi-size)
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
