@@ -35,7 +35,7 @@ static void radio_configure()
       | ((uint32_t)(0xC6) << 16) // Prefix byte of address 6 converted to nRF24L series format
       | ((uint32_t)(0xC4) << 0); // Prefix byte of address 4 converted to nRF24L series format
 
-    NRF_RADIO->BASE0 = 0x01234567UL;  // Base address for prefix 0 converted to nRF24L series format
+    NRF_RADIO->BASE0 = 001234567UL;  // Base address for prefix 0 converted to nRF24L series format
     NRF_RADIO->BASE1 = 0x89ABCDEFUL;  // Base address for prefix 1-7 converted to nRF24L series format
 
     NRF_RADIO->TXADDRESS   = 0x00UL;  // Set device address 0 to use when transmitting
@@ -92,41 +92,47 @@ namespace tos
             this->enable_interrupts();
         }
 
-        void radio::transmit(uint32_t data)
-        {
-            NRF_RADIO->PACKETPTR = reinterpret_cast<uint32_t>(&data);
-
+        void radio::enable_transmit() {
             NRF_RADIO->EVENTS_READY = 0U;
-            NRF_RADIO->TASKS_TXEN   = 1;
+            NRF_RADIO->TASKS_TXEN = 1U;
 
             tos::arm::data.ready.down();
+        }
+
+        void radio::transmit(uint32_t data)
+        {
+            enable_transmit();
+            NRF_RADIO->PACKETPTR = reinterpret_cast<uint32_t>(&data);
 
             NRF_RADIO->EVENTS_END  = 0U;
             NRF_RADIO->TASKS_START = 1U;
 
             tos::arm::data.end.down();
 
-            NRF_RADIO->EVENTS_DISABLED = 0U;
-            NRF_RADIO->TASKS_DISABLE = 1U;
+            disable_radio();
+        }
 
-            tos::arm::data.disabled.down();
+        void radio::enable_receive() {
+            NRF_RADIO->EVENTS_READY = 0U;
+            NRF_RADIO->TASKS_RXEN = 1U;
+
+            tos::arm::data.ready.down();
         }
 
         uint32_t radio::receive()
         {
             volatile uint32_t data{};
             NRF_RADIO->PACKETPTR = reinterpret_cast<uint32_t>(&data);
+
             uint32_t result = 0;
 
-            NRF_RADIO->EVENTS_READY = 0U;
-            NRF_RADIO->TASKS_RXEN = 1U;
-
-            tos::arm::data.ready.down();
+            enable_receive();
 
             NRF_RADIO->EVENTS_END = 0U;
             NRF_RADIO->TASKS_START = 1U;
 
             tos::arm::data.end.down();
+            //tos::arm::data.end.down();
 
             if (NRF_RADIO->CRCSTATUS == 1U)
             {

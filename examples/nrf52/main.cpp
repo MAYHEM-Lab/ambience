@@ -74,6 +74,7 @@ namespace {
                 for (int j = 0; j < 50; ++j) {
                     auto s = ++i;
                     rad.transmit(s);
+                    //rad.transmit(s);
                     auto r = rad.receive();
                     tos::println(usart, "sent", (int32_t) s, "got", (int32_t) r);
                 }

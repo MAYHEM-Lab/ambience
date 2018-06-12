@@ -15,6 +15,12 @@ namespace tos
         public:
             radio();
 
+            void enable_receive();
+            void enable_transmit();
+            void disable_radio();
+
+            void disable_receive();
+
             void transmit(uint32_t data);
 
             uint32_t receive();
@@ -24,7 +30,6 @@ namespace tos
             void enable_interrupts();
             void disable_interrupts();
 
-            void disable_radio();
         };
     }
 }
