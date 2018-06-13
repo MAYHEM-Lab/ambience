@@ -93,6 +93,9 @@ namespace tos
     public:
 
         intrusive_list() : m_head(nullptr), m_tail(nullptr) {}
+        intrusive_list(intrusive_list&&) = default;
+        intrusive_list(const intrusive_list&) = delete;
+        ~intrusive_list() = default;
 
         using iterator_t = intrusive_list_iterator<T>;
 
