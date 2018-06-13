@@ -7,50 +7,80 @@
 #include <stdint.h>
 #include <tos/intrusive_list.hpp>
 #include <tos/event.hpp>
+#include <tos/chrono.hpp>
+#include <tos/function_ref.hpp>
+#include <tos/devices.hpp>
 
 namespace tos
 {
     struct sleeper
             : list_node<sleeper>
     {
-        uint16_t sleep_ticks;
-        event ev;
-        explicit sleeper(uint16_t ticks) : sleep_ticks(ticks) {}
-    };
+        explicit sleeper(uint16_t ticks, const function_ref<void()>& fun) : sleep_ticks(ticks), fun(fun) {}
 
-    struct milliseconds
-    {
-        uint64_t val;
+    private:
+        uint16_t sleep_ticks;
+        function_ref<void()> fun;
+
+        template <class T>
+        friend class alarm;
     };
 
     template <class T>
     class alarm
     {
     public:
+        using alarm_handle = intrusive_list<sleeper>::iterator_t;
+
         explicit alarm(T& t) : m_timer(&t) {
         }
 
-        void  sleep_for(milliseconds dur)
+        void sleep_for(milliseconds dur)
         {
-            sleeper s { uint16_t(dur.val) };
+            event ev;
+            auto fun = [&ev]{
+                ev.fire_isr();
+            };
+            sleeper s { uint16_t(dur.val), fun };
+            set_alarm(s);
+            ev.wait();
+        }
+
+        auto set_alarm(sleeper& s) -> alarm_handle
+        {
+            tos::int_guard no_int;
+            auto it = m_sleepers.begin();
+            while (it != m_sleepers.end() && it->sleep_ticks < s.sleep_ticks)
             {
-                tos::int_guard no_int;
-                auto it = m_sleepers.begin();
-                while (it != m_sleepers.end() && it->sleep_ticks < s.sleep_ticks)
-                {
-                    ++it;
-                }
-                if (it != m_sleepers.end())
-                {
-                    s.sleep_ticks -= it->sleep_ticks;
-                }
-                else
-                {
-                    start();
-                }
-                m_sleepers.insert(it, s);
+                ++it;
             }
-            s.ev.wait();
+            if (it != m_sleepers.end())
+            {
+                s.sleep_ticks -= it->sleep_ticks;
+            }
+            else
+            {
+                start();
+            }
+            return m_sleepers.insert(it, s);
+        }
+
+        void cancel(alarm_handle it)
+        {
+            tos::int_guard no_int;
+
+            auto next = it;
+            ++next;
+            if (next != m_sleepers.end())
+            {
+                next->sleep_ticks += it->sleep_ticks;
+            }
+            m_sleepers.erase(it);
+
+            if (m_sleepers.empty())
+            {
+                stop();
+            }
         }
 
         constexpr milliseconds min_resolution() const { return { 1 }; }
@@ -73,16 +103,16 @@ namespace tos
 
         void tick_handler()
         {
-            auto& front = m_sleepers.front();
+            sleeper& front = m_sleepers.front();
             front.sleep_ticks--;
             if (front.sleep_ticks == 0)
             {
                 m_sleepers.pop_front();
-                front.ev.fire_isr();
-            }
-            if (m_sleepers.empty())
-            {
-                stop();
+                front.fun();
+                if (m_sleepers.empty())
+                {
+                    stop();
+                }
             }
         }
 

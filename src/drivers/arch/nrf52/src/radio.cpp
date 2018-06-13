@@ -132,7 +132,6 @@ namespace tos
             NRF_RADIO->TASKS_START = 1U;
 
             tos::arm::data.end.down();
-            //tos::arm::data.end.down();
 
             if (NRF_RADIO->CRCSTATUS == 1U)
             {

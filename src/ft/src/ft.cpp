@@ -46,7 +46,7 @@ namespace tos {
         {
             tos::int_guard ig;
             if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
-                make_runnable(impl::cur_thread);
+                make_runnable(*impl::cur_thread);
                 switch_context(sc.main_context, return_codes::yield);
             }
         }
@@ -172,9 +172,9 @@ namespace tos {
         }
     }
 
-    void make_runnable(tcb* t)
+    void make_runnable(tcb& t)
     {
-        sc.run_queue.push_back(*t);
+        sc.run_queue.push_back(t);
     }
 }
 

@@ -25,6 +25,8 @@
 namespace {
     auto g = tos::open(tos::devs::gpio);
 
+    tos::semaphore sem{0};
+
     void led1_task() {
         using namespace tos;
 
@@ -35,9 +37,11 @@ namespace {
         while (true) {
             g->write(17, digital::high);
             alarm.sleep_for({ 100 });
+            //sem.down(alarm, {100});
 
             g->write(17, digital::low);
             alarm.sleep_for({ 100 });
+            //sem.down(alarm, {100});
         }
     }
 

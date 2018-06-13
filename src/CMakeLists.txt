@@ -4,7 +4,7 @@ set(TOS_CORE_HEADERS
 	tos/devices.hpp
 	tos/char_stream.hpp
 	tos/arch.hpp
-        tos/init.hpp tos/compiler.hpp)
+        tos/init.hpp tos/compiler.hpp tos/chrono.hpp)
 
 add_library(tos_print tos/print.hpp print.cpp)
 target_compile_options(tos_print PUBLIC -std=gnu++14)

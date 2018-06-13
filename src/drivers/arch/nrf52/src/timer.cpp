@@ -14,7 +14,7 @@ namespace tos
     {
         static constexpr nrfx_timer_t tmr = { NRF_TIMER0, NRFX_TIMER0_INST_IDX };
 
-        timer0::timer0() {
+        timer0::timer0() : m_cb(+[](void*){}) {
             nrfx_timer_config_t conf;
             conf.frequency = NRF_TIMER_FREQ_16MHz;
             conf.interrupt_priority = 7;

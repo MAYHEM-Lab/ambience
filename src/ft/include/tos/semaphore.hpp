@@ -1,8 +1,17 @@
 #pragma once
 
-#include "waitable.hpp"
+#include <tos/chrono.hpp>
+#include <tos/waitable.hpp>
+#include <drivers/common/alarm.hpp>
 
 namespace tos {
+    enum class sem_ret
+    {
+        normal,
+        timeout,
+        error
+    };
+
     /**
      * This class implements a Dijkstra style counting semaphore
      */
@@ -33,6 +42,9 @@ namespace tos {
          * negative
          */
         void down() noexcept;
+
+        template <class AlarmT>
+        sem_ret down(AlarmT& alarm, milliseconds ms) noexcept;
 
         /**
          * Initializes a semaphore with the given value
@@ -85,6 +97,38 @@ namespace tos {
         if (m_count < 0) {
             m_wait.wait();
         }
+    }
+
+    template<class AlarmT>
+    sem_ret semaphore::down(AlarmT &alarm, milliseconds ms) noexcept {
+        tos::int_guard ig;
+
+        auto ret_val = sem_ret::normal;
+
+        --m_count;
+        if (m_count >= 0) {
+            return ret_val;
+        }
+
+        auto wait_handle = m_wait.add(*self());
+
+        auto timeout = [&]{
+            // this executes in ISR context
+            ret_val = sem_ret::timeout;
+            auto& t = m_wait.remove(wait_handle);
+            ++m_count;
+            make_runnable(t);
+        };
+        sleeper s { uint16_t(ms.val), timeout };
+        auto handle = alarm.set_alarm(s);
+
+        wait_yield();
+
+        if (ret_val != sem_ret::timeout)
+        {
+            alarm.cancel(handle);
+        }
+        return ret_val;
     }
 
     inline void semaphore::up_isr() noexcept
