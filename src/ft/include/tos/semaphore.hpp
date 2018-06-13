@@ -7,9 +7,15 @@
 namespace tos {
     enum class sem_ret
     {
+        /**
+         * Semaphore down executed successfully
+         */
         normal,
-        timeout,
-        error
+
+        /**
+         * Semaphore down timed out
+         */
+        timeout
     };
 
     /**
@@ -43,6 +49,19 @@ namespace tos {
          */
         void down() noexcept;
 
+        /**
+         * Decrements the shared counter and blocks for up
+         * to the given amount of time if the counter is
+         * negative.
+         *
+         * Upon timing out, the initial decrement is rolled
+         * back.
+         *
+         * @tparam AlarmT type of the alarm object
+         * @param alarm the alarm object
+         * @param ms maximum duration to block
+         * @return reason for the return
+         */
         template <class AlarmT>
         sem_ret down(AlarmT& alarm, milliseconds ms) noexcept;
 
