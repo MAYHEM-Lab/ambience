@@ -12,7 +12,7 @@ namespace tos
 {
     namespace arm
     {
-        static constexpr nrfx_timer_t tmr = { NRF_TIMER0, NRFX_TIMER0_INST_IDX };
+        static constexpr nrfx_timer_t tmr = { NRF_TIMER0, NRFX_TIMER0_INST_IDX, TIMER0_CC_NUM };
 
         timer0::timer0() : m_cb(+[](void*){}) {
             nrfx_timer_config_t conf;
@@ -22,7 +22,7 @@ namespace tos
             conf.mode = NRF_TIMER_MODE_TIMER;
             conf.p_context = this;
 
-            nrfx_timer_init(&tmr, &conf, [](nrf_timer_event_t event_type, void * p_context){
+            nrfx_timer_init(&tmr, &conf, [](nrf_timer_event_t, void * p_context){
                 auto self = static_cast<timer0*>(p_context);
                 self->m_cb();
                 self->write_ticks(self->m_ticks);
