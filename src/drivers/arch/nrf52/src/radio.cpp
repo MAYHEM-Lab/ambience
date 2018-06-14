@@ -69,7 +69,7 @@ static void radio_configure()
 
 namespace tos
 {
-    namespace arm
+    namespace nrf52
     {
         struct radio_data
         {
@@ -107,7 +107,7 @@ namespace tos
             NRF_RADIO->EVENTS_READY = 0U;
             NRF_RADIO->TASKS_TXEN = 1U;
 
-            tos::arm::data.ready.down();
+            tos::nrf52::data.ready.down();
         }
 
         void radio::transmit(uint32_t data)
@@ -118,7 +118,7 @@ namespace tos
             NRF_RADIO->EVENTS_END  = 0U;
             NRF_RADIO->TASKS_START = 1U;
 
-            tos::arm::data.end.down();
+            tos::nrf52::data.end.down();
 
             disable_radio();
         }
@@ -127,7 +127,7 @@ namespace tos
             NRF_RADIO->EVENTS_READY = 0U;
             NRF_RADIO->TASKS_RXEN = 1U;
 
-            tos::arm::data.ready.down();
+            tos::nrf52::data.ready.down();
         }
 
         uint32_t radio::receive()
@@ -142,7 +142,7 @@ namespace tos
             NRF_RADIO->EVENTS_END = 0U;
             NRF_RADIO->TASKS_START = 1U;
 
-            tos::arm::data.end.down();
+            tos::nrf52::data.end.down();
 
             if (NRF_RADIO->CRCSTATUS == 1U)
             {
@@ -158,7 +158,7 @@ namespace tos
             NRF_RADIO->EVENTS_DISABLED = 0U;
             NRF_RADIO->TASKS_DISABLE = 1U;
 
-            tos::arm::data.disabled.down();
+            tos::nrf52::data.disabled.down();
         }
 
         void radio::enable_interrupts() {
@@ -179,17 +179,17 @@ extern "C"
     {
         if (NRF_RADIO->EVENTS_READY && (NRF_RADIO->INTENSET & RADIO_INTENSET_READY_Msk))
         {
-            tos::arm::data.ready.up_isr();
+            tos::nrf52::data.ready.up_isr();
             NRF_RADIO->EVENTS_READY = 0;
         }
         else if (NRF_RADIO->EVENTS_DISABLED && (NRF_RADIO->INTENSET & RADIO_INTENSET_DISABLED_Msk))
         {
-            tos::arm::data.disabled.up_isr();
+            tos::nrf52::data.disabled.up_isr();
             NRF_RADIO->EVENTS_DISABLED = 0;
         }
         else if (NRF_RADIO->EVENTS_END && (NRF_RADIO->INTENSET & RADIO_INTENCLR_END_Msk))
         {
-            tos::arm::data.end.up_isr();
+            tos::nrf52::data.end.up_isr();
             NRF_RADIO->EVENTS_END = 0;
         }
     }

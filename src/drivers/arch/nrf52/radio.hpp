@@ -8,7 +8,7 @@
 
 namespace tos
 {
-    namespace arm
+    namespace nrf52
     {
         class radio
         {

@@ -78,7 +78,7 @@ namespace tos {
         return sc.schedule();
     }
 
-    constexpr auto stack_size = 512;
+    constexpr auto stack_size = 256;
     void scheduler::start(tcb::entry_point_t t_start)
     {
         const auto stack = static_cast<char*>(tos_stack_alloc(stack_size));

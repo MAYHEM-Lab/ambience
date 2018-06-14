@@ -10,7 +10,7 @@
 
 namespace tos
 {
-    namespace arm
+    namespace nrf52
     {
         static constexpr nrfx_timer_t tmr = { NRF_TIMER0, NRFX_TIMER0_INST_IDX, TIMER0_CC_NUM };
 

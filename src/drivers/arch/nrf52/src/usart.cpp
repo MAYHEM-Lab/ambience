@@ -8,7 +8,7 @@
 
 namespace tos
 {
-    namespace arm
+    namespace nrf52
     {
         constexpr nrfx_uarte_t uart0 { NRF_UARTE0, NRFX_UARTE0_INST_IDX };
 

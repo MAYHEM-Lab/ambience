@@ -10,7 +10,7 @@
 #include <tos/semaphore.hpp>
 
 static uint16_t cnt = 0;
-static tos::function_ref<void()> tmr_cb;
+static tos::function_ref<void()> tmr_cb {+[](void*){}, nullptr};
 
 namespace tos
 {
@@ -59,5 +59,5 @@ namespace tos
 ISR(TIMER1_OVF_vect)
 {
     TCNT1 = cnt;
-    if (tmr_cb) tmr_cb();
+    tmr_cb();
 }

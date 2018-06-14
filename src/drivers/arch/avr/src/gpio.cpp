@@ -10,7 +10,10 @@ namespace tos
 {
     namespace avr
     {
-        tos::function_ref<void()> exint_handlers[2];
+        tos::function_ref<void()> exint_handlers[2] = {
+            { +[](void*){}, nullptr },
+            { +[](void*){}, nullptr }
+        };
     }
 }
 

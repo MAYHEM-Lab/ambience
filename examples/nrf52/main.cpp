@@ -30,7 +30,7 @@ namespace {
     void led1_task() {
         using namespace tos;
 
-        arm::timer0 tmr;
+        nrf52::timer0 tmr;
         auto alarm = open(devs::alarm, tmr);
 
         g->write(17, digital::low);
@@ -55,7 +55,7 @@ namespace {
 
         g->write(19, digital::low);
 
-        arm::radio rad;
+        nrf52::radio rad;
 
         char x;
         uint32_t i = 0;

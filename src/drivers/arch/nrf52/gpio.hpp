@@ -10,7 +10,7 @@
 
 namespace tos
 {
-    namespace arm
+    namespace nrf52
     {
         class gpio
         {
@@ -43,9 +43,9 @@ namespace tos
         };
     }
 
-    inline arm::gpio* open_impl(devs::gpio_t)
+    inline nrf52::gpio* open_impl(devs::gpio_t)
     {
-        arm::gpio::init();
+        nrf52::gpio::init();
         return nullptr;
     }
 }
@@ -54,9 +54,9 @@ namespace tos
 
 namespace tos
 {
-    namespace arm
+    namespace nrf52
     {
-        inline void tos::arm::gpio::write(int pin, digital::low_t)
+        inline void tos::nrf52::gpio::write(int pin, digital::low_t)
         {
             NRF_P0->OUTCLR = (1UL << pin);
         }

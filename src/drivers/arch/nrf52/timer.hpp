@@ -10,7 +10,7 @@
 
 namespace tos
 {
-    namespace arm
+    namespace nrf52
     {
         class timer0
         {
@@ -36,8 +36,8 @@ namespace tos
         };
     }
 
-    inline arm::timer0 open_impl(devs::timer_t<0>)
+    inline nrf52::timer0 open_impl(devs::timer_t<0>)
     {
-        return arm::timer0{};
+        return nrf52::timer0{};
     }
 }
