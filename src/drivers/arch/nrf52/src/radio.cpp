@@ -73,8 +73,19 @@ namespace tos
     {
         struct radio_data
         {
+            /**
+             * Synchronizes the READY event of the RADIO
+             */
             tos::semaphore ready{0};
+
+            /**
+             * Synchronizes the DISABLED event of the RADIO
+             */
             tos::semaphore disabled{0};
+
+            /**
+             * Synchronizes the END event of the RADIO
+             */
             tos::semaphore end{0};
         };
 
@@ -132,7 +143,6 @@ namespace tos
             NRF_RADIO->TASKS_START = 1U;
 
             tos::arm::data.end.down();
-            //tos::arm::data.end.down();
 
             if (NRF_RADIO->CRCSTATUS == 1U)
             {
