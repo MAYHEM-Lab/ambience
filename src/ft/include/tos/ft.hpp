@@ -41,7 +41,7 @@ namespace tos {
 
     namespace this_thread {
         /**
-         * Returns the identifier of the current task
+         * Returns a platform depentent identifier of the current task
          */
         thread_id_t get_id();
 
@@ -59,6 +59,13 @@ namespace tos {
         extern tcb* cur_thread;
     }
 
+    /**
+     * Returns a pointer to the currently running thread.
+     *
+     * Returns `nullptr` if there's no active thread at the moment.
+     *
+     * @return pointer to the current thread
+     */
     inline tcb* self()
     {
         return impl::cur_thread;

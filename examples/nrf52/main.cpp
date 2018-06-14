@@ -25,6 +25,8 @@
 namespace {
     auto g = tos::open(tos::devs::gpio);
 
+    tos::semaphore sem{0};
+
     void led1_task() {
         using namespace tos;
 
@@ -34,10 +36,10 @@ namespace {
         g->write(17, digital::low);
         while (true) {
             g->write(17, digital::high);
-            alarm.sleep_for({ 100 });
+            sem.down(alarm, {10000});
 
             g->write(17, digital::low);
-            alarm.sleep_for({ 100 });
+            sem.down(alarm, {10000});
         }
     }
 
@@ -78,6 +80,10 @@ namespace {
                     auto r = rad.receive();
                     tos::println(usart, "sent", (int32_t) s, "got", (int32_t) r);
                 }
+            }
+            else if (x == 'a')
+            {
+                sem.up();
             }
         }
     }

@@ -13,7 +13,7 @@ namespace tos {
     {
         using entry_point_t = void(*)();
 
-        volatile entry_point_t entry;
+        entry_point_t entry;
         jmp_buf context;
 
         explicit tcb(entry_point_t pt) : entry{tos::move(pt)} {}

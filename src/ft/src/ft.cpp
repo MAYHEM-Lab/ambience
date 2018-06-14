@@ -46,7 +46,7 @@ namespace tos {
         {
             tos::int_guard ig;
             if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
-                make_runnable(impl::cur_thread);
+                make_runnable(*impl::cur_thread);
                 switch_context(sc.main_context, return_codes::yield);
             }
         }
@@ -78,7 +78,7 @@ namespace tos {
         return sc.schedule();
     }
 
-    constexpr auto stack_size = 256;
+    constexpr auto stack_size = 512;
     void scheduler::start(tcb::entry_point_t t_start)
     {
         const auto stack = static_cast<char*>(tos_stack_alloc(stack_size));
@@ -172,9 +172,9 @@ namespace tos {
         }
     }
 
-    void make_runnable(tcb* t)
+    void make_runnable(tcb& t)
     {
-        sc.run_queue.push_back(*t);
+        sc.run_queue.push_back(t);
     }
 }
 

@@ -5,7 +5,7 @@ namespace tos {
      * Places the given thread back into the runnable list
      * @param t thread to make runnable
      */
-    void make_runnable(struct tcb *t);
+    void make_runnable(struct tcb &t);
 
     /**
      * Gives control of the CPU back to the scheduler

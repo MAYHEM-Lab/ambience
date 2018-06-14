@@ -93,6 +93,9 @@ namespace tos
     public:
 
         intrusive_list() : m_head(nullptr), m_tail(nullptr) {}
+        intrusive_list(intrusive_list&&) = default;
+        intrusive_list(const intrusive_list&) = delete;
+        ~intrusive_list() = default;
 
         using iterator_t = intrusive_list_iterator<T>;
 
@@ -113,7 +116,7 @@ namespace tos
          */
         bool empty() { return m_head == nullptr; }
 
-        void push_back(T& t);
+        iterator_t push_back(T& t);
         void push_front(T& t);
 
         T& front();
@@ -122,7 +125,7 @@ namespace tos
         const T& front() const;
         const T& back() const;
 
-        void insert(iterator_t at, T& t);
+        iterator_t insert(iterator_t at, T& t);
 
         void pop_back();
         void pop_front();
@@ -154,7 +157,8 @@ namespace tos
     }
 
     template<class T>
-    void intrusive_list<T>::push_back(T &t) {
+    auto intrusive_list<T>::push_back(T &t) -> iterator_t
+    {
         if (empty())
         {
             m_head = &t;
@@ -165,6 +169,7 @@ namespace tos
         }
         m_tail = &t;
         t.next = nullptr;
+        return iterator_t{ &t };
     }
 
     template <class T>
@@ -183,17 +188,16 @@ namespace tos
     }
 
     template<class T>
-    void intrusive_list<T>::insert(intrusive_list::iterator_t at, T& t)
+    auto intrusive_list<T>::insert(intrusive_list::iterator_t at, T& t) -> iterator_t
     {
         if (at == begin())
         {
             push_front(t);
-            return;
+            return iterator_t{ &t };
         }
         else if (at == end())
         {
-            push_back(t);
-            return;
+            return push_back(t);
         }
 
         t.prev = at->prev;
@@ -204,6 +208,8 @@ namespace tos
         {
             t.prev->next = &t;
         }
+
+        return iterator_t{ &t };
     }
 
     template<class T>

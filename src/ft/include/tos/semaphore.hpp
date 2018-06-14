@@ -1,8 +1,23 @@
 #pragma once
 
-#include "waitable.hpp"
+#include <tos/chrono.hpp>
+#include <tos/waitable.hpp>
+#include <drivers/common/alarm.hpp>
 
 namespace tos {
+    enum class sem_ret
+    {
+        /**
+         * Semaphore down executed successfully
+         */
+        normal,
+
+        /**
+         * Semaphore down timed out
+         */
+        timeout
+    };
+
     /**
      * This class implements a Dijkstra style counting semaphore
      */
@@ -33,6 +48,22 @@ namespace tos {
          * negative
          */
         void down() noexcept;
+
+        /**
+         * Decrements the shared counter and blocks for up
+         * to the given amount of time if the counter is
+         * negative.
+         *
+         * Upon timing out, the initial decrement is rolled
+         * back.
+         *
+         * @tparam AlarmT type of the alarm object
+         * @param alarm the alarm object
+         * @param ms maximum duration to block
+         * @return reason for the return
+         */
+        template <class AlarmT>
+        sem_ret down(AlarmT& alarm, milliseconds ms) noexcept;
 
         /**
          * Initializes a semaphore with the given value
@@ -85,6 +116,38 @@ namespace tos {
         if (m_count < 0) {
             m_wait.wait();
         }
+    }
+
+    template<class AlarmT>
+    sem_ret semaphore::down(AlarmT &alarm, milliseconds ms) noexcept {
+        tos::int_guard ig;
+
+        auto ret_val = sem_ret::normal;
+
+        --m_count;
+        if (m_count >= 0) {
+            return ret_val;
+        }
+
+        auto wait_handle = m_wait.add(*self());
+
+        auto timeout = [&]{
+            // this executes in ISR context
+            ret_val = sem_ret::timeout;
+            auto& t = m_wait.remove(wait_handle);
+            ++m_count;
+            make_runnable(t);
+        };
+        sleeper s { uint16_t(ms.val), timeout };
+        auto handle = alarm.set_alarm(s);
+
+        wait_yield();
+
+        if (ret_val != sem_ret::timeout)
+        {
+            alarm.cancel(handle);
+        }
+        return ret_val;
     }
 
     inline void semaphore::up_isr() noexcept
