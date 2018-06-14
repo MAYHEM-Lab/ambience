@@ -52,7 +52,7 @@ namespace tos {
         }
     }
 
-    void wait_yield()
+    void suspend_self()
     {
         if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
             switch_context(sc.main_context, return_codes::do_wait);

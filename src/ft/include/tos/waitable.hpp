@@ -47,7 +47,7 @@ namespace tos {
     inline void waitable::wait()
     {
         add(*self());
-        wait_yield();
+        suspend_self();
     }
 
     inline auto waitable::add(tcb& t) -> waiter_handle

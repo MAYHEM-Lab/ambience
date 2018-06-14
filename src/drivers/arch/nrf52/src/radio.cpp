@@ -113,7 +113,7 @@ namespace tos
         void radio::transmit(uint32_t data)
         {
             enable_transmit();
-            NRF_RADIO->PACKETPTR = reinterpret_cast<uint32_t>(&data);
+            set_packet_ptr(&data);
 
             NRF_RADIO->EVENTS_END  = 0U;
             NRF_RADIO->TASKS_START = 1U;
@@ -130,10 +130,20 @@ namespace tos
             tos::nrf52::data.ready.down();
         }
 
+        void radio::set_packet_ptr(volatile void* ptr)
+        {
+            NRF_RADIO->PACKETPTR = reinterpret_cast<uint32_t>(ptr);
+        }
+
+        void radio::set_packet_ptr(void* ptr)
+        {
+            NRF_RADIO->PACKETPTR = reinterpret_cast<uint32_t>(ptr);
+        }
+
         uint32_t radio::receive()
         {
             volatile uint32_t data{};
-            NRF_RADIO->PACKETPTR = reinterpret_cast<uint32_t>(&data);
+            set_packet_ptr(&data);
 
             uint32_t result = 0;
 
@@ -159,6 +169,11 @@ namespace tos
             NRF_RADIO->TASKS_DISABLE = 1U;
 
             tos::nrf52::data.disabled.down();
+        }
+
+        void radio::stop()
+        {
+            NRF_RADIO->TASKS_STOP = 1U;
         }
 
         void radio::enable_interrupts() {

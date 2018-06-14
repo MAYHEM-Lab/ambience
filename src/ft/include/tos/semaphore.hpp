@@ -141,7 +141,7 @@ namespace tos {
         sleeper s { uint16_t(ms.val), timeout };
         auto handle = alarm.set_alarm(s);
 
-        wait_yield();
+        suspend_self();
 
         if (ret_val != sem_ret::timeout)
         {

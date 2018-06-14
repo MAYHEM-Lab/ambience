@@ -27,6 +27,11 @@ namespace tos
 
         private:
 
+            void set_packet_ptr(volatile void*);
+            void set_packet_ptr(void*);
+
+            void stop();
+
             void enable_interrupts();
             void disable_interrupts();
 
