@@ -28,18 +28,25 @@ namespace tos
             conf.scl = clock_pin;
             conf.sda = data_pin;
 
-            nrfx_twim_init(&twim0, &conf, [](nrfx_twim_evt_t const *p_event, void *p_context){
-                data.sync.up_isr();
+            auto res = nrfx_twim_init(&twim0, &conf, [](nrfx_twim_evt_t const *p_event, void *p_context){
                 data.evt = p_event->type;
+                data.sync.up_isr();
             }, this);
+
+            if (res != NRFX_SUCCESS)
+            {
+                NVIC_SystemReset();
+            }
         }
 
         twi_tx_res twim::transmit(twi_addr_t to, span<const char> buf) noexcept
         {
+            nrfx_twim_enable(&twim0);
             auto ret = nrfx_twim_tx(&twim0, to.addr, (const uint8_t*)buf.data(), buf.size(), false);
 
             if (ret != NRFX_SUCCESS)
             {
+                return twi_tx_res::other;
                 // reset?
             }
 

@@ -20,7 +20,7 @@ set(TOS_COMMON_FLAGS "-mcpu=cortex-m4 -ffunction-sections -fdata-sections -Wall 
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TOS_COMMON_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOS_COMMON_FLAGS} -std=c++14 -pedantic -fstack-usage -fno-unwind-tables -fno-exceptions -fno-rtti -fno-threadsafe-statics")
-set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections -fno-threadsafe-statics ${TOS_NRF52_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections -Xlinker -Map=output.map -fno-threadsafe-statics ${TOS_NRF52_FLAGS}")
 
 SET(CMAKE_C_ARCHIVE_CREATE "<CMAKE_AR> qcs <TARGET> <LINK_FLAGS> <OBJECTS>")
 SET(CMAKE_C_ARCHIVE_FINISH "<CMAKE_RANLIB> <TARGET>")

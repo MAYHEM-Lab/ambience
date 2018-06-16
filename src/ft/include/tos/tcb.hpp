@@ -19,4 +19,3 @@ namespace tos {
         explicit tcb(entry_point_t pt) : entry{tos::move(pt)} {}
     };
 }
-

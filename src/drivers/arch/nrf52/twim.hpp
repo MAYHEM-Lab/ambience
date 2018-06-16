@@ -6,23 +6,12 @@
 
 #include <tos/span.hpp>
 #include "gpio.hpp"
+#include <drivers/common/i2c.hpp>
 
 namespace tos
 {
     namespace nrf52
     {
-        enum class twi_tx_res
-        {
-            ok,
-            addr_nack,
-            data_nack
-        };
-
-        struct twi_addr_t
-        {
-            uint8_t addr : 7;
-        };
-
         class twim
         {
         public:

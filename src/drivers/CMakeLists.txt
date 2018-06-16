@@ -44,3 +44,9 @@ target_include_directories(tos_eeprom PUBLIC .)
 
 add_library(tos_tty common/tty.hpp src/stub.cpp)
 target_include_directories(tos_tty PUBLIC .)
+
+add_library(tos_i2c common/i2c.hpp src/stub.cpp)
+target_include_directories(tos_i2c PUBLIC .)
+
+add_library(tos_lcd common/lcd.hpp src/stub.cpp)
+target_include_directories(tos_lcd PUBLIC .)

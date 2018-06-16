@@ -21,6 +21,9 @@
 #include <drivers/arch/nrf52/timer.hpp>
 #include <drivers/common/alarm.hpp>
 #include <drivers/arch/nrf52/radio.hpp>
+#include <drivers/arch/nrf52/twim.hpp>
+
+#include <drivers/common/lcd.hpp>
 
 namespace {
     auto g = tos::open(tos::devs::gpio);
@@ -43,6 +46,41 @@ namespace {
         }
     }
 
+    char c;
+    tos::semaphore send{0};
+    tos::semaphore sent{0};
+    void i2c_task()
+    {
+        using namespace tos;
+        nrf52::twim i2c{26, 25};
+
+        lcd<nrf52::twim> lcd{ i2c, { 0x27 }, 20, 4 };
+
+        char buf[] = "Hello World";
+        char buf2[] = "Tos (c631797)";
+
+        nrf52::timer0 tmr;
+        auto alarm = open(devs::alarm, tmr);
+        lcd.begin(alarm);
+
+        lcd.backlight();
+        lcd.print(buf2);
+        lcd.set_cursor(0, 2);
+        lcd.print(buf);
+        lcd.set_cursor(0, 1);
+        lcd.print(buf);
+
+        g->write(17, digital::low);
+        while (true)
+        {
+            send.down();
+            g->write(17, digital::high);
+            lcd.print({ &c, 1 });
+            sent.up();
+            g->write(17, digital::low);
+        }
+    }
+
     void led2_task() {
         using namespace tos;
         using namespace tos_literals;
@@ -56,6 +94,9 @@ namespace {
         g->write(19, digital::low);
 
         nrf52::radio rad;
+
+        char buf[] = "hello world!";
+        tos::println(usart, buf);
 
         char x;
         uint32_t i = 0;
@@ -85,6 +126,13 @@ namespace {
             {
                 sem.up();
             }
+            else if (x == 'i')
+            {
+                usart.read({&c, 1});
+                send.up();
+                sent.down();
+                tos::println(usart, "sent");
+            }
         }
     }
 }
@@ -95,6 +143,7 @@ void TOS_EXPORT tos_main()
     g->set_pin_mode(17, pin_mode::out);
     g->set_pin_mode(19, pin_mode::out);
 
-    tos::launch(led1_task);
+    //tos::launch(led1_task);
+    tos::launch(i2c_task);
     tos::launch(led2_task);
 }
