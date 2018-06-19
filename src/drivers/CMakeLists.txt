@@ -34,11 +34,11 @@ if (TOS_AVR)
     target_include_directories(tos_nrf24 PUBLIC .)
 endif()
 
-add_library(tos_alarm common/alarm.hpp)
+add_library(tos_alarm common/alarm.hpp src/stub.cpp)
 target_link_libraries(tos_alarm PUBLIC tos_core)
 target_include_directories(tos_alarm PUBLIC .)
 
-add_library(tos_eeprom common/eeprom.hpp common/eeprom.hpp)
+add_library(tos_eeprom common/eeprom.hpp src/stub.cpp)
 target_link_libraries(tos_eeprom PUBLIC tos_core)
 target_include_directories(tos_eeprom PUBLIC .)
 
