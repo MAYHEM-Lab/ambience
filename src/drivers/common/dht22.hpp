@@ -8,18 +8,21 @@
 
 namespace tos
 {
-#define DHTLIB_OK                   0
-#define DHTLIB_ERROR_CHECKSUM       -1
-#define DHTLIB_ERROR_TIMEOUT        -2
-#define DHTLIB_ERROR_CONNECT        -3
-#define DHTLIB_ERROR_ACK_L          -4
-#define DHTLIB_ERROR_ACK_H          -5
-
 #define DHTLIB_DHT11_WAKEUP         18
 #define DHTLIB_DHT_WAKEUP           1
 
 #define DHTLIB_DHT11_LEADING_ZEROS  1
 #define DHTLIB_DHT_LEADING_ZEROS    6
+
+    enum class dht_res
+    {
+        ok,
+        checksum = -1,
+        timeout = - 2,
+        connect = - 3,
+        ack_l = -4,
+        ack_h = -5
+    };
 
 // max timeout is 100 usec.
 // For a 16 Mhz proc 100 usec is 1600 clock cycles
@@ -35,34 +38,18 @@ namespace tos
     class dht
     {
     public:
-        dht() { _disableIRQ = true; };
-        // return values:
-        // DHTLIB_OK
-        // DHTLIB_ERROR_CHECKSUM
-        // DHTLIB_ERROR_TIMEOUT
-        // DHTLIB_ERROR_CONNECT
-        // DHTLIB_ERROR_ACK_L
-        // DHTLIB_ERROR_ACK_H
-        int8_t read11(pin_t pin);
-        int8_t read(pin_t pin);
-        int8_t read12(pin_t pin);
+        dht() { m_disableIRQ = true; };
 
-        inline int8_t read21(pin_t pin)   { return read(pin); };
-        inline int8_t read22(pin_t pin)   { return read(pin); };
-        inline int8_t read33(pin_t pin)   { return read(pin); };
-        inline int8_t read44(pin_t pin)   { return read(pin); };
-        inline int8_t read2301(pin_t pin) { return read(pin); };
-        inline int8_t read2302(pin_t pin) { return read(pin); };
-        inline int8_t read2303(pin_t pin) { return read(pin); };
-        inline int8_t read2320(pin_t pin) { return read(pin); };
-        inline int8_t read2322(pin_t pin) { return read(pin); };
+        dht_res read11(pin_t pin);
+        dht_res read(pin_t pin);
+        dht_res read12(pin_t pin);
 
         float humidity;
         float temperature;
 
     private:
         uint8_t bits[5];  // buffer to receive data
-        int8_t _readSensor(pin_t pin, uint8_t wakeupDelay, uint8_t leadingZeroBits);
-        bool   _disableIRQ;
+        dht_res read_sensor(pin_t pin, uint8_t wakeupDelay, uint8_t leadingZeroBits);
+        bool   m_disableIRQ;
     };
 }

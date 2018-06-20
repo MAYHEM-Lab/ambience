@@ -65,7 +65,7 @@ void main_task()
         temp_int.wait();
         char b[32];
         auto res = d.read11(8_pin);
-        tos::println(*usart, res);
+        tos::println(*usart, int8_t(res));
         tos::println(*usart, "Temperature:", dtostrf(d.temperature, 2, 2, b));
         tos::println(*usart, "Humidity:", dtostrf(d.humidity, 2, 2, b));
         auto st = GetTemp(alarm);

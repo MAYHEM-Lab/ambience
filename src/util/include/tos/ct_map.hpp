@@ -46,7 +46,7 @@ struct ct_map<KeyPolicy, el_t<KeyT, ValT>...> :
     {
         static_assert(KeyPolicy::validate(ct<NewValT>{}, ct<NewValT>{}), "");
         return ct_map<KeyPolicy, el_t<KeyT, ValT>..., el_t<NewValT, NewValT>>
-                { tos::move(((ValT&)(el_t<KeyT, ValT>&)*this))..., tos::forward<NewValT>(new_val) };
+                { tos::move(((el_t<KeyT, ValT>&)*this).val)..., tos::forward<NewValT>(new_val) };
     }
 
     template <class NewKeyT, class NewValT>
@@ -55,7 +55,7 @@ struct ct_map<KeyPolicy, el_t<KeyT, ValT>...> :
     {
         static_assert(KeyPolicy::validate(ct<NewKeyT>{}, ct<NewValT>{}), "");
         return ct_map<KeyPolicy, el_t<KeyT, ValT>..., el_t<NewKeyT, NewValT>>
-                { tos::move(((ValT&)(el_t<KeyT, ValT>&)*this))..., tos::forward<NewValT>(new_val) };
+                { tos::move(((el_t<KeyT, ValT>&)*this).val)..., tos::forward<NewValT>(new_val) };
     }
 
     template <class NewKeyT, class NewValT>
@@ -64,7 +64,7 @@ struct ct_map<KeyPolicy, el_t<KeyT, ValT>...> :
     {
         static_assert(KeyPolicy::validate(ct<NewKeyT>{}, ct<NewValT>{}), "");
         return ct_map<KeyPolicy, el_t<KeyT, ValT>..., el_t<NewKeyT, NewValT>>
-                { tos::move(((ValT&)(el_t<KeyT, ValT>&)*this))..., tos::forward<NewValT>(new_val) };
+                { tos::move(((el_t<KeyT, ValT>&)*this).val)..., tos::forward<NewValT>(new_val) };
     }
 
     template <class... ReqKeyTs, class... ReqValTs>

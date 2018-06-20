@@ -49,6 +49,7 @@ namespace tos
         auto set_alarm(sleeper& s) -> alarm_handle
         {
             tos::int_guard no_int;
+
             auto it = m_sleepers.begin();
             while (it != m_sleepers.end() && it->sleep_ticks < s.sleep_ticks)
             {

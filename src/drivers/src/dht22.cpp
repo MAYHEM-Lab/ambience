@@ -4,18 +4,17 @@
 
 #include <common/dht22.hpp>
 #include <util/delay.h>
-#include <arch/avr/usart.hpp>
 #include <tos/print.hpp>
 #include <tos/interrupt.hpp>
 
 namespace tos
 {
-    int8_t dht::read11(pin_t pin)
+    dht_res dht::read11(pin_t pin)
     {
         // READ VALUES
-        if (_disableIRQ) tos::disable_interrupts();
-        int8_t result = _readSensor(pin, DHTLIB_DHT11_WAKEUP, DHTLIB_DHT11_LEADING_ZEROS);
-        if (_disableIRQ) tos::enable_interrupts();
+        if (m_disableIRQ) tos::disable_interrupts();
+        auto result = read_sensor(pin, DHTLIB_DHT11_WAKEUP, DHTLIB_DHT11_LEADING_ZEROS);
+        if (m_disableIRQ) tos::enable_interrupts();
 
         // these bits are always zero, masking them reduces errors.
         bits[0] &= 0x7F;
@@ -29,17 +28,17 @@ namespace tos
         uint8_t sum = bits[0] + bits[1] + bits[2] + bits[3];
         if (bits[4] != sum)
         {
-            return DHTLIB_ERROR_CHECKSUM;
+            return dht_res::checksum;
         }
         return result;
     }
 
-    int8_t dht::read12(pin_t pin)
+    dht_res dht::read12(pin_t pin)
     {
         // READ VALUES
-        if (_disableIRQ) tos::disable_interrupts();
-        int8_t result = _readSensor(pin, DHTLIB_DHT11_WAKEUP, DHTLIB_DHT11_LEADING_ZEROS);
-        if (_disableIRQ) tos::enable_interrupts();
+        if (m_disableIRQ) tos::disable_interrupts();
+        auto result = read_sensor(pin, DHTLIB_DHT11_WAKEUP, DHTLIB_DHT11_LEADING_ZEROS);
+        if (m_disableIRQ) tos::enable_interrupts();
 
         // CONVERT AND STORE
         humidity = bits[0] + bits[1] * 0.1;
@@ -53,17 +52,17 @@ namespace tos
         uint8_t sum = bits[0] + bits[1] + bits[2] + bits[3];
         if (bits[4] != sum)
         {
-            return DHTLIB_ERROR_CHECKSUM;
+            return dht_res::checksum;
         }
         return result;
     }
 
-    int8_t dht::read(pin_t pin)
+    dht_res dht::read(pin_t pin)
     {
         // READ VALUES
-        if (_disableIRQ) tos::disable_interrupts();
-        int8_t result = _readSensor(pin, DHTLIB_DHT_WAKEUP, DHTLIB_DHT_LEADING_ZEROS);
-        if (_disableIRQ) tos::enable_interrupts();
+        if (m_disableIRQ) tos::disable_interrupts();
+        auto result = read_sensor(pin, DHTLIB_DHT_WAKEUP, DHTLIB_DHT_LEADING_ZEROS);
+        if (m_disableIRQ) tos::enable_interrupts();
 
         // these bits are always zero, masking them reduces errors.
         bits[0] &= 0x03;
@@ -81,13 +80,13 @@ namespace tos
         uint8_t sum = bits[0] + bits[1] + bits[2] + bits[3];
         if (bits[4] != sum)
         {
-            return DHTLIB_ERROR_CHECKSUM;
+            return dht_res::checksum;
         }
         return result;
     }
 
     tos::avr::gpio g;
-    int8_t dht::_readSensor(pin_t pin, uint8_t wakeupDelay, uint8_t leadingZeroBits)
+    dht_res dht::read_sensor(pin_t pin, uint8_t wakeupDelay, uint8_t leadingZeroBits)
     {
         // INIT BUFFERVAR TO RECEIVE DATA
         uint8_t mask = 128;
@@ -118,7 +117,7 @@ namespace tos
         {
             if (--loopCount == 0)
             {
-                return DHTLIB_ERROR_CONNECT;
+                return dht_res::connect;
             }
         }
 
@@ -129,7 +128,7 @@ namespace tos
         {
             if (--loopCount == 0)
             {
-                return DHTLIB_ERROR_ACK_L;
+                return dht_res::ack_l;
             }
         }
 
@@ -139,7 +138,7 @@ namespace tos
         {
             if (--loopCount == 0)
             {
-                return DHTLIB_ERROR_ACK_H;
+                return dht_res::ack_h;
             }
         }
 
@@ -179,10 +178,10 @@ namespace tos
             // Check timeout
             if (--loopCount == 0)
             {
-                return DHTLIB_ERROR_TIMEOUT;
+                return dht_res::timeout;
             }
 
         }
-        return DHTLIB_OK;
+        return dht_res::ok;
     }
 }

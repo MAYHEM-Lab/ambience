@@ -53,7 +53,7 @@ namespace tos
             : public base_ring_buf<sync_ring_buf>
     {
     public:
-        explicit sync_ring_buf(size_t cap) : base_ring_buf{cap}, m_read{0}, m_put{cap} {}
+        explicit sync_ring_buf(size_t cap) : base_ring_buf{cap}, m_read{0}, m_put{int8_t(cap)} {}
 
         size_t size() const
         {
