@@ -5,19 +5,22 @@
 #include <tos/utility.hpp>
 
 namespace tos {
-    /**
-     * This type represents an execution context in the system.
-     */
-    struct tcb
-        : public list_node<tcb>
+    namespace kern
     {
-        using entry_point_t = void(*)();
+        /**
+         * This type represents an execution context in the system.
+         */
+        struct tcb
+            : public list_node<tcb>
+        {
+            using entry_point_t = void(*)();
 
-        entry_point_t entry;
-        uint16_t stack_sz;
-        jmp_buf context;
+            entry_point_t entry;
+            uint16_t stack_sz;
+            jmp_buf context;
 
-        explicit tcb(entry_point_t pt, uint16_t stack_sz)
-                : entry{std::move(pt)}, stack_sz{stack_sz} {}
-    };
+            explicit tcb(entry_point_t pt, uint16_t stack_sz)
+                    : entry{std::move(pt)}, stack_sz{stack_sz} {}
+        };
+    }
 }

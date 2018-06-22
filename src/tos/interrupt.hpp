@@ -9,12 +9,12 @@
 #include <stdint.h>
 
 namespace tos {
-    namespace detail {
-        extern int8_t disable_depth;
-    }
-
     namespace kern
     {
+        namespace detail {
+            extern int8_t disable_depth;
+        }
+
         inline void disable_interrupts()
         {
             if (detail::disable_depth==0) {
@@ -31,6 +31,14 @@ namespace tos {
             }
         }
 
+        /**
+         * External methods might enable (or disable)
+         * interrupts regardless of the TOS interrupts
+         * status.
+         *
+         * This method enables or disables the interrupts
+         * depending on the TOS interrupt status.
+         */
         inline void refresh_interrupts()
         {
             if (detail::disable_depth > 0) {
@@ -43,6 +51,13 @@ namespace tos {
         }
     }
 
+    /**
+     * This type implements a scoped interrupt disable
+     * mechanism.
+     *
+     * Disabling interrupts should be avoided as much
+     * as possible, specifically in user code.
+     */
     struct int_guard
     {
     public:

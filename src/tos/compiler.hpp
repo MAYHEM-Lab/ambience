@@ -15,3 +15,4 @@
 #define ALWAYS_INLINE __attribute__((always_inline))
 
 #define TOS_EXPORT __attribute__((visibility("default")))
+#define TOS_HIDDEN __attribute__((visibility("hidden")))

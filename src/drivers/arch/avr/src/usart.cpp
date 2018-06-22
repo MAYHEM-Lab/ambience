@@ -125,10 +125,10 @@ static void write_usart(tos::span<const char> buf)
 
     state->len = buf.size();
     state->write = buf.data();
-    tos::busy(); // We'll block, keep mcu awake
+    tos::kern::busy(); // We'll block, keep mcu awake
     UCSR0B |= (1 << UDRIE0); // enable empty buffer interrupt, ISR will send the data
     state->write_done.down();
-    tos::unbusy();
+    tos::kern::unbusy();
 }
 
 static size_t read_usart(tos::span<char> b)
@@ -136,7 +136,7 @@ static size_t read_usart(tos::span<char> b)
     size_t total = 0;
     auto len = b.size();
     auto buf = b.data();
-    tos::busy();
+    tos::kern::busy();
     while (state && total < len) {
         state->have_data.down();
         *buf = state->read_buf.front();
@@ -144,7 +144,7 @@ static size_t read_usart(tos::span<char> b)
         ++buf;
         ++total;
     }
-    tos::unbusy();
+    tos::kern::unbusy();
     return total;
 }
 

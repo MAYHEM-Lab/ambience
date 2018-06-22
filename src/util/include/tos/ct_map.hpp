@@ -2,6 +2,62 @@
 // Created by fatih on 6/8/18.
 //
 
+/**
+ * ct_map implements a mapping from compile time types to
+ * runtime values.
+ *
+ * In TOS, it's commonly used to implement builder pattern
+ * parameters that are passed to various functions.
+ *
+ * Every map type has a key policy which validates the types
+ * of the keys and values inserted into the map.
+ *
+ * Instances of this class template cannot be copied, but
+ * they can implicitly convert into another map of the same
+ * keys and of values where the values are references into
+ * the original map.
+ *
+ *     struct baud_rate_tag {};
+ *     struct parity_tag {};
+ *     auto map = make_map()
+ *                .add<baud_rate_tag>(115200)
+ *                .add<parity_tag>(usart_parity::odd);
+ *     auto usart = open(devs::usart, map);
+ *
+ * The above snippet creates a map object that will return
+ * (int)115200 when looked up with `baud_rate_tag` and
+ * usart_parity::odd when looked up with `parity_tag`.
+ *
+ * Depending on the handler of the open call, compilation
+ * may fail since it requires additional parameters.
+ *
+ * The advantage of this pattern is that it allows for
+ * multi-step initialization of the map object.
+ *
+ * One important note is that the `add` functions can only
+ * be called on r-values as the run time values are moved
+ * into the newly created map upon every add. This means
+ * we can't modify an existing map object:
+ *
+ *     map.add<foo_type>(42); // won't compile
+ *     auto map2 = map.add<foo_type>(42); // won't compile
+ *
+ * However, it's possible to _move_ from an existing map
+ * and add to that:
+ *
+ *     auto map3 = std::move(map)
+ *                 .add<foo_type>(42);
+ *
+ * As usual with all moved from objects, `map` is left in
+ * an indeterminate state, where reading from it will
+ * return the respective moved from object of the value
+ * type.
+ *
+ * The error messages generated due to a non-existent key or
+ * conversion error is, unfortunately, unwieldy due to the
+ * heavy template usage. This needs some work.
+ */
+
 #pragma once
 
 #include "type_traits.hpp"

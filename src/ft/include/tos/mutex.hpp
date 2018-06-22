@@ -8,12 +8,42 @@
 
 namespace tos
 {
+    /**
+     * This class implements a mutual exclusion
+     * primitive.
+     *
+     * Instances of this type do not implement
+     * recursive mutex semantics. A thread can
+     * easily deadlock if it tries to lock a mutex
+     * it currently holds.
+     */
     class mutex
     {
     public:
+        /**
+         * Initializes a mutex
+         *
+         * A newly initialized mutex is always in
+         * unlocked state.
+         */
         mutex() noexcept : m_sem(1) {}
 
+        /**
+         * Acquires the mutex.
+         *
+         * Calling thread will be suspended if the
+         * mutex is currently held by another thread.
+         */
         void lock() noexcept { m_sem.down(); }
+
+        /**
+         * Releases the mutex.
+         *
+         * If the mutex isn't held by the current
+         * thread, the behaviour is undefined.
+         *
+         * This operation never blocks.
+         */
         void unlock() noexcept { m_sem.up(); }
 
     private:

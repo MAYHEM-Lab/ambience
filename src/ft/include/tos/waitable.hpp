@@ -7,7 +7,7 @@
 namespace tos {
     struct waitable
     {
-        using waiter_handle = intrusive_list<tcb>::iterator_t;
+        using waiter_handle = intrusive_list<kern::tcb>::iterator_t;
 
         /**
          * Makes the current thread yield and block on this
@@ -34,12 +34,12 @@ namespace tos {
          */
         void signal_one();
 
-        waiter_handle add(tcb& t);
-        tcb& remove(waiter_handle);
+        waiter_handle add(kern::tcb& t);
+        kern::tcb& remove(waiter_handle);
 
     private:
 
-        intrusive_list<tcb> m_waiters;
+        intrusive_list<kern::tcb> m_waiters;
     };
 }
 
@@ -47,15 +47,15 @@ namespace tos {
     inline void waitable::wait()
     {
         add(*self());
-        suspend_self();
+        kern::suspend_self();
     }
 
-    inline auto waitable::add(tcb& t) -> waiter_handle
+    inline auto waitable::add(kern::tcb& t) -> waiter_handle
     {
         return m_waiters.push_back(t);
     }
 
-    inline tcb& waitable::remove(waitable::waiter_handle handle) {
+    inline kern::tcb& waitable::remove(waitable::waiter_handle handle) {
         auto& ret = *handle;
         m_waiters.erase(handle);
         return ret;

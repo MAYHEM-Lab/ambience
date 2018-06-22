@@ -1,3 +1,8 @@
+/**
+ * This file contains the interfaces for the threading subsystem
+ * for TOS.
+ */
+
 #pragma once
 
 #include <stdint.h>
@@ -22,7 +27,7 @@ namespace tos {
      * @return identifier for the newly created thread
      */
     [[deprecated]]
-    thread_id_t launch(tcb::entry_point_t);
+    thread_id_t launch(kern::tcb::entry_point_t);
 
     namespace tags
     {
@@ -36,7 +41,7 @@ namespace tos {
             base_key_policy,
             el_t<tags::stack_ptr_t, void* const &>,
             el_t<tags::stack_sz_t, const size_t&>,
-            el_t<tags::entry_pt_t, const tcb::entry_point_t&>
+            el_t<tags::entry_pt_t, const kern::tcb::entry_point_t&>
         >;
 
     inline constexpr auto thread_params() { return ct_map<base_key_policy>{}; }
@@ -78,18 +83,43 @@ namespace tos {
 
     namespace kern
     {
+        /**
+         * This function starts the thread execution subsystem. It
+         * will not return as long as there exists a runnable thread
+         * in the system.
+         *
+         * When all threads block, it will return a reason explaining
+         * why the return happened.
+         *
+         * Depending on the reason, implementations should enter a
+         * power saving state accordingly.
+         *
+         * Behaviour is undefined if this function is called from a
+         * thread context.
+         *
+         * @return exit reason
+         */
         exit_reason schedule();
     }
 
     namespace this_thread {
         /**
          * Returns a platform dependent identifier of the current task.
+         *
+         * Returns a defined, but unspecified value if this function is
+         * called from a non-thread context.
          */
         thread_id_t get_id();
 
         /**
          * Give control of the CPU back to the scheduler. This will leave
          * the thread in a runnable state.
+         *
+         * Behaviour is undefined if this function is called from a
+         * non-thread context.
+         *
+         * A blocking mechanism should always be preferred over yielding
+         * in a busy wait.
          */
         void yield();
 
@@ -100,14 +130,16 @@ namespace tos {
          * No other resource will be returned to the OS through an
          * exit. Thus, it must be used with care. Prefer exiting a
          * thread through returning from the entry point function.
+         *
+         * Behaviour is undefined if this function is called from a
+         * non-thread context.
          */
         [[noreturn]]
         void exit(void* res = nullptr);
     }
 
-
     namespace impl {
-        extern tcb* cur_thread;
+        extern kern::tcb* cur_thread;
     }
 
     /**
@@ -117,7 +149,7 @@ namespace tos {
      *
      * @return pointer to the current thread
      */
-    inline tcb* self()
+    inline kern::tcb* self()
     {
         return impl::cur_thread;
     }
@@ -132,7 +164,7 @@ namespace tos {
         }
     }
 
-    inline thread_id_t launch(tcb::entry_point_t e)
+    inline thread_id_t launch(kern::tcb::entry_point_t e)
     {
         constexpr size_t stack_size = 512;
         auto params = thread_params()
@@ -146,11 +178,11 @@ namespace tos {
     {
         saved = 0,
         /**
-         * a running thread yielded
+         * the running thread yielded
          */
         yield,
         /**
-         * a running thread is waiting on something
+         * the running thread has been suspended
          */
         suspend,
         /**
@@ -158,7 +190,7 @@ namespace tos {
          */
         do_exit,
         /**
-         * the thread was assigned the cpu
+         * this thread was assigned the cpu
          */
         scheduled
     };

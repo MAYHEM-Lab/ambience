@@ -2,8 +2,8 @@
 
 namespace tos
 {
-	namespace detail
+	namespace kern
 	{
-		int8_t disable_depth = 1;
+		int8_t detail::disable_depth = 1;
 	}
 }
