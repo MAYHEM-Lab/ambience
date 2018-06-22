@@ -39,18 +39,18 @@ namespace tos
         void timer0::write_ticks(uint32_t ticks) {
             nrfx_timer_compare(&tmr, NRF_TIMER_CC_CHANNEL0, ticks, true);
             nrfx_timer_clear(&tmr);
-            tos::refresh_interrupts();
+            tos::kern::refresh_interrupts();
         }
 
         void timer0::enable() {
             nrfx_timer_enable(&tmr);
             write_ticks(m_ticks);
-            tos::refresh_interrupts();
+            tos::kern::refresh_interrupts();
         }
 
         void timer0::disable() {
             nrfx_timer_disable(&tmr);
-            tos::refresh_interrupts();
+            tos::kern::refresh_interrupts();
         }
 
         uint16_t timer0::get_ticks() {

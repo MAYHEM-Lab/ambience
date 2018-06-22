@@ -13,30 +13,33 @@ namespace tos {
         extern int8_t disable_depth;
     }
 
-    inline void disable_interrupts()
+    namespace kern
     {
-        if (detail::disable_depth==0) {
-            tos_disable_interrupts();
-        }
-        detail::disable_depth++;
-    }
-
-    inline void enable_interrupts()
-    {
-        detail::disable_depth--;
-        if (detail::disable_depth==0) {
-            tos_enable_interrupts();
-        }
-    }
-
-    inline void refresh_interrupts()
-    {
-        if (detail::disable_depth > 0) {
-            tos_disable_interrupts();
-        }
-        else
+        inline void disable_interrupts()
         {
-            tos_enable_interrupts();
+            if (detail::disable_depth==0) {
+                tos_disable_interrupts();
+            }
+            detail::disable_depth++;
+        }
+
+        inline void enable_interrupts()
+        {
+            detail::disable_depth--;
+            if (detail::disable_depth==0) {
+                tos_enable_interrupts();
+            }
+        }
+
+        inline void refresh_interrupts()
+        {
+            if (detail::disable_depth > 0) {
+                tos_disable_interrupts();
+            }
+            else
+            {
+                tos_enable_interrupts();
+            }
         }
     }
 
@@ -45,12 +48,12 @@ namespace tos {
     public:
         int_guard()
         {
-            disable_interrupts();
+            kern::disable_interrupts();
         }
 
         ~int_guard()
         {
-            enable_interrupts();
+            kern::enable_interrupts();
         }
 
         int_guard(int_guard&&) = delete;

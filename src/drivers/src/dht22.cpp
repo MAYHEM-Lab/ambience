@@ -12,9 +12,9 @@ namespace tos
     dht_res dht::read11(pin_t pin)
     {
         // READ VALUES
-        if (m_disableIRQ) tos::disable_interrupts();
+        if (m_disableIRQ) kern::disable_interrupts();
         auto result = read_sensor(pin, DHTLIB_DHT11_WAKEUP, DHTLIB_DHT11_LEADING_ZEROS);
-        if (m_disableIRQ) tos::enable_interrupts();
+        if (m_disableIRQ) kern::enable_interrupts();
 
         // these bits are always zero, masking them reduces errors.
         bits[0] &= 0x7F;
@@ -36,9 +36,9 @@ namespace tos
     dht_res dht::read12(pin_t pin)
     {
         // READ VALUES
-        if (m_disableIRQ) tos::disable_interrupts();
+        if (m_disableIRQ) kern::disable_interrupts();
         auto result = read_sensor(pin, DHTLIB_DHT11_WAKEUP, DHTLIB_DHT11_LEADING_ZEROS);
-        if (m_disableIRQ) tos::enable_interrupts();
+        if (m_disableIRQ) kern::enable_interrupts();
 
         // CONVERT AND STORE
         humidity = bits[0] + bits[1] * 0.1;
@@ -60,9 +60,9 @@ namespace tos
     dht_res dht::read(pin_t pin)
     {
         // READ VALUES
-        if (m_disableIRQ) tos::disable_interrupts();
+        if (m_disableIRQ) kern::disable_interrupts();
         auto result = read_sensor(pin, DHTLIB_DHT_WAKEUP, DHTLIB_DHT_LEADING_ZEROS);
-        if (m_disableIRQ) tos::enable_interrupts();
+        if (m_disableIRQ) kern::enable_interrupts();
 
         // these bits are always zero, masking them reduces errors.
         bits[0] &= 0x03;

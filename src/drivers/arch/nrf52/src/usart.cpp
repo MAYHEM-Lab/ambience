@@ -32,7 +32,7 @@ namespace tos
                 self->handle_callback(p_event);
             });
 
-            tos::refresh_interrupts();
+            tos::kern::refresh_interrupts();
         }
 
         void uart::handle_callback(const void *event) {

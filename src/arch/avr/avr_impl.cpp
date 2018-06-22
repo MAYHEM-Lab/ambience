@@ -53,13 +53,13 @@ static void power_down(int mode)
 
 int TOS_MAIN NORETURN main()
 {
-    tos::enable_interrupts();
+    tos::kern::enable_interrupts();
 
     tos_main();
 
     while (true)
     {
-        auto res = tos::schedule();
+        auto res = tos::kern::schedule();
         if (res == tos::exit_reason::restart) reboot();
         if (res == tos::exit_reason::power_down) power_down(SLEEP_MODE_PWR_DOWN);
         if (res == tos::exit_reason::idle) power_down(SLEEP_MODE_IDLE);

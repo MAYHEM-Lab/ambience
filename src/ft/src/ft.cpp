@@ -62,24 +62,20 @@ namespace tos {
     [[noreturn]]
     static void thread_exit()
     {
-        tos::disable_interrupts();
+        kern::disable_interrupts();
 
         // no need to save the current context, we'll exit
 
         switch_context(sched.main_context, return_codes::do_exit);
     }
 
-    thread_id_t launch(tcb::entry_point_t e)
+
+    thread_id_t launch(launch_params params)
     {
-        constexpr size_t stack_size = 512;
-        auto params = thread_params()
-            .add<tags::stack_ptr_t>(tos_stack_alloc(stack_size))
-            .add<tags::stack_sz_t>(stack_size)
-            .add<tags::entry_pt_t>(e);
         return sched.start(params);
     }
 
-    exit_reason schedule()
+    exit_reason kern::schedule()
     {
         return sched.schedule();
     }
@@ -95,9 +91,9 @@ namespace tos {
         run_queue.push_back(*thread);
         num_threads++;
 
-        tos::disable_interrupts();
+        kern::disable_interrupts();
         if (setjmp(thread->context)==(int) return_codes::saved) {
-            tos::enable_interrupts();
+            kern::enable_interrupts();
             return { reinterpret_cast<uintptr_t>(thread) };
         }
 
@@ -110,7 +106,7 @@ namespace tos {
          */
         tos_set_stack_ptr(reinterpret_cast<char*>(impl::cur_thread));
 
-        tos::enable_interrupts();
+        kern::enable_interrupts();
         impl::cur_thread->entry();
         this_thread::exit(nullptr);
     }

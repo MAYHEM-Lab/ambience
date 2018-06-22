@@ -44,12 +44,12 @@ void tos_main();
 
 int main()
 {
-    tos::enable_interrupts();
+    tos::kern::enable_interrupts();
 
     tos_main();
 
     while (true)
     {
-        auto res = tos::schedule();
+        auto res = tos::kern::schedule();
     }
 }

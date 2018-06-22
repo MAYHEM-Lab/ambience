@@ -8,8 +8,4 @@
 
 namespace tos
 {
-    inline void kernel_init()
-    {
-        tos::enable_interrupts();
-    }
 }

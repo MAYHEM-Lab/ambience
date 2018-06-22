@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "tcb.hpp"
 #include <tos/ct_map.hpp>
+#include <tos/arch.hpp>
 
 namespace tos {
     /**
@@ -11,6 +12,16 @@ namespace tos {
      */
     struct thread_id_t { uintptr_t id; };
 
+    /**
+     * Launches a new thread with the given entry point function.
+     *
+     * Allocates stack using the deprecated `tos_allocate_stack`
+     * function. Avoid using this version and prefer the overload
+     * taking a launch_params object.
+     *
+     * @return identifier for the newly created thread
+     */
+    [[deprecated]]
     thread_id_t launch(tcb::entry_point_t);
 
     namespace tags
@@ -19,10 +30,6 @@ namespace tos {
         struct entry_pt_t {};
         struct stack_sz_t {};
     }
-
-    static constexpr tags::stack_ptr_t stack_ptr{};
-    static constexpr tags::entry_pt_t entry_pt{};
-    static constexpr tags::stack_sz_t stack_sz{};
 
     using launch_params =
         ct_map<
@@ -34,7 +41,18 @@ namespace tos {
 
     inline constexpr auto thread_params() { return ct_map<base_key_policy>{}; }
 
-    thread_id_t launch(launch_params);
+    /**
+     * Launches a new thread with the given parameters.
+     *
+     * Parameters must include the entry point, a stack and the size
+     * of the stack for the newly created thread. See `tos::launch_params`
+     * for the details the parameters.
+     *
+     * @param params launch parameters
+     *
+     * @return identifier of the new thread
+     */
+    thread_id_t launch(launch_params params);
 
     /**
      * This enumeration denotes why the scheduler returned
@@ -58,24 +76,35 @@ namespace tos {
         restart
     };
 
-    exit_reason schedule();
+    namespace kern
+    {
+        exit_reason schedule();
+    }
 
     namespace this_thread {
         /**
-         * Returns a platform dependent identifier of the current task
+         * Returns a platform dependent identifier of the current task.
          */
         thread_id_t get_id();
 
         /**
-         * Give control of the CPU back to the scheduler
+         * Give control of the CPU back to the scheduler. This will leave
+         * the thread in a runnable state.
          */
         void yield();
 
+        /**
+         * Causes the current thread to exit, stopping the execution
+         * and destroying the stack.
+         *
+         * No other resource will be returned to the OS through an
+         * exit. Thus, it must be used with care. Prefer exiting a
+         * thread through returning from the entry point function.
+         */
         [[noreturn]]
         void exit(void* res = nullptr);
     }
 
-    enum class return_codes : uint8_t;
 
     namespace impl {
         extern tcb* cur_thread;
@@ -101,6 +130,16 @@ namespace tos {
             if (!impl::cur_thread) return {static_cast<uintptr_t>(-1)};
             return {reinterpret_cast<uintptr_t>(impl::cur_thread)};
         }
+    }
+
+    inline thread_id_t launch(tcb::entry_point_t e)
+    {
+        constexpr size_t stack_size = 512;
+        auto params = thread_params()
+            .add<tags::stack_ptr_t>(tos_stack_alloc(stack_size))
+            .add<tags::stack_sz_t>(stack_size)
+            .add<tags::entry_pt_t>(e);
+        return launch(params);
     }
 
     enum class return_codes : uint8_t

@@ -27,7 +27,7 @@ void tos_main();
 
 int main()
 {
-    tos::enable_interrupts();
+    tos::kern::enable_interrupts();
 
     /* Start 16 MHz crystal oscillator */
     NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
@@ -60,7 +60,7 @@ int main()
 
     while (true)
     {
-        auto res = tos::schedule();
+        auto res = tos::kern::schedule();
         if (res == tos::exit_reason::restart) NVIC_SystemReset();// reboot();
         if (res == tos::exit_reason::power_down) __WFI();// power_down(SLEEP_MODE_PWR_DOWN);
         if (res == tos::exit_reason::idle) __WFE();// power_down(SLEEP_MODE_IDLE);
