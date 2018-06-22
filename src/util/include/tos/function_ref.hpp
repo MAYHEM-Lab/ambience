@@ -30,12 +30,12 @@ namespace tos
         template <class T>
         function_ref(T& func) : fun([](ArgTs&&... args, void* data) {
             auto& foo = *static_cast<const T*>(data);
-            foo(forward<ArgTs>(args)...);
+            foo(std::forward<ArgTs>(args)...);
         }), data(&func) {}
 
         RetT operator()(ArgTs&&... args)
         {
-            return fun(tos::forward<ArgTs>(args)..., data);
+            return fun(std::forward<ArgTs>(args)..., data);
         }
 
     private:

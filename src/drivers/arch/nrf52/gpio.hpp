@@ -70,9 +70,9 @@ namespace tos
         {
             if (!val)
             {
-                return write(pin, tos::false_type{});
+                return write(pin, std::false_type{});
             }
-            return write(pin, tos::true_type{});
+            return write(pin, std::true_type{});
         }
 
         inline void gpio::set_pin_mode(int pin, pin_mode::output_t)

@@ -15,6 +15,13 @@
 #include <tos/tuple.hpp>
 #include <drivers/arch/avr/eeprom.hpp>
 
+#if defined(TOS)
+namespace std
+{
+    using namespace tos::std;
+}
+#endif
+
 void tick_task()
 {
     using namespace tos;
@@ -27,7 +34,6 @@ void tick_task()
 
     auto usart = open(tos::devs::usart<0>, usconf);
 
-
     auto g = tos::open(tos::devs::gpio);
     g->set_pin_mode(2_pin, tos::pin_mode::in_pullup);
 
@@ -38,13 +44,13 @@ void tick_task()
 
     g->attach_interrupt(2_pin, tos::pin_change::falling, handler);
 
-    tos::tuple<int, bool> tp {3, 1};
+    ::std::tuple<int, bool> tp {3, 1};
 
     auto eeprom = tos::open(tos::devs::eeprom<0>);
     int num = 0;
     eeprom->read(0, &num, sizeof num);
 
-    tos::println(*usart, "Hello", tos::get<0>(tp), tos::get<1>(tp));
+    tos::println(*usart, "Hello", get<0>(tp), get<1>(tp));
     while (true)
     {
         pinsem.wait();

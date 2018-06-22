@@ -18,7 +18,7 @@ namespace tos {
             uint8_t busy = 0;
             intrusive_list<tcb> run_queue;
 
-            void start(tcb::entry_point_t);
+            thread_id_t start(launch_params);
 
             exit_reason schedule();
         };
@@ -34,7 +34,7 @@ namespace tos
 }
 
 namespace tos {
-    scheduler sc;
+    static scheduler sched;
     namespace impl
     {
         tcb* cur_thread = nullptr;
@@ -47,7 +47,7 @@ namespace tos {
             tos::int_guard ig;
             if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
                 make_runnable(*impl::cur_thread);
-                switch_context(sc.main_context, return_codes::yield);
+                switch_context(sched.main_context, return_codes::yield);
             }
         }
     }
@@ -55,36 +55,41 @@ namespace tos {
     void suspend_self()
     {
         if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
-            switch_context(sc.main_context, return_codes::do_wait);
+            switch_context(sched.main_context, return_codes::suspend);
         }
     }
 
+    [[noreturn]]
     static void thread_exit()
     {
         tos::disable_interrupts();
 
         // no need to save the current context, we'll exit
 
-        switch_context(sc.main_context, return_codes::do_exit);
+        switch_context(sched.main_context, return_codes::do_exit);
     }
 
-    void launch(tcb::entry_point_t e)
+    thread_id_t launch(tcb::entry_point_t e)
     {
-        sc.start(e);
+        constexpr size_t stack_size = 512;
+        auto params = thread_params()
+            .add<tags::stack_ptr_t>(tos_stack_alloc(stack_size))
+            .add<tags::stack_sz_t>(stack_size)
+            .add<tags::entry_pt_t>(e);
+        return sched.start(params);
     }
 
     exit_reason schedule()
     {
-        return sc.schedule();
+        return sched.schedule();
     }
 
-    constexpr auto stack_size = 512;
-    void scheduler::start(tcb::entry_point_t t_start)
+    inline thread_id_t scheduler::start(launch_params params)
     {
-        const auto stack = static_cast<char*>(tos_stack_alloc(stack_size));
-        const auto t_ptr = stack + stack_size - sizeof(tcb);
+        const auto stack = static_cast<char*>(get<tags::stack_ptr_t>(params));
+        const auto t_ptr = stack + get<tags::stack_sz_t>(params) - sizeof(tcb);
 
-        auto thread = new (t_ptr) tcb(t_start);
+        auto thread = new (t_ptr) tcb(get<tags::entry_pt_t>(params), get<tags::stack_sz_t>(params));
 
         // New threads are runnable by default.
         run_queue.push_back(*thread);
@@ -93,7 +98,7 @@ namespace tos {
         tos::disable_interrupts();
         if (setjmp(thread->context)==(int) return_codes::saved) {
             tos::enable_interrupts();
-            return;
+            return { reinterpret_cast<uintptr_t>(thread) };
         }
 
         /**
@@ -103,7 +108,7 @@ namespace tos {
          * set the stack pointer so the new thread will have an
          * independent execution context
          */
-        tos_set_stack_ptr((char*) ((uintptr_t) reinterpret_cast<char*>(impl::cur_thread)));
+        tos_set_stack_ptr(reinterpret_cast<char*>(impl::cur_thread));
 
         tos::enable_interrupts();
         impl::cur_thread->entry();
@@ -115,10 +120,10 @@ namespace tos {
         thread_exit();
     }
 
-    void busy() { sc.busy++; }
-    void unbusy() { sc.busy--; }
+    void busy() { sched.busy++; }
+    void unbusy() { sched.busy--; }
 
-    exit_reason scheduler::schedule()
+    inline exit_reason scheduler::schedule()
     {
         while (true)
         {
@@ -138,7 +143,7 @@ namespace tos {
                  * there's no thread to run right now
                  */
 
-                if (sc.busy > 0)
+                if (sched.busy > 0)
                 {
                     return exit_reason::idle;
                 }
@@ -146,7 +151,7 @@ namespace tos {
                 return exit_reason::power_down;
             }
 
-            auto why = static_cast<return_codes>(setjmp(sc.main_context));
+            auto why = static_cast<return_codes>(setjmp(sched.main_context));
 
             switch (why) {
             case return_codes::saved:
@@ -159,7 +164,7 @@ namespace tos {
             case return_codes::do_exit:
             {
                 auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
-                        + sizeof(tcb) - stack_size;
+                        + sizeof(tcb) - impl::cur_thread->stack_sz;
                 std::destroy_at(impl::cur_thread);
                 tos_stack_free(stack_ptr);
                 num_threads--;
@@ -174,7 +179,7 @@ namespace tos {
 
     void make_runnable(tcb& t)
     {
-        sc.run_queue.push_back(t);
+        sched.run_queue.push_back(t);
     }
 }
 

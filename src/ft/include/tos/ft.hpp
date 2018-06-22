@@ -2,18 +2,39 @@
 
 #include <stdint.h>
 #include "tcb.hpp"
+#include <tos/ct_map.hpp>
 
 namespace tos {
     /**
      * This struct represents a unique identifier for every
      * **running** task in the system.
      */
-    struct thread_id_t
-    {
-        uintptr_t id;
-    };
+    struct thread_id_t { uintptr_t id; };
 
-    void launch(tcb::entry_point_t);
+    thread_id_t launch(tcb::entry_point_t);
+
+    namespace tags
+    {
+        struct stack_ptr_t {};
+        struct entry_pt_t {};
+        struct stack_sz_t {};
+    }
+
+    static constexpr tags::stack_ptr_t stack_ptr{};
+    static constexpr tags::entry_pt_t entry_pt{};
+    static constexpr tags::stack_sz_t stack_sz{};
+
+    using launch_params =
+        ct_map<
+            base_key_policy,
+            el_t<tags::stack_ptr_t, void* const &>,
+            el_t<tags::stack_sz_t, const size_t&>,
+            el_t<tags::entry_pt_t, const tcb::entry_point_t&>
+        >;
+
+    inline constexpr auto thread_params() { return ct_map<base_key_policy>{}; }
+
+    thread_id_t launch(launch_params);
 
     /**
      * This enumeration denotes why the scheduler returned
@@ -41,7 +62,7 @@ namespace tos {
 
     namespace this_thread {
         /**
-         * Returns a platform depentent identifier of the current task
+         * Returns a platform dependent identifier of the current task
          */
         thread_id_t get_id();
 
@@ -50,6 +71,7 @@ namespace tos {
          */
         void yield();
 
+        [[noreturn]]
         void exit(void* res = nullptr);
     }
 
@@ -91,7 +113,7 @@ namespace tos {
         /**
          * a running thread is waiting on something
          */
-        do_wait,
+        suspend,
         /**
          * a thread exited
          */

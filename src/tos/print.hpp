@@ -79,19 +79,19 @@ namespace tos
     void print(CharOstreamT& ostr, T1&& t1, T2&& t2, Ts&&... ts)
     {
         constexpr auto sep = ' ';
-        print(ostr, forward<T1>(t1));
+        print(ostr, std::forward<T1>(t1));
         print(ostr, sep);
-        print(ostr, forward<T2>(t2));
+        print(ostr, std::forward<T2>(t2));
 
         //((print(ostr, sep), print(ostr, forward<Ts>(ts))), ...);
-        int _[] = { 0, (print(ostr, sep), print(ostr, forward<Ts>(ts)), 0)... };
+        int _[] = { 0, (print(ostr, sep), print(ostr, std::forward<Ts>(ts)), 0)... };
         (void)_;
     }
 
     template <class CharOstreamT, class... T>
     void println(CharOstreamT& ostr, T&&... t)
     {
-        print(ostr, forward<T>(t)...);
+        print(ostr, std::forward<T>(t)...);
         print(ostr, "\r\n");
     }
 }

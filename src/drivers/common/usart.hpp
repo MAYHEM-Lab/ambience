@@ -40,13 +40,13 @@ namespace tos
     struct usart_key_policy
     {
         static constexpr auto m = make_map()
-                .add<pair_t<usart_baud_rate, usart_baud_rate>>(tos::true_type{})
-                .add<pair_t<usart_parity, usart_parity>>(tos::true_type{})
-                .add<pair_t<usart_stop_bit, usart_stop_bit>>(tos::true_type{});
+                .add<pair_t<usart_baud_rate, usart_baud_rate>>(std::true_type{})
+                .add<pair_t<usart_parity, usart_parity>>(std::true_type{})
+                .add<pair_t<usart_stop_bit, usart_stop_bit>>(std::true_type{});
 
         template <class KeyT, class ValT>
         static constexpr auto validate(ct<KeyT>, ct<ValT>) {
-            constexpr auto x = tos::false_type{};
+            constexpr auto x = std::false_type{};
             return get_or<pair_t<KeyT, ValT>>(x, m);
         }
     };

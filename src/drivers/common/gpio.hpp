@@ -24,11 +24,11 @@ namespace tos
 
     namespace digital
     {
-        using high_t = true_type;
-        using low_t = false_type;
+        using high_t = std::true_type;
+        using low_t = std::false_type;
 
-        static constexpr true_type high{};
-        static constexpr false_type low{};
+        static constexpr high_t high{};
+        static constexpr low_t low{};
     }
 
     struct pin_t;

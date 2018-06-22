@@ -226,7 +226,7 @@ namespace tos
 
     inline void nrf24::set_channel(nrf24::channel_t channel) {
         constexpr uint8_t max_channel = 125;
-        write_reg(regs::rf_ch, tos::min(channel.channel, max_channel));
+        write_reg(regs::rf_ch, std::min(channel.channel, max_channel));
     }
 
     inline nrf24::channel_t nrf24::get_channel() const {

@@ -130,6 +130,6 @@ namespace tos
     template <class T>
     auto open_impl(devs::alarm_t, T& tmr)
     {
-        return alarm<tos::remove_reference_t<T>>{tmr};
+        return alarm<std::remove_reference_t<T>>{tmr};
     }
 }
