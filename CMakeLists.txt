@@ -21,6 +21,10 @@ message(STATUS "${CMAKE_CXX_FLAGS}")
 
 add_subdirectory(src)
 
+if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/libemsha")
+    add_subdirectory(libs/libemsha)
+endif()
+
 if(TOS_AVR)
     add_subdirectory(examples/gpio)
     #add_subdirectory(examples/spi)
