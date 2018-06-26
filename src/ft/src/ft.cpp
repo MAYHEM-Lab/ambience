@@ -4,7 +4,6 @@
 #include <tos/tcb.hpp>
 #include <tos/scheduler.hpp>
 
-#include <tos_arch.hpp>
 #include <tos/interrupt.hpp>
 #include <tos/new.hpp>
 #include <tos/memory.hpp>
@@ -166,6 +165,7 @@ namespace tos {
                 }
 
                 impl::cur_thread = nullptr;
+                return exit_reason::yield;
             }
         }
 

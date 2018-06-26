@@ -10,7 +10,7 @@ namespace tos {
         /**
          * This type represents an execution context in the system.
          */
-        struct tcb
+        struct alignas(16) tcb
             : public list_node<tcb>
         {
             using entry_point_t = void(*)();

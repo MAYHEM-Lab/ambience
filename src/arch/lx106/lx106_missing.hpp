@@ -1,5 +1,7 @@
 #ifndef ESPMISSINGINCLUDES_H
 #define ESPMISSINGINCLUDES_H
+extern "C"
+{
 
 #include <ets_sys.h>
 #include <stdint.h>
@@ -34,4 +36,5 @@ uint32 system_get_time();
 unsigned long os_random();
 int rand(void);
 void ets_bzero(void *s, size_t n);
+};
 #endif

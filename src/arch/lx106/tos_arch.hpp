@@ -4,14 +4,10 @@
 
 #pragma once
 
+
 extern "C"
 {
-/*#define tos_set_stack_ptr(x) \
-{ \
- __asm__ __volatile__("movi a0, 0;" ::: "memory"); \
- __asm__ __volatile__("mov sp,%0;" :: "r" ((x) - 16) : "memory"); \
-}*/
-
+#include <user_interface.h>
 void tos_set_stack_ptr(void*);
 
 inline void* read_sp()
@@ -20,4 +16,12 @@ inline void* read_sp()
    __asm__ __volatile__("mov %0, a1;" : "=r"(sp) ::);
    return sp;
 }
+}
+
+namespace tos
+{
+    namespace esp82
+    {
+        static constexpr auto main_task_prio = USER_TASK_PRIO_2;
+    }
 }

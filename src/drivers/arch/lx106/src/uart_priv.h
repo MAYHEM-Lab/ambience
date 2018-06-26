@@ -17,9 +17,12 @@
 #ifndef UART_APP_H
 #define UART_APP_H
 
+extern "C"
+{
 #include "uart_register.h"
 #include "eagle_soc.h"
 #include "c_types.h"
+};
 
 #define UART_TX_BUFFER_SIZE 256  //Ring buffer length of tx buffer
 #define UART_RX_BUFFER_SIZE 256 //Ring buffer length of rx buffer
@@ -36,6 +39,7 @@
 #define UART0   0
 #define UART1   1
 
+typedef void (*uart_recv_line)(char *arg);
 
 typedef enum {
     FIVE_BITS = 0x0,
@@ -144,6 +148,15 @@ typedef struct {
     int                      buff_uart_no;  //indicate which uart use tx/rx buffer
 } UartDevice;
 
+void uart_init(UartBautRate uart0_br, UartBautRate uart1_br);
+void uart0_sendStr(const char *str);
+
+
+///////////////////////////////////////
+#define UART_FIFO_LEN  128  //define the tx fifo length
+#define UART_TX_EMPTY_THRESH_VAL 0x10
+
+
 struct UartBuffer{
     uint32     UartBuffSize;
     uint8     *pUartBuff;
@@ -169,9 +182,10 @@ typedef enum {
     BLOCK = 1,
 } TCPState;
 
-
+//void ICACHE_FLASH_ATTR uart_test_rx();
+STATUS uart_tx_one_char(uint8 uart, uint8 TxChar);
 STATUS uart_tx_one_char_no_wait(uint8 uart, uint8 TxChar);
-
+void  uart1_sendStr_no_wait(const char *str);
 struct UartBuffer*  Uart_Buf_Init();
 
 
@@ -186,16 +200,13 @@ void  Uart_rx_buff_enq();
 #endif
 void  uart_rx_intr_enable(uint8 uart_no);
 void  uart_rx_intr_disable(uint8 uart_no);
+void uart0_tx_buffer(uint8 *buf, uint16 len);
 
-
-void ICACHE_FLASH_ATTR
-inline uart0_tx_buffer(uint8 *buf, uint16 len);
 //==============================================
 #define FUNC_UART0_CTS 4
 #define FUNC_U0CTS                      4
 #define FUNC_U1TXD_BK                   2
 #define UART_LINE_INV_MASK  (0x3f<<19)
-
 void UART_SetWordLength(uint8 uart_no, UartBitsNum4Char len);
 void UART_SetStopBits(uint8 uart_no, UartStopBitsNum bit_num);
 void UART_SetLineInverse(uint8 uart_no, UART_LineLevelInverse inverse_mask);
@@ -208,10 +219,7 @@ void UART_ClearIntrStatus(uint8 uart_no,uint32 clr_mask);
 void UART_SetIntrEna(uint8 uart_no,uint32 ena_mask);
 void UART_SetPrintPort(uint8 uart_no);
 bool UART_CheckOutputFinished(uint8 uart_no, uint32 time_out_us);
-void ICACHE_FLASH_ATTR UART_init(UartBautRate uart0_br, UartBautRate uart1_br, uint8 recv_task_priority);
 //==============================================
 
-#define UART0_SIGNAL    1
-#define UART1_SIGNAL    2
 #endif
 

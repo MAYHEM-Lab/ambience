@@ -78,7 +78,16 @@ namespace tos {
          * All threads exited. Usually denotes a bug, system
          * should restart.
          */
-        restart
+        restart,
+        /**
+         * Threading subsystem yields the CPU back to the
+         * architecture. This is useful for architectures that
+         * require periodic control over CPU.
+         *
+         * If the architecture doesn't mandate such a requirement
+         * this value may never be returned.
+         */
+        yield
     };
 
     namespace kern
@@ -166,7 +175,7 @@ namespace tos {
 
     inline thread_id_t launch(kern::tcb::entry_point_t e)
     {
-        constexpr size_t stack_size = 512;
+        constexpr size_t stack_size = 1024;
         auto params = thread_params()
             .add<tags::stack_ptr_t>(tos_stack_alloc(stack_size))
             .add<tags::stack_sz_t>(stack_size)

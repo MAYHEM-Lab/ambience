@@ -13,8 +13,13 @@ extern "C"
 #include <arch/lx106/tos_arch.hpp>
 #include <tos/devices.hpp>
 #include <tos/ft.hpp>
+#include <drivers/arch/lx106/timer.hpp>
+#include <drivers/common/alarm.hpp>
+#include <ft/include/tos/semaphore.hpp>
 
 static const int pin = 2;
+
+tos::semaphore sem{0};
 
 void other()
 {
@@ -22,12 +27,11 @@ void other()
     while (true)
     {
         ++x;
-        //gpio_output_set(0, (1 << pin), 0, 0);
         os_printf("Other: On, %p, %d\n", &x, x);
-        tos::this_thread::yield();
-        //gpio_output_set((1 << pin), 0, 0, 0);
+        sem.down();
+
         os_printf("Other: Off\n");
-        tos::this_thread::yield();
+        sem.down();
     }
 }
 
@@ -36,39 +40,32 @@ void task()
     using namespace tos::tos_literals;
 
     auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
-    usart->options(
-            tos::usart_parity::disabled,
-            tos::usart_stop_bit::one);
     usart->enable();
+    os_printf("\n\n\n\n\n");
 
-    //os_printf("hai");
-
-    //gpio_output_set(0, 0, (1 << pin), 0);
+    auto tmr = open(tos::devs::timer<0>);
+    auto alarm = tos::open(tos::devs::alarm, tmr);
 
     int x = 15;
     int y = 17;
-    os_printf("base sp: %p, %p, %d\n", read_sp(), &x, x);
+
     while (true)
     {
-        //++x;
-        //gpio_output_set(0, (1 << pin), 0, 0);
+        ++x;
         os_printf("Task: On\n");
         os_printf("base sp: %p, %p, %d\n", read_sp(), &x, x);
         os_printf("base sp: %p, %p, %d\n", read_sp(), &y, y);
+        sem.up();
+        alarm.sleep_for({ 500 });
 
-        tos::this_thread::yield();
-        //gpio_output_set((1 << pin), 0, 0, 0);
+        sem.up();
         os_printf("Task: Off\n");
-        tos::this_thread::yield();
+        alarm.sleep_for({ 500 });
     }
 }
 
 void tos_init()
 {
-    gpio_init();
-
-    int x = 15;
-    os_printf("base sp: %p, %p, %d\n", read_sp(), &x, x);
     tos::launch(task);
     tos::launch(other);
 }
