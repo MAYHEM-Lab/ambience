@@ -5,6 +5,7 @@
 #include "catch.hpp"
 
 #include <tos/ring_buf.hpp>
+#include <tos/fixed_fifo.hpp>
 
 TEST_CASE("base ring buffer", "[base_ring_buf]")
 {
@@ -30,4 +31,25 @@ TEST_CASE("base ring buffer", "[base_ring_buf]")
     REQUIRE(rb.push() == 1);
     REQUIRE(rb.push() == 2);
     REQUIRE(rb.push() == 3);
+}
+
+TEST_CASE("fifo test", "[fixed_fifo]")
+{
+    tos::fixed_fifo<char, 4, tos::ring_buf> ff;
+    ff.push('a');
+    REQUIRE(ff.pop() == 'a');
+    ff.push('b');
+    REQUIRE(ff.pop() == 'b');
+    ff.push('c');
+    ff.push('d');
+    REQUIRE(ff.pop() == 'c');
+    REQUIRE(ff.pop() == 'd');
+    ff.push('e');
+    ff.push('f');
+    ff.push('g');
+    ff.push('h');
+    REQUIRE(ff.pop() == 'e');
+    REQUIRE(ff.pop() == 'f');
+    REQUIRE(ff.pop() == 'g');
+    REQUIRE(ff.pop() == 'h');
 }

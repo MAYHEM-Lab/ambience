@@ -11,6 +11,7 @@
 #include <tos/semaphore.hpp>
 #include <tos/print.hpp>
 #include <tos/mutex.hpp>
+#include <drivers/arch/lx106/wifi.hpp>
 
 static const int pin = 2;
 
@@ -36,14 +37,13 @@ void other()
     }
 }
 
-tos::semaphore wifi_sem{0};
-
 void task()
 {
     using namespace tos::tos_literals;
 
     usart = open(tos::devs::usart<0>, 19200_baud_rate);
     usart->enable();
+    tos::print(*usart, "\n\n\n\n\n\n");
 
     auto tmr = open(tos::devs::timer<0>);
     auto alarm = tos::open(tos::devs::alarm, tmr);
@@ -51,23 +51,18 @@ void task()
     int x = 15;
     int y = 17;
 
-    wifi_set_opmode_current(STATION_MODE);
-    wifi_station_scan(nullptr, [](void* arg, STATUS s){
-        if (s == OK)
-        {
-            auto bssInfo = (bss_info *)arg;
-            // skip the first in the chain ... it is invalid
-            bssInfo = STAILQ_NEXT(bssInfo, next);
-            while(bssInfo) {
-                //tos::println(*usart, "ssid:", (const char*)bssInfo->ssid);
-                bssInfo = STAILQ_NEXT(bssInfo, next);
-            }
-        }
-        wifi_sem.up();
-        system_os_post(tos::esp82::main_task_prio, 0, 0);
-    });
+    tos::esp82::wifi w;
+    auto res = w.connect("Otsimo", "987456321");
+    while (!w.wait_for_dhcp());
 
-    wifi_sem.down();
+    tos::println(*usart, "connected?", res);
+
+    if (res)
+    {
+        tos::esp82::wifi_connection conn;
+        auto addr = conn.get_addr();
+        tos::println(*usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
+    }
 
     while (true)
     {
@@ -76,13 +71,12 @@ void task()
         tos::println(*usart, "Task: On");
         {
             tos::lock_guard<tos::mutex> lk{prot};
-            tos::println(*usart, "base sp:", read_sp(), &x, x);
             tos::println(*usart, "base sp:", read_sp(), &y, y);
         }
-        sem.up();
+        //sem.up();
         alarm.sleep_for({ 500 });
 
-        sem.up();
+        //sem.up();
         tos::println(*usart, "Task: Off");
         alarm.sleep_for({ 500 });
     }
@@ -91,5 +85,4 @@ void task()
 void tos_main()
 {
     tos::launch(task);
-    tos::launch(other);
 }

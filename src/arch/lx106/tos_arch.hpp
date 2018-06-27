@@ -22,6 +22,6 @@ namespace tos
 {
     namespace esp82
     {
-        static constexpr auto main_task_prio = USER_TASK_PRIO_2;
+        static constexpr auto main_task_prio = USER_TASK_PRIO_0;
     }
 }
