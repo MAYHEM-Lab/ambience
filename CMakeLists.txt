@@ -39,7 +39,7 @@ if(TOS_AVR)
         add_subdirectory(apps/tvm)
     endif()
 
-    if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/tvm")
+    if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/cspot_lite")
         add_subdirectory(apps/cspot_lite)
     endif()
 elseif(TOS_ESP)

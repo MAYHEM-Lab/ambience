@@ -33,19 +33,23 @@ namespace tos
         ostr.write({str, len});
     }
 
-    template <class CharOstreamT>
+    template <class CharOstreamT,
+            class T = int16_t,
+            typename = tos::std::enable_if_t<!tos::std::is_same<T, int>{}>>
     void print(CharOstreamT & ostr, int16_t x) {
         print(ostr, itoa(x, 10));
     }
 
-    template <class CharOstreamT>
+    template <class CharOstreamT,
+            class T = int32_t,
+            typename = tos::std::enable_if_t<!tos::std::is_same<T, int>{}>>
     void print(CharOstreamT & ostr, int32_t x) {
         print(ostr, itoa(x, 10));
     }
 
     template <class CharOstreamT>
-    void print(CharOstreamT & ostr, void *p) {
-        print(ostr, reinterpret_cast<uintptr_t>(p));
+    void print(CharOstreamT & ostr, int x) {
+        print(ostr, itoa(x, 10));
     }
 
     template <class CharOstreamT>
@@ -53,6 +57,11 @@ namespace tos
         print(ostr, '0');
         print(ostr, 'x');
         print(ostr, itoa(ptr, 16));
+    }
+
+    template <class CharOstreamT>
+    void print(CharOstreamT & ostr, void *p) {
+        print(ostr, reinterpret_cast<uintptr_t>(p));
     }
 
     template <class CharOstreamT>

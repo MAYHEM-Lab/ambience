@@ -1,6 +1,6 @@
 project(tos)
 
-add_library(lx106_usart usart.hpp src/usart.cpp src/uart_register.h src/uart_priv.h)
+add_library(lx106_usart usart.hpp src/uart_register.h src/new_uart_priv.h src/uart_driver.cpp)
 target_link_libraries(lx106_usart PRIVATE tos_core lx106_impl)
 
 add_library(esp82_timer timer.hpp src/timer.cpp)
