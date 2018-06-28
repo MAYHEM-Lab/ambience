@@ -15,6 +15,8 @@ namespace tos
     };
     namespace esp82
     {
+        //TODO: return wifi_connection from wifi upon connection
+
         class wifi_connection
         {
         public:

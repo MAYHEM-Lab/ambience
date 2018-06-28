@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <tos/semaphore.hpp>
-#include <tos/mutex.hpp>
-
 namespace tos
 {
     template <class T>
@@ -49,40 +46,6 @@ namespace tos
         size_t m_cap;
     };
 
-    class sync_ring_buf
-            : public base_ring_buf<sync_ring_buf>
-    {
-    public:
-        explicit sync_ring_buf(size_t cap) : base_ring_buf{cap}, m_read{0}, m_put{int8_t(cap)} {}
-
-        size_t size() const
-        {
-            int8_t sz = get_count(m_read);
-            return sz < 0 ? 0 : sz;
-        }
-
-        using base_ring_buf::capacity;
-        using base_ring_buf::translate;
-
-        size_t push()
-        {
-            m_put.down();
-            auto res = base_ring_buf::push();
-            m_read.up();
-            return res;
-        }
-
-        size_t pop()
-        {
-            m_read.down();
-            auto res = base_ring_buf::pop();
-            m_put.up();
-            return res;
-        }
-
-    private:
-        tos::semaphore m_read, m_put;
-    };
 
     class ring_buf
             : public base_ring_buf<ring_buf>
@@ -112,4 +75,6 @@ namespace tos
     private:
         size_t m_sz;
     };
+
+    class sync_ring_buf;
 }

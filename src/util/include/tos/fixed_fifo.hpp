@@ -8,6 +8,9 @@
 #include <tos/ring_buf.hpp>
 #include <tos/memory.hpp>
 #include <tos/new.hpp>
+#include <tos/interrupt.hpp>
+#include <tos/utility.hpp>
+#include <tos/sync_ring_buf.hpp>
 
 namespace tos
 {
@@ -37,17 +40,19 @@ namespace tos
 {
     template <class T, size_t Len, class RingBufT>
     void fixed_fifo<T, Len, RingBufT>::push(T t) {
+        int_guard ig;
         auto i = m_rb.push();
         std::destroy_at(&(m_buf[i].empty));
-        new (&(m_buf[i].t)) T(std::move(t));
+        new (&m_buf[i].t) T(std::move(t));
     }
 
     template <class T, size_t Len, class RingBufT>
     T fixed_fifo<T, Len, RingBufT>::pop() {
+        int_guard ig;
         auto i = m_rb.pop();
         auto res = std::move(m_buf[i].t);
         std::destroy_at(&(m_buf[i].t));
-        new (&(m_buf[i].empty)) decltype(m_buf[0].empty) ();
+        new (&m_buf[i].empty) decltype(m_buf[0].empty) ();
         return res;
     }
 }

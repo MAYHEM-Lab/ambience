@@ -18,6 +18,9 @@ add_library(tos_util
         src/cxxrt.cpp
         include/tos/span.hpp
         include/tos/ct_map.hpp
-        include/tos/fixed_fifo.hpp)
+        include/tos/fixed_fifo.hpp
+        include/tos/sync_ring_buf.hpp)
+
 target_include_directories(tos_util PUBLIC "include")
 target_compile_options(tos_util PUBLIC "-std=c++14")
+target_link_libraries(tos_util PUBLIC tos_ft)

@@ -15,6 +15,11 @@ namespace tos
         friend class intrusive_list_iterator<T>;
         T* prev;
         T* next;
+
+    public:
+        list_node() = default;
+        list_node(const list_node&) = delete;
+        list_node(list_node&&) = delete;
     };
 
     template <class T>

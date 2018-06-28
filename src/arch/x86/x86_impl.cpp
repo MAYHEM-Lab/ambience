@@ -51,5 +51,9 @@ int main()
     while (true)
     {
         auto res = tos::kern::schedule();
+        if (res == tos::exit_reason::restart)
+        {
+            return 0;
+        }
     }
 }
