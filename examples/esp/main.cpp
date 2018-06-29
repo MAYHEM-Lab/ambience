@@ -31,7 +31,7 @@ void task()
     tos::print(*usart, "\n\n\n\n\n\n");
 
     tos::esp82::wifi w;
-    auto res = w.connect("FG", "23111994a");
+    auto res = w.connect("WIFI", "PASS");
 
     tos::println(*usart, "connected?", res);
 
@@ -44,12 +44,12 @@ void task()
         tos::println(*usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
     }
 
-    tos::esp82::tcp_socket sock{ w, { 1000 } };
+    tos::esp82::tcp_socket sock{ w, { 80 } };
     tos::fixed_fifo<int, 24> buf;
 
     auto recv_handler = [&buf](tos::esp82::tcp_endpoint& ep, tos::span<const char> foo){
         buf.push(foo.size());
-        ep.send("hello");
+        ep.send("HTTP/1.0 200 Content-type: text/html\r\n\r\n<body><b>Hello from Tos!</b></body>\r\n\r\n");
     };
 
     auto sent_handler = [&buf](tos::esp82::tcp_endpoint& ep){

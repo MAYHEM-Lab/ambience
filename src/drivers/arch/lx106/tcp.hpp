@@ -71,6 +71,7 @@ namespace tos
         {
         public:
             explicit tcp_socket(tos::esp82::wifi&, port_num_t port);
+            ~tcp_socket();
 
             template <class ConnHandlerT>
             void accept(ConnHandlerT& handler);
@@ -109,6 +110,10 @@ namespace tos
 
             espconn_regist_connectcb(&m_conn, &conn_handler<ConnHandlerT>);
             espconn_accept(&m_conn);
+        }
+
+        inline tcp_socket::~tcp_socket() {
+            espconn_delete(&m_conn);
         }
 
         inline tcp_endpoint::tcp_endpoint(espconn *conn) : m_conn{conn} {

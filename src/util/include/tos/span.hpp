@@ -36,6 +36,10 @@ namespace tos
         const T* begin() const { return m_base; }
         const T* end() const { return m_base + m_len; }
 
+        span slice(size_t begin, size_t len){
+            return { m_base + begin, len };
+        }
+
     private:
         T* m_base;
         size_t m_len;
