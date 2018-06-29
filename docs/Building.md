@@ -11,7 +11,7 @@ You'll need:
 ```
 mkdir avr_build
 cd avr_build
-cmake -DTOS_AVR=ON ..
+cmake -DTOS_AVR=ON -DCMAKE_BUILD_TYPE=MinSizeRel ..
 cd examples/simple_portable
 make
 avr-objcopy -O ihex -R .eeprom simple_portable app.hex
@@ -27,7 +27,7 @@ You'll need:
 ```
 mkdir esp_build
 cd esp_build
-cmake -DTOS_ESP=ON ..
+cmake -DTOS_ESP=ON -DCMAKE_BUILD_TYPE=MinSizeRel ..
 cd examples/esp
 make
 export PATH=$PATH:~/esp-open-sdk/xtensa-lx106-elf/bin/

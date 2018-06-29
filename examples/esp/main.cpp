@@ -14,42 +14,20 @@
 #include <drivers/arch/lx106/usart.hpp>
 #include <drivers/arch/lx106/wifi.hpp>
 #include <drivers/arch/lx106/tcp.hpp>
+#include <tos/utility.hpp>
 
-static const int pin = 2;
-
-tos::semaphore sem{0};
-
-tos::mutex prot;
-tos::lx106::uart0* usart;
-
-void other()
+extern "C"
 {
-    int x = 5;
-    while (true)
-    {
-        sem.down();
-        ++x;
-        {
-            tos::lock_guard<tos::mutex> lk{prot};
-            tos::println(*usart, "Other: On,", &x, x);
-        }
-
-        sem.down();
-        tos::println(*usart, "Other: Off");
-    }
+#include <mem.h>
 }
 
-tos::fixed_fifo<int, 24> buf;
 void task()
 {
     using namespace tos::tos_literals;
 
-    usart = open(tos::devs::usart<0>, 19200_baud_rate);
+    auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
     usart->enable();
     tos::print(*usart, "\n\n\n\n\n\n");
-
-    auto tmr = open(tos::devs::timer<0>);
-    auto alarm = open(tos::devs::alarm, tmr);
 
     tos::esp82::wifi w;
     auto res = w.connect("WIFI", "PASS");
@@ -65,24 +43,22 @@ void task()
     }
 
     tos::esp82::tcp_socket sock{ w, { 1000 } };
+    tos::fixed_fifo<int, 24> buf;
 
-    auto handler = [&sock](espconn* new_conn){
+    auto recv_handler = [&buf](tos::esp82::tcp_endpoint& ep, tos::span<const char> foo){
+        buf.push(foo.size());
+        ep.send("hello");
+    };
+
+    auto sent_handler = [&buf](tos::esp82::tcp_endpoint& ep){
         buf.push(42);
-        buf.push((int)new_conn);
-        buf.push((int)new_conn->reverse);
-        new_conn->reverse = (void*)2345;
+    };
 
-        espconn_regist_recvcb(new_conn, [](void* arg, char *pdata, unsigned short len){
-            auto new_conn = (espconn *)arg;
-            buf.push(len);
-            buf.push((int)arg);
-            buf.push((int)new_conn->reverse);
-            system_os_post(tos::esp82::main_task_prio, 0, 0);
-
-            espconn_send(new_conn, (uint8_t *)"hello", 5);
-        });
-
-        system_os_post(tos::esp82::main_task_prio, 0, 0);
+    auto handler = [&](tos::esp82::tcp_socket&, tos::esp82::tcp_endpoint new_ep){
+        auto mem = os_malloc(sizeof new_ep);
+        auto ep = new (mem) tos::esp82::tcp_endpoint(std::move(new_ep));
+        ep->attach(tos::esp82::events::recv, recv_handler);
+        ep->attach(tos::esp82::events::sent, sent_handler);
     };
 
     sock.accept(handler);
@@ -94,21 +70,6 @@ void task()
         auto c = buf.pop();
         tos::println(*usart, c);
     }
-
-    /*while (true)
-    {
-        tos::println(*usart, "Task: On");
-        {
-            tos::lock_guard<tos::mutex> lk{prot};
-            tos::println(*usart, "base sp:", read_sp(), &y, y);
-        }
-        //sem.up();
-        alarm.sleep_for({ 500 });
-
-        //sem.up();
-        tos::println(*usart, "Task: Off");
-        alarm.sleep_for({ 500 });
-    }*/
 }
 
 void tos_main()
