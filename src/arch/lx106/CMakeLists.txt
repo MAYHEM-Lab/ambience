@@ -1,6 +1,6 @@
 project(tos CXX ASM)
 
-add_library(lx106_impl esp_impl.cpp tos_arch.hpp user_config.h native.s lx106_missing.hpp)
+add_library(lx106_impl esp_impl.cpp tos_arch.hpp user_config.h native.s lx106_missing.hpp tos_platform.hpp)
 target_include_directories(lx106_impl PRIVATE "../../")
 target_include_directories(lx106_impl PUBLIC ".")
 target_compile_options(lx106_impl PUBLIC -std=gnu++14)

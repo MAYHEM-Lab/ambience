@@ -12,6 +12,8 @@ namespace tos
     class span
     {
     public:
+        using iterator = T*;
+
         span(T* base, size_t len) : m_base(base), m_len(len) {}
 
         template <size_t Sz>

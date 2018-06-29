@@ -99,7 +99,7 @@ namespace tos
             auto new_conn = static_cast<espconn*>(arg);
             auto self = tcp_socket::find_sock(new_conn->proto.tcp->local_port);
 
-            auto handler = *(ConnHandlerT*)self->m_accept_handler;
+            auto& handler = *(ConnHandlerT*)self->m_accept_handler;
             handler(*self, tcp_endpoint{ new_conn });
             system_os_post(tos::esp82::main_task_prio, 0, 0);
         }
@@ -141,8 +141,8 @@ namespace tos
             auto conn = static_cast<espconn*>(arg);
             auto self = static_cast<tcp_endpoint*>(conn->reverse);
 
-            auto handler = *(CallbackT*)self->m_recv_handler;
-            handler(*self, span<const char>{pdata, len});
+            auto& handler = *(CallbackT*)self->m_recv_handler;
+            handler(events::recv, *self, span<const char>{pdata, len});
             system_os_post(tos::esp82::main_task_prio, 0, 0);
         }
 
@@ -152,8 +152,8 @@ namespace tos
             auto conn = static_cast<espconn*>(arg);
             auto self = static_cast<tcp_endpoint*>(conn->reverse);
 
-            auto handler = *(CallbackT*)self->m_sent_handler;
-            handler(*self);
+            auto& handler = *(CallbackT*)self->m_sent_handler;
+            handler(events::sent, *self);
             system_os_post(tos::esp82::main_task_prio, 0, 0);
         }
 
