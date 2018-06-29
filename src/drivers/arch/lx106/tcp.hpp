@@ -125,6 +125,8 @@ namespace tos
         }
 
         inline tcp_endpoint::~tcp_endpoint() {
+            if (!m_conn) return;
+            espconn_disconnect(m_conn);
             espconn_delete(m_conn);
         }
 

@@ -9,12 +9,13 @@
 #include <tos/print.hpp>
 #include <tos/mutex.hpp>
 #include <tos/fixed_fifo.hpp>
+#include <tos/utility.hpp>
+#include <tos/memory.hpp>
 
 #include <drivers/arch/lx106/timer.hpp>
 #include <drivers/arch/lx106/usart.hpp>
 #include <drivers/arch/lx106/wifi.hpp>
 #include <drivers/arch/lx106/tcp.hpp>
-#include <tos/utility.hpp>
 
 extern "C"
 {
@@ -30,10 +31,11 @@ void task()
     tos::print(*usart, "\n\n\n\n\n\n");
 
     tos::esp82::wifi w;
-    auto res = w.connect("WIFI", "PASS");
-    while (!w.wait_for_dhcp());
+    auto res = w.connect("FG", "23111994a");
 
     tos::println(*usart, "connected?", res);
+
+    while (!w.wait_for_dhcp());
 
     if (res)
     {
@@ -52,6 +54,8 @@ void task()
 
     auto sent_handler = [&buf](tos::esp82::tcp_endpoint& ep){
         buf.push(42);
+        tos::std::destroy_at(&ep);
+        os_free(&ep);
     };
 
     auto handler = [&](tos::esp82::tcp_socket&, tos::esp82::tcp_endpoint new_ep){
