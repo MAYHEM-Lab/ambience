@@ -32,7 +32,7 @@ namespace tos
 
         void write(span<const char>);
 
-        size_t read(span<char>);
+        span<char> read(span<char>);
 
         void operator()(esp82::events::sent_t, esp82::tcp_endpoint&);
         void operator()(esp82::events::recv_t, esp82::tcp_endpoint&, span<const char>);
@@ -76,20 +76,17 @@ namespace tos
         auto it = buf.begin();
         auto end = buf.end();
 
-        while (m_it != m_end && it != end)
+        while (it != end && m_it != m_end)
         {
             *m_it++ = *it++;
         }
 
-        /**while (m_fifo.size() != m_fifo.capacity() && it != end)
-        {
-            m_fifo.push_isr(*it++);
-        }**/
+        while (it != end && m_fifo.push_isr(*it++));
 
         m_read_sync.fire_isr();
     }
 
-    size_t tcp_stream::read(tos::span<char> to) {
+    span<char> tcp_stream::read(tos::span<char> to) {
         tos::lock_guard<tos::mutex> lk{ m_busy };
 
         {
@@ -99,7 +96,7 @@ namespace tos
 
             while (m_fifo.size() > 0 && it != end)
             {
-                *m_it++ = m_fifo.pop_isr();
+                *it++ = m_fifo.pop();
             }
 
             m_it = it;
@@ -111,7 +108,7 @@ namespace tos
             m_read_sync.wait();
         }
 
-        return m_it - to.begin();
+        return to.slice(0, m_it - to.begin());
     }
 }
 
@@ -119,13 +116,14 @@ tos::tcp_stream* socket;
 char buf[512];
 void socket_task()
 {
-    auto len = socket->read(buf);
+    auto req = socket->read(buf);
     tos::println(*socket, "HTTP/1.0 200 Content-type: text/html");
-    tos::println(*socket, "");
+    tos::println(*socket);
     tos::print(*socket, "<body><b>Hello from Tos!</b><br/><code>");
-    socket->write({ buf, len });
+    tos::print(*socket, req);
     tos::println(*socket, "</code></body>");
-    tos::println(*socket, "");
+    tos::println(*socket);
+
     tos::std::destroy_at(socket);
     os_free(socket);
 }
@@ -155,25 +153,10 @@ void task()
     tos::esp82::tcp_socket sock{ w, { 80 } };
     tos::fixed_fifo<int, 24> buf;
 
-    using tos::esp82::tcp_endpoint;
-    using namespace tos::esp82::events;
-    auto recv_handler = [&buf](recv_t, tcp_endpoint& ep, tos::span<const char> foo){
-        buf.push(foo.size());
-        ep.send("HTTP/1.0 200 Content-type: text/html\r\n\r\n<body><b>Hello from Tos!</b></body>\r\n\r\n");
-    };
-
-    auto sent_handler = [&buf](sent_t, tcp_endpoint& ep){
-        buf.push(42);
-        tos::std::destroy_at(&ep);
-        os_free(&ep);
-    };
-
     auto handler = [&](tos::esp82::tcp_socket&, tos::esp82::tcp_endpoint new_ep){
         auto mem = os_malloc(sizeof(tos::tcp_stream));
         socket = new (mem) tos::tcp_stream(std::move(new_ep));
         tos::launch(socket_task);
-        //ep->attach(tos::esp82::events::recv, recv_handler);
-        //ep->attach(tos::esp82::events::sent, sent_handler);
     };
 
     sock.accept(handler);

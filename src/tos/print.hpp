@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <tos/utility.hpp>
 #include <string.h>
+#include <tos/span.hpp>
 
 namespace tos
 {
@@ -31,6 +32,12 @@ namespace tos
         auto len = strlen(str);
         if (len == 0) return;
         ostr.write({str, len});
+    }
+
+    template <class CharOstreamT>
+    void print(CharOstreamT& ostr, span<const char> buf)
+    {
+        ostr.write(buf);
     }
 
     template <class CharOstreamT,
@@ -95,6 +102,12 @@ namespace tos
         //((print(ostr, sep), print(ostr, forward<Ts>(ts))), ...);
         int _[] = { 0, (print(ostr, sep), print(ostr, std::forward<Ts>(ts)), 0)... };
         (void)_;
+    }
+
+    template <class CharOstreamT>
+    void println(CharOstreamT& ostr)
+    {
+        print(ostr, "\r\n");
     }
 
     template <class CharOstreamT, class... T>

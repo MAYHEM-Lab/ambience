@@ -21,8 +21,7 @@ namespace tos
         void push(T t);
         T pop();
 
-        void push_isr(T t);
-        T pop_isr();
+        bool push_isr(T t);
 
         size_t size() const { return m_rb.size(); }
         size_t capacity() const { return Len; }
@@ -60,18 +59,14 @@ namespace tos
     }
 
     template <class T, size_t Len, class RingBufT>
-    void fixed_fifo<T, Len, RingBufT>::push_isr(T t) {
-        auto i = m_rb.push();
+    bool fixed_fifo<T, Len, RingBufT>::push_isr(T t) {
+        auto i = m_rb.push_isr();
+        if (i == -1)
+        {
+            return false;
+        }
         std::destroy_at(&(m_buf[i].empty));
         new (&m_buf[i].t) T(std::move(t));
-    }
-
-    template <class T, size_t Len, class RingBufT>
-    T fixed_fifo<T, Len, RingBufT>::pop_isr() {
-        auto i = m_rb.pop();
-        auto res = std::move(m_buf[i].t);
-        std::destroy_at(&(m_buf[i].t));
-        new (&m_buf[i].empty) decltype(m_buf[0].empty) ();
-        return res;
+        return true;
     }
 }
