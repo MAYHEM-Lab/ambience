@@ -23,6 +23,7 @@ extern "C"
 
 tos::tcp_stream* socket;
 char buf[512];
+char sock_stack[1024];
 void socket_task()
 {
     auto req = socket->read(buf);
@@ -65,7 +66,13 @@ void task()
     auto handler = [&](tos::esp82::tcp_socket&, tos::esp82::tcp_endpoint new_ep){
         auto mem = os_malloc(sizeof(tos::tcp_stream));
         socket = new (mem) tos::tcp_stream(std::move(new_ep));
-        tos::launch(socket_task);
+
+        auto params = tos::thread_params()
+                .add<tos::tags::entry_pt_t>(&socket_task)
+                .add<tos::tags::stack_ptr_t>((void*)sock_stack)
+                .add<tos::tags::stack_sz_t>(1024U);
+        tos::launch(params);
+        buf.push(42);
     };
 
     sock.accept(handler);
