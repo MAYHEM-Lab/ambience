@@ -9,6 +9,7 @@
 #include <tos/arch.hpp>
 #include <utility>
 #include <algorithm>
+#include <common/inet/tcp_ip.hpp>
 
 extern "C"
 {
@@ -18,11 +19,6 @@ extern "C"
 
 namespace tos
 {
-    struct port_num_t
-    {
-        uint16_t port;
-    };
-
     namespace esp82
     {
         namespace events
