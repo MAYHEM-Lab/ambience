@@ -21,19 +21,22 @@ extern "C"
 static_assert(sizeof(int) == 4, "");
 alignas(16) char stack[1024 * 2];
 static int stack_index = 0;
-void* tos_stack_alloc(size_t size)
+void* ICACHE_FLASH_ATTR tos_stack_alloc(size_t size)
 {
     return stack + 1024 * stack_index++;
 }
 
-void tos_stack_free(void* data) {}
+void ICACHE_FLASH_ATTR
+tos_stack_free(void* data) {}
 
-void tos_enable_interrupts()
+void ICACHE_FLASH_ATTR
+tos_enable_interrupts()
 {
     ets_intr_unlock();
 }
 
-void tos_disable_interrupts()
+void ICACHE_FLASH_ATTR
+tos_disable_interrupts()
 {
     ets_intr_lock();
 }
@@ -94,7 +97,8 @@ user_rf_cal_sector_set(void)
 }
 }
 
-static void main_task(ETSEvent*)
+static void ICACHE_FLASH_ATTR
+main_task(ETSEvent*)
 {
     auto res = tos::kern::schedule();
 
@@ -109,7 +113,8 @@ extern "C"
 extern void (*__init_array_start)();
 extern void (*__init_array_end)();
 
-static void do_global_ctors()
+static void ICACHE_FLASH_ATTR
+do_global_ctors()
 {
     void (**p)();
     for (p = &__init_array_start; p != &__init_array_end; ++p)
@@ -118,7 +123,8 @@ static void do_global_ctors()
 }
 
 static os_event_t arr[16];
-static void entry()
+static void ICACHE_FLASH_ATTR
+entry()
 {
     do_global_ctors();
     tos::kern::enable_interrupts();

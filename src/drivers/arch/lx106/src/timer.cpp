@@ -15,14 +15,15 @@ namespace tos
 {
     namespace esp82
     {
+        ICACHE_FLASH_ATTR
         timer::timer() : m_cb(+[](void*){}, nullptr)
         {
             system_timer_reinit();
         }
 
-        void timer::set_callback(const tos::function_ref<void()> &cb) {
+        void ICACHE_FLASH_ATTR
+        timer::set_callback(const tos::function_ref<void()> &cb) {
             m_cb = cb;
-
         }
 
         void timer::set_frequency(uint16_t hertz) {
@@ -30,7 +31,7 @@ namespace tos
         }
 
         void timer::enable() {
-            os_timer_setfn(&m_timer, [](void* arg){
+            os_timer_setfn(&m_timer, [] (void* arg){
                 auto self = static_cast<timer*>(arg);
                 self->m_cb();
                 system_os_post(main_task_prio, 0, 0);
