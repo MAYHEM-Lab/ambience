@@ -59,7 +59,7 @@ namespace {
         char buf[] = "Hello World";
         char buf2[] = "Tos (c631797)";
 
-        nrf52::timer0 tmr;
+        auto tmr = open(devs::timer<0>);
         auto alarm = open(devs::alarm, tmr);
         lcd.begin(alarm);
 
