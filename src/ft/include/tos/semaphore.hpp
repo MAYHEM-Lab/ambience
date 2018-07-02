@@ -99,6 +99,16 @@ namespace tos {
         {
             return s.m_wait;
         }
+
+        friend bool try_down_isr(semaphore& s)
+        {
+            if (s.m_count > 0)
+            {
+                --s.m_count;
+                return true;
+            }
+            return false;
+        }
     };
 }
 

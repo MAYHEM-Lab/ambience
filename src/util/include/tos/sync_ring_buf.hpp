@@ -24,6 +24,16 @@ namespace tos
             return res;
         }
 
+        //TODO: return an optional<size_t> here
+        size_t push_isr()
+        {
+            auto cont = try_down_isr(m_put);
+            if (!cont) return -1;
+            auto res = ring_buf::push();
+            m_read.up_isr();
+            return res;
+        }
+
         size_t pop()
         {
             m_read.down();

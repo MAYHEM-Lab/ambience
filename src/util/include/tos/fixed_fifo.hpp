@@ -21,6 +21,8 @@ namespace tos
         void push(T t);
         T pop();
 
+        bool push_isr(T t);
+
         size_t size() const { return m_rb.size(); }
         size_t capacity() const { return Len; }
     private:
@@ -54,5 +56,17 @@ namespace tos
         std::destroy_at(&(m_buf[i].t));
         new (&m_buf[i].empty) decltype(m_buf[0].empty) ();
         return res;
+    }
+
+    template <class T, size_t Len, class RingBufT>
+    bool fixed_fifo<T, Len, RingBufT>::push_isr(T t) {
+        auto i = m_rb.push_isr();
+        if (i == -1)
+        {
+            return false;
+        }
+        std::destroy_at(&(m_buf[i].empty));
+        new (&m_buf[i].t) T(std::move(t));
+        return true;
     }
 }

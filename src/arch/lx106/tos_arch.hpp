@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "tos_platform.hpp"
 
 extern "C"
 {

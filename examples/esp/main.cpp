@@ -4,58 +4,54 @@
 
 #include <tos/devices.hpp>
 #include <tos/ft.hpp>
-#include <drivers/common/alarm.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/print.hpp>
 #include <tos/mutex.hpp>
-#include <tos/fixed_fifo.hpp>
+#include <tos/utility.hpp>
+#include <tos/memory.hpp>
+#include <common/inet/tcp_stream.hpp>
 
-#include <drivers/arch/lx106/timer.hpp>
-#include <drivers/arch/lx106/usart.hpp>
-#include <drivers/arch/lx106/wifi.hpp>
-#include <drivers/arch/lx106/tcp.hpp>
+#include <arch/lx106/timer.hpp>
+#include <arch/lx106/usart.hpp>
+#include <arch/lx106/wifi.hpp>
+#include <arch/lx106/tcp.hpp>
 
-static const int pin = 2;
-
-tos::semaphore sem{0};
-
-tos::mutex prot;
-tos::lx106::uart0* usart;
-
-void other()
+extern "C"
 {
-    int x = 5;
-    while (true)
-    {
-        sem.down();
-        ++x;
-        {
-            tos::lock_guard<tos::mutex> lk{prot};
-            tos::println(*usart, "Other: On,", &x, x);
-        }
-
-        sem.down();
-        tos::println(*usart, "Other: Off");
-    }
+#include <mem.h>
 }
 
-tos::fixed_fifo<int, 24> buf;
+tos::tcp_stream* socket;
+char buf[512];
+char sock_stack[1024];
+void socket_task()
+{
+    auto req = socket->read(buf);
+    tos::println(*socket, "HTTP/1.0 200 Content-type: text/html");
+    tos::println(*socket);
+    tos::print(*socket, "<body><b>Hello from Tos!</b><br/><code>");
+    tos::print(*socket, req);
+    tos::println(*socket, "</code></body>");
+    tos::println(*socket);
+
+    tos::std::destroy_at(socket);
+    os_free(socket);
+}
+
 void task()
 {
     using namespace tos::tos_literals;
 
-    usart = open(tos::devs::usart<0>, 19200_baud_rate);
+    auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
     usart->enable();
     tos::print(*usart, "\n\n\n\n\n\n");
 
-    auto tmr = open(tos::devs::timer<0>);
-    auto alarm = open(tos::devs::alarm, tmr);
-
     tos::esp82::wifi w;
     auto res = w.connect("WIFI", "PASS");
-    while (!w.wait_for_dhcp());
 
     tos::println(*usart, "connected?", res);
+
+    while (!w.wait_for_dhcp());
 
     if (res)
     {
@@ -64,51 +60,31 @@ void task()
         tos::println(*usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
     }
 
-    tos::esp82::tcp_socket sock{ w, { 1000 } };
+    tos::esp82::tcp_socket sock{ w, { 80 } };
+    tos::fixed_fifo<int, 24> buf;
 
-    auto handler = [&sock](espconn* new_conn){
+    auto handler = [&](tos::esp82::tcp_socket&, tos::esp82::tcp_endpoint new_ep){
+        auto mem = os_malloc(sizeof(tos::tcp_stream));
+        socket = new (mem) tos::tcp_stream(std::move(new_ep));
+
+        auto params = tos::thread_params()
+                .add<tos::tags::entry_pt_t>(&socket_task)
+                .add<tos::tags::stack_ptr_t>((void*)sock_stack)
+                .add<tos::tags::stack_sz_t>(1024U);
+        tos::launch(params);
         buf.push(42);
-        buf.push((int)new_conn);
-        buf.push((int)new_conn->reverse);
-        new_conn->reverse = (void*)2345;
-
-        espconn_regist_recvcb(new_conn, [](void* arg, char *pdata, unsigned short len){
-            auto new_conn = (espconn *)arg;
-            buf.push(len);
-            buf.push((int)arg);
-            buf.push((int)new_conn->reverse);
-            system_os_post(tos::esp82::main_task_prio, 0, 0);
-
-            espconn_send(new_conn, (uint8_t *)"hello", 5);
-        });
-
-        system_os_post(tos::esp82::main_task_prio, 0, 0);
     };
 
     sock.accept(handler);
 
     buf.push(100);
+    tos::println(*usart, tos::platform::board_name);
 
     while (true)
     {
         auto c = buf.pop();
         tos::println(*usart, c);
     }
-
-    /*while (true)
-    {
-        tos::println(*usart, "Task: On");
-        {
-            tos::lock_guard<tos::mutex> lk{prot};
-            tos::println(*usart, "base sp:", read_sp(), &y, y);
-        }
-        //sem.up();
-        alarm.sleep_for({ 500 });
-
-        //sem.up();
-        tos::println(*usart, "Task: Off");
-        alarm.sleep_for({ 500 });
-    }*/
 }
 
 void tos_main()

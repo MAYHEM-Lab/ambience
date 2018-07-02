@@ -12,6 +12,8 @@ namespace tos
     class span
     {
     public:
+        using iterator = T*;
+
         span(T* base, size_t len) : m_base(base), m_len(len) {}
 
         template <size_t Sz>
@@ -35,6 +37,14 @@ namespace tos
 
         const T* begin() const { return m_base; }
         const T* end() const { return m_base + m_len; }
+
+        operator span<const T>() const {
+            return { m_base, m_len };
+        }
+
+        span slice(size_t begin, size_t len){
+            return { m_base + begin, len };
+        }
 
     private:
         T* m_base;
