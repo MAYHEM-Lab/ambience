@@ -16,6 +16,7 @@ else()
 endif()
 
 project(tos)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 message(STATUS "${CMAKE_CXX_FLAGS}")
 
@@ -43,6 +44,10 @@ if(TOS_AVR)
         add_subdirectory(apps/cspot_lite)
     endif()
 elseif(TOS_ESP)
+    if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/tvm")
+        #add_subdirectory(apps/tvm)
+    endif()
+
     add_subdirectory(examples/esp)
 elseif(TOS_X86)
     add_subdirectory(examples/simple_portable)

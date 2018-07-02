@@ -30,6 +30,8 @@ namespace tos
         class tcp_endpoint
         {
         public:
+            tcp_endpoint() = delete;
+
             tcp_endpoint(tcp_endpoint&& rhs) noexcept;
             tcp_endpoint(const tcp_endpoint&) = delete;
 

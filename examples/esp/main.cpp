@@ -15,6 +15,7 @@
 #include <arch/lx106/usart.hpp>
 #include <arch/lx106/wifi.hpp>
 #include <arch/lx106/tcp.hpp>
+#include <tos/version.hpp>
 
 extern "C"
 {
@@ -42,14 +43,22 @@ void task()
 {
     using namespace tos::tos_literals;
 
-    auto usart = open(tos::devs::usart<0>, 19200_baud_rate);
-    usart->enable();
-    tos::print(*usart, "\n\n\n\n\n\n");
+    constexpr auto usconf = tos::usart_config()
+            .add(115200_baud_rate)
+            .add(tos::usart_parity::disabled)
+            .add(tos::usart_stop_bit::one);
+
+    auto usart = open(tos::devs::usart<0>, usconf);
+    usart.enable();
+    
+    tos::print(usart, "\n\n\n\n\n\n");
+    tos::println(usart, tos::platform::board_name);
+    tos::println(usart, tos::vcs::commit_hash);
 
     tos::esp82::wifi w;
-    auto res = w.connect("WIFI", "PASS");
+    auto res = w.connect("COFFEEBUS", "coffeebus55");
 
-    tos::println(*usart, "connected?", res);
+    tos::println(usart, "connected?", res);
 
     while (!w.wait_for_dhcp());
 
@@ -57,7 +66,7 @@ void task()
     {
         tos::esp82::wifi_connection conn;
         auto addr = conn.get_addr();
-        tos::println(*usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
+        tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
     }
 
     tos::esp82::tcp_socket sock{ w, { 80 } };
@@ -78,12 +87,10 @@ void task()
     sock.accept(handler);
 
     buf.push(100);
-    tos::println(*usart, tos::platform::board_name);
-
     while (true)
     {
         auto c = buf.pop();
-        tos::println(*usart, c);
+        tos::println(usart, c);
     }
 }
 

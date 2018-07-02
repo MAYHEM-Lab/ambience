@@ -1,7 +1,7 @@
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR xtensa)
 
-set(TOOLS_BASE /opt/x-tools/esp-open-sdk)
+set(TOOLS_BASE /home/fatih/esp-open-sdk)
 set(SDK_ROOT ${TOOLS_BASE}/sdk)
 
 set(CMAKE_C_COMPILER ${TOOLS_BASE}/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc)
