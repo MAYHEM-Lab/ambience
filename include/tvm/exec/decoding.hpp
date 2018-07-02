@@ -7,8 +7,10 @@
 #include <tvm/instr_traits.hpp>
 #ifdef TOS
 #include <tos/tuple.hpp>
-    using tos::tuple;
-    using tos::index_sequence;
+namespace std
+{
+    using namespace tos::std;
+}
 #else
 #include <tuple>
     using std::tuple;
@@ -26,7 +28,7 @@ namespace tvm
 
 
     template<class... T, size_t... Is>
-    constexpr tuple<T...> decode_impl(uint32_t instr, index_sequence<Is...>) {
+    constexpr std::tuple<T...> decode_impl(uint32_t instr, std::index_sequence<Is...>) {
         return {decode_one<T, Is>(instr)...};
     }
 

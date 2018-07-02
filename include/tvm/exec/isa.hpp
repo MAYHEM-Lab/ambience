@@ -48,7 +48,7 @@ namespace tvm
     private:
         template<class ArrT, class OpcT, class FunT>
         static constexpr auto assign(ArrT &&t, OpcT &&opc, FunT &&fun) {
-            t.data[opc] = forward<FunT>(fun);
+            t.data[opc] = std::forward<FunT>(fun);
         }
     };
 }
