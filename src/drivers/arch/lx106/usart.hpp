@@ -41,17 +41,17 @@ namespace tos
 {
     namespace lx106
     {
-        void uart0::enable() {
+        inline void uart0::enable() {
         }
 
-        void uart0::disable() {
+        inline void uart0::disable() {
         }
 
-        void uart0::set_baud_rate(usart_baud_rate baud) {
+        inline void ICACHE_FLASH_ATTR uart0::set_baud_rate(usart_baud_rate baud) {
             //::UART_SetBaudrate(0, baud.rate);
         }
 
-        int uart0::write(tos::span<const char> buf) {
+        inline int ICACHE_FLASH_ATTR uart0::write(tos::span<const char> buf) {
             ::uart0_tx_buffer((uint8 *)buf.data(), buf.size());
             return buf.size();
         }

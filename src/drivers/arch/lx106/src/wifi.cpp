@@ -5,7 +5,7 @@
 #include <wifi.hpp>
 #include <string.h>
 #include <tos/semaphore.hpp>
-#include <util/include/tos/fixed_fifo.hpp>
+#include <tos/fixed_fifo.hpp>
 
 extern "C"
 {

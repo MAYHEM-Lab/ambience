@@ -3,7 +3,7 @@
 #include <arch/lx106/lx106_missing.hpp>
 #include <tos/semaphore.hpp>
 #include <algorithm>
-#include <ft/include/tos/mutex.hpp>
+#include <tos/mutex.hpp>
 
 extern "C"
 {
