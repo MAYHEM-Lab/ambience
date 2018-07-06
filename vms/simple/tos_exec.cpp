@@ -3,18 +3,23 @@
 //
 
 #include <tvm/exec/executor.hpp>
-#include <drivers/arch/avr/usart.hpp>
 
 #include <tos/print.hpp>
 #include <tos/interrupt.hpp>
 #include <tos/ft.hpp>
 
 #include <tos/semaphore.hpp>
-#include <eeprom.hpp>
 #include <drivers/common/eeprom.hpp>
 
 #include "vm_def.hpp"
 #include "vm_state.hpp"
+
+#if defined(TOS_ARCH_avr)
+#include <arch/avr/usart.hpp>
+#include <arch/avr/eeprom.hpp>
+#elif defined(TOS_ARCH_lx106)
+#include <arch/lx106/usart.hpp>
+#endif
 
 struct ptr_fetcher
 {
@@ -58,7 +63,7 @@ void tvm_task()
     }
 }
 
-static uint8_t index = -1;
+static uint8_t prog_index = -1;
 static uint8_t prog[128];
 
 void main_task()
@@ -73,7 +78,7 @@ void main_task()
 
     auto usart = open(tos::devs::usart<0>, usconf);
 
-    auto eeprom = open(tos::devs::eeprom<0>);
+    //auto eeprom = open(tos::devs::eeprom<0>);
 
     tos::println(*usart, "hello");
 
@@ -87,10 +92,10 @@ void main_task()
             usart->read(buffer);
 
             auto wi = uint8_t(buffer[0] - '0');
-            if (index != wi);
+            if (prog_index != wi);
             {
-                eeprom->read(wi * 128, prog, 128);
-                index = wi;
+                //eeprom->read(wi * 128, prog, 128);
+                prog_index = wi;
             }
 
             fetch = ptr_fetcher{prog};
@@ -119,8 +124,8 @@ void main_task()
 
             tos::println(*usart, "ok");
             usart->read({ (char*)prog, buffer[0] });
-            index = wi;
-            eeprom->write(wi * 128, prog, 128);
+            prog_index = wi;
+            //eeprom->write(wi * 128, prog, 128);
             tos::println(*usart, "okay");
         }
     }

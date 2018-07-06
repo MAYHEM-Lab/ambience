@@ -110,7 +110,7 @@ struct pop
     }
 };
 
-#ifdef TOS
+#if defined(TOS) && defined(TOS_ARCH_avr)
 template <class AlarmT>
 uint16_t GetTemp(AlarmT&& alarm)
 {
@@ -130,7 +130,7 @@ struct read_temp
 {
     void operator()(svm::vm_state* state)
     {
-#ifdef TOS
+#if defined(TOS) && defined(TOS_ARCH_avr)
         auto tmr = open(tos::devs::timer<1>);
         auto alarm = open(tos::devs::alarm, *tmr);
         state->registers[0] = GetTemp(alarm);
