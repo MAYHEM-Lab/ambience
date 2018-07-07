@@ -15,7 +15,7 @@
 
 struct add
 {
-    constexpr void operator()(svm::vm_state* state, tvm::reg_ind_t<> r1, tvm::reg_ind_t<> r2)
+    constexpr void operator()(svm::vm_state* state, tvm::reg_ind_t<4> r1, tvm::reg_ind_t<4> r2)
     {
         state->registers[r1.index] += state->registers[r2.index];
     }

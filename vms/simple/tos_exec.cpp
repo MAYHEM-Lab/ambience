@@ -17,9 +17,20 @@
 #if defined(TOS_ARCH_avr)
 #include <arch/avr/usart.hpp>
 #include <arch/avr/eeprom.hpp>
+
 #elif defined(TOS_ARCH_lx106)
 #include <arch/lx106/usart.hpp>
 #endif
+
+#include <arch/lx106/tcp.hpp>
+#include <arch/lx106/wifi.hpp>
+#include <arch/lx106/tcp.hpp>
+#include <common/inet/tcp_stream.hpp>
+
+extern "C"
+{
+#include <mem.h>
+}
 
 struct ptr_fetcher
 {
@@ -68,30 +79,62 @@ static uint8_t prog[128];
 
 void main_task()
 {
-    using namespace tos;
     using namespace tos::tos_literals;
 
     constexpr auto usconf = tos::usart_config()
             .add(19200_baud_rate)
-            .add(usart_parity::disabled)
-            .add(usart_stop_bit::one);
+            .add(tos::usart_parity::disabled)
+            .add(tos::usart_stop_bit::one);
 
-    auto usart = open(tos::devs::usart<0>, usconf);
+    auto uart = open(tos::devs::usart<0>, usconf);
 
+    conn:
+    tos::esp82::wifi w;
+    auto res = w.connect("WIFI", "PASS");
+
+    tos::println(uart, "connected?", res);
+
+    if (!res) goto conn;
+
+    while (!w.wait_for_dhcp());
+
+    if (res)
+    {
+        tos::esp82::wifi_connection conn;
+        auto addr = conn.get_addr();
+        tos::println(uart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
+    }
+
+    tos::esp82::tcp_socket sock{ w, { 80 } };
     //auto eeprom = open(tos::devs::eeprom<0>);
 
-    tos::println(*usart, "hello");
+    tos::println(*uart, "hello");
+
+    tos::tcp_stream* str = nullptr;
+    tos::semaphore conn {0};
+    auto acceptor = [&](tos::esp82::tcp_socket&, tos::esp82::tcp_endpoint new_ep){
+        auto mem = os_malloc(sizeof(tos::tcp_stream));
+        str = new (mem) tos::tcp_stream(std::move(new_ep));
+        conn.up_isr();
+    };
+    sock.accept(acceptor);
 
     while (true)
     {
+        conn.down();
+        tos::println(*str, "Welcome!");
+
         char buffer[1];
-        usart->read(buffer);
+        auto rd = str->read(buffer);
 
-        if (buffer[0] == 'x')
+        if (rd[0] == 'x')
         {
-            usart->read(buffer);
+            tos::println(*uart, "execute", rd);
+            rd = str->read(buffer);
+            tos::println(*uart, rd);
 
-            auto wi = uint8_t(buffer[0] - '0');
+            auto wi = uint8_t(rd[0] - '0');
+            tos::println(*uart, "partition:", wi);
             if (prog_index != wi);
             {
                 //eeprom->read(wi * 128, prog, 128);
@@ -104,30 +147,35 @@ void main_task()
             s_wait.down();
             for (auto& reg : state.registers)
             {
-                tos::print(*usart, reg, " ");
+                tos::print(*str, reg, " ");
             }
-            tos::println(*usart, "");
+            tos::println(*str, "");
         }
-        else if (buffer[0] == 'p')
+        else if (rd[0] == 'p')
         {
-            tos::println(*usart, "send");
-            usart->read(buffer);
+            tos::println(*uart, "program", rd);
+            tos::println(*str, "send");
+            rd = str->read(buffer);
+            tos::println(*uart, rd);
 
-            auto wi = uint8_t(buffer[0] - '0');
-            usart->read(buffer);
+            auto wi = uint8_t(rd[0] - '0');
+            rd = str->read(buffer);
 
-            if (uint8_t (buffer[0]) > 128)
+            if (uint8_t (rd[0]) > 128)
             {
-                tos::println(*usart, "too large");
+                tos::println(*str, "too large");
                 continue;
             }
 
-            tos::println(*usart, "ok");
-            usart->read({ (char*)prog, buffer[0] });
+            tos::println(*str, "ok");
+            str->read({ (char*)prog, rd[0] });
             prog_index = wi;
             //eeprom->write(wi * 128, prog, 128);
-            tos::println(*usart, "okay");
+            tos::println(*str, "okay");
         }
+
+        tos::std::destroy_at(str);
+        os_free(str);
     }
 }
 

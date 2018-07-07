@@ -174,7 +174,7 @@ namespace tvm::as
 
         if ((bool)isalpha(next))
         {
-            // maybe a name or keyword
+            // maybe a name
             auto res = tokenize_name(next);
             if (get_stream().peek() == ':')
             {
