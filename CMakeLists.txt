@@ -45,7 +45,7 @@ if(TOS_AVR)
     endif()
 elseif(TOS_ESP)
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/tvm")
-        #add_subdirectory(apps/tvm)
+        add_subdirectory(apps/tvm)
     endif()
 
     add_subdirectory(examples/esp)

@@ -32,8 +32,6 @@ static void scan_handler(void* arg, STATUS s)
 
         bssInfo = STAILQ_NEXT(bssInfo, next);
 
-        int i = 0;
-
         while(bssInfo) {
             bssInfo = STAILQ_NEXT(bssInfo, next);
         }

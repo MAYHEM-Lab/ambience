@@ -30,6 +30,9 @@ namespace tos
             static int read(char *buf, size_t sz);
 
             static int write(span<const char>);
+
+            uart0*operator->() {return this;}
+            uart0&operator*() {return *this;}
         };
     }
 

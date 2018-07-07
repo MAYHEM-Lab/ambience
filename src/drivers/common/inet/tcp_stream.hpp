@@ -30,7 +30,7 @@ namespace tos
 
         void attach();
 
-        tos::fixed_fifo<char, 512> m_fifo;
+        tos::fixed_fifo<char, 64> m_fifo;
 
         tos::esp82::tcp_endpoint m_ep;
         tos::mutex m_busy;
@@ -41,27 +41,27 @@ namespace tos
         tos::span<char>::iterator m_end{};
     };
 
-    tcp_stream::tcp_stream(tos::esp82::tcp_endpoint &&ep)
+    inline tcp_stream::tcp_stream(tos::esp82::tcp_endpoint &&ep)
             : m_ep(std::move(ep)) {
         attach();
     }
 
-    void tcp_stream::attach() {
+    inline void tcp_stream::attach() {
         m_ep.attach(esp82::events::recv, *this);
         m_ep.attach(esp82::events::sent, *this);
     }
 
-    void tcp_stream::operator()(tos::esp82::events::sent_t, tos::esp82::tcp_endpoint &) {
+    inline void tcp_stream::operator()(tos::esp82::events::sent_t, tos::esp82::tcp_endpoint &) {
         m_write_sync.up();
     }
 
-    void tcp_stream::write(tos::span<const char> buf) {
+    inline void tcp_stream::write(tos::span<const char> buf) {
         tos::lock_guard<tos::mutex> lk{ m_busy };
         m_ep.send(buf);
         m_write_sync.down();
     }
 
-    void tcp_stream::operator()(esp82::events::recv_t, esp82::tcp_endpoint &, span<const char> buf) {
+    inline void tcp_stream::operator()(esp82::events::recv_t, esp82::tcp_endpoint &, span<const char> buf) {
         auto it = buf.begin();
         auto end = buf.end();
 
@@ -75,7 +75,7 @@ namespace tos
         m_read_sync.fire_isr();
     }
 
-    span<char> tcp_stream::read(tos::span<char> to) {
+    inline span<char> tcp_stream::read(tos::span<char> to) {
         tos::lock_guard<tos::mutex> lk{ m_busy };
 
         {
