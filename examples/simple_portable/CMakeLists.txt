@@ -1,7 +1,7 @@
 project(tos)
 
 add_executable(simple_portable main.cpp)
-target_link_libraries(simple_portable tos_core tos_print tos_tty)
+target_link_libraries(simple_portable tos_core tos_print tos_tty emsha)
 
 if (TOS_X86)
     target_link_libraries(simple_portable x86_drivers)

@@ -28,7 +28,7 @@ add_library(nrf52_radio radio.hpp src/radio.cpp)
 target_link_libraries(nrf52_radio PUBLIC tos_core)
 target_include_directories(nrf52_radio PUBLIC .)
 
-add_library(nrf52_drivers)
+add_library(nrf52_drivers src/stub.cpp)
 target_link_libraries(nrf52_drivers PUBLIC
     nrf52_gpio
     nrf52_usart
