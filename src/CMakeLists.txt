@@ -4,10 +4,12 @@ set(TOS_CORE_HEADERS
 	tos/devices.hpp
 	tos/char_stream.hpp
 	tos/arch.hpp
-        tos/init.hpp tos/compiler.hpp tos/chrono.hpp tos/version.hpp)
+        tos/init.hpp tos/compiler.hpp tos/chrono.hpp tos/version.hpp tos/debug.hpp)
 
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+
+add_subdirectory(core)
 
 add_library(tos_print tos/print.hpp print.cpp)
 target_compile_options(tos_print PUBLIC -std=gnu++14)
@@ -18,6 +20,7 @@ add_library(tos_core stub.cpp ${TOS_CORE_HEADERS} tos_init.cpp)
 target_compile_options(tos_core PUBLIC -fno-threadsafe-statics -Wall -Wextra -std=gnu++14)
 target_include_directories(tos_core PUBLIC ".")
 target_compile_definitions(tos_core PUBLIC TOS_GIT_SHA1=\"${GIT_SHA1}\")
+target_link_libraries(tos_core PUBLIC tos_mem)
 
 if(TOS_AVR)
 	add_subdirectory(arch/avr)

@@ -10,12 +10,15 @@
 #include <utility>
 #include <algorithm>
 #include <common/inet/tcp_ip.hpp>
+#include <util/include/tos/fixed_fifo.hpp>
 
 extern "C"
 {
 #include <user_interface.h>
 #include <espconn.h>
 }
+
+extern tos::fixed_fifo<int, 8>* dbg;
 
 namespace tos
 {
@@ -25,6 +28,7 @@ namespace tos
         {
             static struct recv_t{} recv{};
             static struct sent_t{} sent{};
+            static struct discon_t{} discon{};
         }
 
         class tcp_endpoint
@@ -41,6 +45,9 @@ namespace tos
             template <class CallbackT>
             void attach(events::sent_t, CallbackT& cb);
 
+            template <class CallbackT>
+            void attach(events::discon_t, CallbackT& cb);
+
             void send(span<const char>);
 
             ~tcp_endpoint();
@@ -53,15 +60,21 @@ namespace tos
             template <class ConnHandlerT>
             friend void conn_handler(void* arg);
 
+            template <class ConnHandlerT>
+            friend void discon_handler(void* arg);
+
             template <class CallbackT>
             friend void recv_handler(void* arg, char *pdata, unsigned short len);
 
             template <class ConnHandlerT>
             friend void sent_handler(void* arg);
 
+            friend void recon_handler(void* arg, sint8_t err);
+
             espconn* m_conn;
             void* m_recv_handler;
             void* m_sent_handler;
+            void* m_discon_handler;
         };
 
         class tcp_socket
@@ -114,16 +127,27 @@ namespace tos
             espconn_delete(&m_conn);
         }
 
+        inline void recon_handler(void* arg, sint8_t err)
+        {
+            auto conn = static_cast<espconn*>(arg);
+            auto self = static_cast<tcp_endpoint*>(conn->reverse);
+            self->m_conn = conn;
+            dbg->push(10);
+            system_os_post(tos::esp82::main_task_prio, 0, 0);
+        }
+
         inline tcp_endpoint::tcp_endpoint(espconn *conn) : m_conn{conn} {
+            espconn_regist_reconcb(m_conn, recon_handler);
         }
 
         inline tcp_endpoint::tcp_endpoint(tos::esp82::tcp_endpoint &&rhs) noexcept
                 : m_conn{rhs.m_conn}, m_recv_handler{rhs.m_recv_handler},
-                m_sent_handler{rhs.m_sent_handler}
+                m_sent_handler{rhs.m_sent_handler}, m_discon_handler{rhs.m_discon_handler}
         {
             m_conn->reverse = this;
             rhs.m_sent_handler = nullptr;
             rhs.m_recv_handler = nullptr;
+            rhs.m_discon_handler = nullptr;
             rhs.m_conn = nullptr;
         }
 
@@ -138,6 +162,7 @@ namespace tos
         {
             auto conn = static_cast<espconn*>(arg);
             auto self = static_cast<tcp_endpoint*>(conn->reverse);
+            self->m_conn = conn;
 
             auto& handler = *(CallbackT*)self->m_recv_handler;
             handler(events::recv, *self, span<const char>{pdata, len});
@@ -149,9 +174,23 @@ namespace tos
         {
             auto conn = static_cast<espconn*>(arg);
             auto self = static_cast<tcp_endpoint*>(conn->reverse);
+            self->m_conn = conn;
 
             auto& handler = *(CallbackT*)self->m_sent_handler;
             handler(events::sent, *self);
+            system_os_post(tos::esp82::main_task_prio, 0, 0);
+        }
+
+        template <class CallbackT>
+        void discon_handler(void* arg)
+        {
+            auto conn = static_cast<espconn*>(arg);
+            auto self = static_cast<tcp_endpoint*>(conn->reverse);
+            self->m_conn = conn;
+
+            dbg->push(20);
+            auto& handler = *(CallbackT*)self->m_discon_handler;
+            handler(events::discon, *self);
             system_os_post(tos::esp82::main_task_prio, 0, 0);
         }
 
@@ -167,6 +206,13 @@ namespace tos
             m_conn->reverse = this;
             m_sent_handler = &cb;
             espconn_regist_sentcb(m_conn, &sent_handler<CallbackT>);
+        }
+
+        template <class CallbackT>
+        void tcp_endpoint::attach(events::discon_t, CallbackT &cb) {
+            m_conn->reverse = this;
+            m_discon_handler = &cb;
+            espconn_regist_disconcb(m_conn, &discon_handler<CallbackT>);
         }
 
         inline void tcp_endpoint::send(tos::span<const char> buf) {

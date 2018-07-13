@@ -22,9 +22,13 @@ extern "C"
 #include <mem.h>
 }
 
+int reqs = 0;
+volatile bool running = false;
+alignas(alignof(tos::tcp_stream)) char mem[sizeof(tos::tcp_stream)];
 tos::tcp_stream* socket;
 char buf[512];
 char sock_stack[1024];
+tos::fixed_fifo<int, 8>* dbg;
 void socket_task()
 {
     auto req = socket->read(buf);
@@ -32,11 +36,18 @@ void socket_task()
     tos::println(*socket);
     tos::print(*socket, "<body><b>Hello from Tos!</b><br/><code>");
     tos::print(*socket, req);
-    tos::println(*socket, "</code></body>");
+    tos::println(*socket, "</code><br/>");
+    tos::println(*socket, "<ul>");
+    tos::println(*socket, "<li>", tos::platform::board_name, "</li>");
+    tos::println(*socket, "<li>", tos::vcs::commit_hash, "</li>");
+    tos::println(*socket, "<li>", system_get_free_heap_size(), "</li>");
+    tos::println(*socket, "<li>", system_get_time(), "</li>");
+    tos::println(*socket, "<li>", ++reqs, "</li>");
+    tos::println(*socket, "</ul></body>");
     tos::println(*socket);
 
     tos::std::destroy_at(socket);
-    os_free(socket);
+    running = false;
 }
 
 void task()
@@ -56,9 +67,11 @@ void task()
     tos::println(usart, tos::vcs::commit_hash);
 
     tos::esp82::wifi w;
-    auto res = w.connect("COFFEEBUS", "coffeebus55");
+    conn:
+    auto res = w.connect("WIFI", "PASS");
 
     tos::println(usart, "connected?", res);
+    if (!res) goto conn;
 
     while (!w.wait_for_dhcp());
 
@@ -70,28 +83,38 @@ void task()
     }
 
     tos::esp82::tcp_socket sock{ w, { 80 } };
-    tos::fixed_fifo<int, 24> buf;
+    tos::fixed_fifo<int, 8> f;
+    dbg = &f;
 
     auto handler = [&](tos::esp82::tcp_socket&, tos::esp82::tcp_endpoint new_ep){
-        auto mem = os_malloc(sizeof(tos::tcp_stream));
+        if (running){
+            f.push(50);
+            return;
+        }
+        running = true;
+
+        f.push(40);
+
         socket = new (mem) tos::tcp_stream(std::move(new_ep));
 
-        auto params = tos::thread_params()
+        constexpr auto params = tos::thread_params()
                 .add<tos::tags::entry_pt_t>(&socket_task)
                 .add<tos::tags::stack_ptr_t>((void*)sock_stack)
                 .add<tos::tags::stack_sz_t>(1024U);
+
         tos::launch(params);
-        buf.push(42);
     };
 
     sock.accept(handler);
 
-    buf.push(100);
     while (true)
     {
-        auto c = buf.pop();
-        tos::println(usart, c);
+        auto x = f.pop();
+        tos::println(usart, x);
     }
+
+    tos::semaphore s{0};
+    s.down(); // block forever
 }
 
 void tos_main()

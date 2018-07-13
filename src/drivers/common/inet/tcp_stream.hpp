@@ -24,6 +24,7 @@ namespace tos
         span<char> read(span<char>);
 
         void operator()(esp82::events::sent_t, esp82::tcp_endpoint&);
+        void operator()(esp82::events::discon_t, esp82::tcp_endpoint&);
         void operator()(esp82::events::recv_t, esp82::tcp_endpoint&, span<const char>);
 
     private:
@@ -36,6 +37,7 @@ namespace tos
         tos::mutex m_busy;
         tos::semaphore m_write_sync{0};
         tos::event m_read_sync;
+        tos::semaphore m_disc{0};
 
         tos::span<char>::iterator m_it{};
         tos::span<char>::iterator m_end{};
@@ -49,10 +51,15 @@ namespace tos
     inline void tcp_stream::attach() {
         m_ep.attach(esp82::events::recv, *this);
         m_ep.attach(esp82::events::sent, *this);
+        m_ep.attach(esp82::events::discon, *this);
     }
 
     inline void tcp_stream::operator()(tos::esp82::events::sent_t, tos::esp82::tcp_endpoint &) {
         m_write_sync.up();
+    }
+
+    void tcp_stream::operator()(esp82::events::discon_t, esp82::tcp_endpoint &) {
+        m_read_sync.fire_isr();
     }
 
     inline void tcp_stream::write(tos::span<const char> buf) {
