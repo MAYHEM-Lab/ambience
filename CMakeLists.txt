@@ -49,6 +49,7 @@ elseif(TOS_ESP)
     endif()
 
     add_subdirectory(examples/esp)
+    add_subdirectory(examples/esp_lwip)
 elseif(TOS_X86)
     add_subdirectory(examples/simple_portable)
 

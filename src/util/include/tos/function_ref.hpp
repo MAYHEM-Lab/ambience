@@ -46,8 +46,8 @@ namespace tos
         explicit function_ref(funptr_t ptr) : fun(ptr), data(nullptr) {}
 
         template <class T>
-        function_ref(T& func) : fun([](ArgTs&&... args, void* data) {
-            auto& foo = *static_cast<const T*>(data);
+        function_ref(T& func) : fun([](ArgTs... args, void* data) {
+            auto& foo = *static_cast<T*>(data);
             foo(std::forward<ArgTs>(args)...);
         }), data(&func) {}
 

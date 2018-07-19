@@ -5,14 +5,11 @@
 #pragma once
 
 #include <tos/span.hpp>
+#include <drivers/common/inet/tcp_ip.hpp>
 #include <stdint.h>
 
 namespace tos
 {
-    struct ipv4_addr
-    {
-        uint8_t addr[4];
-    };
     namespace esp82
     {
         //TODO: return wifi_connection from wifi upon connection

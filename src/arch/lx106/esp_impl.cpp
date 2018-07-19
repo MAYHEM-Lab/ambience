@@ -15,15 +15,16 @@ extern "C"
 
 #include <tos/ft.hpp>
 #include <tos/interrupt.hpp>
+#include <lwip/timers.h>
 
 extern "C"
 {
 static_assert(sizeof(int) == 4, "");
-alignas(16) char stack[1024 * 2];
+alignas(16) char stack[2048 * 2];
 static int stack_index = 0;
 void* ICACHE_FLASH_ATTR tos_stack_alloc(size_t size)
 {
-    return stack + 1024 * stack_index++;
+    return stack + 2048 * stack_index++;
 }
 
 void ICACHE_FLASH_ATTR
@@ -100,6 +101,7 @@ user_rf_cal_sector_set(void)
 static void ICACHE_FLASH_ATTR
 main_task(ETSEvent*)
 {
+    sys_check_timeouts();
     auto res = tos::kern::schedule();
 
     if (res == tos::exit_reason::yield)

@@ -17,37 +17,98 @@
 #include <arch/lx106/tcp.hpp>
 #include <tos/version.hpp>
 
+#include <lwip/tcp.h>
+
 extern "C"
 {
 #include <mem.h>
 }
 
-int reqs = 0;
 volatile bool running = false;
-alignas(alignof(tos::tcp_stream)) char mem[sizeof(tos::tcp_stream)];
-tos::tcp_stream* socket;
-char buf[512];
-char sock_stack[1024];
-tos::fixed_fifo<int, 8>* dbg;
+alignas(alignof(tos::esp82::tcp_endpoint)) char mem[sizeof(tos::esp82::tcp_endpoint)];
+
+tos::esp82::tcp_endpoint* socket;
+char sock_stack[8192];
+tos::esp82::uart0* u;
+
+tos::function_ref<void(const char*)> print_debug{ [](const char*, void*){} };
+volatile int x = 0;
+volatile int cnt = 0;
+
+struct stack_check
+{
+public:
+    stack_check(void* begin, size_t sz)
+        : m_begin(reinterpret_cast<uint32_t*>(begin)),
+          m_cnt{sz / sizeof(m_marker)},
+          m_marker{0xDEADBEEF}
+    {
+        for (int i = 0; i < m_cnt; ++i)
+        {
+            m_begin[i] = m_marker;
+        }
+    }
+
+    size_t get_usage() const
+    {
+        // stack grows downwards, so count from the 0th index, but subtract from the top!
+        for (int i = 0; i < m_cnt; ++i)
+        {
+            if (m_begin[i] != m_marker)
+            {
+                return (m_cnt - i) * sizeof m_marker;
+            }
+        }
+        return 0;
+    }
+
+private:
+    uint32_t * m_begin;
+    size_t m_cnt;
+    uint32_t m_marker;
+};
+
+stack_check* sc;
+
 void socket_task()
 {
-    auto req = socket->read(buf);
-    tos::println(*socket, "HTTP/1.0 200 Content-type: text/html");
-    tos::println(*socket);
-    tos::print(*socket, "<body><b>Hello from Tos!</b><br/><code>");
-    tos::print(*socket, req);
-    tos::println(*socket, "</code><br/>");
-    tos::println(*socket, "<ul>");
-    tos::println(*socket, "<li>", tos::platform::board_name, "</li>");
-    tos::println(*socket, "<li>", tos::vcs::commit_hash, "</li>");
-    tos::println(*socket, "<li>", system_get_free_heap_size(), "</li>");
-    tos::println(*socket, "<li>", system_get_time(), "</li>");
-    tos::println(*socket, "<li>", ++reqs, "</li>");
-    tos::println(*socket, "</ul></body>");
-    tos::println(*socket);
+    //tos::esp82::prnt_debug(*u);
+    //auto req = socket->read(buf);
+    tos::semaphore s{0};
+    cnt = 0;
+
+    char buf[512];
+    auto recv_handler = [&](auto, tos::esp82::tcp_endpoint&, tos::span<const char> data){
+        if (data.data())
+        {
+            std::copy(data.begin(), data.end(), buf);
+            buf[data.size()] = 0;
+        }
+        s.up_isr();
+        x++;
+        cnt++;
+    };
+
+    auto sent_handler = [&](auto, tos::esp82::tcp_endpoint&){
+        s.up_isr();
+    };
+
+    socket->attach(tos::esp82::events::recv, recv_handler);
+    socket->attach(tos::esp82::events::sent, sent_handler);
+
+    s.down();
+
+    socket->send("hello\r\n\r\n");
+    s.down();
+
+    socket->send(buf);
+    s.down();
 
     tos::std::destroy_at(socket);
     running = false;
+    tos::println(*u, "done", x, cnt, int(sc->get_usage()));
+    tos::std::destroy_at(sc);
+    os_free(sc);
 }
 
 void task()
@@ -68,49 +129,60 @@ void task()
 
     tos::esp82::wifi w;
     conn:
-    auto res = w.connect("WIFI", "PASS");
+    auto res = w.connect("Nakedsense.2", "serdar1988");
 
     tos::println(usart, "connected?", res);
     if (!res) goto conn;
 
     while (!w.wait_for_dhcp());
 
-    if (res)
-    {
-        tos::esp82::wifi_connection conn;
-        auto addr = conn.get_addr();
-        tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
-    }
+    tos::esp82::wifi_connection conn;
+    auto addr = conn.get_addr();
+    tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
 
     tos::esp82::tcp_socket sock{ w, { 80 } };
-    tos::fixed_fifo<int, 8> f;
-    dbg = &f;
+    tos::fixed_fifo<char, 100> cbuf;
 
-    auto handler = [&](tos::esp82::tcp_socket&, tos::esp82::tcp_endpoint new_ep){
+    auto printer = [&](const char* what)
+    {
+        while (*what)
+        {
+            cbuf.push_isr(*what++);
+        }
+    };
+
+    u = &usart;
+    print_debug = printer;
+
+    auto handler = [&](tos::esp82::tcp_socket&, tos::esp82::tcp_endpoint&& new_ep){
+        //printer("got conn");
+
         if (running){
-            f.push(50);
+            printer("running");
             return;
         }
         running = true;
 
-        f.push(40);
+        socket = new (mem) tos::esp82::tcp_endpoint(std::move(new_ep));
 
-        socket = new (mem) tos::tcp_stream(std::move(new_ep));
+        auto m = os_malloc(sizeof(stack_check));
+        sc = new (m) stack_check(sock_stack, 8192);
 
         constexpr auto params = tos::thread_params()
                 .add<tos::tags::entry_pt_t>(&socket_task)
                 .add<tos::tags::stack_ptr_t>((void*)sock_stack)
-                .add<tos::tags::stack_sz_t>(1024U);
+                .add<tos::tags::stack_sz_t>(8192U);
 
         tos::launch(params);
     };
 
     sock.accept(handler);
+    print_debug("hi");
 
     while (true)
     {
-        auto x = f.pop();
-        tos::println(usart, x);
+        auto x = cbuf.pop();
+        tos::print(usart, x);
     }
 
     tos::semaphore s{0};
