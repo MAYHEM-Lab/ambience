@@ -22,6 +22,7 @@
 #include <lwip/timers.h>
 #include <tos/algorithm.hpp>
 #include <algorithm>
+#include <arch/lx106/tcp.hpp>
 
 extern "C"
 {
@@ -59,28 +60,17 @@ void task()
     tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
 
     lwip_init();
-    auto pcb = tcp_new();
-    ip_addr a;
-    memcpy(&a.addr, addr.addr, 4);
-    auto err = tcp_bind(pcb, IP_ADDR_ANY, 80);
 
-    if (err != ERR_OK) {
-        tos::println(usart, "bind failed!");
-        tcp_close(pcb);
-        return;
-    }
-
-    auto listen_pcb = tcp_listen(pcb);
-    if (!listen_pcb) {
-        tos::println(usart, "listen failed!");
-        tcp_close(pcb);
-        return;
+    tos::esp82::tcp_socket sock(w, {80});
+    if (!sock.is_valid())
+    {
+        tos::println(usart, "nope");
     }
 
     struct t
     {
         tos::semaphore s{0};
-        tcp_pcb* cl;
+        tos::esp82::tcp_endpoint* ep;
         char buf[16];
         int rlen = 0;
         bool read = false;
@@ -88,53 +78,36 @@ void task()
     } data;
     int cnt = 0;
 
-    static auto recvhandle = [](void* user, struct tcp_pcb *tpcb, struct pbuf *p, err_t err) -> err_t {
-        auto& sem = *static_cast<t*>(user);
-        sem.s.up();
-        sem.rlen = 0;
-        sem.read = false;
-        std::fill(sem.buf, sem.buf + 16, 0);
-        if (p != nullptr)
-        {
-            memcpy(sem.buf, p->payload, tos::std::min<int>(16, p->len));
-            sem.rlen = p->len;
-            sem.read = true;
-            pbuf_free(p);
-        }
-        system_os_post(tos::esp82::main_task_prio, 0, 0);
-        return ERR_OK;
+    auto handlerecv = [&](auto, auto&, tos::span<const char> recvd){
+        data.s.up();
+        std::fill(data.buf, data.buf + 16, 0);
+        memcpy(data.buf, recvd.data(), tos::std::min<int>(16, recvd.size()));
+        data.rlen = recvd.size();
+        data.read = true;
     };
 
-    static auto senthandle = [](void* user, struct tcp_pcb *tpcb, u16_t len) -> err_t {
-        auto& sem = *static_cast<t*>(user);
-        sem.s.up();
-        sem.sent = true;
-        system_os_post(tos::esp82::main_task_prio, 0, 0);
-        return ERR_OK;
+    auto handlesent = [&](auto, auto&){
+        data.s.up();
+        data.sent = true;
     };
 
-    tcp_arg(listen_pcb, &data);
-    tcp_accept(listen_pcb, [](void* user, tcp_pcb* newpcb, err_t err) -> err_t {
-        if (err != ERR_OK)
+    auto acceptor = [&](auto&, tos::esp82::tcp_endpoint&& newep){
+        if (data.ep)
         {
-            return ERR_OK;
+            return false;
         }
-        auto& sem = *static_cast<t*>(user);
-        if (sem.cl)
-        {
-            //tcp_abort(newpcb);
-            return ERR_ABRT;
-        }
-        sem.s.up();
-        sem.cl = newpcb;
-        tcp_recv(newpcb, recvhandle);
-        tcp_sent(newpcb, senthandle);
-        //tcp_nagle_disable(newpcb);
-        system_os_post(tos::esp82::main_task_prio, 0, 0);
-        return ERR_OK;
-    });
+        data.s.up();
+        auto mem = os_malloc(sizeof newep);
+        newep.attach(tos::esp82::events::sent, handlesent);
+        newep.attach(tos::esp82::events::recv, handlerecv);
+        data.ep = new (mem) tos::esp82::tcp_endpoint(std::move(newep));
+        return true;
+    };
+
+    sock.accept(acceptor);
+
 cnn:
-    data.cl = nullptr;
+    data.ep = nullptr;
     data.rlen = 0;
     data.read = false;
     data.sent = false;
@@ -142,23 +115,6 @@ cnn:
 
     data.s.down();
     tos::println(usart, "hello");
-
-    tcp_arg(data.cl, &data);
-
-    /*tcp_poll(data.cl, [](void *user, struct tcp_pcb *tpcb) -> err_t {
-        auto& sem = *static_cast<t*>(user);
-        sem.s.up();
-        system_os_post(tos::esp82::main_task_prio, 0, 0);
-        return ERR_OK;
-    }, 1);*/
-
-    tcp_err(data.cl, [](void *user, err_t err) {
-        auto& sem = *static_cast<t*>(user);
-        //sem.s.up();
-        system_os_post(tos::esp82::main_task_prio, 0, 0);
-    });
-
-    tcp_accepted(listen_pcb);
 
     recv:
     data.s.down();
@@ -174,23 +130,11 @@ cnn:
         goto recv;
     }
 
-    if (data.rlen > 0)
-    {
-        tcp_recved(data.cl, data.rlen);
-    }
-
     tos::println(usart, "read", data.rlen, data.buf);
 
-    err = tcp_write(data.cl, "hello\r\n\r\n", 10, 0);
-
-    if (err != ERR_OK)
-    {
-        tos::println(usart, "write fail");
-        return;
-    }
+    data.ep->send("hello\r\n\r\n");
 
     send:
-    tcp_output(data.cl);
     data.s.down();
     if (!data.sent)
     {
@@ -200,17 +144,9 @@ cnn:
 
     tos::println(usart, "wow");
 
-    tcp_recv(data.cl, nullptr);
-    err = tcp_close(data.cl);
-    tcp_abort(data.cl);
-
-    data.cl = nullptr;
-
-    /*if (err != ERR_OK)
-    {
-        tos::println(usart, "close failed");
-        tcp_abort(data.cl);
-    }*/
+    tos::std::destroy_at(data.ep);
+    os_free(data.ep);
+    data.ep = nullptr;
 
     tos::println(usart, "done", ++cnt, int(system_get_free_heap_size()));
 
