@@ -122,7 +122,7 @@ void task()
         auto& sem = *static_cast<t*>(user);
         if (sem.cl)
         {
-            tcp_abort(newpcb);
+            //tcp_abort(newpcb);
             return ERR_ABRT;
         }
         sem.s.up();
