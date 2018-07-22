@@ -9,7 +9,7 @@ add_library(tos_ft
         include/tos/waitable.hpp
         include/tos/event.hpp
         src/ft.cpp
-        src/semaphore.cpp)
+        src/semaphore.cpp include/tos/unwind.hpp)
 
 target_include_directories(tos_ft PUBLIC "include")
 target_compile_options(tos_ft PUBLIC -std=gnu++14)

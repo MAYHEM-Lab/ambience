@@ -132,7 +132,7 @@ namespace tos
             auto& handler = *(ConnHandlerT*)self->m_accept_handler;
             auto res = handler(*self, tcp_endpoint{ new_conn });
             system_os_post(tos::esp82::main_task_prio, 0, 0);
-            return res ? ERR_OK : ERR_ABRT;
+            return ERR_OK;
         }
 
         template <class ConnHandlerT>

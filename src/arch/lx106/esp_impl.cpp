@@ -122,6 +122,11 @@ do_global_ctors()
     for (p = &__init_array_start; p != &__init_array_end; ++p)
         (*p)();
 }
+
+uint32 ICACHE_FLASH_ATTR espconn_init(uint32)
+{
+    return 1;
+}
 }
 
 static os_event_t arr[16];

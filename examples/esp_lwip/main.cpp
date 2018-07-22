@@ -13,23 +13,22 @@
 #include <arch/lx106/timer.hpp>
 #include <arch/lx106/usart.hpp>
 #include <arch/lx106/wifi.hpp>
+#include <arch/lx106/tcp.hpp>
 #include <tos/version.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos_arch.hpp>
 
-#include <lwip/tcp.h>
 #include <lwip/init.h>
-#include <lwip/timers.h>
 #include <tos/algorithm.hpp>
 #include <algorithm>
-#include <arch/lx106/tcp.hpp>
+#include <common/inet/tcp_stream.hpp>
 
 extern "C"
 {
 #include <mem.h>
-#include <user_interface.h>
 }
 
+char buf[512];
 void task()
 {
     using namespace tos::tos_literals;
@@ -48,7 +47,7 @@ void task()
 
     tos::esp82::wifi w;
     conn:
-    auto res = w.connect("Nakedsense.2", "serdar1988");
+    auto res = w.connect("WIFI", "PASS");
 
     tos::println(usart, "connected?", res);
     if (!res) goto conn;
@@ -67,98 +66,57 @@ void task()
         tos::println(usart, "nope");
     }
 
-    struct t
-    {
-        tos::semaphore s{0};
-        tos::esp82::tcp_endpoint* ep;
-        char buf[16];
-        int rlen = 0;
-        bool read = false;
-        bool sent = false;
-    } data;
-    int cnt = 0;
-
-    auto handlerecv = [&](auto, auto&, tos::span<const char> recvd){
-        data.s.up();
-        std::fill(data.buf, data.buf + 16, 0);
-        memcpy(data.buf, recvd.data(), tos::std::min<int>(16, recvd.size()));
-        data.rlen = recvd.size();
-        data.read = true;
-    };
-
-    auto handlesent = [&](auto, auto&){
-        data.s.up();
-        data.sent = true;
-    };
+    tos::semaphore s{0};
+    tos::tcp_stream* ep;
 
     auto acceptor = [&](auto&, tos::esp82::tcp_endpoint&& newep){
-        if (data.ep)
+        if (ep)
         {
             return false;
         }
-        data.s.up();
-        auto mem = os_malloc(sizeof newep);
-        newep.attach(tos::esp82::events::sent, handlesent);
-        newep.attach(tos::esp82::events::recv, handlerecv);
-        data.ep = new (mem) tos::esp82::tcp_endpoint(std::move(newep));
+        auto mem = os_malloc(sizeof(tos::tcp_stream));
+        ep = new (mem) tos::tcp_stream(std::move(newep));
+        s.up();
         return true;
     };
 
     sock.accept(acceptor);
 
-cnn:
-    data.ep = nullptr;
-    data.rlen = 0;
-    data.read = false;
-    data.sent = false;
-    tos::println(usart, "waiting", get_count(data.s));
-
-    data.s.down();
-    tos::println(usart, "hello");
-
-    recv:
-    data.s.down();
-
-    tos::println(usart, "upped");
-
-    if (!data.read)
+    int cnt = 0;
+    while (true)
     {
-        if (data.rlen == 0)
-        {
-            goto cnn;
-        }
-        goto recv;
+        ep = nullptr;
+        tos::println(usart, "waiting", get_count(s));
+        s.down();
+        ++cnt;
+
+        tos::println(usart, "hello");
+
+        auto req = ep->read({buf, 64});
+
+        auto socket = ep;
+        tos::println(*socket, "HTTP/1.0 200 Content-type: text/html");
+        tos::println(*socket);
+        tos::print(*socket, "<body><b>Hello from Tos!</b><br/><code>");
+        tos::print(*socket, req);
+        tos::println(*socket, "</code><br/>");
+        tos::println(*socket, "<ul>");
+        tos::println(*socket, "<li>", tos::platform::board_name, "</li>");
+        tos::println(*socket, "<li>", tos::vcs::commit_hash, "</li>");
+        tos::println(*socket, "<li>", int(system_get_free_heap_size()), "</li>");
+        tos::println(*socket, "<li>", int(system_get_time()), "</li>");
+        tos::println(*socket, "<li>", cnt, "</li>");
+        tos::println(*socket, "</ul></body>");
+        tos::println(*socket);
+
+        tos::println(usart, "wow");
+
+        tos::std::destroy_at(ep);
+        os_free(ep);
+        ep = nullptr;
+
+        tos::println(usart, "done", cnt, int(system_get_free_heap_size()));
     }
-
-    tos::println(usart, "read", data.rlen, data.buf);
-
-    data.ep->send("hello\r\n\r\n");
-
-    send:
-    data.s.down();
-    if (!data.sent)
-    {
-        tos::println(usart, "nope");
-        goto send;
-    }
-
-    tos::println(usart, "wow");
-
-    tos::std::destroy_at(data.ep);
-    os_free(data.ep);
-    data.ep = nullptr;
-
-    tos::println(usart, "done", ++cnt, int(system_get_free_heap_size()));
-
-    goto cnn;
-}
-
-extern "C"
-{
-uint32 ICACHE_FLASH_ATTR espconn_init(uint32)
-{
-    return 1;
-}
 }
 
 void tos_main()
