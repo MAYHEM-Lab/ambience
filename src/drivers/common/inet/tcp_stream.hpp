@@ -10,9 +10,15 @@
 #include <tos/semaphore.hpp>
 #include <tos/event.hpp>
 #include <tos/span.hpp>
+#include <tos/expected.hpp>
 
 namespace tos
 {
+    enum class read_error
+    {
+        disconnected,
+        timeout
+    };
     class tcp_stream
     {
     public:
@@ -21,11 +27,13 @@ namespace tos
 
         void write(span<const char>);
 
-        span<char> read(span<char>);
+        expected<span<char>, read_error> read(span<char>);
 
         void operator()(esp82::events::sent_t, esp82::tcp_endpoint&);
         void operator()(esp82::events::discon_t, esp82::tcp_endpoint&);
         void operator()(esp82::events::recv_t, esp82::tcp_endpoint&, span<const char>);
+
+        bool disconnected() const { return m_discon; }
 
     private:
 
@@ -37,7 +45,7 @@ namespace tos
         tos::mutex m_busy;
         tos::semaphore m_write_sync{0};
         tos::event m_read_sync;
-        tos::semaphore m_disc{0};
+        bool m_discon{false};
 
         tos::span<char>::iterator m_it{};
         tos::span<char>::iterator m_end{};
@@ -49,12 +57,16 @@ namespace tos
     }
 
     inline void tcp_stream::attach() {
-        m_ep.attach(esp82::events::recv, *this);
-        m_ep.attach(esp82::events::sent, *this);
+        m_ep.attach(*this);
     }
 
     inline void tcp_stream::operator()(tos::esp82::events::sent_t, tos::esp82::tcp_endpoint &) {
         m_write_sync.up();
+    }
+
+    inline void tcp_stream::operator()(tos::esp82::events::discon_t, tos::esp82::tcp_endpoint &) {
+        m_read_sync.fire();
+        m_discon = true;
     }
 
     inline void tcp_stream::write(tos::span<const char> buf) {
@@ -77,7 +89,12 @@ namespace tos
         m_read_sync.fire_isr();
     }
 
-    inline span<char> tcp_stream::read(tos::span<char> to) {
+    inline expected<span<char>, read_error> tcp_stream::read(tos::span<char> to) {
+        if (m_discon)
+        {
+            return unexpected(read_error::disconnected);
+        }
+
         tos::lock_guard<tos::mutex> lk{ m_busy };
 
         {
@@ -94,9 +111,14 @@ namespace tos
             m_end = end;
         }
 
-        if (m_it != m_end)
+        if (m_it == to.begin()) // buffer was empty, wait for new data
         {
             m_read_sync.wait();
+
+            if (m_discon)
+            {
+                return unexpected(read_error::disconnected);
+            }
         }
 
         return to.slice(0, m_it - to.begin());

@@ -211,7 +211,7 @@ namespace tos {
                 : m_head(this)
         {}
 
-        tracked(const tracked& rhs) noexcept
+        tracked(const tracked&) noexcept
                 : m_head(this)
         {
         }

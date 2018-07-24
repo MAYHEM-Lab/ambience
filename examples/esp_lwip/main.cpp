@@ -87,29 +87,32 @@ void task()
     {
         ep = nullptr;
         tos::println(usart, "waiting", get_count(s));
+
         s.down();
-        ++cnt;
 
         tos::println(usart, "hello");
 
-        auto req = ep->read({buf, 64});
+        with(ep->read(buf), [&](auto& req) {
+            ++cnt;
 
-        auto socket = ep;
-        tos::println(*socket, "HTTP/1.0 200 Content-type: text/html");
-        tos::println(*socket);
-        tos::print(*socket, "<body><b>Hello from Tos!</b><br/><code>");
-        tos::print(*socket, req);
-        tos::println(*socket, "</code><br/>");
-        tos::println(*socket, "<ul>");
-        tos::println(*socket, "<li>", tos::platform::board_name, "</li>");
-        tos::println(*socket, "<li>", tos::vcs::commit_hash, "</li>");
-        tos::println(*socket, "<li>", int(system_get_free_heap_size()), "</li>");
-        tos::println(*socket, "<li>", int(system_get_time()), "</li>");
-        tos::println(*socket, "<li>", cnt, "</li>");
-        tos::println(*socket, "</ul></body>");
-        tos::println(*socket);
+            tos::println(*ep, "HTTP/1.0 200 Content-type: text/html");
+            tos::println(*ep);
+            tos::print(*ep, "<body><b>Hello from Tos!</b><br/><code>");
+            tos::print(*ep, req);
+            tos::println(*ep, "</code><br/>");
+            tos::println(*ep, "<ul>");
+            tos::println(*ep, "<li>", tos::platform::board_name, "</li>");
+            tos::println(*ep, "<li>", tos::vcs::commit_hash, "</li>");
+            tos::println(*ep, "<li>", int(system_get_free_heap_size()), "</li>");
+            tos::println(*ep, "<li>", int(system_get_time()), "</li>");
+            tos::println(*ep, "<li>", cnt, "</li>");
+            tos::println(*ep, "</ul></body>");
+            tos::println(*ep);
 
-        tos::println(usart, "wow");
+            tos::println(usart, "wow");
+        }, [&](tos::read_error err){
+            tos::println(usart, "disconnected!");
+        });
 
         tos::std::destroy_at(ep);
         os_free(ep);
