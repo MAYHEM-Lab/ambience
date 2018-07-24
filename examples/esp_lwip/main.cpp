@@ -49,77 +49,81 @@ void task()
     conn:
     auto res = w.connect("WIFI", "PASS");
 
-    tos::println(usart, "connected?", res);
+    tos::println(usart, "connected?", bool(res));
     if (!res) goto conn;
 
-    while (!w.wait_for_dhcp());
 
-    tos::esp82::wifi_connection conn;
-    auto addr = conn.get_addr();
-    tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
+    with (std::move(res), [&](tos::esp82::wifi_connection& conn) {
+        while (!w.wait_for_dhcp());
 
-    lwip_init();
-
-    tos::esp82::tcp_socket sock(w, {80});
-    if (!sock.is_valid())
-    {
-        tos::println(usart, "nope");
-    }
-
-    tos::semaphore s{0};
-    tos::tcp_stream* ep;
-
-    auto acceptor = [&](auto&, tos::esp82::tcp_endpoint&& newep){
-        if (ep)
-        {
-            return false;
-        }
-        auto mem = os_malloc(sizeof(tos::tcp_stream));
-        ep = new (mem) tos::tcp_stream(std::move(newep));
-        s.up();
-        return true;
-    };
-
-    sock.accept(acceptor);
-
-    int cnt = 0;
-    while (true)
-    {
-        ep = nullptr;
-        tos::println(usart, "waiting", get_count(s));
-
-        s.down();
-
-        tos::println(usart, "hello");
-
-        with(ep->read(buf), [&](auto& req) {
-            ++cnt;
-
-            tos::println(*ep, "HTTP/1.0 200 Content-type: text/html");
-            tos::println(*ep);
-            tos::print(*ep, "<body><b>Hello from Tos!</b><br/><code>");
-            tos::print(*ep, req);
-            tos::println(*ep, "</code><br/>");
-            tos::println(*ep, "<ul>");
-            tos::println(*ep, "<li>", tos::platform::board_name, "</li>");
-            tos::println(*ep, "<li>", tos::vcs::commit_hash, "</li>");
-            tos::println(*ep, "<li>", int(system_get_free_heap_size()), "</li>");
-            tos::println(*ep, "<li>", int(system_get_time()), "</li>");
-            tos::println(*ep, "<li>", cnt, "</li>");
-            tos::println(*ep, "</ul></body>");
-            tos::println(*ep);
-
-            tos::println(usart, "wow");
-        }, [&](tos::read_error err){
-            tos::println(usart, "disconnected!");
+        auto addr = with(conn.get_addr(), [&](auto& addr){
+            return addr;
+        }, [](auto){
+            return tos::ipv4_addr{};
         });
 
-        tos::std::destroy_at(ep);
-        os_free(ep);
-        ep = nullptr;
+        tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
 
-        tos::println(usart, "done", cnt, int(system_get_free_heap_size()));
-    }
+        lwip_init();
+
+        tos::esp82::tcp_socket sock(w, {80});
+        if (!sock.is_valid()) {
+            tos::println(usart, "nope");
+        }
+
+        tos::semaphore s{0};
+        tos::tcp_stream *ep;
+
+        auto acceptor = [&](auto &, tos::esp82::tcp_endpoint &&newep) {
+            if (ep) {
+                return false;
+            }
+            auto mem = os_malloc(sizeof(tos::tcp_stream));
+            ep = new(mem) tos::tcp_stream(std::move(newep));
+            s.up();
+            return true;
+        };
+
+        sock.accept(acceptor);
+
+        int cnt = 0;
+        while (true) {
+            ep = nullptr;
+            tos::println(usart, "waiting", get_count(s));
+
+            s.down();
+
+            tos::println(usart, "hello");
+
+            with(ep->read(buf), [&](auto &req) {
+                ++cnt;
+
+                tos::println(*ep, "HTTP/1.0 200 Content-type: text/html");
+                tos::println(*ep);
+                tos::print(*ep, "<body><b>Hello from Tos!</b><br/><code>");
+                tos::print(*ep, req);
+                tos::println(*ep, "</code><br/>");
+                tos::println(*ep, "<ul>");
+                tos::println(*ep, "<li>", tos::platform::board_name, "</li>");
+                tos::println(*ep, "<li>", tos::vcs::commit_hash, "</li>");
+                tos::println(*ep, "<li>", int(system_get_free_heap_size()), "</li>");
+                tos::println(*ep, "<li>", int(system_get_time()), "</li>");
+                tos::println(*ep, "<li>", cnt, "</li>");
+                tos::println(*ep, "</ul></body>");
+                tos::println(*ep);
+
+                tos::println(usart, "wow");
+            }, [&](tos::read_error err) {
+                tos::println(usart, "disconnected!");
+            });
+
+            tos::std::destroy_at(ep);
+            os_free(ep);
+            ep = nullptr;
+
+            tos::println(usart, "done", cnt, int(system_get_free_heap_size()));
+        }
+    }, tos::ignore);
 }
 
 void tos_main()

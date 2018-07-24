@@ -7,32 +7,48 @@
 #include <tos/span.hpp>
 #include <drivers/common/inet/tcp_ip.hpp>
 #include <stdint.h>
+#include <tos/expected.hpp>
 
 namespace tos
 {
     namespace esp82
     {
-        //TODO: return wifi_connection from wifi upon connection
-
         class wifi_connection
         {
         public:
-            ipv4_addr get_addr();
+            expected<ipv4_addr, bool> get_addr();
+            wifi_connection(const wifi_connection&) = delete;
+            wifi_connection(wifi_connection&& rhs) {
+                rhs.discon = false;
+            }
+            ~wifi_connection();
+
+        private:
+            wifi_connection() = default;
+            friend class wifi;
+            bool discon = true;
+        };
+
+        enum class assoc_error
+        {
+            unknown
         };
 
         class wifi
         {
         public:
-
             wifi() noexcept;
 
-            bool connect(span<const char> ssid, span<const char> passwd) noexcept;
+            expected<wifi_connection, assoc_error>
+            connect(span<const char> ssid, span<const char> passwd) noexcept;
 
             bool wait_for_dhcp();
 
             void scan();
 
+            ~wifi();
         private:
         };
+
     }
 }

@@ -13,6 +13,7 @@
 #include <tos/fixed_fifo.hpp>
 #include <tos/track_ptr.hpp>
 #include <lwip/tcp.h>
+#include <tos/expected.hpp>
 
 namespace tos
 {
@@ -24,6 +25,12 @@ namespace tos
             static struct sent_t{} sent{};
             static struct discon_t{} discon{};
         }
+
+        enum class connect_error
+        {
+            not_connected,
+            unknown
+        };
 
         class tcp_endpoint
         {
@@ -57,6 +64,8 @@ namespace tos
             template <class EventHandlerT>
             friend void err_handler(void *user, err_t err);
 
+            friend expected<tcp_endpoint, connect_error> connect(wifi_connection&, ipv4_addr, port_num_t);
+
             tcp_pcb* m_conn;
             void* m_event_handler;
         };
@@ -80,6 +89,16 @@ namespace tos
             template <class ConnHandlerT>
             friend err_t conn_handler(void* user, tcp_pcb* new_conn, err_t err);
         };
+
+        /**
+         * Initiates a TCP connection with the given endpoint.
+         *
+         * @param iface the interface to connect through
+         * @param host ip address of the destination host
+         * @param port tcp port of the destination application
+         * @return an endpoint or an error if connection fails
+         */
+        expected<tcp_endpoint, connect_error> connect(wifi_connection& iface, ipv4_addr host, port_num_t port);
     }
 }
 
@@ -212,6 +231,45 @@ namespace tos
         inline void tcp_endpoint::send(tos::span<const char> buf) {
             tcp_write(m_conn, (uint8_t*)buf.data(), buf.size(), 0);
             tcp_output(m_conn);
+        }
+
+        struct conn_state
+        {
+            tos::semaphore sem{0};
+            err_t res;
+        };
+
+        inline auto connected_handler(void *arg, struct tcp_pcb *tpcb, err_t err) -> err_t
+        {
+            auto state = static_cast<conn_state*>(arg);
+            state->res = err;
+            state->sem.up();
+            system_os_post(tos::esp82::main_task_prio, 0, 0);
+            return ERR_OK;
+        }
+
+        inline void conn_err_handler(void* arg, err_t err)
+        {
+            auto state = static_cast<conn_state*>(arg);
+            state->res = err;
+            state->sem.up();
+            system_os_post(tos::esp82::main_task_prio, 0, 0);
+        }
+
+        inline expected<tcp_endpoint, connect_error> connect(wifi_connection&, ipv4_addr host, port_num_t port) {
+            auto pcb = tcp_new();
+            ip_addr_t a;
+            memcpy(&a.addr, host.addr, 4);
+            conn_state state;
+            tcp_arg(pcb, &state);
+            tcp_connect(pcb, &a, port.port, connected_handler); // this signals ERR_OK
+            tcp_err(pcb, conn_err_handler); // this signals ERR_CONN
+            state.sem.down();
+            if (state.res != ERR_OK)
+            {
+                return unexpected(connect_error::unknown);
+            }
+            return tcp_endpoint(pcb);
         }
     }
 }

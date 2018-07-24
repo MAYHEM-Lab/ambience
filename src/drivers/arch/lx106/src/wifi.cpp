@@ -43,12 +43,21 @@ namespace tos
 {
     namespace esp82
     {
-        ipv4_addr wifi_connection::get_addr() {
+        expected<ipv4_addr, bool> wifi_connection::get_addr() {
             ip_info info;
             wifi_get_ip_info(STATION_IF, &info);
+
             ipv4_addr res;
             memcpy(res.addr, &info.ip, 4);
+
             return res;
+        }
+
+        wifi_connection::~wifi_connection() {
+            if (discon)
+            {
+                wifi_station_disconnect();
+            }
         }
 
         wifi::wifi() noexcept {
@@ -56,7 +65,11 @@ namespace tos
             wifi_set_opmode_current(STATION_MODE);
         }
 
-        bool wifi::connect(tos::span<const char> ssid, tos::span<const char> passwd) noexcept {
+        wifi::~wifi() {
+        }
+
+        expected<wifi_connection, assoc_error>
+        wifi::connect(tos::span<const char> ssid, tos::span<const char> passwd) noexcept {
             station_config stationConfig{};
             strncpy((char*)stationConfig.ssid, ssid.data(), 32);
             strncpy((char*)stationConfig.password, passwd.data(), 64);
@@ -76,10 +89,11 @@ namespace tos
                 {
                     case EVENT_STAMODE_DISCONNECTED:
                         wifi_station_disconnect();
-                        return false;
+                        return unexpected(assoc_error::unknown);
                     case EVENT_STAMODE_CONNECTED:
-                        return true;
+                        return wifi_connection{};
                     default:
+                        tos::this_thread::yield();
                         break;
                 }
             }
