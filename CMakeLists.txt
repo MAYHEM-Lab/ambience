@@ -48,9 +48,14 @@ elseif(TOS_ESP)
         add_subdirectory(apps/tvm)
     endif()
 
+    if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/mqtt")
+        add_subdirectory(libs/mqtt)
+    endif()
+
     add_subdirectory(examples/esp)
     add_subdirectory(examples/esp_lwip)
     add_subdirectory(examples/esp_conn)
+    add_subdirectory(examples/esp_mqtt)
 elseif(TOS_X86)
     add_subdirectory(examples/simple_portable)
 
