@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <stddef.h>
+
 namespace tos
 {
     template <class T>
@@ -12,6 +14,9 @@ namespace tos
     public:
         explicit base_ring_buf(size_t sz)
                 : m_cap{sz} {}
+
+        explicit base_ring_buf(size_t sz, size_t begin)
+                : m_begin{begin}, m_cap{sz} {}
 
         size_t capacity() const
         {
@@ -24,12 +29,12 @@ namespace tos
         }
 
     protected:
-        size_t push()
+        size_t push_base()
         {
             return (m_begin + get_size()) % m_cap;
         }
 
-        size_t pop()
+        size_t pop_base()
         {
             auto res = m_begin;
             m_begin = (m_begin + 1) % m_cap;
@@ -51,7 +56,13 @@ namespace tos
             : public base_ring_buf<ring_buf>
     {
     public:
+        /**
+         * Constructs a new ring buffer with the given capacity
+         * @param cap capacity
+         */
         explicit ring_buf(size_t cap) : base_ring_buf{cap}, m_sz{0} {}
+
+        ring_buf(size_t cap, size_t sz, size_t begin) : base_ring_buf{cap, begin}, m_sz{sz} {}
 
         size_t size() const { return m_sz; }
 
@@ -60,14 +71,14 @@ namespace tos
 
         size_t push()
         {
-            auto res = base_ring_buf::push();
+            auto res = push_base();
             m_sz++;
             return res;
         }
 
         size_t pop()
         {
-            auto res = base_ring_buf::pop();
+            auto res = pop_base();
             m_sz--;
             return res;
         }

@@ -14,8 +14,10 @@ namespace tos {
         {
             T t;
 
-            explicit tuple_elem(T&& t)
-                : t(t) {}
+            template <class U>
+            explicit tuple_elem(U&& u)
+                : t{std::forward<U>(u)} {}
+
         };
 
         template<class SeqT, class... T>

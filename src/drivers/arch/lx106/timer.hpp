@@ -31,6 +31,9 @@ namespace tos
             uint16_t get_ticks();
 
             void set_callback(const function_ref<void()>& cb);
+
+            timer* operator->(){return this;}
+            timer& operator*(){return *this;}
         private:
 
             function_ref<void()> m_cb;

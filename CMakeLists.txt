@@ -20,6 +20,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 message(STATUS "${CMAKE_CXX_FLAGS}")
 
+include(${CMAKE_SOURCE_DIR}/cmake/TosTools.cmake)
+
 add_subdirectory(src)
 
 if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/libemsha")
@@ -46,6 +48,10 @@ if(TOS_AVR)
 elseif(TOS_ESP)
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/tvm")
         add_subdirectory(apps/tvm)
+    endif()
+
+    if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/cspot_lite")
+        add_subdirectory(apps/cspot_lite)
     endif()
 
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/mqtt")
