@@ -8,6 +8,10 @@
 #include <drivers/common/inet/tcp_ip.hpp>
 #include <stdint.h>
 #include <tos/expected.hpp>
+extern "C"
+{
+#include <user_interface.h>
+}
 
 namespace tos
 {
@@ -37,16 +41,16 @@ namespace tos
         class wifi
         {
         public:
-            wifi() noexcept;
+            wifi() noexcept ICACHE_FLASH_ATTR;
 
             expected<wifi_connection, assoc_error>
-            connect(span<const char> ssid, span<const char> passwd) noexcept;
+            connect(span<const char> ssid, span<const char> passwd) noexcept ICACHE_FLASH_ATTR;
 
-            bool wait_for_dhcp();
+            bool wait_for_dhcp() ICACHE_FLASH_ATTR;
 
             void scan();
 
-            ~wifi();
+            ~wifi() ICACHE_FLASH_ATTR;
         private:
         };
 

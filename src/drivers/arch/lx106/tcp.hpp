@@ -178,17 +178,14 @@ namespace tos
         err_t recv_handler(void* user, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
         {
             auto self = static_cast<tcp_endpoint*>(user);
-            self->m_conn = tpcb;
-
+            auto& handler = *(CallbackT*)self->m_event_handler;
             if (p)
             {
-                auto& handler = *(CallbackT*)self->m_event_handler;
                 handler(events::recv, *self, span<const char>{ (char*)p->payload, p->len });
                 tcp_recved(tpcb, p->len);
                 pbuf_free(p);
             } else {
                 // conn closed
-                auto& handler = *(CallbackT*)self->m_event_handler;
                 handler(events::discon, *self);
                 return ERR_OK;
             }

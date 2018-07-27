@@ -24,25 +24,20 @@
 #include <common/inet/tcp_stream.hpp>
 #include <MQTTClient.h>
 
-extern "C"
-{
-#include <mem.h>
-}
-
 struct net_facade
 {
     tos::tcp_stream& str;
 
-    int ICACHE_FLASH_ATTR read(unsigned char* buffer, int len, int)
+    int ALWAYS_INLINE read(unsigned char* buffer, int len, int)
     {
         return with(str.read(tos::span<char>{ (char*)buffer, len }), [](auto& rd) {
             return rd.size();
         }, [](auto& err){
-            return 0;   
+            return 0;
         });
     }
 
-    int ICACHE_FLASH_ATTR write(unsigned char* buffer, int len, int)
+    int ALWAYS_INLINE write(unsigned char* buffer, int len, int)
     {
         str.write({ (char*)buffer, len });
         return len;
@@ -62,29 +57,29 @@ public:
         countdown_ms(ms);
     }
 
-    bool ICACHE_FLASH_ATTR expired()
+    bool ALWAYS_INLINE expired()
     {
         return (interval_end_ms > 0L) && (millis() >= interval_end_ms);
     }
 
-    void ICACHE_FLASH_ATTR countdown_ms(unsigned long ms)
+    void ALWAYS_INLINE countdown_ms(unsigned long ms)
     {
         interval_end_ms = millis() + ms;
     }
 
-    void ICACHE_FLASH_ATTR countdown(int seconds)
+    void ALWAYS_INLINE countdown(int seconds)
     {
         countdown_ms((unsigned long)seconds * 1000L);
     }
 
-    int ICACHE_FLASH_ATTR left_ms()
+    int ALWAYS_INLINE left_ms()
     {
         return interval_end_ms - millis();
     }
 
 private:
 
-    unsigned long ICACHE_FLASH_ATTR millis()
+    unsigned long ALWAYS_INLINE millis()
     {
         return system_get_time() / 1000;
     }
@@ -116,7 +111,7 @@ void ICACHE_FLASH_ATTR task()
     tos::println(usart, "connected?", bool(res));
     if (!res) goto conn;
 
-    with (std::move(res), [&](tos::esp82::wifi_connection& conn){
+    with (std::move(res), [&](tos::esp82::wifi_connection& conn) ICACHE_FLASH_ATTR{
         while (!w.wait_for_dhcp());
 
         with(conn.get_addr(), [&](auto& addr){
@@ -134,6 +129,7 @@ void ICACHE_FLASH_ATTR task()
             data.MQTTVersion = 3;
             data.clientID.cstring = (char*)"tos-sample";
             auto rc = client.connect(data);
+
             if (rc != 0)
             {
                 tos::println(usart, "rc from MQTT connect is", rc);

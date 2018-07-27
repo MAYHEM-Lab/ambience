@@ -158,11 +158,13 @@ SECTIONS
   {
     _irom0_text_start = ABSOLUTE(.);
 
+    *libtos_ft.a:(.text .text.* .literal .literal.*)
+    *libtos_core.a:(.text .text.* .literal .literal.*)
+
     *libat.a:(.literal.* .text.*)
     *libcrypto.a:(.literal.* .text.*)
     *libespnow.a:(.literal.* .text.*)
     *libjson.a:(.literal.* .text.*)
-    *liblwip.a:(.literal.* .text.*)
     *libmesh.a:(.literal.* .text.*)
     *libnet80211.a:(.literal.* .text.*)
     *libsmartconfig.a:(.literal.* .text.*)
@@ -171,6 +173,7 @@ SECTIONS
     *libwpa.a:(.literal.* .text.*)
     *libwpa2.a:(.literal.* .text.*)
     *libwps.a:(.literal.* .text.*)
+    *libpp.a:(.text .text.* .literal .literal.*)
 
     *libmbedtls.a:(.literal.* .text.*)
 

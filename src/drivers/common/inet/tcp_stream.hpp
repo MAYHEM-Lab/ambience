@@ -27,7 +27,7 @@ namespace tos
 
         void write(span<const char>) ICACHE_FLASH_ATTR;
 
-        expected<span<char>, read_error> read(span<char>) ICACHE_FLASH_ATTR;
+        expected<span<char>, read_error> read(span<char>);
 
         void operator()(esp82::events::sent_t, esp82::tcp_endpoint&) ICACHE_FLASH_ATTR;
         void operator()(esp82::events::discon_t, esp82::tcp_endpoint&) ICACHE_FLASH_ATTR;
@@ -56,26 +56,26 @@ namespace tos
         attach();
     }
 
-    inline void ICACHE_FLASH_ATTR tcp_stream::attach() {
+    inline void tcp_stream::attach() {
         m_ep.attach(*this);
     }
 
-    inline void ICACHE_FLASH_ATTR tcp_stream::operator()(tos::esp82::events::sent_t, tos::esp82::tcp_endpoint &) {
+    inline void tcp_stream::operator()(tos::esp82::events::sent_t, tos::esp82::tcp_endpoint &) {
         m_write_sync.up();
     }
 
-    inline void ICACHE_FLASH_ATTR tcp_stream::operator()(tos::esp82::events::discon_t, tos::esp82::tcp_endpoint &) {
+    inline void tcp_stream::operator()(tos::esp82::events::discon_t, tos::esp82::tcp_endpoint &) {
         m_read_sync.fire();
         m_discon = true;
     }
 
-    inline void ICACHE_FLASH_ATTR tcp_stream::write(tos::span<const char> buf) {
+    inline void tcp_stream::write(tos::span<const char> buf) {
         tos::lock_guard<tos::mutex> lk{ m_busy };
         m_ep.send(buf);
         m_write_sync.down();
     }
 
-    inline void ICACHE_FLASH_ATTR tcp_stream::operator()(esp82::events::recv_t, esp82::tcp_endpoint &, span<const char> buf) {
+    inline void tcp_stream::operator()(esp82::events::recv_t, esp82::tcp_endpoint &, span<const char> buf) {
         auto it = buf.begin();
         auto end = buf.end();
 
@@ -89,7 +89,7 @@ namespace tos
         m_read_sync.fire_isr();
     }
 
-    inline expected<span<char>, read_error> ICACHE_FLASH_ATTR tcp_stream::read(tos::span<char> to) {
+    inline expected<span<char>, read_error> tcp_stream::read(tos::span<char> to) {
         if (m_discon)
         {
             return unexpected(read_error::disconnected);
