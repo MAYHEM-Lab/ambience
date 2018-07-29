@@ -17,7 +17,6 @@ PHDRS
   irom0_0_phdr PT_LOAD;
 }
 
-
 /*  Default entry point:  */
 ENTRY(call_user_start)
 EXTERN(_DebugExceptionVector)
@@ -162,13 +161,12 @@ SECTIONS
     *libtos_core.a:(.text .text.* .literal .literal.*)
 
     *libat.a:(.literal.* .text.*)
+    *libaxtls.a:(.text.* .literal.*)
     *libcrypto.a:(.literal.* .text.*)
-    *libespnow.a:(.literal.* .text.*)
     *libjson.a:(.literal.* .text.*)
     *libmesh.a:(.literal.* .text.*)
     *libnet80211.a:(.literal.* .text.*)
     *libsmartconfig.a:(.literal.* .text.*)
-    *libssl.a:(.literal.* .text.*)
     *libupgrade.a:(.literal.* .text.*)
     *libwpa.a:(.literal.* .text.*)
     *libwpa2.a:(.literal.* .text.*)

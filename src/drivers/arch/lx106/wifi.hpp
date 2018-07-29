@@ -22,8 +22,14 @@ namespace tos
         public:
             expected<ipv4_addr, bool> get_addr();
             wifi_connection(const wifi_connection&) = delete;
-            wifi_connection(wifi_connection&& rhs) {
+            wifi_connection(wifi_connection&& rhs) noexcept {
                 rhs.discon = false;
+            }
+            wifi_connection&operator=(wifi_connection&& rhs) noexcept
+            {
+                discon = rhs.discon;
+                rhs.discon = false;
+                return *this;
             }
             ~wifi_connection();
 

@@ -67,6 +67,31 @@ namespace tos
 
         explicit operator bool() const { return m_have; }
 
+        expected& operator=(expected&& rhs) noexcept
+        {
+            if (m_have && rhs.m_have)
+            {
+                m_t = std::move(rhs.m_t);
+            }
+            else if (!m_have && !rhs.m_have)
+            {
+                m_err = std::move(rhs.m_err);
+            }
+            else if (m_have && !rhs.m_have)
+            {
+                std::destroy_at(&m_t);
+                new (&m_err) ErrT(std::move(rhs.m_err));
+            }
+            else // if (!m_have && rhs.m_have)
+            {
+                std::destroy_at(&m_err);
+                new (&m_t) T(std::move(rhs.m_t));
+            }
+            m_have = rhs.m_have;
+            rhs.m_have = false;
+            return *this;
+        }
+
         ~expected()
         {
             if (m_have)

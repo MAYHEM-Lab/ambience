@@ -15,6 +15,12 @@
 #include <lwip/tcp.h>
 #include <tos/expected.hpp>
 
+#ifdef TOS_HAVE_SSL
+#include <compat/lwipr_compat.h>
+#undef putc
+#undef getc
+#endif
+
 namespace tos
 {
     namespace esp82
@@ -55,16 +61,10 @@ namespace tos
             template <class ConnHandlerT>
             friend err_t conn_handler(void* user, tcp_pcb* new_conn, err_t err);
 
-            template <class CallbackT>
-            friend err_t recv_handler(void* user, struct tcp_pcb *tpcb, struct pbuf *p, err_t err);
-
-            template <class ConnHandlerT>
-            friend err_t sent_handler(void* user, struct tcp_pcb *tpcb, u16_t len);
-
-            template <class EventHandlerT>
-            friend void err_handler(void *user, err_t err);
+            friend struct ep_handlers;
 
             friend expected<tcp_endpoint, connect_error> connect(wifi_connection&, ipv4_addr, port_num_t);
+            friend expected<tcp_endpoint, connect_error> connect_ssl(wifi_connection&, ipv4_addr, port_num_t);
 
             tcp_pcb* m_conn;
             void* m_event_handler;
@@ -174,55 +174,58 @@ namespace tos
             tcp_abort(m_conn);
         }
 
-        template <class CallbackT>
-        err_t recv_handler(void* user, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
+        struct ep_handlers
         {
-            auto self = static_cast<tcp_endpoint*>(user);
-            auto& handler = *(CallbackT*)self->m_event_handler;
-            if (p)
+            template <class CallbackT>
+            static err_t recv_handler(void* user, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
             {
-                handler(events::recv, *self, span<const char>{ (char*)p->payload, p->len });
-                tcp_recved(tpcb, p->len);
-                pbuf_free(p);
-            } else {
-                // conn closed
-                handler(events::discon, *self);
+                auto self = static_cast<tcp_endpoint*>(user);
+                auto& handler = *(CallbackT*)self->m_event_handler;
+                if (p)
+                {
+                    handler(events::recv, *self, span<const char>{ (char*)p->payload, p->len });
+                    tcp_recved(tpcb, p->len);
+                    pbuf_free(p);
+                } else {
+                    // conn closed
+                    handler(events::discon, *self);
+                    return ERR_OK;
+                }
+                system_os_post(tos::esp82::main_task_prio, 0, 0);
                 return ERR_OK;
             }
-            system_os_post(tos::esp82::main_task_prio, 0, 0);
-            return ERR_OK;
-        }
 
-        template <class CallbackT>
-        err_t sent_handler(void* user, struct tcp_pcb *tpcb, u16_t)
-        {
-            auto self = static_cast<tcp_endpoint*>(user);
-            self->m_conn = tpcb;
+            template <class CallbackT>
+            static err_t sent_handler(void* user, struct tcp_pcb *tpcb, u16_t)
+            {
+                auto self = static_cast<tcp_endpoint*>(user);
+                self->m_conn = tpcb;
 
-            auto& handler = *(CallbackT*)self->m_event_handler;
-            handler(events::sent, *self);
-            system_os_post(tos::esp82::main_task_prio, 0, 0);
+                auto& handler = *(CallbackT*)self->m_event_handler;
+                handler(events::sent, *self);
+                system_os_post(tos::esp82::main_task_prio, 0, 0);
 
-            return ERR_OK;
-        }
+                return ERR_OK;
+            }
 
-        template <class EventHandlerT>
-        void err_handler(void *user, err_t err)
-        {
-            auto self = static_cast<tcp_endpoint*>(user);
+            template <class EventHandlerT>
+            static void err_handler(void *user, err_t err)
+            {
+                auto self = static_cast<tcp_endpoint*>(user);
 
-            auto& handler = *(EventHandlerT*)self->m_event_handler;
-            handler(events::discon, *self);
-            system_os_post(tos::esp82::main_task_prio, 0, 0);
-        }
+                auto& handler = *(EventHandlerT*)self->m_event_handler;
+                handler(events::discon, *self);
+                system_os_post(tos::esp82::main_task_prio, 0, 0);
+            }
+        };
 
         template <class EventHandlerT>
         void tcp_endpoint::attach(EventHandlerT &cb) {
             m_event_handler = &cb;
             tcp_arg(m_conn, this);
-            tcp_sent(m_conn, &sent_handler<EventHandlerT>);
-            tcp_recv(m_conn, &recv_handler<EventHandlerT>);
-            tcp_err(m_conn, &err_handler<EventHandlerT>);
+            tcp_sent(m_conn, &ep_handlers::sent_handler<EventHandlerT>);
+            tcp_recv(m_conn, &ep_handlers::recv_handler<EventHandlerT>);
+            tcp_err(m_conn, &ep_handlers::err_handler<EventHandlerT>);
         }
 
         inline void tcp_endpoint::send(tos::span<const char> buf) {
@@ -245,6 +248,23 @@ namespace tos
             return ERR_OK;
         }
 
+#ifdef TOS_HAVE_SSL
+        inline auto ssl_connected_handler(void *arg, struct tcp_pcb *tpcb, err_t err) -> err_t
+        {
+            auto state = static_cast<conn_state*>(arg);
+
+            auto clientfd = axl_append(tpcb);
+            auto options = SSL_SERVER_VERIFY_LATER;
+            auto sslContext = ssl_ctx_new(SSL_CONNECT_IN_PARTS | options, 1); // !!! SSL_CONNECT_IN_PARTS must be in the flags !!!
+            auto sslObj = ssl_client_new(sslContext, clientfd, nullptr, 0, nullptr);
+
+            state->res = err;
+            state->sem.up();
+            system_os_post(tos::esp82::main_task_prio, 0, 0);
+            return ERR_OK;
+        }
+#endif
+
         inline void conn_err_handler(void* arg, err_t err)
         {
             auto state = static_cast<conn_state*>(arg);
@@ -260,6 +280,22 @@ namespace tos
             conn_state state;
             tcp_arg(pcb, &state);
             tcp_connect(pcb, &a, port.port, connected_handler); // this signals ERR_OK
+            tcp_err(pcb, conn_err_handler); // this signals ERR_CONN
+            state.sem.down();
+            if (state.res != ERR_OK)
+            {
+                return unexpected(connect_error::unknown);
+            }
+            return tcp_endpoint(pcb);
+        }
+
+        inline expected<tcp_endpoint, connect_error> connect_ssl(wifi_connection&, ipv4_addr host, port_num_t port) {
+            auto pcb = tcp_new();
+            ip_addr_t a;
+            memcpy(&a.addr, host.addr, 4);
+            conn_state state;
+            tcp_arg(pcb, &state);
+            tcp_connect(pcb, &a, port.port, ssl_connected_handler); // this signals ERR_OK
             tcp_err(pcb, conn_err_handler); // this signals ERR_CONN
             state.sem.down();
             if (state.res != ERR_OK)
