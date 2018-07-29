@@ -1,6 +1,7 @@
 project(tos CXX ASM)
 
-add_library(lx106_impl esp_impl.cpp tos_arch.hpp user_config.h native.s lx106_missing.hpp tos_platform.hpp /home/fatih/axtls-8266/compat/lwipr_compat.c)
+add_library(lx106_impl esp_impl.cpp tos_arch.hpp user_config.h native.s lx106_missing.hpp tos_platform.hpp
+        /home/fatih/axtls-8266/compat/lwipr_compat.c)
 target_include_directories(lx106_impl PRIVATE "../../")
 target_include_directories(lx106_impl PUBLIC ".")
 target_compile_options(lx106_impl PUBLIC -std=gnu++14)
@@ -14,7 +15,7 @@ target_include_directories(lx106_impl PUBLIC "${TOOLS_BASE}/esp-lwip/src/include
 target_include_directories(lx106_impl PUBLIC "${TOOLS_BASE}/esp-lwip/src/include/ipv4")
 target_link_libraries(lx106_impl PUBLIC "-Tlinker.ld")
 target_link_libraries(lx106_impl PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(lx106_impl PUBLIC tos_ft lwip axtls)
+target_link_libraries(lx106_impl PUBLIC tos_ft lwip axtls c)
 target_compile_definitions(lx106_impl PUBLIC LWIP_OPEN_SRC LWIP_RAW ESP8266 WITH_PGM_READ_HELPER TOS_HAVE_SSL)
 set_target_properties(lx106_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)
-target_link_libraries(lx106_impl PUBLIC "-Wl,--start-group -lmain -lnet80211 -lwpa -lpp -lphy -lc -laxtls -Wl,--end-group -lgcc")
+target_link_libraries(lx106_impl PUBLIC "-Wl,--start-group -lmain -lnet80211 -lwpa -lpp -lphy -laxtls -Wl,--end-group -lgcc")

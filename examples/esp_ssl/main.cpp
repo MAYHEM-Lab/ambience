@@ -23,6 +23,8 @@
 #include <algorithm>
 #include <common/inet/tcp_stream.hpp>
 
+#include <stdlib.h>
+
 extern "C"
 {
 #include <mem.h>
@@ -52,13 +54,22 @@ extern "C"
 
     void ax_wdt_feed()
     {
-        tos::this_thread::yield();
+        system_soft_wdt_feed();
+        //tos::this_thread::yield();
     }
 
     void _exit()
     {
         tos::this_thread::exit();
     }
+_PTR
+_malloc_r (struct _reent *r, size_t sz)
+{
+    return malloc (sz);
+}
+
+void _getpid_r() {}
+void _kill_r() {}
 }
 
 char buf[512];
@@ -78,9 +89,13 @@ void task()
     tos::println(usart, tos::platform::board_name);
     tos::println(usart, tos::vcs::commit_hash);
 
+    lwip_init();
+
+    axl_init(3);
+
     tos::esp82::wifi w;
     conn:
-    auto res = w.connect("WIFI", "PASS");
+    auto res = w.connect("AndroidAP", "12345678");
 
     tos::println(usart, "connected?", bool(res));
     if (!res) goto conn;
@@ -92,10 +107,34 @@ void task()
             tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
         }, tos::ignore);
 
-        lwip_init();
-
-        with(tos::esp82::connect_ssl(conn, { { 192, 168, 0, 40 } }, { 4443 }), [&](tos::esp82::tcp_endpoint& conn){
+        with(tos::esp82::connect_ssl(conn, { { 45, 55, 149, 110 } }, { 443 }), [&](tos::esp82::secure_tcp_endpoint& conn){
             tos::println(usart, "perfect");
+
+            struct{
+                void operator()(tos::lwip::events::sent_t, tos::esp82::secure_tcp_endpoint&){
+                    sent_sem.up();
+                }
+                void operator()(tos::lwip::events::recv_t, tos::esp82::secure_tcp_endpoint&, tos::span<const char> buf){
+                    if (got)return;
+                    got = true;
+                    memcpy(::buf, buf.data(), buf.size());
+                    ::buf[buf.size()] = 0;
+                    read_sem.up();
+                }
+                void operator()(tos::lwip::events::discon_t, tos::esp82::secure_tcp_endpoint&){
+
+                }
+
+                tos::semaphore sent_sem{0};
+                tos::semaphore read_sem{0};
+                bool got = false;
+            } handler;
+            conn.attach(handler);
+            conn.send("GET / HTTP/1.1\r\n"
+                      "Host: bakirbros.com\r\n"
+                      "\r\n");
+            handler.sent_sem.down();
+            handler.read_sem.down();
             /*tos::tcp_stream stream {std::move(conn)};
             tos::println(stream, "GET /");
             tos::println(stream);
@@ -107,7 +146,7 @@ void task()
             });*/
 
         }, [&](auto& err){
-            tos::println(usart, "couldn't connect");
+            tos::println(usart, "couldn't connect", int(err));
         });
 
         tos::println(usart, "done", int(system_get_free_heap_size()));
@@ -115,6 +154,7 @@ void task()
         tos::println(usart, "uuuh, shouldn't have happened!");
     });
 
+    tos::println(usart, (const char*)buf);
     while (true){
         tos::this_thread::yield();
     }

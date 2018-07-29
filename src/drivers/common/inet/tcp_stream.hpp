@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <arch/lx106/tcp.hpp>
+#include <drivers/arch/lx106/tcp.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/mutex.hpp>
 #include <tos/semaphore.hpp>
@@ -19,21 +19,23 @@ namespace tos
         disconnected,
         timeout
     };
+
+    template <class BaseEndpointT>
     class tcp_stream
     {
     public:
 
-        explicit tcp_stream(tos::esp82::tcp_endpoint&& ep);
+        explicit tcp_stream(BaseEndpointT&& ep) ALWAYS_INLINE;
 
-        void write(span<const char>) ICACHE_FLASH_ATTR;
+        void write(span<const char>) ALWAYS_INLINE;
 
         expected<span<char>, read_error> read(span<char>);
 
-        void operator()(esp82::events::sent_t, esp82::tcp_endpoint&) ICACHE_FLASH_ATTR;
-        void operator()(esp82::events::discon_t, esp82::tcp_endpoint&) ICACHE_FLASH_ATTR;
-        void operator()(esp82::events::recv_t, esp82::tcp_endpoint&, span<const char>) ICACHE_FLASH_ATTR;
+        void operator()(lwip::events::sent_t, BaseEndpointT&) ICACHE_FLASH_ATTR;
+        void operator()(lwip::events::discon_t, BaseEndpointT&) ICACHE_FLASH_ATTR;
+        void operator()(lwip::events::recv_t, BaseEndpointT&, span<const char>) ICACHE_FLASH_ATTR;
 
-        bool ICACHE_FLASH_ATTR disconnected() const { return m_discon; }
+        bool ALWAYS_INLINE disconnected() const { return m_discon; }
 
     private:
 
@@ -41,7 +43,7 @@ namespace tos
 
         tos::fixed_fifo<char, 64> m_fifo;
 
-        tos::esp82::tcp_endpoint m_ep;
+        BaseEndpointT m_ep;
         tos::mutex m_busy;
         tos::semaphore m_write_sync{0};
         tos::event m_read_sync;
@@ -51,31 +53,37 @@ namespace tos
         tos::span<char>::iterator m_end{};
     };
 
-    inline tcp_stream::tcp_stream(tos::esp82::tcp_endpoint &&ep)
+    template <class BaseEndpointT>
+    inline tcp_stream<BaseEndpointT>::tcp_stream(BaseEndpointT &&ep)
             : m_ep(std::move(ep)) {
         attach();
     }
 
-    inline void tcp_stream::attach() {
+    template <class BaseEndpointT>
+    inline void tcp_stream<BaseEndpointT>::attach() {
         m_ep.attach(*this);
     }
 
-    inline void tcp_stream::operator()(tos::esp82::events::sent_t, tos::esp82::tcp_endpoint &) {
+    template <class BaseEndpointT>
+    inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::sent_t, BaseEndpointT &) {
         m_write_sync.up();
     }
 
-    inline void tcp_stream::operator()(tos::esp82::events::discon_t, tos::esp82::tcp_endpoint &) {
+    template <class BaseEndpointT>
+    inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t, BaseEndpointT &) {
         m_read_sync.fire();
         m_discon = true;
     }
 
-    inline void tcp_stream::write(tos::span<const char> buf) {
+    template <class BaseEndpointT>
+    inline void tcp_stream<BaseEndpointT>::write(tos::span<const char> buf) {
         tos::lock_guard<tos::mutex> lk{ m_busy };
         m_ep.send(buf);
         m_write_sync.down();
     }
 
-    inline void tcp_stream::operator()(esp82::events::recv_t, esp82::tcp_endpoint &, span<const char> buf) {
+    template <class BaseEndpointT>
+    inline void tcp_stream<BaseEndpointT>::operator()(lwip::events::recv_t, BaseEndpointT &, span<const char> buf) {
         auto it = buf.begin();
         auto end = buf.end();
 
@@ -89,7 +97,8 @@ namespace tos
         m_read_sync.fire_isr();
     }
 
-    inline expected<span<char>, read_error> tcp_stream::read(tos::span<char> to) {
+    template <class BaseEndpointT>
+    inline expected<span<char>, read_error> tcp_stream<BaseEndpointT>::read(tos::span<char> to) {
         if (m_discon)
         {
             return unexpected(read_error::disconnected);

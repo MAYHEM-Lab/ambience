@@ -62,7 +62,7 @@ void task()
         lwip_init();
 
         with(tos::esp82::connect(conn, { { 192, 168, 0, 40 } }, { 8080 }), [&](tos::esp82::tcp_endpoint& conn){
-            tos::tcp_stream stream {std::move(conn)};
+            tos::tcp_stream<tos::esp82::tcp_endpoint> stream {std::move(conn)};
             tos::println(stream, "GET /");
             tos::println(stream);
 
