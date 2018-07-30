@@ -381,25 +381,6 @@ namespace tos
             return ERR_OK;
         }
 
-#ifdef TOS_HAVE_SSL
-
-        SSL *sslObj = NULL;
-        SSLCTX* sslContext = NULL;
-        int clientfd;
-
-        inline auto ssl_connected_handler(void *arg, struct tcp_pcb *tpcb, err_t err) -> err_t
-        {
-            auto state = static_cast<conn_state*>(arg);
-
-            clientfd = axl_append(tpcb);
-
-            state->res = err;
-            state->sem.up();
-            system_os_post(tos::esp82::main_task_prio, 0, 0);
-            return ERR_OK;
-        }
-#endif
-
         inline void conn_err_handler(void* arg, err_t err)
         {
             auto state = static_cast<conn_state*>(arg);
@@ -424,36 +405,38 @@ namespace tos
             return tcp_endpoint(pcb);
         }
 
-        inline err_t staticOnReceive(void *arg, struct tcp_pcb *tcp, struct pbuf *p, err_t err)
+#ifdef TOS_HAVE_SSL
+        struct secure_conn_state : conn_state
         {
-            struct pbuf* pout;
-            int read_bytes = 0;
+            SSL* ssl_obj;
+        };
 
-            printf("Err: %d\n", err);
+        inline err_t handshake_receive(void *arg, struct tcp_pcb *tcp, struct pbuf *p, err_t err)
+        {
+            auto state = static_cast<secure_conn_state*>(arg);
 
-            if(tcp == NULL || p == NULL) {
-                /* @TODO: Take care to handle error conditions */
-                printf("Wtf");
-                return -1;
+            if(!tcp || !p) {
+                state->res = ERR_CLSD;
+                return ERR_ABRT;
             }
 
             system_soft_wdt_feed();
-            read_bytes = axl_ssl_read(sslObj, tcp, p, &pout);
-            printf("read: %d", read_bytes);
+
+            struct pbuf* pout = nullptr;
+            axl_ssl_read(state->ssl_obj, tcp, p, &pout);
+
             tcp_recved(tcp, p->tot_len);
-            if(p != NULL) {
-                pbuf_free(p);
+            pbuf_free(p);
+            if (pout)
+            {
+                pbuf_free(pout);
             }
 
-            if(read_bytes > 0) {
-                // free the SSL pbuf and put the decrypted data in the brand new pout pbuf
-
-                printf("Got decrypted data length: %d", read_bytes);
-
-                // put the decrypted data in a brand new pbuf
-                p = pout;
-
-                // @TODO: Continue to work with the p buf containing the decrypted data
+            if (ssl_handshake_status(state->ssl_obj) == SSL_OK)
+            {
+                state->res = ERR_OK;
+                state->sem.up();
+                system_os_post(tos::esp82::main_task_prio, 0, 0);
             }
 
             return ERR_OK;
@@ -463,31 +446,43 @@ namespace tos
             auto pcb = tcp_new();
             ip_addr_t a;
             memcpy(&a.addr, host.addr, 4);
-            conn_state state;
+            secure_conn_state state;
+
             tcp_arg(pcb, &state);
-            tcp_recv(pcb, staticOnReceive);
+            tcp_recv(pcb, handshake_receive);
             tcp_err(pcb, conn_err_handler); // this signals ERR_CONN
 
-            tcp_connect(pcb, &a, port.port, ssl_connected_handler); // this signals ERR_OK
+            tcp_connect(pcb, &a, port.port, connected_handler); // this signals ERR_OK
             state.sem.down();
 
-            sslContext = ssl_ctx_new(SSL_CONNECT_IN_PARTS | SSL_SERVER_VERIFY_LATER | SSL_DISPLAY_STATES | SSL_DISPLAY_BYTES, 1);
-            auto ext = ssl_ext_new();
-            ext->host_name = "bakirbros.com";
-            system_update_cpu_freq(SYS_CPU_160MHZ);
-            sslObj = ssl_client_new(sslContext, clientfd, nullptr, 0, ext);
-
-            while (ssl_handshake_status(sslObj) != SSL_OK)
+            if (state.res != ERR_OK)
             {
-                tos::this_thread::yield();
+                return unexpected(connect_error::not_connected);
             }
-            system_update_cpu_freq(SYS_CPU_80MHZ);
+
+            auto clientfd = axl_append(pcb);
+            auto sslContext = ssl_ctx_new(SSL_CONNECT_IN_PARTS | SSL_SERVER_VERIFY_LATER, 1);
+
+            system_update_cpu_freq(SYS_CPU_160MHZ); // Run faster during SSL handshake
+
+            auto sslObj = state.ssl_obj = ssl_client_new(sslContext, clientfd, nullptr, 0, nullptr);
+
+            state.sem.down();
+
+            if (state.res != ERR_OK)
+            {
+                return unexpected(connect_error::ssl_error);
+            }
+
+            system_update_cpu_freq(SYS_CPU_80MHZ); // back to normal speed
 
             if (state.res != ERR_OK)
             {
                 return unexpected(connect_error::unknown);
             }
+
             return secure_tcp_endpoint(pcb, sslObj, sslContext);
         }
+#endif
     }
 }
