@@ -47,7 +47,7 @@ void main_task()
         with(tos::esp82::connect(c, { 192, 168, 0, 40 }, { 80 }),
             [&](tos::esp82::tcp_endpoint& ep)
             {
-                tos::tcp_stream stream(tos::std::move(ep));
+                tos::tcp_stream<tos::esp82::tcp_endpoint> stream(tos::std::move(ep));
                 tos::println(stream, "GET /");
                 tos::println(stream);
 

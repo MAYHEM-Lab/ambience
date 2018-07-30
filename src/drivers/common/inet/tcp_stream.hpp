@@ -32,8 +32,8 @@ namespace tos
         expected<span<char>, read_error> read(span<char>);
 
         void operator()(lwip::events::sent_t, BaseEndpointT&) ICACHE_FLASH_ATTR;
-        void operator()(lwip::events::discon_t, BaseEndpointT&) ICACHE_FLASH_ATTR;
-        void operator()(lwip::events::recv_t, BaseEndpointT&, span<const char>) ICACHE_FLASH_ATTR;
+        void operator()(lwip::events::discon_t, BaseEndpointT&, lwip::discon_reason) ICACHE_FLASH_ATTR;
+        void operator()(lwip::events::recv_t, BaseEndpointT&, lwip::buffer&&) ICACHE_FLASH_ATTR;
 
         bool ALWAYS_INLINE disconnected() const { return m_discon; }
 
@@ -41,12 +41,12 @@ namespace tos
 
         void attach();
 
-        tos::fixed_fifo<char, 64> m_fifo;
+        lwip::buffer m_buffer;
 
         BaseEndpointT m_ep;
         tos::mutex m_busy;
         tos::semaphore m_write_sync{0};
-        tos::event m_read_sync;
+        tos::semaphore m_read_sync{0};
         bool m_discon{false};
 
         tos::span<char>::iterator m_it{};
@@ -70,8 +70,8 @@ namespace tos
     }
 
     template <class BaseEndpointT>
-    inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t, BaseEndpointT &) {
-        m_read_sync.fire();
+    inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t, BaseEndpointT &, lwip::discon_reason) {
+        m_read_sync.up();
         m_discon = true;
     }
 
@@ -83,53 +83,27 @@ namespace tos
     }
 
     template <class BaseEndpointT>
-    inline void tcp_stream<BaseEndpointT>::operator()(lwip::events::recv_t, BaseEndpointT &, span<const char> buf) {
-        auto it = buf.begin();
-        auto end = buf.end();
-
-        while (it != end && m_it != m_end)
+    inline void tcp_stream<BaseEndpointT>::operator()(lwip::events::recv_t, BaseEndpointT &, lwip::buffer&& buf) {
+        if (m_buffer.has_more())
         {
-            *m_it++ = *it++;
+            m_buffer.append(std::move(buf));
         }
-
-        while (it != end && m_fifo.push_isr(*it++));
-
-        m_read_sync.fire_isr();
+        else
+        {
+            m_buffer = std::move(buf);
+        }
+        m_read_sync.up();
     }
 
     template <class BaseEndpointT>
     inline expected<span<char>, read_error> tcp_stream<BaseEndpointT>::read(tos::span<char> to) {
-        if (m_discon)
+        if (m_discon && !m_buffer.has_more())
         {
             return unexpected(read_error::disconnected);
         }
 
         tos::lock_guard<tos::mutex> lk{ m_busy };
 
-        {
-            tos::int_guard ig;
-            auto it = to.begin();
-            auto end = to.end();
-
-            while (m_fifo.size() > 0 && it != end)
-            {
-                *it++ = m_fifo.pop();
-            }
-
-            m_it = it;
-            m_end = end;
-        }
-
-        if (m_it == to.begin()) // buffer was empty, wait for new data
-        {
-            m_read_sync.wait();
-
-            if (m_discon)
-            {
-                return unexpected(read_error::disconnected);
-            }
-        }
-
-        return to.slice(0, m_it - to.begin());
+        return m_buffer.read(to);
     }
 }

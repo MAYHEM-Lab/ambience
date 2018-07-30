@@ -72,14 +72,14 @@ void task()
         }
 
         tos::semaphore s{0};
-        tos::tcp_stream *ep;
+        tos::tcp_stream<tos::esp82::tcp_endpoint> *ep;
 
         auto acceptor = [&](auto &, tos::esp82::tcp_endpoint &&newep) {
             if (ep) {
                 return false;
             }
-            auto mem = os_malloc(sizeof(tos::tcp_stream));
-            ep = new(mem) tos::tcp_stream(std::move(newep));
+            auto mem = os_malloc(sizeof(tos::tcp_stream<tos::esp82::tcp_endpoint>));
+            ep = new(mem) tos::tcp_stream<tos::esp82::tcp_endpoint>(std::move(newep));
             s.up();
             return true;
         };

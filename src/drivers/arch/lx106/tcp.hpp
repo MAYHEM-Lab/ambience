@@ -18,10 +18,10 @@
 
 #ifdef TOS_HAVE_SSL
 #include <compat/lwipr_compat.h>
-#include <ssl/tls1.h>
-
 #undef putc
 #undef getc
+#undef printf
+#include <ssl/tls1.h>
 #endif
 
 namespace tos
@@ -34,6 +34,16 @@ namespace tos
             static struct sent_t{} sent{};
             static struct discon_t{} discon{};
         }
+
+        enum class discon_reason
+        {
+            closed,
+            ssl_error,
+            recv_error,
+            aborted,
+            reset,
+            other_error
+        };
 
         struct buffer
         {
@@ -68,6 +78,7 @@ namespace tos
 
             span<char> read(span<char> buf)
             {
+                tos::int_guard ig;
                 auto remaining = tos::std::min(buf.size(), size());
 
                 auto total = 0;
@@ -220,7 +231,6 @@ namespace tos
             SSLCTX* ssl_ctx;
         };
 
-
         class tcp_socket
                 : public tos::list_node<tcp_socket>
         {
@@ -321,6 +331,8 @@ namespace tos
         inline tcp_endpoint::~tcp_endpoint() {
             if (!m_conn) return;
             tcp_recv(m_conn, nullptr);
+            tcp_err(m_conn, nullptr);
+            tcp_sent(m_conn, nullptr);
             tcp_close(m_conn);
             tcp_abort(m_conn);
         }
@@ -337,17 +349,21 @@ namespace tos
             {
                 auto self = static_cast<tcp_endpoint*>(user);
                 auto& handler = *(CallbackT*)self->m_event_handler;
-                if (p)
+                system_os_post(tos::esp82::main_task_prio, 0, 0);
+                if (err != ERR_OK)
                 {
-                    handler(lwip::events::recv, *self, span<const char>{ (char*)p->payload, p->len });
-                    tcp_recved(tpcb, p->len);
-                    pbuf_free(p);
-                } else {
-                    // conn closed
-                    handler(lwip::events::discon, *self);
+                    handler(lwip::events::discon, *self, lwip::discon_reason::recv_error);
                     return ERR_OK;
                 }
-                system_os_post(tos::esp82::main_task_prio, 0, 0);
+                if (p)
+                {
+                    tcp_recved(tpcb, p->tot_len);
+                    handler(lwip::events::recv, *self, lwip::buffer{ p });
+                } else {
+                    // conn closed
+                    handler(lwip::events::discon, *self, lwip::discon_reason::closed);
+                    return ERR_OK;
+                }
                 return ERR_OK;
             }
 
@@ -370,7 +386,8 @@ namespace tos
                 auto self = static_cast<tcp_endpoint*>(user);
 
                 auto& handler = *(EventHandlerT*)self->m_event_handler;
-                handler(lwip::events::discon, *self);
+                handler(lwip::events::discon, *self, err == ERR_ABRT ?
+                                        lwip::discon_reason::aborted : lwip::discon_reason::reset);
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
             }
         };
@@ -405,7 +422,10 @@ namespace tos
         inline secure_tcp_endpoint::~secure_tcp_endpoint() {
             if (!m_conn) return;
             ssl_ctx_free(ssl_ctx);
+            axl_free(m_conn);
             tcp_recv(m_conn, nullptr);
+            tcp_err(m_conn, nullptr);
+            tcp_sent(m_conn, nullptr);
             tcp_close(m_conn);
             tcp_abort(m_conn);
         }
@@ -424,10 +444,14 @@ namespace tos
                 auto ret_code = ERR_OK;
                 auto self = static_cast<secure_tcp_endpoint*>(user);
                 auto& handler = *(CallbackT*)self->m_event_handler;
+                system_os_post(tos::esp82::main_task_prio, 0, 0);
+
                 if (err != ERR_OK)
                 {
-                    printf("err: %d", err);
+                    handler(lwip::events::discon, *self, lwip::discon_reason::recv_error);
+                    return ERR_ABRT;
                 }
+
                 if (p)
                 {
                     pbuf* pout;
@@ -437,20 +461,20 @@ namespace tos
 
                     if (read_bytes <= SSL_OK)
                     {
-                        printf("something is wrong");
-                        handler(lwip::events::discon, *self);
-                        ret_code = ERR_ABRT;
+                        handler(lwip::events::discon, *self, lwip::discon_reason::ssl_error);
+                        return ERR_ABRT;
                     }
-                    else
+
+                    if (read_bytes > 0)
                     {
                         handler(lwip::events::recv, *self, lwip::buffer{pout});
+                        return ERR_OK;
                     }
-                } else {
-                    // conn closed
-                    handler(lwip::events::discon, *self);
                 }
-                system_os_post(tos::esp82::main_task_prio, 0, 0);
-                return ret_code;
+
+                // conn closed
+                handler(lwip::events::discon, *self, lwip::discon_reason::closed);
+                return ERR_OK;
             }
 
             template <class CallbackT>
@@ -471,8 +495,11 @@ namespace tos
                 auto self = static_cast<secure_tcp_endpoint*>(user);
 
                 auto& handler = *(EventHandlerT*)self->m_event_handler;
-                handler(lwip::events::discon, *self);
+                handler(lwip::events::discon, *self, err == ERR_ABRT ?
+                                        lwip::discon_reason::aborted : lwip::discon_reason::reset);
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
+                axl_free(self->m_conn);
+                self->m_conn = nullptr;
             }
         };
 

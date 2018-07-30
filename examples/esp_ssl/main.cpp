@@ -73,7 +73,6 @@ void _kill_r() {}
 }
 
 char buf[512];
-tos::lwip::buffer b;
 void task()
 {
     using namespace tos::tos_literals;
@@ -108,54 +107,35 @@ void task()
             tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
         }, tos::ignore);
 
-        with(tos::esp82::connect_ssl(conn, { { 192, 168, 0, 40 } }, { 4443 }), [&](tos::esp82::secure_tcp_endpoint& conn){
-            tos::println(usart, "perfect");
+        for (int i = 0; i < 25; ++i)
+        {
+            with(tos::esp82::connect_ssl(conn, { { 192, 168, 0, 40 } }, { 4443 }), [&](tos::esp82::secure_tcp_endpoint& conn){
+                tos::println(usart, "perfect");
 
-            struct{
-                tos::semaphore sent_sem{0};
-                bool fin = false;
-                tos::semaphore read_sem{0};
+                tos::tcp_stream<tos::esp82::secure_tcp_endpoint> stream(std::move(conn));
 
-                void operator()(tos::lwip::events::sent_t, tos::esp82::secure_tcp_endpoint&){
-                    sent_sem.up();
+                stream.write("GET / HTTP/1.1\r\n"
+                             "Host: 192.168.0.40\r\n"
+                             "\r\n");
+
+                tos::println(usart);
+
+                while (true)
+                {
+                    auto res = stream.read(buf);
+                    if (!res) break;
+                    with(std::move(res), [&](tos::span<const char> r){
+                        tos::print(usart, r);
+                    }, tos::ignore);
                 }
+                tos::println(usart);
+            }, [&](auto& err){
+                tos::println(usart, "couldn't connect", int(err));
+            });
 
-                void operator()(tos::lwip::events::recv_t, tos::esp82::secure_tcp_endpoint&, tos::lwip::buffer&& buf){
-                    if (b.has_more())
-                    {
-                        b.append(std::move(buf));
-                    }
-                    else
-                    {
-                        b = std::move(buf);
-                    }
-                    read_sem.up();
-                }
-
-                void operator()(tos::lwip::events::discon_t, tos::esp82::secure_tcp_endpoint&){
-                    fin = true;
-                }
-
-            } handler;
-            conn.attach(handler);
-            conn.send("GET / HTTP/1.1\r\n"
-                      "Host: 192.168.0.40\r\n"
-                      "\r\n");
-            handler.sent_sem.down();
-            while (!handler.fin || b.has_more())
-            {
-                handler.read_sem.down();
-                auto r = b.read(buf);
-                tos::println(usart, "==BUCKET==");
-                tos::print(usart, r);
-                tos::println(usart, "##BUCKET##");
-            }
-        }, [&](auto& err){
-            tos::println(usart, "couldn't connect", int(err));
-        });
-
-        tos::println(usart);
-        tos::println(usart, "done", int(system_get_free_heap_size()));
+            tos::println(usart);
+            tos::println(usart, "done", int(system_get_free_heap_size()));
+        }
     }, [&](auto& err){
         tos::println(usart, "uuuh, shouldn't have happened!");
     });

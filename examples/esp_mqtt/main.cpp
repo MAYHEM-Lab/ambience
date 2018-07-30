@@ -26,7 +26,7 @@
 
 struct net_facade
 {
-    tos::tcp_stream& str;
+    tos::tcp_stream<tos::esp82::tcp_endpoint>& str;
 
     int ALWAYS_INLINE read(unsigned char* buffer, int len, int)
     {
@@ -121,7 +121,7 @@ void ICACHE_FLASH_ATTR task()
         lwip_init();
 
         with(tos::esp82::connect(conn, { { 198, 41, 30, 241 } }, { 1883 }), [&](tos::esp82::tcp_endpoint& conn){
-            tos::tcp_stream stream {std::move(conn)};
+            tos::tcp_stream<tos::esp82::tcp_endpoint> stream {std::move(conn)};
             net_facade net{stream};
 
             MQTT::Client<net_facade, timer_facade> client{ net };
