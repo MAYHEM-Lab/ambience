@@ -14,6 +14,7 @@
 #include <tos/track_ptr.hpp>
 #include <lwip/tcp.h>
 #include <tos/expected.hpp>
+#include <tos/algorithm.hpp>
 
 #ifdef TOS_HAVE_SSL
 #include <compat/lwipr_compat.h>
@@ -33,6 +34,119 @@ namespace tos
             static struct sent_t{} sent{};
             static struct discon_t{} discon{};
         }
+
+        struct buffer
+        {
+            buffer() : m_root{nullptr}, m_read_off{0} {}
+            explicit buffer(pbuf* buf) : m_root{buf}, m_read_off{0} {}
+
+            buffer(const buffer&) = delete;
+            buffer(buffer&& rhs) noexcept : m_root{rhs.m_root}, m_read_off{rhs.m_read_off}
+            {
+                rhs.m_root = nullptr;
+            }
+
+            buffer& operator=(buffer&& rhs) noexcept
+            {
+                if (m_root)
+                {
+                    pbuf_free(m_root);
+                }
+                m_root = rhs.m_root;
+                m_read_off = rhs.m_read_off;
+                rhs.m_root = nullptr;
+                return *this;
+            }
+
+            ~buffer()
+            {
+                if (m_root)
+                {
+                    pbuf_free(m_root);
+                }
+            }
+
+            span<char> read(span<char> buf)
+            {
+                auto remaining = tos::std::min(buf.size(), size());
+
+                auto total = 0;
+                for (auto out_it = buf.begin(); remaining > 0;)
+                {
+                    auto bucket = cur_bucket();
+                    auto bucket_sz = tos::std::min(bucket.size(), remaining);
+                    std::copy(bucket.begin(), bucket.begin() + bucket_sz, out_it);
+                    out_it += bucket_sz;
+                    total += bucket_sz;
+                    remaining -= bucket_sz;
+                    consume(bucket_sz);
+                }
+
+                return buf.slice(0, total);
+            }
+
+            size_t size() const {
+                if (!m_root) return 0;
+                return m_root->tot_len - m_read_off;
+            }
+
+            bool has_more() const
+            {
+                return m_root;
+            }
+
+            void append(buffer&& b)
+            {
+                auto buf = b.m_root;
+                b.m_root = nullptr;
+                pbuf_cat(m_root, buf);
+            }
+
+        private:
+
+            /**
+             * Consumes the given number of bytes from the pbuf chain
+             *
+             * Number of bytes must be less than or equal to the cur_bucket().size()
+             *
+             * @param sz number of bytes
+             */
+            void consume(size_t sz)
+            {
+                if (sz < cur_bucket().size())
+                {
+                    m_read_off += sz;
+                    return;
+                }
+
+                if (!m_root->next)
+                {
+                    // done
+                    pbuf_free(m_root);
+                    m_root = nullptr;
+                    return;
+                }
+
+                auto next = m_root->next;
+                pbuf_ref(next);
+                pbuf_free(m_root);
+                m_root = next;
+                m_read_off = 0;
+            }
+
+            span<char> cur_bucket()
+            {
+                return { (char*)m_root->payload + m_read_off, m_root->len - m_read_off};
+            }
+
+            span<const char> cur_bucket() const
+            {
+                return { (const char*)m_root->payload + m_read_off, m_root->len - m_read_off};
+            }
+
+            pbuf* m_root;
+            size_t m_read_off;
+        };
     }
 
     namespace esp82
@@ -290,6 +404,7 @@ namespace tos
 
         inline secure_tcp_endpoint::~secure_tcp_endpoint() {
             if (!m_conn) return;
+            ssl_ctx_free(ssl_ctx);
             tcp_recv(m_conn, nullptr);
             tcp_close(m_conn);
             tcp_abort(m_conn);
@@ -306,32 +421,36 @@ namespace tos
             template <class CallbackT>
             static err_t recv_handler(void* user, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
             {
+                auto ret_code = ERR_OK;
                 auto self = static_cast<secure_tcp_endpoint*>(user);
                 auto& handler = *(CallbackT*)self->m_event_handler;
+                if (err != ERR_OK)
+                {
+                    printf("err: %d", err);
+                }
                 if (p)
                 {
                     pbuf* pout;
                     auto read_bytes = axl_ssl_read(self->ssl_obj, tpcb, p, &pout);
-
-                    if (read_bytes <= 0)
-                    {
-                        printf("something is wrong");
-                    }
-                    if (read_bytes > 0)
-                    {
-                        handler(lwip::events::recv, *self, span<const char>{ (char*)pout->payload, pout->len });
-                        pbuf_free(pout);
-                    }
-
                     tcp_recved(tpcb, p->tot_len);
                     pbuf_free(p);
+
+                    if (read_bytes <= SSL_OK)
+                    {
+                        printf("something is wrong");
+                        handler(lwip::events::discon, *self);
+                        ret_code = ERR_ABRT;
+                    }
+                    else
+                    {
+                        handler(lwip::events::recv, *self, lwip::buffer{pout});
+                    }
                 } else {
                     // conn closed
                     handler(lwip::events::discon, *self);
-                    return ERR_OK;
                 }
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
-                return ERR_OK;
+                return ret_code;
             }
 
             template <class CallbackT>
@@ -465,7 +584,9 @@ namespace tos
 
             system_update_cpu_freq(SYS_CPU_160MHZ); // Run faster during SSL handshake
 
-            auto sslObj = state.ssl_obj = ssl_client_new(sslContext, clientfd, nullptr, 0, nullptr);
+            auto ext = ssl_ext_new();
+            ssl_ext_set_max_fragment_size(ext, 2);
+            auto sslObj = state.ssl_obj = ssl_client_new(sslContext, clientfd, nullptr, 0, ext);
 
             state.sem.down();
 
