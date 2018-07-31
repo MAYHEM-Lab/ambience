@@ -62,7 +62,6 @@ elseif(TOS_ESP)
     add_subdirectory(examples/esp_conn)
     add_subdirectory(examples/esp_mqtt)
     add_subdirectory(examples/esp_ssl)
-    add_subdirectory(examples/app)
 elseif(TOS_X86)
     #add_subdirectory(examples/simple_portable)
 

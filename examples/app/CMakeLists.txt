@@ -1,3 +1,0 @@
-add_executable(my_app main.cpp)
-target_link_libraries(my_app tos_core esp82_drivers tos_print paho_mqtt)
-target_compile_definitions(my_app PUBLIC MQTTCLIENT_QOS2)
