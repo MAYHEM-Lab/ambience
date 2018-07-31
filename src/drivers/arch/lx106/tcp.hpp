@@ -17,7 +17,7 @@
 #include <tos/algorithm.hpp>
 
 #ifdef TOS_HAVE_SSL
-#include <compat/lwipr_compat.h>
+#include <lwipr_compat/lwipr_compat.h>
 #undef putc
 #undef getc
 #undef printf

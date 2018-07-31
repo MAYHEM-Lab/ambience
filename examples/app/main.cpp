@@ -1,9 +1,6 @@
 //
 // Created by fatih on 7/28/18.
 //
-#include <compat/lwipr_compat.h>
-#undef putc
-#undef getc
 #include <tos/ft.hpp>
 #include <drivers/arch/lx106/usart.hpp>
 #include <drivers/arch/lx106/timer.hpp>
@@ -19,7 +16,6 @@ void main_task()
 {
     using namespace tos::tos_literals;
     lwip_init();
-    axl_init(10);
 
     auto uart_params = tos::usart_config()
                         .add(115200_baud_rate)
