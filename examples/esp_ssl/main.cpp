@@ -101,21 +101,23 @@ void task()
     if (!res) goto conn;
 
     with (std::move(res), [&](tos::esp82::wifi_connection& conn){
+        tos::println(usart, "in");
         while (!w.wait_for_dhcp());
 
         with(conn.get_addr(), [&](auto& addr){
             tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
         }, tos::ignore);
 
-        for (int i = 0; i < 25; ++i)
+        for (int i = 0; i < 1500; ++i)
         {
-            with(tos::esp82::connect_ssl(conn, { { 192, 168, 0, 40 } }, { 4443 }), [&](tos::esp82::secure_tcp_endpoint& conn){
+            with(tos::esp82::connect_ssl(conn, { { 45, 55, 149, 110 } }, { 443 }), [&](tos::esp82::secure_tcp_endpoint& conn){
                 tos::println(usart, "perfect");
 
                 tos::tcp_stream<tos::esp82::secure_tcp_endpoint> stream(std::move(conn));
 
                 stream.write("GET / HTTP/1.1\r\n"
-                             "Host: 192.168.0.40\r\n"
+                             "Host: bakirbros.com\r\n"
+                             "Connection: close\r\n"
                              "\r\n");
 
                 tos::println(usart);
@@ -127,6 +129,7 @@ void task()
                     with(std::move(res), [&](tos::span<const char> r){
                         tos::print(usart, r);
                     }, tos::ignore);
+                    tos::this_thread::yield();
                 }
                 tos::println(usart);
             }, [&](auto& err){
@@ -134,7 +137,7 @@ void task()
             });
 
             tos::println(usart);
-            tos::println(usart, "done", int(system_get_free_heap_size()));
+            tos::println(usart, "done", i, int(system_get_free_heap_size()));
         }
     }, [&](auto& err){
         tos::println(usart, "uuuh, shouldn't have happened!");

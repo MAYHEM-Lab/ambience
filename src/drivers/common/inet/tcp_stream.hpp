@@ -46,7 +46,6 @@ namespace tos
         BaseEndpointT m_ep;
         tos::mutex m_busy;
         tos::semaphore m_write_sync{0};
-        tos::semaphore m_read_sync{0};
         bool m_discon{false};
 
         tos::span<char>::iterator m_it{};
@@ -70,9 +69,9 @@ namespace tos
     }
 
     template <class BaseEndpointT>
-    inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t, BaseEndpointT &, lwip::discon_reason) {
-        m_read_sync.up();
+    inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t, BaseEndpointT &, lwip::discon_reason r) {
         m_discon = true;
+        ets_printf("\nclosed: %d\n", int(r));
     }
 
     template <class BaseEndpointT>
@@ -92,7 +91,6 @@ namespace tos
         {
             m_buffer = std::move(buf);
         }
-        m_read_sync.up();
     }
 
     template <class BaseEndpointT>

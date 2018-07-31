@@ -78,7 +78,6 @@ namespace tos
 
             span<char> read(span<char> buf)
             {
-                tos::int_guard ig;
                 auto remaining = tos::std::min(buf.size(), size());
 
                 auto total = 0;
@@ -91,6 +90,7 @@ namespace tos
                     total += bucket_sz;
                     remaining -= bucket_sz;
                     consume(bucket_sz);
+                    tos::this_thread::yield();
                 }
 
                 return buf.slice(0, total);
@@ -441,14 +441,18 @@ namespace tos
             template <class CallbackT>
             static err_t recv_handler(void* user, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
             {
+                system_soft_wdt_feed();
+                ets_printf("\nenter recv_handler\n");
                 auto ret_code = ERR_OK;
                 auto self = static_cast<secure_tcp_endpoint*>(user);
                 auto& handler = *(CallbackT*)self->m_event_handler;
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
+                ets_printf("\nposted prio\n");
 
                 if (err != ERR_OK)
                 {
                     handler(lwip::events::discon, *self, lwip::discon_reason::recv_error);
+                    ets_printf("\nexit with recv_error\n");
                     return ERR_ABRT;
                 }
 
@@ -456,23 +460,29 @@ namespace tos
                 {
                     pbuf* pout;
                     auto read_bytes = axl_ssl_read(self->ssl_obj, tpcb, p, &pout);
+                    ets_printf("\naxl_ssl_read returned\n");
                     tcp_recved(tpcb, p->tot_len);
+                    ets_printf("\ntcp_recved returned\n");
                     pbuf_free(p);
+                    ets_printf("\npbuf_free returned\n");
 
                     if (read_bytes <= SSL_OK)
                     {
                         handler(lwip::events::discon, *self, lwip::discon_reason::ssl_error);
+                        ets_printf("\nexit with ssl_error\n");
                         return ERR_ABRT;
                     }
 
                     if (read_bytes > 0)
                     {
                         handler(lwip::events::recv, *self, lwip::buffer{pout});
+                        ets_printf("\nexit with success\n");
                         return ERR_OK;
                     }
                 }
 
                 // conn closed
+                ets_printf("\nexit with closed\n");
                 handler(lwip::events::discon, *self, lwip::discon_reason::closed);
                 return ERR_OK;
             }
@@ -480,18 +490,21 @@ namespace tos
             template <class CallbackT>
             static err_t sent_handler(void* user, struct tcp_pcb *tpcb, u16_t)
             {
+                ets_printf("\nenter sent_handler\n");
                 auto self = static_cast<secure_tcp_endpoint*>(user);
 
                 auto& handler = *(CallbackT*)self->m_event_handler;
                 handler(lwip::events::sent, *self);
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
 
+                ets_printf("\nexit sent_handler\n");
                 return ERR_OK;
             }
 
             template <class EventHandlerT>
             static void err_handler(void *user, err_t err)
             {
+                ets_printf("\nenter err_handler\n");
                 auto self = static_cast<secure_tcp_endpoint*>(user);
 
                 auto& handler = *(EventHandlerT*)self->m_event_handler;
@@ -500,6 +513,7 @@ namespace tos
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
                 axl_free(self->m_conn);
                 self->m_conn = nullptr;
+                ets_printf("\nexit err_handler\n");
             }
         };
 
@@ -521,9 +535,13 @@ namespace tos
         inline auto connected_handler(void *arg, struct tcp_pcb *tpcb, err_t err) -> err_t
         {
             auto state = static_cast<conn_state*>(arg);
+            system_os_post(tos::esp82::main_task_prio, 0, 0);
             state->res = err;
             state->sem.up();
-            system_os_post(tos::esp82::main_task_prio, 0, 0);
+            if (err != ERR_OK)
+            {
+                return ERR_ABRT;
+            }
             return ERR_OK;
         }
 
@@ -562,7 +580,10 @@ namespace tos
             auto state = static_cast<secure_conn_state*>(arg);
 
             if(!tcp || !p) {
+                ets_printf("closed");
                 state->res = ERR_CLSD;
+                state->sem.up();
+                system_os_post(tos::esp82::main_task_prio, 0, 0);
                 return ERR_ABRT;
             }
 
@@ -597,10 +618,12 @@ namespace tos
             tcp_arg(pcb, &state);
             tcp_recv(pcb, handshake_receive);
             tcp_err(pcb, conn_err_handler); // this signals ERR_CONN
-
+            ets_printf("\ncalling tcp_connect\n");
             tcp_connect(pcb, &a, port.port, connected_handler); // this signals ERR_OK
+
             state.sem.down();
 
+            ets_printf("\nfirst step done\n");
             if (state.res != ERR_OK)
             {
                 return unexpected(connect_error::not_connected);
@@ -616,17 +639,16 @@ namespace tos
             auto sslObj = state.ssl_obj = ssl_client_new(sslContext, clientfd, nullptr, 0, ext);
 
             state.sem.down();
-
-            if (state.res != ERR_OK)
-            {
-                return unexpected(connect_error::ssl_error);
-            }
+            ets_printf("\nsecond step done\n");
 
             system_update_cpu_freq(SYS_CPU_80MHZ); // back to normal speed
 
             if (state.res != ERR_OK)
             {
-                return unexpected(connect_error::unknown);
+                ssl_ctx_free(sslContext);
+                axl_free(pcb);
+                ets_printf("\nreturning ssl_error\n");
+                return unexpected(connect_error::ssl_error);
             }
 
             return secure_tcp_endpoint(pcb, sslObj, sslContext);

@@ -6,6 +6,7 @@
 #include <string.h>
 #include <tos/semaphore.hpp>
 #include <tos/fixed_fifo.hpp>
+#include <ssl/os_port.h>
 
 extern "C"
 {
@@ -93,6 +94,7 @@ namespace tos
                     case EVENT_STAMODE_CONNECTED:
                         return wifi_connection{};
                     default:
+                        ets_printf("ev: %d\n", int(ev.event));
                         tos::this_thread::yield();
                         break;
                 }
