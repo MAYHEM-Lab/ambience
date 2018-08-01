@@ -129,10 +129,6 @@ uint32 ICACHE_FLASH_ATTR espconn_init(uint32)
     return 1;
 }
 
-void WEAK lwip_init()
-{
-
-}
 }
 
 static os_event_t arr[16];

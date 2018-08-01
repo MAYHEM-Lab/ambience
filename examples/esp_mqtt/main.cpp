@@ -24,9 +24,14 @@
 #include <common/inet/tcp_stream.hpp>
 #include <MQTTClient.h>
 
+extern "C"
+{
+#include <mem.h>
+}
+
 struct net_facade
 {
-    tos::tcp_stream<tos::esp82::tcp_endpoint>& str;
+    tos::tcp_stream<tos::esp82::secure_tcp_endpoint>& str;
 
     int ALWAYS_INLINE read(unsigned char* buffer, int len, int)
     {
@@ -59,6 +64,7 @@ public:
 
     bool ALWAYS_INLINE expired()
     {
+        tos::this_thread::yield();
         return (interval_end_ms > 0L) && (millis() >= interval_end_ms);
     }
 
@@ -87,6 +93,48 @@ private:
     unsigned long interval_end_ms;
 };
 
+extern "C"
+{
+void* malloc(size_t sz)
+{
+    return os_malloc(sz);
+}
+
+void free(void* ptr)
+{
+    os_free(ptr);
+}
+
+void* calloc(size_t nitems, size_t size)
+{
+    return os_zalloc(nitems * size);
+}
+
+void* realloc(void* base, size_t sz)
+{
+    return os_realloc(base, sz);
+}
+
+void ax_wdt_feed()
+{
+    system_soft_wdt_feed();
+    //tos::this_thread::yield();
+}
+
+void _exit()
+{
+    tos::this_thread::exit();
+}
+_PTR
+_malloc_r (struct _reent *r, size_t sz)
+{
+    return malloc (sz);
+}
+
+void _getpid_r() {}
+void _kill_r() {}
+}
+
 char buf[512];
 void ICACHE_FLASH_ATTR task()
 {
@@ -106,7 +154,7 @@ void ICACHE_FLASH_ATTR task()
 
     tos::esp82::wifi w;
     conn:
-    auto res = w.connect("Nakedsense.2", "serdar1988");
+    auto res = w.connect("FG", "23111994a");
 
     tos::println(usart, "connected?", bool(res));
     if (!res) goto conn;
@@ -119,9 +167,10 @@ void ICACHE_FLASH_ATTR task()
         }, tos::ignore);
 
         lwip_init();
+        axl_init(3);
 
-        with(tos::esp82::connect(conn, { { 198, 41, 30, 241 } }, { 1883 }), [&](tos::esp82::tcp_endpoint& conn){
-            tos::tcp_stream<tos::esp82::tcp_endpoint> stream {std::move(conn)};
+        with(tos::esp82::connect_ssl(conn, { { 198, 41, 30, 241 } }, { 8883 }), [&](tos::esp82::secure_tcp_endpoint& conn){
+            tos::tcp_stream<tos::esp82::secure_tcp_endpoint> stream {std::move(conn)};
             net_facade net{stream};
 
             MQTT::Client<net_facade, timer_facade> client{ net };
@@ -141,8 +190,8 @@ void ICACHE_FLASH_ATTR task()
             message.qos = MQTT::QOS1;
             message.retained = false;
             message.dup = false;
-            message.payload = (void*)"Hello From tos@esp8266";
-            message.payloadlen = strlen("Hello From tos@esp8266") + 1;
+            message.payload = (void*)"Secure hello From tos@esp8266";
+            message.payloadlen = strlen("Secure hello From tos@esp8266") + 1;
             rc = client.publish("tos-sample", message);
             tos::println(usart, "rc from MQTT publish is", rc);
 
