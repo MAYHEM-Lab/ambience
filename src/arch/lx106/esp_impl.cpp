@@ -16,6 +16,7 @@ extern "C"
 #include <tos/ft.hpp>
 #include <tos/interrupt.hpp>
 #include <lwip/timers.h>
+#include <tos/compiler.hpp>
 
 extern "C"
 {
@@ -126,6 +127,11 @@ do_global_ctors()
 uint32 ICACHE_FLASH_ATTR espconn_init(uint32)
 {
     return 1;
+}
+
+void WEAK lwip_init()
+{
+
 }
 }
 

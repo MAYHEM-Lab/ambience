@@ -20,5 +20,5 @@ add_library(esp82_gpio gpio.hpp src/gpio.cpp)
 target_include_directories(esp82_gpio PUBLIC .)
 target_link_libraries(esp82_gpio PUBLIC tos_core tos_gpio)
 
-add_library(esp82_drivers src/stub.cpp)
+add_library(esp82_drivers src/stub.cpp drivers.hpp)
 target_link_libraries(esp82_drivers PUBLIC lx106_usart esp82_timer esp82_wifi esp82_tcp)

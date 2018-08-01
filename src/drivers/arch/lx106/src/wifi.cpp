@@ -7,6 +7,7 @@
 #include <tos/semaphore.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <ssl/os_port.h>
+#include <lwip/init.h>
 
 extern "C"
 {
@@ -92,6 +93,7 @@ namespace tos
                         wifi_station_disconnect();
                         return unexpected(assoc_error::unknown);
                     case EVENT_STAMODE_CONNECTED:
+                        lwip_init();
                         return wifi_connection{};
                     default:
                         ets_printf("ev: %d\n", int(ev.event));

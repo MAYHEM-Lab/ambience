@@ -2,6 +2,8 @@
 // Created by fatih on 6/28/18.
 //
 
+#pragma once
+
 #include <tos/ring_buf.hpp>
 #include <tos/semaphore.hpp>
 

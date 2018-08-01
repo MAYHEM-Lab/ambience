@@ -8,6 +8,7 @@
 #include <tos/memory.hpp>
 #include <tos/type_traits.hpp>
 #include <tos/compiler.hpp>
+#include <tos/new.hpp>
 
 namespace tos
 {
@@ -50,11 +51,11 @@ namespace tos
         {
             if (m_have)
             {
-                new (&m_t) T(std::move(rhs.m_t));
+                new (&m_t) T(tos::std::move(rhs.m_t));
             }
             else
             {
-                new (&m_err) ErrT(std::move(rhs.m_err));
+                new (&m_err) ErrT(tos::std::move(rhs.m_err));
             }
             rhs.m_have = false;
         }

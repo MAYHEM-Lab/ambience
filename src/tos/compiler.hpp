@@ -16,3 +16,5 @@
 
 #define TOS_EXPORT __attribute__((visibility("default")))
 #define TOS_HIDDEN __attribute__((visibility("hidden")))
+
+#define WEAK __attribute__((weak))
