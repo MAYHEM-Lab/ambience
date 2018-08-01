@@ -629,11 +629,13 @@ namespace tos
                 return unexpected(connect_error::not_connected);
             }
 
+            tos::this_thread::yield();
             auto clientfd = axl_append(pcb);
             auto sslContext = ssl_ctx_new(SSL_CONNECT_IN_PARTS | SSL_SERVER_VERIFY_LATER, 1);
 
             system_update_cpu_freq(SYS_CPU_160MHZ); // Run faster during SSL handshake
 
+            tos::this_thread::yield();
             auto ext = ssl_ext_new();
             ssl_ext_set_max_fragment_size(ext, 2);
             auto sslObj = state.ssl_obj = ssl_client_new(sslContext, clientfd, nullptr, 0, ext);
@@ -646,6 +648,7 @@ namespace tos
             if (state.res != ERR_OK)
             {
                 ssl_ctx_free(sslContext);
+                tos::this_thread::yield();
                 axl_free(pcb);
                 ets_printf("\nreturning ssl_error\n");
                 return unexpected(connect_error::ssl_error);
