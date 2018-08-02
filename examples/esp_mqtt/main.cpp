@@ -169,35 +169,38 @@ void ICACHE_FLASH_ATTR task()
         lwip_init();
         axl_init(3);
 
-        with(tos::esp82::connect_ssl(conn, { { 198, 41, 30, 241 } }, { 8883 }), [&](tos::esp82::secure_tcp_endpoint& conn){
-            tos::tcp_stream<tos::esp82::secure_tcp_endpoint> stream {std::move(conn)};
-            net_facade net{stream};
+        for (int i = 0; i < 25; ++i)
+        {
+            with(tos::esp82::connect_ssl(conn, { { 198, 41, 30, 241 } }, { 8883 }), [&](tos::esp82::secure_tcp_endpoint& conn){
+                tos::tcp_stream<tos::esp82::secure_tcp_endpoint> stream {std::move(conn)};
+                net_facade net{stream};
 
-            MQTT::Client<net_facade, timer_facade> client{ net };
-            MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
-            data.MQTTVersion = 3;
-            data.clientID.cstring = (char*)"tos-sample";
-            auto rc = client.connect(data);
+                MQTT::Client<net_facade, timer_facade> client{ net };
+                MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
+                data.MQTTVersion = 3;
+                data.clientID.cstring = (char*)"tos-sample";
+                auto rc = client.connect(data);
 
-            if (rc != 0)
-            {
-                tos::println(usart, "rc from MQTT connect is", rc);
-                return;
-            }
-            tos::println(usart, "MQTT connected");
+                if (rc != 0)
+                {
+                    tos::println(usart, "rc from MQTT connect is", rc);
+                    return;
+                }
+                tos::println(usart, "MQTT connected");
 
-            MQTT::Message message;
-            message.qos = MQTT::QOS1;
-            message.retained = false;
-            message.dup = false;
-            message.payload = (void*)"Secure hello From tos@esp8266";
-            message.payloadlen = strlen("Secure hello From tos@esp8266") + 1;
-            rc = client.publish("tos-sample", message);
-            tos::println(usart, "rc from MQTT publish is", rc);
+                MQTT::Message message;
+                message.qos = MQTT::QOS1;
+                message.retained = false;
+                message.dup = false;
+                message.payload = (void*)"Secure hello From tos@esp8266";
+                message.payloadlen = strlen("Secure hello From tos@esp8266") + 1;
+                rc = client.publish("tos-sample", message);
+                tos::println(usart, "rc from MQTT publish is", rc);
 
-        }, [&](auto& err){
-            tos::println(usart, "couldn't connect");
-        });
+            }, [&](auto& err){
+                tos::println(usart, "couldn't connect");
+            });
+        }
 
         tos::println(usart, "done", int(system_get_free_heap_size()));
     }, [&](auto& err){

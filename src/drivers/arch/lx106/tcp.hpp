@@ -633,6 +633,7 @@ namespace tos
             auto clientfd = axl_append(pcb);
             auto sslContext = ssl_ctx_new(SSL_CONNECT_IN_PARTS | SSL_SERVER_VERIFY_LATER, 1);
 
+            tos::this_thread::yield();
             system_update_cpu_freq(SYS_CPU_160MHZ); // Run faster during SSL handshake
 
             tos::this_thread::yield();
