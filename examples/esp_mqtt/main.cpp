@@ -136,7 +136,7 @@ void _kill_r() {}
 }
 
 char buf[512];
-void ICACHE_FLASH_ATTR task()
+void ICACHE_FLASH_ATTR task(void* arg_pt)
 {
     using namespace tos::tos_literals;
 
@@ -148,6 +148,8 @@ void ICACHE_FLASH_ATTR task()
     auto usart = open(tos::devs::usart<0>, usconf);
     usart.enable();
 
+    auto arg = *static_cast<int*>(arg_pt);
+
     tos::print(usart, "\n\n\n\n\n\n");
     tos::println(usart, tos::platform::board_name);
     tos::println(usart, tos::vcs::commit_hash);
@@ -157,6 +159,8 @@ void ICACHE_FLASH_ATTR task()
     auto res = w.connect("FG", "23111994a");
 
     tos::println(usart, "connected?", bool(res));
+    tos::println(usart, "argument:", arg);
+
     if (!res) goto conn;
 
     with (std::move(res), [&](tos::esp82::wifi_connection& conn) ICACHE_FLASH_ATTR{
@@ -212,7 +216,10 @@ void ICACHE_FLASH_ATTR task()
     }
 }
 
+int x;
+
 void tos_main()
 {
-    tos::launch(task);
+    x = 42;
+    tos::launch(task, &x);
 }

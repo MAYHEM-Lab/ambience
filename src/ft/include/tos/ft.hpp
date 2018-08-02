@@ -27,13 +27,14 @@ namespace tos {
      * @return identifier for the newly created thread
      */
     [[deprecated]]
-    thread_id_t launch(kern::tcb::entry_point_t);
+    thread_id_t launch(kern::tcb::entry_point_t, void* arg = nullptr);
 
     namespace tags
     {
         struct stack_ptr_t {};
         struct entry_pt_t {};
         struct stack_sz_t {};
+        struct argument_t {};
     }
 
     using launch_params =
@@ -41,7 +42,8 @@ namespace tos {
             base_key_policy,
             el_t<tags::stack_ptr_t, void* const &>,
             el_t<tags::stack_sz_t, const size_t&>,
-            el_t<tags::entry_pt_t, const kern::tcb::entry_point_t&>
+            el_t<tags::entry_pt_t, const kern::tcb::entry_point_t&>,
+            el_t<tags::argument_t, void* const&>
         >;
 
     inline constexpr auto thread_params() { return ct_map<base_key_policy>{}; }
@@ -173,13 +175,14 @@ namespace tos {
         }
     }
 
-    inline thread_id_t launch(kern::tcb::entry_point_t e)
+    inline thread_id_t launch(kern::tcb::entry_point_t e, void* arg)
     {
         constexpr size_t stack_size = 2048;
         auto params = thread_params()
             .add<tags::stack_ptr_t>(tos_stack_alloc(stack_size))
             .add<tags::stack_sz_t>(stack_size)
-            .add<tags::entry_pt_t>(e);
+            .add<tags::entry_pt_t>(e)
+            .add<tags::argument_t>(arg);
         return launch(params);
     }
 

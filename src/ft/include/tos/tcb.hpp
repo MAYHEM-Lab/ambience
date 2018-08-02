@@ -13,7 +13,7 @@ namespace tos {
         struct alignas(16) tcb
             : public list_node<tcb>
         {
-            using entry_point_t = void(*)();
+            using entry_point_t = void(*)(void*);
 
             uint16_t stack_sz;
             jmp_buf context;

@@ -105,9 +105,11 @@ namespace tos {
             const auto stack = static_cast<char*>(get<tags::stack_ptr_t>(params));
             const auto t_ptr = stack + get<tags::stack_sz_t>(params) - sizeof(tcb);
             tcb::entry_point_t entry = get<tags::entry_pt_t>(params);
+            void* user_arg = get<tags::argument_t>(params);
 
             auto thread = new (t_ptr) tcb(get<tags::stack_sz_t>(params));
             push(reinterpret_cast<uintptr_t>(thread), entry);
+            push(reinterpret_cast<uintptr_t>(thread) - sizeof entry, user_arg);
 
             // New threads are runnable by default.
             run_queue.push_back(*thread);
@@ -127,10 +129,11 @@ namespace tos {
              * independent execution context
              */
             tos_set_stack_ptr(reinterpret_cast<char*>(impl::cur_thread));
+            auto arg_pt = pop<void*>(reinterpret_cast<uintptr_t>(impl::cur_thread) - sizeof entry);
             auto entry_pt = pop<tcb::entry_point_t>(reinterpret_cast<uintptr_t>(impl::cur_thread));
 
             kern::enable_interrupts();
-            entry_pt();
+            entry_pt(arg_pt);
             this_thread::exit(nullptr);
         }
 
