@@ -80,12 +80,34 @@ namespace tos {
             return sched.schedule();
         }
 
+        template <class T>
+        void push(uintptr_t stack, T val)
+        {
+            // assumes stack grows downwards
+            char* stptr = reinterpret_cast<char*>(stack);
+            stptr -= sizeof val;
+            memcpy(stptr, &val, sizeof val);
+        }
+
+        template <class T>
+        T pop(uintptr_t stack)
+        {
+            // assumes stack grows downwards
+            T t;
+            char* stptr = reinterpret_cast<char*>(stack);
+            stptr -= sizeof t;
+            memcpy(&t, stptr, sizeof t);
+            return t;
+        }
+
         inline thread_id_t scheduler::start(launch_params params)
         {
             const auto stack = static_cast<char*>(get<tags::stack_ptr_t>(params));
             const auto t_ptr = stack + get<tags::stack_sz_t>(params) - sizeof(tcb);
+            tcb::entry_point_t entry = get<tags::entry_pt_t>(params);
 
-            auto thread = new (t_ptr) tcb(get<tags::entry_pt_t>(params), get<tags::stack_sz_t>(params));
+            auto thread = new (t_ptr) tcb(get<tags::stack_sz_t>(params));
+            push(reinterpret_cast<uintptr_t>(thread), entry);
 
             // New threads are runnable by default.
             run_queue.push_back(*thread);
@@ -105,9 +127,10 @@ namespace tos {
              * independent execution context
              */
             tos_set_stack_ptr(reinterpret_cast<char*>(impl::cur_thread));
+            auto entry_pt = pop<tcb::entry_point_t>(reinterpret_cast<uintptr_t>(impl::cur_thread));
 
             kern::enable_interrupts();
-            impl::cur_thread->entry();
+            entry_pt();
             this_thread::exit(nullptr);
         }
 

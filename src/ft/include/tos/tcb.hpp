@@ -15,12 +15,11 @@ namespace tos {
         {
             using entry_point_t = void(*)();
 
-            entry_point_t entry;
             uint16_t stack_sz;
             jmp_buf context;
 
-            explicit tcb(entry_point_t pt, uint16_t stack_sz)
-                    : entry{std::move(pt)}, stack_sz{stack_sz} {}
+            explicit tcb(uint16_t stack_sz)
+                    : stack_sz{stack_sz} {}
         };
     }
 }
