@@ -5,20 +5,19 @@
 #pragma once
 
 #include <stddef.h>
+#include <tos/span.hpp>
 
 namespace tos
 {
     struct char_istream
     {
-        virtual int read(char* buf, size_t sz) = 0;
-        virtual char getc() = 0;
+        virtual span<char> read(span<char>) = 0;
         virtual ~char_istream() = default;
     };
 
     struct char_ostream
     {
-        virtual int write(const char* buf, size_t sz) = 0;
-        virtual void putc(char c) = 0;
+        virtual int write(span<const char>) = 0;
         virtual ~char_ostream() = default;
     };
 

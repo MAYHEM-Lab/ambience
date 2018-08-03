@@ -55,6 +55,10 @@ namespace tos
         T&operator*() { return *get(); }
         const T&operator*() const { return *get(); }
 
+        explicit operator bool(){
+            return m_ptr;
+        }
+
         void reset()
         {
             if (!m_ptr) return;

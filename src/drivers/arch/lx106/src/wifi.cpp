@@ -70,6 +70,15 @@ namespace tos
         wifi::~wifi() {
         }
 
+        bool wifi_connection::wait_for_dhcp() {
+            auto ev = events.pop();
+            if (ev.event == EVENT_STAMODE_GOT_IP)
+            {
+                return true;
+            }
+            return false;
+        }
+
         expected<wifi_connection, assoc_error>
         wifi::connect(tos::span<const char> ssid, tos::span<const char> passwd) noexcept {
             station_config stationConfig{};
@@ -101,15 +110,6 @@ namespace tos
                         break;
                 }
             }
-        }
-
-        bool wifi::wait_for_dhcp() {
-            auto ev = events.pop();
-            if (ev.event == EVENT_STAMODE_GOT_IP)
-            {
-                return true;
-            }
-            return false;
         }
 
         void wifi::scan() {

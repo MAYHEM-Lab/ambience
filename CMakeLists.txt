@@ -28,7 +28,7 @@ if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/libemsha")
     add_subdirectory(libs/libemsha)
 endif()
 
-add_subdirectory(libs/kthreads)
+#add_subdirectory(libs/kthreads)
 
 if(TOS_AVR)
     add_subdirectory(examples/gpio)

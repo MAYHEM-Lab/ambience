@@ -54,7 +54,7 @@ void task()
 
 
     with (std::move(res), [&](tos::esp82::wifi_connection& conn) {
-        while (!w.wait_for_dhcp());
+        while (!conn.wait_for_dhcp());
 
         auto addr = with(conn.get_addr(), [&](auto& addr){
             return addr;

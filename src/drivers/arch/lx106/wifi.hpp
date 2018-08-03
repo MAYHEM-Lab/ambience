@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <tos/devices.hpp>
 #include <tos/span.hpp>
 #include <drivers/common/inet/tcp_ip.hpp>
 #include <stdint.h>
@@ -33,6 +34,8 @@ namespace tos
             }
             ~wifi_connection();
 
+            bool wait_for_dhcp() ICACHE_FLASH_ATTR;
+
         private:
             wifi_connection() = default;
             friend class wifi;
@@ -52,13 +55,21 @@ namespace tos
             expected<wifi_connection, assoc_error>
             connect(span<const char> ssid, span<const char> passwd) noexcept ICACHE_FLASH_ATTR;
 
-            bool wait_for_dhcp() ICACHE_FLASH_ATTR;
-
             void scan();
 
             ~wifi() ICACHE_FLASH_ATTR;
         private:
         };
+    }
 
+    namespace devs
+    {
+        template <int N> using wifi_t = dev<struct _wifi_t, N>;
+        template <int N> static constexpr wifi_t<N> wifi{};
+    }
+
+    inline esp82::wifi open_impl(devs::wifi_t<0>)
+    {
+        return {};
     }
 }
