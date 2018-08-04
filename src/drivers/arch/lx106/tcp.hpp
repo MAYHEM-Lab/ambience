@@ -40,6 +40,7 @@ namespace tos
             closed,
             ssl_error,
             recv_error,
+            sent_error,
             aborted,
             reset,
             other_error
@@ -212,7 +213,7 @@ namespace tos
             template <class EventHandlerT>
             void attach(EventHandlerT& cb);
 
-            void send(span<const char>);
+            uint16_t send(span<const char>);
 
             ~secure_tcp_endpoint();
 
@@ -408,9 +409,9 @@ namespace tos
 
         inline secure_tcp_endpoint::secure_tcp_endpoint(tos::esp82::secure_tcp_endpoint &&rhs) noexcept
                 : m_conn{rhs.m_conn},
+                  m_event_handler{rhs.m_event_handler},
                   ssl_obj{rhs.ssl_obj},
-                  ssl_ctx{rhs.ssl_ctx},
-                  m_event_handler{rhs.m_event_handler}
+                  ssl_ctx{rhs.ssl_ctx}
         {
             tcp_arg(m_conn, this);
             rhs.m_event_handler = nullptr;
@@ -430,8 +431,10 @@ namespace tos
             tcp_abort(m_conn);
         }
 
-        inline void secure_tcp_endpoint::send(tos::span<const char> buf) {
+        inline uint16_t secure_tcp_endpoint::send(tos::span<const char> buf) {
+            auto write_len = ssl_calculate_write_length(ssl_obj, buf.size());
             axl_ssl_write(ssl_obj, (const uint8_t*)buf.data(), buf.size());
+            return write_len;
             //tcp_write(m_conn, (uint8_t*)buf.data(), buf.size(), 0);
             //tcp_output(m_conn);
         }
@@ -443,7 +446,6 @@ namespace tos
             {
                 system_soft_wdt_feed();
                 ets_printf("\nenter recv_handler\n");
-                auto ret_code = ERR_OK;
                 auto self = static_cast<secure_tcp_endpoint*>(user);
                 auto& handler = *(CallbackT*)self->m_event_handler;
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
@@ -488,13 +490,13 @@ namespace tos
             }
 
             template <class CallbackT>
-            static err_t sent_handler(void* user, struct tcp_pcb *tpcb, u16_t)
+            static err_t sent_handler(void* user, struct tcp_pcb*, u16_t bytes)
             {
                 ets_printf("\nenter sent_handler\n");
                 auto self = static_cast<secure_tcp_endpoint*>(user);
-
                 auto& handler = *(CallbackT*)self->m_event_handler;
-                handler(lwip::events::sent, *self);
+
+                handler(lwip::events::sent, *self, bytes);
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
 
                 ets_printf("\nexit sent_handler\n");
@@ -532,7 +534,7 @@ namespace tos
             err_t res;
         };
 
-        inline auto connected_handler(void *arg, struct tcp_pcb *tpcb, err_t err) -> err_t
+        inline auto connected_handler(void *arg, struct tcp_pcb *, err_t err) -> err_t
         {
             auto state = static_cast<conn_state*>(arg);
             system_os_post(tos::esp82::main_task_prio, 0, 0);
@@ -578,6 +580,15 @@ namespace tos
         inline err_t handshake_receive(void *arg, struct tcp_pcb *tcp, struct pbuf *p, err_t err)
         {
             auto state = static_cast<secure_conn_state*>(arg);
+
+            if (err != ERR_OK)
+            {
+                ets_printf("err not OK");
+                state->res = ERR_CLSD;
+                state->sem.up();
+                system_os_post(tos::esp82::main_task_prio, 0, 0);
+                return ERR_ABRT;
+            }
 
             if(!tcp || !p) {
                 ets_printf("closed");

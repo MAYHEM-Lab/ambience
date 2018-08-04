@@ -63,7 +63,7 @@ extern "C"
         tos::this_thread::exit();
     }
 _PTR
-_malloc_r (struct _reent *r, size_t sz)
+_malloc_r (struct _reent*, size_t sz)
 {
     return malloc (sz);
 }
@@ -73,7 +73,7 @@ void _kill_r() {}
 }
 
 char buf[512];
-void task()
+void task(void*)
 {
     using namespace tos::tos_literals;
 
@@ -95,7 +95,7 @@ void task()
 
     tos::esp82::wifi w;
     conn:
-    auto res = w.connect("AndroidAP", "12345678");
+    auto res = w.connect("WIFI", "PASS");
 
     tos::println(usart, "connected?", bool(res));
     if (!res) goto conn;
@@ -139,7 +139,7 @@ void task()
             tos::println(usart);
             tos::println(usart, "done", i, int(system_get_free_heap_size()));
         }
-    }, [&](auto& err){
+    }, [&](auto&){
         tos::println(usart, "uuuh, shouldn't have happened!");
     });
 

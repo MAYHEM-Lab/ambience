@@ -31,7 +31,7 @@ namespace tos
 
         expected<span<char>, read_error> read(span<char>);
 
-        void operator()(lwip::events::sent_t, BaseEndpointT&) ICACHE_FLASH_ATTR;
+        void operator()(lwip::events::sent_t, BaseEndpointT&, uint16_t) ICACHE_FLASH_ATTR;
         void operator()(lwip::events::discon_t, BaseEndpointT&, lwip::discon_reason) ICACHE_FLASH_ATTR;
         void operator()(lwip::events::recv_t, BaseEndpointT&, lwip::buffer&&) ICACHE_FLASH_ATTR;
 
@@ -47,6 +47,7 @@ namespace tos
         tos::mutex m_busy;
         tos::semaphore m_write_sync{0};
         bool m_discon{false};
+        uint16_t m_sent_bytes = 0;
 
         tos::span<char>::iterator m_it{};
         tos::span<char>::iterator m_end{};
@@ -64,7 +65,9 @@ namespace tos
     }
 
     template <class BaseEndpointT>
-    inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::sent_t, BaseEndpointT &) {
+    inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::sent_t, BaseEndpointT &, uint16_t len) {
+        m_sent_bytes += len;
+        ets_printf("sent %d bytes", int(len));
         m_write_sync.up();
     }
 
@@ -77,8 +80,13 @@ namespace tos
     template <class BaseEndpointT>
     inline void tcp_stream<BaseEndpointT>::write(tos::span<const char> buf) {
         tos::lock_guard<tos::mutex> lk{ m_busy };
-        m_ep.send(buf);
-        m_write_sync.down();
+        m_sent_bytes = 0;
+        auto to_send = m_ep.send(buf);
+        ets_printf("sending %d bytes", int(to_send));
+        while (m_sent_bytes != to_send)
+        {
+            m_write_sync.down();
+        }
     }
 
     template <class BaseEndpointT>
