@@ -51,5 +51,5 @@ target_include_directories(tos_i2c PUBLIC .)
 add_library(tos_lcd common/lcd.hpp src/stub.cpp)
 target_include_directories(tos_lcd PUBLIC .)
 
-add_library(tos_inet common/inet/tcp_ip.hpp common/inet/tcp_stream.hpp src/stub.cpp)
+add_library(tos_inet common/inet/tcp_ip.hpp common/inet/tcp_stream.hpp src/stub.cpp common/inet/lwip.hpp)
 target_include_directories(tos_inet PUBLIC .)

@@ -8,13 +8,13 @@
 #include <wifi.hpp>
 #include <tos/arch.hpp>
 #include <utility>
-#include <algorithm>
 #include <common/inet/tcp_ip.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/track_ptr.hpp>
 #include <lwip/tcp.h>
 #include <tos/expected.hpp>
 #include <tos/algorithm.hpp>
+#include <common/inet/lwip.hpp>
 
 #ifdef TOS_HAVE_SSL
 #include <lwipr_compat/lwipr_compat.h>
@@ -26,151 +26,8 @@
 
 namespace tos
 {
-    namespace lwip
-    {
-        namespace events
-        {
-            static struct recv_t{} recv{};
-            static struct sent_t{} sent{};
-            static struct discon_t{} discon{};
-        }
-
-        enum class discon_reason
-        {
-            closed,
-            ssl_error,
-            recv_error,
-            sent_error,
-            aborted,
-            reset,
-            other_error
-        };
-
-        struct buffer
-        {
-            buffer() : m_root{nullptr}, m_read_off{0} {}
-            explicit buffer(pbuf* buf) : m_root{buf}, m_read_off{0} {}
-
-            buffer(const buffer&) = delete;
-            buffer(buffer&& rhs) noexcept : m_root{rhs.m_root}, m_read_off{rhs.m_read_off}
-            {
-                rhs.m_root = nullptr;
-            }
-
-            buffer& operator=(buffer&& rhs) noexcept
-            {
-                if (m_root)
-                {
-                    pbuf_free(m_root);
-                }
-                m_root = rhs.m_root;
-                m_read_off = rhs.m_read_off;
-                rhs.m_root = nullptr;
-                return *this;
-            }
-
-            ~buffer()
-            {
-                if (m_root)
-                {
-                    pbuf_free(m_root);
-                }
-            }
-
-            span<char> read(span<char> buf)
-            {
-                auto remaining = tos::std::min(buf.size(), size());
-
-                auto total = 0;
-                for (auto out_it = buf.begin(); remaining > 0;)
-                {
-                    auto bucket = cur_bucket();
-                    auto bucket_sz = tos::std::min(bucket.size(), remaining);
-                    std::copy(bucket.begin(), bucket.begin() + bucket_sz, out_it);
-                    out_it += bucket_sz;
-                    total += bucket_sz;
-                    remaining -= bucket_sz;
-                    consume(bucket_sz);
-                    tos::this_thread::yield();
-                }
-
-                return buf.slice(0, total);
-            }
-
-            size_t size() const {
-                if (!m_root) return 0;
-                return m_root->tot_len - m_read_off;
-            }
-
-            bool has_more() const
-            {
-                return m_root;
-            }
-
-            void append(buffer&& b)
-            {
-                auto buf = b.m_root;
-                b.m_root = nullptr;
-                pbuf_cat(m_root, buf);
-            }
-
-        private:
-
-            /**
-             * Consumes the given number of bytes from the pbuf chain
-             *
-             * Number of bytes must be less than or equal to the cur_bucket().size()
-             *
-             * @param sz number of bytes
-             */
-            void consume(size_t sz)
-            {
-                if (sz < cur_bucket().size())
-                {
-                    m_read_off += sz;
-                    return;
-                }
-
-                if (!m_root->next)
-                {
-                    // done
-                    pbuf_free(m_root);
-                    m_root = nullptr;
-                    return;
-                }
-
-                auto next = m_root->next;
-                pbuf_ref(next);
-                pbuf_free(m_root);
-                m_root = next;
-                m_read_off = 0;
-            }
-
-            span<char> cur_bucket()
-            {
-                return { (char*)m_root->payload + m_read_off, m_root->len - m_read_off};
-            }
-
-            span<const char> cur_bucket() const
-            {
-                return { (const char*)m_root->payload + m_read_off, m_root->len - m_read_off};
-            }
-
-            pbuf* m_root;
-            size_t m_read_off;
-        };
-    }
-
     namespace esp82
     {
-        enum class connect_error
-        {
-            not_connected,
-            cert_invalid,
-            ssl_error,
-            unknown
-        };
-
         class tcp_endpoint
         {
         public:
@@ -196,7 +53,7 @@ namespace tos
 
             friend struct ep_handlers;
 
-            friend expected<tcp_endpoint, connect_error> connect(wifi_connection&, ipv4_addr, port_num_t);
+            friend expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection&, ipv4_addr, port_num_t);
 
             tcp_pcb* m_conn;
             void* m_event_handler;
@@ -224,7 +81,7 @@ namespace tos
 
             friend struct sec_ep_handlers;
 
-            friend expected<secure_tcp_endpoint, connect_error> connect_ssl(wifi_connection&, ipv4_addr, port_num_t);
+            friend expected<secure_tcp_endpoint, lwip::connect_error> connect_ssl(wifi_connection&, ipv4_addr, port_num_t);
 
             tcp_pcb* m_conn;
             void* m_event_handler;
@@ -260,7 +117,7 @@ namespace tos
          * @param port tcp port of the destination application
          * @return an endpoint or an error if connection fails
          */
-        expected<tcp_endpoint, connect_error> connect(wifi_connection& iface, ipv4_addr host, port_num_t port);
+        expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection& iface, ipv4_addr host, port_num_t port);
     }
 }
 
@@ -363,7 +220,6 @@ namespace tos
                 } else {
                     // conn closed
                     handler(lwip::events::discon, *self, lwip::discon_reason::closed);
-                    return ERR_OK;
                 }
                 return ERR_OK;
             }
@@ -490,7 +346,7 @@ namespace tos
             }
 
             template <class CallbackT>
-            static err_t sent_handler(void* user, struct tcp_pcb*, u16_t bytes)
+            static err_t sent_handler(void* user, struct tcp_pcb*, uint16_t bytes)
             {
                 ets_printf("\nenter sent_handler\n");
                 auto self = static_cast<secure_tcp_endpoint*>(user);
@@ -555,7 +411,7 @@ namespace tos
             system_os_post(tos::esp82::main_task_prio, 0, 0);
         }
 
-        inline expected<tcp_endpoint, connect_error> connect(wifi_connection&, ipv4_addr host, port_num_t port) {
+        inline expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection&, ipv4_addr host, port_num_t port) {
             auto pcb = tcp_new();
             ip_addr_t a;
             memcpy(&a.addr, host.addr, 4);
@@ -566,7 +422,7 @@ namespace tos
             state.sem.down();
             if (state.res != ERR_OK)
             {
-                return unexpected(connect_error::unknown);
+                return unexpected(lwip::connect_error::unknown);
             }
             return tcp_endpoint(pcb);
         }
@@ -620,7 +476,7 @@ namespace tos
             return ERR_OK;
         }
 
-        inline expected<secure_tcp_endpoint, connect_error> connect_ssl(wifi_connection&, ipv4_addr host, port_num_t port) {
+        inline expected<secure_tcp_endpoint, lwip::connect_error> connect_ssl(wifi_connection&, ipv4_addr host, port_num_t port) {
             auto pcb = tcp_new();
             ip_addr_t a;
             memcpy(&a.addr, host.addr, 4);
@@ -637,7 +493,7 @@ namespace tos
             ets_printf("\nfirst step done\n");
             if (state.res != ERR_OK)
             {
-                return unexpected(connect_error::not_connected);
+                return unexpected(lwip::connect_error::not_connected);
             }
 
             tos::this_thread::yield();
@@ -650,7 +506,9 @@ namespace tos
             tos::this_thread::yield();
             auto ext = ssl_ext_new();
             ssl_ext_set_max_fragment_size(ext, 2);
+            system_soft_wdt_stop();
             auto sslObj = state.ssl_obj = ssl_client_new(sslContext, clientfd, nullptr, 0, ext);
+            system_soft_wdt_restart();
 
             state.sem.down();
             ets_printf("\nsecond step done\n");
@@ -663,7 +521,7 @@ namespace tos
                 tos::this_thread::yield();
                 axl_free(pcb);
                 ets_printf("\nreturning ssl_error\n");
-                return unexpected(connect_error::ssl_error);
+                return unexpected(lwip::connect_error::ssl_error);
             }
 
             return secure_tcp_endpoint(pcb, sslObj, sslContext);
