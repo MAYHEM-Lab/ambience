@@ -24,10 +24,9 @@ namespace tos
     class tcp_stream
     {
     public:
-
         explicit tcp_stream(BaseEndpointT&& ep) ALWAYS_INLINE;
 
-        void write(span<const char>) ALWAYS_INLINE;
+        int write(span<const char>) ALWAYS_INLINE;
 
         expected<span<char>, read_error> read(span<char>);
 
@@ -79,7 +78,7 @@ namespace tos
     }
 
     template <class BaseEndpointT>
-    inline void tcp_stream<BaseEndpointT>::write(tos::span<const char> buf) {
+    inline int tcp_stream<BaseEndpointT>::write(tos::span<const char> buf) {
         tos::lock_guard<tos::mutex> lk{ m_busy };
         m_sent_bytes = 0;
         auto to_send = m_ep.send(buf);
@@ -88,6 +87,7 @@ namespace tos
         {
             m_write_sync.down();
         }
+        return m_sent_bytes;
     }
 
     template <class BaseEndpointT>

@@ -23,7 +23,9 @@ namespace tos
         public:
             expected<ipv4_addr, bool> get_addr();
             wifi_connection(const wifi_connection&) = delete;
-            wifi_connection(wifi_connection&& rhs) noexcept {
+            wifi_connection(wifi_connection&& rhs) noexcept :
+                m_state{rhs.m_state}
+            {
                 rhs.discon = false;
             }
             wifi_connection&operator=(wifi_connection&& rhs) noexcept
@@ -32,14 +34,30 @@ namespace tos
                 rhs.discon = false;
                 return *this;
             }
+
             ~wifi_connection();
 
-            bool wait_for_dhcp() ICACHE_FLASH_ATTR;
+            bool ICACHE_FLASH_ATTR is_connected()  { return m_state != states::disconnected && m_state != states::null; }
+            bool ICACHE_FLASH_ATTR is_disconnected() { return m_state == states::disconnected; }
+            bool ICACHE_FLASH_ATTR has_ip() { return m_state == states::operational; }
+
+            void ICACHE_FLASH_ATTR wait_for_dhcp();
+
+            void consume_event() ICACHE_FLASH_ATTR;
 
         private:
+
             wifi_connection() = default;
             friend class wifi;
             bool discon = true;
+
+            enum class states
+            {
+                operational,
+                waiting_dhcp,
+                disconnected,
+                null
+            } m_state = states::null;
         };
 
         enum class assoc_error

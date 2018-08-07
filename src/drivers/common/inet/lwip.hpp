@@ -29,6 +29,7 @@ namespace tos
             not_connected,
             cert_invalid,
             ssl_error,
+            no_network,
             unknown
         };
 

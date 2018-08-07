@@ -23,6 +23,7 @@ static void wifi_handler(System_Event_t* ev)
         events.pop();
     }
     events.push(*ev);
+    ets_printf("ev: %d\n", int(ev->event));
     system_os_post(tos::esp82::main_task_prio, 0, 0);
 }
 
@@ -67,16 +68,34 @@ namespace tos
             wifi_set_opmode_current(STATION_MODE);
         }
 
-        wifi::~wifi() {
+        wifi::~wifi() = default;
+
+        void ICACHE_FLASH_ATTR wifi_connection::wait_for_dhcp() {
+            while (!has_ip())
+            {
+                consume_event();
+            }
         }
 
-        bool wifi_connection::wait_for_dhcp() {
+        void wifi_connection::consume_event() {
             auto ev = events.pop();
-            if (ev.event == EVENT_STAMODE_GOT_IP)
+            switch (ev.event)
             {
-                return true;
+            case EVENT_STAMODE_GOT_IP:
+                m_state = states::operational;
+                break;
+            case EVENT_STAMODE_DISCONNECTED:
+                discon = false;
+                m_state = states::disconnected;
+                break;
+            case EVENT_STAMODE_CONNECTED:
+                discon = true;
+                m_state = states::waiting_dhcp;
+                break;
+            default:
+                ets_printf("unexpected ev: %d\n", int(ev.event));
+                break;
             }
-            return false;
         }
 
         expected<wifi_connection, assoc_error>
@@ -93,23 +112,19 @@ namespace tos
             wifi_station_set_config_current(&stationConfig);
             wifi_station_connect();
 
-            while (true)
+            wifi_connection conn;
+
+            while (!conn.is_connected())
             {
-                auto ev = events.pop();
-                switch (ev.event)
+                conn.consume_event();
+                if (conn.is_disconnected())
                 {
-                    case EVENT_STAMODE_DISCONNECTED:
-                        wifi_station_disconnect();
-                        return unexpected(assoc_error::unknown);
-                    case EVENT_STAMODE_CONNECTED:
-                        lwip_init();
-                        return wifi_connection{};
-                    default:
-                        ets_printf("ev: %d\n", int(ev.event));
-                        tos::this_thread::yield();
-                        break;
+                    return unexpected(assoc_error::unknown);
                 }
             }
+
+            lwip_init();
+            return std::move(conn);
         }
 
         void wifi::scan() {

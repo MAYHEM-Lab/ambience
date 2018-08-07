@@ -53,7 +53,7 @@ void task(void*)
     if (!res) goto conn;
 
     with (std::move(res), [&](tos::esp82::wifi_connection& conn){
-        while (!conn.wait_for_dhcp());
+        conn.wait_for_dhcp();
 
         with(conn.get_addr(), [&](auto& addr){
             tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
@@ -69,6 +69,7 @@ void task(void*)
                              "Host: bakirbros.com\r\n"
                              "Connection: close\r\n"
                              "\r\n");
+
                 tos::println(stream);
 
                 while (true)
@@ -90,8 +91,13 @@ void task(void*)
         tos::println(usart, "uuuh, shouldn't have happened!");
     });
 
-    while (true){
-        tos::this_thread::yield();
+    auto tmr = open(tos::devs::timer<0>);
+    auto alarm = open(tos::devs::alarm, tmr);
+
+    while (true)
+    {
+        alarm.sleep_for({ 10'000 });
+        tos::println(usart, "tick!");
     }
 }
 

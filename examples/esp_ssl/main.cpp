@@ -102,7 +102,7 @@ void task(void*)
 
     with (std::move(res), [&](tos::esp82::wifi_connection& conn){
         tos::println(usart, "in");
-        while (!conn.wait_for_dhcp());
+        conn.wait_for_dhcp();
 
         with(conn.get_addr(), [&](auto& addr){
             tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);

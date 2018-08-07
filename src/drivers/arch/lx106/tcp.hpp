@@ -247,6 +247,7 @@ namespace tos
                 auto& handler = *(EventHandlerT*)self->m_event_handler;
                 handler(lwip::events::discon, *self, err == ERR_ABRT ?
                                         lwip::discon_reason::aborted : lwip::discon_reason::reset);
+                self->m_conn = nullptr;
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
             }
         };
@@ -413,7 +414,11 @@ namespace tos
             system_os_post(tos::esp82::main_task_prio, 0, 0);
         }
 
-        inline expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection&, ipv4_addr host, port_num_t port) {
+        inline expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection& c, ipv4_addr host, port_num_t port) {
+            if (!c.has_ip())
+            {
+                return unexpected(lwip::connect_error::no_network);
+            }
             auto pcb = tcp_new();
             ip_addr_t a;
             memcpy(&a.addr, host.addr, 4);
