@@ -74,6 +74,7 @@ namespace tos
     template <class BaseEndpointT>
     inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t, BaseEndpointT &, lwip::discon_reason r) {
         m_discon = true;
+        m_write_sync.up();
         ets_printf("\nclosed: %d\n", int(r));
     }
 
@@ -83,7 +84,7 @@ namespace tos
         m_sent_bytes = 0;
         auto to_send = m_ep.send(buf);
         ets_printf("sending %d bytes", int(to_send));
-        while (m_sent_bytes != to_send)
+        while (m_sent_bytes != to_send && !m_discon)
         {
             m_write_sync.down();
         }

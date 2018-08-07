@@ -39,7 +39,7 @@ namespace tos
             template <class EventHandlerT>
             void attach(EventHandlerT& cb);
 
-            void send(span<const char>);
+            uint16_t send(span<const char>);
 
             ~tcp_endpoint();
 
@@ -195,9 +195,10 @@ namespace tos
             tcp_abort(m_conn);
         }
 
-        inline void tcp_endpoint::send(tos::span<const char> buf) {
+        inline uint16_t tcp_endpoint::send(tos::span<const char> buf) {
             tcp_write(m_conn, (uint8_t*)buf.data(), buf.size(), 0);
             tcp_output(m_conn);
+            return buf.size();
         }
 
         struct ep_handlers
@@ -208,6 +209,7 @@ namespace tos
                 auto self = static_cast<tcp_endpoint*>(user);
                 auto& handler = *(CallbackT*)self->m_event_handler;
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
+
                 if (err != ERR_OK)
                 {
                     handler(lwip::events::discon, *self, lwip::discon_reason::recv_error);
@@ -225,13 +227,13 @@ namespace tos
             }
 
             template <class CallbackT>
-            static err_t sent_handler(void* user, struct tcp_pcb *tpcb, u16_t)
+            static err_t sent_handler(void* user, struct tcp_pcb *tpcb, u16_t len)
             {
                 auto self = static_cast<tcp_endpoint*>(user);
                 self->m_conn = tpcb;
 
                 auto& handler = *(CallbackT*)self->m_event_handler;
-                handler(lwip::events::sent, *self);
+                handler(lwip::events::sent, *self, len);
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
 
                 return ERR_OK;
@@ -437,6 +439,8 @@ namespace tos
         {
             auto state = static_cast<secure_conn_state*>(arg);
 
+            ets_printf("\nenter handshake receive\n");
+
             if (err != ERR_OK)
             {
                 ets_printf("err not OK");
@@ -457,7 +461,11 @@ namespace tos
             system_soft_wdt_feed();
 
             struct pbuf* pout = nullptr;
-            axl_ssl_read(state->ssl_obj, tcp, p, &pout);
+            ets_printf("\ncalling axl_ssl_read\n");
+
+            auto res = axl_ssl_read(state->ssl_obj, tcp, p, &pout);
+
+            ets_printf("\naxl_ssl_read returned %d\n", int(res));
 
             tcp_recved(tcp, p->tot_len);
             pbuf_free(p);

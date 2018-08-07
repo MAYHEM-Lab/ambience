@@ -29,7 +29,7 @@ extern "C"
 }
 
 char buf[512];
-void task()
+void task(void*)
 {
     using namespace tos::tos_literals;
 
@@ -61,22 +61,31 @@ void task()
 
         lwip_init();
 
-        with(tos::esp82::connect(conn, { { 192, 168, 0, 40 } }, { 8080 }), [&](tos::esp82::tcp_endpoint& conn){
-            tos::tcp_stream<tos::esp82::tcp_endpoint> stream {std::move(conn)};
-            tos::println(stream, "GET /");
-            tos::println(stream);
+        for (int i = 0; i < 15'000; ++i) {
+            with(tos::esp82::connect(conn, {{45, 55, 149, 110}}, {80}), [&](tos::esp82::tcp_endpoint &conn) {
+                tos::tcp_stream<tos::esp82::tcp_endpoint> stream{std::move(conn)};
 
-            with (stream.read(buf), [&](auto& res){
-                tos::println(usart, res);
-            }, [&](auto){
-                tos::println(usart, "didn't receive");
+                stream.write("GET / HTTP/1.1\r\n"
+                             "Host: bakirbros.com\r\n"
+                             "Connection: close\r\n"
+                             "\r\n");
+                tos::println(stream);
+
+                while (true)
+                {
+                    auto res = stream.read(buf);
+                    if (!res) break;
+                    with(std::move(res), [&](tos::span<const char> r){
+                        tos::print(usart, r);
+                    }, tos::ignore);
+                    tos::this_thread::yield();
+                }
+            }, [&](auto &err) {
+                tos::println(usart, "couldn't connect");
             });
+            tos::println(usart, "done", i, int(system_get_free_heap_size()));
+        }
 
-        }, [&](auto& err){
-            tos::println(usart, "couldn't connect");
-        });
-
-        tos::println(usart, "done", int(system_get_free_heap_size()));
     }, [&](auto& err){
         tos::println(usart, "uuuh, shouldn't have happened!");
     });

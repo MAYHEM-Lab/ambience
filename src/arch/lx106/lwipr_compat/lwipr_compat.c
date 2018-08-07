@@ -353,11 +353,9 @@ void ax_fd_set(AxlTcpDataArray *vector, int index, struct tcp_pcb *tcp) {
 
 void ax_fd_double_capacity_if_full(AxlTcpDataArray *vector) {
 	if (vector->size >= vector->capacity) {
+		ets_printf("doubling up %d %p", (int)(vector->capacity), vector->data);
 		vector->capacity *= 2;
 		vector->data = (AxlTcpData*)realloc(vector->data, sizeof(AxlTcpData) * vector->capacity);
-	}
-}
-
-void ax_fd_free(AxlTcpDataArray *vector) {
-	os_free(vector->data);
+        ets_printf("doubled up %p", vector->data);
+    }
 }

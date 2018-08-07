@@ -19,7 +19,7 @@
  * Define the AXL_DEBUG_PRINT function to add debug functionality
  */
 #ifndef AXL_DEBUG
-	#define AXL_DEBUG_PRINT(...)
+	#define AXL_DEBUG_PRINT(...) ets_printf(__VA_ARGS__)
 #else
 	#define AXL_DEBUG_PRINT(...)  debugf(__VA_ARGS__)
 #endif
