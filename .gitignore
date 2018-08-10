@@ -4,4 +4,3 @@ cmake-build-*
 .idea
 *build*/
 apps/*
-libs/*
