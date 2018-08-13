@@ -43,7 +43,9 @@ namespace tos
 
             void ICACHE_FLASH_ATTR wait_for_dhcp();
 
+            void consume_all() ICACHE_FLASH_ATTR;
             void consume_event() ICACHE_FLASH_ATTR;
+            void consume_event(System_Event_t) ICACHE_FLASH_ATTR;
 
         private:
 

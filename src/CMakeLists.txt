@@ -4,7 +4,7 @@ set(TOS_CORE_HEADERS
 	tos/devices.hpp
 	tos/char_stream.hpp
 	tos/arch.hpp
-        tos/init.hpp tos/compiler.hpp tos/chrono.hpp tos/version.hpp tos/debug.hpp)
+        tos/init.hpp tos/compiler.hpp tos/chrono.hpp tos/version.hpp tos/debug.hpp tos/posix.hpp tos/posix.h tos/device_id.hpp)
 
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
@@ -16,7 +16,7 @@ target_compile_options(tos_print PUBLIC -std=gnu++14)
 target_link_libraries(tos_print PUBLIC tos_util)
 target_include_directories(tos_print PUBLIC ".")
 
-add_library(tos_core stub.cpp ${TOS_CORE_HEADERS} tos_init.cpp)
+add_library(tos_core stub.cpp ${TOS_CORE_HEADERS} tos_init.cpp device_id.cpp)
 target_compile_options(tos_core PUBLIC -fno-threadsafe-statics -Wall -Wextra -std=gnu++14)
 target_include_directories(tos_core PUBLIC ".")
 target_compile_definitions(tos_core PUBLIC TOS_GIT_SHA1=\"${GIT_SHA1}\")

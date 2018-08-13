@@ -29,7 +29,7 @@ extern "C"
 }
 
 char buf[512];
-void task()
+void task(void*)
 {
     using namespace tos::tos_literals;
 

@@ -77,25 +77,35 @@ namespace tos
             }
         }
 
-        void wifi_connection::consume_event() {
-            auto ev = events.pop();
+        void wifi_connection::consume_event(System_Event_t ev) {
             switch (ev.event)
             {
-            case EVENT_STAMODE_GOT_IP:
-                m_state = states::operational;
-                break;
-            case EVENT_STAMODE_DISCONNECTED:
-                discon = false;
-                m_state = states::disconnected;
-                break;
-            case EVENT_STAMODE_CONNECTED:
-                discon = true;
-                m_state = states::waiting_dhcp;
-                break;
-            default:
-                ets_printf("unexpected ev: %d\n", int(ev.event));
-                break;
+                case EVENT_STAMODE_GOT_IP:
+                    m_state = states::operational;
+                    break;
+                case EVENT_STAMODE_DISCONNECTED:
+                    discon = false;
+                    m_state = states::disconnected;
+                    break;
+                case EVENT_STAMODE_CONNECTED:
+                    discon = true;
+                    m_state = states::waiting_dhcp;
+                    break;
+                default:
+                    ets_printf("unexpected ev: %d\n", int(ev.event));
+                    break;
             }
+        }
+
+        void wifi_connection::consume_all() {
+            while (events.size() > 0)
+            {
+                consume_event(events.pop());
+            }
+        }
+
+        void wifi_connection::consume_event() {
+            consume_event(events.pop());
         }
 
         expected<wifi_connection, assoc_error>

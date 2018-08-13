@@ -415,6 +415,7 @@ namespace tos
         }
 
         inline expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection& c, ipv4_addr host, port_num_t port) {
+            c.consume_all();
             if (!c.has_ip())
             {
                 return unexpected(lwip::connect_error::no_network);
