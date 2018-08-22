@@ -22,7 +22,7 @@ namespace std
 }
 #endif
 
-void tick_task()
+void tick_task(void*)
 {
     using namespace tos;
     using namespace tos::tos_literals;

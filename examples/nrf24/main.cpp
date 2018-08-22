@@ -10,7 +10,7 @@
 #include <drivers/arch/avr/timer.hpp>
 #include <drivers/common/alarm.hpp>
 
-void nrf_task()
+void nrf_task(void*)
 {
     using namespace tos;
     using namespace tos::tos_literals;

@@ -30,7 +30,7 @@ namespace {
 
     tos::semaphore sem{0};
 
-    void led1_task() {
+    void led1_task(void*) {
         using namespace tos;
 
         nrf52::timer0 tmr;
@@ -49,7 +49,7 @@ namespace {
     char c;
     tos::semaphore send{0};
     tos::semaphore sent{0};
-    void i2c_task()
+    void i2c_task(void*)
     {
         using namespace tos;
         nrf52::twim i2c{26, 25};
@@ -81,7 +81,7 @@ namespace {
         }
     }
 
-    void led2_task() {
+    void led2_task(void*) {
         using namespace tos;
         using namespace tos_literals;
         constexpr auto usconf = tos::usart_config()

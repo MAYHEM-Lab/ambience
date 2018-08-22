@@ -31,7 +31,7 @@ double GetTemp(AlarmT&& alarm)
     return (ADCW - 324.31) / 1.22;
 }
 
-void main_task()
+void main_task(void*)
 {
     using namespace tos;
     using namespace tos::tos_literals;

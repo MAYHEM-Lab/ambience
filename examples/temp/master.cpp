@@ -14,7 +14,7 @@
 #include <tos/event.hpp>
 #include <drivers/common/alarm.hpp>
 
-void tick_task()
+void tick_task(void*)
 {
     using namespace tos::tos_literals;
 

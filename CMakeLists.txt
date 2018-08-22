@@ -29,8 +29,6 @@ if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/libemsha")
 endif()
 
 add_subdirectory(libs/kthreads)
-add_subdirectory(libs/zmtp)
-add_subdirectory(libs/umsgpack)
 
 if(TOS_AVR)
     add_subdirectory(examples/gpio)
@@ -44,10 +42,6 @@ if(TOS_AVR)
 
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/tvm")
         add_subdirectory(apps/tvm)
-    endif()
-
-    if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/cspot_lite")
-        add_subdirectory(apps/cspot_lite)
     endif()
 elseif(TOS_ESP)
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/tvm")
@@ -66,6 +60,9 @@ elseif(TOS_ESP)
     add_subdirectory(examples/esp_conn)
     add_subdirectory(examples/esp_mqtt)
     add_subdirectory(examples/esp_ssl)
+
+    add_subdirectory(libs/zmtp)
+    add_subdirectory(libs/umsgpack)
 elseif(TOS_X86)
     #add_subdirectory(examples/simple_portable)
 
