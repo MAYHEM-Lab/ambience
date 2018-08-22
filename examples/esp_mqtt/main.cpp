@@ -31,9 +31,6 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
             .add(tos::usart_stop_bit::one);
 
     auto usart = open(tos::devs::usart<0>, usconf);
-    usart.enable();
-
-    auto arg = *static_cast<int*>(arg_pt);
 
     tos::print(usart, "\n\n\n\n\n\n");
     tos::println(usart, tos::platform::board_name);
@@ -44,7 +41,6 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
     auto res = w.connect("AndroidAP", "12345678");
 
     tos::println(usart, "connected?", bool(res));
-    tos::println(usart, "argument:", arg);
 
     if (!res) goto conn;
 
@@ -82,37 +78,27 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
                 }
 
                 tos::println(usart, "MQTT connected");
+                auto s = accel.sample();
 
                 MQTT::Message message;
                 message.qos = MQTT::QOS1;
                 message.retained = false;
                 message.dup = false;
-                static char pbuf[512];
-                auto s = accel.sample();
 
-                struct umsgpack_packer_buf *buf = (struct umsgpack_packer_buf*)&pbuf;
+                static char pbuf[64];
+                tos::msgpack::packer p{pbuf};
 
-                umsgpack_packer_init(buf, sizeof(pbuf));
+                auto map = p.insert_map(3);
+                map.insert("x", s.x);
+                map.insert("y", s.y);
+                map.insert("z", s.z);
 
-                umsgpack_pack_map(buf, 3);
+                tos::println(usart, p.get());
 
-                umsgpack_pack_str(buf, (char *) "x", 1);
-                umsgpack_pack_float(buf, s.x);
-
-                umsgpack_pack_str(buf, (char *) "y", 1);
-                umsgpack_pack_float(buf, s.y);
-
-                umsgpack_pack_str(buf, (char *) "z", 1);
-                umsgpack_pack_float(buf, s.z);
-
-                auto str = tos::span<const char>((char*)buf->data, umsgpack_get_length(buf));
-                tos::println(usart, str);
-
-                message.payload = (void*)str.data();
-                message.payloadlen = str.size();
+                message.payload = (void*)p.get().data();
+                message.payloadlen = p.get().size();
                 rc = client.publish("tos-sample", message);
                 tos::println(usart, "rc from MQTT publish is", rc);
-
             }, [&](auto& err){
                 tos::println(usart, "couldn't connect");
             });
@@ -122,16 +108,9 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
     }, [&](auto& err){
         tos::println(usart, "uuuh, shouldn't have happened!");
     });
-
-    while (true){
-        tos::this_thread::yield();
-    }
 }
-
-int x;
 
 void tos_main()
 {
-    x = 42;
-    tos::launch(task, &x);
+    tos::launch(task);
 }
