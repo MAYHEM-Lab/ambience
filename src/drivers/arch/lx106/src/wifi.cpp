@@ -14,6 +14,7 @@ extern "C"
 #include <user_interface.h>
 }
 
+static tos::track_ptr<tos::esp82::wifi_connection> conn;
 static tos::fixed_fifo<System_Event_t, 8> events;
 
 static void wifi_handler(System_Event_t* ev)
@@ -22,8 +23,8 @@ static void wifi_handler(System_Event_t* ev)
     {
         events.pop();
     }
-    events.push(*ev);
     ets_printf("ev: %d\n", int(ev->event));
+    events.push(*ev);
     system_os_post(tos::esp82::main_task_prio, 0, 0);
 }
 
@@ -54,6 +55,10 @@ namespace tos
             memcpy(res.addr, &info.ip, 4);
 
             return res;
+        }
+
+        wifi_connection::wifi_connection() {
+            conn = get_ptr(*this);
         }
 
         wifi_connection::~wifi_connection() {

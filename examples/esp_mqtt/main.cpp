@@ -2,140 +2,25 @@
 // Created by fatih on 7/19/18.
 //
 
-#include <tos/devices.hpp>
-#include <tos/ft.hpp>
-#include <tos/semaphore.hpp>
 #include <tos/print.hpp>
-#include <tos/mutex.hpp>
-#include <tos/utility.hpp>
-#include <tos/memory.hpp>
 
-#include <arch/lx106/timer.hpp>
-#include <arch/lx106/usart.hpp>
-#include <arch/lx106/wifi.hpp>
-#include <arch/lx106/tcp.hpp>
+#include <arch/lx106/drivers.hpp>
 #include <tos/version.hpp>
 #include <tos/fixed_fifo.hpp>
-#include <tos_arch.hpp>
 
 #include <lwip/init.h>
 #include <tos/algorithm.hpp>
 #include <algorithm>
 #include <common/inet/tcp_stream.hpp>
 #include <MQTTClient.h>
+#include <tos/adapters.hpp>
+#include <stdio.h>
+#include "sntp.h"
 
-extern "C"
-{
-#include <mem.h>
-}
+#include "fake_accel.hpp"
 
-struct net_facade
-{
-    tos::tcp_stream<tos::esp82::tcp_endpoint>& str;
+#include <umsgpack.hpp>
 
-    int ALWAYS_INLINE read(unsigned char* buffer, int len, int)
-    {
-        return with(str.read(tos::span<char>{ (char*)buffer, len }), [](auto& rd) {
-            return rd.size();
-        }, [](auto& err){
-            return 0;
-        });
-    }
-
-    int ALWAYS_INLINE write(unsigned char* buffer, int len, int)
-    {
-        str.write({ (char*)buffer, len });
-        return len;
-    }
-};
-
-struct timer_facade
-{
-public:
-    timer_facade()
-    {
-        interval_end_ms = 0L;
-    }
-
-    timer_facade(int ms)
-    {
-        countdown_ms(ms);
-    }
-
-    bool ALWAYS_INLINE expired()
-    {
-        tos::this_thread::yield();
-        return (interval_end_ms > 0L) && (millis() >= interval_end_ms);
-    }
-
-    void ALWAYS_INLINE countdown_ms(unsigned long ms)
-    {
-        interval_end_ms = millis() + ms;
-    }
-
-    void ALWAYS_INLINE countdown(int seconds)
-    {
-        countdown_ms((unsigned long)seconds * 1000L);
-    }
-
-    int ALWAYS_INLINE left_ms()
-    {
-        return interval_end_ms - millis();
-    }
-
-private:
-
-    unsigned long ALWAYS_INLINE millis()
-    {
-        return system_get_time() / 1000;
-    }
-
-    unsigned long interval_end_ms;
-};
-
-extern "C"
-{
-void* malloc(size_t sz)
-{
-    return os_malloc(sz);
-}
-
-void free(void* ptr)
-{
-    os_free(ptr);
-}
-
-void* calloc(size_t nitems, size_t size)
-{
-    return os_zalloc(nitems * size);
-}
-
-void* realloc(void* base, size_t sz)
-{
-    return os_realloc(base, sz);
-}
-
-void ax_wdt_feed()
-{
-    system_soft_wdt_feed();
-    //tos::this_thread::yield();
-}
-
-void _exit()
-{
-    tos::this_thread::exit();
-}
-_PTR
-_malloc_r (struct _reent *r, size_t sz)
-{
-    return malloc (sz);
-}
-
-void _getpid_r() {}
-void _kill_r() {}
-}
-
-char buf[512];
 void ICACHE_FLASH_ATTR task(void* arg_pt)
 {
     using namespace tos::tos_literals;
@@ -154,9 +39,9 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
     tos::println(usart, tos::platform::board_name);
     tos::println(usart, tos::vcs::commit_hash);
 
-    tos::esp82::wifi w;
+    auto w = open(tos::devs::wifi<0>);
     conn:
-    auto res = w.connect("FG", "23111994a");
+    auto res = w.connect("AndroidAP", "12345678");
 
     tos::println(usart, "connected?", bool(res));
     tos::println(usart, "argument:", arg);
@@ -173,16 +58,21 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
         lwip_init();
         //axl_init(3);
 
+        sntp_set_timezone(0);
+        sntp_setservername(0, "0.tr.pool.ntp.org");
+        sntp_init();
+        fake_accel accel{ { -1, -1, -1}, { 1, 1, 1 } };
+
         for (int i = 0; i < 25'000; ++i)
         {
-            with(tos::esp82::connect(conn, { { 198, 41, 30, 241 } }, { 1883 }), [&](tos::esp82::tcp_endpoint& conn){
+            with(tos::esp82::connect(conn, { { 45, 55, 149, 110 } }, { 1883 }), [&](tos::esp82::tcp_endpoint& conn){
                 tos::tcp_stream<tos::esp82::tcp_endpoint> stream {std::move(conn)};
                 net_facade net{stream};
 
                 MQTT::Client<net_facade, timer_facade> client{ net };
                 MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
                 data.MQTTVersion = 3;
-                data.clientID.cstring = (char*)"tos-sample";
+                data.clientID.cstring = (char*)"tos-client";
                 auto rc = client.connect(data);
 
                 if (rc != 0)
@@ -190,14 +80,36 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
                     tos::println(usart, "rc from MQTT connect is", rc);
                     return;
                 }
+
                 tos::println(usart, "MQTT connected");
 
                 MQTT::Message message;
                 message.qos = MQTT::QOS1;
                 message.retained = false;
                 message.dup = false;
-                message.payload = (void*)"Secure hello From tos@esp8266";
-                message.payloadlen = strlen("Secure hello From tos@esp8266") + 1;
+                static char pbuf[512];
+                auto s = accel.sample();
+
+                struct umsgpack_packer_buf *buf = (struct umsgpack_packer_buf*)&pbuf;
+
+                umsgpack_packer_init(buf, sizeof(pbuf));
+
+                umsgpack_pack_map(buf, 3);
+
+                umsgpack_pack_str(buf, (char *) "x", 1);
+                umsgpack_pack_float(buf, s.x);
+
+                umsgpack_pack_str(buf, (char *) "y", 1);
+                umsgpack_pack_float(buf, s.y);
+
+                umsgpack_pack_str(buf, (char *) "z", 1);
+                umsgpack_pack_float(buf, s.z);
+
+                auto str = tos::span<const char>((char*)buf->data, umsgpack_get_length(buf));
+                tos::println(usart, str);
+
+                message.payload = (void*)str.data();
+                message.payloadlen = str.size();
                 rc = client.publish("tos-sample", message);
                 tos::println(usart, "rc from MQTT publish is", rc);
 

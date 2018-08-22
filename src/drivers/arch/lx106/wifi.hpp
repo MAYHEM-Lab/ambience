@@ -9,6 +9,7 @@
 #include <drivers/common/inet/tcp_ip.hpp>
 #include <stdint.h>
 #include <tos/expected.hpp>
+#include <tos/track_ptr.hpp>
 extern "C"
 {
 #include <user_interface.h>
@@ -18,7 +19,7 @@ namespace tos
 {
     namespace esp82
     {
-        class wifi_connection
+        class wifi_connection : public tracked
         {
         public:
             expected<ipv4_addr, bool> get_addr();
@@ -48,8 +49,7 @@ namespace tos
             void consume_event(System_Event_t) ICACHE_FLASH_ATTR;
 
         private:
-
-            wifi_connection() = default;
+            wifi_connection();
             friend class wifi;
             bool discon = true;
 
