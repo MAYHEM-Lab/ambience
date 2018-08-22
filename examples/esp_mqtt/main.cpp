@@ -18,8 +18,35 @@
 #include "sntp.h"
 
 #include "fake_accel.hpp"
+#include <tos/posix.hpp>
 
 #include <umsgpack.hpp>
+#include <unistd.h>
+
+tos::posix::file_desc* stdo;
+
+int handle_sample(MQTT::Client<net_facade, timer_facade>& client, vec3 s)
+{
+    MQTT::Message message;
+    message.qos = MQTT::QOS1;
+    message.retained = false;
+    message.dup = false;
+
+    static char pbuf[64];
+    tos::msgpack::packer p { pbuf };
+
+    auto map = p.insert_map(3);
+    map.insert("x", s.x);
+    map.insert("y", s.y);
+    map.insert("z", s.z);
+
+    message.payload = (void*)p.get().data();
+    message.payloadlen = p.get().size();
+
+    tos::println(*stdo, "sending!");
+
+    return client.publish("tos-sample", message);
+}
 
 void ICACHE_FLASH_ATTR task(void* arg_pt)
 {
@@ -35,6 +62,13 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
     tos::print(usart, "\n\n\n\n\n\n");
     tos::println(usart, tos::platform::board_name);
     tos::println(usart, tos::vcs::commit_hash);
+
+    tos::posix::wrapper_desc<decltype(usart)> sf{usart};
+    stdo = &sf;
+    char test[5];
+    auto r = read(0, test, 5);
+
+    tos::println(*stdo, "hello!", int(r), int(errno));
 
     auto w = open(tos::devs::wifi<0>);
     conn:
@@ -57,7 +91,7 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
         sntp_set_timezone(0);
         sntp_setservername(0, "0.tr.pool.ntp.org");
         sntp_init();
-        fake_accel accel{ { -1, -1, -1}, { 1, 1, 1 } };
+        fake_accel accel { { -1, -1, -1}, { 1, 1, 1 } };
 
         for (int i = 0; i < 25'000; ++i)
         {
@@ -80,26 +114,10 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
                 tos::println(usart, "MQTT connected");
                 auto s = accel.sample();
 
-                MQTT::Message message;
-                message.qos = MQTT::QOS1;
-                message.retained = false;
-                message.dup = false;
+                rc = handle_sample(client, s);
 
-                static char pbuf[64];
-                tos::msgpack::packer p{pbuf};
-
-                auto map = p.insert_map(3);
-                map.insert("x", s.x);
-                map.insert("y", s.y);
-                map.insert("z", s.z);
-
-                tos::println(usart, p.get());
-
-                message.payload = (void*)p.get().data();
-                message.payloadlen = p.get().size();
-                rc = client.publish("tos-sample", message);
                 tos::println(usart, "rc from MQTT publish is", rc);
-            }, [&](auto& err){
+            }, [&](auto&){
                 tos::println(usart, "couldn't connect");
             });
         }

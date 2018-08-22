@@ -7,6 +7,7 @@
 #include <drivers/common/usart.hpp>
 #include <tos/span.hpp>
 #include "src/new_uart_priv.h"
+#include <tos/driver_traits.hpp>
 
 namespace tos
 {
@@ -27,13 +28,14 @@ namespace tos
 
             static void disable();
 
-            static int read(char *buf, size_t sz);
-
             static int write(span<const char>);
 
             uart0*operator->() {return this;}
             uart0&operator*() {return *this;}
         };
+
+        static_assert(driver_traits<uart0>::has_write{}, "uart must have write!");
+        static_assert(!driver_traits<uart0>::has_read{}, "uart must not have read!");
     }
 
     inline esp82::uart0 open_impl(devs::usart_t<0>, esp82::usart_constraint params)

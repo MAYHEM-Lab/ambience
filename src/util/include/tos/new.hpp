@@ -3,12 +3,12 @@
 //
 
 #pragma once
+#include <stddef.h>
 
 #if !defined(TOS_STDLIB_COMPAT)
 #include <new>
 #else
 
-#include <stddef.h>
 
 inline void* operator new(size_t, void* __p) noexcept { return __p; }
 inline void* operator new[](size_t, void* __p) noexcept { return __p; }
@@ -18,3 +18,5 @@ inline void  operator delete  (void*, void*) throw() { }
 inline void  operator delete[](void*, void*) throw() { }
 
 #endif
+
+inline void operator delete (void*, size_t){}

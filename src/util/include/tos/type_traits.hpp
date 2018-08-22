@@ -114,6 +114,20 @@ namespace tos {
 
         template<class T>
         T&& declval();
+
+        template <bool, class, class B>
+        struct conditional_type {
+            using type = B;
+        };
+
+        template <class A, class B>
+        struct conditional_type<true, A, B>
+        {
+            using type = A;
+        };
+
+        template <bool Val, class A, class B>
+        using conditional_t = typename conditional_type<Val, A, B>::type;
     }
 }
 

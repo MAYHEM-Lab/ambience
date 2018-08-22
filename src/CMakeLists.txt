@@ -4,7 +4,7 @@ set(TOS_CORE_HEADERS
 	tos/devices.hpp
 	tos/char_stream.hpp
 	tos/arch.hpp
-        tos/init.hpp tos/compiler.hpp tos/chrono.hpp tos/version.hpp tos/debug.hpp tos/device_id.hpp)
+        tos/init.hpp tos/compiler.hpp tos/chrono.hpp tos/version.hpp tos/debug.hpp tos/device_id.hpp tos/driver_traits.hpp)
 
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
