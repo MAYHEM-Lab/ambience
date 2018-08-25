@@ -38,7 +38,8 @@ extern "C"
         syscall_ret(res.size());
     }
 
-    _ssize_t _read_r(_reent*, int fd, void* to, size_t len)
+    struct _reent;
+    size_t _read_r(_reent*, int fd, void* to, size_t len)
     {
         return _read(fd, to, len);
     }

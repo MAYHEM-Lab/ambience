@@ -5,16 +5,16 @@
 #pragma once
 
 #include <tos/intrusive_list.hpp>
-#include <wifi.hpp>
+#include "wifi.hpp"
 #include <tos/arch.hpp>
 #include <utility>
-#include <common/inet/tcp_ip.hpp>
+#include <drivers/common/inet/tcp_ip.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/track_ptr.hpp>
 #include <lwip/tcp.h>
 #include <tos/expected.hpp>
 #include <tos/algorithm.hpp>
-#include <common/inet/lwip.hpp>
+#include <drivers/common/inet/lwip.hpp>
 
 #ifdef TOS_HAVE_SSL
 #include <lwipr_compat/lwipr_compat.h>
