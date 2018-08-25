@@ -1,4 +1,5 @@
 #include <gpio.hpp>
+#include <tos/ft.hpp>
 
 extern "C"
 {
@@ -187,6 +188,8 @@ unsigned char twi_writeTo(unsigned char address, unsigned char * buf, unsigned i
         SCL_HIGH();
         twi_delay(twi_dcount);
     }
+
+    tos::this_thread::yield();
     return 0;
 }
 
@@ -200,7 +203,9 @@ unsigned char twi_readFrom(unsigned char address, unsigned char* buf, unsigned i
         return 2;//received NACK on transmit of address
     }
     for(i=0; i<(len-1); i++)
+    {
         buf[i] = twi_read_byte(false);
+    }
     buf[len-1] = twi_read_byte(true);
     if(sendStop)
         twi_write_stop();
@@ -211,6 +216,8 @@ unsigned char twi_readFrom(unsigned char address, unsigned char* buf, unsigned i
         SCL_HIGH();
         twi_delay(twi_dcount);
     }
+
+    tos::this_thread::yield();
     return 0;
 }
 #define I2C_OK                      0

@@ -18,12 +18,12 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
     -U__STRICT_ANSI__ -DICACHE_FLASH -mtext-section-literals -mlongcalls \
-    -nostdlib -ffunction-sections -fdata-sections -Wall -Wextra -ffreestanding")
+    -nostdlib -ffunction-sections -fdata-sections -Wall -Wextra -ffreestanding -fstack-usage")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtext-section-literals -mlongcalls \
     -DICACHE_FLASH -nostdlib -ffunction-sections -fdata-sections -std=c++14 \
     -Wall -Wextra -fno-unwind-tables -ffreestanding -fno-exceptions -fno-rtti \
-    -fno-threadsafe-statics")
+    -fno-threadsafe-statics -fstack-usage")
 
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections -Wl,-EL -L${SDK_ROOT}/ld -L${SDK_ROOT}/lib -Xlinker -Map=output.map")
 
