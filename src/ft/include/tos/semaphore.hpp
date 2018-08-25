@@ -68,14 +68,14 @@ namespace tos {
         /**
          * Initializes a semaphore with the given value
          */
-        explicit semaphore(int8_t n) noexcept
+        explicit semaphore(int16_t n) noexcept
                 :m_count(n)
         { }
 
         semaphore(semaphore&&) = delete;
 
     private:
-        int8_t m_count;
+        int16_t m_count;
         waitable m_wait;
 
         /**
@@ -84,7 +84,7 @@ namespace tos {
          * @param s the semaphore to extract from
          * @return counter value
          */
-        friend int8_t get_count(const semaphore& s)
+        friend int16_t get_count(const semaphore& s)
         {
             return s.m_count;
         }

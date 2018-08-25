@@ -13,12 +13,12 @@ namespace tos
     {
     public:
         explicit sync_ring_buf(size_t cap, size_t sz, size_t begin)
-            : ring_buf{cap, sz, begin}, m_read{int8_t(sz)}, m_put{int8_t(cap - sz)} {}
+            : ring_buf{cap, sz, begin}, m_read{int16_t(sz)}, m_put{int16_t(cap - sz)} {}
         /**
          * Creates a new synchronized ring buf with the given capacity
          * @param cap capacity
          */
-        explicit sync_ring_buf(size_t cap) : ring_buf{cap}, m_read{0}, m_put{int8_t(cap)} {}
+        explicit sync_ring_buf(size_t cap) : ring_buf{cap}, m_read{0}, m_put{int16_t(cap)} {}
 
         using ring_buf::size;
         using ring_buf::capacity;
