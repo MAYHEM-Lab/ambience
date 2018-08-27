@@ -474,31 +474,6 @@ int umsgpack_pack_nil(struct umsgpack_packer_buf *buf) {
 }
 
 void umsgpack_packer_init(struct umsgpack_packer_buf *buf, int size) {
-     if (buf) {
-        buf->length = size - sizeof(struct umsgpack_packer_buf);
-        buf->pos = 0;
-    }
-}
-
-/**
- * @param[in] size   Size of the buffer to be allocated
- *
- * In messagepack-lite, the caller is responsible for estimating
- * the buffer size needed.
- */
-struct umsgpack_packer_buf *umsgpack_alloc(int size) {
-    struct umsgpack_packer_buf *buf = malloc(size + sizeof(struct umsgpack_packer_buf));
-    if (buf) {
-        buf->length = size;
-        buf->pos = 0;
-    }
-    return buf;
-}
-
-/**
- * @param[in] buf    Destination buffer to be freed
- */
-int umsgpack_free(struct umsgpack_packer_buf *buf) {
-    free(buf);
-    return 1;
+    buf->length = size - sizeof(struct umsgpack_packer_buf);
+    buf->pos = 0;
 }

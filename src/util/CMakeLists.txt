@@ -14,7 +14,6 @@ add_library(tos_util
         src/new.cpp
         include/tos/new.hpp
         include/tos/memory.hpp
-        include/tos/debug.hpp
         src/cxxrt.cpp
         include/tos/span.hpp
         include/tos/ct_map.hpp

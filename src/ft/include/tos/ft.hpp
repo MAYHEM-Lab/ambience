@@ -171,13 +171,13 @@ namespace tos {
         inline thread_id_t get_id()
         {
             if (!impl::cur_thread) return {static_cast<uintptr_t>(-1)};
-            return {reinterpret_cast<uintptr_t>(impl::cur_thread)};
+            return { reinterpret_cast<uintptr_t>(impl::cur_thread) };
         }
     }
 
     inline thread_id_t launch(kern::tcb::entry_point_t e, void* arg)
     {
-        constexpr size_t stack_size = 2048;
+        constexpr size_t stack_size = 4096;
         auto params = thread_params()
             .add<tags::stack_ptr_t>(tos_stack_alloc(stack_size))
             .add<tags::stack_sz_t>(stack_size)

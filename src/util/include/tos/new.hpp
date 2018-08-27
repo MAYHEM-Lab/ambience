@@ -4,6 +4,7 @@
 
 #pragma once
 #include <stddef.h>
+#include <stdlib.h>
 
 #if !defined(TOS_STDLIB_COMPAT)
 #include <new>
@@ -20,3 +21,12 @@ inline void  operator delete[](void*, void*) throw() { }
 #endif
 
 inline void operator delete (void*, size_t){}
+inline void operator delete (void* pt)
+{
+    free(pt);
+}
+
+inline void* operator new(size_t sz)
+{
+    return malloc(sz);
+}

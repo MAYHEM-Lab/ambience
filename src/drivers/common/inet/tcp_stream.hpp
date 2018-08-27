@@ -47,9 +47,6 @@ namespace tos
         tos::semaphore m_write_sync{0};
         bool m_discon{false};
         uint16_t m_sent_bytes = 0;
-
-        tos::span<char>::iterator m_it{};
-        tos::span<char>::iterator m_end{};
     };
 
     template <class BaseEndpointT>
@@ -67,6 +64,7 @@ namespace tos
     inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::sent_t, BaseEndpointT &, uint16_t len) {
         m_sent_bytes += len;
         m_write_sync.up();
+        ets_printf("sent: %d\n", int(len));
     }
 
     template <class BaseEndpointT>
@@ -78,14 +76,16 @@ namespace tos
 
     template <class BaseEndpointT>
     inline int tcp_stream<BaseEndpointT>::write(tos::span<const char> buf) {
-        if (m_discon) { return 0; }
         tos::lock_guard<tos::mutex> lk{ m_busy };
+        if (m_discon) { return 0; }
         m_sent_bytes = 0;
         auto to_send = m_ep.send(buf);
+        ets_printf("sending: %d\n", int(to_send));
         while (m_sent_bytes != to_send && !m_discon)
         {
             m_write_sync.down();
         }
+        ets_printf("sentt: %d\n", int(m_sent_bytes));
         return m_sent_bytes;
     }
 

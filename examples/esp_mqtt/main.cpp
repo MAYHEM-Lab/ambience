@@ -50,7 +50,7 @@ int handle_samples(MQTT::Client<net_facade, timer_facade, 512>& client)
         map.insert("z", s.z);
     };
 
-    tos::println(*out, "sz2:", vecs.size());
+    tos::println(*out, vecs.size());
     int len = std::min<int>(20, vecs.size());
     auto arr = p.insert_arr(len);
     for (int i = 0; i < len; ++i)
@@ -62,8 +62,6 @@ int handle_samples(MQTT::Client<net_facade, timer_facade, 512>& client)
     message.payloadlen = p.get().size();
 
     auto res = client.publish("tos-sample", message);
-
-    tos::println(*out, "pl:", int(message.payloadlen), res);
 
     return res;
 }
@@ -91,7 +89,8 @@ void sample_task(void* arg)
         v.y = y;
         v.z = z;
         vecs.push(v);
-        alarm.sleep_for({ 10 });
+        using namespace tos::chrono_literals;
+        alarm.sleep_for(10_ms);
     }
 }
 
@@ -128,49 +127,53 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
         }, tos::ignore);
 
         lwip_init();
-        //axl_init(3);
 
-        sntp_set_timezone(0);
-        sntp_setservername(0, "0.tr.pool.ntp.org");
-        sntp_init();
+        for (int j = 0; j < 25; ++j)
+        {
+            bool isconn = false;
+            while (!isconn)
+                with(tos::esp82::connect(conn, { { 45, 55, 149, 110 } }, { 1883 }), [&](tos::esp82::tcp_endpoint& conn){
+                    tos::tcp_stream<tos::esp82::tcp_endpoint> stream {std::move(conn)};
+                    net_facade net{stream};
+                    isconn = true;
 
-        bool isconn = false;
-        while (!isconn)
-        with(tos::esp82::connect(conn, { { 45, 55, 149, 110 } }, { 1883 }), [&](tos::esp82::tcp_endpoint& conn){
-            tos::tcp_stream<tos::esp82::tcp_endpoint> stream {std::move(conn)};
-            net_facade net{stream};
-            isconn = true;
+                    auto client = new MQTT::Client<net_facade, timer_facade, 512>(net);
+                    MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
+                    data.MQTTVersion = 3;
+                    data.clientID.cstring = (char*)"tos-client";
+                    auto rc = client->connect(data);
 
-            MQTT::Client<net_facade, timer_facade, 512> client{ net };
-            MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
-            data.MQTTVersion = 3;
-            data.clientID.cstring = (char*)"tos-client";
-            auto rc = client.connect(data);
+                    if (rc != 0)
+                    {
+                        tos::println(usart, "rc from MQTT connect is", rc);
+                        return;
+                    }
 
-            if (rc != 0)
-            {
-                tos::println(usart, "rc from MQTT connect is", rc);
-                return;
-            }
+                    tos::println(usart, "MQTT connected");
+                    if (j == 0)
+                    {
+                        tos::launch(sample_task);
+                    }
 
-            tos::println(usart, "MQTT connected");
-            tos::launch(sample_task);
+                    for (int i = 0; i < 1'000; ++i) {
+                        if (stream.disconnected())
+                        {
+                            tos::println(usart, "disc");
+                            return;
+                        }
 
-            for (int i = 0; i < 25'000; ++i) {
-                if (stream.disconnected())
-                {
-                    tos::println(usart, "disc");
-                }
+                        auto res = handle_samples(*client);
+                        tos::println(usart, "res", res, j * 1000 + i, int(system_get_free_heap_size()));
+                        tos::this_thread::yield();
+                    }
 
-                handle_samples(client);
-                tos::this_thread::yield();
-            }
+                    delete client;
+                }, [&](auto&){
+                    tos::println(usart, "couldn't connect");
+                });
+        }
 
-        }, [&](auto&){
-            tos::println(usart, "couldn't connect");
-        });
-
-        tos::println(usart, "done", int(system_get_free_heap_size()));
+        tos::println(usart, "done");
     }, [&](auto& err){
         tos::println(usart, "uuuh, shouldn't have happened!");
     });

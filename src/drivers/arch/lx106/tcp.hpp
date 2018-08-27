@@ -15,6 +15,7 @@
 #include <tos/expected.hpp>
 #include <tos/algorithm.hpp>
 #include <drivers/common/inet/lwip.hpp>
+#include <tos/debug.hpp>
 
 #ifdef TOS_HAVE_SSL
 #include <lwipr_compat/lwipr_compat.h>
@@ -187,7 +188,9 @@ namespace tos
         }
 
         inline tcp_endpoint::~tcp_endpoint() {
+            tos_debug_print("close called\n");
             if (!m_conn) return;
+            tos_debug_print("closing\n");
             tcp_recv(m_conn, nullptr);
             tcp_err(m_conn, nullptr);
             tcp_sent(m_conn, nullptr);
@@ -196,6 +199,7 @@ namespace tos
         }
 
         inline uint16_t tcp_endpoint::send(tos::span<const char> buf) {
+            if (!m_conn) return 0;
             tcp_write(m_conn, (uint8_t*)buf.data(), buf.size(), 0);
             tcp_output(m_conn);
             return buf.size();
@@ -221,16 +225,16 @@ namespace tos
                     handler(lwip::events::recv, *self, lwip::buffer{ p });
                 } else {
                     // conn closed
+                    tos_debug_print("close received\n");
                     handler(lwip::events::discon, *self, lwip::discon_reason::closed);
                 }
                 return ERR_OK;
             }
 
             template <class CallbackT>
-            static err_t sent_handler(void* user, struct tcp_pcb *tpcb, u16_t len)
+            static err_t sent_handler(void* user, struct tcp_pcb *, u16_t len)
             {
                 auto self = static_cast<tcp_endpoint*>(user);
-                self->m_conn = tpcb;
 
                 auto& handler = *(CallbackT*)self->m_event_handler;
                 handler(lwip::events::sent, *self, len);

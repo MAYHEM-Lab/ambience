@@ -4,7 +4,5 @@
 
 #pragma once
 
-namespace tos
-{
-
-}
+extern "C" int ets_printf(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+#define tos_debug_print ets_printf
