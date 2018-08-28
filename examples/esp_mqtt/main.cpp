@@ -66,6 +66,32 @@ int handle_samples(MQTT::Client<net_facade, timer_facade, 512>& client)
     return res;
 }
 
+void fake_task(void* arg)
+{
+    tos_debug_print("fake stack: %p\n", read_sp());
+    uart0_tx_buffer_sync((const uint8_t *)"hello", 5);
+
+    tos::esp82::timer tmr = tos::open(tos::devs::timer<0>);
+    auto alarm = tos::open(tos::devs::alarm, tmr);
+
+    fake_accel acc { {0, 0, 0}, { 1, 1, 1 } };
+    tos::println(*out, "Hello!");
+
+    int cnt = 0;
+    while (true)
+    {
+        vecs.push(acc.sample());
+        using namespace tos::chrono_literals;
+        cnt++;
+        if (cnt % 100 == 0)
+        {
+            tos::println(*out, "runnables:", tos::runnables());
+            cnt = 0;
+        }
+        alarm.sleep_for(10_ms);
+    }
+}
+
 void sample_task(void* arg)
 {
     tos::esp82::gpio g;
@@ -96,6 +122,7 @@ void sample_task(void* arg)
 
 void ICACHE_FLASH_ATTR task(void* arg_pt)
 {
+    tos_debug_print("task stack: %p\n", read_sp());
     using namespace tos::tos_literals;
 
     constexpr auto usconf = tos::usart_config()
@@ -152,7 +179,7 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
                     tos::println(usart, "MQTT connected");
                     if (j == 0)
                     {
-                        tos::launch(sample_task);
+                        tos::launch(fake_task);
                     }
 
                     for (int i = 0; i < 1'000; ++i) {
@@ -181,5 +208,6 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
 
 void tos_main()
 {
+    tos_debug_print("main stack: %p\n", read_sp());
     tos::launch(task);
 }

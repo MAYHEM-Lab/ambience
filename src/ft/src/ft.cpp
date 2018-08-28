@@ -17,6 +17,7 @@ namespace tos {
             int8_t  num_threads = 0;
             uint8_t busy = 0;
             intrusive_list<tcb> run_queue;
+            int8_t runnable = 0;
 
             thread_id_t start(launch_params);
 
@@ -35,6 +36,11 @@ namespace tos
 
 namespace tos {
     static kern::scheduler sched;
+
+    size_t runnables() {
+        return sched.runnable;
+    }
+
     namespace impl
     {
         kern::tcb* cur_thread = nullptr;
@@ -71,7 +77,10 @@ namespace tos {
     {
         void suspend_self()
         {
+            //tos_debug_print("suspend %p\n", impl::cur_thread);
+
             if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
+                impl::cur_thread->s = state::suspended;
                 switch_context(sched.main_context, return_codes::suspend);
             }
         }
@@ -163,7 +172,9 @@ namespace tos {
             }
 
             // New threads are runnable by default.
+            thread->s = state::runnable;
             run_queue.push_back(*thread);
+            runnable++;
             num_threads++;
 
             kern::disable_interrupts();
@@ -218,6 +229,14 @@ namespace tos {
                     return exit_reason::power_down;
                 }
 
+                validate(run_queue, [](bool b, const char* r){
+                    if (!b)
+                    {
+                        tos_debug_print("%s", r);
+                        while (true);
+                    }
+                });
+
                 auto why = static_cast<return_codes>(setjmp(sched.main_context));
 
                 switch (why) {
@@ -225,6 +244,8 @@ namespace tos {
                 {
                     impl::cur_thread = &run_queue.front();
                     run_queue.pop_front();
+                    runnable--;
+                    impl::cur_thread->s = state::running;
 
                     auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
                                      + sizeof(tcb) + sizeof(stack_guard) - impl::cur_thread->stack_sz;
@@ -271,6 +292,23 @@ namespace tos {
 
         void make_runnable(tcb& t)
         {
+            //tos_debug_print("runnable %p\n", &t);
+
+            if (t.s == state::runnable)
+            {
+                tos_debug_print("already runnable");
+                while (true);
+            }
+
+            t.s = state::runnable;
+            sched.runnable++;
+
+            if (sched.runnable > sched.num_threads)
+            {
+                tos_debug_print("run queue bug");
+                while (true);
+            }
+
             sched.run_queue.push_back(t);
         }
     }

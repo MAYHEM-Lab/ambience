@@ -164,6 +164,8 @@ namespace tos {
     {
         return impl::cur_thread;
     }
+
+    size_t runnables();
 }
 
 namespace tos {

@@ -17,15 +17,21 @@ extern "C"
 #include <tos/interrupt.hpp>
 #include <lwip/timers.h>
 #include <tos/compiler.hpp>
+#include <tos/debug.hpp>
 
 extern "C"
 {
 static_assert(sizeof(int) == 4, "");
-alignas(16) char stack[2048 * 2];
+alignas(16) char stack[4096 * 2];
 static int stack_index = 0;
 void* ICACHE_FLASH_ATTR tos_stack_alloc(size_t size)
 {
-    return stack + 2048 * stack_index++;
+    tos_debug_print("stack index: %d", stack_index);
+    if (stack_index > 1)
+    {
+        while (true);
+    }
+    return stack + 4096 * stack_index++;
 }
 
 void ICACHE_FLASH_ATTR
@@ -137,7 +143,7 @@ entry()
     do_global_ctors();
     tos::kern::enable_interrupts();
     tos_main();
-    system_set_os_print(0);
+    system_set_os_print(1);
     system_os_task(main_task, tos::esp82::main_task_prio, arr, 16);
     system_os_post(tos::esp82::main_task_prio, 0, 0);
 }

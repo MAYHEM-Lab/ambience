@@ -199,7 +199,10 @@ namespace tos
         }
 
         inline uint16_t tcp_endpoint::send(tos::span<const char> buf) {
-            if (!m_conn) return 0;
+            if (!m_conn) {
+                tos_debug_print("erroneous call to send");
+                return 0;
+            }
             tcp_write(m_conn, (uint8_t*)buf.data(), buf.size(), 0);
             tcp_output(m_conn);
             return buf.size();
@@ -210,6 +213,8 @@ namespace tos
             template <class CallbackT>
             static err_t recv_handler(void* user, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
             {
+                tos_debug_print("recv stack: %p\n", read_sp());
+
                 auto self = static_cast<tcp_endpoint*>(user);
                 auto& handler = *(CallbackT*)self->m_event_handler;
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
@@ -234,6 +239,8 @@ namespace tos
             template <class CallbackT>
             static err_t sent_handler(void* user, struct tcp_pcb *, u16_t len)
             {
+                tos_debug_print("sent stack: %p\n", read_sp());
+
                 auto self = static_cast<tcp_endpoint*>(user);
 
                 auto& handler = *(CallbackT*)self->m_event_handler;
@@ -246,6 +253,8 @@ namespace tos
             template <class EventHandlerT>
             static void err_handler(void *user, err_t err)
             {
+                tos_debug_print("err stack: %p\n", read_sp());
+
                 auto self = static_cast<tcp_endpoint*>(user);
 
                 auto& handler = *(EventHandlerT*)self->m_event_handler;
@@ -253,6 +262,7 @@ namespace tos
                                         lwip::discon_reason::aborted : lwip::discon_reason::reset);
                 self->m_conn = nullptr;
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
+                tos_debug_print("ok");
             }
         };
 

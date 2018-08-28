@@ -64,14 +64,14 @@ namespace tos
     inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::sent_t, BaseEndpointT &, uint16_t len) {
         m_sent_bytes += len;
         m_write_sync.up();
-        ets_printf("sent: %d\n", int(len));
+        tos_debug_print("sent: %d\n", int(len));
     }
 
     template <class BaseEndpointT>
     inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t, BaseEndpointT &, lwip::discon_reason r) {
         m_discon = true;
         m_write_sync.up();
-        ets_printf("\nclosed: %d\n", int(r));
+        tos_debug_print("\nclosed: %d\n", int(r));
     }
 
     template <class BaseEndpointT>
@@ -80,12 +80,12 @@ namespace tos
         if (m_discon) { return 0; }
         m_sent_bytes = 0;
         auto to_send = m_ep.send(buf);
-        ets_printf("sending: %d\n", int(to_send));
+        tos_debug_print("sending: %d\n", int(to_send));
         while (m_sent_bytes != to_send && !m_discon)
         {
             m_write_sync.down();
         }
-        ets_printf("sentt: %d\n", int(m_sent_bytes));
+        tos_debug_print("sentt: %d\n", int(m_sent_bytes));
         return m_sent_bytes;
     }
 

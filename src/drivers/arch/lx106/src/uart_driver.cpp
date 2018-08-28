@@ -25,6 +25,17 @@
 #include <algorithm>
 #include <mem.h>
 
+#include <tos/semaphore.hpp>
+#include <tos/mutex.hpp>
+
+struct uart_state
+{
+    const char* tx_buffer{nullptr};
+    size_t buf_sz{0};
+    tos::semaphore tx_done{0};
+    tos::mutex tx_busy;
+};
+
 extern "C"
 {
 #include <user_interface.h>
@@ -124,8 +135,6 @@ uart0_intr_handler(void *arg)
         uart0_rxfifo_len = UART_RXFIFO_LEN(UART0);
         uart0_rxfifo_move(&uart0_rx_ringbuf, uart0_rxfifo_len);
     } else if (uart0_status & UART_TXFIFO_EMPTY_INT_ST) {
-        uint16 i;
-
         // TX buffer empty, check if ringbuf has space or disable int
         WRITE_PERI_REG(UART_INT_CLR(UART0), UART_TXFIFO_EMPTY_INT_ST);
 
@@ -241,6 +250,28 @@ uart0_read_buf(void *buf, uint16 nbytes, uint16 timeout)
     return i;
 }
 
+void uart0_tx_char_sync(uint8_t c)
+{
+    ETS_UART_INTR_DISABLE();
+
+    while (true)
+    {
+        uint32 fifo_cnt = READ_PERI_REG(UART_STATUS(UART0)) & (UART_TXFIFO_CNT<<UART_TXFIFO_CNT_S);
+        if ((fifo_cnt >> UART_TXFIFO_CNT_S & UART_TXFIFO_CNT) < 1) {
+            break;
+        }
+    }
+
+    WRITE_PERI_REG(UART_FIFO(UART0), c);
+}
+
+void uart0_tx_buffer_sync(const uint8_t* buf, uint16_t len)
+{
+    while (len --> 0)
+    {
+        uart0_tx_char_sync(*buf++);
+    }
+}
 
 void
 uart0_tx_buffer(const uint8 *buf, uint16 len) {
