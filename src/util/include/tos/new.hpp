@@ -20,7 +20,9 @@ inline void  operator delete[](void*, void*) throw() { }
 
 #endif
 
-inline void operator delete (void*, size_t){}
+inline void operator delete (void* pt, size_t){
+    free(pt);
+}
 inline void operator delete (void* pt)
 {
     free(pt);
