@@ -33,16 +33,16 @@ namespace {
     void led1_task(void*) {
         using namespace tos;
 
-        nrf52::timer0 tmr;
+        auto tmr = tos::open(tos::devs::timer<0>);
         auto alarm = open(devs::alarm, tmr);
 
         g->write(17, digital::low);
         while (true) {
             g->write(17, digital::high);
-            sem.down(alarm, {10000});
+            sem.down(alarm, {1000});
 
             g->write(17, digital::low);
-            sem.down(alarm, {10000});
+            sem.down(alarm, {1000});
         }
     }
 
@@ -81,6 +81,10 @@ namespace {
         }
     }
 
+    void ble_task(void*)
+    {
+    }
+
     void led2_task(void*) {
         using namespace tos;
         using namespace tos_literals;
@@ -95,8 +99,7 @@ namespace {
 
         nrf52::radio rad;
 
-        char buf[] = "hello world!";
-        tos::println(usart, buf);
+        tos::println(usart, "hello world!");
 
         char x;
         uint32_t i = 0;

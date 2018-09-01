@@ -148,7 +148,7 @@ namespace tos
         iterator_t end();
 
         template <class ErrHandle>
-        friend bool validate(const intrusive_list<T>& list, ErrHandle&& assrt)
+        friend void validate(const intrusive_list<T>& list, ErrHandle&& assrt)
         {
             if (list.m_head == nullptr || list.m_tail == nullptr)
             {

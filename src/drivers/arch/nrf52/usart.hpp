@@ -27,7 +27,7 @@ namespace tos
             uart(uart&&);
 
             void write(span<const char> buf);
-            void read(span<char> buf);
+            span<char> read(span<char> buf);
 
         private:
 

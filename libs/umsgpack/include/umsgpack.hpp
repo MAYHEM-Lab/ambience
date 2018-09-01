@@ -7,6 +7,7 @@
 extern "C"
 {
 #include <umsgpack.h>
+#include <cwpack.h>
 }
 #undef bool
 
@@ -41,6 +42,7 @@ namespace tos
             void insert(T val);
 
             map_packer insert_map(size_t len);
+            arr_packer insert_arr(size_t len);
 
         private:
             friend class packer;
@@ -56,30 +58,28 @@ namespace tos
         public:
             explicit packer(span<char> buffer);
 
-            map_packer insert_map(size_t len)
-            {
-                umsgpack_pack_map(m_buf, len);
-                return {*this, len};
-            }
+            map_packer insert_map(size_t len);
 
-            arr_packer insert_arr(size_t len)
-            {
-                umsgpack_pack_array(m_buf, len);
-                return {*this, len};
-            }
+            arr_packer insert_arr(size_t len);
 
             span<const char> get()
             {
-                return {(const char*)m_buf->data, umsgpack_get_length(m_buf)};
+                auto len = m_ctx.current - m_ctx.start;
+                return m_buffer.slice(0, len);
             }
 
-            void put(float val);
-            void put(int val);
-            void put(const char* str);
+            void insert(float val);
+            void insert(int val);
+            void insert(uint32_t val);
+            void insert(const char *str);
+            void insert(span<char> str);
+
+            void insert(span<uint8_t> binary);
 
         private:
             span<char> m_buffer;
-            umsgpack_packer_buf* m_buf;
+            //umsgpack_packer_buf* m_buf;
+            cw_pack_context m_ctx;
         };
     }
 };
@@ -91,20 +91,51 @@ namespace tos
     namespace msgpack
     {
         inline packer::packer(span<char> buffer) : m_buffer{buffer} {
-            m_buf = (umsgpack_packer_buf*)buffer.data();
-            umsgpack_packer_init(m_buf, buffer.size());
+            //m_buf = (umsgpack_packer_buf*)buffer.data();
+            //umsgpack_packer_init(m_buf, buffer.size());
+            cw_pack_context_init(&m_ctx, buffer.data(), buffer.size(), nullptr);
         }
 
-        inline void packer::put(float val) {
-            umsgpack_pack_float(m_buf, val);
+        inline void packer::insert(float val) {
+            cw_pack_float(&m_ctx, val);
+            //umsgpack_pack_float(m_buf, val);
         }
 
-        inline void packer::put(int val) {
-            umsgpack_pack_int(m_buf, val);
+        inline void packer::insert(int val) {
+            cw_pack_signed(&m_ctx, val);
+            //umsgpack_pack_int(m_buf, val);
         }
 
-        inline void packer::put(const char *str) {
-            umsgpack_pack_str(m_buf, (char*)str, strlen(str));
+        void packer::insert(uint32_t val) {
+            cw_pack_signed(&m_ctx, val);
+            //umsgpack_pack_uint(m_buf, val);
+        }
+
+        inline void packer::insert(const char *str) {
+            cw_pack_str(&m_ctx, str, strlen(str));
+            //umsgpack_pack_str(m_buf, (char*)str, strlen(str));
+        }
+
+        inline void packer::insert(tos::span<char> str) {
+            cw_pack_str(&m_ctx, str.data(), str.size());
+            //umsgpack_pack_str(m_buf, str.data(), str.size());
+        }
+
+        inline void packer::insert(span <uint8_t> binary) {
+            cw_pack_bin(&m_ctx, binary.data(), binary.size());
+            //umsgpack_pack_str(m_buf, (char*)binary.data(), binary.size());
+        }
+
+        inline arr_packer packer::insert_arr(size_t len) {
+            cw_pack_array_size(&m_ctx, len);
+            //umsgpack_pack_array(m_buf, len);
+            return {*this, len};
+        }
+
+        inline map_packer packer::insert_map(size_t len) {
+            cw_pack_map_size(&m_ctx, len);
+            //umsgpack_pack_map(m_buf, len);
+            return {*this, len};
         }
 
         inline map_packer::map_packer(packer &p, size_t len)
@@ -117,8 +148,8 @@ namespace tos
             {
                 //TODO: error
             }
-            m_packer.put(name);
-            m_packer.put(val);
+            m_packer.insert(name);
+            m_packer.insert(val);
             ++m_done;
         }
 
@@ -128,7 +159,7 @@ namespace tos
             {
                 //TODO: error
             }
-            m_packer.put(val);
+            m_packer.insert(val);
             ++m_done;
         }
 
@@ -138,6 +169,10 @@ namespace tos
 
         map_packer arr_packer::insert_map(size_t len) {
             return m_packer.insert_map(len);
+        }
+
+        arr_packer arr_packer::insert_arr(size_t len) {
+            return m_packer.insert_arr(len);
         }
     }
 };

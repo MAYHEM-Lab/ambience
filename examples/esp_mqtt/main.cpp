@@ -24,7 +24,14 @@
 #include <unistd.h>
 #include <drivers/common/adxl345.hpp>
 
-static tos::fixed_fifo<vec3, 127> vecs;
+struct pair
+{
+    vec3 v;
+    uint32_t base_time;
+    uint32_t count;
+};
+
+static tos::fixed_fifo<pair, 127> vecs;
 
 tos::posix::file_desc* out;
 
@@ -39,15 +46,54 @@ int handle_samples(MQTT::Client<net_facade, timer_facade, 512>& client)
     message.retained = false;
     message.dup = false;
 
-    static char pbuf[512];
+    static char pbuf[1024];
     tos::msgpack::packer p { pbuf };
 
-    auto put_vec = [](auto& to, vec3 s)
+    auto put_vec = [](auto& to, pair s)
     {
-        auto map = to.insert_map(3);
-        map.insert("x", s.x);
-        map.insert("y", s.y);
-        map.insert("z", s.z);
+        auto map = to.insert_arr(5);
+        map.insert(s.v.x);
+        map.insert(s.v.y);
+        map.insert(s.v.z);
+        map.insert(s.base_time);
+        map.insert(s.count);
+    };
+
+    tos::println(*out, vecs.size());
+    int len = std::min<int>(20, vecs.size());
+    auto arr = p.insert_arr(len);
+    for (int i = 0; i < len; ++i)
+    {
+        put_vec(arr, vecs.pop());
+        tos::this_thread::yield();
+    }
+
+    message.payload = (void*)p.get().data();
+    message.payloadlen = p.get().size();
+
+    auto res = client.publish("tos-sample", message);
+
+    return res;
+}
+
+int handle_samples_tcp(tos::tcp_stream<tos::esp82::tcp_endpoint>& client)
+{
+    while (vecs.size() < 20)
+    {
+        tos::this_thread::yield();
+    }
+
+    static char pbuf[768];
+    tos::msgpack::packer p { pbuf };
+
+    auto put_vec = [](auto& to, pair s)
+    {
+        auto map = to.insert_arr(5);
+        map.insert(s.v.x);
+        map.insert(s.v.y);
+        map.insert(s.v.z);
+        map.insert(s.base_time);
+        map.insert(s.count);
     };
 
     tos::println(*out, vecs.size());
@@ -58,12 +104,9 @@ int handle_samples(MQTT::Client<net_facade, timer_facade, 512>& client)
         put_vec(arr, vecs.pop());
     }
 
-    message.payload = (void*)p.get().data();
-    message.payloadlen = p.get().size();
+    client.write(p.get());
 
-    auto res = client.publish("tos-sample", message);
-
-    return res;
+    return 0;
 }
 
 void fake_task(void* arg)
@@ -80,7 +123,7 @@ void fake_task(void* arg)
     int cnt = 0;
     while (true)
     {
-        vecs.push(acc.sample());
+        vecs.push({ acc.sample(), 0, 0 });
         using namespace tos::chrono_literals;
         cnt++;
         if (cnt % 100 == 0)
@@ -106,6 +149,14 @@ void sample_task(void* arg)
 
     tos::println(*out, "Hello!");
 
+    uint32_t time = sntp_get_current_timestamp();
+    while (time == 0)
+    {
+        tos::this_thread::yield();
+        time = sntp_get_current_timestamp();
+    }
+
+    uint32_t count = 0;
     while (true)
     {
         int x, y, z;
@@ -114,7 +165,7 @@ void sample_task(void* arg)
         v.x = x;
         v.y = y;
         v.z = z;
-        vecs.push(v);
+        vecs.push({ v, time, count++ });
         using namespace tos::chrono_literals;
         alarm.sleep_for(10_ms);
     }
@@ -155,16 +206,20 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
 
         lwip_init();
 
+        sntp_set_timezone(0);
+        sntp_setservername(0, "0.tr.pool.ntp.org");
+        sntp_init();
+
         for (int j = 0; j < 25; ++j)
         {
             bool isconn = false;
             while (!isconn)
-                with(tos::esp82::connect(conn, { { 45, 55, 149, 110 } }, { 1883 }), [&](tos::esp82::tcp_endpoint& conn){
+                with(tos::esp82::connect(conn, { { 165, 227, 135, 235 } }, { 9993 }), [&](tos::esp82::tcp_endpoint& conn){
                     tos::tcp_stream<tos::esp82::tcp_endpoint> stream {std::move(conn)};
-                    net_facade net{stream};
+                    //net_facade net{stream};
                     isconn = true;
 
-                    auto client = new MQTT::Client<net_facade, timer_facade, 512>(net);
+                    /*auto client = new MQTT::Client<net_facade, timer_facade, 512>(net);
                     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
                     data.MQTTVersion = 3;
                     data.clientID.cstring = (char*)"tos-client";
@@ -176,10 +231,10 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
                         return;
                     }
 
-                    tos::println(usart, "MQTT connected");
+                    tos::println(usart, "MQTT connected");*/
                     if (j == 0)
                     {
-                        tos::launch(fake_task);
+                        tos::launch(sample_task);
                     }
 
                     for (int i = 0; i < 1'000; ++i) {
@@ -189,12 +244,12 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
                             return;
                         }
 
-                        auto res = handle_samples(*client);
+                        auto res = handle_samples_tcp(stream);
                         tos::println(usart, "res", res, j * 1000 + i, int(system_get_free_heap_size()));
                         tos::this_thread::yield();
                     }
 
-                    delete client;
+                    //delete client;
                 }, [&](auto&){
                     tos::println(usart, "couldn't connect");
                 });

@@ -91,6 +91,7 @@ namespace tos
 
     template <class BaseEndpointT>
     inline void tcp_stream<BaseEndpointT>::operator()(lwip::events::recv_t, BaseEndpointT &, lwip::buffer&& buf) {
+        tos_debug_print("recved %d\n", buf.size());
         if (m_buffer.has_more())
         {
             m_buffer.append(std::move(buf));
