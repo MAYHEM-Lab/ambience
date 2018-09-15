@@ -13,7 +13,7 @@
 #ifdef TOS_ARCH_avr
 #include <drivers/arch/avr/usart.hpp>
 #elif defined(TOS_ARCH_x86)
-#include <drivers/arch/x86/stdio.hpp>
+#include <drivers/arch/x86/drivers.hpp>
 #elif defined(TOS_ARCH_arm)
 #include <drivers/arch/nrf52/usart.hpp>
 #endif
@@ -25,7 +25,7 @@
 tos::semaphore sem(0);
 
 tos::mutex m;
-void TOS_TASK hello_task()
+void TOS_TASK hello_task(void*)
 {
     auto tty = tos::open(tos::devs::tty<0>);
     {
@@ -42,7 +42,7 @@ void TOS_TASK hello_task()
     }
 }
 
-void TOS_TASK yo_task()
+void TOS_TASK yo_task(void*)
 {
     emsha::HMAC hm{(const uint8_t*)"abc", 3};
     auto tty = tos::open(tos::devs::tty<0>);
@@ -71,12 +71,14 @@ void tos_main()
     using namespace tos;
     using namespace tos::tos_literals;
 
+#if !defined(TOS_ARCH_x86)
     constexpr auto usconf = tos::usart_config()
             .add(115200_baud_rate)
             .add(usart_parity::disabled)
             .add(usart_stop_bit::one);
 
     auto usart = open(tos::devs::usart<0>, usconf);
+#endif
 
     tos::launch(hello_task);
     tos::launch(yo_task);

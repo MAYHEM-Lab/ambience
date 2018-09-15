@@ -1,5 +1,6 @@
 #include <setjmp.h>
 #include <stdlib.h>
+#include <string.h>
 #include <tos/ft.hpp>
 #include <tos/tcb.hpp>
 #include <tos/scheduler.hpp>
