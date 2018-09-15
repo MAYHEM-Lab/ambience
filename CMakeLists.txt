@@ -63,7 +63,7 @@ elseif(TOS_ESP)
     add_subdirectory(libs/umsgpack)
     add_subdirectory(libs/CWPack)
 elseif(TOS_X86)
-    #add_subdirectory(examples/simple_portable)
+    add_subdirectory(examples/simple_portable)
 
     add_subdirectory(tests)
 elseif(TOS_ARM)
