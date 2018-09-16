@@ -20,3 +20,11 @@ namespace tos
 #if defined(TOS_ARCH_arm)
 #define tos_debug_print(...)
 #endif
+
+#if defined(TOS_ARCH_x86)
+#include <stdio.h>
+#define tos_debug_print printf
+#endif
+
+#if !defined(tos_debug_print)
+#endif
