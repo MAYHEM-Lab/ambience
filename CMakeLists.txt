@@ -60,7 +60,6 @@ elseif(TOS_ESP)
     add_subdirectory(examples/esp_ssl)
 
     add_subdirectory(libs/zmtp)
-    add_subdirectory(libs/umsgpack)
     add_subdirectory(libs/CWPack)
 elseif(TOS_X86)
     #add_subdirectory(examples/simple_portable)
