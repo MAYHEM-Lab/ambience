@@ -20,7 +20,7 @@
 #include "fake_accel.hpp"
 #include <tos/posix.hpp>
 
-#include <umsgpack.hpp>
+#include <cwpack.hpp>
 #include <unistd.h>
 #include <drivers/common/adxl345.hpp>
 
@@ -76,7 +76,8 @@ int handle_samples(MQTT::Client<net_facade, timer_facade, 512>& client)
     return res;
 }
 
-int handle_samples_tcp(tos::tcp_stream<tos::esp82::tcp_endpoint>& client)
+template<class T>
+int handle_samples_tcp(T& client)
 {
     while (vecs.size() < 20)
     {

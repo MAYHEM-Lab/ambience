@@ -22,20 +22,16 @@ extern "C"
 extern "C"
 {
 static_assert(sizeof(int) == 4, "");
-alignas(16) char stack[4096 * 2];
-static int stack_index = 0;
+
 void* ICACHE_FLASH_ATTR tos_stack_alloc(size_t size)
 {
-    tos_debug_print("stack index: %d", stack_index);
-    if (stack_index > 1)
-    {
-        while (true);
-    }
-    return stack + 4096 * stack_index++;
+    return os_malloc(size);
 }
 
 void ICACHE_FLASH_ATTR
-tos_stack_free(void* data) {}
+tos_stack_free(void* data) {
+    os_free(data);
+}
 
 void ICACHE_FLASH_ATTR
 tos_enable_interrupts()
@@ -108,7 +104,7 @@ user_rf_cal_sector_set(void)
 static void ICACHE_FLASH_ATTR
 main_task(ETSEvent*)
 {
-    sys_check_timeouts();
+    //sys_check_timeouts();
     auto res = tos::kern::schedule();
 
     if (res == tos::exit_reason::yield)

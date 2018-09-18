@@ -59,7 +59,7 @@ void task(void*)
         auto addr = with(conn.get_addr(), [&](auto& addr){
             return addr;
         }, [](auto){
-            return tos::ipv4_addr{};
+            return tos::ipv4_addr_t{};
         });
 
         tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);

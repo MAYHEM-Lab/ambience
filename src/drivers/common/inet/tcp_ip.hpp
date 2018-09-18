@@ -6,39 +6,68 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <tos/span.hpp>
+#include <tos/algorithm.hpp>
 
-namespace tos
-{
+namespace tos {
     /**
      * This class represents an IP port number
      */
-    struct port_num_t
-    {
+    struct port_num_t {
         uint16_t port;
     };
 
-    inline bool operator==(const port_num_t& a, const port_num_t& b)
-    {
-        return a.port == b.port;
-    }
-
-    inline bool operator!=(const port_num_t& a, const port_num_t& b)
-    {
-        return a.port != b.port;
-    }
-
-    struct ipv4_addr
-    {
+    struct ipv4_addr_t {
         uint8_t addr[4];
     };
 
-    inline bool operator==(const ipv4_addr& a, const ipv4_addr& b)
-    {
+    struct mac_addr_t {
+        uint8_t addr[6];
+    };
+
+    inline bool operator==(const port_num_t &a, const port_num_t &b) {
+        return a.port == b.port;
+    }
+
+    inline bool operator!=(const port_num_t &a, const port_num_t &b) {
+        return a.port != b.port;
+    }
+
+    inline bool operator==(const ipv4_addr_t &a, const ipv4_addr_t &b) {
         return memcmp(a.addr, b.addr, 4) == 0;
     }
 
-    inline bool operator!=(const ipv4_addr& a, const ipv4_addr& b)
-    {
+    inline bool operator!=(const ipv4_addr_t &a, const ipv4_addr_t &b) {
         return memcmp(a.addr, b.addr, 4) != 0;
+    }
+
+    inline ipv4_addr_t parse_ip(tos::span<const char> addr);
+}
+
+namespace tos{
+    inline ipv4_addr_t parse_ip(tos::span<const char> addr) {
+        ipv4_addr_t res;
+
+        auto it = addr.begin();
+        auto end = it;
+        while (end != addr.end() && *end != '.') ++end;
+        res.addr[0] = atoi({it, end});
+
+        it = ++end;
+        end = it;
+        while (end != addr.end() && *end != '.') ++end;
+        res.addr[1] = atoi({it, end});
+
+        it = ++end;
+        end = it;
+        while (end != addr.end() && *end != '.') ++end;
+        res.addr[2] = atoi({it, end});
+
+        it = ++end;
+        end = it;
+        while (end != addr.end() && *end != '.') ++end;
+        res.addr[3] = atoi({it, end});
+
+        return res;
     }
 }

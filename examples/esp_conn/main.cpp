@@ -47,7 +47,7 @@ void task(void*)
 
     tos::esp82::wifi w;
     conn:
-    auto res = w.connect("WIFI", "PASS");
+    auto res = w.connect("UCSB Wireless Web", "");
 
     tos::println(usart, "connected?", bool(res));
     if (!res) goto conn;
@@ -61,7 +61,7 @@ void task(void*)
 
         lwip_init();
 
-        for (int i = 0; i < 15'000; ++i) {
+        for (int i = 0; i < 30'000; ++i) {
             with(tos::esp82::connect(conn, {{45, 55, 149, 110}}, {80}), [&](tos::esp82::tcp_endpoint &conn) {
                 tos::tcp_stream<tos::esp82::tcp_endpoint> stream{std::move(conn)};
 

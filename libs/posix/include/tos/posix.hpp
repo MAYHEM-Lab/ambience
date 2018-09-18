@@ -16,27 +16,19 @@ namespace tos
 
         template <class T>
         auto read_td(T& t, span<char> buf, std::true_type)
-        {
-            return t.read(buf);
-        }
+        { return t.read(buf); }
 
         template <class T>
         auto read_td(T&, span<char> buf, std::false_type)
-        {
-            return buf.slice(0, 0);
-        }
+        { return buf.slice(0, 0); }
 
         template <class T>
         auto write_td(T& t, span<const char> buf, std::true_type)
-        {
-            return t.write(buf);
-        }
+        { return t.write(buf); }
 
         template <class T>
         auto write_td(T&, span<const char>, std::false_type)
-        {
-            return 0;
-        }
+        { return 0; }
 
         template <class T>
         struct wrapper_desc

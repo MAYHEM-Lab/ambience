@@ -9,6 +9,7 @@
 #include <tos/type_traits.hpp>
 #include <tos/compiler.hpp>
 #include <tos/new.hpp>
+#include <tos/debug.hpp>
 
 namespace tos
 {
@@ -105,8 +106,9 @@ namespace tos
             }
         }
     private:
-        T& get() { return m_t; }
-        const T& get() const { return m_t; }
+        T&& get() && { return std::move(m_t); }
+        T& get() & { return m_t; }
+        const T& get() const & { return m_t; }
 
         ErrT& error() { return m_err; }
         const ErrT& error() const { return m_err; }
@@ -128,6 +130,39 @@ namespace tos
                 return have_handler(e.get());
             }
             return err_handler(e.error());
+        };
+
+        friend auto ALWAYS_INLINE force_get(expected&& e) -> T
+        {
+            if (e)
+            {
+                return std::move(e.get());
+            }
+            //TODO: die
+            tos_debug_print("force_get(e&&) failed!");
+            while (true);
+        };
+
+        friend auto ALWAYS_INLINE force_get(const expected& e) -> const T&
+        {
+            if (e)
+            {
+                return e.get();
+            }
+            //TODO: die
+            tos_debug_print("force_get(const e&) failed!");
+            while (true);
+        };
+
+        friend auto ALWAYS_INLINE force_get(expected& e) -> T&
+        {
+            if (e)
+            {
+                return e.get();
+            }
+            //TODO: die
+            tos_debug_print("force_get(e&) failed!");
+            while (true);
         };
     };
 

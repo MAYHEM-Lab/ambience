@@ -71,7 +71,7 @@ namespace tos
     inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t, BaseEndpointT &, lwip::discon_reason r) {
         m_discon = true;
         m_write_sync.up();
-        tos_debug_print("\nclosed: %d\n", int(r));
+        tos_debug_print("closed: %d\n", int(r));
     }
 
     template <class BaseEndpointT>

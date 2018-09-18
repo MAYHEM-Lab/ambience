@@ -54,7 +54,7 @@ namespace tos
 
             friend struct ep_handlers;
 
-            friend expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection&, ipv4_addr, port_num_t);
+            friend expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection&, ipv4_addr_t, port_num_t);
 
             tcp_pcb* m_conn;
             void* m_event_handler;
@@ -82,7 +82,7 @@ namespace tos
 
             friend struct sec_ep_handlers;
 
-            friend expected<secure_tcp_endpoint, lwip::connect_error> connect_ssl(wifi_connection&, ipv4_addr, port_num_t);
+            friend expected<secure_tcp_endpoint, lwip::connect_error> connect_ssl(wifi_connection&, ipv4_addr_t, port_num_t);
 
             tcp_pcb* m_conn;
             void* m_event_handler;
@@ -118,7 +118,7 @@ namespace tos
          * @param port tcp port of the destination application
          * @return an endpoint or an error if connection fails
          */
-        expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection& iface, ipv4_addr host, port_num_t port);
+        expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection& iface, ipv4_addr_t host, port_num_t port);
     }
 }
 
@@ -428,7 +428,7 @@ namespace tos
             system_os_post(tos::esp82::main_task_prio, 0, 0);
         }
 
-        inline expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection& c, ipv4_addr host, port_num_t port) {
+        inline expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection& c, ipv4_addr_t host, port_num_t port) {
             c.consume_all();
             if (!c.has_ip())
             {
@@ -442,6 +442,10 @@ namespace tos
             tcp_connect(pcb, &a, port.port, connected_handler); // this signals ERR_OK
             tcp_err(pcb, conn_err_handler); // this signals ERR_CONN
             state.sem.down();
+            if (state.res == ERR_RST)
+            {
+                return unexpected(lwip::connect_error::connection_reset);
+            }
             if (state.res != ERR_OK)
             {
                 return unexpected(lwip::connect_error::unknown);
@@ -504,7 +508,7 @@ namespace tos
             return ERR_OK;
         }
 
-        inline expected<secure_tcp_endpoint, lwip::connect_error> connect_ssl(wifi_connection&, ipv4_addr host, port_num_t port) {
+        inline expected<secure_tcp_endpoint, lwip::connect_error> connect_ssl(wifi_connection&, ipv4_addr_t host, port_num_t port) {
             auto pcb = tcp_new();
             ip_addr_t a;
             memcpy(&a.addr, host.addr, 4);
