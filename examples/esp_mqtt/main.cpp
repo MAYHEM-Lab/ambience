@@ -204,8 +204,17 @@ void ICACHE_FLASH_ATTR task(void* arg_pt)
         with(conn.get_addr(), [&](auto& addr){
             tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
         }, tos::ignore);
-
         lwip_init();
+
+        tos::launch(fake_task);
+
+        int i = 0;
+        while (true)
+        {
+            auto res = handle_samples_tcp(usart);
+            tos::println(usart, "res", res, i++, int(system_get_free_heap_size()));
+            tos::this_thread::yield();
+        }
 
         sntp_set_timezone(0);
         sntp_setservername(0, "0.tr.pool.ntp.org");

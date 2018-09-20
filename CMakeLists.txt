@@ -30,6 +30,7 @@ endif()
 
 add_subdirectory(libs/kthreads)
 add_subdirectory(libs/posix)
+add_subdirectory(libs/sntp)
 
 if(TOS_AVR)
     add_subdirectory(examples/gpio)

@@ -11,7 +11,6 @@
 #include "os_type.h"
 #include "sntp.h"
 #include <sys/time.h>
-#include <time.h>
 
 /***************************RTC TIME OPTION***************************************/
 // daylight settings
