@@ -291,7 +291,7 @@ sntp_process(u32_t *receive_timestamp) {
 
     time_t t = (ntohl(receive_timestamp[0]) - DIFF_SEC_1900_1970);
     auto frac_ms = (uint64_t(ntohl(receive_timestamp[1])) * 1000) >> 32;
-    ets_printf("sec: %u frac: %u", t, ntohl(receive_timestamp[1]));
+    ets_printf("sec: %u frac: %u\n", t, ntohl(receive_timestamp[1]));
     /* change system time and/or the update the RTC clock */
     SNTP_SET_SYSTEM_TIME(t);
     /* display local time from GMT time */
@@ -642,4 +642,30 @@ sntp_getservername(u8_t idx) {
 }
 #endif /* SNTP_SERVER_DNS */
 
+void sntp_set_update_delay(int) {
+    tos_debug_print("sntp_set_update_delay\n");
+}
+void sntp_setservername(unsigned char, const char*){
+    tos_debug_print("sntp_setservername\n");
+}
+void sntp_set_daylight(bool){
+    tos_debug_print("sntp_set_daylight\n");
+}
+void sntp_set_timetype(bool){
+    tos_debug_print("sntp_set_timetype\n");
+}
+bool sntp_get_timetype(){
+    tos_debug_print("sntp_get_timetype\n");
+
+    return false;
+}
+void sntp_set_receive_time_size(char){
+    tos_debug_print("sntp_set_receive_time_size\n");
+}
+const char* sntp_get_real_time()
+{
+    tos_debug_print("sntp_get_real_time\n");
+
+    return nullptr;
+}
 }

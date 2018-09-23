@@ -82,7 +82,8 @@ namespace tos
 
             friend struct sec_ep_handlers;
 
-            friend expected<secure_tcp_endpoint, lwip::connect_error> connect_ssl(wifi_connection&, ipv4_addr_t, port_num_t);
+            friend expected<secure_tcp_endpoint, lwip::connect_error> connect_ssl(wifi_connection&, ipv4_addr_t, port_num_t,
+                    tos::span<const uint8_t>, tos::span<const uint8_t>, tos::span<const uint8_t>);
 
             tcp_pcb* m_conn;
             void* m_event_handler;
@@ -508,7 +509,9 @@ namespace tos
             return ERR_OK;
         }
 
-        inline expected<secure_tcp_endpoint, lwip::connect_error> connect_ssl(wifi_connection&, ipv4_addr_t host, port_num_t port) {
+        inline expected<secure_tcp_endpoint, lwip::connect_error>
+        connect_ssl(wifi_connection&, ipv4_addr_t host, port_num_t port,
+                tos::span<const uint8_t> key, tos::span<const uint8_t> cert, tos::span<const uint8_t> cacert) {
             auto pcb = tcp_new();
             ip_addr_t a;
             memcpy(&a.addr, host.addr, 4);
@@ -531,6 +534,9 @@ namespace tos
             tos::this_thread::yield();
             auto clientfd = axl_append(pcb);
             auto sslContext = ssl_ctx_new(SSL_CONNECT_IN_PARTS | SSL_SERVER_VERIFY_LATER, 1);
+            ssl_obj_memory_load(sslContext, SSL_OBJ_RSA_KEY, key.data(), key.size(), nullptr);
+            ssl_obj_memory_load(sslContext, SSL_OBJ_X509_CERT, cert.data(), cert.size(), nullptr);
+            ssl_obj_memory_load(sslContext, SSL_OBJ_X509_CACERT, cacert.data(), cacert.size(), nullptr);
 
             tos::this_thread::yield();
             system_update_cpu_freq(SYS_CPU_160MHZ); // Run faster during SSL handshake

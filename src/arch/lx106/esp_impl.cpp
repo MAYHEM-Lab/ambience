@@ -25,7 +25,13 @@ static_assert(sizeof(int) == 4, "");
 
 void* ICACHE_FLASH_ATTR tos_stack_alloc(size_t size)
 {
-    return os_malloc(size);
+    auto res = os_malloc(size);
+    if (res == nullptr)
+    {
+        tos_debug_print("can't alloc stack!");
+        while (true);
+    }
+    return res;
 }
 
 void ICACHE_FLASH_ATTR

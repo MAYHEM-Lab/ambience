@@ -17,6 +17,7 @@ endif()
 
 project(tos)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 message(STATUS "${CMAKE_CXX_FLAGS}")
 
@@ -59,6 +60,8 @@ elseif(TOS_ESP)
     add_subdirectory(examples/esp_conn)
     add_subdirectory(examples/esp_mqtt)
     add_subdirectory(examples/esp_ssl)
+
+    add_subdirectory(examples/aws_push)
 
     add_subdirectory(libs/zmtp)
     add_subdirectory(libs/CWPack)

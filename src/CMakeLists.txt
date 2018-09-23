@@ -6,6 +6,8 @@ set(TOS_CORE_HEADERS
 	tos/arch.hpp
         tos/init.hpp tos/compiler.hpp tos/chrono.hpp tos/version.hpp tos/debug.hpp tos/device_id.hpp tos/driver_traits.hpp tos/delay.hpp )
 
+include(CMakeRC)
+
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
