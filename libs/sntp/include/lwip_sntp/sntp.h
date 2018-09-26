@@ -61,7 +61,7 @@ bool sntp_set_timezone(sint8 timezone);
  * @param numdns the index of the NTP server to set must be < SNTP_MAX_SERVERS
  * @param dnsserver IP address of the NTP server to set
  */
-void sntp_setserver(u8_t idx, ip_addr_t *addr);
+void sntp_setserver(unsigned char idx, ip_addr_t *addr);
 
 /**
  * Obtain one of the currently configured by IP address (or DHCP) NTP servers

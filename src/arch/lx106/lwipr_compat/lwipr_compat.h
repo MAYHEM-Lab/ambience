@@ -34,7 +34,7 @@ extern "C" {
  * Define watchdog function to be called during CPU intensive operations.
  */
 #ifndef WATCHDOG_RESET
-	#define WATCHDOG_RESET()
+	#define WATCHDOG_RESET() ax_wdt_feed()
 #endif
 
 typedef struct {

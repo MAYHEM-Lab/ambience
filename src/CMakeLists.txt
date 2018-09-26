@@ -14,6 +14,8 @@ set(TOS_CORE_HEADERS
 	tos/delay.hpp
 )
 
+include(CMakeRC)
+
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
