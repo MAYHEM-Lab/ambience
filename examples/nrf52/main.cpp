@@ -33,7 +33,7 @@ namespace {
     void led1_task(void*) {
         using namespace tos;
 
-        auto tmr = tos::open(tos::devs::timer<0>);
+        auto tmr = open(tos::devs::timer<0>);
         auto alarm = open(devs::alarm, tmr);
 
         g->write(17, digital::low);

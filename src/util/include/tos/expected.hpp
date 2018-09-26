@@ -11,6 +11,19 @@
 #include <tos/new.hpp>
 #include <tos/debug.hpp>
 
+/**
+ * This function is called upon a force_get execution on an
+ * expected object that's in unexpected state.
+ *
+ * This function is implemented as a weak symbol on supported
+ * platforms and could be replaced by user provided
+ * implementations.
+ *
+ * The implementation must never return to the caller, otherwise
+ * the behaviour is undefined.
+ */
+[[noreturn]] void tos_force_get_failed(void*);
+
 namespace tos
 {
     template <class ErrT>
@@ -114,7 +127,7 @@ namespace tos
         const ErrT& error() const { return m_err; }
 
         union {
-            char ___;
+            char ___; // avoid having to construct any member
             T m_t;
             ErrT m_err;
         };
@@ -138,9 +151,8 @@ namespace tos
             {
                 return std::move(e.get());
             }
-            //TODO: die
-            tos_debug_print("force_get(e&&) failed!");
-            while (true);
+
+            tos_force_get_failed(nullptr);
         };
 
         friend auto ALWAYS_INLINE force_get(const expected& e) -> const T&
@@ -149,9 +161,8 @@ namespace tos
             {
                 return e.get();
             }
-            //TODO: die
-            tos_debug_print("force_get(const e&) failed!");
-            while (true);
+
+            tos_force_get_failed(nullptr);
         };
 
         friend auto ALWAYS_INLINE force_get(expected& e) -> T&
@@ -160,9 +171,8 @@ namespace tos
             {
                 return e.get();
             }
-            //TODO: die
-            tos_debug_print("force_get(e&) failed!");
-            while (true);
+
+            tos_force_get_failed(nullptr);
         };
     };
 
