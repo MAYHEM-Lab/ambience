@@ -121,6 +121,7 @@ main_task(ETSEvent*)
 
 extern "C"
 {
+extern "C" void *__dso_handle = 0;
 extern void (*__init_array_start)();
 extern void (*__init_array_end)();
 

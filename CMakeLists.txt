@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 
-set(TOS ON)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+include(${CMAKE_SOURCE_DIR}/cmake/Tos.cmake)
 
 if(TOS_AVR)
     set(AVR_CPU atmega328p)
@@ -16,12 +19,7 @@ else()
 endif()
 
 project(tos)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
 message(STATUS "${CMAKE_CXX_FLAGS}")
-
-include(${CMAKE_SOURCE_DIR}/cmake/TosTools.cmake)
 
 add_subdirectory(src)
 

@@ -15,6 +15,7 @@ target_include_directories(lx106_impl PUBLIC "${TOOLS_BASE}/esp-lwip/src/include
 target_include_directories(lx106_impl PUBLIC "${TOOLS_BASE}/esp-lwip/src/include/ipv4")
 target_link_libraries(lx106_impl PUBLIC "-Tlinker.ld")
 target_link_libraries(lx106_impl PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(lx106_impl PUBLIC "-L${TOOLS_BASE}/xtensa-lx106-elf/xtensa-lx106-elf/sysroot/usr/lib")
 target_link_libraries(lx106_impl PUBLIC tos_ft lwip axtls c)
 target_compile_definitions(lx106_impl PUBLIC LWIP_OPEN_SRC LWIP_RAW ESP8266 WITH_PGM_READ_HELPER TOS_HAVE_SSL)
 set_target_properties(lx106_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)

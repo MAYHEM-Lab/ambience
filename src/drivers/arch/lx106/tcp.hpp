@@ -7,7 +7,6 @@
 #include <tos/intrusive_list.hpp>
 #include "wifi.hpp"
 #include <tos/arch.hpp>
-#include <utility>
 #include <drivers/common/inet/tcp_ip.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/track_ptr.hpp>
