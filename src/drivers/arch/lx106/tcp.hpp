@@ -60,6 +60,7 @@ namespace tos
             void* m_event_handler;
         };
 
+#if defined(TOS_HAVE_SSL)
         class secure_tcp_endpoint
         {
         public:
@@ -90,6 +91,7 @@ namespace tos
             SSL* ssl_obj;
             SSLCTX* ssl_ctx;
         };
+#endif
 
         class tcp_socket
                 : public tos::list_node<tcp_socket>
@@ -275,7 +277,7 @@ namespace tos
             tcp_recv(m_conn, &ep_handlers::recv_handler<EventHandlerT>);
             tcp_err(m_conn, &ep_handlers::err_handler<EventHandlerT>);
         }
-
+#if defined(TOS_HAVE_SSL)
         inline secure_tcp_endpoint::secure_tcp_endpoint(tcp_pcb *conn, SSL* obj, SSLCTX* ctx)
                 : m_conn{conn}, ssl_obj{obj}, ssl_ctx{ctx} {
             tcp_arg(m_conn, this);
@@ -401,6 +403,7 @@ namespace tos
             tcp_recv(m_conn, &sec_ep_handlers::recv_handler<EventHandlerT>);
             tcp_err(m_conn, &sec_ep_handlers::err_handler<EventHandlerT>);
         }
+#endif
 
         struct conn_state
         {
