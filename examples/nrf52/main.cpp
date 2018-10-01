@@ -81,10 +81,6 @@ namespace {
         }
     }
 
-    void ble_task(void*)
-    {
-    }
-
     void led2_task(void*) {
         using namespace tos;
         using namespace tos_literals;

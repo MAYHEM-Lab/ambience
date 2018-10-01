@@ -7,9 +7,9 @@ tos_set_stack_ptr:
     mov sp, a2
     jx a3
 
-.global call_user_start
-call_user_start:
-    j call_user_start_sdk
+#.global call_user_start
+#call_user_start:
+#    j call_user_start_sdk
 
 /*.section .MyUserExceptionVector.text
 .global MyUserExceptionVector

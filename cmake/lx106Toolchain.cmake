@@ -16,14 +16,10 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
-    -U__STRICT_ANSI__ -DICACHE_FLASH -mtext-section-literals -g -mlongcalls \
-    -nostdlib -ffunction-sections -fdata-sections -Wall -Wextra -ffreestanding")
+set(LX106_FLAGS "-DICACHE_FLASH -mtext-section-literals -mlongcalls")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtext-section-literals -g -mlongcalls \
-    -DICACHE_FLASH -nostdlib -ffunction-sections -fdata-sections -std=c++14 \
-    -Wall -Wextra -fno-unwind-tables -ffreestanding -fno-exceptions -fno-rtti \
-    -fno-threadsafe-statics")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LX106_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LX106_FLAGS}")
 
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections -Wl,-EL -L${SDK_ROOT}/ld -L${SDK_ROOT}/lib -Xlinker -Map=output.map")
 

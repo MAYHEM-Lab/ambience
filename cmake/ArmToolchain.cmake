@@ -15,11 +15,10 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-set(TOS_NRF52_FLAGS "-DNRF52 -DFLOAT_ABI_HARD -DCONFIG_GPIO_AS_PINRESET -DNRF52832_XXAA -DNRF52_PAN_74 -mthumb -mabi=aapcs -mfloat-abi=hard -mfpu=fpv4-sp-d16 -u _printf_float -fno-builtin -fshort-enums -g3")
-set(TOS_COMMON_FLAGS "-mcpu=cortex-m4 -ffunction-sections -fdata-sections -Wall -Wextra -ffreestanding ${TOS_NRF52_FLAGS}")
+set(TOS_NRF52_FLAGS "-mcpu=cortex-m4 -DNRF52 -DFLOAT_ABI_HARD -DCONFIG_GPIO_AS_PINRESET -DNRF52832_XXAA -DNRF52_PAN_74 -mthumb -mabi=aapcs -mfloat-abi=hard -mfpu=fpv4-sp-d16 -u _printf_float -fno-builtin -fshort-enums -g3")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TOS_COMMON_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOS_COMMON_FLAGS} -std=c++14 -pedantic -fstack-usage -fno-unwind-tables -fno-exceptions -fno-rtti -fno-threadsafe-statics")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TOS_NRF52_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOS_NRF52_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections -Xlinker -Map=output.map -fno-threadsafe-statics ${TOS_NRF52_FLAGS}")
 
 SET(CMAKE_C_ARCHIVE_CREATE "<CMAKE_AR> qcs <TARGET> <LINK_FLAGS> <OBJECTS>")

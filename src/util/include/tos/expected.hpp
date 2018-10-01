@@ -143,7 +143,7 @@ namespace tos
                 return have_handler(e.get());
             }
             return err_handler(e.error());
-        };
+        }
 
         friend auto ALWAYS_INLINE force_get(expected&& e) -> T
         {
@@ -153,7 +153,7 @@ namespace tos
             }
 
             tos_force_get_failed(nullptr);
-        };
+        }
 
         friend auto ALWAYS_INLINE force_get(const expected& e) -> const T&
         {
@@ -163,7 +163,7 @@ namespace tos
             }
 
             tos_force_get_failed(nullptr);
-        };
+        }
 
         friend auto ALWAYS_INLINE force_get(expected& e) -> T&
         {
@@ -173,7 +173,7 @@ namespace tos
             }
 
             tos_force_get_failed(nullptr);
-        };
+        }
     };
 
     struct ignore_t

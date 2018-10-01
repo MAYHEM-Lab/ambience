@@ -22,7 +22,6 @@
  * THE SOFTWARE.
  */
 #include <tos/mutex.hpp>
-#include <algorithm>
 #include <mem.h>
 
 #include <tos/semaphore.hpp>
