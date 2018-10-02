@@ -6,6 +6,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Get submodules
+          command: git submodule update --init --recursive
+      - run:
           name: Update apt
           command: apt-get update
       - run:
@@ -39,6 +42,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Get submodules
+          command: git submodule update --init --recursive
+      - run:
           name: Update apt
           command: apt-get update
       - run:
@@ -58,6 +64,9 @@ jobs:
       - image: ubuntu:bionic
     steps:
       - checkout
+      - run:
+          name: Get submodules
+          command: git submodule update --init --recursive
       - run:
           name: Update apt
           command: apt-get update
@@ -79,6 +88,9 @@ jobs:
     - image: ubuntu:bionic
     steps:
     - checkout
+    - run:
+        name: Get submodules
+        command: git submodule update --init --recursive
     - run:
         name: Update apt
         command: apt-get update

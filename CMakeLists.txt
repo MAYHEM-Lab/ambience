@@ -29,7 +29,6 @@ endif()
 
 add_subdirectory(libs/kthreads)
 add_subdirectory(libs/posix)
-add_subdirectory(libs/sntp)
 
 if(TOS_AVR)
     add_subdirectory(examples/gpio)
@@ -63,10 +62,11 @@ elseif(TOS_ESP)
 
     add_subdirectory(libs/zmtp)
     add_subdirectory(libs/CWPack)
+    add_subdirectory(libs/sntp)
 elseif(TOS_X86)
     add_subdirectory(examples/simple_portable)
 
-    add_subdirectory(tests)
+    #add_subdirectory(tests)
 elseif(TOS_ARM)
     add_subdirectory(examples/nrf52)
 endif()

@@ -7,6 +7,7 @@
 #include <drivers/common/tty.hpp>
 #include <drivers/common/usart.hpp>
 #include <tos/span.hpp>
+#undef putc
 
 namespace tos
 {
