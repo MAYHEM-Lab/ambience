@@ -8,7 +8,6 @@
 
 extern "C"
 {
-#include <user_interface.h>
 void tos_set_stack_ptr(void*);
 
 inline void* read_sp()
@@ -23,6 +22,6 @@ namespace tos
 {
     namespace esp82
     {
-        static constexpr auto main_task_prio = USER_TASK_PRIO_0;
+        static constexpr auto main_task_prio = 0;
     }
 }

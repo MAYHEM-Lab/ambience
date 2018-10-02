@@ -16,6 +16,7 @@ extern "C"
 {
 #include "osapi.h"
 #include "os_type.h"
+#include <user_interface.h>
 
 int ets_printf(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 /**

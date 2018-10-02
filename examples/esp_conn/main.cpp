@@ -51,7 +51,7 @@ void task(void*)
     tos::println(usart, "connected?", bool(res));
     if (!res) goto conn;
 
-    with (std::move(res), [&](tos::esp82::wifi_connection& conn){
+    with (tos::std::move(res), [&](tos::esp82::wifi_connection& conn){
         conn.wait_for_dhcp();
 
         with(conn.get_addr(), [&](auto& addr){
@@ -62,7 +62,7 @@ void task(void*)
 
         for (int i = 0; i < 30'000; ++i) {
             with(tos::esp82::connect(conn, {{45, 55, 149, 110}}, {80}), [&](tos::esp82::tcp_endpoint &conn) {
-                tos::tcp_stream<tos::esp82::tcp_endpoint> stream{std::move(conn)};
+                tos::tcp_stream<tos::esp82::tcp_endpoint> stream{tos::std::move(conn)};
 
                 stream.write("GET / HTTP/1.1\r\n"
                              "Host: bakirbros.com\r\n"
@@ -75,7 +75,7 @@ void task(void*)
                 {
                     auto res = stream.read(buf);
                     if (!res) break;
-                    with(std::move(res), [&](tos::span<const char> r){
+                    with(tos::std::move(res), [&](tos::span<const char> r){
                         tos::print(usart, r);
                     }, tos::ignore);
                     tos::this_thread::yield();

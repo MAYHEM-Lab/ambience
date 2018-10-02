@@ -6,7 +6,6 @@
 #include <string.h>
 #include <tos/semaphore.hpp>
 #include <tos/fixed_fifo.hpp>
-#include <ssl/os_port.h>
 #include <lwip/init.h>
 
 extern "C"

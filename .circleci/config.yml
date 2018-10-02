@@ -74,10 +74,38 @@ jobs:
           working_directory: build/
           name: Build Project
           command: ninja
+  esp_build:
+    docker:
+    - image: ubuntu:bionic
+    steps:
+    - checkout
+    - run:
+        name: Update apt
+        command: apt-get update
+    - run:
+        name: Install unzip wget
+        command: apt-get install -y unzip wget bzip2 tar ninja-build cmake
+    - run:
+        name: Download toolchain
+        command: wget http://cs.ucsb.edu/~bakir/tos-esp-sdk.tar.bz2
+    - run:
+        name: Create toolchain dir
+        command: mkdir -p /opt/x-tools/esp-open-sdk
+    - run:
+        name: Extract toolchain
+        command: tar xf tos-esp-sdk.tar.bz2 -C /opt/x-tools/esp-open-sdk
+    - run:
+        name: Generate Project
+        command: mkdir build && cd build && cmake -G Ninja -DTOS_ESP=ON -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - run:
+        working_directory: build/
+        name: Build Project
+        command: ninja esp_conn
 workflows:
   version: 2
   all_platforms:
     jobs:
+      - esp_build
       - arm_build
       - avr_build
       - x86_build
