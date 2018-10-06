@@ -19,8 +19,6 @@
 #endif
 
 #include <tos/mutex.hpp>
-#include <emsha/emsha.hh>
-#include <emsha/hmac.hh>
 
 tos::semaphore sem(0);
 
@@ -44,15 +42,11 @@ void TOS_TASK hello_task(void*)
 
 void TOS_TASK yo_task(void*)
 {
-    emsha::HMAC hm{(const uint8_t*)"abc", 3};
     auto tty = tos::open(tos::devs::tty<0>);
     {
         tos::lock_guard<tos::mutex> lock{m};
         tos::println(*tty, tos::this_thread::get_id().id);
     }
-
-    uint8_t buf[emsha::SHA256_HASH_SIZE];
-    hm.finalize(buf);
 
     for (int i = 0; i < 100; ++i)
     {
@@ -60,7 +54,6 @@ void TOS_TASK yo_task(void*)
         {
             tos::lock_guard<tos::mutex> lock{m};
             tos::println(*tty, tos::this_thread::get_id().id, ": yo", i);
-            tos::println(*tty, (const char*)buf);
         }
         tos::this_thread::yield();
     }

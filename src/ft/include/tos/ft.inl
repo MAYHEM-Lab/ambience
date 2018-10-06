@@ -120,6 +120,7 @@ namespace tos {
 
         inline stack_smash_status check_stack_smash(char* stack, uint16_t st_size)
         {
+            return {};
             const auto stack_top    = stack + st_size;
             const auto st_g_ptr     = stack_top - sizeof stack_guard;
             const auto t_ptr        = st_g_ptr  - sizeof(tcb);
@@ -142,7 +143,7 @@ namespace tos {
             return res;
         }
 
-        inline thread_id_t NO_INLINE scheduler::start(launch_params params)
+        inline thread_id_t scheduler::start(launch_params params)
         {
             const auto st_size = get<tags::stack_sz_t>(params);
             const auto stack = static_cast<char*>(get<tags::stack_ptr_t>(params));
