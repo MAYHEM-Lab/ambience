@@ -12,7 +12,7 @@ set(TOS_CORE_HEADERS
 	tos/device_id.hpp
 	tos/driver_traits.hpp
 	tos/delay.hpp
-)
+        tos/barrier.hpp)
 
 include(CMakeRC)
 

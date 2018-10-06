@@ -8,7 +8,7 @@
 #include <tos/span.hpp>
 #include "src/new_uart_priv.h"
 #include <tos/driver_traits.hpp>
-#include <tos/ft.hpp>
+#include <tos/thread.hpp>
 
 namespace tos
 {

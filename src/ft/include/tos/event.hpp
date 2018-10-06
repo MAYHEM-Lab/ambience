@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tos/waitable.hpp>
+#include <tos/barrier.hpp>
 
 namespace tos {
     class event
@@ -43,19 +44,25 @@ namespace tos {
 namespace tos {
     inline void event::fire() noexcept
     {
+        detail::memory_barrier_enter();
         tos::int_guard ig;
         fire_isr();
+        detail::memory_barrier_exit();
     }
 
     inline void event::wait() noexcept
     {
+        detail::memory_barrier_enter();
         tos::int_guard ig;
         m_wait.wait();
+        detail::memory_barrier_exit();
     }
 
     inline void event::fire_isr() noexcept
     {
+        detail::memory_barrier_enter();
         m_wait.signal_all();
+        detail::memory_barrier_exit();
     }
 }
 

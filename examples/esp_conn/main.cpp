@@ -45,50 +45,53 @@ void task(void*)
     tos::println(usart, tos::vcs::commit_hash);
 
     tos::esp82::wifi w;
-    conn:
+    conn_:
     auto res = w.connect("UCSB Wireless Web", "");
 
     tos::println(usart, "connected?", bool(res));
-    if (!res) goto conn;
+    if (!res) goto conn_;
 
-    with (tos::std::move(res), [&](tos::esp82::wifi_connection& conn){
-        conn.wait_for_dhcp();
+    auto& wconn = force_get(res);
 
-        with(conn.get_addr(), [&](auto& addr){
-            tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
-        }, tos::ignore);
+    wconn.wait_for_dhcp();
 
-        lwip_init();
+    auto addr = force_get(wconn.get_addr());
 
-        for (int i = 0; i < 30'000; ++i) {
-            with(tos::esp82::connect(conn, {{45, 55, 149, 110}}, {80}), [&](tos::esp82::tcp_endpoint &conn) {
-                tos::tcp_stream<tos::esp82::tcp_endpoint> stream{tos::std::move(conn)};
+    tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
 
-                stream.write("GET / HTTP/1.1\r\n"
-                             "Host: bakirbros.com\r\n"
-                             "Connection: close\r\n"
-                             "\r\n");
+    lwip_init();
 
-                tos::println(stream);
+    for (int i = 0; i < 3'000'000; ++i) {
+        auto try_conn = tos::esp82::connect(wconn, {{45, 55, 149, 110}}, {80});
 
-                while (true)
-                {
-                    auto res = stream.read(buf);
-                    if (!res) break;
-                    with(tos::std::move(res), [&](tos::span<const char> r){
-                        tos::print(usart, r);
-                    }, tos::ignore);
-                    tos::this_thread::yield();
-                }
-            }, [&](auto &err) {
-                tos::println(usart, "couldn't connect");
-            });
-            tos::println(usart, "done", i, int(system_get_free_heap_size()));
+        if (!try_conn)
+        {
+            tos::println(usart, "couldn't connect");
+            continue;
         }
 
-    }, [&](auto& err){
-        tos::println(usart, "uuuh, shouldn't have happened!");
-    });
+        auto& conn = force_get(try_conn);
+        tos::tcp_stream<tos::esp82::tcp_endpoint> stream{tos::std::move(conn)};
+
+        stream.write("GET / HTTP/1.1\r\n"
+                     "Host: bakirbros.com\r\n"
+                     "Connection: close\r\n"
+                     "\r\n");
+
+        tos::println(stream);
+
+        while (true)
+        {
+            auto read_res = stream.read(buf);
+            if (!read_res) break;
+
+            auto& r = force_get(read_res);
+            tos::print(usart, r);
+            tos::this_thread::yield();
+        }
+
+        tos::println(usart, "done", i, int(system_get_free_heap_size()));
+    }
 
     auto tmr = open(tos::devs::timer<0>);
     auto alarm = open(tos::devs::alarm, tmr);

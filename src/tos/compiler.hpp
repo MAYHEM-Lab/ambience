@@ -13,6 +13,7 @@
 #endif
 #define NORETURN __attribute__((noreturn))
 #define ALWAYS_INLINE __attribute__((always_inline))
+#define NO_INLINE __attribute__((noinline))
 
 #define TOS_EXPORT __attribute__((visibility("default")))
 #define TOS_HIDDEN __attribute__((visibility("hidden")))

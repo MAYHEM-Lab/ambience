@@ -3,6 +3,7 @@
 #include <tos/chrono.hpp>
 #include <tos/waitable.hpp>
 #include <drivers/common/alarm.hpp>
+#include <tos/barrier.hpp>
 
 namespace tos {
     enum class sem_ret
@@ -115,21 +116,26 @@ namespace tos {
 namespace tos {
     inline void semaphore::up() noexcept
     {
+        detail::memory_barrier_enter();
         tos::int_guard ig;
         up_isr();
+        detail::memory_barrier_exit();
     }
 
     inline void semaphore::down() noexcept
     {
+        detail::memory_barrier_enter();
         tos::int_guard ig;
         --m_count;
         if (m_count < 0) {
             m_wait.wait();
         }
+        detail::memory_barrier_exit();
     }
 
     template<class AlarmT>
     sem_ret semaphore::down(AlarmT &alarm, milliseconds ms) noexcept {
+        detail::memory_barrier_enter();
         tos::int_guard ig;
 
         auto ret_val = sem_ret::normal;
@@ -157,6 +163,8 @@ namespace tos {
         {
             alarm.cancel(handle);
         }
+
+        detail::memory_barrier_exit();
         return ret_val;
     }
 
