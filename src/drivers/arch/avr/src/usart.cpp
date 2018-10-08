@@ -87,8 +87,8 @@ namespace tos {
             UCSR0C = usart_control(m, p, s);
         }
 
-        int usart0::read(span<char> buf) {
-            return read_usart(buf);
+        span<char> usart0::read(span<char> buf) {
+            return buf.slice(0, read_usart(buf));
         }
 
         int usart0::write(span<const char> buf) {

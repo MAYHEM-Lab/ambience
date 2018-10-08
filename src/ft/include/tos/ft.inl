@@ -38,19 +38,19 @@ namespace tos {
         /**
          * the running thread yielded
          */
-                yield,
+        yield,
         /**
          * the running thread has been suspended
          */
-                suspend,
+        suspend,
         /**
          * a thread exited
          */
-                do_exit,
+        do_exit,
         /**
          * this thread was assigned the cpu
          */
-                scheduled
+        scheduled
     };
 }
 
@@ -120,7 +120,6 @@ namespace tos {
 
         inline stack_smash_status check_stack_smash(char* stack, uint16_t st_size)
         {
-            return {};
             const auto stack_top    = stack + st_size;
             const auto st_g_ptr     = stack_top - sizeof stack_guard;
             const auto t_ptr        = st_g_ptr  - sizeof(tcb);
@@ -258,7 +257,6 @@ namespace tos {
 
                         switch_context(impl::cur_thread->context, return_codes::scheduled);
                     }
-                        break;
                     case return_codes::do_exit:
                     {
                         auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
@@ -266,8 +264,8 @@ namespace tos {
                         std::destroy_at(impl::cur_thread);
                         tos_stack_free(stack_ptr);
                         num_threads--;
-                    }
                         break;
+                    }
                     case return_codes::yield:
                     case return_codes::suspend:
                     {
@@ -279,8 +277,8 @@ namespace tos {
                             tos_debug_print("Stack Smash Detected! %llx %llx %llx", res.val1, res.val2, res.val3);
                             while (true);
                         }
-                    }
                         break;
+                    }
                     default:
                         break;
                 }

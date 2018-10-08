@@ -22,30 +22,30 @@
 
 tos::semaphore sem(0);
 
+tos::char_ostream* out_str;
+
 tos::mutex m;
 void TOS_TASK hello_task(void*)
 {
-    auto tty = tos::open(tos::devs::tty<0>);
     {
         tos::lock_guard<tos::mutex> lock{m};
-        tos::println(*tty, tos::this_thread::get_id().id);
+        tos::println(*out_str, tos::this_thread::get_id().id);
     }
 
     while (true) {
         sem.down();
         {
             tos::lock_guard<tos::mutex> lock{m};
-            tos::println(*tty, tos::this_thread::get_id().id, ": hello");
+            tos::println(*out_str, tos::this_thread::get_id().id, ": hello");
         }
     }
 }
 
 void TOS_TASK yo_task(void*)
 {
-    auto tty = tos::open(tos::devs::tty<0>);
     {
         tos::lock_guard<tos::mutex> lock{m};
-        tos::println(*tty, tos::this_thread::get_id().id);
+        tos::println(*out_str, tos::this_thread::get_id().id);
     }
 
     for (int i = 0; i < 100; ++i)
@@ -53,7 +53,7 @@ void TOS_TASK yo_task(void*)
         sem.up();
         {
             tos::lock_guard<tos::mutex> lock{m};
-            tos::println(*tty, tos::this_thread::get_id().id, ": yo", i);
+            tos::println(*out_str, tos::this_thread::get_id().id, ": yo", i);
         }
         tos::this_thread::yield();
     }
@@ -71,6 +71,9 @@ void tos_main()
             .add(usart_stop_bit::one);
 
     auto usart = open(tos::devs::usart<0>, usconf);
+
+    auto sf = new stream_facade<decltype(usart)>(tos::std::move(usart));
+    out_str = sf;
 #endif
 
     tos::launch(hello_task);

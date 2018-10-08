@@ -45,7 +45,7 @@ namespace tos {
 
             static void options(usart_modes, usart_parity, usart_stop_bit);
 
-            static int read(span<char> buf);
+            static span<char> read(span<char> buf);
 
             static int write(span<const char> buf);
 
@@ -57,7 +57,7 @@ namespace tos {
         void write_sync(const char* x, size_t len);
     }
 
-    inline avr::usart0* open_impl(devs::usart_t<0>, avr::usart_constraint&& rate)
+    inline avr::usart0 open_impl(devs::usart_t<0>, avr::usart_constraint&& rate)
     {
         avr::usart0::set_baud_rate(get<usart_baud_rate>(rate));
         avr::usart0::options(
@@ -65,11 +65,6 @@ namespace tos {
                 get<usart_parity>(rate),
                 get<usart_stop_bit>(rate));
         avr::usart0::enable();
-        return nullptr;
-    }
-
-    inline avr::usart0* open_impl(devs::tty_t<0>)
-    {
-        return nullptr;
+        return {};
     }
 }
