@@ -26,5 +26,9 @@ namespace tos
 #define tos_debug_print printf
 #endif
 
+#if defined(TOS_ARCH_avr)
+#define tos_debug_print(...)
+#endif
+
 #if !defined(tos_debug_print)
 #endif

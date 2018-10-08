@@ -93,7 +93,7 @@ namespace tos {
 
         int usart0::write(span<const char> buf) {
             write_usart(buf);
-            return buf.size() - state->len;
+            return buf.size() - ::state->len;
         }
     }
 }

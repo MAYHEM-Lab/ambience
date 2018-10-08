@@ -8,18 +8,21 @@
 #include <nrf52.h>
 #include <nrf.h>
 #include <tos/interrupt.hpp>
+#include <stdlib.h>
 
 extern "C"
 {
 alignas(8) char stack[512*2];
 int stack_index = 0;
-void* tos_stack_alloc(size_t)
+void* tos_stack_alloc(size_t sz)
 {
+    return malloc(sz);
     return stack+512*stack_index++;
 }
 
-void tos_stack_free(void*)
+void tos_stack_free(void* ptr)
 {
+    return free(ptr);
 }
 }
 

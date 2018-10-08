@@ -26,6 +26,14 @@ namespace tos
         static constexpr stop_bit_2_t stop_bit_2{};
     }
 
+    namespace uart
+    {
+        namespace events
+        {
+            static struct sent_t{} sent{};
+        }
+    }
+
     enum class usart_stop_bit : uint8_t {
         one = 0b0,
         two = 0b1
