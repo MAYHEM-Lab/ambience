@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include <arch/avr/gpio.hpp>
+//#include <arch/avr/gpio.hpp>
+#include <arch/lx106/gpio.hpp>
 
 namespace tos
 {
@@ -30,7 +31,7 @@ namespace tos
 // so 100 us takes max 400 loops
 // so by dividing F_CPU by 40000 we "fail" as fast as possible
 #ifndef F_CPU
-#define DHTLIB_TIMEOUT 1000  // ahould be approx. clock/40000
+#define DHTLIB_TIMEOUT 2000  // ahould be approx. clock/40000
 #else
 #define DHTLIB_TIMEOUT (F_CPU/40000)
 #endif
@@ -40,16 +41,16 @@ namespace tos
     public:
         dht() { m_disableIRQ = true; };
 
-        dht_res read11(pin_t pin);
-        dht_res read(pin_t pin);
-        dht_res read12(pin_t pin);
+        dht_res read11(esp82::pin_t pin);
+        dht_res read(esp82::pin_t pin);
+        dht_res read12(esp82::pin_t pin);
 
         float humidity;
         float temperature;
 
     private:
         uint8_t bits[5];  // buffer to receive data
-        dht_res read_sensor(pin_t pin, uint8_t wakeupDelay, uint8_t leadingZeroBits);
+        dht_res read_sensor(esp82::pin_t pin, uint8_t wakeupDelay, uint8_t leadingZeroBits);
         bool   m_disableIRQ;
     };
 }
