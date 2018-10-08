@@ -3,13 +3,13 @@
 //
 
 #include <common/dht22.hpp>
-#include <util/delay.h>
+//#include <util/delay.h>
 #include <tos/print.hpp>
 #include <tos/interrupt.hpp>
 
 namespace tos
 {
-    dht_res dht::read11(pin_t pin)
+    dht_res dht::read11(esp82::pin_t pin)
     {
         // READ VALUES
         if (m_disableIRQ) kern::disable_interrupts();
@@ -33,7 +33,7 @@ namespace tos
         return result;
     }
 
-    dht_res dht::read12(pin_t pin)
+    dht_res dht::read12(esp82::pin_t pin)
     {
         // READ VALUES
         if (m_disableIRQ) kern::disable_interrupts();
@@ -57,7 +57,7 @@ namespace tos
         return result;
     }
 
-    dht_res dht::read(pin_t pin)
+    dht_res dht::read(esp82::pin_t pin)
     {
         // READ VALUES
         if (m_disableIRQ) kern::disable_interrupts();
@@ -85,8 +85,8 @@ namespace tos
         return result;
     }
 
-    tos::avr::gpio g;
-    dht_res dht::read_sensor(pin_t pin, uint8_t wakeupDelay, uint8_t leadingZeroBits)
+    tos::esp82::gpio g;
+    dht_res dht::read_sensor(esp82::pin_t pin, uint8_t wakeupDelay, uint8_t leadingZeroBits)
     {
         // INIT BUFFERVAR TO RECEIVE DATA
         uint8_t mask = 128;
@@ -105,8 +105,9 @@ namespace tos
         g.write(pin, false);
         //pinMode(pin, OUTPUT);
         //digitalWrite(pin, LOW); // T-be
-        if (wakeupDelay > 8) _delay_ms(wakeupDelay);
-        else _delay_us(wakeupDelay * 1000UL);
+        //if (wakeupDelay > 8) ets_delay_us(wakeupDelay * 1000UL);
+        //else
+            ets_delay_us(wakeupDelay * 1000UL);
         // digitalWrite(pin, HIGH); // T-go
         //pinMode(pin, INPUT);
         g.set_pin_mode(pin, pin_mode::in);

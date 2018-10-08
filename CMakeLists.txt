@@ -60,6 +60,8 @@ elseif(TOS_ESP)
 
     add_subdirectory(examples/aws_push)
 
+    add_subdirectory(examples/dht11_sample)
+
     add_subdirectory(libs/zmtp)
     add_subdirectory(libs/CWPack)
     add_subdirectory(libs/sntp)

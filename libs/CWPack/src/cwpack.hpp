@@ -11,18 +11,23 @@ extern "C"
 
 #include <string.h>
 #include <tos/span.hpp>
+//#include <string>
 
 namespace tos
 {
     namespace msgpack
     {
         class packer;
+        class arr_packer;
 
         class map_packer
         {
         public:
             template <class ValT>
             void insert(const char* name, ValT val);
+
+            map_packer insert_map(const char* name, size_t len);
+            arr_packer insert_arr(const char* name, size_t len);
 
         private:
             friend class packer;
@@ -67,6 +72,9 @@ namespace tos
             }
 
             void insert(float val);
+            void insert(double val);
+            void insert(nullptr_t val);
+            void insert(bool val);
             void insert(int32_t val);
             void insert(uint32_t val);
 
@@ -74,6 +82,10 @@ namespace tos
 
             void insert(const char *str);
             void insert(span<const char> str);
+            /*void insert(const std::string str)
+            {
+                return insert(str.c_str());
+            }*/
 
             void insert(span<const uint8_t> binary);
 
@@ -94,8 +106,20 @@ namespace tos
             cw_pack_context_init(&m_ctx, buffer.data(), buffer.size(), nullptr);
         }
 
+        inline void packer::insert(bool val) {
+            cw_pack_boolean(&m_ctx, val);
+        }
+
         inline void packer::insert(float val) {
             cw_pack_float(&m_ctx, val);
+        }
+
+        inline void packer::insert(double val) {
+            cw_pack_double(&m_ctx, val);
+        }
+
+        inline void packer::insert(nullptr_t val) {
+            cw_pack_nil(&m_ctx);
         }
 
         inline void packer::insert(int32_t val) {
@@ -143,6 +167,16 @@ namespace tos
             ++m_done;
         }
 
+        map_packer map_packer::insert_map(const char *name, size_t len) {
+            m_packer.insert(name);
+            return m_packer.insert_map(len);
+        }
+
+        arr_packer map_packer::insert_arr(const char *name, size_t len) {
+            m_packer.insert(name);
+            return m_packer.insert_arr(len);
+        }
+
         template<class T>
         void arr_packer::insert(T val) {
             if (m_done == m_len)
@@ -154,7 +188,6 @@ namespace tos
         }
 
         arr_packer::arr_packer(packer &p, size_t len) : m_len{len}, m_done{0}, m_packer{p} {
-
         }
 
         map_packer arr_packer::insert_map(size_t len) {

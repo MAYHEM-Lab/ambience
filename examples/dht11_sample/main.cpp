@@ -1,26 +1,41 @@
-//
-// Created by fatih on 7/19/18.
-//
-
 #include <tos/devices.hpp>
 #include <tos/ft.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/print.hpp>
 #include <tos/mutex.hpp>
 #include <tos/utility.hpp>
-#include <tos/memory.hpp>
 
-#include <arch/lx106/timer.hpp>
-#include <arch/lx106/usart.hpp>
-#include <arch/lx106/wifi.hpp>
-#include <arch/lx106/tcp.hpp>
+#include <arch/lx106/drivers.hpp>
 #include <tos/version.hpp>
-#include <tos/fixed_fifo.hpp>
-#include <tos_arch.hpp>
 
 #include <lwip/init.h>
-#include <tos/algorithm.hpp>
 #include <common/inet/tcp_stream.hpp>
+#include <drivers/common/dht22.hpp>
+
+#include <cwpack.hpp>
+
+auto dht = tos::dht{};
+void send(tos::esp82::wifi_connection& c)
+{
+    auto e_res = tos::esp82::connect(c, {169, 231, 181, 15}, {4242});
+    if (!e_res)
+    {
+        return;
+    }
+
+    auto res = dht.read(tos::esp82::pin_t{4});
+    //tos::println(usart, int(res), int(dht.temperature), int(dht.humidity));
+    static char buf[128];
+    tos::msgpack::packer p {buf};
+    auto arr = p.insert_arr(2);
+    arr.insert(dht.temperature);
+    arr.insert(dht.humidity);
+
+    auto& conn = force_get(e_res);
+    tos::tcp_stream<tos::esp82::tcp_endpoint> stream(std::move(conn));
+
+    stream.write(p.get());
+}
 
 char buf[512];
 void task(void*)
@@ -40,6 +55,7 @@ void task(void*)
     tos::println(usart, tos::vcs::commit_hash);
 
     tos::esp82::wifi w;
+
     conn_:
     auto res = w.connect("UCSB Wireless Web", "");
 
@@ -56,45 +72,13 @@ void task(void*)
 
     lwip_init();
 
-    for (int i = 0; i < 3'000'000; ++i) {
-        auto try_conn = tos::esp82::connect(wconn, {{45, 55, 149, 110}}, {80});
-
-        if (!try_conn)
-        {
-            tos::println(usart, "couldn't connect");
-            continue;
-        }
-
-        auto& conn = force_get(try_conn);
-        tos::tcp_stream<tos::esp82::tcp_endpoint> stream{tos::std::move(conn)};
-
-        stream.write("GET / HTTP/1.1\r\n"
-                     "Host: bakirbros.com\r\n"
-                     "Connection: close\r\n"
-                     "\r\n");
-
-        tos::println(stream);
-
-        while (true)
-        {
-            auto read_res = stream.read(buf);
-            if (!read_res) break;
-
-            auto& r = force_get(read_res);
-            tos::print(usart, r);
-            tos::this_thread::yield();
-        }
-
-        tos::println(usart, "done", i, int(system_get_free_heap_size()));
-    }
-
     auto tmr = open(tos::devs::timer<0>);
     auto alarm = open(tos::devs::alarm, tmr);
 
     while (true)
     {
-        alarm.sleep_for({ 10'000 });
-        tos::println(usart, "tick!");
+        alarm.sleep_for({ 1'000 });
+        send(wconn);
     }
 }
 
