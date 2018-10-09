@@ -4,7 +4,6 @@
 
 #include <common/dht22.hpp>
 //#include <util/delay.h>
-#include <tos/print.hpp>
 #include <tos/interrupt.hpp>
 
 namespace tos
@@ -85,10 +84,8 @@ namespace tos
         return result;
     }
 
-    tos::esp82::gpio g;
     dht_res dht::read_sensor(esp82::pin_t pin, uint8_t wakeupDelay, uint8_t leadingZeroBits)
     {
-        // INIT BUFFERVAR TO RECEIVE DATA
         uint8_t mask = 128;
         uint8_t idx = 0;
 
@@ -100,6 +97,7 @@ namespace tos
 
         leadingZeroBits = 40 - leadingZeroBits;
 
+        auto& g = *m_gpio;
         // REQUEST SAMPLE
         g.set_pin_mode(pin, pin_mode::out);
         g.write(pin, false);
@@ -107,7 +105,7 @@ namespace tos
         //digitalWrite(pin, LOW); // T-be
         //if (wakeupDelay > 8) ets_delay_us(wakeupDelay * 1000UL);
         //else
-            ets_delay_us(wakeupDelay * 1000UL);
+        ets_delay_us(wakeupDelay * 1000UL);
         // digitalWrite(pin, HIGH); // T-go
         //pinMode(pin, INPUT);
         g.set_pin_mode(pin, pin_mode::in);
@@ -181,7 +179,6 @@ namespace tos
             {
                 return dht_res::timeout;
             }
-
         }
         return dht_res::ok;
     }

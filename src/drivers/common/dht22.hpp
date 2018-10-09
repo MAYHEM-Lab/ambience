@@ -39,7 +39,13 @@ namespace tos
     class dht
     {
     public:
-        dht() { m_disableIRQ = true; };
+        explicit dht(esp82::gpio& gpio)
+            : m_gpio{&gpio}
+        {
+            m_disableIRQ = true;
+        };
+
+        dht(const dht&) = delete;
 
         dht_res read11(esp82::pin_t pin);
         dht_res read(esp82::pin_t pin);
@@ -52,5 +58,9 @@ namespace tos
         uint8_t bits[5];  // buffer to receive data
         dht_res read_sensor(esp82::pin_t pin, uint8_t wakeupDelay, uint8_t leadingZeroBits);
         bool   m_disableIRQ;
+        esp82::gpio* m_gpio;
     };
 }
+
+// IMPL
+
