@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <tos/devices.hpp>
 #include <drivers/common/spi.hpp>
+#include <util/include/tos/span.hpp>
 #include "gpio.hpp"
 
 namespace tos {
@@ -25,7 +26,7 @@ namespace tos {
             static void disable();
 
             static uint8_t exchange(uint8_t byte);
-            static void exchange_many(uint8_t* buffer, uint16_t len);
+            static void exchange_many(tos::span<uint8_t> buffer);
 
             static void select_slave(pin_t pin);
 

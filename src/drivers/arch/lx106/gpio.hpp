@@ -46,6 +46,11 @@ namespace tos
             static void write(pin_t pin, bool val);
         };
     }
+
+    inline tos::esp82::gpio open_impl(tos::devs::gpio_t)
+    {
+        return {};
+    }
 }
 
 namespace tos

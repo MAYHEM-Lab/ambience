@@ -24,7 +24,7 @@ add_library(esp82_i2c src/twim.cpp twim.hpp src/si2c.cpp)
 target_include_directories(esp82_i2c PUBLIC . PRIVATE src)
 target_link_libraries(esp82_i2c PUBLIC esp82_gpio)
 
-add_library(esp82_spi spi.hpp)
+add_library(esp82_spi spi.hpp src/spi.cpp src/spi.h src/spi_register.h)
 target_include_directories(esp82_spi PUBLIC . PRIVATE src)
 target_link_libraries(esp82_spi PUBLIC esp82_gpio)
 
