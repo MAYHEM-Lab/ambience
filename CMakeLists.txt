@@ -69,7 +69,7 @@ elseif(TOS_ESP)
 elseif(TOS_X86)
     add_subdirectory(examples/simple_portable)
 
-    #add_subdirectory(tests)
+    add_subdirectory(tests)
 elseif(TOS_ARM)
     add_subdirectory(examples/nrf52)
 endif()

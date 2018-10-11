@@ -100,9 +100,9 @@ namespace tos
         };
     }
 
-    inline avr::gpio* open_impl(devs::gpio_t)
+    inline avr::gpio open_impl(devs::gpio_t)
     {
-        return nullptr;
+        return {};
     }
 }
 

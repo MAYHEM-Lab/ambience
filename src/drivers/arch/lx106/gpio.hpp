@@ -24,6 +24,8 @@ namespace tos
         class gpio
         {
         public:
+            using pin_type = pin_t;
+
             gpio();
 
             static void set_pin_mode(pin_t, pin_mode::input_t);

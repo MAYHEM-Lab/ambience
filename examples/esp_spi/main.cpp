@@ -32,7 +32,6 @@ void spi_task(void*)
     tos::println(usart, tos::platform::board_name);
     tos::println(usart, tos::vcs::commit_hash);
 
-
     while (true)
     {
         using namespace tos::chrono_literals;
