@@ -7,6 +7,7 @@
 #include "types.hpp"
 #include "constants.hpp"
 #include <stddef.h>
+#include <tos/expected.hpp>
 
 namespace tos
 {
@@ -36,6 +37,10 @@ namespace xbee
         parse_errors consume(uint8_t data);
 
         response get() const;
+
+        length_t get_len() const;
+
+        api_ids get_api_id() const { return m_id; }
 
     private:
 
@@ -101,6 +106,18 @@ namespace tos
                 case parser_state::got_api_id:
                     return parse_errors::NONE;
             }
+
+            return parse_errors::CHECKSUM_FAILURE;
+        }
+
+        length_t response_parser::get_len() const
+        {
+            if ((int)m_state < (int)parser_state::got_len_lsb)
+            {
+                return {0xFFFF};
+            }
+
+            return length_t{ (uint16_t)((uint16_t)m_len_msb << 8 | m_len_lsb) };
         }
     }
 

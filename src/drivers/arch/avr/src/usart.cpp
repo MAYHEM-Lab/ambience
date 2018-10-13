@@ -109,11 +109,11 @@ namespace tos
 {
     namespace avr
     {
-        void write_sync(const char* x, size_t len)
+        void write_sync(span<const char> buf)
         {
-            while (*x)
+            for (auto c : buf)
             {
-                put_sync(*x++);
+                put_sync(c);
             }
         }
     }

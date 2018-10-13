@@ -54,7 +54,7 @@ namespace tos {
             usart0() = default;
         };
 
-        void write_sync(const char* x, size_t len);
+        void write_sync(span<const char>);
     }
 
     inline avr::usart0 open_impl(devs::usart_t<0>, avr::usart_constraint&& rate)

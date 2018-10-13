@@ -37,8 +37,8 @@ namespace xbee
         REMOTE_AT_COMMAND_RESPONSE = 0x97
     };
 
-    static constexpr frame_id_t DEFAULT_FRAME_ID{1};
-    static constexpr frame_id_t NO_RESPONSE_FRAME_ID{0};
+    static constexpr frame_id_t DEFAULT_FRAME_ID {1};
+    static constexpr frame_id_t NO_RESPONSE_FRAME_ID {0};
 
     static constexpr uint8_t START_BYTE = 0x7e;
     static constexpr uint8_t ESCAPE_BYTE = 0x7d;

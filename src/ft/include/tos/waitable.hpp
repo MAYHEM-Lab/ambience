@@ -76,13 +76,6 @@ namespace tos {
 
     inline void waitable::signal_one()
     {
-        validate(m_waiters, [](bool b, const char* r){
-            if (!b)
-            {
-                tos_debug_print("f: %s", r);
-                while (true);
-            }
-        });
         if (m_waiters.empty()) return;
         auto& front = m_waiters.front();
         m_waiters.pop_front();

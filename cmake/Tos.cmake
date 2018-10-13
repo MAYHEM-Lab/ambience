@@ -9,10 +9,13 @@ endfunction()
 set(TOS_FLAGS "-Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wpedantic \
      -ffunction-sections -fdata-sections -ffreestanding -g -pedantic")
 
-set(TOS_LINKER_FLAGS "-Wl,--gc-sections -fno-threadsafe-statics")
+set(TOS_LINKER_FLAGS "-fno-threadsafe-statics")
 
 if (GCC)
     set(TOS_FLAGS "${TOS_FLAGS} -fstack-usage")
+    set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,--gc-sections")
+elseif(CLANG)
+    set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,-dead_strip")
 endif()
 
 set(TOS_C_FLAGS "${TOS_FLAGS} -U__STRICT_ANSI__")

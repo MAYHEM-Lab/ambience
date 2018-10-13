@@ -30,7 +30,7 @@ namespace tos
     {
         namespace events
         {
-            static struct sent_t{} sent{};
+            static constexpr struct sent_t{} sent{};
         }
     }
 

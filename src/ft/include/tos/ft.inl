@@ -23,7 +23,7 @@ namespace tos {
 
     inline thread_id_t launch(kern::tcb::entry_point_t e, void* arg)
     {
-        constexpr size_t stack_size = 3072;
+        constexpr size_t stack_size = 256;
         auto params = thread_params()
                 .add<tags::stack_ptr_t>(tos_stack_alloc(stack_size))
                 .add<tags::stack_sz_t>(stack_size)
@@ -160,6 +160,7 @@ namespace tos {
             auto thread = new (t_ptr)       tcb     (st_size);
             auto guard2 = new (st_g2_ptr)   uint64_t(stack_guard);
             auto guard3 = new (st_g3_ptr)   uint64_t(stack_guard);
+            (void)guard1, (void)guard2, (void)guard3;
 
             thread->entry = entry;
             thread->user = user_arg;
@@ -227,14 +228,6 @@ namespace tos {
 
                     return exit_reason::power_down;
                 }
-
-                validate(run_queue, [](bool b, const char* r){
-                    if (!b)
-                    {
-                        tos_debug_print("%s", r);
-                        while (true);
-                    }
-                });
 
                 auto why = static_cast<return_codes>(setjmp(sched.main_context));
 

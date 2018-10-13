@@ -24,7 +24,13 @@ add_library(tos_dht22 common/dht22.hpp src/dht22.cpp)
 target_link_libraries(tos_dht22 PUBLIC tos_core tos_gpio)
 target_include_directories(tos_dht22 PUBLIC .)
 
-add_library(tos_xbee common/xbee.hpp common/xbee/constants.hpp common/xbee/types.hpp common/xbee/request.hpp common/xbee/response.hpp)
+add_library(tos_xbee
+        common/xbee.hpp
+        common/xbee/constants.hpp
+        common/xbee/types.hpp
+        common/xbee/request.hpp
+        common/xbee/response.hpp
+        src/stub.cpp common/xbee/utility.hpp)
 target_link_libraries(tos_xbee PUBLIC tos_core tos_usart)
 target_include_directories(tos_xbee PUBLIC .)
 

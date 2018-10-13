@@ -6,7 +6,9 @@
 
 #include "types.hpp"
 #include "constants.hpp"
+#include "utility.hpp"
 #include <tos/span.hpp>
+#include <tos/print.hpp>
 
 namespace tos
 {
@@ -20,11 +22,11 @@ namespace xbee
     };
 
     template <class AddrT>
-    class tx_req : req<api_ids::TX_16_REQUEST>
+    class tx_req : public req<api_ids::TX_16_REQUEST>
     {
     public:
-        tx_req(const AddrT& to, span<const uint8_t> data)
-                : req{ DEFAULT_FRAME_ID }
+        tx_req(const AddrT& to, span<const uint8_t> data, frame_id_t f_id = DEFAULT_FRAME_ID)
+                : req{ f_id }
                 , m_addr{ to }
                 , m_opts{ tx_options::ack }
                 , m_data{ data }
@@ -34,10 +36,50 @@ namespace xbee
         const tx_options& get_options() const { return m_opts; }
         const span<const uint8_t>& get_payload() const { return m_data; }
 
+        template <class StreamT>
+        void put_to(StreamT& str) const {
+
+            // remaining are payload bytes
+            tos::print(str, uint8_t( api_id ));
+            tos::print(str, uint8_t( m_frame_id.id ));
+            write_addr(str, get_addr());
+            tos::print(str, uint8_t( get_options() ));
+            auto pl = get_payload();
+            tos::print(str, span<const char>((const char*)pl.data(), pl.size()));
+        }
+
     private:
         AddrT m_addr;
         tx_options m_opts;
         span<const uint8_t> m_data;
     };
+
+    template <class StreamT, class ReqT>
+    void write_to(StreamT& str, const ReqT& req)
+    {
+        struct
+        {
+            uint8_t chk_sum{ 0 };
+            StreamT* str;
+            int write(span<const char> buf)
+            {
+                auto res = str->write(buf);
+                for (auto c : buf)
+                {
+                    chk_sum += uint8_t(c);
+                }
+                return res;
+            }
+        } chk_str;
+        chk_str.str = &str;
+
+        tos::print(str, START_BYTE);
+        tos::print(str, uint8_t(0)); // msb is always 0
+        tos::print(str, uint8_t( (req.get_payload().size() + 5 ) & 0xFF ));
+
+        req.put_to(chk_str);
+
+        tos::print(str, uint8_t(uint8_t(0xFF) - chk_str.chk_sum));
+    }
 }
 }

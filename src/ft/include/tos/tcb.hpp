@@ -27,8 +27,8 @@ namespace tos {
             entry_point_t entry;
             state s;
 
-            explicit tcb(uint16_t stack_sz) noexcept
-                    : stack_sz{stack_sz} {}
+            explicit tcb(uint16_t stack_size) noexcept
+                    : stack_sz{stack_size} {}
         };
     }
 }
