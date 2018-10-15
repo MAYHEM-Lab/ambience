@@ -22,7 +22,7 @@ avrdude -F -V -c arduino -p ATMEGA328P -P /dev/ttyUSB0 -b 115200 -U flash:w:app.
 
 You'll need:
 
-+ `esp-open-sdk` in your home directory
++ `esp-open-sdk` in /opt/x-tools
 
 ```
 mkdir esp_build
@@ -30,7 +30,8 @@ cd esp_build
 cmake -DTOS_ESP=ON -DCMAKE_BUILD_TYPE=MinSizeRel ..
 cd examples/esp
 make
-export PATH=$PATH:~/esp-open-sdk/xtensa-lx106-elf/bin/
-~/esp-open-sdk/esptool/esptool.py elf2image simple_esp
-~/esp-open-sdk/esptool/esptool.py write_flash 0x00000 simple_esp-0x00000.bin 0x10000 simple_esp-0x10000.bin
+export PATH=$PATH:/opt/x-tools/esp-open-sdk/xtensa-lx106-elf/bin/
+export PATH=$PATH:/opt/x-tools/esp-open-sdk/esptool/
+esptool.py elf2image simple_esp
+esptool.py write_flash 0x00000 simple_esp-0x00000.bin 0x10000 simple_esp-0x10000.bin
 ```

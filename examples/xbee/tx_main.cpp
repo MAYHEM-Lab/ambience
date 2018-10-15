@@ -15,16 +15,12 @@ void tx_task(void*)
     using namespace tos::tos_literals;
 
     constexpr auto usconf = tos::usart_config()
-            .add(115200_baud_rate)
+            .add(9600_baud_rate)
             .add(tos::usart_parity::disabled)
             .add(tos::usart_stop_bit::one);
 
     auto usart = open(tos::devs::usart<0>, usconf);
     usart.enable();
-
-    tos::print(usart, "\n\n\n\n\n\n");
-    tos::println(usart, tos::platform::board_name);
-    tos::println(usart, tos::vcs::commit_hash);
 
     namespace xbee = tos::xbee;
 
@@ -33,15 +29,17 @@ void tx_task(void*)
     auto tmr = tos::open(tos::devs::timer<1>);
     auto alarm = tos::open(tos::devs::alarm, *tmr);
 
+    xbee::frame_id_t fid{1};
     while (true)
     {
         using namespace tos::chrono_literals;
 
-        xbee::addr_16 base_addr { 0x1234 } ;
+        xbee::addr_16 base_addr { 0xABCD } ;
         uint8_t buf[] = { 'h', 'i' };
-        xbee::tx16_req r { base_addr, buf };
+        xbee::tx16_req r { base_addr, buf, fid };
 
         x.transmit(r);
+        fid.id++;
 
         alarm.sleep_for(1000_ms);
     }
