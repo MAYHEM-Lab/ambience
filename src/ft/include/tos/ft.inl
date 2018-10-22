@@ -121,7 +121,6 @@ namespace tos {
 
         inline stack_smash_status check_stack_smash(char* stack, uint16_t st_size)
         {
-            return {true};
             const auto stack_top    = stack + st_size;
             const auto st_g_ptr     = stack_top - sizeof stack_guard;
             const auto t_ptr        = st_g_ptr  - sizeof(tcb);
@@ -152,18 +151,18 @@ namespace tos {
             const auto stack_top = stack + st_size;
 
             const auto st_g_ptr = stack_top - sizeof stack_guard;
-            /*auto guard1 = new (st_g_ptr) uint64_t(stack_guard);*/
+            auto guard1 = new (st_g_ptr) uint64_t(stack_guard);
 
             const auto t_ptr = st_g_ptr - sizeof(tcb);
             auto thread = new (t_ptr) tcb(st_size);
 
-            /*const auto st_g2_ptr = t_ptr - sizeof stack_guard;
+            const auto st_g2_ptr = t_ptr - sizeof stack_guard;
             auto guard2 = new (st_g2_ptr) uint64_t(stack_guard);
 
             const auto st_g3_ptr = stack;
             auto guard3 = new (st_g3_ptr) uint64_t(stack_guard);
 
-            (void)guard1, (void)guard2, (void)guard3;*/
+            (void)guard1, (void)guard2, (void)guard3;
 
             tcb::entry_point_t entry = get<tags::entry_pt_t>(params);
             void* user_arg = get<tags::argument_t>(params);
