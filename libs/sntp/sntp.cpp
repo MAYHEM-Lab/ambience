@@ -19,6 +19,7 @@ extern "C"
 #include <user_interface.h>
 
 int ets_printf(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+//int os_printf_plus(const char* format, ...)  { return 0; }
 /**
  * SNTP_DEBUG: Enable debugging for SNTP.
  */
@@ -310,7 +311,7 @@ sntp_process(u32_t *receive_timestamp) {
  */
 static void ICACHE_FLASH_ATTR
 sntp_initialize_request(struct sntp_msg *req) {
-    os_memset(req, 0, SNTP_MSG_LEN);
+    memset(req, 0, SNTP_MSG_LEN);
     req->li_vn_mode = SNTP_LI_NO_WARNING | SNTP_VERSION | SNTP_MODE_CLIENT;
 
 #if SNTP_CHECK_RESPONSE >= 2
@@ -398,6 +399,7 @@ sntp_try_next_server(void* arg)
 /* Always retry on error if only one server is supported */
 #define sntp_try_next_server    sntp_retry
 #endif /* SNTP_SUPPORT_MULTIPLE_SERVERS */
+
 
 /** UDP recv callback for the sntp pcb */
 static void ICACHE_FLASH_ATTR
