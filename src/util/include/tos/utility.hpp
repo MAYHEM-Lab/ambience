@@ -6,6 +6,7 @@
 #include <tos/type_traits.hpp>
 #include <stdint.h>
 #include <stddef.h>
+#include <tos/chrono.hpp>
 
 namespace tos {
     namespace std {
@@ -94,6 +95,20 @@ namespace tos {
         {
             static constexpr size_t value = sizeof...(Ts);
         };
+    }
+
+    template <class AlarmT, class FunT>
+    void forever(AlarmT& alarm, milliseconds ms, FunT&& fun)
+    {
+        using namespace tos::std;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
+        while (true)
+        {
+            forward<FunT>(fun)();
+            alarm.sleep_for(ms);
+        }
+#pragma clang diagnostic pop
     }
 }
 
