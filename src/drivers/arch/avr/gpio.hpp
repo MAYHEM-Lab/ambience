@@ -97,12 +97,15 @@ namespace tos
             static digital_io_t read(const pin_t&);
 
             static void attach_interrupt(const pin_t& pin, pin_change p, function_ref<void()> handler);
+
+            gpio&operator*() { return *this; }
+            gpio*operator->() { return this; }
         };
     }
 
-    inline avr::gpio* open_impl(devs::gpio_t)
+    inline avr::gpio open_impl(devs::gpio_t)
     {
-        return nullptr;
+        return {};
     }
 }
 

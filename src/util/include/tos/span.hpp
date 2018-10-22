@@ -16,6 +16,8 @@ namespace tos
 
         constexpr span(T* base, size_t len) : m_base(base), m_len(len) {}
 
+        constexpr span(T* base, T* end) : m_base{base}, m_len{end - base} {}
+
         template <size_t Sz>
         constexpr span(T (&arr)[Sz]) : m_base(arr), m_len(Sz) {}
 
@@ -39,7 +41,7 @@ namespace tos
         constexpr const T* end() const { return m_base + m_len; }
 
         constexpr operator span<const T>() const {
-            return { m_base, m_len };
+            return { m_base, size_t(m_len) };
         }
 
         constexpr span slice(size_t begin, size_t len){
@@ -48,6 +50,6 @@ namespace tos
 
     private:
         T* m_base;
-        size_t m_len;
+        ptrdiff_t m_len;
     };
 }

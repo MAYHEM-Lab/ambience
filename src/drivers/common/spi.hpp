@@ -10,7 +10,7 @@
 
 namespace tos
 {
-    struct spi_interface
+    struct spi_interface final
     {
         uint8_t exchange(uint8_t);
         void exchange_many(uint8_t* buffer, uint16_t len);
@@ -46,7 +46,7 @@ namespace tos
 
         void exchange_many(uint8_t* buf, uint16_t sz)
         {
-            return T::exchange_many(buf, sz);
+            return T::exchange_many({buf, sz});
         }
 
         spi_transaction(const spi_transaction&) = delete;

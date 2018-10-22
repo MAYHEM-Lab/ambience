@@ -8,6 +8,7 @@
 #include <tos/span.hpp>
 #include "src/new_uart_priv.h"
 #include <tos/driver_traits.hpp>
+#include <tos/thread.hpp>
 
 namespace tos
 {
@@ -32,6 +33,11 @@ namespace tos
 
             uart0*operator->() {return this;}
             uart0&operator*() {return *this;}
+        };
+
+        struct sync_uart0
+        {
+            static int write(span<const char>);
         };
 
         static_assert(driver_traits<uart0>::has_write{}, "uart must have write!");
@@ -63,7 +69,14 @@ namespace tos
         }
 
         inline int ICACHE_FLASH_ATTR uart0::write(tos::span<const char> buf) {
-            ::uart0_tx_buffer((uint8 *)buf.data(), buf.size());
+            //::uart0_tx_buffer((uint8 *)buf.data(), buf.size());
+            ::uart0_tx_buffer_sync((const uint8_t*)buf.data(), buf.size());
+            tos::this_thread::yield();
+            return buf.size();
+        }
+
+        inline int sync_uart0::write(span<const char> buf) {
+            ::uart0_tx_buffer_sync((const uint8_t*)buf.data(), buf.size());
             return buf.size();
         }
     }

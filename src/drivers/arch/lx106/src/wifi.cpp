@@ -6,7 +6,6 @@
 #include <string.h>
 #include <tos/semaphore.hpp>
 #include <tos/fixed_fifo.hpp>
-#include <ssl/os_port.h>
 #include <lwip/init.h>
 
 extern "C"
@@ -47,11 +46,11 @@ namespace tos
 {
     namespace esp82
     {
-        expected<ipv4_addr, bool> wifi_connection::get_addr() {
+        expected<ipv4_addr_t, bool> wifi_connection::get_addr() {
             ip_info info;
             wifi_get_ip_info(STATION_IF, &info);
 
-            ipv4_addr res;
+            ipv4_addr_t res;
             memcpy(res.addr, &info.ip, 4);
 
             return res;
@@ -111,6 +110,12 @@ namespace tos
 
         void wifi_connection::consume_event() {
             consume_event(events.pop());
+        }
+
+        mac_addr_t wifi::get_ether_address() const {
+            mac_addr_t res;
+            wifi_get_macaddr(STATION_IF, res.addr);
+            return res;
         }
 
         expected<wifi_connection, assoc_error>

@@ -5,6 +5,12 @@
 #include <tos/utility.hpp>
 
 namespace tos {
+    enum class state
+    {
+        runnable,
+        suspended,
+        running
+    };
     namespace kern
     {
         /**
@@ -15,11 +21,13 @@ namespace tos {
         {
             using entry_point_t = void(*)(void*);
 
-            uint16_t stack_sz;
-            jmp_buf context;
+            uint16_t stack_sz{};
+            jmp_buf context{};
+            void * user;
+            entry_point_t entry;
 
-            explicit tcb(uint16_t stack_sz)
-                    : stack_sz{stack_sz} {}
+            explicit tcb(uint16_t stack_size) noexcept
+                    : stack_sz{stack_size} {}
         };
     }
 }

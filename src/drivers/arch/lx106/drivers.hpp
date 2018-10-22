@@ -10,3 +10,4 @@
 #include "usart.hpp"
 #include "wifi.hpp"
 #include "twim.hpp"
+#include "spi.hpp"

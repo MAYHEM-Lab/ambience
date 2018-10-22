@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 
-set(TOS ON)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+include(${CMAKE_SOURCE_DIR}/cmake/Tos.cmake)
 
 if(TOS_AVR)
     set(AVR_CPU atmega328p)
@@ -16,11 +19,7 @@ else()
 endif()
 
 project(tos)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
-
 message(STATUS "${CMAKE_CXX_FLAGS}")
-
-include(${CMAKE_SOURCE_DIR}/cmake/TosTools.cmake)
 
 add_subdirectory(src)
 
@@ -30,6 +29,7 @@ endif()
 
 add_subdirectory(libs/kthreads)
 add_subdirectory(libs/posix)
+add_subdirectory(libs/caps)
 
 if(TOS_AVR)
     add_subdirectory(examples/gpio)
@@ -38,8 +38,9 @@ if(TOS_AVR)
     #add_subdirectory(examples/sd)
     add_subdirectory(examples/temp)
     add_subdirectory(examples/int)
-    #add_subdirectory(examples/simple_portable)
+    add_subdirectory(examples/simple_portable)
     add_subdirectory(examples/nrf24)
+    add_subdirectory(examples/xbee)
 elseif(TOS_ESP)
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/tvm")
         #add_subdirectory(apps/tvm)
@@ -53,15 +54,22 @@ elseif(TOS_ESP)
         add_subdirectory(libs/mqtt)
     endif()
 
+    #add_subdirectory(examples/esp_fault)
     add_subdirectory(examples/esp_lwip)
     add_subdirectory(examples/esp_conn)
-    add_subdirectory(examples/esp_mqtt)
-    add_subdirectory(examples/esp_ssl)
+    #add_subdirectory(examples/esp_mqtt)
+    #add_subdirectory(examples/esp_ssl)
+    add_subdirectory(examples/esp_spi)
+
+    #add_subdirectory(examples/aws_push)
+
+    add_subdirectory(examples/dht11_sample)
 
     add_subdirectory(libs/zmtp)
-    add_subdirectory(libs/umsgpack)
+    add_subdirectory(libs/CWPack)
+    add_subdirectory(libs/sntp)
 elseif(TOS_X86)
-    #add_subdirectory(examples/simple_portable)
+    add_subdirectory(examples/simple_portable)
 
     add_subdirectory(tests)
 elseif(TOS_ARM)

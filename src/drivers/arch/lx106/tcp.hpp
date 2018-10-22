@@ -7,14 +7,15 @@
 #include <tos/intrusive_list.hpp>
 #include "wifi.hpp"
 #include <tos/arch.hpp>
-#include <utility>
 #include <drivers/common/inet/tcp_ip.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/track_ptr.hpp>
 #include <lwip/tcp.h>
+#include <lwip/init.h>
 #include <tos/expected.hpp>
 #include <tos/algorithm.hpp>
 #include <drivers/common/inet/lwip.hpp>
+#include <tos/debug.hpp>
 
 #ifdef TOS_HAVE_SSL
 #include <lwipr_compat/lwipr_compat.h>
@@ -53,12 +54,13 @@ namespace tos
 
             friend struct ep_handlers;
 
-            friend expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection&, ipv4_addr, port_num_t);
+            friend expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection&, ipv4_addr_t, port_num_t);
 
             tcp_pcb* m_conn;
             void* m_event_handler;
         };
 
+#if defined(TOS_HAVE_SSL)
         class secure_tcp_endpoint
         {
         public:
@@ -81,19 +83,29 @@ namespace tos
 
             friend struct sec_ep_handlers;
 
-            friend expected<secure_tcp_endpoint, lwip::connect_error> connect_ssl(wifi_connection&, ipv4_addr, port_num_t);
+            friend expected<secure_tcp_endpoint, lwip::connect_error> connect_ssl(wifi_connection&, ipv4_addr_t, port_num_t,
+                    tos::span<const uint8_t>, tos::span<const uint8_t>, tos::span<const uint8_t>);
 
             tcp_pcb* m_conn;
             void* m_event_handler;
             SSL* ssl_obj;
             SSLCTX* ssl_ctx;
         };
+#endif
 
+        /**
+         * This class implements a TCP listener
+         */
         class tcp_socket
                 : public tos::list_node<tcp_socket>
         {
         public:
-            explicit tcp_socket(tos::esp82::wifi&, port_num_t port);
+
+            /**
+             * Constructs a tcp socket with the given port on the given interface
+             * @param port port to bind to
+             */
+            explicit tcp_socket(tos::esp82::wifi_connection&, port_num_t port);
             ~tcp_socket();
 
             template <class ConnHandlerT>
@@ -117,7 +129,7 @@ namespace tos
          * @param port tcp port of the destination application
          * @return an endpoint or an error if connection fails
          */
-        expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection& iface, ipv4_addr host, port_num_t port);
+        expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection& iface, ipv4_addr_t host, port_num_t port);
     }
 }
 
@@ -125,7 +137,7 @@ namespace tos
 {
     namespace esp82
     {
-        inline tcp_socket::tcp_socket(tos::esp82::wifi&, port_num_t port) {
+        inline tcp_socket::tcp_socket(tos::esp82::wifi_connection&, port_num_t port) {
             auto pcb = tcp_new();
 
             auto err = tcp_bind(pcb, IP_ADDR_ANY, port.port);
@@ -154,7 +166,7 @@ namespace tos
             auto self = static_cast<tcp_socket*>(user);
 
             auto& handler = *(ConnHandlerT*)self->m_accept_handler;
-            auto res = handler(*self, tcp_endpoint{ new_conn });
+            /*auto res =*/ handler(*self, tcp_endpoint{ new_conn });
             system_os_post(tos::esp82::main_task_prio, 0, 0);
             return ERR_OK;
         }
@@ -187,7 +199,9 @@ namespace tos
         }
 
         inline tcp_endpoint::~tcp_endpoint() {
+            tos_debug_print("close called\n");
             if (!m_conn) return;
+            tos_debug_print("closing\n");
             tcp_recv(m_conn, nullptr);
             tcp_err(m_conn, nullptr);
             tcp_sent(m_conn, nullptr);
@@ -196,6 +210,10 @@ namespace tos
         }
 
         inline uint16_t tcp_endpoint::send(tos::span<const char> buf) {
+            if (!m_conn) {
+                tos_debug_print("erroneous call to send");
+                return 0;
+            }
             tcp_write(m_conn, (uint8_t*)buf.data(), buf.size(), 0);
             tcp_output(m_conn);
             return buf.size();
@@ -206,6 +224,8 @@ namespace tos
             template <class CallbackT>
             static err_t recv_handler(void* user, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
             {
+                tos_debug_print("recv stack: %p\n", read_sp());
+
                 auto self = static_cast<tcp_endpoint*>(user);
                 auto& handler = *(CallbackT*)self->m_event_handler;
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
@@ -221,16 +241,18 @@ namespace tos
                     handler(lwip::events::recv, *self, lwip::buffer{ p });
                 } else {
                     // conn closed
+                    tos_debug_print("close received\n");
                     handler(lwip::events::discon, *self, lwip::discon_reason::closed);
                 }
                 return ERR_OK;
             }
 
             template <class CallbackT>
-            static err_t sent_handler(void* user, struct tcp_pcb *tpcb, u16_t len)
+            static err_t sent_handler(void* user, struct tcp_pcb *, u16_t len)
             {
+                tos_debug_print("sent stack: %p\n", read_sp());
+
                 auto self = static_cast<tcp_endpoint*>(user);
-                self->m_conn = tpcb;
 
                 auto& handler = *(CallbackT*)self->m_event_handler;
                 handler(lwip::events::sent, *self, len);
@@ -242,6 +264,8 @@ namespace tos
             template <class EventHandlerT>
             static void err_handler(void *user, err_t err)
             {
+                tos_debug_print("err stack: %p\n", read_sp());
+
                 auto self = static_cast<tcp_endpoint*>(user);
 
                 auto& handler = *(EventHandlerT*)self->m_event_handler;
@@ -249,6 +273,7 @@ namespace tos
                                         lwip::discon_reason::aborted : lwip::discon_reason::reset);
                 self->m_conn = nullptr;
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
+                tos_debug_print("ok");
             }
         };
 
@@ -260,7 +285,7 @@ namespace tos
             tcp_recv(m_conn, &ep_handlers::recv_handler<EventHandlerT>);
             tcp_err(m_conn, &ep_handlers::err_handler<EventHandlerT>);
         }
-
+#if defined(TOS_HAVE_SSL)
         inline secure_tcp_endpoint::secure_tcp_endpoint(tcp_pcb *conn, SSL* obj, SSLCTX* ctx)
                 : m_conn{conn}, ssl_obj{obj}, ssl_ctx{ctx} {
             tcp_arg(m_conn, this);
@@ -386,6 +411,7 @@ namespace tos
             tcp_recv(m_conn, &sec_ep_handlers::recv_handler<EventHandlerT>);
             tcp_err(m_conn, &sec_ep_handlers::err_handler<EventHandlerT>);
         }
+#endif
 
         struct conn_state
         {
@@ -414,7 +440,7 @@ namespace tos
             system_os_post(tos::esp82::main_task_prio, 0, 0);
         }
 
-        inline expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection& c, ipv4_addr host, port_num_t port) {
+        inline expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection& c, ipv4_addr_t host, port_num_t port) {
             c.consume_all();
             if (!c.has_ip())
             {
@@ -428,6 +454,10 @@ namespace tos
             tcp_connect(pcb, &a, port.port, connected_handler); // this signals ERR_OK
             tcp_err(pcb, conn_err_handler); // this signals ERR_CONN
             state.sem.down();
+            if (state.res == ERR_RST)
+            {
+                return unexpected(lwip::connect_error::connection_reset);
+            }
             if (state.res != ERR_OK)
             {
                 return unexpected(lwip::connect_error::unknown);
@@ -490,7 +520,9 @@ namespace tos
             return ERR_OK;
         }
 
-        inline expected<secure_tcp_endpoint, lwip::connect_error> connect_ssl(wifi_connection&, ipv4_addr host, port_num_t port) {
+        inline expected<secure_tcp_endpoint, lwip::connect_error>
+        connect_ssl(wifi_connection&, ipv4_addr_t host, port_num_t port,
+                tos::span<const uint8_t> key, tos::span<const uint8_t> cert, tos::span<const uint8_t> cacert) {
             auto pcb = tcp_new();
             ip_addr_t a;
             memcpy(&a.addr, host.addr, 4);
@@ -513,6 +545,9 @@ namespace tos
             tos::this_thread::yield();
             auto clientfd = axl_append(pcb);
             auto sslContext = ssl_ctx_new(SSL_CONNECT_IN_PARTS | SSL_SERVER_VERIFY_LATER, 1);
+            ssl_obj_memory_load(sslContext, SSL_OBJ_RSA_KEY, key.data(), key.size(), nullptr);
+            ssl_obj_memory_load(sslContext, SSL_OBJ_X509_CERT, cert.data(), cert.size(), nullptr);
+            ssl_obj_memory_load(sslContext, SSL_OBJ_X509_CACERT, cacert.data(), cacert.size(), nullptr);
 
             tos::this_thread::yield();
             system_update_cpu_freq(SYS_CPU_160MHZ); // Run faster during SSL handshake

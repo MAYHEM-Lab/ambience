@@ -82,13 +82,13 @@ namespace avr
 
     static uint8_t *buffer_begin, *buffer_end;
     uint8_t spi0::exchange(uint8_t byte) {
-        exchange_many(&byte, 1);
+        exchange_many(tos::span<uint8_t>(&byte, 1));
         return byte;
     }
 
-    void spi0::exchange_many(uint8_t *buffer, uint16_t len) {
-        buffer_begin = buffer;
-        buffer_end = buffer + len;
+    void spi0::exchange_many(tos::span<uint8_t> buffer) {
+        buffer_begin = buffer.begin();
+        buffer_end = buffer.end();
         SPDR = *buffer_begin;
         spi_block.down();
     }

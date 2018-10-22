@@ -56,7 +56,7 @@ namespace tos
 {
     namespace nrf52
     {
-        inline void tos::nrf52::gpio::write(int pin, digital::low_t)
+        inline void gpio::write(int pin, digital::low_t)
         {
             NRF_P0->OUTCLR = (1UL << pin);
         }

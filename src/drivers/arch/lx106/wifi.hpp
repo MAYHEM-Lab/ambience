@@ -22,7 +22,7 @@ namespace tos
         class wifi_connection : public tracked
         {
         public:
-            expected<ipv4_addr, bool> get_addr();
+            expected<ipv4_addr_t, bool> get_addr();
             wifi_connection(const wifi_connection&) = delete;
             wifi_connection(wifi_connection&& rhs) noexcept :
                 m_state{rhs.m_state}
@@ -73,7 +73,12 @@ namespace tos
             wifi() noexcept ICACHE_FLASH_ATTR;
 
             expected<wifi_connection, assoc_error>
+            connect(span<const char> ssid) noexcept ICACHE_FLASH_ATTR { return connect(ssid, ""); }
+
+            expected<wifi_connection, assoc_error>
             connect(span<const char> ssid, span<const char> passwd) noexcept ICACHE_FLASH_ATTR;
+
+            mac_addr_t get_ether_address() const;
 
             void scan();
 

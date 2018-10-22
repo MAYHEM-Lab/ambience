@@ -20,14 +20,24 @@ target_include_directories(tos_usart PUBLIC .)
 add_library(tos_gpio common/gpio.hpp src/stub.cpp)
 target_include_directories(tos_gpio PUBLIC .)
 
+add_library(tos_dht22 common/dht22.hpp src/dht22.cpp)
+target_link_libraries(tos_dht22 PUBLIC tos_core tos_gpio)
+target_include_directories(tos_dht22 PUBLIC .)
+
+add_library(tos_xbee
+        common/xbee.hpp
+        common/xbee/constants.hpp
+        common/xbee/types.hpp
+        common/xbee/request.hpp
+        common/xbee/response.hpp
+        src/stub.cpp common/xbee/utility.hpp)
+target_link_libraries(tos_xbee PUBLIC tos_core tos_usart)
+target_include_directories(tos_xbee PUBLIC .)
+
 if (TOS_AVR)
     add_library(tos_spi_sd src/spi_sd.cpp common/sd/spi_sd.hpp common/sd/sd_info.hpp)
     target_link_libraries(tos_spi_sd PUBLIC tos_core tos_spi tos_gpio)
     target_include_directories(tos_spi_sd PRIVATE .)
-
-    add_library(tos_dht22 common/dht22.hpp src/dht22.cpp)
-    target_link_libraries(tos_dht22 PUBLIC tos_core tos_gpio)
-    target_include_directories(tos_dht22 PUBLIC .)
 
     add_library(tos_nrf24 common/nrf24.hpp src/nrf24.cpp)
     target_link_libraries(tos_nrf24 PUBLIC tos_core)

@@ -17,19 +17,27 @@ extern "C"
 #include <tos/interrupt.hpp>
 #include <lwip/timers.h>
 #include <tos/compiler.hpp>
+#include <tos/debug.hpp>
 
 extern "C"
 {
 static_assert(sizeof(int) == 4, "");
-alignas(16) char stack[2048 * 2];
-static int stack_index = 0;
+
 void* ICACHE_FLASH_ATTR tos_stack_alloc(size_t size)
 {
-    return stack + 2048 * stack_index++;
+    auto res = os_malloc(size);
+    if (res == nullptr)
+    {
+        tos_debug_print("can't alloc stack!");
+        while (true);
+    }
+    return res;
 }
 
 void ICACHE_FLASH_ATTR
-tos_stack_free(void* data) {}
+tos_stack_free(void* data) {
+    os_free(data);
+}
 
 void ICACHE_FLASH_ATTR
 tos_enable_interrupts()
@@ -102,7 +110,7 @@ user_rf_cal_sector_set(void)
 static void ICACHE_FLASH_ATTR
 main_task(ETSEvent*)
 {
-    sys_check_timeouts();
+    //sys_check_timeouts();
     auto res = tos::kern::schedule();
 
     if (res == tos::exit_reason::yield)
@@ -113,6 +121,8 @@ main_task(ETSEvent*)
 
 extern "C"
 {
+extern "C" void *__dso_handle;
+void *__dso_handle = 0;
 extern void (*__init_array_start)();
 extern void (*__init_array_end)();
 
@@ -137,7 +147,7 @@ entry()
     do_global_ctors();
     tos::kern::enable_interrupts();
     tos_main();
-    system_set_os_print(0);
+    system_set_os_print(1);
     system_os_task(main_task, tos::esp82::main_task_prio, arr, 16);
     system_os_post(tos::esp82::main_task_prio, 0, 0);
 }

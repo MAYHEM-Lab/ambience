@@ -36,28 +36,29 @@ namespace tos
         using funptr_t = RetT(*)(ArgTs..., void*);
 
         function_ref(const function_ref& rhs)
-            : fun(rhs.fun), data(rhs.data)
+            : m_fun(rhs.m_fun), m_data(rhs.m_data)
         {
         }
 
         function_ref(funptr_t ptr, void* data)
-                : fun(ptr), data(data) {}
+                : m_fun(ptr), m_data(data) {}
 
-        explicit function_ref(funptr_t ptr) : fun(ptr), data(nullptr) {}
+        explicit function_ref(funptr_t ptr) : m_fun(ptr), m_data(nullptr) {}
 
         template <class T>
-        function_ref(T& func) : fun([](ArgTs... args, void* data) {
+        function_ref(T& func) : m_fun([](ArgTs... args, void* data) -> RetT {
             auto& foo = *static_cast<T*>(data);
-            foo(std::forward<ArgTs>(args)...);
-        }), data(&func) {}
+            return foo(std::forward<ArgTs>(args)...);
+        }), m_data(&func) {}
 
-        RetT operator()(ArgTs&&... args)
+        template <class... CallArgTs>
+        RetT operator()(CallArgTs&&... args)
         {
-            return fun(std::forward<ArgTs>(args)..., data);
+            return m_fun(std::forward<CallArgTs>(args)..., m_data);
         }
 
     private:
-        funptr_t fun;
-        void* data;
+        funptr_t m_fun;
+        void* m_data;
     };
 }

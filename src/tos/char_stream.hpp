@@ -32,7 +32,7 @@ namespace tos
     template <class T>
     struct istream_facade : char_istream
     {
-        explicit istream_facade(T& t) : m_t{t} {}
+        explicit istream_facade(T t) : m_t{std::move(t)} {}
 
         span<char> read(span<char> buf) override
         {
@@ -40,13 +40,13 @@ namespace tos
         }
 
     private:
-        T& m_t;
+        T m_t;
     };
 
     template <class T>
     struct ostream_facade : char_ostream
     {
-        explicit ostream_facade(T& t) : m_t{t} {}
+        explicit ostream_facade(T t) : m_t{std::move(t)} {}
 
         int write(span<const char> buf) override
         {
@@ -54,12 +54,12 @@ namespace tos
         }
 
     private:
-        T& m_t;
+        T m_t;
     };
 
     template <class T>
     struct iostream_facade : char_iostream {
-        explicit iostream_facade(T& t) : m_t{t} {}
+        explicit iostream_facade(T t) : m_t{std::move(t)} {}
 
         span<char> read(span<char> buf) override
         {
@@ -71,7 +71,7 @@ namespace tos
             return m_t.write(buf);
         }
     private:
-        T& m_t;
+        T m_t;
     };
 
     template <class T>

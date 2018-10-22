@@ -106,6 +106,7 @@ int axl_ssl_read(SSL *ssl, struct tcp_pcb *tcp, struct pbuf *pin, struct pbuf **
 	uint8_t *total_read_buffer = NULL;
 	AxlTcpData* data = NULL;
 
+	AXL_DEBUG_PRINT("in axl_ssl_read\n");
 	if (ssl == NULL) {
 		AXL_DEBUG_PRINT("axl_ssl_read: SSL is null\n");
 		return ERR_AXL_INVALID_SSL;
@@ -263,6 +264,8 @@ int ax_port_read(int clientfd, uint8_t *buf, int bytes_needed) {
 		AXL_DEBUG_PRINT("ax_port_read: Nothing to read?! May be the connection needs resetting?\n");
 		return 0;
 	}
+
+	AXL_DEBUG_PRINT("in ax_port_read\n");
 
 	read_buf =(uint8_t*)calloc(data->tcp_pbuf->len + 1, sizeof(uint8_t));
 	pread_buf = read_buf;

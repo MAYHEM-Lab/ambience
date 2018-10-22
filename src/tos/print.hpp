@@ -22,6 +22,11 @@ namespace tos
         ostr.write({&c, 1});
     }
 
+    template <class CharOstreamT>
+    void print(CharOstreamT& ostr, uint8_t b) {
+        print(ostr, char(b));
+    }
+
     /**
      * Prints the given null terminated string to the output stream
      * @param ostr The output stream

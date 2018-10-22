@@ -3,6 +3,7 @@
 #include <tos/ft.hpp>
 #include <tos/scheduler.hpp>
 #include <tos/interrupt.hpp>
+#include <tos/debug.hpp>
 
 namespace tos {
     struct waitable
@@ -46,6 +47,11 @@ namespace tos {
 namespace tos {
     inline void waitable::wait()
     {
+        if (self() == nullptr)
+        {
+            tos_debug_print("wait called from non thread ctx!");
+            while (true);
+        }
         add(*self());
         kern::suspend_self();
     }

@@ -9,6 +9,20 @@
 #include <tos/type_traits.hpp>
 #include <tos/compiler.hpp>
 #include <tos/new.hpp>
+#include <tos/debug.hpp>
+
+/**
+ * This function is called upon a force_get execution on an
+ * expected object that's in unexpected state.
+ *
+ * This function is implemented as a weak symbol on supported
+ * platforms and could be replaced by user provided
+ * implementations.
+ *
+ * The implementation must never return to the caller, otherwise
+ * the behaviour is undefined.
+ */
+[[noreturn]] void tos_force_get_failed(void*);
 
 namespace tos
 {
@@ -66,7 +80,7 @@ namespace tos
         template <class ErrU>
         expected(unexpected_t<ErrU>&& u) : m_err{std::move(u.m_err)}, m_have{false} {}
 
-        explicit operator bool() const { return m_have; }
+        constexpr explicit __attribute__((pure)) operator bool() const { return m_have; }
 
         expected& operator=(expected&& rhs) noexcept
         {
@@ -105,14 +119,15 @@ namespace tos
             }
         }
     private:
-        T& get() { return m_t; }
-        const T& get() const { return m_t; }
+        T&& get() && { return std::move(m_t); }
+        T& get() & { return m_t; }
+        const T& get() const & { return m_t; }
 
         ErrT& error() { return m_err; }
         const ErrT& error() const { return m_err; }
 
         union {
-            char ___;
+            char ___; // avoid having to construct any member
             T m_t;
             ErrT m_err;
         };
@@ -128,13 +143,43 @@ namespace tos
                 return have_handler(e.get());
             }
             return err_handler(e.error());
-        };
+        }
+
+        friend auto ALWAYS_INLINE force_get(expected&& e) -> T
+        {
+            if (e)
+            {
+                return std::move(e.get());
+            }
+
+            tos_force_get_failed(nullptr);
+        }
+
+        friend auto ALWAYS_INLINE force_get(const expected& e) -> const T&
+        {
+            if (e)
+            {
+                return e.get();
+            }
+
+            tos_force_get_failed(nullptr);
+        }
+
+        friend auto ALWAYS_INLINE force_get(expected& e) -> T&
+        {
+            if (e)
+            {
+                return e.get();
+            }
+
+            tos_force_get_failed(nullptr);
+        }
     };
 
     struct ignore_t
     {
         template <class T>
-        void operator()(T&&)const{};
+        void operator()(T&&)const{}
     };
     static constexpr ignore_t ignore{};
 }

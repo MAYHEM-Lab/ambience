@@ -42,7 +42,7 @@ extern "C"
 
 void tos_main();
 
-int main()
+extern "C" int main()
 {
     tos::kern::enable_interrupts();
 

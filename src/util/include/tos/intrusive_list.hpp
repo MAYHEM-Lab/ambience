@@ -13,6 +13,8 @@ namespace tos
     {
         friend class intrusive_list<T>;
         friend class intrusive_list_iterator<T>;
+
+    public:
         T* prev;
         T* next;
 
@@ -144,6 +146,35 @@ namespace tos
 
         iterator_t begin();
         iterator_t end();
+
+        template <class ErrHandle>
+        friend void validate(const intrusive_list<T>& list, ErrHandle&& assrt)
+        {
+            if (list.m_head == nullptr || list.m_tail == nullptr)
+            {
+                assrt(list.m_tail == list.m_head && list.m_tail == nullptr,
+                        "Case 0");
+            }
+
+            int len1 = 0;
+            for (auto l = list.m_head; l; l = l->next)
+            {
+                if (l != list.m_head && l->prev == nullptr)
+                {
+                    assrt(false, "Case 2");
+                }
+                len1++;
+            }
+            for (auto l = list.m_tail; l; l = l->prev)
+            {
+                if (l != list.m_tail && l->next == nullptr)
+                {
+                    assrt(false, "Case 3");
+                }
+                len1--;
+            }
+            assrt(len1 == 0, "Case 1");
+        }
     };
 
     template<class T>
@@ -290,4 +321,5 @@ namespace tos
 
         return iterator_t{ptr->next};
     }
+
 }

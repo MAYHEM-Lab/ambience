@@ -16,11 +16,11 @@ namespace tos
     struct sleeper
             : list_node<sleeper>
     {
-        explicit sleeper(uint16_t ticks, const function_ref<void()>& fun) : sleep_ticks(ticks), fun(fun) {}
+        explicit sleeper(uint16_t ticks, const function_ref<void()>& fun) : sleep_ticks(ticks), m_fun(fun) {}
 
     private:
         uint16_t sleep_ticks;
-        function_ref<void()> fun;
+        function_ref<void()> m_fun;
 
         template <class T>
         friend class alarm;
@@ -109,7 +109,7 @@ namespace tos
             if (front.sleep_ticks == 0)
             {
                 m_sleepers.pop_front();
-                front.fun();
+                front.m_fun();
                 if (m_sleepers.empty())
                 {
                     stop();

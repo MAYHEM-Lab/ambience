@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include <nrf_delay.h>
+#include <tos/delay.hpp>
+#include <tos/span.hpp>
 
 #define LCD_CLEARDISPLAY 0x01
 #define LCD_RETURNHOME 0x02
@@ -125,7 +126,7 @@ namespace tos
         alarm.sleep_for({ 5 });
 
         write4bits(0x03 << 4);
-        nrf_delay_us(150);
+        tos::delay_us(microseconds{150});
 
         // finally, set to 4-bit interface
         write4bits(0x02 << 4);
@@ -173,23 +174,23 @@ namespace tos
         auto res = m_i2c.transmit(m_addr, { (char*)&data, 1 });
         if (res != twi_tx_res::ok)
         {
-            NVIC_SystemReset();
+            //TODO: err
         }
     }
 
     template<class I2cT>
     void lcd<I2cT>::pulseEnable(uint8_t _data) {
         expanderWrite(_data | En);	// En high
-        nrf_delay_us(1);
+        tos::delay_us(microseconds{1});
 
         expanderWrite(_data & ~En);	// En low
-        nrf_delay_us(50);
+        tos::delay_us(microseconds{50});
     }
 
     template<class I2cT>
     void lcd<I2cT>::clear() {
         command(LCD_CLEARDISPLAY);// clear display, set cursor position to zero
-        nrf_delay_us(2000);
+        tos::delay_ms(milliseconds{2}); // should probably be a timer sleep
     }
 
     template<class I2cT>
@@ -207,7 +208,7 @@ namespace tos
     template<class I2cT>
     void lcd<I2cT>::home() {
         command(LCD_RETURNHOME);  // set cursor position to zero
-        nrf_delay_us(2000);
+        tos::delay_ms(milliseconds{2});
     }
 
     template<class I2cT>

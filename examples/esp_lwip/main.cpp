@@ -20,7 +20,6 @@
 
 #include <lwip/init.h>
 #include <tos/algorithm.hpp>
-#include <algorithm>
 #include <common/inet/tcp_stream.hpp>
 
 extern "C"
@@ -59,14 +58,14 @@ void task(void*)
         auto addr = with(conn.get_addr(), [&](auto& addr){
             return addr;
         }, [](auto){
-            return tos::ipv4_addr{};
+            return tos::ipv4_addr_t{};
         });
 
         tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
 
         lwip_init();
 
-        tos::esp82::tcp_socket sock(w, {80});
+        tos::esp82::tcp_socket sock(conn, {80});
         if (!sock.is_valid()) {
             tos::println(usart, "nope");
         }

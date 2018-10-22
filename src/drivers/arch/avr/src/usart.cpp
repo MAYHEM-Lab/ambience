@@ -87,13 +87,13 @@ namespace tos {
             UCSR0C = usart_control(m, p, s);
         }
 
-        int usart0::read(span<char> buf) {
-            return read_usart(buf);
+        span<char> usart0::read(span<char> buf) {
+            return buf.slice(0, read_usart(buf));
         }
 
         int usart0::write(span<const char> buf) {
             write_usart(buf);
-            return buf.size() - state->len;
+            return buf.size() - ::state->len;
         }
     }
 }
@@ -109,11 +109,11 @@ namespace tos
 {
     namespace avr
     {
-        void write_sync(const char* x, size_t len)
+        void write_sync(span<const char> buf)
         {
-            while (*x)
+            for (auto c : buf)
             {
-                put_sync(*x++);
+                put_sync(c);
             }
         }
     }

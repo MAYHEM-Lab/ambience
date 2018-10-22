@@ -1,0 +1,4 @@
+
+
+add_executable(esp82_spi_test main.cpp)
+target_link_libraries(esp82_spi_test PUBLIC tos_core esp82_drivers tos_print)

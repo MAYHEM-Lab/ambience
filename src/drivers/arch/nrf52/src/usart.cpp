@@ -66,12 +66,14 @@ namespace tos
             m_write_sync.down();
         }
 
-        void uart::read(span<char> buf) {
+        span<char> uart::read(span<char> buf) {
             tos::lock_guard<tos::mutex> lk { m_read_busy };
 
             auto err = nrfx_uarte_rx(&uart0, (uint8_t*)buf.data(), buf.size());
 
             m_read_sync.down();
+
+            return buf;
         }
     }
 }

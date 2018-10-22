@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include <utility>
-#include <cstring>
+#include <string.h>
 #include <type_traits>
 #include <cstddef>
 
@@ -58,7 +57,7 @@ namespace tos {
 
             void move_from(track_ptr&& rhs)
             {
-                ::std::memcpy(this, &rhs, sizeof(rhs));
+                memcpy(this, &rhs, sizeof(rhs));
 
                 if (next) {
                     next->prev = this;
@@ -67,7 +66,7 @@ namespace tos {
                     prev->next = this;
                 }
 
-                ::std::memset(&rhs, 0, sizeof(rhs));
+                memset(&rhs, 0, sizeof(rhs));
             }
 
             void copy_from(track_ptr& rhs)
@@ -84,7 +83,7 @@ namespace tos {
             }
 
             template <class T>
-            explicit track_ptr(T* obj) : obj(obj), next{}, prev{} {}
+            explicit track_ptr(T* o) : obj(o), next{}, prev{} {}
 
         public:
 

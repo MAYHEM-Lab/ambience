@@ -7,6 +7,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <string.h>
+#include "tos_platform.hpp"
 
 extern "C"
 {

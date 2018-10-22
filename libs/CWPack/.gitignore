@@ -1,0 +1,16 @@
+# Finder ---------------------------
+.DS_Store
+
+# Explicit no GIT
+*.noGIT
+
+# Object files
+*.o
+
+# Executables
+cwpackModuleTest
+json2cwpack2json
+
+# Data files
+*.msgpack
+*.msgpack.json

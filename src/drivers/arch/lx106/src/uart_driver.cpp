@@ -22,8 +22,18 @@
  * THE SOFTWARE.
  */
 #include <tos/mutex.hpp>
-#include <algorithm>
 #include <mem.h>
+
+#include <tos/semaphore.hpp>
+#include <tos/mutex.hpp>
+
+struct uart_state
+{
+    const char* tx_buffer{nullptr};
+    size_t buf_sz{0};
+    tos::semaphore tx_done{0};
+    tos::mutex tx_busy;
+};
 
 extern "C"
 {
@@ -124,8 +134,6 @@ uart0_intr_handler(void *arg)
         uart0_rxfifo_len = UART_RXFIFO_LEN(UART0);
         uart0_rxfifo_move(&uart0_rx_ringbuf, uart0_rxfifo_len);
     } else if (uart0_status & UART_TXFIFO_EMPTY_INT_ST) {
-        uint16 i;
-
         // TX buffer empty, check if ringbuf has space or disable int
         WRITE_PERI_REG(UART_INT_CLR(UART0), UART_TXFIFO_EMPTY_INT_ST);
 
@@ -241,6 +249,28 @@ uart0_read_buf(void *buf, uint16 nbytes, uint16 timeout)
     return i;
 }
 
+void uart0_tx_char_sync(uint8_t c)
+{
+    ETS_UART_INTR_DISABLE();
+
+    while (true)
+    {
+        uint32 fifo_cnt = READ_PERI_REG(UART_STATUS(UART0)) & (UART_TXFIFO_CNT<<UART_TXFIFO_CNT_S);
+        if ((fifo_cnt >> UART_TXFIFO_CNT_S & UART_TXFIFO_CNT) < 1) {
+            break;
+        }
+    }
+
+    WRITE_PERI_REG(UART_FIFO(UART0), c);
+}
+
+void uart0_tx_buffer_sync(const uint8_t* buf, uint16_t len)
+{
+    while (len --> 0)
+    {
+        uart0_tx_char_sync(*buf++);
+    }
+}
 
 void
 uart0_tx_buffer(const uint8 *buf, uint16 len) {
@@ -255,42 +285,6 @@ uart0_tx_buffer(const uint8 *buf, uint16 len) {
     ETS_UART_INTR_ENABLE();
 
     state.tx_done.down();
-}
-
-uint16 ICACHE_FLASH_ATTR
-uart0_write_buf(const void *buf, uint16 nbytes, uint16 timeout)
-{
-    tos::lock_guard<tos::mutex> lk{state.tx_busy};
-
-    uint32 stime;
-    const uint8 *data = static_cast<const uint8_t*>(buf);
-    uint16 i;
-
-    if (timeout > 0) {
-        uint32 stime = system_get_time();
-        uint16 ringbuflen;
-
-        // Wait until there is some space available
-        while ((system_get_time() - stime) < ((uint32)timeout * 1000)) {
-            ETS_UART_INTR_DISABLE();
-            ringbuflen = uart0_tx_ringbuf.len;
-            ETS_UART_INTR_ENABLE();
-            if (ringbuflen < RINGBUF_SIZE) break;
-            os_delay_us(WAIT_RESOLUTION_US);
-        }
-    }
-
-    ETS_UART_INTR_DISABLE();
-    for (i=0; i<nbytes; i++) {
-        if (uart0_tx_ringbuf.len >= RINGBUF_SIZE) break;
-        RINGBUF_PUT(&uart0_tx_ringbuf, data[i]);
-    }
-    SET_PERI_REG_MASK(UART_INT_ENA(UART0), UART_TXFIFO_EMPTY_INT_ENA);
-    ETS_UART_INTR_ENABLE();
-
-    state.tx_done.down();
-
-    return i;
 }
 
 void ICACHE_FLASH_ATTR
@@ -338,5 +332,6 @@ uart1_write_byte(uint8 byte)
 {
     UART_TXFIFO_PUT(UART1, byte);
     while (UART_TXFIFO_LEN(UART1));
+    return byte;
 }
 }

@@ -2,13 +2,12 @@
 // Created by Mehmet Fatih BAKIR on 15/04/2018.
 //
 
-#include <drivers/arch/avr/usart.hpp>
-#include <ft/include/tos/ft.hpp>
+#include <drivers/arch/avr/drivers.hpp>
+#include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/arch.hpp>
 #include <drivers/common/gpio.hpp>
 #include <tos/devices.hpp>
-#include <drivers/arch/avr/timer.hpp>
 #include <stdlib.h>
 #include <drivers/common/dht22.hpp>
 #include <util/delay.h>
@@ -16,6 +15,7 @@
 #include <drivers/common/alarm.hpp>
 #include <avr/io.h>
 #include <tos/compiler.hpp>
+#include <drivers/common/xbee.hpp>
 
 template <class AlarmT>
 double GetTemp(AlarmT&& alarm)
@@ -43,33 +43,36 @@ void main_task(void*)
 
     auto usart = open(tos::devs::usart<0>, usconf);
 
-    tos::dht d{};
 
     auto g = tos::open(tos::devs::gpio);
-    g->set_pin_mode(8_pin, tos::pin_mode::in_pullup);
 
-    g->set_pin_mode(2_pin, tos::pin_mode::in_pullup);
+    g.set_pin_mode(8_pin, tos::pin_mode::in_pullup);
+
+    g.set_pin_mode(2_pin, tos::pin_mode::in_pullup);
 
     tos::event temp_int;
     auto inthandler = [&]{
         temp_int.fire_isr();
     };
 
-    g->attach_interrupt(2_pin, tos::pin_change::low, inthandler);
+    g.attach_interrupt(2_pin, tos::pin_change::low, inthandler);
 
     auto tmr = open(tos::devs::timer<1>);
     auto alarm = open(tos::devs::alarm, *tmr);
 
+    auto d = tos::make_dht(g, [](tos::microseconds us) {
+        _delay_us(us.val);
+    });
     while (true)
     {
         temp_int.wait();
         char b[32];
         auto res = d.read11(8_pin);
-        tos::println(*usart, int8_t(res));
-        tos::println(*usart, "Temperature:", dtostrf(d.temperature, 2, 2, b));
-        tos::println(*usart, "Humidity:", dtostrf(d.humidity, 2, 2, b));
+        tos::println(usart, int8_t(res));
+        tos::println(usart, "Temperature:", dtostrf(d.temperature, 2, 2, b));
+        tos::println(usart, "Humidity:", dtostrf(d.humidity, 2, 2, b));
         auto st = GetTemp(alarm);
-        tos::println(*usart, "Internal:", dtostrf(st, 2, 2, b));
+        tos::println(usart, "Internal:", dtostrf(st, 2, 2, b));
         alarm.sleep_for({ 100 });
     }
 }

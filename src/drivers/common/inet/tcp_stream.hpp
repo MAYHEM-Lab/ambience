@@ -47,10 +47,13 @@ namespace tos
         tos::semaphore m_write_sync{0};
         bool m_discon{false};
         uint16_t m_sent_bytes = 0;
-
-        tos::span<char>::iterator m_it{};
-        tos::span<char>::iterator m_end{};
     };
+
+    template <class EndPointT>
+    tcp_stream<EndPointT> make_stream(EndPointT&& ep)
+    {
+        return tcp_stream<EndPointT>{ std::move(ep) };
+    }
 
     template <class BaseEndpointT>
     inline tcp_stream<BaseEndpointT>::tcp_stream(BaseEndpointT &&ep)
@@ -67,30 +70,34 @@ namespace tos
     inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::sent_t, BaseEndpointT &, uint16_t len) {
         m_sent_bytes += len;
         m_write_sync.up();
+        tos_debug_print("sent: %d\n", int(len));
     }
 
     template <class BaseEndpointT>
     inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t, BaseEndpointT &, lwip::discon_reason r) {
         m_discon = true;
         m_write_sync.up();
-        ets_printf("\nclosed: %d\n", int(r));
+        tos_debug_print("closed: %d\n", int(r));
     }
 
     template <class BaseEndpointT>
     inline int tcp_stream<BaseEndpointT>::write(tos::span<const char> buf) {
-        if (m_discon) { return 0; }
         tos::lock_guard<tos::mutex> lk{ m_busy };
+        if (m_discon) { return 0; }
         m_sent_bytes = 0;
         auto to_send = m_ep.send(buf);
+        tos_debug_print("sending: %d\n", int(to_send));
         while (m_sent_bytes != to_send && !m_discon)
         {
             m_write_sync.down();
         }
+        tos_debug_print("sentt: %d\n", int(m_sent_bytes));
         return m_sent_bytes;
     }
 
     template <class BaseEndpointT>
     inline void tcp_stream<BaseEndpointT>::operator()(lwip::events::recv_t, BaseEndpointT &, lwip::buffer&& buf) {
+        tos_debug_print("recved %d\n", buf.size());
         if (m_buffer.has_more())
         {
             m_buffer.append(std::move(buf));
@@ -102,7 +109,7 @@ namespace tos
     }
 
     template <class BaseEndpointT>
-    inline expected<span<char>, read_error> tcp_stream<BaseEndpointT>::read(tos::span<char> to) {
+    expected<span<char>, read_error> tcp_stream<BaseEndpointT>::read(tos::span<char> to) {
         if (m_discon && !m_buffer.has_more())
         {
             return unexpected(read_error::disconnected);
@@ -110,6 +117,8 @@ namespace tos
 
         tos::lock_guard<tos::mutex> lk{ m_busy };
 
-        return m_buffer.read(to);
+        auto res = m_buffer.read(to);
+        tos::this_thread::yield();
+        return res;
     }
 }

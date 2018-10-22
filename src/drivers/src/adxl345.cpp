@@ -105,7 +105,7 @@ namespace tos {
     }
 
     void adxl345::readFromI2C(uint8_t address, int num, uint8_t *buff) {
-        char buf[] = {address};
+        char buf[] = { address };
         auto wres = m_twim.transmit({ADXL345_DEVICE}, buf);
         if (wres != tos::twi_tx_res::ok) {
             ets_printf("write error!");
@@ -120,7 +120,7 @@ namespace tos {
     }
 
     void adxl345::writeToI2C(uint8_t address, uint8_t val) {
-        char buf[] = {address, val};
+        char buf[] = { address, val };
         auto res = m_twim.transmit({ADXL345_DEVICE}, buf);
         if (res != tos::twi_tx_res::ok) {
             ets_printf("write error!");

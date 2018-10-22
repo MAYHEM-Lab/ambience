@@ -5,6 +5,7 @@
 #pragma once
 
 #include <tos/utility.hpp>
+#include <tos/span.hpp>
 
 namespace tos
 {
@@ -36,6 +37,16 @@ namespace tos
                 max_range(mid, end)
             );
         }
+    }
+
+    inline int atoi(tos::span<const char> chars)
+    {
+        int res = 0;
+        for (auto p = chars.begin(); p != chars.end() && *p != 0; ++p)
+        {
+            res = res * 10 + *p - '0';
+        }
+        return res;
     }
 
     namespace std

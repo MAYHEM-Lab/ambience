@@ -24,6 +24,8 @@ namespace tos
         class gpio
         {
         public:
+            using pin_type = pin_t;
+
             gpio();
 
             static void set_pin_mode(pin_t, pin_mode::input_t);
@@ -45,6 +47,11 @@ namespace tos
 
             static void write(pin_t pin, bool val);
         };
+    }
+
+    inline tos::esp82::gpio open_impl(tos::devs::gpio_t)
+    {
+        return {};
     }
 }
 

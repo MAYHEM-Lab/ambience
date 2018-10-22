@@ -30,6 +30,7 @@ namespace tos
             cert_invalid,
             ssl_error,
             no_network,
+            connection_reset,
             unknown
         };
 

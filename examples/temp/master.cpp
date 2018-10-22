@@ -2,7 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 15/04/2018.
 //
 
-#include <drivers/arch/avr/usart.hpp>
+#include <drivers/arch/avr/drivers.hpp>
 #include <ft/include/tos/ft.hpp>
 #include <tos/print.hpp>
 #include <drivers/common/gpio.hpp>
