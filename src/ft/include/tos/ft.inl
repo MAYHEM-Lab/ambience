@@ -110,6 +110,42 @@ namespace tos {
             return sched.schedule();
         }
 
+        template <class FunT, class... Args>
+        struct storage
+        {
+        public:
+            template <class FunU, class... ArgUs>
+            storage(FunU&& fun, ArgUs&&... args)
+                : m_fun{tos::std::forward<FunU>(fun)},
+                  m_args{tos::std::forward<ArgUs>(args)...} {}
+
+            auto& get_entry() { return m_fun; }
+            auto& get_args() { return m_args; }
+
+        private:
+            FunT m_fun;
+            tos::std::tuple<Args...> m_args;
+        };
+
+        using raw_store = storage<void(*)(void*), void*>;
+
+        template <class FunT, class... Args>
+        inline thread_id_t launch_with_args(FunT&& fun, Args&&... args)
+        {
+            using namespace tos::std;
+
+            using fun_t = remove_reference_t <FunT>;
+            using tuple_t = tuple<Args...>;
+
+            tuple_t args_tup { forward<Args>(args)... };
+
+            auto wrapper = [f = fun_t(forward<FunT>(fun))] (tuple_t* t) {
+                tos::apply(f, *t);
+            };
+
+
+        }
+
         inline thread_id_t scheduler::start(launch_params params)
         {
             const auto st_size = get<tags::stack_sz_t>(params);
@@ -118,13 +154,10 @@ namespace tos {
             const auto stack_top = stack + st_size;
 
             const auto t_ptr = stack_top - sizeof(tcb);
-            auto thread = new (t_ptr) tcb(st_size);
 
             tcb::entry_point_t entry = get<tags::entry_pt_t>(params);
             void* user_arg = get<tags::argument_t>(params);
-
-            thread->entry = entry;
-            thread->user = user_arg;
+            auto thread = new (t_ptr) super_tcb<raw_store>(st_size - (sizeof(super_tcb<raw_store>) - sizeof(tcb)), raw_store{ entry, user_arg });
 
             // New threads are runnable by default.
             run_queue.push_back(*thread);
@@ -147,7 +180,10 @@ namespace tos {
 
             kern::enable_interrupts();
 
-            impl::cur_thread->entry(impl::cur_thread->user);
+            using tcb_t = super_tcb<raw_store>;
+            tos::apply(
+                    static_cast<tcb_t *>(impl::cur_thread)->get_entry(),
+                    static_cast<tcb_t *>(impl::cur_thread)->get_args());
             this_thread::exit(nullptr);
         }
 
@@ -194,10 +230,7 @@ namespace tos {
                     }
                     case return_codes::do_exit:
                     {
-                        auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
-                                         + sizeof(tcb) - impl::cur_thread->stack_sz;
                         std::destroy_at(impl::cur_thread);
-                        tos_stack_free(stack_ptr);
                         num_threads--;
                         break;
                     }
