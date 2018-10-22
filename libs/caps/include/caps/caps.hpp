@@ -63,9 +63,7 @@ namespace caps
         caps::sign_t res{};
         auto beg = (const uint8_t *) c.c.all;
         size_t sz = sizeof(CapabilityT) * c.c.num_caps;
-        uint8_t sig[emsha::SHA256_HASH_SIZE];
-        s.sign({beg, sz}, sig);
-        memcpy(res.buf, sig, emsha::SHA256_HASH_SIZE);
+        s.sign({beg, sz}, res.buf);
         return res;
     }
 

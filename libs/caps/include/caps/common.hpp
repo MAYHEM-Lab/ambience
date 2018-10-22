@@ -52,7 +52,7 @@ namespace caps
 {
     inline bool operator!=(const sign_t& a, const sign_t& b)
     {
-        return memcmp(a.buf, b.buf, 32) == 0;
+        return memcmp(a.buf, b.buf, 32) != 0;
     }
 
     inline bool operator==(const sign_t& a, const sign_t& b)
