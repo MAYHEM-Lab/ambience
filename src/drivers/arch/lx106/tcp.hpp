@@ -165,7 +165,7 @@ namespace tos
             auto self = static_cast<tcp_socket*>(user);
 
             auto& handler = *(ConnHandlerT*)self->m_accept_handler;
-            auto res = handler(*self, tcp_endpoint{ new_conn });
+            /*auto res =*/ handler(*self, tcp_endpoint{ new_conn });
             system_os_post(tos::esp82::main_task_prio, 0, 0);
             return ERR_OK;
         }

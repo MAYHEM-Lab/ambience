@@ -94,7 +94,7 @@ namespace tos
             cw_pack_context m_ctx;
         };
     }
-};
+}
 
 /// IMPL
 
@@ -118,7 +118,7 @@ namespace tos
             cw_pack_double(&m_ctx, val);
         }
 
-        inline void packer::insert(nullptr_t val) {
+        inline void packer::insert(nullptr_t) {
             cw_pack_nil(&m_ctx);
         }
 
@@ -198,4 +198,4 @@ namespace tos
             return m_packer.insert_arr(len);
         }
     }
-};
+}

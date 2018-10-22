@@ -38,6 +38,6 @@ unsigned long os_random();
 int rand(void);
 void ets_bzero(void *s, size_t n);
 #ifdef __cplusplus
-};
+}
 #endif
 #endif
