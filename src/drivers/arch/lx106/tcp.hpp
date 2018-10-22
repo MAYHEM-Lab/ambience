@@ -92,11 +92,19 @@ namespace tos
         };
 #endif
 
+        /**
+         * This class implements a TCP listener
+         */
         class tcp_socket
                 : public tos::list_node<tcp_socket>
         {
         public:
-            explicit tcp_socket(tos::esp82::wifi&, port_num_t port);
+
+            /**
+             * Constructs a tcp socket with the given port on the given interface
+             * @param port port to bind to
+             */
+            explicit tcp_socket(tos::esp82::wifi_connection&, port_num_t port);
             ~tcp_socket();
 
             template <class ConnHandlerT>
@@ -128,7 +136,7 @@ namespace tos
 {
     namespace esp82
     {
-        inline tcp_socket::tcp_socket(tos::esp82::wifi&, port_num_t port) {
+        inline tcp_socket::tcp_socket(tos::esp82::wifi_connection&, port_num_t port) {
             auto pcb = tcp_new();
 
             auto err = tcp_bind(pcb, IP_ADDR_ANY, port.port);

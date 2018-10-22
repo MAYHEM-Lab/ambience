@@ -73,6 +73,9 @@ namespace tos
             wifi() noexcept ICACHE_FLASH_ATTR;
 
             expected<wifi_connection, assoc_error>
+            connect(span<const char> ssid) noexcept ICACHE_FLASH_ATTR { return connect(ssid, ""); }
+
+            expected<wifi_connection, assoc_error>
             connect(span<const char> ssid, span<const char> passwd) noexcept ICACHE_FLASH_ATTR;
 
             mac_addr_t get_ether_address() const;

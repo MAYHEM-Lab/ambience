@@ -244,8 +244,6 @@ uint32 spi_transaction(
         uint32 din_bits,
         uint32 dummy_bits){
 
-    if(spi_no > 1) return 0;  //Check for a valid SPI
-
     //code for custom Chip Select as GPIO PIN here
 
     while(spi_busy(spi_no)); //wait for SPI to be ready
@@ -295,7 +293,6 @@ uint32 spi_transaction(
         if(READ_PERI_REG(SPI_USER(spi_no))&SPI_WR_BYTE_ORDER) {
             WRITE_PERI_REG(SPI_W0(spi_no), dout_data<<(32-dout_bits));
         } else {
-
             uint8 dout_extra_bits = dout_bits%8;
 
             if(dout_extra_bits){
@@ -328,8 +325,6 @@ uint32 spi_transaction(
         } else {
             return READ_PERI_REG(SPI_W0(spi_no)); //Read in the same way as DOUT is sent. Note existing contents of SPI_W0 remain unless overwritten!
         }
-
-        return 0; //something went wrong
     }
 //########## END SECTION ##########//
 

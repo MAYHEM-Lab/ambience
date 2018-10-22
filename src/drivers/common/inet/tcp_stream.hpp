@@ -49,6 +49,12 @@ namespace tos
         uint16_t m_sent_bytes = 0;
     };
 
+    template <class EndPointT>
+    tcp_stream<EndPointT> make_stream(EndPointT&& ep)
+    {
+        return tcp_stream<EndPointT>{ std::move(ep) };
+    }
+
     template <class BaseEndpointT>
     inline tcp_stream<BaseEndpointT>::tcp_stream(BaseEndpointT &&ep)
             : m_ep(std::move(ep)) {
