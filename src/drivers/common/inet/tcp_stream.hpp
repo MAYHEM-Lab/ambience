@@ -109,7 +109,7 @@ namespace tos
     }
 
     template <class BaseEndpointT>
-    inline expected<span<char>, read_error> tcp_stream<BaseEndpointT>::read(tos::span<char> to) {
+    expected<span<char>, read_error> tcp_stream<BaseEndpointT>::read(tos::span<char> to) {
         if (m_discon && !m_buffer.has_more())
         {
             return unexpected(read_error::disconnected);
@@ -117,6 +117,8 @@ namespace tos
 
         tos::lock_guard<tos::mutex> lk{ m_busy };
 
-        return m_buffer.read(to);
+        auto res = m_buffer.read(to);
+        tos::this_thread::yield();
+        return res;
     }
 }

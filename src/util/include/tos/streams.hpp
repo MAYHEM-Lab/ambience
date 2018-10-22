@@ -12,10 +12,8 @@ namespace tos
     span<char> read_to_end(StreamT& str, span<char> buf)
     {
         auto b = buf;
-        while (true)
+        while (b.size() != 0)
         {
-            if (b.size() == 0) break;
-
             auto rd = str.read(b);
             if (!rd)
             {
