@@ -23,7 +23,7 @@ namespace tos {
 
     inline thread_id_t launch(kern::tcb::entry_point_t e, void* arg)
     {
-        constexpr size_t stack_size = 256;
+        constexpr size_t stack_size = 2048;
         auto params = thread_params()
                 .add<tags::stack_ptr_t>(tos_stack_alloc(stack_size))
                 .add<tags::stack_sz_t>(stack_size)
