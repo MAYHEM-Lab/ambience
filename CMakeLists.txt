@@ -54,14 +54,14 @@ elseif(TOS_ESP)
         add_subdirectory(libs/mqtt)
     endif()
 
-    add_subdirectory(examples/esp_fault)
+    #add_subdirectory(examples/esp_fault)
     add_subdirectory(examples/esp_lwip)
     add_subdirectory(examples/esp_conn)
-    add_subdirectory(examples/esp_mqtt)
-    add_subdirectory(examples/esp_ssl)
+    #add_subdirectory(examples/esp_mqtt)
+    #add_subdirectory(examples/esp_ssl)
     add_subdirectory(examples/esp_spi)
 
-    add_subdirectory(examples/aws_push)
+    #add_subdirectory(examples/aws_push)
 
     add_subdirectory(examples/dht11_sample)
 

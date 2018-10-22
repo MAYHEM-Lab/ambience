@@ -20,7 +20,6 @@
 
 #include <lwip/init.h>
 #include <tos/algorithm.hpp>
-#include <algorithm>
 #include <common/inet/tcp_stream.hpp>
 
 extern "C"
@@ -66,7 +65,7 @@ void task(void*)
 
         lwip_init();
 
-        tos::esp82::tcp_socket sock(w, {80});
+        tos::esp82::tcp_socket sock(conn, {80});
         if (!sock.is_valid()) {
             tos::println(usart, "nope");
         }

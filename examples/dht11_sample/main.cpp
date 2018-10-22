@@ -14,7 +14,10 @@
 
 #include <cwpack.hpp>
 
-auto dht = tos::dht{};
+auto gpio = open(tos::devs::gpio);
+auto dht = tos::make_dht(gpio, [](tos::microseconds us) {
+    os_delay_us(us.val);
+});
 void send(tos::esp82::wifi_connection& c)
 {
     auto e_res = tos::esp82::connect(c, {169, 231, 181, 15}, {4242});

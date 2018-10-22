@@ -20,7 +20,6 @@
 
 #include <lwip/init.h>
 #include <tos/algorithm.hpp>
-#include <algorithm>
 #include <common/inet/tcp_stream.hpp>
 
 #include <stdlib.h>
