@@ -15,6 +15,9 @@ namespace caps
         int16_t num_caps;
         int16_t __padding;
         CapabilityT all[0];
+
+        cap_list() = default;
+        cap_list(const cap_list&) = delete;
     };
 
     template <class CapabilityT>

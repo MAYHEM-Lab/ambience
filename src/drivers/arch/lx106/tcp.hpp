@@ -11,6 +11,7 @@
 #include <tos/fixed_fifo.hpp>
 #include <tos/track_ptr.hpp>
 #include <lwip/tcp.h>
+#include <lwip/init.h>
 #include <tos/expected.hpp>
 #include <tos/algorithm.hpp>
 #include <drivers/common/inet/lwip.hpp>

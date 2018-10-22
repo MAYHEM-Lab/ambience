@@ -228,7 +228,6 @@ struct sntp_server {
 
 static struct sntp_server sntp_servers[SNTP_MAX_SERVERS];
 
-static u8_t sntp_set_servers_from_dhcp;
 #if SNTP_SUPPORT_MULTIPLE_SERVERS
 /** The currently used server (initialized to 0) */
 static u8_t sntp_current_server;

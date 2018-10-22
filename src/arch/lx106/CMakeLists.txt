@@ -16,6 +16,8 @@ target_link_libraries(lx106_impl PUBLIC "-L${TOOLS_BASE}/xtensa-lx106-elf/xtensa
 target_link_libraries(lx106_impl PUBLIC tos_ft lwip c)
 target_compile_definitions(lx106_impl PUBLIC LWIP_OPEN_SRC LWIP_RAW ESP8266 WITH_PGM_READ_HELPER)
 
+target_compile_options(lx106_impl PUBLIC -Wno-literal-suffix)
+
 if (USE_SSL)
   target_include_directories(lx106_impl PUBLIC "${SDK_ROOT}/axtls-8266/")
   target_include_directories(lx106_impl PUBLIC "${SDK_ROOT}/axtls-8266/crypto")
