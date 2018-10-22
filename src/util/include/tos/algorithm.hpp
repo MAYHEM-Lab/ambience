@@ -6,6 +6,7 @@
 
 #include <tos/utility.hpp>
 #include <tos/span.hpp>
+#include "tuple.hpp"
 
 namespace tos
 {
@@ -47,6 +48,37 @@ namespace tos
             res = res * 10 + *p - '0';
         }
         return res;
+    }
+
+    namespace impl
+    {
+        template <class FuncT, class TupT, size_t... Is>
+        auto apply(FuncT&& fun, TupT&& args, tos::std::index_sequence<Is...>)
+        {
+            using namespace tos::std;
+            using tos::std::get;
+            return forward<FuncT>(fun)(get<Is>(forward<TupT>(args))...);
+        }
+    }
+
+    template <class FuncT, class TupT>
+    auto apply(FuncT &&fun, TupT &&args)
+    {
+        using namespace tos::std;
+        using tup_t = remove_reference_t<TupT>;
+        constexpr size_t sz = tuple_size<tup_t>::value;
+        return impl::apply(forward<FuncT>(fun), forward<TupT>(args), make_index_sequence<sz>());
+    }
+
+    template <class FuncT, class... ArgTs>
+    auto invoke(FuncT &&fun, ArgTs &&...args)
+    {
+        using namespace tos::std;
+        constexpr size_t sz = sizeof...(ArgTs);
+        return impl::apply(
+                forward<FuncT>(fun),
+                tos::std::tuple<ArgTs...>(forward<ArgTs>(args)...),
+                        make_index_sequence<sz>());
     }
 
     namespace std
