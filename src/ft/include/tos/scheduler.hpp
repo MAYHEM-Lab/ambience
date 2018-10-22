@@ -105,7 +105,6 @@ namespace tos {
             int8_t  num_threads = 0;
             uint8_t busy = 0;
             intrusive_list<tcb> run_queue;
-            int8_t runnable = 0;
 
             thread_id_t start(launch_params);
 
