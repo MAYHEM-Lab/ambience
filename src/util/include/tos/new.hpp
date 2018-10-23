@@ -10,7 +10,6 @@
 #include <new>
 #else
 
-
 inline void* operator new(size_t, void* __p) noexcept { return __p; }
 inline void* operator new[](size_t, void* __p) noexcept { return __p; }
 
@@ -20,6 +19,7 @@ inline void  operator delete[](void*, void*) throw() { }
 
 #endif
 
+
 inline void operator delete (void* pt, size_t){
     free(pt);
 }
@@ -28,7 +28,22 @@ inline void operator delete (void* pt)
     free(pt);
 }
 
+inline void operator delete[] (void* pt)
+{
+    free(pt);
+}
+
+inline void operator delete[] (void* pt, size_t)
+{
+    free(pt);
+}
+
 inline void* operator new(size_t sz)
+{
+    return malloc(sz);
+}
+
+inline void* operator new[](size_t sz)
 {
     return malloc(sz);
 }

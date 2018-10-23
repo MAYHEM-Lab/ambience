@@ -21,7 +21,7 @@ namespace tos
 
         milliseconds() = delete;
 
-        explicit operator microseconds() const {
+        operator microseconds() const {
             return { val * 1000 };
         }
     };
@@ -32,7 +32,7 @@ namespace tos
 
         seconds() = delete;
 
-        explicit operator milliseconds() const {
+        operator milliseconds() const {
             return { val * 1000 };
         }
     };

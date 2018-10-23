@@ -287,42 +287,6 @@ uart0_tx_buffer(const uint8 *buf, uint16 len) {
     state.tx_done.down();
 }
 
-uint16 ICACHE_FLASH_ATTR
-uart0_write_buf(const void *buf, uint16 nbytes, uint16 timeout)
-{
-    tos::lock_guard<tos::mutex> lk{state.tx_busy};
-
-    uint32 stime;
-    const uint8 *data = static_cast<const uint8_t*>(buf);
-    uint16 i;
-
-    if (timeout > 0) {
-        uint32 stime = system_get_time();
-        uint16 ringbuflen;
-
-        // Wait until there is some space available
-        while ((system_get_time() - stime) < ((uint32)timeout * 1000)) {
-            ETS_UART_INTR_DISABLE();
-            ringbuflen = uart0_tx_ringbuf.len;
-            ETS_UART_INTR_ENABLE();
-            if (ringbuflen < RINGBUF_SIZE) break;
-            os_delay_us(WAIT_RESOLUTION_US);
-        }
-    }
-
-    ETS_UART_INTR_DISABLE();
-    for (i=0; i<nbytes; i++) {
-        if (uart0_tx_ringbuf.len >= RINGBUF_SIZE) break;
-        RINGBUF_PUT(&uart0_tx_ringbuf, data[i]);
-    }
-    SET_PERI_REG_MASK(UART_INT_ENA(UART0), UART_TXFIFO_EMPTY_INT_ENA);
-    ETS_UART_INTR_ENABLE();
-
-    state.tx_done.down();
-
-    return i;
-}
-
 void ICACHE_FLASH_ATTR
 uart0_flush()
 {
@@ -368,5 +332,6 @@ uart1_write_byte(uint8 byte)
 {
     UART_TXFIFO_PUT(UART1, byte);
     while (UART_TXFIFO_LEN(UART1));
+    return byte;
 }
 }

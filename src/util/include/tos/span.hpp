@@ -41,7 +41,7 @@ namespace tos
         constexpr const T* end() const { return m_base + m_len; }
 
         constexpr operator span<const T>() const {
-            return { m_base, m_len };
+            return { m_base, size_t(m_len) };
         }
 
         constexpr span slice(size_t begin, size_t len){

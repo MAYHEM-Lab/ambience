@@ -71,7 +71,7 @@ namespace tos
     };
 
     template <class GpioT, class DelayT>
-    auto make_dht22(GpioT& g, DelayT&& d)
+    auto make_dht(GpioT &g, DelayT &&d)
     {
         using namespace tos::std;
         using GT = remove_reference_t <remove_const_t <GpioT>>;

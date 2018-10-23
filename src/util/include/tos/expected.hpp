@@ -80,7 +80,7 @@ namespace tos
         template <class ErrU>
         expected(unexpected_t<ErrU>&& u) : m_err{std::move(u.m_err)}, m_have{false} {}
 
-        explicit operator bool() const { return m_have; }
+        constexpr explicit __attribute__((pure)) operator bool() const { return m_have; }
 
         expected& operator=(expected&& rhs) noexcept
         {

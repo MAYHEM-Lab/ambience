@@ -20,7 +20,6 @@ void tx_task(void*)
             .add(tos::usart_stop_bit::one);
 
     auto usart = open(tos::devs::usart<0>, usconf);
-    usart.enable();
 
     namespace xbee = tos::xbee;
 
@@ -30,11 +29,12 @@ void tx_task(void*)
     auto alarm = tos::open(tos::devs::alarm, *tmr);
 
     xbee::frame_id_t fid{1};
+
     while (true)
     {
         using namespace tos::chrono_literals;
 
-        xbee::addr_16 base_addr { 0xABCD } ;
+        constexpr xbee::addr_16 base_addr { 0xABCD } ;
         uint8_t buf[] = { 'h', 'i' };
         xbee::tx16_req r { base_addr, buf, fid };
 

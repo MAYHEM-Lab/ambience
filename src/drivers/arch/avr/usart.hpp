@@ -49,6 +49,9 @@ namespace tos {
 
             static int write(span<const char> buf);
 
+            usart0&operator*() { return *this; }
+            usart0*operator->() { return this; }
+
         private:
 
             usart0() = default;

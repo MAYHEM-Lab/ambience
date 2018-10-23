@@ -60,8 +60,8 @@ void main_task(void*)
     auto tmr = open(tos::devs::timer<1>);
     auto alarm = open(tos::devs::alarm, *tmr);
 
-    auto d = tos::make_dht22(g, [](tos::microseconds){
-
+    auto d = tos::make_dht(g, [](tos::microseconds us) {
+        _delay_us(us.val);
     });
     while (true)
     {

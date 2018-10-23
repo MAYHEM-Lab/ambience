@@ -72,9 +72,7 @@ void task(void*)
                      "Host: bakirbros.com\r\n"
                      "Connection: close\r\n"
                      "\r\n");
-
-        tos::println(stream);
-
+        
         while (true)
         {
             auto read_res = stream.read(buf);

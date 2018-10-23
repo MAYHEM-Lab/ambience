@@ -49,6 +49,12 @@ namespace tos
         uint16_t m_sent_bytes = 0;
     };
 
+    template <class EndPointT>
+    tcp_stream<EndPointT> make_stream(EndPointT&& ep)
+    {
+        return tcp_stream<EndPointT>{ std::move(ep) };
+    }
+
     template <class BaseEndpointT>
     inline tcp_stream<BaseEndpointT>::tcp_stream(BaseEndpointT &&ep)
             : m_ep(std::move(ep)) {
@@ -103,7 +109,7 @@ namespace tos
     }
 
     template <class BaseEndpointT>
-    inline expected<span<char>, read_error> tcp_stream<BaseEndpointT>::read(tos::span<char> to) {
+    expected<span<char>, read_error> tcp_stream<BaseEndpointT>::read(tos::span<char> to) {
         if (m_discon && !m_buffer.has_more())
         {
             return unexpected(read_error::disconnected);
@@ -111,6 +117,8 @@ namespace tos
 
         tos::lock_guard<tos::mutex> lk{ m_busy };
 
-        return m_buffer.read(to);
+        auto res = m_buffer.read(to);
+        tos::this_thread::yield();
+        return res;
     }
 }

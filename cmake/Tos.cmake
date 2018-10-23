@@ -7,14 +7,16 @@ function(print_size target)
 endfunction()
 
 set(TOS_FLAGS "-Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wpedantic \
-     -ffunction-sections -fdata-sections -ffreestanding -g -pedantic")
+     -ffunction-sections -fdata-sections -ffreestanding -g -pedantic -freorder-functions")
 
-set(TOS_LINKER_FLAGS "-fno-threadsafe-statics")
+set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions")
 
-if (GCC)
-    set(TOS_FLAGS "${TOS_FLAGS} -fstack-usage")
-    set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,--gc-sections")
-elseif(CLANG)
+set(TOS_FLAGS "${TOS_FLAGS} -fstack-usage")
+set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,--gc-sections -Xlinker -Map=output.map")
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(STATUS "Using gcc")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,-dead_strip")
 endif()
 

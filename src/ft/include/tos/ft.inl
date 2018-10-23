@@ -23,7 +23,7 @@ namespace tos {
 
     inline thread_id_t launch(kern::tcb::entry_point_t e, void* arg)
     {
-        constexpr size_t stack_size = 256;
+        constexpr size_t stack_size = 2048;
         auto params = thread_params()
                 .add<tags::stack_ptr_t>(tos_stack_alloc(stack_size))
                 .add<tags::stack_sz_t>(stack_size)
@@ -59,6 +59,8 @@ namespace tos
     [[noreturn]] inline void switch_context(jmp_buf& j, return_codes rc)
     {
         longjmp(j, static_cast<int>(rc));
+
+        __builtin_unreachable();
     }
 }
 
@@ -99,7 +101,6 @@ namespace tos {
             //tos_debug_print("suspend %p\n", impl::cur_thread);
 
             if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
-                impl::cur_thread->s = state::suspended;
                 switch_context(sched.main_context, return_codes::suspend);
             }
         }
@@ -109,37 +110,40 @@ namespace tos {
             return sched.schedule();
         }
 
-        static constexpr uint64_t stack_guard = 0xD5E5A5D5B5E5E5F5;
-
-        struct stack_smash_status
+        template <class FunT, class... Args>
+        struct storage
         {
-            bool result;
-            bool guard1, guard2, guard3;
-            uint64_t val1, val2, val3;
+        public:
+            template <class FunU, class... ArgUs>
+            storage(FunU&& fun, ArgUs&&... args)
+                : m_fun{tos::std::forward<FunU>(fun)},
+                  m_args{tos::std::forward<ArgUs>(args)...} {}
+
+            auto& get_entry() { return m_fun; }
+            auto& get_args() { return m_args; }
+
+        private:
+            FunT m_fun;
+            tos::std::tuple<Args...> m_args;
         };
 
-        inline stack_smash_status check_stack_smash(char* stack, uint16_t st_size)
+        using raw_store = storage<void(*)(void*), void*>;
+
+        template <class FunT, class... Args>
+        inline thread_id_t launch_with_args(FunT&& fun, Args&&... args)
         {
-            const auto stack_top    = stack + st_size;
-            const auto st_g_ptr     = stack_top - sizeof stack_guard;
-            const auto t_ptr        = st_g_ptr  - sizeof(tcb);
-            const auto st_g2_ptr    = t_ptr     - sizeof stack_guard;
-            const auto st_g3_ptr    = stack;
+            using namespace tos::std;
 
-            auto guard1 = *reinterpret_cast<const uint64_t*>(st_g_ptr);
-            auto guard2 = *reinterpret_cast<const uint64_t*>(st_g2_ptr);
-            auto guard3 = *reinterpret_cast<const uint64_t*>(st_g3_ptr);
+            using fun_t = remove_reference_t <FunT>;
+            using tuple_t = tuple<Args...>;
 
-            stack_smash_status res;
-            res.guard1 = guard1 == stack_guard;
-            res.guard2 = guard2 == stack_guard;
-            res.guard3 = guard3 == stack_guard;
-            res.val1 = guard1;
-            res.val2 = guard2;
-            res.val3 = guard3;
-            res.result = res.guard1 && res.guard2 && res.guard3;
+            tuple_t args_tup { forward<Args>(args)... };
 
-            return res;
+            auto wrapper = [f = fun_t(forward<FunT>(fun))] (tuple_t* t) {
+                tos::apply(f, *t);
+            };
+
+
         }
 
         inline thread_id_t scheduler::start(launch_params params)
@@ -147,34 +151,16 @@ namespace tos {
             const auto st_size = get<tags::stack_sz_t>(params);
             const auto stack = static_cast<char*>(get<tags::stack_ptr_t>(params));
 
-            const auto stack_top    = stack + st_size;
-            const auto st_g_ptr     = stack_top - sizeof stack_guard;
-            const auto t_ptr        = st_g_ptr  - sizeof(tcb);
-            const auto st_g2_ptr    = t_ptr     - sizeof stack_guard;
-            const auto st_g3_ptr    = stack;
+            const auto stack_top = stack + st_size;
+
+            const auto t_ptr = stack_top - sizeof(tcb);
 
             tcb::entry_point_t entry = get<tags::entry_pt_t>(params);
             void* user_arg = get<tags::argument_t>(params);
-
-            auto guard1 = new (st_g_ptr)    uint64_t(stack_guard);
-            auto thread = new (t_ptr)       tcb     (st_size);
-            auto guard2 = new (st_g2_ptr)   uint64_t(stack_guard);
-            auto guard3 = new (st_g3_ptr)   uint64_t(stack_guard);
-            (void)guard1, (void)guard2, (void)guard3;
-
-            thread->entry = entry;
-            thread->user = user_arg;
-
-            if (!check_stack_smash(stack, st_size).result)
-            {
-                tos_debug_print("Stack Guard Failure!");
-                while (true);
-            }
+            auto thread = new (t_ptr) super_tcb<raw_store>(st_size - (sizeof(super_tcb<raw_store>) - sizeof(tcb)), raw_store{ entry, user_arg });
 
             // New threads are runnable by default.
-            thread->s = state::runnable;
             run_queue.push_back(*thread);
-            runnable++;
             num_threads++;
 
             kern::disable_interrupts();
@@ -190,11 +176,14 @@ namespace tos {
              * set the stack pointer so the new thread will have an
              * independent execution context
              */
-            tos_set_stack_ptr(reinterpret_cast<char*>(impl::cur_thread) - sizeof stack_guard);
+            tos_set_stack_ptr(reinterpret_cast<char*>(impl::cur_thread));
 
             kern::enable_interrupts();
 
-            impl::cur_thread->entry(impl::cur_thread->user);
+            using tcb_t = super_tcb<raw_store>;
+            tos::apply(
+                    static_cast<tcb_t *>(impl::cur_thread)->get_entry(),
+                    static_cast<tcb_t *>(impl::cur_thread)->get_args());
             this_thread::exit(nullptr);
         }
 
@@ -236,42 +225,17 @@ namespace tos {
                     {
                         impl::cur_thread = &run_queue.front();
                         run_queue.pop_front();
-                        runnable--;
-                        impl::cur_thread->s = state::running;
-
-                        auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
-                                         + sizeof(tcb) + sizeof(stack_guard) - impl::cur_thread->stack_sz;
-                        auto res = check_stack_smash(stack_ptr, impl::cur_thread->stack_sz);
-                        if (!res.result)
-                        {
-                            tos_debug_print("Init Stack Smash Detected! %llx %llx %llx", res.val1, res.val2, res.val3);
-                            while (true);
-                        }
 
                         switch_context(impl::cur_thread->context, return_codes::scheduled);
                     }
                     case return_codes::do_exit:
                     {
-                        auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
-                                         + sizeof(tcb) + sizeof(stack_guard) - impl::cur_thread->stack_sz;
                         std::destroy_at(impl::cur_thread);
-                        tos_stack_free(stack_ptr);
                         num_threads--;
                         break;
                     }
                     case return_codes::yield:
                     case return_codes::suspend:
-                    {
-                        auto stack_ptr = reinterpret_cast<char*>(impl::cur_thread)
-                                         + sizeof(tcb) + sizeof(stack_guard) - impl::cur_thread->stack_sz;
-                        auto res = check_stack_smash(stack_ptr, impl::cur_thread->stack_sz);
-                        if (!res.result)
-                        {
-                            tos_debug_print("Stack Smash Detected! %llx %llx %llx", res.val1, res.val2, res.val3);
-                            while (true);
-                        }
-                        break;
-                    }
                     default:
                         break;
                 }
@@ -283,23 +247,6 @@ namespace tos {
 
         inline void make_runnable(tcb& t)
         {
-            //tos_debug_print("runnable %p\n", &t);
-
-            if (t.s == state::runnable)
-            {
-                tos_debug_print("already runnable");
-                while (true);
-            }
-
-            t.s = state::runnable;
-            sched.runnable++;
-
-            if (sched.runnable > sched.num_threads)
-            {
-                tos_debug_print("run queue bug");
-                while (true);
-            }
-
             sched.run_queue.push_back(t);
         }
     }

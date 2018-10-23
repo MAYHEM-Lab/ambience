@@ -11,6 +11,7 @@
 #include <tos/fixed_fifo.hpp>
 #include <tos/track_ptr.hpp>
 #include <lwip/tcp.h>
+#include <lwip/init.h>
 #include <tos/expected.hpp>
 #include <tos/algorithm.hpp>
 #include <drivers/common/inet/lwip.hpp>
@@ -92,11 +93,19 @@ namespace tos
         };
 #endif
 
+        /**
+         * This class implements a TCP listener
+         */
         class tcp_socket
                 : public tos::list_node<tcp_socket>
         {
         public:
-            explicit tcp_socket(tos::esp82::wifi&, port_num_t port);
+
+            /**
+             * Constructs a tcp socket with the given port on the given interface
+             * @param port port to bind to
+             */
+            explicit tcp_socket(tos::esp82::wifi_connection&, port_num_t port);
             ~tcp_socket();
 
             template <class ConnHandlerT>
@@ -128,7 +137,7 @@ namespace tos
 {
     namespace esp82
     {
-        inline tcp_socket::tcp_socket(tos::esp82::wifi&, port_num_t port) {
+        inline tcp_socket::tcp_socket(tos::esp82::wifi_connection&, port_num_t port) {
             auto pcb = tcp_new();
 
             auto err = tcp_bind(pcb, IP_ADDR_ANY, port.port);
@@ -157,7 +166,7 @@ namespace tos
             auto self = static_cast<tcp_socket*>(user);
 
             auto& handler = *(ConnHandlerT*)self->m_accept_handler;
-            auto res = handler(*self, tcp_endpoint{ new_conn });
+            /*auto res =*/ handler(*self, tcp_endpoint{ new_conn });
             system_os_post(tos::esp82::main_task_prio, 0, 0);
             return ERR_OK;
         }

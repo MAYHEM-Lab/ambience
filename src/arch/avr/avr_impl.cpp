@@ -51,7 +51,7 @@ static void power_down(int mode)
     sleep_disable();
 }
 
-int TOS_MAIN NORETURN main()
+int TOS_EXPORT TOS_MAIN NORETURN main()
 {
     tos::kern::enable_interrupts();
 

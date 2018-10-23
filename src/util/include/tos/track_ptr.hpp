@@ -83,7 +83,7 @@ namespace tos {
             }
 
             template <class T>
-            explicit track_ptr(T* obj) : obj(obj), next{}, prev{} {}
+            explicit track_ptr(T* o) : obj(o), next{}, prev{} {}
 
         public:
 

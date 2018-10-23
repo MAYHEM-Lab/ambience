@@ -1,15 +1,15 @@
 #ifndef LWIP_SNTP_H
 #define LWIP_SNTP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <lwip/opt.h>
 #include <lwip/ip_addr.h>
 #include <stdint.h>
 
 #include <time.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /** The maximum number of SNTP servers that can be set */
 #ifndef SNTP_MAX_SERVERS

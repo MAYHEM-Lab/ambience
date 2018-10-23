@@ -56,6 +56,9 @@ namespace tos {
         {
             return elem.t;
         }
+
+        static_assert(sizeof(int) == sizeof(tuple<int>), "tuple shouldn't have overhead!");
+        static_assert(sizeof(void*) == sizeof(tuple<void*>), "tuple shouldn't have overhead!");
     }
 }
 

@@ -7,13 +7,13 @@
 
 #ifndef TIME_H_
 #define TIME_H_
+
+extern "C"
+{
 #include "osapi.h"
 #include "os_type.h"
 #include "sntp.h"
 #include <sys/time.h>
-
-extern "C"
-{
 /***************************RTC TIME OPTION***************************************/
 // daylight settings
 // Base calculated with value obtained from NTP server (64 bits)
