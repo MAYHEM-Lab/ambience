@@ -98,7 +98,6 @@ namespace tos {
     }
 }
 
-
 static void put_sync(const char data)
 {
     while (!(UCSR0A & (1<<UDRE0)));
@@ -148,9 +147,24 @@ static size_t read_usart(tos::span<char> b)
     return total;
 }
 
+class uart_ev_handler
+{
+public:
+    void operator()(tos::uart::events::sent_t) {
+        state->write_done.up_isr();
+    }
+
+    void operator()(tos::uart::events::recv_t, char c) {
+        state->read_buf.push_back(c);
+        state->have_data.up_isr();
+    }
+};
+
+static uart_ev_handler handler;
+
 ISR (USART_TX_vect)
 {
-    state->write_done.up_isr();
+    handler(tos::uart::events::sent);
 }
 
 ISR (USART_UDRE_vect) {
@@ -167,6 +181,5 @@ ISR (USART_UDRE_vect) {
 
 ISR (USART_RX_vect) {
     auto byte = UDR0;
-    state->read_buf.push_back(byte);
-    state->have_data.up_isr();
+    handler(tos::uart::events::recv, byte);
 }
