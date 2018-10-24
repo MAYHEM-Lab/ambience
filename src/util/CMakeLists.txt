@@ -8,12 +8,10 @@ add_library(tos_util
     include/tos/expected.hpp
     include/tos/function_ref.hpp
     include/tos/utility.hpp
-    include/tos/type_traits.hpp
     include/tos/tuple.hpp
     include/tos/algorithm.hpp
     src/new.cpp
     include/tos/new.hpp
-    include/tos/memory.hpp
     src/cxxrt.cpp
     include/tos/span.hpp
     include/tos/ct_map.hpp
@@ -23,10 +21,11 @@ add_library(tos_util
     include/tos/mem_stream.hpp
     src/expected.cpp
     include/tos/array.hpp
-    include/initializer_list
     include/tos/unique_ptr.hpp
     include/tos/streams.hpp)
 
 target_include_directories(tos_util PUBLIC "include")
 target_compile_options(tos_util PUBLIC "-std=c++14")
-target_link_libraries(tos_util PUBLIC tos_ft)
+target_link_libraries(tos_util PUBLIC tos::ft tos::libcxx)
+
+add_library(tos::util ALIAS tos_util)

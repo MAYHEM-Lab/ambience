@@ -45,7 +45,7 @@ namespace tos
     public:
 
         explicit dht(GpioT& gpio, DelayT delay)
-        : DelayT{tos::std::move(delay)}, m_gpio{&gpio}
+        : DelayT{std::move(delay)}, m_gpio{&gpio}
         {
             m_disableIRQ = true;
         };
@@ -73,7 +73,7 @@ namespace tos
     template <class GpioT, class DelayT>
     auto make_dht(GpioT &g, DelayT &&d)
     {
-        using namespace tos::std;
+        using namespace std;
         using GT = remove_reference_t <remove_const_t <GpioT>>;
         using DT = remove_reference_t <remove_const_t <DelayT>>;
         return dht<GT, DT>(g, forward<DelayT>(d));

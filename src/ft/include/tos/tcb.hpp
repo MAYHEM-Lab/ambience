@@ -2,7 +2,7 @@
 
 #include <tos/intrusive_list.hpp>
 #include <setjmp.h>
-#include <tos/utility.hpp>
+#include <utility>
 #include <tos/arch.hpp>
 
 namespace tos {
@@ -24,10 +24,6 @@ namespace tos {
 
             jmp_buf context;
 
-            char* get_stack_base()
-            {
-                return reinterpret_cast<char*>(this) + sizeof(*this) - stack_sz;
-            }
 
             explicit tcb(uint16_t stack_size) noexcept
                     : stack_sz{stack_size} {}
@@ -38,6 +34,11 @@ namespace tos {
             }
 
         private:
+            char* get_stack_base()
+            {
+                return reinterpret_cast<char*>(this) + sizeof(*this) - stack_sz;
+            }
+
             uint16_t stack_sz{};
         };
 
@@ -45,8 +46,8 @@ namespace tos {
         struct super_tcb : tcb, ArgT
         {
             template <class ArgU>
-            super_tcb(uint16_t stack_sz, ArgU&& arg)
-                : tcb(stack_sz), ArgT(tos::std::forward<ArgU>(arg)) {}
+            super_tcb(uint16_t stk_sz, ArgU&& arg)
+                : tcb(stk_sz), ArgT(std::forward<ArgU>(arg)) {}
 
             using ArgT::get_entry;
             using ArgT::get_args;

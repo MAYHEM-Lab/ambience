@@ -19,7 +19,8 @@ namespace tos
         template <class, class, class... Args>
         struct open_impl_exists : std::false_type {};
         template <class... Args>
-        struct open_impl_exists<void, std::void_t<decltype(open_impl( std::declval<Args>()...) )>, Args...>
+        struct open_impl_exists
+                <void, std::void_t<decltype(open_impl(std::declval<Args>()...))>, Args...>
         : std::true_type {};
     }
 
@@ -51,7 +52,7 @@ namespace tos
      * @return the device object
      */
     template <class T, class... ArgTs,
-            typename std::enable_if<open_impl_exists<T, ArgTs...>{}>::type* = nullptr>
+            std::enable_if_t<open_impl_exists<T, ArgTs...>{}>* = nullptr>
     static auto open(T t, ArgTs&&... args)
         -> decltype(open_impl(t, std::forward<ArgTs>(args)...))
     {
@@ -59,7 +60,7 @@ namespace tos
     }
 
     template <class T, class... ArgTs,
-            typename std::disable_if<open_impl_exists<T, ArgTs...>{}>::type* = nullptr>
+            std::enable_if_t<!open_impl_exists<T, ArgTs...>{}>* = nullptr>
     static auto open(T t, ArgTs&&... args)
     {
         static_assert(open_impl_exists<T,ArgTs...>{}, "Can't open that device, did you include necessary headers?");

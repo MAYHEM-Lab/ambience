@@ -5,8 +5,8 @@
 #pragma once
 
 #include <tos/utility.hpp>
-#include <tos/memory.hpp>
-#include <tos/type_traits.hpp>
+#include <memory>
+#include <type_traits>
 #include <tos/compiler.hpp>
 #include <tos/new.hpp>
 #include <tos/debug.hpp>
@@ -65,16 +65,16 @@ namespace tos
         {
             if (m_have)
             {
-                new (&m_t) T(tos::std::move(rhs.m_t));
+                new (&m_t) T(std::move(rhs.m_t));
             }
             else
             {
-                new (&m_err) ErrT(tos::std::move(rhs.m_err));
+                new (&m_err) ErrT(std::move(rhs.m_err));
             }
             rhs.m_have = false;
         }
 
-        template <class U, typename = tos::std::enable_if_t<!tos::std::is_same<U, expected>{}>>
+        template <class U, typename = std::enable_if_t<!std::is_same<U, expected>{}>>
         expected(U&& u) : m_t{std::forward<U>(u)}, m_have{true} {}
 
         template <class ErrU>

@@ -6,7 +6,7 @@
 #include <tos/ft.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/new.hpp>
-#include <tos/memory.hpp>
+#include <memory>
 
 #include <stdlib.h>
 
@@ -35,7 +35,7 @@ kt_sem make_kt_sem(int initval) {
 
 void kill_kt_sem(kt_sem ksem) {
     auto sem = static_cast<tos::semaphore*>(ksem);
-    tos::std::destroy_at(sem);
+    std::destroy_at(sem);
     free(sem);
 }
 

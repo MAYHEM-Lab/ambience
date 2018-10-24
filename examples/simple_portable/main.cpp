@@ -72,7 +72,7 @@ void tos_main()
 
     auto usart = open(tos::devs::usart<0>, usconf);
 
-    auto sf = new stream_facade<decltype(usart)>(tos::std::move(usart));
+    auto sf = new stream_facade<decltype(usart)>(std::move(usart));
     out_str = sf;
 #endif
 

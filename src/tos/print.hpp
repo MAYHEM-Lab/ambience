@@ -47,14 +47,14 @@ namespace tos
 
     template <class CharOstreamT,
             class T = int16_t,
-            typename = tos::std::enable_if_t<!tos::std::is_same<T, int>{}>>
+            typename = std::enable_if_t<!std::is_same<T, int>{}>>
     void print(CharOstreamT & ostr, int16_t x) {
         print(ostr, itoa(x, 10));
     }
 
     template <class CharOstreamT,
             class T = int32_t,
-            typename = tos::std::enable_if_t<!tos::std::is_same<T, int>{}>>
+            typename = std::enable_if_t<!std::is_same<T, int>{}>>
     void print(CharOstreamT & ostr, int32_t x) {
         print(ostr, itoa(x, 10));
     }

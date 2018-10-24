@@ -8,9 +8,10 @@
 
 #include <tos/interrupt.hpp>
 #include <tos/new.hpp>
-#include <tos/memory.hpp>
+#include <memory>
 #include <tos/debug.hpp>
 #include <tos/compiler.hpp>
+#include <tos/algorithm.hpp>
 
 namespace tos {
     namespace this_thread {
@@ -116,15 +117,15 @@ namespace tos {
         public:
             template <class FunU, class... ArgUs>
             storage(FunU&& fun, ArgUs&&... args)
-                : m_fun{tos::std::forward<FunU>(fun)},
-                  m_args{tos::std::forward<ArgUs>(args)...} {}
+                : m_fun{std::forward<FunU>(fun)},
+                  m_args{std::forward<ArgUs>(args)...} {}
 
             auto& get_entry() { return m_fun; }
             auto& get_args() { return m_args; }
 
         private:
             FunT m_fun;
-            tos::std::tuple<Args...> m_args;
+            tos::tuple<Args...> m_args;
         };
 
         using raw_store = storage<void(*)(void*), void*>;
@@ -132,7 +133,7 @@ namespace tos {
         template <class FunT, class... Args>
         inline thread_id_t launch_with_args(FunT&& fun, Args&&... args)
         {
-            using namespace tos::std;
+            using namespace std;
 
             using fun_t = remove_reference_t <FunT>;
             using tuple_t = tuple<Args...>;
@@ -143,7 +144,7 @@ namespace tos {
                 tos::apply(f, *t);
             };
 
-
+            __builtin_unreachable();
         }
 
         inline thread_id_t scheduler::start(launch_params params)

@@ -1,0 +1,53 @@
+//
+// Created by Mehmet Fatih BAKIR on 24/10/2018.
+//
+
+#pragma once
+
+namespace std
+{
+    template <class T>
+    constexpr T max(const T &a, const T &b) {
+        return a < b ? b : a;
+    }
+
+    template <class T>
+    constexpr T min(const T &a, const T &b) {
+        return a > b ? b : a;
+    }
+
+    template <class ItT>
+    constexpr auto max_element(ItT begin, ItT end) -> ItT
+    {
+        auto max = begin;
+        ++begin;
+
+        for (; begin != end; ++begin)
+        {
+            if (*begin > *max)
+            {
+                max = begin;
+            }
+        }
+
+        return max;
+    }
+
+    template<class ForwardIt, class T >
+    void fill(ForwardIt first, ForwardIt last, const T& value)
+    {
+        for (; first != last; ++first) {
+            *first = value;
+        }
+    }
+
+    template<class InputIt, class OutputIt>
+    OutputIt copy(InputIt first, InputIt last,
+            OutputIt d_first)
+    {
+        while (first != last) {
+            *d_first++ = *first++;
+        }
+        return d_first;
+    }
+}

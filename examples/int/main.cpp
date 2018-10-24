@@ -15,13 +15,6 @@
 #include <tos/tuple.hpp>
 #include <drivers/arch/avr/eeprom.hpp>
 
-#if defined(TOS)
-namespace std
-{
-    using namespace tos::std;
-}
-#endif
-
 void tick_task(void*)
 {
     using namespace tos;
@@ -44,7 +37,7 @@ void tick_task(void*)
 
     g->attach_interrupt(2_pin, tos::pin_change::falling, handler);
 
-    ::std::tuple<int, bool> tp {3, 1};
+    tos::tuple<int, bool> tp {3, 1};
 
     auto eeprom = tos::open(tos::devs::eeprom<0>);
     int num = 0;

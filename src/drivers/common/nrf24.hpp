@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <drivers/arch/avr/gpio.hpp>
+#include <drivers/arch/avr/drivers.hpp>
 #include <tos/span.hpp>
-#include <drivers/arch/avr/spi.hpp>
 #include <util/delay.h>
 #include <tos/algorithm.hpp>
+#include <algorithm>
 #include "spi.hpp"
 #include <avr/pgmspace.h>
 

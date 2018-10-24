@@ -7,7 +7,8 @@ function(print_size target)
 endfunction()
 
 set(TOS_FLAGS "-Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wpedantic \
-     -ffunction-sections -fdata-sections -ffreestanding -g -pedantic -freorder-functions")
+     -ffunction-sections -fdata-sections -ffreestanding -g -pedantic -freorder-functions \
+        -Wno-unknown-pragmas")
 
 set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions")
 

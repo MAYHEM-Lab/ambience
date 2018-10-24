@@ -6,8 +6,8 @@
 
 #include <stddef.h>
 #include <tos/span.hpp>
-#include <util/include/tos/type_traits.hpp>
 #include "driver_traits.hpp"
+#include <type_traits>
 
 namespace tos
 {
@@ -75,12 +75,12 @@ namespace tos
     };
 
     template <class T>
-    using correct_base_t = tos::std::conditional_t<
+    using correct_base_t = std::conditional_t<
             has_read_v<T> && has_write_v<T>,
             iostream_facade<T>,
-            tos::std::conditional_t<has_read_v<T>,
+            std::conditional_t<has_read_v<T>,
                     istream_facade<T>,
-                    tos::std::conditional_t<has_write_v<T>,
+                    std::conditional_t<has_write_v<T>,
                             ostream_facade<T>,
                             void>>>;
 

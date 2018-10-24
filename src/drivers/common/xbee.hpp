@@ -17,7 +17,7 @@ namespace tos
     public:
 
         explicit xbee_s1(UsartT&& dev) noexcept
-            : m_usart{tos::std::move(dev)} {}
+            : m_usart{std::move(dev)} {}
 
         template <class TxPacket>
         void transmit(const TxPacket& packet);

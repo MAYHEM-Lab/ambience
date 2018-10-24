@@ -10,6 +10,8 @@
 #include <tos/print.hpp>
 #include <tos/version.hpp>
 
+#include <tos/array.hpp>
+
 void tx_task(void*)
 {
     using namespace tos::tos_literals;
@@ -23,7 +25,7 @@ void tx_task(void*)
 
     namespace xbee = tos::xbee;
 
-    tos::xbee_s1<tos::avr::usart0> x {tos::std::move(usart)};
+    tos::xbee_s1<tos::avr::usart0> x {std::move(usart)};
 
     auto tmr = tos::open(tos::devs::timer<1>);
     auto alarm = tos::open(tos::devs::alarm, *tmr);
@@ -34,8 +36,8 @@ void tx_task(void*)
     {
         using namespace tos::chrono_literals;
 
-        constexpr xbee::addr_16 base_addr { 0xABCD } ;
-        uint8_t buf[] = { 'h', 'i' };
+        constexpr xbee::addr_16 base_addr { 0xABCD };
+        tos::array<uint8_t, 2> buf = { 'h', 'i' };
         xbee::tx16_req r { base_addr, buf, fid };
 
         x.transmit(r);

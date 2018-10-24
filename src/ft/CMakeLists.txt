@@ -17,5 +17,7 @@ target_compile_options(tos_ft PUBLIC -std=gnu++14)
 target_link_libraries(tos_ft PUBLIC tos_arch)
 target_link_libraries(tos_ft PUBLIC tos_util)
 target_link_libraries(tos_ft PUBLIC tos_interrupt)
-target_link_libraries(tos_ft PUBLIC tos_core)
+target_link_libraries(tos_ft PUBLIC tos_core tos::libcxx)
 target_compile_definitions(tos_ft PUBLIC TOS=ON)
+
+add_library(tos::ft ALIAS tos_ft)
