@@ -241,6 +241,10 @@
 #  endif  // __LONG_LONG_SUPPORTED
 #endif  // __FreeBSD__
 
+#ifdef __AVR__
+#define _LIBCPP_HAS_NO_LONG_LONG
+#endif
+
 #ifdef __NetBSD__
 #  include <sys/endian.h>
 #  if _BYTE_ORDER == _LITTLE_ENDIAN

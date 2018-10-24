@@ -9,13 +9,20 @@ add_library(tos_libcxx
         include/version
         include/memory
         include/cstddef
+        include/iosfwd
+        include/functional
+        include/__functional_base
         include/__nullptr)
 
 target_include_directories(tos_libcxx PUBLIC "include")
-target_compile_options(tos_libcxx PUBLIC -D_LIBCPP_HAS_NO_THREADS)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_THREADS)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_EXCEPTIONS)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_RTTI)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_RTTI)
+target_compile_definitions(tos_libcxx PUBLIC TOS)
 
-add_library(base_libcxx src/stub.cpp)
+add_library(base_libcxx src/compile.cpp)
 if (TOS_PROVIDE_LIBCXX)
-target_link_libraries(base_libcxx PUBLIC tos_libcxx)
+    target_link_libraries(base_libcxx PUBLIC tos_libcxx)
 endif()
 add_library(tos::libcxx ALIAS base_libcxx)
