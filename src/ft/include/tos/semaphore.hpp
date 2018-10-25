@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tos/chrono.hpp>
+#include <chrono>
 #include <tos/waitable.hpp>
 #include <drivers/common/alarm.hpp>
 #include <tos/barrier.hpp>
@@ -64,7 +64,7 @@ namespace tos {
          * @return reason for the return
          */
         template <class AlarmT>
-        sem_ret down(AlarmT& alarm, milliseconds ms) noexcept;
+        sem_ret down(AlarmT& alarm, std::chrono::milliseconds ms) noexcept;
 
         /**
          * Initializes a semaphore with the given value
@@ -134,7 +134,7 @@ namespace tos {
     }
 
     template<class AlarmT>
-    sem_ret semaphore::down(AlarmT &alarm, milliseconds ms) noexcept {
+    sem_ret semaphore::down(AlarmT &alarm, std::chrono::milliseconds ms) noexcept {
         detail::memory_barrier_enter();
         tos::int_guard ig;
 

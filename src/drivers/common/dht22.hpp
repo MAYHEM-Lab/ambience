@@ -5,7 +5,7 @@
 #pragma once
 
 #include <tos/utility.hpp>
-#include <tos/chrono.hpp>
+#include <chrono>
 #include <tos/interrupt.hpp>
 #include <drivers/common/gpio.hpp>
 
@@ -106,7 +106,7 @@ namespace tos
         //digitalWrite(pin, LOW); // T-be
         //if (wakeupDelay > 8) ets_delay_us(wakeupDelay * 1000UL);
         //else
-        static_cast<DelayT&>(*this)(tos::microseconds{ wakeupDelay * 1000UL });
+        static_cast<DelayT&>(*this)(std::chrono::microseconds{ wakeupDelay * 1000UL });
         //ets_delay_us(wakeupDelay * 1000UL);
         // digitalWrite(pin, HIGH); // T-go
         //pinMode(pin, INPUT);

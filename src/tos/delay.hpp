@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <tos/chrono.hpp>
+#include <chrono>
 
 namespace tos
 {
-    void delay_us(microseconds us);
-    void delay_ms(milliseconds ms);
+    void delay_us(std::chrono::microseconds us);
+    void delay_ms(std::chrono::milliseconds ms);
 }

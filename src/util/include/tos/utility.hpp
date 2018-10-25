@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <tos/chrono.hpp>
+#include <chrono>
 #include <utility>
 
 namespace tos {
@@ -24,7 +24,7 @@ namespace tos {
     using concat_t = invoke_t<concat<S1, S2>>;
 
     template <class AlarmT, class FunT>
-    void forever(AlarmT& alarm, milliseconds ms, FunT&& fun)
+    void forever(AlarmT& alarm, std::chrono::milliseconds ms, FunT&& fun)
     {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"

@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <tos/intrusive_list.hpp>
 #include <tos/event.hpp>
-#include <tos/chrono.hpp>
+#include <chrono>
 #include <tos/function_ref.hpp>
 #include <tos/devices.hpp>
 
@@ -35,7 +35,7 @@ namespace tos
         explicit alarm(T& t) : m_timer(&t) {
         }
 
-        void sleep_for(milliseconds dur)
+        void sleep_for(std::chrono::milliseconds dur)
         {
             event ev;
             auto fun = [&ev]{
@@ -84,7 +84,7 @@ namespace tos
             }
         }
 
-        constexpr milliseconds min_resolution() const { return { 1 }; }
+        constexpr std::chrono::milliseconds min_resolution() const { return { 1 }; }
 
     private:
 

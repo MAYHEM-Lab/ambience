@@ -182,17 +182,19 @@ namespace tos
 
     template<class I2cT>
     void lcd<I2cT>::pulseEnable(uint8_t _data) {
+        using namespace std::chrono_literals;
         expanderWrite(_data | En);	// En high
-        tos::delay_us(microseconds{1});
+        tos::delay_us(1us);
 
         expanderWrite(_data & ~En);	// En low
-        tos::delay_us(microseconds{50});
+        tos::delay_us(50us);
     }
 
     template<class I2cT>
     void lcd<I2cT>::clear() {
+        using namespace std::chrono_literals;
         command(LCD_CLEARDISPLAY);// clear display, set cursor position to zero
-        tos::delay_ms(milliseconds{2}); // should probably be a timer sleep
+        tos::delay_ms(2ms); // should probably be a timer sleep
     }
 
     template<class I2cT>
@@ -209,8 +211,9 @@ namespace tos
 
     template<class I2cT>
     void lcd<I2cT>::home() {
+        using namespace std::chrono_literals;
         command(LCD_RETURNHOME);  // set cursor position to zero
-        tos::delay_ms(milliseconds{2});
+        tos::delay_ms(2ms);
     }
 
     template<class I2cT>
