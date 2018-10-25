@@ -154,7 +154,7 @@ namespace tos {
             ++m_count;
             make_runnable(t);
         };
-        sleeper s { uint16_t(ms.val), timeout };
+        sleeper s { uint16_t(ms.count()), timeout };
         auto handle = alarm.set_alarm(s);
 
         kern::suspend_self();

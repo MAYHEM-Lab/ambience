@@ -41,7 +41,7 @@ namespace tos
             auto fun = [&ev]{
                 ev.fire_isr();
             };
-            sleeper s { uint16_t(dur.val), fun };
+            sleeper s { uint16_t(dur.count()), fun };
             set_alarm(s);
             ev.wait();
         }

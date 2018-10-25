@@ -60,7 +60,8 @@ void tick_task(void*)
 
     while (true)
     {
-        alarm.sleep_for({ 1000 });
+        using namespace std::chrono_literals;
+        alarm.sleep_for(1s);
         tos::println(*usart, "Tick", (int)gp->read(8_pin));
     }
 }

@@ -11,7 +11,6 @@
 #include <new>
 #include <tos/debug.hpp>
 #include <tos/compiler.hpp>
-#include <tos/algorithm.hpp>
 
 namespace tos {
     namespace this_thread {
@@ -125,7 +124,7 @@ namespace tos {
 
         private:
             FunT m_fun;
-            tos::tuple<Args...> m_args;
+            std::tuple<Args...> m_args;
         };
 
         using raw_store = storage<void(*)(void*), void*>;
@@ -141,7 +140,7 @@ namespace tos {
             tuple_t args_tup { forward<Args>(args)... };
 
             auto wrapper = [f = fun_t(forward<FunT>(fun))] (tuple_t* t) {
-                tos::apply(f, *t);
+                std::apply(f, *t);
             };
 
             __builtin_unreachable();
@@ -182,7 +181,7 @@ namespace tos {
             kern::enable_interrupts();
 
             using tcb_t = super_tcb<raw_store>;
-            tos::apply(
+            std::apply(
                     static_cast<tcb_t *>(impl::cur_thread)->get_entry(),
                     static_cast<tcb_t *>(impl::cur_thread)->get_args());
             this_thread::exit(nullptr);

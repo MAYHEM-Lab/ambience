@@ -22,7 +22,8 @@ double GetTemp(AlarmT&& alarm)
 {
     ADMUX = (3 << REFS0) | (8 << MUX0); // 1.1V REF, channel#8 is temperature
     ADCSRA |= (1 << ADEN) | (6 << ADPS0);       // enable the ADC div64
-    alarm.sleep_for({20});
+    using namespace std::chrono_literals;
+    alarm.sleep_for(20ms);
     ADCSRA |= (1 << ADSC);      // Start the ADC
 
     while (ADCSRA & (1 << ADSC));       // Detect end-of-conversion
@@ -60,8 +61,8 @@ void main_task(void*)
     auto tmr = open(tos::devs::timer<1>);
     auto alarm = open(tos::devs::alarm, *tmr);
 
-    auto d = tos::make_dht(g, [](tos::microseconds us) {
-        _delay_us(us.val);
+    auto d = tos::make_dht(g, [](std::chrono::microseconds us) {
+        _delay_us(us.count());
     });
     while (true)
     {
@@ -73,7 +74,8 @@ void main_task(void*)
         tos::println(usart, "Humidity:", dtostrf(d.humidity, 2, 2, b));
         auto st = GetTemp(alarm);
         tos::println(usart, "Internal:", dtostrf(st, 2, 2, b));
-        alarm.sleep_for({ 100 });
+        using namespace std::chrono_literals;
+        alarm.sleep_for(100ms);
     }
 }
 

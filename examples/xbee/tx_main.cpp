@@ -34,7 +34,7 @@ void tx_task(void*)
 
     while (true)
     {
-        using namespace tos::chrono_literals;
+        using namespace std::chrono_literals;
 
         constexpr xbee::addr_16 base_addr { 0xABCD };
         std::array<uint8_t, 2> buf = { 'h', 'i' };
@@ -43,7 +43,7 @@ void tx_task(void*)
         x.transmit(r);
         fid.id++;
 
-        alarm.sleep_for(1000_ms);
+        alarm.sleep_for(1s);
     }
 }
 

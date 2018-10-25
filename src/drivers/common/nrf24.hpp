@@ -7,7 +7,6 @@
 #include <drivers/arch/avr/drivers.hpp>
 #include <tos/span.hpp>
 #include <util/delay.h>
-#include <tos/algorithm.hpp>
 #include <algorithm>
 #include "spi.hpp"
 #include <avr/pgmspace.h>

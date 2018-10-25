@@ -31,7 +31,8 @@ void tick_task(void*)
     while (true)
     {
         tos::println(*usart, "yo");
-        alarm.sleep_for({ 1000 });
+        using namespace std::chrono_literals;
+        alarm.sleep_for(1s);
     }
 }
 

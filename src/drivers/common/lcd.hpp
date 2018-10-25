@@ -114,19 +114,21 @@ namespace tos
             displ_func |= LCD_2LINE;
         }
 
-        alarm.sleep_for({ 50 });
+        using namespace std::chrono_literals;
+
+        alarm.sleep_for(50ms);
 
         expanderWrite(m_backlight);
-        alarm.sleep_for({ 1000 });
+        alarm.sleep_for(1s);
 
         write4bits(0x03 << 4);
-        alarm.sleep_for({ 5 });
+        alarm.sleep_for(5ms);
 
         write4bits(0x03 << 4);
-        alarm.sleep_for({ 5 });
+        alarm.sleep_for(5ms);
 
         write4bits(0x03 << 4);
-        tos::delay_us(microseconds{150});
+        tos::delay_us(150us);
 
         // finally, set to 4-bit interface
         write4bits(0x02 << 4);

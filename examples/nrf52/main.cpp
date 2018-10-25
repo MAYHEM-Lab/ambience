@@ -39,10 +39,11 @@ namespace {
         g->write(17, digital::low);
         while (true) {
             g->write(17, digital::high);
-            sem.down(alarm, {1000});
+            using namespace std::chrono_literals;
+            sem.down(alarm, 1s);
 
             g->write(17, digital::low);
-            sem.down(alarm, {1000});
+            sem.down(alarm, 1s);
         }
     }
 

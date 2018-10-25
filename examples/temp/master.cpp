@@ -27,9 +27,10 @@ void tick_task(void*)
 
     while (true)
     {
-        alarm.sleep_for({ 5000 });
+        using namespace std::chrono_literals;
+        alarm.sleep_for(5s);
         g->write(8_pin, false);
-        alarm.sleep_for({ 20 });
+        alarm.sleep_for(20ms);
         g->write(8_pin, true);
     }
 }

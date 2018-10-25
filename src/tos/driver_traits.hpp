@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <tos/algorithm.hpp>
 #include <tos/span.hpp>
 
 namespace tos
