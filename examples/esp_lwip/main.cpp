@@ -8,7 +8,6 @@
 #include <tos/print.hpp>
 #include <tos/mutex.hpp>
 #include <tos/utility.hpp>
-#include <tos/memory.hpp>
 
 #include <arch/lx106/timer.hpp>
 #include <arch/lx106/usart.hpp>
@@ -19,7 +18,6 @@
 #include <tos_arch.hpp>
 
 #include <lwip/init.h>
-#include <tos/algorithm.hpp>
 #include <common/inet/tcp_stream.hpp>
 
 extern "C"
@@ -116,7 +114,7 @@ void task(void*)
                 tos::println(usart, "disconnected!");
             });
 
-            tos::std::destroy_at(ep);
+            std::destroy_at(ep);
             os_free(ep);
             ep = nullptr;
 

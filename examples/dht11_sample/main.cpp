@@ -15,8 +15,8 @@
 #include <cwpack.hpp>
 
 auto gpio = open(tos::devs::gpio);
-auto dht = tos::make_dht(gpio, [](tos::microseconds us) {
-    os_delay_us(us.val);
+auto dht = tos::make_dht(gpio, [](std::chrono::microseconds us) {
+    os_delay_us(us.count());
 });
 void send(tos::esp82::wifi_connection& c)
 {
@@ -80,7 +80,8 @@ void task(void*)
 
     while (true)
     {
-        alarm.sleep_for({ 1'000 });
+        using namespace std::chrono_literals;
+        alarm.sleep_for(1s);
         send(wconn);
     }
 }

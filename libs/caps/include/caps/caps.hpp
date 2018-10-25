@@ -8,7 +8,7 @@
 #include "signer.hpp"
 #include <string.h>
 #include <initializer_list>
-#include <tos/new.hpp>
+#include <new>
 #include <tos/unique_ptr.hpp>
 
 namespace caps

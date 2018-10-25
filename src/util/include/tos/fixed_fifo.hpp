@@ -6,8 +6,8 @@
 
 #include <stddef.h>
 #include <tos/ring_buf.hpp>
-#include <tos/memory.hpp>
-#include <tos/new.hpp>
+#include <memory>
+#include <new>
 #include <tos/interrupt.hpp>
 #include <tos/utility.hpp>
 #include <tos/sync_ring_buf.hpp>

@@ -16,7 +16,7 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-set(LX106_FLAGS "-DICACHE_FLASH -mtext-section-literals -mlongcalls -nostdlib")
+set(LX106_FLAGS "-DICACHE_FLASH -mtext-section-literals -mlongcalls -nostdlib -U__STRICT_ANSI__")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LX106_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LX106_FLAGS}")

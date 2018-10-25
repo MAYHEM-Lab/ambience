@@ -8,18 +8,13 @@
 #include <tos/print.hpp>
 #include <tos/mutex.hpp>
 #include <tos/utility.hpp>
-#include <tos/memory.hpp>
 
-#include <arch/lx106/timer.hpp>
-#include <arch/lx106/usart.hpp>
-#include <arch/lx106/wifi.hpp>
-#include <arch/lx106/tcp.hpp>
+#include <arch/lx106/drivers.hpp>
 #include <tos/version.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos_arch.hpp>
 
 #include <lwip/init.h>
-#include <tos/algorithm.hpp>
 #include <common/inet/tcp_stream.hpp>
 
 char buf[512];
@@ -66,7 +61,7 @@ void task(void*)
         }
 
         auto& conn = force_get(try_conn);
-        tos::tcp_stream<tos::esp82::tcp_endpoint> stream{tos::std::move(conn)};
+        tos::tcp_stream<tos::esp82::tcp_endpoint> stream{std::move(conn)};
 
         stream.write("GET / HTTP/1.1\r\n"
                      "Host: bakirbros.com\r\n"
@@ -91,7 +86,8 @@ void task(void*)
 
     while (true)
     {
-        alarm.sleep_for({ 10'000 });
+        using namespace std::chrono_literals;
+        alarm.sleep_for(10s);
         tos::println(usart, "tick!");
     }
 }

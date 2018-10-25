@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <tos/span.hpp>
-#include <tos/algorithm.hpp>
+#include <algorithm>
 
 namespace tos {
     /**
@@ -45,6 +45,16 @@ namespace tos {
 }
 
 namespace tos{
+    inline int atoi(tos::span<const char> chars)
+    {
+        int res = 0;
+        for (auto p = chars.begin(); p != chars.end() && *p != 0; ++p)
+        {
+            res = res * 10 + *p - '0';
+        }
+        return res;
+    }
+
     inline ipv4_addr_t parse_ip(tos::span<const char> addr) {
         ipv4_addr_t res;
 

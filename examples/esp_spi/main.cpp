@@ -34,8 +34,8 @@ void spi_task(void*)
 
     while (true)
     {
-        using namespace tos::chrono_literals;
-        alarm.sleep_for(1000_ms);
+        using namespace std::chrono_literals;
+        alarm.sleep_for(1000ms);
         tos::println(usart, "tick!");
         s.exchange(0xDA);
 

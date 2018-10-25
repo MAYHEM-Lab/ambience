@@ -7,7 +7,7 @@
 #include <lwip/pbuf.h>
 #include <stddef.h>
 #include <tos/ft.hpp>
-#include <tos/algorithm.hpp>
+#include <algorithm>
 #include <tos/span.hpp>
 
 namespace tos
@@ -127,13 +127,13 @@ namespace tos
              */
             span<char> read(span<char> buf)
             {
-                auto remaining = tos::std::min(buf.size(), size());
+                auto remaining = std::min(buf.size(), size());
 
                 auto total = 0;
                 for (auto out_it = buf.begin(); remaining > 0;)
                 {
                     auto bucket = cur_bucket();
-                    auto bucket_sz = tos::std::min(bucket.size(), remaining);
+                    auto bucket_sz = std::min(bucket.size(), remaining);
                     std::copy(bucket.begin(), bucket.begin() + bucket_sz, out_it);
                     out_it += bucket_sz;
                     total += bucket_sz;

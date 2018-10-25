@@ -22,7 +22,7 @@ namespace tos
     {
     public:
         explicit unique_ptr(T* t) : m_ptr{t} {}
-        unique_ptr(T* t, DeleterT&& del) : m_ptr{t}, DeleterT{tos::std::forward(del)} {}
+        unique_ptr(T* t, DeleterT&& del) : m_ptr{t}, DeleterT{std::forward(del)} {}
 
         unique_ptr(const unique_ptr&) = delete;
         unique_ptr(unique_ptr&& rhs) noexcept : m_ptr{rhs.m_ptr} {
@@ -50,6 +50,6 @@ namespace tos
     template<typename T, typename... Args>
     tos::unique_ptr<T> make_unique(Args&&... args)
     {
-        return tos::unique_ptr<T>(new T(tos::std::forward<Args>(args)...));
+        return tos::unique_ptr<T>(new T(std::forward<Args>(args)...));
     }
 }

@@ -13,7 +13,7 @@
 #include <lwip/tcp.h>
 #include <lwip/init.h>
 #include <tos/expected.hpp>
-#include <tos/algorithm.hpp>
+#include <algorithm>
 #include <drivers/common/inet/lwip.hpp>
 #include <tos/debug.hpp>
 
