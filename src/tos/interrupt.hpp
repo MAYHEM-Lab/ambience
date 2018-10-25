@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <tos_arch.hpp>
 #include <tos/arch.hpp>
 #include <stdint.h>
 
