@@ -11,7 +11,6 @@ add_library(tos_util
     include/tos/tuple.hpp
     include/tos/algorithm.hpp
     src/new.cpp
-    include/tos/new.hpp
     src/cxxrt.cpp
     include/tos/span.hpp
     include/tos/ct_map.hpp
