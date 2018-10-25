@@ -17,7 +17,6 @@ add_library(tos_util
     include/tos/track_ptr.hpp
     include/tos/mem_stream.hpp
     src/expected.cpp
-    include/tos/unique_ptr.hpp
     include/tos/streams.hpp)
 
 target_include_directories(tos_util PUBLIC "include")

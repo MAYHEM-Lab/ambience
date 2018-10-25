@@ -9,7 +9,7 @@
 #include <string.h>
 #include <initializer_list>
 #include <new>
-#include <tos/unique_ptr.hpp>
+#include <memory>
 
 namespace caps
 {
@@ -147,7 +147,7 @@ namespace caps
     };
 
     template <class CapabilityT>
-    tos::unique_ptr<caps::cap_root<CapabilityT>, raw_deleter> mkcaps(std::initializer_list<CapabilityT> capabs, caps::signer &s)
+    std::unique_ptr<caps::cap_root<CapabilityT>, raw_deleter> mkcaps(std::initializer_list<CapabilityT> capabs, caps::signer &s)
     {
         auto mem = new char[sizeof(caps::cap_root<CapabilityT>) + sizeof(CapabilityT) * capabs.size()];
         auto cps = new(mem) caps::cap_root<CapabilityT>;
@@ -158,6 +158,6 @@ namespace caps
         cps->c.num_caps = i;
         cps->c.child = nullptr;
         cps->signature = sign(*cps, s);
-        return tos::unique_ptr<caps::cap_root<CapabilityT>, raw_deleter>{cps};
+        return std::unique_ptr<caps::cap_root<CapabilityT>, raw_deleter>{cps};
     }
 }
