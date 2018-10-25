@@ -19,7 +19,6 @@ add_library(tos_util
     include/tos/track_ptr.hpp
     include/tos/mem_stream.hpp
     src/expected.cpp
-    include/tos/array.hpp
     include/tos/unique_ptr.hpp
     include/tos/streams.hpp)
 
