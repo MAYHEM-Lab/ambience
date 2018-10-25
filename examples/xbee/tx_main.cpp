@@ -10,7 +10,7 @@
 #include <tos/print.hpp>
 #include <tos/version.hpp>
 
-#include <tos/array.hpp>
+#include <array>
 
 void tx_task(void*)
 {
@@ -37,7 +37,7 @@ void tx_task(void*)
         using namespace tos::chrono_literals;
 
         constexpr xbee::addr_16 base_addr { 0xABCD };
-        tos::array<uint8_t, 2> buf = { 'h', 'i' };
+        std::array<uint8_t, 2> buf = { 'h', 'i' };
         xbee::tx16_req r { base_addr, buf, fid };
 
         x.transmit(r);

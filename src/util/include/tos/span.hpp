@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <array>
 
 namespace tos
 {
@@ -20,6 +21,13 @@ namespace tos
 
         template <size_t Sz>
         constexpr span(T (&arr)[Sz]) : m_base(arr), m_len(Sz) {}
+
+        template <size_t Sz>
+        constexpr span(std::array<T, Sz>& arr) : m_base(arr.data()), m_len(arr.size()) {}
+
+        template <size_t Sz>
+        constexpr span(const std::array<std::remove_const_t<T>, Sz>& arr)
+        : m_base(arr.data()), m_len(arr.size()) {}
 
         constexpr size_t size() const { return m_len; }
 
