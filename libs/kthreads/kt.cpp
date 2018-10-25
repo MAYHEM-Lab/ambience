@@ -5,8 +5,8 @@
 #include <kt/kt.h>
 #include <tos/ft.hpp>
 #include <tos/semaphore.hpp>
-#include <tos/new.hpp>
 #include <memory>
+#include <new>
 
 #include <stdlib.h>
 

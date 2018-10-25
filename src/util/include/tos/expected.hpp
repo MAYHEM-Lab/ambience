@@ -8,8 +8,8 @@
 #include <memory>
 #include <type_traits>
 #include <tos/compiler.hpp>
-#include <tos/new.hpp>
 #include <tos/debug.hpp>
+#include <new>
 
 /**
  * This function is called upon a force_get execution on an

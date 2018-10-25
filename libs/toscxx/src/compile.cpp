@@ -4,3 +4,5 @@
 
 #include <tuple>
 #include <functional>
+#include <algorithm>
+#include <vector>

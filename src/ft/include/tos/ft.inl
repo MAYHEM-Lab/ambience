@@ -7,8 +7,8 @@
 #include <tos/scheduler.hpp>
 
 #include <tos/interrupt.hpp>
-#include <tos/new.hpp>
 #include <memory>
+#include <new>
 #include <tos/debug.hpp>
 #include <tos/compiler.hpp>
 #include <tos/algorithm.hpp>

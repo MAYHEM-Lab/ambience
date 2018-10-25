@@ -18,7 +18,7 @@ target_include_directories(tos_libcxx PUBLIC "include")
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_THREADS)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_EXCEPTIONS)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_RTTI)
-target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_RTTI)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_UNICODE_CHARS)
 target_compile_definitions(tos_libcxx PUBLIC TOS)
 
 add_library(base_libcxx src/compile.cpp)
