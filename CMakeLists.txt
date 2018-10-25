@@ -31,6 +31,7 @@ add_subdirectory(libs/kthreads)
 add_subdirectory(libs/posix)
 add_subdirectory(libs/caps)
 add_subdirectory(libs/toscxx)
+add_subdirectory(libs/sml)
 
 if(TOS_AVR)
     add_subdirectory(examples/gpio)
