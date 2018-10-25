@@ -1,6 +1,6 @@
 
 add_library(tos_libcxx
-        src/stub.cpp
+        src/vector.cpp
         include/initializer_list
         include/algorithm
         include/utility
