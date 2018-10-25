@@ -12,7 +12,7 @@
 #include <drivers/arch/avr/gpio.hpp>
 #include <tos/event.hpp>
 
-#include <tos/tuple.hpp>
+#include <tuple>
 #include <drivers/arch/avr/eeprom.hpp>
 
 void tick_task(void*)
@@ -37,13 +37,10 @@ void tick_task(void*)
 
     g->attach_interrupt(2_pin, tos::pin_change::falling, handler);
 
-    tos::tuple<int, bool> tp {3, 1};
-
     auto eeprom = tos::open(tos::devs::eeprom<0>);
     int num = 0;
     eeprom->read(0, &num, sizeof num);
 
-    tos::println(*usart, "Hello", get<0>(tp), get<1>(tp));
     while (true)
     {
         pinsem.wait();

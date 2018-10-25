@@ -8,7 +8,6 @@ add_library(tos_util
     include/tos/expected.hpp
     include/tos/function_ref.hpp
     include/tos/utility.hpp
-    include/tos/tuple.hpp
         src/new.cpp
     src/cxxrt.cpp
     include/tos/span.hpp
