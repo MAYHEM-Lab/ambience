@@ -153,7 +153,7 @@ namespace tos {
 
             const auto stack_top = stack + st_size;
 
-            const auto t_ptr = stack_top - sizeof(tcb);
+            const auto t_ptr = stack_top - sizeof(super_tcb<raw_store>);
 
             tcb::entry_point_t entry = get<tags::entry_pt_t>(params);
             void* user_arg = get<tags::argument_t>(params);
