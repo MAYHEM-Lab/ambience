@@ -10,7 +10,6 @@
 
 #include <avr/power.h>
 #include <avr/sleep.h>
-#include <tos/init.hpp>
 #include <tos/compiler.hpp>
 #include <tos/ft.hpp>
 

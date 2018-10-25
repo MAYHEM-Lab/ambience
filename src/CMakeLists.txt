@@ -4,8 +4,7 @@ set(TOS_CORE_HEADERS
 	tos/devices.hpp
 	tos/char_stream.hpp
 	tos/arch.hpp
-	tos/init.hpp
-	tos/compiler.hpp
+		tos/compiler.hpp
     tos/version.hpp
 	tos/debug.hpp
 	tos/device_id.hpp

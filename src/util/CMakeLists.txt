@@ -8,7 +8,7 @@ add_library(tos_util
     include/tos/expected.hpp
     include/tos/function_ref.hpp
     include/tos/utility.hpp
-        src/new.cpp
+    src/new.cpp
     src/cxxrt.cpp
     include/tos/span.hpp
     include/tos/ct_map.hpp
