@@ -12,9 +12,20 @@
 #include <avr/sleep.h>
 #include <tos/compiler.hpp>
 #include <tos/ft.hpp>
+#include <ft/include/tos/semaphore.hpp>
+#include <drivers/arch/avr/gpio.hpp>
 
 extern "C"
 {
+    /**
+     * Doing a software reset through watchdog timer leaves the wdt
+     * enabled after the reset which causes an infinite reset loop.
+     *
+     * Disabling the watchdog timer at reset solves it.
+     *
+     * .init3 is simply an unused section that's reserved for user code,
+     * so we stick it there.
+     */
     void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
     void wdt_init(void)
     {
@@ -36,18 +47,32 @@ extern "C"
 
 extern void tos_main();
 
-static void reboot()
+/*static void reboot()
 {
     wdt_enable(WDTO_15MS);
     for (;;);
-}
+}*/
 
 static void power_down(int mode)
 {
     set_sleep_mode(mode);
     sleep_enable();
+    sleep_bod_disable();
     sleep_cpu();
     sleep_disable();
+}
+
+tos::event s;
+ISR (WDT_vect)
+{
+    s.fire_isr();
+    // WDIE & WDIF is cleared in hardware upon entering this ISR
+    wdt_disable();
+}
+
+void wait_wdt()
+{
+    s.wait();
 }
 
 int TOS_EXPORT TOS_MAIN NORETURN main()
@@ -59,8 +84,17 @@ int TOS_EXPORT TOS_MAIN NORETURN main()
     while (true)
     {
         auto res = tos::kern::schedule();
-        if (res == tos::exit_reason::restart) reboot();
-        if (res == tos::exit_reason::power_down) power_down(SLEEP_MODE_PWR_DOWN);
+        if (res == tos::exit_reason::restart) {
+            tos_main();
+        }
+        if (res == tos::exit_reason::power_down) {
+            using namespace tos::tos_literals;
+            tos::avr::gpio::write(13_pin, tos::digital::high);
+            power_down(SLEEP_MODE_PWR_DOWN);
+            tos::avr::gpio::write(13_pin, tos::digital::low);
+        }
         if (res == tos::exit_reason::idle) power_down(SLEEP_MODE_IDLE);
     }
+
+    __builtin_unreachable();
 }

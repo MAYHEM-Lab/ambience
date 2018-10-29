@@ -43,6 +43,14 @@ namespace tos
             tos::kern::unbusy();
         }
 
+        timer1::~timer1()
+        {
+            if ((PRR & (1 << PRTIM1)) == 0)
+            {
+                disable();
+            }
+        }
+
         uint16_t timer1::get_ticks() {
             // TODO: should this be atomic?
 
