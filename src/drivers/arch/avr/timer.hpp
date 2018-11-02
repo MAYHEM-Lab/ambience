@@ -22,10 +22,17 @@ namespace tos {
 
             static void set_callback(const function_ref<void()>&);
 
+            timer1() = default;
+            timer1(const timer1&) = delete;
+            timer1(timer1&& tmr) noexcept { tmr.m_disable = false; }
             ~timer1();
 
             timer1* operator->() { return this; }
             timer1& operator*() { return *this; }
+
+        private:
+
+            bool m_disable{true};
         };
         class timer0 {
           public:

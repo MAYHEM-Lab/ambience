@@ -88,10 +88,7 @@ int TOS_EXPORT TOS_MAIN NORETURN main()
             tos_main();
         }
         if (res == tos::exit_reason::power_down) {
-            using namespace tos::tos_literals;
-            tos::avr::gpio::write(13_pin, tos::digital::high);
             power_down(SLEEP_MODE_PWR_DOWN);
-            tos::avr::gpio::write(13_pin, tos::digital::low);
         }
         if (res == tos::exit_reason::idle) power_down(SLEEP_MODE_IDLE);
     }

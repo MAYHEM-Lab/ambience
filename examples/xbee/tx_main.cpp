@@ -63,7 +63,6 @@ void tx_task(void*)
         x.transmit(r);
         fid.id++;
 
-
         xbee::sm_response_parser<xbee::tx_status> parser;
         while (!parser.finished())
         {

@@ -10,6 +10,7 @@
 #include <tos/expected.hpp>
 #include <variant.hpp>
 #include <boost/sml.hpp>
+#include <tos/span.hpp>
 
 namespace tos
 {
@@ -40,7 +41,7 @@ namespace xbee
     struct tx_status
             : response_base<api_ids::TX_STATUS_RESPONSE>
     {
-        enum class status : uint8_t
+        enum class statuses : uint8_t
         {
             success = 0,
             cca_fail = 0x2,
@@ -53,6 +54,7 @@ namespace xbee
             payload_too_large = 0x74
         } status;
     };
+
 
     using response = mpark::variant<mpark::monostate, modem_status, tx_status>;
 
@@ -78,6 +80,14 @@ namespace xbee
     namespace events
     {
         struct byte { uint8_t byte; };
+    }
+
+    void consume(tx_status& ts, tos::span<const uint8_t> data)
+    {
+        if (data.size() == 2)
+        {
+            ts.status = tx_status::statuses(data[1]);
+        }
     }
 
     struct base_parse_state
@@ -108,18 +118,27 @@ namespace xbee
     template <class T>
     struct store_msb
     {
-        constexpr bool operator()(events::byte ev, parse_state<T>& state) const
+        constexpr void operator()(events::byte ev, parse_state<T>& state) const
         {
-            return state.msb = ev.byte;
+            state.msb = ev.byte;
         }
     };
 
     template <class T>
     struct store_lsb
     {
-        constexpr bool operator()(events::byte ev, parse_state<T>& state) const
+        constexpr void operator()(events::byte ev, parse_state<T>& state) const
         {
-            return state.lsb = ev.byte;
+            state.lsb = ev.byte;
+        }
+    };
+
+    template <class T>
+    struct store_payload
+    {
+        constexpr void operator()(tos::span<const uint8_t> ev, parse_state<T>& state) const
+        {
+            consume(state.res, ev);
         }
     };
 
@@ -133,7 +152,8 @@ namespace xbee
                 "got_start"_s + event<events::byte> / store_msb<ResType>{}     = "got_msb"_s,
                 "got_msb"_s   + event<events::byte> / store_lsb<ResType>{}     = "got_lsb"_s,
                 "got_lsb"_s   + event<events::byte> [ is_type_correct_t<ResType>{} ] = "api_id"_s,
-                "api_id"_s = X
+                "api_id"_s    + event<tos::span<const uint8_t>> = "got_payload"_s,
+                "got_payload"_s + event<events::byte> = X
             );
         }
     };
@@ -153,6 +173,21 @@ namespace xbee
                 m_escape = true;
                 return;
             }
+            using namespace boost::sml;
+
+            if (sm.is("api_id"_s))
+            {
+                m_pl_index++;
+
+                if (m_pl_index < get_len().len)
+                {
+                    return;
+                }
+
+                uint8_t buf[2];
+                sm.process_event(tos::span<const uint8_t>(buf));
+                return;
+            }
 
             sm.process_event(events::byte{data});
         }
@@ -167,6 +202,8 @@ namespace xbee
 
     private:
         bool m_escape {false};
+
+        uint8_t m_pl_index = 1;
 
         parse_state<ResType> m_s;
         boost::sml::sm<xbee_response<ResType>> sm {m_s};

@@ -45,9 +45,9 @@ namespace tos
 
         timer1::~timer1()
         {
-            if ((PRR & (1 << PRTIM1)) == 0)
+            if (m_disable && (PRR & (1 << PRTIM1)) == 0)
             {
-                disable();
+                //disable();
             }
         }
 

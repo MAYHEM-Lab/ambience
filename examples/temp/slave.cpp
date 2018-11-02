@@ -15,7 +15,6 @@
 #include <drivers/common/alarm.hpp>
 #include <avr/io.h>
 #include <tos/compiler.hpp>
-#include <drivers/common/xbee.hpp>
 #include <ft/include/tos/semaphore.hpp>
 #include "app.hpp"
 
@@ -59,6 +58,8 @@ void main_task(void*)
     auto d = tos::make_dht(g, [](std::chrono::microseconds us) {
         _delay_us(us.count());
     });
+
+    tos::print(usart, "hi");
 
     std::array<char, 2> buf;
     usart.read(buf);

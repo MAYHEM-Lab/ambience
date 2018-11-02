@@ -15,6 +15,8 @@ namespace tos
     public:
         using iterator = T*;
 
+        constexpr span(nullptr_t, size_t) = delete;
+
         constexpr span(T* base, size_t len) : m_base(base), m_len(len) {}
 
         constexpr span(T* base, T* end) : m_base{base}, m_len{end - base} {}
