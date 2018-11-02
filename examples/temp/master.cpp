@@ -98,7 +98,7 @@ void tx_task(void*)
 
             gpio.write(7_pin, tos::digital::high);
 
-            alarm.sleep_for(50ms);
+            alarm.sleep_for(2000ms);
 
             namespace xbee = tos::xbee;
 
@@ -113,7 +113,7 @@ void tx_task(void*)
             x.transmit(r);
             fid.id++;
 
-            alarm.sleep_for(20ms);
+            alarm.sleep_for(500ms);
             gpio.write(7_pin, tos::digital::low);
         }
 
