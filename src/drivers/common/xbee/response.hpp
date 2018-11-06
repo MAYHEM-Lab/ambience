@@ -8,7 +8,6 @@
 #include "constants.hpp"
 #include <stddef.h>
 #include <tos/expected.hpp>
-#include <variant.hpp>
 #include <boost/sml.hpp>
 #include <tos/span.hpp>
 
@@ -54,19 +53,6 @@ namespace xbee
             payload_too_large = 0x74
         } status;
     };
-
-
-    using response = mpark::variant<mpark::monostate, modem_status, tx_status>;
-
-    inline response make_response(api_ids id)
-    {
-        switch (id)
-        {
-            case modem_status::api_id: return modem_status{};
-            case tx_status::api_id: return tx_status{};
-        }
-        return {};
-    }
 
     enum class parser_state
     {
