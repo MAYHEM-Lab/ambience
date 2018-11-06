@@ -21,6 +21,7 @@ namespace xbee
         REMOTE_AT_REQUEST = 0x17,
         ZB_TX_REQUEST = 0x10,
         ZB_EXPLICIT_TX_REQUEST = 0x11,
+
         RX_64_RESPONSE = 0x80,
         RX_16_RESPONSE = 0x81,
         RX_64_IO_RESPONSE = 0x82,

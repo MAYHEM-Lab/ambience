@@ -6,7 +6,7 @@ function(print_size target)
     )
 endfunction()
 
-set(TOS_FLAGS "-Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wpedantic \
+set(TOS_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -Wpedantic \
      -ffunction-sections -fdata-sections -ffreestanding -g -pedantic -freorder-functions \
         -Wno-unknown-pragmas")
 

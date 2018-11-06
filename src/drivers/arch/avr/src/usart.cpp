@@ -8,6 +8,7 @@
 #include <ft/include/tos/ft.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/mutex.hpp>
+#include <optional>
 
 template<class T, size_t len>
 struct ringbuf {
@@ -51,12 +52,7 @@ struct open_state {
 static void write_usart(tos::span<const char>);
 static size_t read_usart(tos::span<char>);
 
-static open_state *create() {
-    static open_state state;
-    return &state;
-}
-
-static open_state *state = create();
+std::optional<open_state> state;
 
 namespace tos {
     namespace avr {
@@ -76,11 +72,13 @@ namespace tos {
         }
 
         void usart0::enable() {
+            ::state.emplace();
             UCSR0B |= (1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0) | (1 << TXCIE0);
         }
 
         void usart0::disable() {
             UCSR0B &= ~((1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0) | (1 << TXCIE0));
+            ::state.reset();
         }
 
         void usart0::options(usart_modes m, usart_parity p, usart_stop_bit s) {

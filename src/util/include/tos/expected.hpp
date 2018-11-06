@@ -118,6 +118,9 @@ namespace tos
                 std::destroy_at(&m_err);
             }
         }
+
+        using value_type = T;
+        using error_type = ErrT;
     private:
         T&& get() && { return std::move(m_t); }
         T& get() & { return m_t; }
@@ -175,6 +178,14 @@ namespace tos
             tos_force_get_failed(nullptr);
         }
     };
+
+    template <class T, class U>
+    typename T::value_type get_or(T&& t, U&& r)
+    {
+        return with(std::forward<T>(t),
+                [](auto&& res) -> decltype(auto) { return std::forward<decltype(res)>(res); },
+                [&](auto&&) -> decltype(auto) { return r; });
+    }
 
     struct ignore_t
     {

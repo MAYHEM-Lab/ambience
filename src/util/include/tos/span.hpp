@@ -15,6 +15,8 @@ namespace tos
     public:
         using iterator = T*;
 
+        constexpr span(nullptr_t, size_t) = delete;
+
         constexpr span(T* base, size_t len) : m_base(base), m_len(len) {}
 
         constexpr span(T* base, T* end) : m_base{base}, m_len{end - base} {}
@@ -60,4 +62,11 @@ namespace tos
         T* m_base;
         ptrdiff_t m_len;
     };
+
+    template <class T, class U>
+    span<T> raw_cast(span<U> sp)
+    {
+        static_assert(sizeof(T) == 1, "");
+        return {reinterpret_cast<T*>(sp.data()), sp.size() * sizeof(U) };
+    }
 }

@@ -52,9 +52,16 @@ namespace tos {
             usart0&operator*() { return *this; }
             usart0*operator->() { return this; }
 
-        private:
+            ~usart0() { if(m_disable) disable(); }
+            usart0(usart0&& rhs)
+            {
+                rhs.m_disable = false;
+            }
+            usart0(const usart0&) = delete;
+            usart0() { enable(); }
 
-            usart0() = default;
+        private:
+            bool m_disable {true};
         };
 
         void write_sync(span<const char>);
@@ -67,7 +74,6 @@ namespace tos {
                 tos::avr::usart_modes::async,
                 get<usart_parity>(rate),
                 get<usart_stop_bit>(rate));
-        avr::usart0::enable();
         return {};
     }
 }

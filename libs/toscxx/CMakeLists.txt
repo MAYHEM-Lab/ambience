@@ -24,6 +24,8 @@ target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIO)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIN _LIBCPP_HAS_NO_STDOUT)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE)
 target_compile_definitions(tos_libcxx PUBLIC TOS)
+
+target_compile_features(tos_libcxx PUBLIC cxx_std_17)
 endif()
 
 add_library(base_libcxx src/compile.cpp)
