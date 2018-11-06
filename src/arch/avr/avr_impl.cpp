@@ -33,7 +33,7 @@ extern "C"
         wdt_disable();
     }
 
-    alignas(16) char stack[256*2];
+    alignas(alignof(std::max_align_t)) char stack[256*2];
     int stack_index = 0;
     void* tos_stack_alloc(size_t)
     {
