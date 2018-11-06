@@ -1,4 +1,12 @@
 version: 2
+workflows:
+  version: 2
+  all_platforms:
+    jobs:
+    - esp_build
+    - arm_build
+    - avr_build
+    - x86_build
 jobs:
   arm_build:
     docker:
@@ -113,11 +121,3 @@ jobs:
         working_directory: build/
         name: Build Project
         command: ninja esp_conn
-workflows:
-  version: 2
-  all_platforms:
-    jobs:
-      - esp_build
-      - arm_build
-      - avr_build
-      - x86_build
