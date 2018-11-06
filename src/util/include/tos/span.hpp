@@ -62,4 +62,11 @@ namespace tos
         T* m_base;
         ptrdiff_t m_len;
     };
+
+    template <class T, class U>
+    span<T> raw_cast(span<U> sp)
+    {
+        static_assert(sizeof(T) == 1, "");
+        return {reinterpret_cast<T*>(sp.data()), sp.size() * sizeof(U) };
+    }
 }
