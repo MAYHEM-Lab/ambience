@@ -18,23 +18,6 @@
 #include <ft/include/tos/semaphore.hpp>
 #include "app.hpp"
 
-template <class AlarmT>
-double GetTemp(AlarmT&& alarm)
-{
-    ADMUX = (3 << REFS0) | (8 << MUX0); // 1.1V REF, channel#8 is temperature
-    ADCSRA |= (1 << ADEN) | (6 << ADPS0);       // enable the ADC div64
-
-    using namespace std::chrono_literals;
-    alarm.sleep_for(20ms);
-
-    ADCSRA |= (1 << ADSC);      // Start the ADC
-
-    while (ADCSRA & (1 << ADSC));       // Detect end-of-conversion
-
-    // The offset of 324.31 could be wrong. It is just an indication.
-    // The returned temperature is in degrees Celcius.
-    return (ADCW - 324.31) / 1.22;
-}
 
 void main_task(void*)
 {
@@ -59,6 +42,9 @@ void main_task(void*)
         _delay_us(us.count());
     });
 
+    using namespace std::chrono_literals;
+    alarm.sleep_for(2s);
+
     tos::print(usart, "hi");
 
     std::array<char, 2> buf;
@@ -66,10 +52,39 @@ void main_task(void*)
 
     auto res = d.read(10_pin);
 
+    int retries = 0;
+    while (res != tos::dht_res::ok)
+    {
+        //tos::println(usart, int8_t(res));
+        alarm.sleep_for(2s);
+        if (retries == 5)
+        {
+            // err
+        }
+        ++retries;
+        res = d.read(10_pin);
+    }
+
     if (buf[1] == 'o')
     {
-        temp::sample s { d.temperature, d.humidity };
-        usart.write({ (const char*)&s, sizeof s });
+        temp::sample s { d.temperature, d.humidity, temp::GetTemp(alarm) };
+        struct
+        {
+            uint8_t chk_sum{ 0 };
+            decltype(usart)* str;
+            int write(span<const char> buf)
+            {
+                auto res = str->write(buf);
+                for (auto c : buf)
+                {
+                    chk_sum += uint8_t(c);
+                }
+                return res;
+            }
+        } chk_str;
+        chk_str.str = &usart;
+        chk_str.write({ (const char*)&s, sizeof s });
+        usart.write({ (const char*)&chk_str.chk_sum, 1 });
     }
     else
     {
