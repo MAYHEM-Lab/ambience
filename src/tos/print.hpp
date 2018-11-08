@@ -12,7 +12,7 @@
 
 namespace tos
 {
-    char* itoa(int32_t i, int base);
+    const char* itoa(int32_t i, int base);
 }
 
 namespace tos

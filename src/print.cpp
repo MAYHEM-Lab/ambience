@@ -7,7 +7,7 @@
 
 namespace tos
 {
-    char* itoa(int32_t i, int base) {
+    const char* itoa(int32_t i, int base) {
         static char intbuf[12];
         static char lookup[] = {\
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -16,9 +16,7 @@ namespace tos
         int j = 0, isneg = 0;
 
         if (i == 0) {
-            intbuf[0] = '0';
-            intbuf[1] = '\0';
-            return intbuf;
+            return "0";
         }
 
         if (i < 0) {
