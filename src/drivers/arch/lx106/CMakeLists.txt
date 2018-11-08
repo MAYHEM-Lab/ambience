@@ -28,6 +28,10 @@ add_library(esp82_spi spi.hpp src/spi.cpp src/spi.h src/spi_register.h)
 target_include_directories(esp82_spi PUBLIC . PRIVATE src)
 target_link_libraries(esp82_spi PUBLIC esp82_gpio)
 
+add_library(esp82_adc adc.hpp src/adc.cpp)
+target_include_directories(esp82_adc PUBLIC . PRIVATE src)
+target_link_libraries(esp82_adc PUBLIC tos_core)
+
 add_library(esp82_drivers src/stub.cpp drivers.hpp)
 target_link_libraries(esp82_drivers PUBLIC
         lx106_usart

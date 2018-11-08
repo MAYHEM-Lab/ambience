@@ -63,6 +63,12 @@ namespace tos
         ptrdiff_t m_len;
     };
 
+    template <class U, class T>
+    span<U> spanify(T&& t)
+    {
+        return span<U>(std::forward<T>(t));
+    }
+
     template <class T, class U>
     span<T> raw_cast(span<U> sp)
     {

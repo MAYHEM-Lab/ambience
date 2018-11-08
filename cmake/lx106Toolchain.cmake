@@ -21,7 +21,7 @@ set(LX106_FLAGS "-DICACHE_FLASH -mtext-section-literals -mlongcalls -nostdlib -U
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LX106_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LX106_FLAGS}")
 
-set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections -Wl,-EL -L${SDK_ROOT}/sdk/ld -L${SDK_ROOT}/sdk/lib")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-EL -L${SDK_ROOT}/sdk/ld -L${SDK_ROOT}/sdk/lib")
 
 set(TOS_PROVIDE_LIBCXX ON)
 

@@ -47,6 +47,16 @@ namespace tos
         uint8_t pin;
     };
 
+    constexpr bool operator==(const pin_t& a, const pin_t& b)
+    {
+        return a.port == b.port && a.pin == b.pin;
+    }
+
+    constexpr bool operator!=(const pin_t& a, const pin_t& b)
+    {
+        return !(a == b);
+    }
+
     inline pin_t from_gpio_num(uint16_t gpio) {
         if (gpio < 8) {
             return { avr::ports::D(), uint8_t(gpio) };

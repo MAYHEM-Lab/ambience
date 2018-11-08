@@ -28,9 +28,8 @@ void task(void*)
             .add(tos::usart_stop_bit::one);
 
     auto usart = open(tos::devs::usart<0>, usconf);
-    usart.enable();
 
-    tos::print(usart, "\n\n\n\n\n\n");
+    tos::println(usart, "\n\n\n\n");
     tos::println(usart, tos::platform::board_name);
     tos::println(usart, tos::vcs::commit_hash);
 

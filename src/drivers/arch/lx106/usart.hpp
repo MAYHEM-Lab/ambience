@@ -25,10 +25,6 @@ namespace tos
         public:
             uart0(usart_constraint);
 
-            static void enable();
-
-            static void disable();
-
             static int write(span<const char>);
 
             uart0*operator->() {return this;}
@@ -62,16 +58,9 @@ namespace tos
             //lx106::uart0::set_baud_rate(rate);
         }
 
-        inline void uart0::enable() {
-        }
-
-        inline void uart0::disable() {
-        }
-
         inline int ICACHE_FLASH_ATTR uart0::write(tos::span<const char> buf) {
-            //::uart0_tx_buffer((uint8 *)buf.data(), buf.size());
-            ::uart0_tx_buffer_sync((const uint8_t*)buf.data(), buf.size());
-            tos::this_thread::yield();
+            ::uart0_tx_buffer((uint8 *)buf.data(), buf.size());
+            //::uart0_tx_buffer_sync((const uint8_t*)buf.data(), buf.size());
             return buf.size();
         }
 
