@@ -11,3 +11,4 @@
 #include "wifi.hpp"
 #include "twim.hpp"
 #include "spi.hpp"
+#include "adc.hpp"

@@ -65,6 +65,7 @@ elseif(TOS_ESP)
     #add_subdirectory(examples/esp_mqtt)
     #add_subdirectory(examples/esp_ssl)
     add_subdirectory(examples/esp_spi)
+    add_subdirectory(examples/esp_adc)
 
     #add_subdirectory(examples/aws_push)
 
