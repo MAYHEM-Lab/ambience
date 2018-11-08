@@ -45,6 +45,7 @@ if(TOS_AVR)
     add_subdirectory(examples/simple_portable)
     add_subdirectory(examples/nrf24)
     add_subdirectory(examples/xbee)
+    add_subdirectory(examples/ina219)
 
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/tvm")
         add_subdirectory(apps/tvm)
