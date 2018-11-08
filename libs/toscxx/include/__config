@@ -50,8 +50,6 @@
 #    define _LIBCPP_STD_VER 18  // current year, or date of c++2a ratification
 #  endif
 #endif  // _LIBCPP_STD_VER
-#undef _LIBCPP_STD_VER
-#define _LIBCPP_STD_VER 17
 
 #if defined(__ELF__)
 #  define _LIBCPP_OBJECT_FORMAT_ELF   1

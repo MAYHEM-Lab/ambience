@@ -3,8 +3,11 @@
 
 Tos is a cooperative multitasking library operating system focused on correctness and compile time safety features.
 
+More info can be found at: [http://fatihbakir.net/tos/](http://fatihbakir.net/tos/)
+
 Supported targets:
 + AVR (atmega328p)
 + Xtensa (ESP8266 (lx106))
 + x86 (User space)
-+ ARM (NRF52832 (Cortex M4))
++ ARM (NRF52832 (Cortex M4), STM32F103 (Cortex M3))
+

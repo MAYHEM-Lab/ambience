@@ -8,7 +8,7 @@
 #include <avr/io.h>
 #include <tos/function_ref.hpp>
 #include <avr/interrupt.h>
-#include <common/gpio.hpp>
+#include <drivers/common/gpio.hpp>
 
 namespace tos
 {

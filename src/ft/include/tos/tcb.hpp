@@ -4,6 +4,7 @@
 #include <setjmp.h>
 #include <utility>
 #include <tos/arch.hpp>
+#include <cstddef>
 
 namespace tos {
     enum class state
@@ -17,13 +18,12 @@ namespace tos {
         /**
          * This type represents an execution context in the system.
          */
-        struct alignas(16) tcb
+        struct alignas(alignof(std::max_align_t)) tcb
             : public list_node<tcb>
         {
             using entry_point_t = void(*)(void*);
 
             jmp_buf context;
-
 
             explicit tcb(uint16_t stack_size) noexcept
                     : stack_sz{stack_size} {}

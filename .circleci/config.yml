@@ -1,4 +1,12 @@
 version: 2
+workflows:
+  version: 2
+  all_platforms:
+    jobs:
+    - esp_build
+    - arm_build
+    - avr_build
+    - x86_build
 jobs:
   arm_build:
     docker:
@@ -25,7 +33,7 @@ jobs:
           command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-7-2017-q4-major /opt/x-tools
       - run:
           name: Download nRF52 SDK
-          command: wget https://www.nordicsemi.com/eng/nordic/download_resource/59011/70/53512602/116085 -O nrf5-sdk.zip
+          command: wget https://www.nordicsemi.com/eng/nordic/download_resource/59011/94/80130352/116085 -O nrf5-sdk.zip
       - run:
           name: Extract SDK
           command: unzip nrf5-sdk.zip -d /opt/x-tools
@@ -113,11 +121,3 @@ jobs:
         working_directory: build/
         name: Build Project
         command: ninja esp_conn
-workflows:
-  version: 2
-  all_platforms:
-    jobs:
-      - esp_build
-      - arm_build
-      - avr_build
-      - x86_build

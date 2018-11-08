@@ -31,7 +31,7 @@ add_library(tos_xbee
         common/xbee/request.hpp
         common/xbee/response.hpp
         src/stub.cpp common/xbee/utility.hpp)
-target_link_libraries(tos_xbee PUBLIC tos_core tos_usart)
+target_link_libraries(tos_xbee PUBLIC tos_core tos_usart Boost::sml)
 target_include_directories(tos_xbee PUBLIC .)
 
 if (TOS_AVR)

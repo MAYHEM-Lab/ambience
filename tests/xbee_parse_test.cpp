@@ -45,6 +45,34 @@ TEST_CASE("xbee req gen", "[tos-xbee]")
     REQUIRE(r[10] == uint8_t(0xE6)); // checksum
 }
 
+TEST_CASE("xbee sm res parse", "[tos-xbee]")
+{
+    namespace xbee = tos::xbee;
+    xbee::sm_response_parser<xbee::tx_status> p;
+
+    uint8_t full_packet[] = {
+            0x7E, // start byte
+            0x00, // length msb
+            0x01, // length lsb
+
+            0x89, // api id (TX_STATUS_RESPONSE)
+            //0x01, // Frame ID
+            //0x00, // Status
+
+            //0xad  // Checksum
+    };
+
+    for (auto b : full_packet)
+    {
+        p.consume(b);
+    }
+
+    REQUIRE(p.finished());
+
+    REQUIRE(p.get_len().len == 1);
+    REQUIRE(p.get_api_id() == xbee::api_ids::TX_STATUS_RESPONSE);
+}
+
 TEST_CASE("xbee res parse", "[tos-xbee]")
 {
     namespace xbee = tos::xbee;

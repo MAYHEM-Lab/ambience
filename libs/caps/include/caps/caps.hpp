@@ -23,7 +23,7 @@ namespace caps
     bool verify(const caps::cap_root<CapabilityT> &c, caps::signer &s);
 
     template <class CapabilityT, class SatisfyCheckerT>
-    inline bool validate(const caps::cap_root<CapabilityT>& cr, const CapabilityT& sub, SatisfyCheckerT&& satisfies);
+    inline bool validate(const caps::cap_root<CapabilityT>& cr, const CapabilityT& needle, SatisfyCheckerT&& satisfies);
 
     template <class CapabilityT>
     void attach(caps::cap_root<CapabilityT> &c, caps::cap_list<CapabilityT> &child);
@@ -46,14 +46,14 @@ namespace caps
 
     template<class CapabilityT, class SatisfyCheckerT>
     bool validate(
-            const caps::cap_root<CapabilityT> &cr,
-            const CapabilityT &sub,
+            const caps::cap_root<CapabilityT> &haystack,
+            const CapabilityT &needle,
             SatisfyCheckerT &&satisfies) {
-        auto* leaf = &cr.c;
+        auto* leaf = &haystack.c;
         for (; leaf->child; leaf = leaf->child); // find the end of the hmac chain
 
-        return any_of(begin(*leaf), end(*leaf), [&sub, &satisfies](auto& cap){
-            return satisfies(sub, cap);
+        return any_of(begin(*leaf), end(*leaf), [&needle, &satisfies](auto& cap){
+            return satisfies(needle, cap);
         });
     }
 
