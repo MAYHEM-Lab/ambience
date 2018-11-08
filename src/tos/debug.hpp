@@ -4,6 +4,35 @@
 
 #pragma once
 
+namespace tos
+{
+    template <class ErrT>
+    [[noreturn]]
+    void raise(ErrT&&);
+
+    namespace kern
+    {
+        /**
+         * This function is used to signal a non-recoverable fault in
+         * the system.
+         *
+         * The execution of the whole operating system will be suspended.
+         *
+         * In a debug environment, the OS will idle forever.
+         *
+         * In a release environemnt, if possible, the incident will be
+         * logged and the system will be rebooted.
+         *
+         * Should be used only for fatal errors such as broken invariants.
+         *
+         * @tparam ErrT an explanation for the crash
+         */
+        template <class ErrT>
+        [[noreturn]]
+        void fatal(ErrT&&) noexcept;
+    }
+}
+
 #if defined(TOS_ARCH_lx106)
 extern "C" int ets_printf(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 
