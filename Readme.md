@@ -5,15 +5,18 @@ Tos is a cooperative multitasking library operating system focused on efficiency
 
 Tos provides a modern programming environment on extremely resource constrained environments. It can work on boards with less than 1k of ram and 5k of program flash. These numbers are not just the OS, it also includes an application.
 
-Supported targets:
+Supported and tested targets:
 
-| Arch   | CPU                 | Board                   |
-|--------|---------------------|-------------------------|
-| AVR    | atmega328p          | Uno, Nano, Pro Mini       |
-| ARM    | cortex m3, cortex m4 | STM32F103, nRF528232     |
-| Xtensa | lx106               | ESP8266 (any board) |
-| x86    | any | User space of any OS |
+| Arch | Controller |
+|------|-----|
+| AVR    | atmega328p |
+| ARM    | STM32F103 (cortex m3) |
+| ARM    | nRF528232 (cortex m4) |
+| Xtensa | ESP8266 |
+| ARM    | any (runs in userspace) |
+| x86    | any (runs in userspace) |
 
+Tos does not depend on the exact board the  as the IO is completely generic. It should run unmodified on any board as long as the controller is supported. For instance, it will work fine on your custom board with an atmega328p or esp8266.
 
 ## In a nutshell
 
