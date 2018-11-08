@@ -29,6 +29,11 @@ public:
         return (int16_t)((value >> 3) * 4);
     }
 
+    float getBusVoltage_V() {
+        int16_t value = getBusVoltage_raw();
+        return value * 0.001;
+    }
+
     int16_t getCurrent_raw() {
         uint16_t value;
 

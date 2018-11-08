@@ -13,14 +13,6 @@ void main_task(void*)
     using namespace tos;
     using namespace tos_literals;
 
-    avr::twim t{17_pin, 18_pin};
-    ina219<avr::twim> ina{ {0x40}, t };
-
-    ina.setCalibration_32V_2A();
-
-    auto tmr = open(devs::timer<1>);
-    auto alarm = open(devs::alarm, tmr);
-
     constexpr auto usconf = tos::usart_config()
             .add(9600_baud_rate)
             .add(tos::usart_parity::disabled)
@@ -28,12 +20,22 @@ void main_task(void*)
 
     auto usart = open(tos::devs::usart<0>, usconf);
 
+    tos::println(usart, "hello");
+
+    avr::twim t{18_pin, 19_pin};
+    ina219<avr::twim> ina{ {0x41}, t };
+
+    ina.setCalibration_32V_2A();
+
+    auto tmr = open(devs::timer<1>);
+    auto alarm = open(devs::alarm, tmr);
+
     while (true)
     {
         using namespace std::chrono_literals;
         alarm.sleep_for(500ms);
         int curr = ina.getCurrent_mA();
-        int v = ina.getBusVoltage_raw();
+        int v = ina.getBusVoltage_V();
 
         tos::println(usart, "V:", v);
         tos::println(usart, "I:", curr, "mA");

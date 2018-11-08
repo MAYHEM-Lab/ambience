@@ -114,13 +114,17 @@ namespace avr
 
     twi_tx_res twim::transmit(tos::twi_addr_t to, tos::span<const char> buf) noexcept {
         twi_write(to.addr, (const uint8_t*)buf.data(), buf.size());
+        kern::busy();
         transmission.sem.down();
+        kern::unbusy();
         return transmission.index == transmission.length ? twi_tx_res::ok : twi_tx_res::other;
     }
 
     twi_rx_res twim::receive(tos::twi_addr_t from, tos::span<char> buf) noexcept {
         twi_read(from.addr, buf.size());
+        kern::busy();
         transmission.sem.down();
+        kern::unbusy();
         uint8_t *data = &transmission.buffer[1];
         std::memcpy(buf.data(), data, std::min<size_t>(buf.size(), TWI_BUFFER_LENGTH - 1));
         return transmission.index == transmission.length ? twi_rx_res::ok : twi_rx_res::other;
