@@ -16,6 +16,7 @@
 #include <util/delay.h>
 #include <util/include/tos/mem_stream.hpp>
 #include "app.hpp"
+#include <drivers/common/ina219.hpp>
 
 namespace temp
 {
@@ -114,6 +115,7 @@ void hibernate(std::chrono::seconds dur)
 
 void tx_task(void*)
 {
+    using namespace tos;
     using namespace tos::tos_literals;
 
     constexpr auto usconf = tos::usart_config()
@@ -124,6 +126,8 @@ void tx_task(void*)
     auto usart = open(tos::devs::usart<0>, usconf);
 
     auto gpio = tos::open(tos::devs::gpio);
+
+    avr::twim t{18_pin, 19_pin};
 
     gpio.set_pin_mode(7_pin, tos::pin_mode::out);
     gpio.set_pin_mode(11_pin, tos::pin_mode::out);
@@ -137,6 +141,8 @@ void tx_task(void*)
         {
             auto tmr = tos::open(tos::devs::timer<1>);
             auto alarm = tos::open(tos::devs::alarm, *tmr);
+
+            ina219<avr::twim> ina{ {0x41}, t };
 
             using namespace std::chrono_literals;
             alarm.sleep_for(2s);
@@ -192,7 +198,7 @@ void tx_task(void*)
             tos::print(buff, 3, dtostrf(samples[1].cpu, 2, 2, fl_buf));
             tos::println(buff);
 
-            constexpr xbee::addr_16 base_addr { 0xABCD };
+            constexpr xbee::addr_16 base_addr { 0x0010};
 
             xbee::tx16_req r { base_addr, tos::raw_cast<const uint8_t>(buff.get()), fid };
 
@@ -211,7 +217,7 @@ void tx_task(void*)
             alarm.sleep_for(5ms);
         }
 
-        hibernate(50s);
+        hibernate(4min + 50s);
     }
 }
 

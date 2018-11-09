@@ -63,6 +63,7 @@ target_include_directories(tos_lcd PUBLIC .)
 
 add_library(tos_ina219 common/ina219.hpp src/stub.cpp common/detail/ina219_constants.hpp)
 target_link_libraries(tos_ina219 PUBLIC tos_i2c)
+add_library(tos::ina219 ALIAS tos_ina219)
 
 if (TOS_ESP)
     add_library(tos_adxl345 common/adxl345.hpp src/adxl345.cpp)

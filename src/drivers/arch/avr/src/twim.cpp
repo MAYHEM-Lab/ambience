@@ -39,8 +39,6 @@ namespace {
         TWBR = ((F_CPU / TWI_FREQ) - 16) / 2;
         TWSR = 0; // prescaler = 1
 
-        sei();
-
         TWCR = _BV(TWEN);
     }
 

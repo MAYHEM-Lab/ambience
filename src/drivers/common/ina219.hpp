@@ -17,7 +17,9 @@ class ina219
 {
 public:
     template <class TwimU = TwimT>
-    ina219(twi_addr_t addr, TwimU&& twim) : _addr{addr}, _twim{std::forward<TwimU>(twim)} {}
+    ina219(twi_addr_t addr, TwimU&& twim) : _addr{addr}, _twim{std::forward<TwimU>(twim)} {
+        setCalibration_32V_2A();
+    }
 
     void setCalibration_32V_2A();
 

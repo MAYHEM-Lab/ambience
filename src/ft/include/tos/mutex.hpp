@@ -16,6 +16,8 @@ namespace tos
      * recursive mutex semantics. A thread can
      * easily deadlock if it tries to lock a mutex
      * it currently holds.
+     *
+     * + Only one thread may hold a mutex at one time
      */
     class mutex
     {

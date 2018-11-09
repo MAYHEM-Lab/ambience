@@ -25,8 +25,6 @@ void main_task(void*)
     avr::twim t{18_pin, 19_pin};
     ina219<avr::twim> ina{ {0x41}, t };
 
-    ina.setCalibration_32V_2A();
-
     auto tmr = open(devs::timer<1>);
     auto alarm = open(devs::alarm, tmr);
 
