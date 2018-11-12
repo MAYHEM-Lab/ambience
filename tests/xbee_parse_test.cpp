@@ -56,8 +56,8 @@ TEST_CASE("xbee sm res parse", "[tos-xbee]")
             0x01, // length lsb
 
             0x89, // api id (TX_STATUS_RESPONSE)
-            //0x01, // Frame ID
-            //0x00, // Status
+            0x01, // Frame ID
+            0x00, // Status
 
             //0xad  // Checksum
     };

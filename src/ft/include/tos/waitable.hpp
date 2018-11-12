@@ -49,8 +49,7 @@ namespace tos {
     {
         if (self() == nullptr)
         {
-            tos_debug_print("wait called from non thread ctx!");
-            while (true);
+            kern::fatal("wait called from non thread ctx!");
         }
         add(*self());
         kern::suspend_self();

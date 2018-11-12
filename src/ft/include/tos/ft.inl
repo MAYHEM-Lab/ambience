@@ -23,7 +23,7 @@ namespace tos {
 
     inline thread_id_t launch(void(*e)(void*), void* arg)
     {
-        constexpr size_t stack_size = 8192;
+        constexpr size_t stack_size = TOS_DEFAULT_STACK_SIZE;
         auto params = thread_params()
                 .add<tags::stack_ptr_t>(tos_stack_alloc(stack_size))
                 .add<tags::stack_sz_t>(stack_size)

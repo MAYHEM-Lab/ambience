@@ -2,11 +2,13 @@
 // Created by Mehmet Fatih BAKIR on 13/04/2018.
 //
 
-#define CATCH_CONFIG_MAIN
-#define main ___MAIN
+#define CATCH_CONFIG_RUNNER
 #include "catch.hpp"
+#include <tos/ft.hpp>
 
 void tos_main()
 {
-    Catch::Session().run();
+    tos::launch([](void*){
+        Catch::Session().run();
+    });
 }

@@ -29,7 +29,9 @@ namespace tos
          */
         template <class ErrT>
         [[noreturn]]
-        void fatal(ErrT&&) noexcept;
+        void fatal(ErrT&&) noexcept {
+            while(true);
+        }
     }
 }
 
