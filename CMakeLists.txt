@@ -20,9 +20,11 @@ elseif(TOS_STM32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTOS_DEFAULT_STACK_SIZE=2048")
 elseif(TOS_X86)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTOS_DEFAULT_STACK_SIZE=8192*2")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "CXXFLAGS")
 else()
     message(FATAL_ERROR "Target architecture cannot be determined!")
 endif()
+
 
 project(tos)
 message(STATUS "${CMAKE_CXX_FLAGS}")
