@@ -94,7 +94,8 @@ void main_task(void*)
         tos::println(usart, "Humidity:", dtostrf(d.humidity, 2, 2, b));
     }
 
-    tos::semaphore{0}.down();
+    tos::this_thread::block_forever();
+    //tos::semaphore{0}.down();
     //auto st = GetTemp(alarm);
     //tos::println(usart, "Internal:", dtostrf(st, 2, 2, b));
 }

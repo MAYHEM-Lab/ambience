@@ -51,7 +51,13 @@ namespace tos {
          * blocks the calling thread if the counter is
          * negative
          */
-        void down() noexcept;
+        void down() & noexcept;
+
+        /**
+         * A temporary semaphore can't be blocked on
+         * as it would block indefinitely
+         */
+        void down() && = delete;
 
         /**
          * Decrements the shared counter and blocks for up
@@ -123,7 +129,7 @@ namespace tos {
         detail::memory_barrier_exit();
     }
 
-    inline void semaphore::down() noexcept
+    inline void semaphore::down() & noexcept
     {
         detail::memory_barrier_enter();
         tos::int_guard ig;

@@ -67,6 +67,12 @@ namespace tos {
                 switch_context(sched.main_context, return_codes::yield);
             }
         }
+
+        inline void block_forever()
+        {
+            kern::disable_interrupts();
+            switch_context(sched.main_context, return_codes::suspend);
+        }
     }
 
     [[noreturn]]
@@ -83,6 +89,7 @@ namespace tos {
     {
         inline void suspend_self()
         {
+            // interrupts are assumed to be disabled for this function to be called
             //tos_debug_print("suspend %p\n", impl::cur_thread);
 
             if (setjmp(impl::cur_thread->get_context())==(int) return_codes::saved) {

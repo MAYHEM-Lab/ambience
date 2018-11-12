@@ -3,38 +3,33 @@
 //
 
 #include <drivers/common/spi.hpp>
-#include <usart.hpp>
-#include <ft/include/tos/ft.hpp>
+#include <drivers/arch/avr/drivers.hpp>
+#include <tos/ft.hpp>
 #include <tos/print.hpp>
-#include <avr/interrupt.h>
 
-void slave_task()
+void slave_task(void*)
 {
-    tos::avr::spi0::init_slave();
-    tos::avr::spi0::enable();
+    using namespace tos::tos_literals;
+    auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);
+    spi.enable();
 
-    tos::avr::usart0::set_baud_rate(9600);
-    tos::avr::usart0::set_2x_rate();
-    tos::avr::usart0::options(tos::usart_modes::async, tos::usart_parity::disabled, tos::usart_stop_bit::one);
-    tos::avr::usart0::enable();
-    tos::usart comm;
+    constexpr auto usconf = tos::usart_config()
+            .add(19200_baud_rate)
+            .add(tos::usart_parity::disabled)
+            .add(tos::usart_stop_bit::one);
 
-    println(comm, "Hi from slave!");
+    auto usart = open(tos::devs::usart<0>, usconf);
+
+    tos::println(usart, "Hi from slave!");
 
     while (true)
     {
-        char c = tos::avr::spi_put_byte(0xFF);
-        comm.putc(c);
+        char c = spi.exchange(0xFF);
+        tos::println(usart, c);
     }
 }
 
-int main()
+void tos_main()
 {
     tos::launch(slave_task);
-    sei();
-
-    while(true)
-    {
-        tos::schedule();
-    }
 }

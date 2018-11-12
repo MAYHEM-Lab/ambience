@@ -50,6 +50,23 @@ namespace tos
         void yield();
 
         /**
+         * This function yields the control back to the kernel, however,
+         * the thread will not be placed back into the runnable queue,
+         * which blocks this thread forever in a non-resumable way.
+         *
+         * The thread will NOT save it's last state, thus it CANNOT be
+         * resumed, even with a handle to the thread!
+         *
+         * If you'd like to implement your own waiting semantics, you should
+         * either build on top of `waitable` or use `kern::suspend_self`
+         * instead of this.
+         *
+         * This is a dangerous function and should probably not be used!
+         */
+        [[noreturn]]
+        void block_forever();
+
+        /**
          * Causes the current thread to exit, stopping the execution
          * and destroying the stack.
          *

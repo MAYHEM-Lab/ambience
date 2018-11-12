@@ -32,20 +32,22 @@ namespace tos {
 
             static void deselect_slave(pin_t pin);
 
-        private:
             spi0() = default;
+
+            spi0*operator->() { return this; }
+            spi0&operator*() { return *this; }
         };
     }
 
-    inline avr::spi0* open_impl(tos::devs::spi_t<0>, spi_mode::master_t)
+    inline avr::spi0 open_impl(tos::devs::spi_t<0> /*tag*/, spi_mode::master_t /*type*/)
     {
         avr::spi0::init_master();
-        return nullptr;
+        return {};
     }
 
-    inline avr::spi0* open_impl(tos::devs::spi_t<0>, spi_mode::slave_t)
+    inline avr::spi0 open_impl(tos::devs::spi_t<0> /*tag*/, spi_mode::slave_t /*type*/)
     {
         avr::spi0::init_slave();
-        return nullptr;
+        return {};
     }
 }

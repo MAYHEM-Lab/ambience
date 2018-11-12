@@ -14,6 +14,21 @@
 #include <tos/ft.hpp>
 #include <ft/include/tos/semaphore.hpp>
 #include <drivers/arch/avr/gpio.hpp>
+#include <tos/delay.hpp>
+#include <util/delay.h>
+
+namespace tos
+{
+    void delay_ms(std::chrono::milliseconds d)
+    {
+        ::_delay_ms(d.count());
+    }
+
+    void delay_us(std::chrono::microseconds d)
+    {
+        ::_delay_us(d.count());
+    }
+} // namespace tos
 
 extern "C"
 {
