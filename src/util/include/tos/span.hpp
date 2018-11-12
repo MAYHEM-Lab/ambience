@@ -75,4 +75,4 @@ namespace tos
         static_assert(sizeof(T) == 1, "");
         return {reinterpret_cast<T*>(sp.data()), sp.size() * sizeof(U) };
     }
-}
+} // namespace tos

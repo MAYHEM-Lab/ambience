@@ -34,6 +34,7 @@ add_subdirectory(libs/posix)
 add_subdirectory(libs/caps)
 add_subdirectory(libs/toscxx)
 add_subdirectory(libs/sml)
+add_subdirectory(libs/CWPack)
 
 if(TOS_AVR)
     add_subdirectory(examples/gpio)
@@ -73,9 +74,13 @@ elseif(TOS_ESP)
     add_subdirectory(examples/dht11_sample)
 
     add_subdirectory(libs/zmtp)
-    add_subdirectory(libs/CWPack)
     add_subdirectory(libs/sntp)
 elseif(TOS_X86)
+
+    if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/cspot_lite")
+        add_subdirectory(apps/cspot_lite)
+    endif()
+
     add_subdirectory(examples/simple_portable)
 
     add_subdirectory(tests)

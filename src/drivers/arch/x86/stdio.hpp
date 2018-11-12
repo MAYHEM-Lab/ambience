@@ -16,11 +16,10 @@ namespace tos
         class stdio
         {
         public:
-            static void putc(char);
-            static void write(span<const char> buf);
-            static int read(span<char> buf);
+            static int write(span<const char> buf);
+            static span<char> read(span<char> buf);
         };
-    }
+    } // namespace x86
 
     template <class T>
     inline x86::stdio* open_impl(devs::usart_t<0>, T)
@@ -32,4 +31,4 @@ namespace tos
     {
         return nullptr;
     }
-}
+} // namespace tos
