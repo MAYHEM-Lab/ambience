@@ -67,6 +67,10 @@ jobs:
           working_directory: build/
           name: Build Project
           command: ninja
+      - run:
+          working_directory: build/
+          name: Run Tests
+          command: ninja test
   avr_build:
     docker:
       - image: ubuntu:bionic

@@ -23,6 +23,8 @@ endif()
 project(tos)
 message(STATUS "${CMAKE_CXX_FLAGS}")
 
+enable_testing()
+
 add_subdirectory(src)
 
 if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/libemsha")
@@ -49,7 +51,7 @@ if(TOS_AVR)
     add_subdirectory(examples/ina219)
 
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/tvm")
-        add_subdirectory(apps/tvm)
+        #add_subdirectory(apps/tvm)
     endif()
 elseif(TOS_ESP)
 

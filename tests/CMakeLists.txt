@@ -1,4 +1,3 @@
-
 project(tos)
 
 add_library(catch_main catch_main.cpp)
@@ -13,3 +12,7 @@ target_link_libraries(intrusive_tests catch_main tos_util)
 
 add_executable(xbee_tests xbee_parse_test.cpp)
 target_link_libraries(xbee_tests catch_main tos_xbee)
+
+add_test(xbee_tests xbee_tests)
+add_test(intrusive_list_tests intrusive_tests)
+add_test(utilities_tests util_tests)
