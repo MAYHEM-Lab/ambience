@@ -23,7 +23,7 @@ namespace tos {
      * @return identifier for the newly created thread
      */
     [[deprecated]]
-    thread_id_t launch(kern::tcb::entry_point_t, void* arg = nullptr);
+    thread_id_t launch(void(*)(void*), void* = nullptr);
 
     inline constexpr auto thread_params() { return ct_map<base_key_policy>{}; }
 

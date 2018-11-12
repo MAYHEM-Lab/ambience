@@ -17,14 +17,14 @@ namespace tos
         struct entry_pt_t {};
         struct stack_sz_t {};
         struct argument_t {};
-    }
+    } // namespace tags
 
     using launch_params =
     ct_map<
         base_key_policy,
         el_t<tags::stack_ptr_t, void* const &>,
         el_t<tags::stack_sz_t, const size_t&>,
-        el_t<tags::entry_pt_t, const kern::tcb::entry_point_t&>,
+        el_t<tags::entry_pt_t, void(* const&)(void*)>,
         el_t<tags::argument_t, void* const&>
     >;
 
@@ -62,5 +62,5 @@ namespace tos
          */
         [[noreturn]]
         void exit(void* res = nullptr);
-    }
-}
+    } // namespace this_thread
+} //namespace tos

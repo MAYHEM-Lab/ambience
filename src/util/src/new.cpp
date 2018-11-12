@@ -3,10 +3,12 @@
 //
 
 #include <stdlib.h>
+#include <new>
 
 void operator delete (void* pt, size_t){
     free(pt);
 }
+
 void operator delete (void* pt)
 {
     free(pt);

@@ -3,54 +3,66 @@
 #include <tos/intrusive_list.hpp>
 #include <setjmp.h>
 #include <utility>
+#include <tos/utility.hpp>
 #include <tos/arch.hpp>
 #include <cstddef>
+#include <algorithm>
 
 namespace tos {
-    enum class state
-    {
-        runnable,
-        suspended,
-        running
-    };
     namespace kern
     {
         /**
          * This type represents an execution context in the system.
+         *
+         * It's expected that a concrete task descriptor type will
+         * extend this class to implement required functionality such
+         * as starting threads or passing arguments.
          */
         struct alignas(alignof(std::max_align_t)) tcb
-            : public list_node<tcb>
+            : public list_node<tcb>, public non_copy_movable
         {
-            using entry_point_t = void(*)(void*);
+            /**
+             * Constructs a new tcb object with the given stack offset
+             * @param stack_off
+             */
+            explicit tcb(uint16_t stack_off) noexcept
+                    : m_tcb_off{stack_off} {}
 
-            jmp_buf context;
-
-            explicit tcb(uint16_t stack_size) noexcept
-                    : stack_sz{stack_size} {}
-
-            ~tcb()
+            /**
+             * This function computes the beginning of the memory block
+             * of the task this tcb belongs to.
+             *
+             * @return pointer to the task's base
+             */
+            char* get_task_base()
             {
-                tos_stack_free(get_stack_base());
+                return reinterpret_cast<char*>(this) - m_tcb_off;
             }
 
+            /**
+             * Returns a reference to the context of the task.
+             *
+             * The function can either be called to store the current
+             * context, or to resume execution from the context.
+             *
+             * @return execution context of the task
+             */
+            jmp_buf& get_context()
+            {
+                return m_context;
+            }
+
+            /**
+             * The threading subsystem does not know about the concrete time
+             * at the destruction of a task, so the destructor must be virtual
+             * in order to properly destroy the concrete task descriptor.
+             */
+            virtual ~tcb() = 0;
         private:
-            char* get_stack_base()
-            {
-                return reinterpret_cast<char*>(this) + sizeof(*this) - stack_sz;
-            }
-
-            uint16_t stack_sz{};
+            uint16_t m_tcb_off; // we store the offset of this object from the task base
+            jmp_buf m_context;
         };
 
-        template <class ArgT>
-        struct super_tcb : tcb, ArgT
-        {
-            template <class ArgU>
-            super_tcb(uint16_t stk_sz, ArgU&& arg)
-                : tcb(stk_sz), ArgT(std::forward<ArgU>(arg)) {}
-
-            using ArgT::get_entry;
-            using ArgT::get_args;
-        };
-    }
-}
+        inline tcb::~tcb() = default;
+    } // namespace kern
+} //namespace tos

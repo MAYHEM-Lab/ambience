@@ -13,10 +13,14 @@ target_include_directories(lx106_impl PUBLIC "${SDK_ROOT}/esp-lwip/src/include/i
 target_link_libraries(lx106_impl PUBLIC "-Tlinker.ld")
 target_link_libraries(lx106_impl PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(lx106_impl PUBLIC "-L${TOOLS_BASE}/xtensa-lx106-elf/xtensa-lx106-elf/sysroot/usr/lib")
-target_link_libraries(lx106_impl PUBLIC tos_ft lwip c)
+target_link_libraries(lx106_impl PUBLIC tos_ft lwip c esp_adapters)
 target_compile_definitions(lx106_impl PUBLIC LWIP_OPEN_SRC LWIP_RAW ESP8266 WITH_PGM_READ_HELPER)
 
 target_compile_options(lx106_impl PUBLIC -Wno-literal-suffix)
+
+add_library(esp_adapters esp_adapters.cpp)
+target_link_libraries(esp_adapters PUBLIC tos_core)
+target_link_libraries(esp_adapters PUBLIC "-Wl,--undefined=malloc -Wl,--undefined=free")
 
 if (USE_SSL)
   target_include_directories(lx106_impl PUBLIC "${SDK_ROOT}/axtls-8266/")

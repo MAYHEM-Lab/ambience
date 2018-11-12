@@ -21,9 +21,9 @@ namespace tos {
         }
     }
 
-    inline thread_id_t launch(kern::tcb::entry_point_t e, void* arg)
+    inline thread_id_t launch(void(*e)(void*), void* arg)
     {
-        constexpr size_t stack_size = 256;
+        constexpr size_t stack_size = 2048;
         auto params = thread_params()
                 .add<tags::stack_ptr_t>(tos_stack_alloc(stack_size))
                 .add<tags::stack_sz_t>(stack_size)
@@ -72,7 +72,7 @@ namespace tos {
         inline void yield()
         {
             tos::int_guard ig;
-            if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
+            if (setjmp(impl::cur_thread->get_context())==(int) return_codes::saved) {
                 kern::make_runnable(*impl::cur_thread);
                 switch_context(sched.main_context, return_codes::yield);
             }
@@ -89,18 +89,13 @@ namespace tos {
         switch_context(sched.main_context, return_codes::do_exit);
     }
 
-    inline thread_id_t launch(launch_params params)
-    {
-        return sched.start(params);
-    }
-
     namespace kern
     {
         inline void suspend_self()
         {
             //tos_debug_print("suspend %p\n", impl::cur_thread);
 
-            if (setjmp(impl::cur_thread->context)==(int) return_codes::saved) {
+            if (setjmp(impl::cur_thread->get_context())==(int) return_codes::saved) {
                 switch_context(sched.main_context, return_codes::suspend);
             }
         }
@@ -111,62 +106,60 @@ namespace tos {
         }
 
         template <class FunT, class... Args>
-        struct storage
+        struct super_tcb : tcb
         {
-        public:
             template <class FunU, class... ArgUs>
-            storage(FunU&& fun, ArgUs&&... args)
-                : m_fun{std::forward<FunU>(fun)},
-                  m_args{std::forward<ArgUs>(args)...} {}
+            super_tcb(uint16_t stk_sz, FunU&& fun, ArgUs&&... args)
+                    : tcb(stk_sz - sizeof(super_tcb)),
+                      m_fun{std::forward<FunU>(fun)},
+                      m_args{std::forward<ArgUs>(args)...} {}
 
-            auto& get_entry() { return m_fun; }
-            auto& get_args() { return m_args; }
+            void start()
+            {
+                std::apply(m_fun, m_args);
+            }
+
+            ~super_tcb()
+            {
+                tos_stack_free(get_task_base());
+            }
 
         private:
             FunT m_fun;
             std::tuple<Args...> m_args;
         };
 
-        using raw_store = storage<void(*)(void*), void*>;
+        using raw_task = super_tcb<void(*)(void*), void*>;
 
-        template <class FunT, class... Args>
-        inline thread_id_t launch_with_args(FunT&& fun, Args&&... args)
-        {
-            using namespace std;
-
-            using fun_t = remove_reference_t <FunT>;
-            using tuple_t = tuple<Args...>;
-
-            tuple_t args_tup { forward<Args>(args)... };
-
-            auto wrapper = [f = fun_t(forward<FunT>(fun))] (tuple_t* t) {
-                std::apply(f, *t);
-            };
-
-            __builtin_unreachable();
-        }
-
-        inline thread_id_t scheduler::start(launch_params params)
+        inline raw_task& prep_raw_layout(launch_params& params)
         {
             const auto st_size = get<tags::stack_sz_t>(params);
-            const auto stack = static_cast<char*>(get<tags::stack_ptr_t>(params));
+            const auto task_base = static_cast<char*>(get<tags::stack_ptr_t>(params));
 
-            const auto stack_top = stack + st_size;
+            const auto stack_top = task_base + st_size;
 
-            const auto t_ptr = stack_top - sizeof(super_tcb<raw_store>);
+            const auto t_ptr = stack_top - sizeof(raw_task);
 
-            tcb::entry_point_t entry = get<tags::entry_pt_t>(params);
+            void (*entry)(void*) = get<tags::entry_pt_t>(params);
             void* user_arg = get<tags::argument_t>(params);
-            auto thread = new (t_ptr) super_tcb<raw_store>(st_size - (sizeof(super_tcb<raw_store>) - sizeof(tcb)), raw_store{ entry, user_arg });
+            auto thread = new (t_ptr) raw_task(st_size, entry, user_arg);
+
+            return *thread;
+        }
+
+        template <class TaskT>
+        inline thread_id_t scheduler::start(TaskT& t)
+        {
+            static_assert(std::is_base_of<tcb, TaskT>{}, "Tasks must inherit from tcb class!");
 
             // New threads are runnable by default.
-            run_queue.push_back(*thread);
+            run_queue.push_back(t);
             num_threads++;
 
             kern::disable_interrupts();
-            if (setjmp(thread->context)==(int) return_codes::saved) {
+            if (setjmp(t.get_context())==(int) return_codes::saved) {
                 kern::enable_interrupts();
-                return { reinterpret_cast<uintptr_t>(thread) };
+                return { reinterpret_cast<uintptr_t>(static_cast<tcb*>(&t)) };
             }
 
             /**
@@ -180,10 +173,7 @@ namespace tos {
 
             kern::enable_interrupts();
 
-            using tcb_t = super_tcb<raw_store>;
-            std::apply(
-                    static_cast<tcb_t *>(impl::cur_thread)->get_entry(),
-                    static_cast<tcb_t *>(impl::cur_thread)->get_args());
+            static_cast<TaskT *>(impl::cur_thread)->start();
             this_thread::exit(nullptr);
         }
 
@@ -226,7 +216,7 @@ namespace tos {
                         impl::cur_thread = &run_queue.front();
                         run_queue.pop_front();
 
-                        switch_context(impl::cur_thread->context, return_codes::scheduled);
+                        switch_context(impl::cur_thread->get_context(), return_codes::scheduled);
                     }
                     case return_codes::do_exit:
                     {
@@ -249,6 +239,12 @@ namespace tos {
         {
             sched.run_queue.push_back(t);
         }
+    }
+
+    inline thread_id_t launch(launch_params params)
+    {
+        auto& t = kern::prep_raw_layout(params);
+        return sched.start(t);
     }
 
     inline void this_thread::exit(void*)

@@ -134,6 +134,9 @@ do_global_ctors()
         (*p)();
 }
 
+void __register_exitproc() {
+}
+
 uint32 ICACHE_FLASH_ATTR espconn_init(uint32)
 {
     return 1;

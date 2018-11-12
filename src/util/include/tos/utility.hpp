@@ -26,14 +26,34 @@ namespace tos {
     template <class AlarmT, class FunT>
     void forever(AlarmT& alarm, std::chrono::milliseconds ms, FunT&& fun)
     {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-noreturn"
         while (true)
         {
             std::forward<FunT>(fun)();
             alarm.sleep_for(ms);
         }
-#pragma clang diagnostic pop
     }
-}
+
+    struct non_copyable
+    {
+        non_copyable() = default;
+        non_copyable(const non_copyable&) = delete;
+        non_copyable(non_copyable&&) = default;
+        non_copyable& operator=(const non_copyable&) = delete;
+        non_copyable& operator=(non_copyable&&) = default;
+        ~non_copyable() = default;
+    };
+
+    struct non_movable
+    {
+        non_movable() = default;
+        non_movable(const non_movable&) = default;
+        non_movable(non_movable&&) = delete;
+        non_movable& operator=(const non_movable&) = default;
+        non_movable& operator=(non_movable&&) = delete;
+        ~non_movable() = default;
+    };
+
+    struct non_copy_movable : non_copyable, non_movable {};
+
+} // namespace tos
 

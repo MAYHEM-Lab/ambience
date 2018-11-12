@@ -106,9 +106,10 @@ namespace tos {
             uint8_t busy = 0;
             intrusive_list<tcb> run_queue;
 
-            thread_id_t start(launch_params);
+            template <class TaskT>
+            thread_id_t start(TaskT&);
 
             exit_reason schedule();
         };
-    }
-}
+    } // namespace kern
+} //namespace tos

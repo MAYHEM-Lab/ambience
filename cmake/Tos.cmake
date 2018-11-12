@@ -10,7 +10,7 @@ set(TOS_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -Wpedantic \
      -ffunction-sections -fdata-sections -ffreestanding -g -pedantic -freorder-functions \
         -Wno-unknown-pragmas")
 
-set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions")
+set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions -fno-exceptions -fno-rtti -fno-unwind-tables -fno-threadsafe-statics")
 
 set(TOS_FLAGS "${TOS_FLAGS} -fstack-usage")
 set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,--gc-sections -Xlinker -Map=output.map")
@@ -30,3 +30,7 @@ set(TOS ON)
 set(CMAKE_C_FLAGS ${TOS_C_FLAGS})
 set(CMAKE_CXX_FLAGS ${TOS_CXX_FLAGS})
 set(CMAKE_EXE_LINKER_FLAGS ${TOS_LINKER_FLAGS})
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS "${CMAKE_EXPORT_COMPILE_COMMANDS}" CACHE STRING "CMAKE_EXPORT_COMPILE_COMMANDS")
