@@ -33,16 +33,13 @@ enable_testing()
 
 add_subdirectory(src)
 
-if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/libemsha")
-    add_subdirectory(libs/libemsha)
-endif()
-
 add_subdirectory(libs/kthreads)
 add_subdirectory(libs/posix)
 add_subdirectory(libs/caps)
 add_subdirectory(libs/toscxx)
 add_subdirectory(libs/sml)
 add_subdirectory(libs/CWPack)
+add_subdirectory(libs/libemsha)
 
 if(TOS_AVR)
     add_subdirectory(examples/gpio)
