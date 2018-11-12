@@ -11,6 +11,7 @@
 #include <new>
 #include <tos/debug.hpp>
 #include <tos/compiler.hpp>
+#include <tos/span.hpp>
 
 namespace tos {
     namespace this_thread {
@@ -19,17 +20,6 @@ namespace tos {
             if (!impl::cur_thread) return {static_cast<uintptr_t>(-1)};
             return { reinterpret_cast<uintptr_t>(impl::cur_thread) };
         }
-    }
-
-    inline thread_id_t launch(void(*e)(void*), void* arg)
-    {
-        constexpr size_t stack_size = TOS_DEFAULT_STACK_SIZE;
-        auto params = thread_params()
-                .add<tags::stack_ptr_t>(tos_stack_alloc(stack_size))
-                .add<tags::stack_sz_t>(stack_size)
-                .add<tags::entry_pt_t>(e)
-                .add<tags::argument_t>(arg);
-        return launch(params);
     }
 
     enum class return_codes : uint8_t
@@ -147,6 +137,17 @@ namespace tos {
             return *thread;
         }
 
+        inline raw_task& prep_raw_layout(tos::span<char> task_data, void(*e)(void*), void* d)
+        {
+            const auto stack_top = task_data.end();
+
+            const auto t_ptr = stack_top - sizeof(raw_task);
+
+            auto thread = new (t_ptr) raw_task(task_data.size(), e, d);
+
+            return *thread;
+        }
+
         template <class TaskT>
         inline thread_id_t scheduler::start(TaskT& t)
         {
@@ -245,6 +246,19 @@ namespace tos {
     {
         auto& t = kern::prep_raw_layout(params);
         return sched.start(t);
+    }
+
+    inline thread_id_t launch(tos::span<char> task_span, void(*e)(void*), void* d)
+    {
+        auto& t = kern::prep_raw_layout(task_span, e, d);
+        return sched.start(t);
+    }
+
+    inline thread_id_t launch(void(*e)(void*), void* arg)
+    {
+        constexpr size_t stack_size = TOS_DEFAULT_STACK_SIZE;
+        tos::span<char> task_span((char*)tos_stack_alloc(stack_size), stack_size);
+        return launch(task_span, e, arg);
     }
 
     inline void this_thread::exit(void*)

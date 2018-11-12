@@ -1,8 +1,23 @@
- //
+//
 // Created by fatih on 11/8/18.
 //
 
-#ifndef TOS_ADC_HPP
-#define TOS_ADC_HPP
+#pragma once
 
-#endif //TOS_ADC_HPP
+namespace tos
+{
+namespace avr
+{
+    class adc_channel {};
+
+    class adc
+    {
+    public:
+
+
+
+    private:
+    };
+
+} // namespace avr
+} // namespace tos

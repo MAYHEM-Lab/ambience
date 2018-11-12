@@ -21,8 +21,11 @@ namespace tos {
 
     /**
      * This class implements a Dijkstra style counting semaphore
+     *
+     * Multiple threads could be holding different units of the
+     * semaphore at the same time.
      */
-    class semaphore
+    class semaphore : public non_copy_movable
     {
     public:
         /**
@@ -72,8 +75,6 @@ namespace tos {
         explicit semaphore(int16_t n) noexcept
                 :m_count(n)
         { }
-
-        semaphore(semaphore&&) = delete;
 
     private:
         int16_t m_count;

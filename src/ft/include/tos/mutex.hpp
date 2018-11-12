@@ -19,7 +19,7 @@ namespace tos
      *
      * + Only one thread may hold a mutex at one time
      */
-    class mutex
+    class mutex : public non_copy_movable
     {
     public:
         /**

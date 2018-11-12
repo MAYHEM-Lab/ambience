@@ -4,7 +4,7 @@
 #include <tos/barrier.hpp>
 
 namespace tos {
-    class event
+    class event : public non_copy_movable
     {
     public:
         /**
@@ -32,9 +32,6 @@ namespace tos {
          * to wait on this event.
          */
         void wait() noexcept;
-
-        explicit event() noexcept {}
-        event(event&&) = delete;
 
     private:
         waitable m_wait;

@@ -10,3 +10,4 @@
 #include "timer.hpp"
 #include "usart.hpp"
 #include "twim.hpp"
+#include "adc.hpp"
