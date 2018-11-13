@@ -12,6 +12,17 @@
 
 namespace tos {
     namespace avr {
+        /**
+         * This class implements the AVR spi hardware.
+         *
+         * It's one of the first drivers implemented in tos, so it's
+         * not as nice as I'd like it to be and is probably in need
+         * for a rehaul, specifically, it has both master and slave
+         * interfaces for SPI, only one of which can be used at one
+         * time.
+         *
+         * Also, it does not support setting the clock speed for now.
+         */
         class spi0
         {
         public:
@@ -49,5 +60,5 @@ namespace tos {
     {
         avr::spi0::init_slave();
         return {};
-    }
-}
+    } // namespace avr
+} // namespace tos

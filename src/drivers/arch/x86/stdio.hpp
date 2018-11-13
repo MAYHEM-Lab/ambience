@@ -18,17 +18,20 @@ namespace tos
         public:
             static int write(span<const char> buf);
             static span<char> read(span<char> buf);
+
+            stdio*operator->() { return this; }
+            stdio&operator*() { return *this; }
         };
     } // namespace x86
 
     template <class T>
-    inline x86::stdio* open_impl(devs::usart_t<0>, T)
+    inline x86::stdio open_impl(devs::usart_t<0>, T)
     {
-        return nullptr;
+        return {};
     }
 
-    inline x86::stdio* open_impl(devs::tty_t<0>)
+    inline x86::stdio open_impl(devs::tty_t<0>)
     {
-        return nullptr;
+        return {};
     }
 } // namespace tos

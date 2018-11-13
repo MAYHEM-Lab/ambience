@@ -16,17 +16,17 @@ namespace tos {
          * All threads are blocked, however there are
          * busy threads. System should wait for any interrupt.
          */
-                idle,
+        idle,
         /**
          * All threads are blocked, and the system isn't busy.
          * We can go to the lowest possible power state.
          */
-                power_down,
+        power_down,
         /**
          * All threads exited. Usually denotes a bug, system
          * should restart.
          */
-                restart,
+        restart,
         /**
          * Threading subsystem yields the CPU back to the
          * architecture. This is useful for architectures that
@@ -35,7 +35,7 @@ namespace tos {
          * If the architecture doesn't mandate such a requirement
          * this value may never be returned.
          */
-                yield
+        yield
     };
 
     namespace kern
@@ -104,6 +104,7 @@ namespace tos {
             jmp_buf main_context{};
             int8_t  num_threads = 0;
             uint8_t busy = 0;
+
             intrusive_list<tcb> run_queue;
 
             template <class TaskT>

@@ -10,6 +10,7 @@
 #include <initializer_list>
 #include <new>
 #include <memory>
+#include <algorithm>
 
 namespace caps
 {
@@ -31,19 +32,6 @@ namespace caps
 
 namespace caps
 {
-    template< class InputIt, class UnaryPredicate >
-    constexpr bool any_of(InputIt first, InputIt last, UnaryPredicate p)
-    {
-        for (; first != last; ++first)
-        {
-            if (p(*first))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
     template<class CapabilityT, class SatisfyCheckerT>
     bool validate(
             const caps::cap_root<CapabilityT> &haystack,
@@ -52,7 +40,7 @@ namespace caps
         auto* leaf = &haystack.c;
         for (; leaf->child; leaf = leaf->child); // find the end of the hmac chain
 
-        return any_of(begin(*leaf), end(*leaf), [&needle, &satisfies](auto& cap){
+        return std::any_of(begin(*leaf), end(*leaf), [&needle, &satisfies](auto& cap){
             return satisfies(needle, cap);
         });
     }
