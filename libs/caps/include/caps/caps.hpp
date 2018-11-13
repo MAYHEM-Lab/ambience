@@ -160,7 +160,7 @@ namespace caps
         template <class StreamT>
         void serialize(StreamT& to, const sign_t& signature)
         {
-            static_assert(std::is_pod<sign_t>{}, "signature must be a pod");
+            static_assert(std::is_trivially_copyable<sign_t>{}, "signature must be a pod");
             to.write({ (const char*)&signature, sizeof signature });
         }
 
@@ -170,7 +170,7 @@ namespace caps
             to.write({ (const char*)&list.num_caps, sizeof list.num_caps });
             for (auto& cap : list)
             {
-                static_assert(std::is_pod<decltype(cap)>{}, "capabilities must be pods");
+                static_assert(std::is_trivially_copyable<decltype(cap)>{}, "capabilities must be pods");
                 to.write({ (const char*)&cap, sizeof cap });
             }
         }
