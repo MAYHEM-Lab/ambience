@@ -107,7 +107,7 @@ namespace tos {
         {
             template <class FunU, class... ArgUs>
             super_tcb(uint16_t stk_sz, FunU&& fun, ArgUs&&... args)
-                    : tcb(stk_sz - sizeof(super_tcb)),
+                    : m_tcb_off(stk_sz - sizeof(super_tcb)),
                       m_fun{std::forward<FunU>(fun)},
                       m_args{std::forward<ArgUs>(args)...} {}
 
@@ -115,8 +115,19 @@ namespace tos {
             {
                 std::apply(m_fun, m_args);
             }
+            
+            /**
+             * This function computes the beginning of the memory block
+             * of the task this tcb belongs to.
+             *
+             * @return pointer to the task's base
+             */
+            char* get_task_base()
+            {
+                return reinterpret_cast<char*>(this) - m_tcb_off;
+            }
 
-            ~super_tcb()
+            ~super_tcb() final
             {
                 tos_stack_free(get_task_base());
             }
@@ -124,6 +135,7 @@ namespace tos {
         private:
             FunT m_fun;
             std::tuple<Args...> m_args;
+            uint16_t m_tcb_off; // we store the offset of this object from the task base
         };
 
         using raw_task = super_tcb<void(*)(void*), void*>;

@@ -22,24 +22,6 @@ namespace tos {
             : public list_node<tcb>, public non_copy_movable
         {
             /**
-             * Constructs a new tcb object with the given stack offset
-             * @param stack_off
-             */
-            explicit tcb(uint16_t stack_off) noexcept
-                    : m_tcb_off{stack_off} {}
-
-            /**
-             * This function computes the beginning of the memory block
-             * of the task this tcb belongs to.
-             *
-             * @return pointer to the task's base
-             */
-            char* get_task_base()
-            {
-                return reinterpret_cast<char*>(this) - m_tcb_off;
-            }
-
-            /**
              * Returns a reference to the context of the task.
              *
              * The function can either be called to store the current
@@ -59,7 +41,6 @@ namespace tos {
              */
             virtual ~tcb() = 0;
         private:
-            uint16_t m_tcb_off; // we store the offset of this object from the task base
             jmp_buf m_context;
         };
 
