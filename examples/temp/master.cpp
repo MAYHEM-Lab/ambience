@@ -183,7 +183,7 @@ void tx_task(void*)
             xbee::frame_id_t fid{1};
 
             static char msg_buf[100];
-            tos::memory_stream buff{msg_buf};
+            tos::omemory_stream buff{msg_buf};
 
             static char fl_buf[10];
             tos::print(buff, temp::master_id, "");

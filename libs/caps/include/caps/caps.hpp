@@ -11,6 +11,7 @@
 #include <new>
 #include <memory>
 #include <algorithm>
+#include <util/include/tos/streams.hpp>
 
 namespace caps
 {
@@ -32,7 +33,7 @@ namespace caps
     template <class StreamT, class CapabilityT>
     void serialize(StreamT& to, const caps::cap_root<CapabilityT>& caps);
 
-    template <class StreamT, class CapabilityT>
+    template <class CapabilityT, class StreamT>
     auto deserialize(StreamT& from);
 }
 
@@ -170,7 +171,7 @@ namespace caps
             to.write({ (const char*)&list.num_caps, sizeof list.num_caps });
             for (auto& cap : list)
             {
-                static_assert(std::is_trivially_copyable<decltype(cap)>{}, "capabilities must be pods");
+                static_assert(std::is_trivially_copyable<std::remove_reference_t<decltype(cap)>>{}, "capabilities must be pods");
                 to.write({ (const char*)&cap, sizeof cap });
             }
         }
@@ -179,7 +180,7 @@ namespace caps
         sign_t deserialize_sign(StreamT& from)
         {
             sign_t signature;
-            from.read({ (char*)&signature, sizeof signature });
+            tos::read_to_end(from, { (char*)&signature, sizeof signature });
             return signature;
         }
 
@@ -188,7 +189,7 @@ namespace caps
         {
             for (int i = 0; i < len; ++i)
             {
-                from.read({ (char*)to.all[i], sizeof to.all[i] });
+                tos::read_to_end(from, { (char*)&to.all[i], sizeof to.all[i] });
             }
             to.num_caps = len;
         }
@@ -197,7 +198,7 @@ namespace caps
         std::unique_ptr<cap_root<CapabilityT>, raw_deleter> deserialize_root(StreamT& from)
         {
             decltype(cap_list<CapabilityT>::num_caps) len;
-            from.read({ (char*)&len, sizeof len });
+            tos::read_to_end(from, { (char*)&len, sizeof len });
             auto mem = new char[sizeof(caps::cap_root<CapabilityT>) + sizeof(CapabilityT) * len];
             auto cps = new(mem) caps::cap_root<CapabilityT>;
             read_list(from, cps->c, len);
@@ -208,7 +209,7 @@ namespace caps
         std::unique_ptr<cap_list<CapabilityT>, raw_deleter> deserialize_list(StreamT& from)
         {
             decltype(cap_list<CapabilityT>::num_caps) len;
-            from.read({ (char*)&len, sizeof len });
+            tos::read_to_end(from, { (char*)&len, sizeof len });
             if (len == 0) return nullptr;
             auto mem = new char[sizeof(caps::cap_list<CapabilityT>) + sizeof(CapabilityT) * len];
             auto cps = new(mem) caps::cap_list<CapabilityT>;
@@ -224,17 +225,34 @@ namespace caps
         {
             detail::serialize(to, *child);
         }
-        char c[] = {0};
-        to.write(c);
+        decltype(caps.c.num_caps) c[] = {0};
+        to.write({(const char*)&c, sizeof c});
+
+        /*
+         * The signature goes last into the wire
+         *
+         * If it went first, since the receiver couldn't know the size of the
+         * overall object, it'd have to store the signature in a temporary location
+         * probably on the stack. Signatures could be huge, so we prefer not to
+         * store a temporary signature and then copy it.
+         *
+         * When the signature goes last, the receiver can actually construct the
+         * whole capability chain and just copy the signature to the signature
+         * field of the root. This way, we save stack space and avoid copying
+         * large signatures.
+         */
         detail::serialize(to, caps.signature);
     }
 
-    template<class StreamT, class CapabilityT>
+    template<class CapabilityT, class StreamT>
     auto deserialize(StreamT& from)
     {
-        auto root = detail::deserialize_root(from);
+        auto root = detail::deserialize_root<CapabilityT>(from);
         auto tail = &root->c;
-        for (auto l = detail::deserialize_list(from); l; l = detail::deserialize_list(from))
+        for (
+                auto l = detail::deserialize_list<CapabilityT>(from);
+                l;
+                l = detail::deserialize_list<CapabilityT>(from))
         {
             tail->child = l.release();
             tail = tail->child;
