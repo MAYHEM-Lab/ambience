@@ -28,6 +28,12 @@ namespace caps
 
     template <class CapabilityT>
     void attach(caps::cap_root<CapabilityT> &c, caps::cap_list<CapabilityT> &child);
+
+    template <class StreamT, class CapabilityT>
+    void serialize(StreamT& to, const caps::cap_root<CapabilityT>& caps);
+
+    template <class StreamT, class CapabilityT>
+    auto deserialize(StreamT& from);
 }
 
 namespace caps
@@ -147,5 +153,94 @@ namespace caps
         cps->c.child = nullptr;
         cps->signature = sign(*cps, s);
         return std::unique_ptr<caps::cap_root<CapabilityT>, raw_deleter>{cps};
+    }
+
+    namespace detail
+    {
+        template <class StreamT>
+        void serialize(StreamT& to, const sign_t& signature)
+        {
+            static_assert(std::is_pod<sign_t>{}, "signature must be a pod");
+            to.write({ (const char*)&signature, sizeof signature });
+        }
+
+        template <class StreamT, class CapabilityT>
+        void serialize(StreamT& to, const cap_list<CapabilityT>& list)
+        {
+            to.write({ (const char*)&list.num_caps, sizeof list.num_caps });
+            for (auto& cap : list)
+            {
+                static_assert(std::is_pod<decltype(cap)>{}, "capabilities must be pods");
+                to.write({ (const char*)&cap, sizeof cap });
+            }
+        }
+
+        template <class StreamT>
+        sign_t deserialize_sign(StreamT& from)
+        {
+            sign_t signature;
+            from.read({ (char*)&signature, sizeof signature });
+            return signature;
+        }
+
+        template <class CapabilityT, class StreamT>
+        void read_list(StreamT& from, cap_list<CapabilityT>& to, int16_t len)
+        {
+            for (int i = 0; i < len; ++i)
+            {
+                from.read({ (char*)to.all[i], sizeof to.all[i] });
+            }
+            to.num_caps = len;
+        }
+
+        template <class CapabilityT, class StreamT>
+        std::unique_ptr<cap_root<CapabilityT>, raw_deleter> deserialize_root(StreamT& from)
+        {
+            decltype(cap_list<CapabilityT>::num_caps) len;
+            from.read({ (char*)&len, sizeof len });
+            auto mem = new char[sizeof(caps::cap_root<CapabilityT>) + sizeof(CapabilityT) * len];
+            auto cps = new(mem) caps::cap_root<CapabilityT>;
+            read_list(from, cps->c, len);
+            return std::unique_ptr<caps::cap_root<CapabilityT>, raw_deleter>{cps};
+        }
+
+        template <class CapabilityT, class StreamT>
+        std::unique_ptr<cap_list<CapabilityT>, raw_deleter> deserialize_list(StreamT& from)
+        {
+            decltype(cap_list<CapabilityT>::num_caps) len;
+            from.read({ (char*)&len, sizeof len });
+            if (len == 0) return nullptr;
+            auto mem = new char[sizeof(caps::cap_list<CapabilityT>) + sizeof(CapabilityT) * len];
+            auto cps = new(mem) caps::cap_list<CapabilityT>;
+            read_list(from, *cps, len);
+            return std::unique_ptr<caps::cap_list<CapabilityT>, raw_deleter>{cps};
+        }
+    }
+
+    template<class StreamT, class CapabilityT>
+    void serialize(StreamT& to, const cap_root<CapabilityT>& caps)
+    {
+        for (auto child = &caps.c; child; child = child->child)
+        {
+            detail::serialize(to, *child);
+        }
+        char c[] = {0};
+        to.write(c);
+        detail::serialize(to, caps.signature);
+    }
+
+    template<class StreamT, class CapabilityT>
+    auto deserialize(StreamT& from)
+    {
+        auto root = detail::deserialize_root(from);
+        auto tail = &root->c;
+        for (auto l = detail::deserialize_list(from); l; l = detail::deserialize_list(from))
+        {
+            tail->child = l.release();
+            tail = tail->child;
+        }
+        tail->child = nullptr;
+        root->signature = detail::deserialize_sign(from);
+        return root;
     }
 }
