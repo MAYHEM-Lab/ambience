@@ -22,6 +22,12 @@ namespace tos {
             detail::disable_depth++;
         }
 
+		/**
+		 * Decrements the interrupt disable count and if
+		 * it reaches zero, globally enables interrupts.
+		 *
+		 * Must be matched by a previous `disable_interrupts` call.
+		 */
         inline void enable_interrupts()
         {
             detail::disable_depth--;

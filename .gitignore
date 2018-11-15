@@ -6,3 +6,5 @@ cmake-build-*
 apps/*
 .vscode/
 workspace/
+.vs/
+CMakeSettings.json

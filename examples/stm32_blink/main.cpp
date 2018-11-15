@@ -11,6 +11,8 @@
 #include <libopencm3/usb/cdc.h>
 #include <libopencm3/usb/usbd.h>
 
+#include <drivers/arch/stm32/drivers.hpp>
+
 constexpr usb_device_descriptor dev = []{
     usb_device_descriptor r{};
     r.bLength = USB_DT_DEVICE_SIZE,
@@ -282,22 +284,17 @@ void usb_hp_can_tx_isr(void)
 }
 }
 
-constexpr auto RCC_LED1 = RCC_GPIOC;
-constexpr auto PORT_LED1 = GPIOC;
-constexpr auto PIN_LED1 = GPIO13;
-
 tos::semaphore set{1}, clear{0};
 
 void blink_task(void*)
 {
-    rcc_periph_clock_enable(RCC_LED1);
-    gpio_set_mode(PORT_LED1, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, PIN_LED1);
-    gpio_set(PORT_LED1, PIN_LED1);
+	tos::stm32::gpio g{ tos::stm32::gpios::C };
+	g.set_pin_mode(GPIO13, tos::pin_mode::out);
 
     while (true)
     {
         set.down();
-        gpio_set(PORT_LED1, PIN_LED1);
+        gpio_set(GPIOC, GPIO13);
         for (int i = 0; i < 2'000'000; i++) {
             __asm__("nop");
         }
@@ -310,7 +307,7 @@ void off_task(void*)
     while (true)
     {
         clear.down();
-        gpio_clear(PORT_LED1, PIN_LED1);
+        gpio_clear(GPIOC, GPIO13);
         for (int i = 0; i < 2'000'000; i++) {
             __asm__("nop");
         }
@@ -320,7 +317,7 @@ void off_task(void*)
 
 void tos_main()
 {
-    //tos::launch(blink_task);
-    //tos::launch(off_task);
-    tos::launch(usb_task);
+    tos::launch(blink_task);
+    tos::launch(off_task);
+    //tos::launch(usb_task);
 }
