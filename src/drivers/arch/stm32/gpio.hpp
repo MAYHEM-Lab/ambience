@@ -2,31 +2,43 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <cstdint>
+#include <array>
 
 namespace tos
 {
 	namespace stm32
 	{
-		struct gpio_def {
+		struct port_def {
 			uintptr_t which;
 			rcc_periph_clken rcc;
 		};
 
-		namespace gpios
+		struct pin_t
 		{
-			constexpr inline gpio_def C {
+			const port_def* port;
+			uint16_t pin;
+		};
+
+		constexpr inline std::array<port_def, 8> ports = {
+			port_def {
+				GPIOA,
+				RCC_GPIOA
+			}, port_def {
+				GPIOB,
+				RCC_GPIOB
+			}, port_def {
 				GPIOC,
 				RCC_GPIOC
-			};
+			}
 		};
 
 		class gpio
 		{
 		public:
-			using pin_type = uint16_t;
+			using pin_type = pin_t;
 
-			explicit gpio(const gpio_def& def) : m_def{ &def } {
-				rcc_periph_clock_enable(m_def->rcc);
+			explicit gpio(const port_def& def) {
+				rcc_periph_clock_enable(def.rcc);
 			}
 			
 			/**
@@ -34,12 +46,19 @@ namespace tos
 			 */
 			void set_pin_mode(pin_type pin, pin_mode::output_t)
 			{
-				gpio_set_mode(m_def->which, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, pin);
+				gpio_set_mode(pin.port->which, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, pin.pin);
 			}
 
 		private:
-
-			const gpio_def* m_def;
 		};
+	}
+
+	namespace tos_literals
+	{
+		constexpr stm32::pin_t operator""_pin(unsigned long long pin)
+		{
+			auto port_index = pin / 16;
+			return { &stm32::ports[port_index], 1 << (pin % 16) };
+		}
 	}
 }
