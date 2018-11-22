@@ -12,7 +12,7 @@
     #define TOS_TASK
 #endif
 #define NORETURN __attribute__((noreturn))
-#define ALWAYS_INLINE __attribute__((always_inline))
+#define ALWAYS_INLINE __attribute__((always_inline)) inline
 #define NO_INLINE __attribute__((noinline))
 
 #define TOS_EXPORT __attribute__((visibility("default")))

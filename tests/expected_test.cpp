@@ -49,3 +49,33 @@ TEST_CASE("move", "[expected]")
     REQUIRE(force_get(res2) == 3);
     REQUIRE(res);
 }
+
+TEST_CASE("with", "[expected]")
+{
+    REQUIRE(with(foo(), [](int x) { return x; }, [](int x){ return x; }) == 3);
+    REQUIRE(with(bar(), [](int x) { return x; }, [](int x){ return x; }) == 3);
+}
+
+class move_only
+{
+public:
+    move_only() = default;
+    move_only(const move_only&) = delete;
+    move_only(move_only&& rhs) {
+        rhs.moved = true;
+    }
+
+    bool moved = false;
+};
+
+tos::expected<move_only, int> test_move_only() { return move_only{}; }
+
+TEST_CASE("move only", "[expected]")
+{
+    auto res = test_move_only();
+    auto res2 = std::move(res);
+    REQUIRE(res2);
+    REQUIRE(res);
+    REQUIRE(!force_get(res2).moved);
+    REQUIRE(force_get(res).moved);
+}

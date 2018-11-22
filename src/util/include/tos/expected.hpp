@@ -58,11 +58,12 @@ namespace tos
     template <class T, class ErrT>
     class expected
     {
+        using internal_t = tl::expected<T, ErrT>;
     public:
-        template <typename = std::enable_if_t<std::is_same<T, void>{}>>
+        template <class U = T, typename = std::enable_if_t<std::is_same<U, void>{}>>
         expected() : m_internal{} {}
 
-        template <class U, typename = std::enable_if_t<!std::is_same<U, expected>{}>>
+        template <class U = T, typename = std::enable_if_t<!std::is_same<U, expected>{}>>
         expected(U&& u) : m_internal{std::forward<U>(u)} {}
 
         template <class ErrU>
@@ -70,68 +71,40 @@ namespace tos
 
         constexpr explicit PURE operator bool() const { return bool(m_internal); }
 
-        using value_type = T;
-        using error_type = ErrT;
+        using value_type = typename internal_t::value_type;
+        using error_type = typename internal_t::error_type;
     private:
+        internal_t m_internal;
 
-        std::enable_if_t<!std::is_same<T, void>{}, T&&>
-        get() && { return std::move(*m_internal); }
+        template <class ExpectedT, class HandlerT, class ErrHandlerT>
+        friend auto with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT&&)
+            -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal)));
 
-        std::enable_if_t<!std::is_same<T, void>{}, T&>
-        get() & { return *m_internal; }
-
-        std::enable_if_t<!std::is_same<T, void>{}, const T&>
-        get() const & { return *m_internal; }
-
-        template <typename = std::enable_if_t<!std::is_same<ErrT, void>{}>>
-        ErrT& error() { return m_internal.error(); }
-
-        template <typename = std::enable_if_t<!std::is_same<ErrT, void>{}>>
-        const ErrT& error() const { return m_internal.error(); }
-
-        tl::expected<T, ErrT> m_internal;
-
-        template <class HandlerT, class ErrHandlerT>
-        friend auto ALWAYS_INLINE with(expected&& e, HandlerT&& have_handler, ErrHandlerT&& err_handler)
-                -> decltype(have_handler(e.get()))
-        {
-            if (e)
-            {
-                return have_handler(e.get());
-            }
-            return err_handler(e.error());
-        }
-
-        friend auto ALWAYS_INLINE force_get(expected&& e) -> T
-        {
-            if (e)
-            {
-                return std::move(e.get());
-            }
-
-            tos_force_get_failed(nullptr);
-        }
-
-        friend auto ALWAYS_INLINE force_get(const expected& e) -> const T&
-        {
-            if (e)
-            {
-                return e.get();
-            }
-
-            tos_force_get_failed(nullptr);
-        }
-
-        friend auto ALWAYS_INLINE force_get(expected& e) -> T&
-        {
-            if (e)
-            {
-                return e.get();
-            }
-
-            tos_force_get_failed(nullptr);
-        }
+        template <class ExpectedT>
+        friend decltype(auto) force_get(ExpectedT&&);
     };
+
+    template <class ExpectedT, class HandlerT, class ErrHandlerT>
+    auto ALWAYS_INLINE with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT&& err_handler)
+        -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal)))
+    {
+        if (e)
+        {
+            return have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal));
+        }
+        return err_handler(std::forward<decltype(e.m_internal.error())>(e.m_internal.error()));
+    }
+
+    template <class ExpectedT>
+    decltype(auto) ALWAYS_INLINE force_get(ExpectedT&& e)
+    {
+        if (e)
+        {
+            return std::forward<decltype(*e.m_internal)>(*e.m_internal);
+        }
+
+        tos_force_get_failed(nullptr);
+    }
 
     template <class T, class U>
     typename T::value_type get_or(T&& t, U&& r)

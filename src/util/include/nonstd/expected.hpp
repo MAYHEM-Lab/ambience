@@ -826,7 +826,7 @@ namespace tl {
 
 // This class manages conditionally having a trivial copy constructor
 // This specialization is for when T and E are trivially copy constructible
-        template <class T, class E,
+        template <class T, class E, bool = std::is_copy_constructible_v<T> && std::is_copy_constructible_v<E>,
                 bool = is_void_or<T, TL_EXPECTED_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T)>::
                        value &&TL_EXPECTED_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(E)::value>
         struct expected_copy_base : expected_operations_base<T, E> {
@@ -835,10 +835,11 @@ namespace tl {
 
 // This specialization is for when T or E are not trivially copy constructible
         template <class T, class E>
-        struct expected_copy_base<T, E, false> : expected_operations_base<T, E> {
+        struct expected_copy_base<T, E, true, false> : expected_operations_base<T, E> {
             using expected_operations_base<T, E>::expected_operations_base;
 
             expected_copy_base() = default;
+
             expected_copy_base(const expected_copy_base &rhs)
                     : expected_operations_base<T, E>(no_init) {
                 if (rhs.has_value()) {
