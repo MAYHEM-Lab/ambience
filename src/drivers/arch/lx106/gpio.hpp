@@ -38,12 +38,12 @@ namespace tos
             /**
              * Sets the given output pin to digital high
              */
-            static void write(pin_t pin, digital::high_t) ALWAYS_INLINE;
+            static void write(pin_t pin, digital::high_t);
 
             /**
              * Sets the given output pin to digital low
              */
-            static void write(pin_t pin, digital::low_t) ALWAYS_INLINE;
+            static void write(pin_t pin, digital::low_t);
 
             static void write(pin_t pin, bool val);
         };
@@ -85,15 +85,15 @@ namespace tos
             gpio_output_set(0, 0, 1 << pin.pin, 0);
         }
 
-        inline bool gpio::read(const pin_t &pin) {
+        bool ALWAYS_INLINE gpio::read(const pin_t &pin) {
             return (gpio_input_get() >> pin.pin) & 1;
         }
 
-        inline void gpio::write(pin_t pin, digital::high_t) {
+        void ALWAYS_INLINE gpio::write(pin_t pin, digital::high_t) {
             gpio_output_set(1 << pin.pin, 0, 1 << pin.pin, 0);
         }
 
-        inline void gpio::write(pin_t pin, digital::low_t) {
+        void ALWAYS_INLINE gpio::write(pin_t pin, digital::low_t) {
             gpio_output_set(0, 1 << pin.pin, 1 << pin.pin, 0);
         }
 

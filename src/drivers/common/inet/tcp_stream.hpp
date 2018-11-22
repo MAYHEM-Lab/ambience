@@ -24,9 +24,9 @@ namespace tos
     class tcp_stream
     {
     public:
-        explicit tcp_stream(BaseEndpointT&& ep) ALWAYS_INLINE;
+        explicit tcp_stream(BaseEndpointT&& ep);
 
-        int write(span<const char>) ALWAYS_INLINE;
+        int write(span<const char>);
 
         expected<span<char>, read_error> read(span<char>);
 
@@ -56,7 +56,7 @@ namespace tos
     }
 
     template <class BaseEndpointT>
-    inline tcp_stream<BaseEndpointT>::tcp_stream(BaseEndpointT &&ep)
+    ALWAYS_INLINE tcp_stream<BaseEndpointT>::tcp_stream(BaseEndpointT &&ep)
             : m_ep(std::move(ep)) {
         attach();
     }
@@ -81,7 +81,7 @@ namespace tos
     }
 
     template <class BaseEndpointT>
-    inline int tcp_stream<BaseEndpointT>::write(tos::span<const char> buf) {
+    int tcp_stream<BaseEndpointT>::write(tos::span<const char> buf) {
         tos::lock_guard<tos::mutex> lk{ m_busy };
         if (m_discon) { return 0; }
         m_sent_bytes = 0;
