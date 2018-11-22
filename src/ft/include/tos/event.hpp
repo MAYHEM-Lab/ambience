@@ -4,6 +4,12 @@
 #include <tos/barrier.hpp>
 
 namespace tos {
+
+    /**
+     * Events are very barebones synchronisation primitives.
+     *
+     * They are susceptible to the lost wake up problem
+     */
     class event : public non_copy_movable
     {
     public:

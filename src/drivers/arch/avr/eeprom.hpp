@@ -20,8 +20,31 @@ namespace tos
         };
     }
 
-    inline avr::eeprom* open_impl(devs::eeprom_t<0>)
+    inline avr::eeprom open_impl(devs::eeprom_t<0>)
     {
-        return nullptr;
+        return {};
+    }
+}
+
+// impl
+
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <avr/eeprom.h>
+
+namespace tos
+{
+    namespace avr
+    {
+        inline size_t eeprom::read(uint64_t iop, void* buf, uint16_t bufsz)
+        {
+            eeprom_read_block(buf, (const void*)iop, bufsz);
+            return bufsz;
+        }
+
+        inline void eeprom::write(uint64_t iop, const void* buf, uint16_t bufsz)
+        {
+            eeprom_update_block(buf, (void*)iop, bufsz);
+        }
     }
 }

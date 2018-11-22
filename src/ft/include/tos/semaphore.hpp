@@ -108,6 +108,11 @@ namespace tos {
             return s.m_wait;
         }
 
+        friend void reset(semaphore& s, int16_t val)
+        {
+            s.m_count = val;
+        }
+
         friend bool try_down_isr(semaphore& s)
         {
             if (s.m_count > 0)

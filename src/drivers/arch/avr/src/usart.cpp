@@ -30,6 +30,7 @@ public:
         return m_store[m_begin];
     }
 
+    void clear() { m_begin = 0; m_end = 0; }
 private:
     T m_store[len];
     size_t m_begin, m_end;
@@ -50,7 +51,6 @@ struct open_state {
 };
 
 static void write_usart(tos::span<const char>);
-static size_t read_usart(tos::span<char>);
 
 std::optional<open_state> state;
 
@@ -85,8 +85,47 @@ namespace tos {
             UCSR0C = usart_control(m, p, s);
         }
 
-        span<char> usart0::read(span<char> buf) {
-            return buf.slice(0, read_usart(buf));
+        span<char> usart0::read(span<char> b)
+        {
+            size_t total = 0;
+            auto len = b.size();
+            auto buf = b.data();
+            tos::kern::busy();
+            while (state && total < len) {
+                state->have_data.down();
+                *buf = state->read_buf.front();
+                state->read_buf.pop_front();
+                ++buf;
+                ++total;
+            }
+            tos::kern::unbusy();
+            return b.slice(0, total);
+        }
+
+        void usart0::clear() {
+            tos::int_guard ig;
+            reset(state->have_data, 0);
+            state->read_buf.clear();
+        }
+
+        span<char> usart0::read(span<char> b, tos::alarm<tos::avr::timer1> & alarm, const std::chrono::milliseconds& to) {
+            size_t total = 0;
+            auto len = b.size();
+            auto buf = b.data();
+            tos::kern::busy();
+            while (state && total < len) {
+                auto res = state->have_data.down(alarm, to);
+                if (res == sem_ret::timeout)
+                {
+                    break;
+                }
+                *buf = state->read_buf.front();
+                state->read_buf.pop_front();
+                ++buf;
+                ++total;
+            }
+            tos::kern::unbusy();
+            return b.slice(0, total);
         }
 
         int usart0::write(span<const char> buf) {
@@ -126,23 +165,6 @@ static void write_usart(tos::span<const char> buf)
     UCSR0B |= (1 << UDRIE0); // enable empty buffer interrupt, ISR will send the data
     state->write_done.down();
     tos::kern::unbusy();
-}
-
-static size_t read_usart(tos::span<char> b)
-{
-    size_t total = 0;
-    auto len = b.size();
-    auto buf = b.data();
-    tos::kern::busy();
-    while (state && total < len) {
-        state->have_data.down();
-        *buf = state->read_buf.front();
-        state->read_buf.pop_front();
-        ++buf;
-        ++total;
-    }
-    tos::kern::unbusy();
-    return total;
 }
 
 class uart_ev_handler

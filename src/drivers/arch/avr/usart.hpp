@@ -11,6 +11,8 @@
 #include <drivers/common/usart.hpp>
 #include <drivers/common/tty.hpp>
 #include <tos/span.hpp>
+#include <drivers/common/alarm.hpp>
+#include "timer.hpp"
 
 namespace tos {
 
@@ -45,7 +47,10 @@ namespace tos {
 
             static void options(usart_modes, usart_parity, usart_stop_bit);
 
+            void clear();
+
             static span<char> read(span<char> buf);
+            static span<char> read(span<char> buf, tos::alarm<tos::avr::timer1>&, const std::chrono::milliseconds&);
 
             static int write(span<const char> buf);
 

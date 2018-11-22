@@ -19,3 +19,5 @@
 #define TOS_HIDDEN __attribute__((visibility("hidden")))
 
 #define WEAK __attribute__((weak))
+
+#define PURE __attribute__((pure))

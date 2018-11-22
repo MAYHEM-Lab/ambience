@@ -25,7 +25,7 @@ namespace xbee
     struct modem_status
             : response_base<api_ids::MODEM_STATUS_RESPONSE>
     {
-        enum class status : uint8_t
+        enum class statuses : uint8_t
         {
             hw_reset = 0,
             wdt_rest = 1,
@@ -43,6 +43,7 @@ namespace xbee
         enum class statuses : uint8_t
         {
             success = 0,
+            no_ack = 1,
             cca_fail = 0x2,
             invalid_dest_ep_success = 0x15,
             network_ack_fail = 0x21,
@@ -66,14 +67,28 @@ namespace xbee
     namespace events
     {
         struct byte { uint8_t byte; };
+        struct pl_done {};
     }
 
-    void consume(tx_status& ts, tos::span<const uint8_t> data)
+    void consume_payload(tx_status& ts, tos::span<const uint8_t> data, size_t index)
     {
-        if (data.size() == 2)
+        if (index == 0 && data.size() == 1)
+        {
+            return;
+        }
+        else if (index == 0 && data.size() == 2)
         {
             ts.status = tx_status::statuses(data[1]);
         }
+        else if (index == 1)
+        {
+            ts.status = tx_status::statuses(data[0]);
+        }
+    }
+
+    void consume_payload(modem_status& ts, tos::span<const uint8_t> data, size_t index)
+    {
+        ts.status = modem_status::statuses(data[0]);
     }
 
     struct base_parse_state
@@ -119,35 +134,41 @@ namespace xbee
         }
     };
 
-    template <class T>
-    struct store_payload
-    {
-        constexpr void operator()(tos::span<const uint8_t> ev, parse_state<T>& state) const
-        {
-            consume(state.res, ev);
-        }
-    };
-
     template <class ResType>
     struct xbee_response
     {
         auto operator()() const {
             using namespace boost::sml;
+            namespace s = boost::sml;
             return make_transition_table(
-                *"null"_s     + event<events::byte> [ is_start ]               = "got_start"_s,
-                "got_start"_s + event<events::byte> / store_msb<ResType>{}     = "got_msb"_s,
-                "got_msb"_s   + event<events::byte> / store_lsb<ResType>{}     = "got_lsb"_s,
-                "got_lsb"_s   + event<events::byte> [ is_type_correct_t<ResType>{} ] = "api_id"_s,
-                "api_id"_s    + event<tos::span<const uint8_t>> = "got_payload"_s,
-                "got_payload"_s + event<events::byte> = X
+                *"null"_s     + s::event<events::byte> [ is_start ]               = "got_start"_s,
+                "got_start"_s + s::event<events::byte> / store_msb<ResType>{}     = "got_msb"_s,
+                "got_msb"_s   + s::event<events::byte> / store_lsb<ResType>{}     = "got_len"_s,
+                "got_len"_s   + s::event<events::byte> [ is_type_correct_t<ResType>{} ] = "api_id"_s,
+                "api_id"_s    + s::event<events::pl_done> = "got_payload"_s,
+                "got_payload"_s + s::event<events::byte> = X
             );
         }
     };
 
-    template <class ResType>
-    class sm_response_parser
+    template <class Type>
+    struct simple_alloc
+    {
+        using obj_type = Type;
+
+        Type operator()(api_ids id, length_t len)
+        {
+            return Type{};
+        }
+    };
+
+    template <class ResType, class ResAllocator = simple_alloc<ResType>>
+    class sm_response_parser : ResAllocator
     {
     public:
+        template <class ResAllocatorU = ResAllocator>
+        sm_response_parser(ResAllocatorU&& res) : ResAllocator(std::forward<ResAllocatorU>(res)) {}
+
         void consume(uint8_t data)
         {
             if (m_escape)
@@ -163,6 +184,7 @@ namespace xbee
 
             if (sm.is("api_id"_s))
             {
+                consume_payload(m_pl, { &data, 1 }, m_pl_index - 1);
                 m_pl_index++;
 
                 if (m_pl_index < get_len().len)
@@ -170,12 +192,17 @@ namespace xbee
                     return;
                 }
 
-                uint8_t buf[2];
-                sm.process_event(tos::span<const uint8_t>(buf));
+                sm.process_event(events::pl_done{});
                 return;
             }
 
             sm.process_event(events::byte{data});
+
+            if (sm.is("got_len"_s))
+            {
+                m_pl = static_cast<ResAllocator>(*this)(get_api_id(), get_len());
+                // confirm size
+            }
         }
 
         length_t get_len() const { return length_t{ (uint16_t)((uint16_t)m_s.msb << 8 | m_s.lsb) }; }
@@ -186,10 +213,13 @@ namespace xbee
             return sm.is(X);
         }
 
+        typename ResAllocator::obj_type&& get_payload() && { return std::move(m_pl); }
+
     private:
         bool m_escape {false};
 
         uint8_t m_pl_index = 1;
+        typename ResAllocator::obj_type m_pl;
 
         parse_state<ResType> m_s;
         boost::sml::sm<xbee_response<ResType>> sm {m_s};
@@ -208,10 +238,52 @@ namespace xbee
 
         bool m_escaped = false;
         parser_state m_state = parser_state::null;
-        size_t m_loc = 0;
+
         uint8_t m_len_msb, m_len_lsb;
         api_ids m_id;
     };
+
+    enum class xbee_errors
+    {
+        xbee_non_responsive
+    };
+
+    template <class StreamT, class AlarmT>
+    tos::expected<xbee::modem_status, xbee_errors> read_modem_status(StreamT& str, AlarmT& alarm)
+    {
+        using namespace std::chrono_literals;
+        xbee::sm_response_parser<xbee::modem_status> parser({});
+        while (!parser.finished())
+        {
+            std::array<char, 1> rbuf;
+            auto r = str.read(rbuf, alarm, 5s);
+            if (r.size() != 1) {
+                // xbee isn't waking up
+                return unexpected(xbee_errors::xbee_non_responsive);
+            }
+            parser.consume(rbuf[0]);
+        }
+        return std::move(parser).get_payload();
+    }
+
+    template <class StreamT, class AlarmT>
+    tos::expected<xbee::tx_status, xbee_errors> read_tx_status(StreamT& str, AlarmT& alarm)
+    {
+        using namespace std::chrono_literals;
+        xbee::sm_response_parser<xbee::tx_status> parser({});
+        while (!parser.finished())
+        {
+            std::array<char, 1> rbuf;
+            auto r = str.read(rbuf, alarm, 5s);
+            if (r.size() != 1)
+            {
+                // xbee is non responsive
+                return unexpected(xbee_errors::xbee_non_responsive);
+            }
+            parser.consume(rbuf[0]);
+        }
+        return std::move(parser).get_payload();
+    }
 }
 }
 

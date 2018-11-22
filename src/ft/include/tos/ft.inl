@@ -133,9 +133,9 @@ namespace tos {
             }
 
         private:
+            uint16_t m_tcb_off; // we store the offset of this object from the task base
             FunT m_fun;
             std::tuple<Args...> m_args;
-            uint16_t m_tcb_off; // we store the offset of this object from the task base
         };
 
         using raw_task = super_tcb<void(*)(void*), void*>;

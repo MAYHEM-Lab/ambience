@@ -9,6 +9,7 @@
 #include <tos/ft.hpp>
 #include <algorithm>
 #include <tos/span.hpp>
+#include <tos/semaphore.hpp>
 
 namespace tos
 {

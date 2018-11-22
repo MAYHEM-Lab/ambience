@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <avr/io.h>
+#include <tos/print.hpp>
 
 namespace temp
 {
@@ -19,6 +20,16 @@ struct sample
     float humid;
     float cpu;
 };
+
+template <class StreamT>
+void print(StreamT& str, int id, const sample& s)
+{
+    static char fl_buf[10];
+    tos::print(str, id, "");
+    tos::print(str, 1, dtostrf(s.temp, 2, 2, fl_buf), "");
+    tos::print(str, 2, dtostrf(s.humid, 2, 2, fl_buf), "");
+    tos::println(str, 3, dtostrf(s.cpu, 2, 2, fl_buf));
+}
 
 static_assert(sizeof(sample) == 12, "");
 

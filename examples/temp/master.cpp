@@ -27,22 +27,34 @@ namespace temp
         using namespace std::chrono_literals;
 
         gpio.write(11_pin, tos::digital::high);
+        alarm.sleep_for(100ms);
 
         std::array<char, 2> wait;
-        usart.read(wait);
+        auto res = usart.read(wait, alarm, 5s);
 
-        if (wait[0] != 'h' || wait[1] != 'i')
+        if (res.size() != 2 || res[0] != 'h' || res[1] != 'i')
         {
-            return temp::sample{ -5, -6, -7 };
+            return temp::sample{ -1, -1, -1 };
         }
 
         std::array<char, sizeof(temp::sample)> buf;
 
         tos::print(usart, "go");
-        usart.read(buf);
+        alarm.sleep_for(10s);
+        auto r = usart.read(buf, alarm, 5s);
+
+        if (r.size() != buf.size())
+        {
+            return temp::sample{ -1, -1, -1 };
+        }
 
         std::array<char, 1> chk_buf;
-        auto chkbuf = usart.read(chk_buf);
+
+        auto chkbuf = usart.read(chk_buf, alarm, 5s);
+        if (chkbuf.size() == 0)
+        {
+            return temp::sample{ -1, -1, -1 };
+        }
 
         gpio.write(11_pin, tos::digital::low);
         alarm.sleep_for(5ms);
@@ -60,7 +72,7 @@ namespace temp
 
         if (uint8_t(chkbuf[0]) != chk)
         {
-            return temp::sample{};
+            return temp::sample{ -1, -1, -1 };
         }
 
         temp::sample s;
@@ -124,10 +136,9 @@ void tx_task(void*)
             .add(tos::usart_stop_bit::one);
 
     auto usart = open(tos::devs::usart<0>, usconf);
+    tos::println(usart, "alive");
 
     auto gpio = tos::open(tos::devs::gpio);
-
-    avr::twim t{18_pin, 19_pin};
 
     gpio.set_pin_mode(7_pin, tos::pin_mode::out);
     gpio.set_pin_mode(11_pin, tos::pin_mode::out);
@@ -138,11 +149,10 @@ void tx_task(void*)
     while (true)
     {
         using namespace std::chrono_literals;
+
         {
             auto tmr = tos::open(tos::devs::timer<1>);
             auto alarm = tos::open(tos::devs::alarm, *tmr);
-
-            ina219<avr::twim> ina{ {0x41}, t };
 
             using namespace std::chrono_literals;
             alarm.sleep_for(2s);
@@ -153,71 +163,64 @@ void tx_task(void*)
                 _delay_us(us.count());
             });
 
+            int tries = 1;
             auto res = d.read(12_pin);
 
-            while (res != tos::dht_res::ok)
+            while (res != tos::dht_res::ok && tries < 5)
             {
+                tos::println(usart, "nope");
                 alarm.sleep_for(2s);
                 res = d.read(12_pin);
+                ++tries;
+            }
+
+            if (tries == 5)
+            {
+                d.temperature = -1;
+                d.humidity = -1;
             }
 
             std::array<temp::sample, 2> samples = {
-                    temp::sample{ d.temperature, d.humidity, temp::GetTemp(alarm) },
-                    temp::read_slave(gpio, alarm, usart)
+                temp::sample{ d.temperature, d.humidity, temp::GetTemp(alarm) },
+                temp::read_slave(gpio, alarm, usart)
             };
 
+            tos::println(usart, int(samples[0].temp), int(samples[0].cpu));
+            tos::println(usart, int(samples[1].cpu));
+
             namespace xbee = tos::xbee;
-
             gpio.write(7_pin, tos::digital::high);
+
+            alarm.sleep_for(100ms);
+            auto r = xbee::read_modem_status(usart, alarm);
+
+            if (r)
             {
-                xbee::sm_response_parser<xbee::modem_status> parser;
-                while (!parser.finished())
-                {
-                    std::array<char, 1> rbuf;
-                    usart.read(rbuf);
-                    parser.consume(rbuf[0]);
-                }
-            }
+                tos::xbee_s1<tos::avr::usart0> x {usart};
 
-            tos::xbee_s1<tos::avr::usart0> x {usart};
-            xbee::frame_id_t fid{1};
+                static char msg_buf[100];
+                tos::omemory_stream buff{msg_buf};
 
-            static char msg_buf[100];
-            tos::omemory_stream buff{msg_buf};
+                temp::print(buff, temp::master_id, samples[0]);
+                temp::print(buff, temp::slave_id, samples[1]);
 
-            static char fl_buf[10];
-            tos::print(buff, temp::master_id, "");
-            tos::print(buff, 1, dtostrf(samples[0].temp, 2, 2, fl_buf), "");
-            tos::print(buff, 2, dtostrf(samples[0].humid, 2, 2, fl_buf), "");
-            tos::print(buff, 3, dtostrf(samples[0].cpu, 2, 2, fl_buf));
-            tos::println(buff);
+                constexpr xbee::addr_16 base_addr{ 0x0010 };
+                xbee::tx16_req req { base_addr, tos::raw_cast<const uint8_t>(buff.get()), xbee::frame_id_t{1} };
+                x.transmit(req);
 
-            tos::print(buff, temp::slave_id, "");
-            tos::print(buff, 1, dtostrf(samples[1].temp, 2, 2, fl_buf), "");
-            tos::print(buff, 2, dtostrf(samples[1].humid, 2, 2, fl_buf), "");
-            tos::print(buff, 3, dtostrf(samples[1].cpu, 2, 2, fl_buf));
-            tos::println(buff);
-
-            constexpr xbee::addr_16 base_addr { 0x0010};
-
-            xbee::tx16_req r { base_addr, tos::raw_cast<const uint8_t>(buff.get()), fid };
-
-            x.transmit(r);
-            fid.id++;
-
-            xbee::sm_response_parser<xbee::tx_status> parser;
-            while (!parser.finished())
-            {
-                std::array<char, 1> rbuf;
-                usart.read(rbuf);
-                parser.consume(rbuf[0]);
+                alarm.sleep_for(100ms);
+                auto tx_r = xbee::read_tx_status(usart, alarm);
             }
 
             gpio.write(7_pin, tos::digital::low);
-            alarm.sleep_for(5ms);
+
+            if (!r)
+            {
+                tos::println(usart, "xbee failed");
+            }
         }
 
-        hibernate(4min + 50s);
+        hibernate(4min + 30s);
     }
 }
 
