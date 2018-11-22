@@ -25,7 +25,7 @@ else()
     message(FATAL_ERROR "Target architecture cannot be determined!")
 endif()
 
-
+unset(WIN32)
 project(tos)
 message(STATUS "${CMAKE_CXX_FLAGS}")
 

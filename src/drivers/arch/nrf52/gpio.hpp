@@ -15,31 +15,31 @@ namespace tos
         class gpio
         {
         public:
-            using pin_t = int;
+            using pin_type = int;
 
             static void init();
 
             /**
              * Sets the given pin to be an input
              */
-            static void set_pin_mode(pin_t pin, pin_mode::input_t);
+            static void set_pin_mode(pin_type pin, pin_mode::input_t);
 
             /**
              * Sets the given pin to be an output
              */
-            static void set_pin_mode(pin_t pin, pin_mode::output_t);
+            static void set_pin_mode(pin_type pin, pin_mode::output_t);
 
             /**
              * Sets the given output pin to digital high
              */
-            static void write(pin_t pin, digital::high_t) ALWAYS_INLINE;
+            static void write(pin_type pin, digital::high_t) ALWAYS_INLINE;
 
             /**
              * Sets the given output pin to digital low
              */
-            static void write(pin_t pin, digital::low_t) ALWAYS_INLINE;
+            static void write(pin_type pin, digital::low_t) ALWAYS_INLINE;
 
-            static void write(pin_t pin, bool val);
+            static void write(pin_type pin, bool val);
         };
     }
 

@@ -8,6 +8,8 @@ elseif(TOS_X86)
     add_subdirectory(arch/x86)
 elseif(TOS_ARM)
     add_subdirectory(arch/nrf52)
+elseif(TOS_STM32)
+	add_subdirectory(arch/stm32)
 endif()
 
 add_library(tos_spi common/spi.hpp src/stub.cpp common/timer.hpp src/spi.cpp)
