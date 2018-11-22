@@ -17,7 +17,7 @@ add_library(tos_util
     include/tos/track_ptr.hpp
     include/tos/mem_stream.hpp
     src/expected.cpp
-    include/tos/streams.hpp include/tos/fixed_point.hpp)
+    include/tos/streams.hpp include/tos/fixed_point.hpp include/nonstd/expected.hpp)
 
 target_include_directories(tos_util PUBLIC "include")
 target_compile_options(tos_util PUBLIC "-std=c++14")

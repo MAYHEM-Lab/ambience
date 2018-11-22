@@ -10,6 +10,7 @@
 #include <tos/compiler.hpp>
 #include <tos/debug.hpp>
 #include <new>
+#include <nonstd/expected.hpp>
 
 /**
  * This function is called upon a force_get execution on an
@@ -58,84 +59,37 @@ namespace tos
     class expected
     {
     public:
-        expected(const expected&) = delete;
-
-        expected(expected<T, ErrT>&& rhs) noexcept
-            : m_have(rhs.m_have)
-        {
-            if (m_have)
-            {
-                new (&m_t) T(std::move(rhs.m_t));
-            }
-            else
-            {
-                new (&m_err) ErrT(std::move(rhs.m_err));
-            }
-            rhs.m_have = false;
-        }
+        template <typename = std::enable_if_t<std::is_same<T, void>{}>>
+        expected() : m_internal{} {}
 
         template <class U, typename = std::enable_if_t<!std::is_same<U, expected>{}>>
-        expected(U&& u) : m_t{std::forward<U>(u)}, m_have{true} {}
+        expected(U&& u) : m_internal{std::forward<U>(u)} {}
 
         template <class ErrU>
-        expected(unexpected_t<ErrU>&& u) : m_err{std::move(u.m_err)}, m_have{false} {}
+        expected(unexpected_t<ErrU>&& u) : m_internal{tl::make_unexpected(std::move(u.m_err))} {}
 
-        constexpr explicit PURE operator bool() const { return m_have; }
-
-        expected& operator=(expected&& rhs) noexcept
-        {
-            if (m_have && rhs.m_have)
-            {
-                m_t = std::move(rhs.m_t);
-            }
-            else if (!m_have && !rhs.m_have)
-            {
-                m_err = std::move(rhs.m_err);
-            }
-            else if (m_have && !rhs.m_have)
-            {
-                std::destroy_at(&m_t);
-                new (&m_err) ErrT(std::move(rhs.m_err));
-            }
-            else // if (!m_have && rhs.m_have)
-            {
-                std::destroy_at(&m_err);
-                new (&m_t) T(std::move(rhs.m_t));
-            }
-            m_have = rhs.m_have;
-            rhs.m_have = false;
-            return *this;
-        }
-
-        ~expected()
-        {
-            if (m_have)
-            {
-                std::destroy_at(&m_t);
-            }
-            else
-            {
-                std::destroy_at(&m_err);
-            }
-        }
+        constexpr explicit PURE operator bool() const { return bool(m_internal); }
 
         using value_type = T;
         using error_type = ErrT;
     private:
-        T&& get() && { return std::move(m_t); }
-        T& get() & { return m_t; }
-        const T& get() const & { return m_t; }
 
-        ErrT& error() { return m_err; }
-        const ErrT& error() const { return m_err; }
+        std::enable_if_t<!std::is_same<T, void>{}, T&&>
+        get() && { return std::move(*m_internal); }
 
-        union {
-            char ___; // avoid having to construct any member
-            T m_t;
-            ErrT m_err;
-        };
+        std::enable_if_t<!std::is_same<T, void>{}, T&>
+        get() & { return *m_internal; }
 
-        bool m_have;
+        std::enable_if_t<!std::is_same<T, void>{}, const T&>
+        get() const & { return *m_internal; }
+
+        template <typename = std::enable_if_t<!std::is_same<ErrT, void>{}>>
+        ErrT& error() { return m_internal.error(); }
+
+        template <typename = std::enable_if_t<!std::is_same<ErrT, void>{}>>
+        const ErrT& error() const { return m_internal.error(); }
+
+        tl::expected<T, ErrT> m_internal;
 
         template <class HandlerT, class ErrHandlerT>
         friend auto ALWAYS_INLINE with(expected&& e, HandlerT&& have_handler, ErrHandlerT&& err_handler)
