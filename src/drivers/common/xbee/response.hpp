@@ -167,7 +167,7 @@ namespace xbee
     {
     public:
         template <class ResAllocatorU = ResAllocator>
-        sm_response_parser(ResAllocatorU&& res) : ResAllocator(std::forward<ResAllocatorU>(res)) {}
+        sm_response_parser(ResAllocatorU&& res = {}) : ResAllocator(std::forward<ResAllocatorU>(res)) {}
 
         void consume(uint8_t data)
         {
