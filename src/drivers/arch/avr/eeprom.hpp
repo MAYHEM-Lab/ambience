@@ -17,6 +17,9 @@ namespace tos
         public:
             size_t read(uint64_t iop, void* buf, uint16_t bufsz);
             void write(uint64_t iop, const void* buf, uint16_t bufsz);
+
+            eeprom*operator->(){ return this; }
+            eeprom&operator*(){ return *this; }
         };
     }
 
