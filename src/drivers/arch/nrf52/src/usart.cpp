@@ -12,7 +12,7 @@ namespace tos
     {
         constexpr nrfx_uarte_t uart0 { NRF_UARTE0, NRFX_UARTE0_INST_IDX };
 
-        uart::uart(usart_constraint&& config, gpio::pin_t rx, gpio::pin_t tx) noexcept
+        uart::uart(usart_constraint&& config, gpio::pin_type rx, gpio::pin_type tx) noexcept
                 : m_write_sync{0}, m_read_sync{0}
         {
             nrfx_uarte_config_t conf{};

@@ -19,7 +19,7 @@ namespace tos
             tos::semaphore sync{0};
         } data;
 
-        twim::twim(gpio::pin_t clock_pin, gpio::pin_t data_pin)
+        twim::twim(gpio::pin_type clock_pin, gpio::pin_type data_pin)
         {
             nrfx_twim_config_t conf{};
             conf.frequency = NRF_TWIM_FREQ_250K;

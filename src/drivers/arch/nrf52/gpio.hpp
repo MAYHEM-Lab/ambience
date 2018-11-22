@@ -32,12 +32,12 @@ namespace tos
             /**
              * Sets the given output pin to digital high
              */
-            static void write(pin_type pin, digital::high_t) ALWAYS_INLINE;
+            static void write(pin_type pin, digital::high_t);
 
             /**
              * Sets the given output pin to digital low
              */
-            static void write(pin_type pin, digital::low_t) ALWAYS_INLINE;
+            static void write(pin_type pin, digital::low_t);
 
             static void write(pin_type pin, bool val);
         };
@@ -56,12 +56,12 @@ namespace tos
 {
     namespace nrf52
     {
-        inline void gpio::write(int pin, digital::low_t)
+        void ALWAYS_INLINE gpio::write(int pin, digital::low_t)
         {
             NRF_P0->OUTCLR = (1UL << pin);
         }
 
-        inline void gpio::write(int pin, digital::high_t)
+        void ALWAYS_INLINE gpio::write(int pin, digital::high_t)
         {
             NRF_P0->OUTSET = (1UL << pin);
         }

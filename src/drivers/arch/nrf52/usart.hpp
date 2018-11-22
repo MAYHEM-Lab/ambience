@@ -21,7 +21,7 @@ namespace tos
         class uart
         {
         public:
-            explicit uart(usart_constraint&& config, gpio::pin_t rx = 8, gpio::pin_t tx = 6) noexcept;
+            explicit uart(usart_constraint&& config, gpio::pin_type rx = 8, gpio::pin_type tx = 6) noexcept;
 
             uart(const uart&) = delete;
             uart(uart&&);
