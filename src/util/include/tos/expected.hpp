@@ -10,6 +10,7 @@
 #include <tos/compiler.hpp>
 #include <tos/debug.hpp>
 #include <new>
+#include <nonstd/expected.hpp>
 
 /**
  * This function is called upon a force_get execution on an
@@ -57,127 +58,53 @@ namespace tos
     template <class T, class ErrT>
     class expected
     {
+        using internal_t = tl::expected<T, ErrT>;
     public:
-        expected(const expected&) = delete;
+        template <class U = T, typename = std::enable_if_t<std::is_same<U, void>{}>>
+        expected() : m_internal{} {}
 
-        expected(expected<T, ErrT>&& rhs) noexcept
-            : m_have(rhs.m_have)
-        {
-            if (m_have)
-            {
-                new (&m_t) T(std::move(rhs.m_t));
-            }
-            else
-            {
-                new (&m_err) ErrT(std::move(rhs.m_err));
-            }
-            rhs.m_have = false;
-        }
-
-        template <class U, typename = std::enable_if_t<!std::is_same<U, expected>{}>>
-        expected(U&& u) : m_t{std::forward<U>(u)}, m_have{true} {}
+        template <class U = T, typename = std::enable_if_t<!std::is_same<U, expected>{}>>
+        expected(U&& u) : m_internal{std::forward<U>(u)} {}
 
         template <class ErrU>
-        expected(unexpected_t<ErrU>&& u) : m_err{std::move(u.m_err)}, m_have{false} {}
+        expected(unexpected_t<ErrU>&& u) : m_internal{tl::make_unexpected(std::move(u.m_err))} {}
 
-        constexpr explicit PURE operator bool() const { return m_have; }
+        constexpr explicit PURE operator bool() const { return bool(m_internal); }
 
-        expected& operator=(expected&& rhs) noexcept
-        {
-            if (m_have && rhs.m_have)
-            {
-                m_t = std::move(rhs.m_t);
-            }
-            else if (!m_have && !rhs.m_have)
-            {
-                m_err = std::move(rhs.m_err);
-            }
-            else if (m_have && !rhs.m_have)
-            {
-                std::destroy_at(&m_t);
-                new (&m_err) ErrT(std::move(rhs.m_err));
-            }
-            else // if (!m_have && rhs.m_have)
-            {
-                std::destroy_at(&m_err);
-                new (&m_t) T(std::move(rhs.m_t));
-            }
-            m_have = rhs.m_have;
-            rhs.m_have = false;
-            return *this;
-        }
-
-        ~expected()
-        {
-            if (m_have)
-            {
-                std::destroy_at(&m_t);
-            }
-            else
-            {
-                std::destroy_at(&m_err);
-            }
-        }
-
-        using value_type = T;
-        using error_type = ErrT;
+        using value_type = typename internal_t::value_type;
+        using error_type = typename internal_t::error_type;
     private:
-        T&& get() && { return std::move(m_t); }
-        T& get() & { return m_t; }
-        const T& get() const & { return m_t; }
+        internal_t m_internal;
 
-        ErrT& error() { return m_err; }
-        const ErrT& error() const { return m_err; }
+        template <class ExpectedT, class HandlerT, class ErrHandlerT>
+        friend auto with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT&&)
+            -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal)));
 
-        union {
-            char ___; // avoid having to construct any member
-            T m_t;
-            ErrT m_err;
-        };
-
-        bool m_have;
-
-        template <class HandlerT, class ErrHandlerT>
-        friend auto ALWAYS_INLINE with(expected&& e, HandlerT&& have_handler, ErrHandlerT&& err_handler)
-                -> decltype(have_handler(e.get()))
-        {
-            if (e)
-            {
-                return have_handler(e.get());
-            }
-            return err_handler(e.error());
-        }
-
-        friend auto ALWAYS_INLINE force_get(expected&& e) -> T
-        {
-            if (e)
-            {
-                return std::move(e.get());
-            }
-
-            tos_force_get_failed(nullptr);
-        }
-
-        friend auto ALWAYS_INLINE force_get(const expected& e) -> const T&
-        {
-            if (e)
-            {
-                return e.get();
-            }
-
-            tos_force_get_failed(nullptr);
-        }
-
-        friend auto ALWAYS_INLINE force_get(expected& e) -> T&
-        {
-            if (e)
-            {
-                return e.get();
-            }
-
-            tos_force_get_failed(nullptr);
-        }
+        template <class ExpectedT>
+        friend decltype(auto) force_get(ExpectedT&&);
     };
+
+    template <class ExpectedT, class HandlerT, class ErrHandlerT>
+    auto ALWAYS_INLINE with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT&& err_handler)
+        -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal)))
+    {
+        if (e)
+        {
+            return have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal));
+        }
+        return err_handler(std::forward<decltype(e.m_internal.error())>(e.m_internal.error()));
+    }
+
+    template <class ExpectedT>
+    decltype(auto) ALWAYS_INLINE force_get(ExpectedT&& e)
+    {
+        if (e)
+        {
+            return std::forward<decltype(*e.m_internal)>(*e.m_internal);
+        }
+
+        tos_force_get_failed(nullptr);
+    }
 
     template <class T, class U>
     typename T::value_type get_or(T&& t, U&& r)
