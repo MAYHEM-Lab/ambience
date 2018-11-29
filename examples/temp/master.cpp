@@ -18,6 +18,9 @@
 #include "app.hpp"
 #include <drivers/common/ina219.hpp>
 
+char trace_buf[128];
+tos::omemory_stream trace{ trace_buf };
+
 namespace temp
 {
     template <class GpioT, class AlarmT, class UsartT>
@@ -26,6 +29,7 @@ namespace temp
         using namespace tos::tos_literals;
         using namespace std::chrono_literals;
 
+		// wake up the slave and wait for it to boot
         gpio.write(11_pin, tos::digital::high);
         alarm.sleep_for(100ms);
 
@@ -34,6 +38,7 @@ namespace temp
 
         if (res.size() != 2 || res[0] != 'h' || res[1] != 'i')
         {
+			tos::println(trace, "slave non-responsive");
             return temp::sample{ -1, -1, -1 };
         }
 
@@ -45,6 +50,7 @@ namespace temp
 
         if (r.size() != buf.size())
         {
+			tos::println(trace, "slave sent garbage");
             return temp::sample{ -1, -1, -1 };
         }
 
@@ -53,6 +59,7 @@ namespace temp
         auto chkbuf = usart.read(chk_buf, alarm, 5s);
         if (chkbuf.size() == 0)
         {
+			tos::println(trace, "slave omitted checksum");
             return temp::sample{ -1, -1, -1 };
         }
 
@@ -72,9 +79,11 @@ namespace temp
 
         if (uint8_t(chkbuf[0]) != chk)
         {
+			tos::println(trace, "slave checksum mismatch");
             return temp::sample{ -1, -1, -1 };
         }
 
+		tos::println(trace, "slave success");
         temp::sample s;
         memcpy(&s, buf.data(), sizeof(temp::sample));
         return s;
@@ -85,6 +94,8 @@ namespace temp
  * This function takes the system to a deep sleep.
  *
  * The actual sleep duration could be longer than the requested time.
+ *
+ * System won't sleep if there are other runnable threads in the system.
  *
  * @param dur seconds to at least sleep for
  */
@@ -150,6 +161,8 @@ void tx_task(void*)
     {
         using namespace std::chrono_literals;
 
+		// reset the trace stream
+		trace = tos::omemory_stream{ trace_buf };
         {
             auto tmr = tos::open(tos::devs::timer<1>);
             auto alarm = tos::open(tos::devs::alarm, *tmr);
@@ -168,7 +181,7 @@ void tx_task(void*)
 
             while (res != tos::dht_res::ok && tries < 5)
             {
-                tos::println(usart, "nope");
+                tos::println(trace, "dht non-responsive");
                 alarm.sleep_for(2s);
                 res = d.read(12_pin);
                 ++tries;
@@ -185,8 +198,8 @@ void tx_task(void*)
                 temp::read_slave(gpio, alarm, usart)
             };
 
-            tos::println(usart, int(samples[0].temp), int(samples[0].cpu));
-            tos::println(usart, int(samples[1].cpu));
+            tos::println(trace, int(samples[0].temp), int(samples[0].cpu));
+            tos::println(trace, int(samples[1].cpu));
 
             namespace xbee = tos::xbee;
             gpio.write(7_pin, tos::digital::high);
@@ -210,15 +223,33 @@ void tx_task(void*)
 
                 alarm.sleep_for(100ms);
                 auto tx_r = xbee::read_tx_status(usart, alarm);
+
+				if (tx_r)
+				{
+					auto& res = force_get(tx_r);
+					if (res.status == xbee::tx_status::statuses::success)
+					{
+						tos::println(trace, "xbee sent!");
+					}
+					else
+					{
+						tos::println(trace, "xbee send failed");
+					}
+				}
+				else
+				{
+					tos::println(trace, "xbee non responsive");
+				}
             }
+			else
+			{
+				tos::println(trace, "xbee non responsive");
+			}
 
             gpio.write(7_pin, tos::digital::low);
-
-            if (!r)
-            {
-                tos::println(usart, "xbee failed");
-            }
         }
+
+		tos::println(usart, trace.get());
 
         hibernate(4min + 30s);
     }

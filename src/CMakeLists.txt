@@ -28,7 +28,7 @@ add_library(tos_core stub.cpp ${TOS_CORE_HEADERS} tos_init.cpp device_id.cpp deb
 target_compile_options(tos_core PUBLIC -fno-threadsafe-statics -Wall -Wextra -std=gnu++14)
 target_include_directories(tos_core PUBLIC ".")
 target_compile_definitions(tos_core PUBLIC TOS_GIT_SHA1=\"${GIT_SHA1}\")
-target_link_libraries(tos_core PUBLIC tos_mem)
+target_link_libraries(tos_core PUBLIC tos_mem tos_util)
 target_link_libraries(tos_core PUBLIC tos::libcxx)
 add_library(tos::core ALIAS tos_core)
 

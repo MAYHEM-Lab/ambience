@@ -48,7 +48,7 @@ namespace tos
     template <class...> struct pair_t {};
     struct usart_key_policy
     {
-        static constexpr auto m = make_map()
+        static constexpr auto m = tos::make_map()
                 .add<pair_t<usart_baud_rate, usart_baud_rate>>(std::true_type{})
                 .add<pair_t<usart_parity, usart_parity>>(std::true_type{})
                 .add<pair_t<usart_stop_bit, usart_stop_bit>>(std::true_type{});
@@ -61,6 +61,14 @@ namespace tos
     };
 
     constexpr inline ct_map<usart_key_policy> usart_config() { return ct_map<usart_key_policy>{}; }
+
+	namespace uart
+	{
+		static constexpr auto default_9600 = usart_config()
+			.add(tos::usart_baud_rate{ 9600 })
+			.add(tos::usart_parity::disabled)
+			.add(tos::usart_stop_bit::one);
+	}
 
     namespace tos_literals
     {

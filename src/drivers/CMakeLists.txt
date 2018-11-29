@@ -17,6 +17,7 @@ target_link_libraries(tos_spi PUBLIC tos_gpio tos_core)
 target_include_directories(tos_spi PUBLIC .)
 
 add_library(tos_usart common/usart.hpp src/stub.cpp)
+target_link_libraries(tos_usart PUBLIC tos::core)
 target_include_directories(tos_usart PUBLIC .)
 
 add_library(tos_gpio common/gpio.hpp src/stub.cpp)

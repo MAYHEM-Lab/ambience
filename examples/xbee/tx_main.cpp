@@ -18,12 +18,7 @@ void tx_task(void*)
     using namespace tos::tos_literals;
     using namespace std::chrono_literals;
 
-    constexpr auto usconf = tos::usart_config()
-            .add(9600_baud_rate)
-            .add(tos::usart_parity::disabled)
-            .add(tos::usart_stop_bit::one);
-
-    auto usart = open(tos::devs::usart<0>, usconf);
+    auto usart = open(tos::devs::usart<0>, tos::uart::default_9600);
 
     auto gpio = tos::open(tos::devs::gpio);
 
@@ -93,7 +88,7 @@ void tx_task(void*)
                 auto tx_r = xbee::read_tx_status(usart, alarm);
                 if (tx_r)
                 {
-                    stat = force_get(tx_r);
+                    stat = tos::force_get(tx_r);
                 }
                 else
                 {
