@@ -5,15 +5,19 @@
 #include <tos/ft.hpp>
 
 #include <libopencm3/stm32/gpio.h>
+#include <libopencm3/stm32/timer.h>
 #include <tos/semaphore.hpp>
 
 #include <drivers/arch/stm32/drivers.hpp>
 #include <util/include/tos/fixed_fifo.hpp>
+#include <util/include/tos/mem_stream.hpp>
+#include <tos/print.hpp>
 
 tos::semaphore set{1}, clear{0};
 
 void usart_setup()
 {
+    rcc_periph_clock_enable(RCC_GPIOA);
     rcc_periph_clock_enable(RCC_USART2);
 
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
@@ -35,6 +39,47 @@ void usart_setup()
     usart_enable(USART2);
 }
 
+int cnt = 0;
+tos::semaphore tsem{0};
+
+void tim2_isr()
+{
+    if (timer_get_flag(TIM2, TIM_SR_CC1IF))
+    {
+        timer_clear_flag(TIM2, TIM_SR_CC1IF);
+        uint16_t compare_time = timer_get_counter(TIM2);
+        timer_set_oc_value(TIM2, TIM_OC1, compare_time + 2);
+        if (++cnt == 1000)
+        {
+            tsem.up_isr();
+            cnt = 0;
+        }
+    }
+}
+
+void timer_setup()
+{
+    rcc_periph_clock_enable(RCC_TIM2);
+
+    rcc_periph_reset_pulse(RST_TIM2);
+
+    timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
+
+    timer_set_prescaler(TIM2, ((rcc_apb1_frequency * 2) / 2'000));
+
+    timer_disable_preload(TIM2);
+    timer_continuous_mode(TIM2);
+
+    timer_set_period(TIM2, 65535);
+
+    timer_set_oc_value(TIM2, TIM_OC1, 2);
+
+    timer_enable_counter(TIM2);
+
+    nvic_enable_irq(NVIC_TIM2_IRQ);
+    timer_enable_irq(TIM2, TIM_DIER_CC1IE);
+}
+
 tos::fixed_fifo<uint8_t, 32, tos::ring_buf> rx_buf;
 const uint8_t* tx_it;
 const uint8_t* tx_end;
@@ -48,6 +93,7 @@ void usart2_isr()
         rx_buf.push(usart_recv(USART2));
         rx_s.up_isr();
     }
+
     if ((USART_CR1(USART2) & USART_CR1_TXEIE) &&
              (USART_SR(USART2) & USART_SR_TXE))
     {
@@ -68,20 +114,40 @@ void usart_write(tos::span<const uint8_t> buf)
     tx_s.down();
 }
 
+void usart_write(tos::span<const char> buf)
+{
+    usart_write(tos::span<const uint8_t>{ (const uint8_t*)buf.data(), buf.size() });
+}
+
 void blink_task(void*)
 {
 	using namespace tos::tos_literals;
 
-    tos::stm32::gpio g{ tos::stm32::ports[0] };
+    tos::stm32::gpio g;
 
     usart_setup();
+    timer_setup();
 
 	g.set_pin_mode(5_pin, tos::pin_mode::out);
+
+	char buf[20];
+	tos::omemory_stream oms{buf};
+	tos::println(oms, int(rcc_apb1_frequency));
+	usart_write(oms.get());
 
     while (true)
     {
         set.down();
-        gpio_set(GPIOA, GPIO5);
+        g.write(5_pin, tos::digital::high);
+        while (true)
+        {
+            tsem.down();
+            usart_write("l");
+            g.write(5_pin, tos::digital::low);
+            tsem.down();
+            usart_write("h");
+            g.write(5_pin, tos::digital::high);
+        }
         rx_s.down();
         uint8_t buf[] = { 'h', 'i', rx_buf.pop(), '\n' };
         usart_write(buf);
