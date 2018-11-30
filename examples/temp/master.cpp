@@ -88,7 +88,7 @@ namespace temp
         memcpy(&s, buf.data(), sizeof(temp::sample));
         return s;
     }
-}
+} // namespace temp
 
 /**
  * This function takes the system to a deep sleep.

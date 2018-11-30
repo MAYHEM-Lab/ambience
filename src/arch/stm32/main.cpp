@@ -32,13 +32,7 @@ int main()
 {
     rcc_clock_setup_in_hse_8mhz_out_72mhz();
 
-    /* Enable GPIOA clock (for LED GPIOs). */
-    rcc_periph_clock_enable(RCC_GPIOA);
-
-    /* Enable clocks for GPIO port B (for GPIO_USART1_TX) and USART1. */
-    rcc_periph_clock_enable(RCC_GPIOB);
-    rcc_periph_clock_enable(RCC_AFIO);
-    rcc_periph_clock_enable(RCC_USART1);
+    tos::kern::enable_interrupts();
 
     tos_main();
 

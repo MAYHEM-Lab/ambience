@@ -8,23 +8,88 @@
 #include <tos/semaphore.hpp>
 
 #include <drivers/arch/stm32/drivers.hpp>
+#include <util/include/tos/fixed_fifo.hpp>
 
 tos::semaphore set{1}, clear{0};
+
+void usart_setup()
+{
+    rcc_periph_clock_enable(RCC_USART2);
+
+    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
+                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
+    gpio_set_mode(GPIOA, GPIO_MODE_INPUT,
+                  GPIO_CNF_INPUT_FLOAT, GPIO_USART2_RX);
+
+    usart_set_baudrate(USART2, 9600);
+    usart_set_databits(USART2, 8);
+    usart_set_stopbits(USART2, USART_STOPBITS_1);
+    usart_set_mode(USART2, USART_MODE_TX_RX);
+    usart_set_parity(USART2, USART_PARITY_NONE);
+    usart_set_flow_control(USART2, USART_FLOWCONTROL_NONE);
+
+    nvic_enable_irq(NVIC_USART2_IRQ);
+
+    usart_enable_rx_interrupt(USART2);
+
+    usart_enable(USART2);
+}
+
+tos::fixed_fifo<uint8_t, 32, tos::ring_buf> rx_buf;
+const uint8_t* tx_it;
+const uint8_t* tx_end;
+tos::semaphore rx_s{0};
+tos::semaphore tx_s{0};
+
+void usart2_isr()
+{
+    if ((USART_CR1(USART2) & USART_CR1_RXNEIE) &&
+        (USART_SR(USART2) & USART_SR_RXNE)) {
+        rx_buf.push(usart_recv(USART2));
+        rx_s.up_isr();
+    }
+    if ((USART_CR1(USART2) & USART_CR1_TXEIE) &&
+             (USART_SR(USART2) & USART_SR_TXE))
+    {
+        usart_send(USART2, *tx_it++);
+        if (tx_it == tx_end)
+        {
+            usart_disable_tx_interrupt(USART2);
+            tx_s.up_isr();
+        }
+    }
+}
+
+void usart_write(tos::span<const uint8_t> buf)
+{
+    tx_it = buf.begin();
+    tx_end = buf.end();
+    usart_enable_tx_interrupt(USART2);
+    tx_s.down();
+}
 
 void blink_task(void*)
 {
 	using namespace tos::tos_literals;
 
-	tos::stm32::gpio g{ tos::stm32::ports[2] };
-	g.set_pin_mode(45_pin, tos::pin_mode::out);
+    tos::stm32::gpio g{ tos::stm32::ports[0] };
+
+    usart_setup();
+
+	g.set_pin_mode(5_pin, tos::pin_mode::out);
 
     while (true)
     {
         set.down();
-        gpio_set(GPIOC, GPIO13);
+        gpio_set(GPIOA, GPIO5);
+        rx_s.down();
+        uint8_t buf[] = { 'h', 'i', rx_buf.pop(), '\n' };
+        usart_write(buf);
+
         for (int i = 0; i < 2'000'000; i++) {
             __asm__("nop");
         }
+
         clear.up();
     }
 }
@@ -34,7 +99,7 @@ void off_task(void*)
     while (true)
     {
         clear.down();
-        gpio_clear(GPIOC, GPIO13);
+        gpio_clear(GPIOA, GPIO5);
         for (int i = 0; i < 2'000'000; i++) {
             __asm__("nop");
         }
