@@ -13,6 +13,8 @@
 #include <util/include/tos/mem_stream.hpp>
 #include <tos/print.hpp>
 
+#include <drivers/arch/stm32/timer.hpp>
+
 tos::semaphore set{1}, clear{0};
 
 void usart_setup()
@@ -33,9 +35,7 @@ void usart_setup()
     usart_set_flow_control(USART2, USART_FLOWCONTROL_NONE);
 
     nvic_enable_irq(NVIC_USART2_IRQ);
-
     usart_enable_rx_interrupt(USART2);
-
     usart_enable(USART2);
 }
 
@@ -57,27 +57,19 @@ void tim2_isr()
     }
 }
 
-void timer_setup()
+void tim3_isr()
 {
-    rcc_periph_clock_enable(RCC_TIM2);
-
-    rcc_periph_reset_pulse(RST_TIM2);
-
-    timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
-
-    timer_set_prescaler(TIM2, ((rcc_apb1_frequency * 2) / 2'000));
-
-    timer_disable_preload(TIM2);
-    timer_continuous_mode(TIM2);
-
-    timer_set_period(TIM2, 65535);
-
-    timer_set_oc_value(TIM2, TIM_OC1, 2);
-
-    timer_enable_counter(TIM2);
-
-    nvic_enable_irq(NVIC_TIM2_IRQ);
-    timer_enable_irq(TIM2, TIM_DIER_CC1IE);
+    if (timer_get_flag(TIM3, TIM_SR_CC1IF))
+    {
+        timer_clear_flag(TIM3, TIM_SR_CC1IF);
+        uint16_t compare_time = timer_get_counter(TIM3);
+        timer_set_oc_value(TIM3, TIM_OC1, compare_time + 2);
+        if (++cnt == 1000)
+        {
+            tsem.up_isr();
+            cnt = 0;
+        }
+    }
 }
 
 tos::fixed_fifo<uint8_t, 32, tos::ring_buf> rx_buf;
@@ -126,7 +118,10 @@ void blink_task(void*)
     tos::stm32::gpio g;
 
     usart_setup();
-    timer_setup();
+
+    tos::stm32::gp_timers tmr{tos::stm32::timers::tim2};
+    //auto alarm = tos::open(tos::devs::alarm, tmr);
+    tmr.set_frequency(1);
 
 	g.set_pin_mode(5_pin, tos::pin_mode::out);
 
@@ -135,6 +130,7 @@ void blink_task(void*)
 	tos::println(oms, int(rcc_apb1_frequency));
 	usart_write(oms.get());
 
+    tmr.enable();
     while (true)
     {
         set.down();
