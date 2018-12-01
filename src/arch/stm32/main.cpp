@@ -12,6 +12,9 @@
 
 extern "C"
 {
+extern "C" void *__dso_handle;
+void *__dso_handle = 0;
+
 alignas(8) char stack[512*2];
 int stack_index = 0;
 void* tos_stack_alloc(size_t sz)

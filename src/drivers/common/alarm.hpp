@@ -90,16 +90,16 @@ namespace tos
 
         void start()
         {
-            m_timer->set_callback({[](void* data){
+            (*m_timer)->set_callback({[](void* data){
                 static_cast<alarm*>(data)->tick_handler();
             }, this});
-            m_timer->set_frequency(1000);
-            m_timer->enable();
+            (*m_timer)->set_frequency(1000);
+            (*m_timer)->enable();
         }
 
         void stop()
         {
-            m_timer->disable();
+            (*m_timer)->disable();
         }
 
         void tick_handler()

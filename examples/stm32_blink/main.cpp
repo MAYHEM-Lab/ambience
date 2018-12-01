@@ -39,39 +39,6 @@ void usart_setup()
     usart_enable(USART2);
 }
 
-int cnt = 0;
-tos::semaphore tsem{0};
-
-void tim2_isr()
-{
-    if (timer_get_flag(TIM2, TIM_SR_CC1IF))
-    {
-        timer_clear_flag(TIM2, TIM_SR_CC1IF);
-        uint16_t compare_time = timer_get_counter(TIM2);
-        timer_set_oc_value(TIM2, TIM_OC1, compare_time + 2);
-        if (++cnt == 1000)
-        {
-            tsem.up_isr();
-            cnt = 0;
-        }
-    }
-}
-
-void tim3_isr()
-{
-    if (timer_get_flag(TIM3, TIM_SR_CC1IF))
-    {
-        timer_clear_flag(TIM3, TIM_SR_CC1IF);
-        uint16_t compare_time = timer_get_counter(TIM3);
-        timer_set_oc_value(TIM3, TIM_OC1, compare_time + 2);
-        if (++cnt == 1000)
-        {
-            tsem.up_isr();
-            cnt = 0;
-        }
-    }
-}
-
 tos::fixed_fifo<uint8_t, 32, tos::ring_buf> rx_buf;
 const uint8_t* tx_it;
 const uint8_t* tx_end;
@@ -119,9 +86,9 @@ void blink_task(void*)
 
     usart_setup();
 
-    tos::stm32::gp_timers tmr{tos::stm32::timers::tim2};
-    //auto alarm = tos::open(tos::devs::alarm, tmr);
-    tmr.set_frequency(1);
+    auto tmr = std::make_shared<tos::stm32::gp_timers>(tos::stm32::timers::tim2);
+    auto alarm = tos::open(tos::devs::alarm, tmr);
+    tos::stm32::tmr2 = tmr;
 
 	g.set_pin_mode(5_pin, tos::pin_mode::out);
 
@@ -130,17 +97,18 @@ void blink_task(void*)
 	tos::println(oms, int(rcc_apb1_frequency));
 	usart_write(oms.get());
 
-    tmr.enable();
     while (true)
     {
         set.down();
         g.write(5_pin, tos::digital::high);
         while (true)
         {
-            tsem.down();
+            using namespace std::chrono_literals;
+            alarm.sleep_for(1s);
             usart_write("l");
             g.write(5_pin, tos::digital::low);
-            tsem.down();
+
+            alarm.sleep_for(1s);
             usart_write("h");
             g.write(5_pin, tos::digital::high);
         }

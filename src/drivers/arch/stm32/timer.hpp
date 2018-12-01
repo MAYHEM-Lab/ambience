@@ -8,6 +8,8 @@
 #include <libopencm3/stm32/timer.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencmsis/core_cm3.h>
+#include <util/include/tos/function_ref.hpp>
+#include <memory>
 
 namespace tos::stm32
 {
@@ -33,6 +35,8 @@ namespace tos::stm32
 
     using gp_timers = timer_base<true>;
 
+    extern std::weak_ptr<tos::stm32::gp_timers> tmr2;
+
     template <>
     class timer_base<true>
     {
@@ -41,10 +45,23 @@ namespace tos::stm32
 
         void set_frequency(uint16_t hertz);
 
+        void set_callback(tos::function_ref<void()> fun) {
+            m_fun = fun;
+        }
+
         void enable();
         void disable();
     private:
         const tim_def* m_def;
+        tos::function_ref<void()> m_fun;
+        uint16_t m_period;
+        friend void run_callback(timer_base& tmr){
+            tmr.m_fun();
+        }
+        friend uint16_t get_period(timer_base& tmr)
+        {
+            return tmr.m_period;
+        }
     };
 
     constexpr bool is_general_timer(int num)
@@ -61,7 +78,8 @@ namespace tos::stm32
 
 namespace tos::stm32
 {
-    timer_base<true>::timer_base(const tim_def& def) : m_def{&def}
+    inline timer_base<true>::timer_base(const tim_def& def)
+        : m_def{&def}, m_fun{[](void*){}}
     {
         rcc_periph_clock_enable(m_def->rcc);
         rcc_periph_reset_pulse(m_def->rst);
@@ -71,18 +89,19 @@ namespace tos::stm32
         timer_set_period(m_def->tim, 65535);
     }
 
-    void timer_base<true>::set_frequency(uint16_t hertz) {
+    inline void timer_base<true>::set_frequency(uint16_t hertz) {
+        m_period = ((hertz * 2) / 1'000);
         timer_set_prescaler(m_def->tim, ((rcc_apb1_frequency * 2) / 2'000));
-        timer_set_oc_value(m_def->tim, TIM_OC1, ((uint32_t)hertz * 2) / 1000);
     }
 
-    void timer_base<true>::enable() {
+    inline void timer_base<true>::enable() {
+        timer_set_oc_value(m_def->tim, TIM_OC1, timer_get_counter(m_def->tim) + m_period);
         timer_enable_counter(m_def->tim);
         nvic_enable_irq(m_def->irq);
         timer_enable_irq(m_def->tim, TIM_DIER_CC1IE);
     }
 
-    void timer_base<true>::disable() {
+    inline void timer_base<true>::disable() {
         timer_disable_irq(m_def->tim, TIM_DIER_CC1IE);
         nvic_disable_irq(m_def->irq);
         timer_disable_counter(m_def->tim);
