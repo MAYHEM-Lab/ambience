@@ -40,6 +40,7 @@ add_subdirectory(libs/toscxx)
 add_subdirectory(libs/sml)
 add_subdirectory(libs/CWPack)
 add_subdirectory(libs/libemsha)
+add_subdirectory(libs/json)
 
 if(TOS_AVR)
     add_subdirectory(examples/gpio)

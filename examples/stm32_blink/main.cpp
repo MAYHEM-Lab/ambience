@@ -6,6 +6,7 @@
 
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/timer.h>
+#include <libopencm3/stm32/usart.h>
 #include <tos/semaphore.hpp>
 
 #include <drivers/arch/stm32/drivers.hpp>
@@ -14,6 +15,7 @@
 #include <tos/print.hpp>
 
 #include <drivers/arch/stm32/timer.hpp>
+#include <nlohmann/json.hpp>
 
 tos::semaphore set{1}, clear{0};
 
@@ -80,6 +82,7 @@ void usart_write(tos::span<const char> buf)
 
 void blink_task(void*)
 {
+	using json = nlohmann::json;
 	using namespace tos::tos_literals;
 
     tos::stm32::gpio g;
@@ -96,6 +99,12 @@ void blink_task(void*)
 	tos::omemory_stream oms{buf};
 	tos::println(oms, int(rcc_apb1_frequency));
 	usart_write(oms.get());
+
+	json j;
+	j["hello"] = 5;
+	
+	auto str = j.dump();
+	usart_write(tos::span<const char>{ str.data(), str.size() });
 
     while (true)
     {
