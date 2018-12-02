@@ -15,7 +15,7 @@ void tim2_isr()
 
         using namespace tos::stm32;
 
-        auto ptr = timer_base<true>::get(0);
+        auto ptr = general_timer::get(0);
         if (!ptr)
         {
             return;
@@ -35,7 +35,7 @@ void tim3_isr()
 
         using namespace tos::stm32;
 
-        auto ptr = timer_base<true>::get(1);
+        auto ptr = general_timer::get(1);
         if (!ptr)
         {
             return;
