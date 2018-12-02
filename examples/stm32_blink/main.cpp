@@ -85,13 +85,12 @@ void blink_task(void*)
 	using json = nlohmann::json;
 	using namespace tos::tos_literals;
 
-    tos::stm32::gpio g;
+	auto g = tos::open(tos::devs::gpio);
 
     usart_setup();
 
-    auto tmr = std::make_shared<tos::stm32::gp_timers>(tos::stm32::timers::tim2);
+    auto tmr = tos::open(tos::devs::timer<2>);
     auto alarm = tos::open(tos::devs::alarm, tmr);
-    tos::stm32::tmr2 = tmr;
 
 	g.set_pin_mode(5_pin, tos::pin_mode::out);
 
