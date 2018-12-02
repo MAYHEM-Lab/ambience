@@ -35,12 +35,12 @@ namespace tos::stm32
 
     template <>
     class timer_base<true> :
-            public tracked,
             public self_pointing<timer_base<true>>,
             public tracked_driver<timer_base<true>, 3>
     {
     public:
         timer_base(const gp_tim_def& tim);
+        timer_base(timer_base&&) = default;
 
         void set_frequency(uint16_t hertz);
 

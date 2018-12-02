@@ -17,38 +17,32 @@ template <class DriverT, int DriverNum = 1>
 struct tracked_driver
 {
 public:
-    explicit tracked_driver(int num) { assign(num, *static_cast<DriverT*>(this)); }
-
-    template <int N>
-    explicit tracked_driver(std::integral_constant<int, N>) { assign<N>(*static_cast<DriverT*>(this)); }
-
-    template <int Num>
-    static void assign(DriverT& d)
-    {
-        m_drivers[Num] = get_ptr(d);
+    explicit tracked_driver(int num) {
+        m_which = &instances[num];
+        assign();
     }
 
-    static void assign(int num, DriverT& d)
+    tracked_driver(tracked_driver&& rhs) : m_which(rhs.m_which)
     {
-        m_drivers[num] = get_ptr(d);
+        rhs.m_which = nullptr;
+        assign();
     }
 
-    template <int Num>
-    static const track_ptr<DriverT>& get()
+    static DriverT* get(int num)
     {
-        return m_drivers[Num];
-    }
-
-    static const track_ptr<DriverT>& get(int num)
-    {
-        return m_drivers[num];
+        return instances[num];
     }
 
 private:
+    void assign()
+    {
+        *m_which = static_cast<DriverT*>(this);
+    }
 
-    static track_ptr<DriverT> m_drivers[DriverNum];
+    DriverT** m_which;
+    static std::array<DriverT*, DriverNum> instances;
 };
 
 template <class DriverT, int DriverNum>
-track_ptr<DriverT> tracked_driver<DriverT, DriverNum>::m_drivers[DriverNum];
+std::array<DriverT*, DriverNum> tracked_driver<DriverT, DriverNum>::instances {};
 }

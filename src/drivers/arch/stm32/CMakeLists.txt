@@ -21,3 +21,4 @@ target_link_libraries(stm32_drivers PUBLIC
         stm32_rcc
         stm32_timer
         )
+target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> -Wl,--no-whole-archive")
