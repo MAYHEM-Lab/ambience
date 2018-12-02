@@ -1,3 +1,6 @@
+add_library(stm32_rcc rcc.hpp src/stub.cpp)
+target_link_libraries(stm32_rcc PUBLIC tos::core)
+target_include_directories(stm32_rcc PUBLIC ".")
 
 add_library(stm32_gpio gpio.hpp src/stub.cpp)
 target_link_libraries(stm32_gpio PUBLIC tos_gpio tos::core)
@@ -15,5 +18,6 @@ add_library(stm32_drivers drivers.hpp src/stub.cpp)
 target_link_libraries(stm32_drivers PUBLIC
         stm32_gpio
         stm32_usart
+        stm32_rcc
         stm32_timer
         )
