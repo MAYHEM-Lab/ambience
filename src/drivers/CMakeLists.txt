@@ -12,6 +12,11 @@ elseif(TOS_STM32)
 	add_subdirectory(arch/stm32)
 endif()
 
+add_library(tos_drivers common/driver_base.hpp src/stub.cpp)
+target_link_libraries(tos_drivers PUBLIC tos::core tos::util)
+target_include_directories(tos_drivers PUBLIC .)
+add_library(tos::drivers ALIAS tos_drivers)
+
 add_library(tos_spi common/spi.hpp src/stub.cpp common/timer.hpp src/spi.cpp)
 target_link_libraries(tos_spi PUBLIC tos_gpio tos_core)
 target_include_directories(tos_spi PUBLIC .)

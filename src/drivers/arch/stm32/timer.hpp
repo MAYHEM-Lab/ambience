@@ -10,12 +10,15 @@
 #include <libopencmsis/core_cm3.h>
 #include <util/include/tos/function_ref.hpp>
 #include <memory>
+#include <tos/track_ptr.hpp>
+#include <drivers/common/timer.hpp>
+#include <drivers/common/driver_base.hpp>
 
 namespace tos::stm32
 {
     template <bool IsGen> class timer_base;
 
-    struct tim_def
+    struct gp_tim_def
     {
         uint32_t tim;
         rcc_periph_clken rcc;
@@ -23,25 +26,21 @@ namespace tos::stm32
         uint8_t irq;
     };
 
-    namespace timers
-    {
-        constexpr tim_def tim2 {
-            TIM2, RCC_TIM2, RST_TIM2, NVIC_TIM2_IRQ
-        };
-        constexpr tim_def tim3 {
-            TIM3, RCC_TIM3, RST_TIM3, NVIC_TIM3_IRQ
-        };
-    } // namespace timers
+    constexpr gp_tim_def gen_timers[] = {
+        {TIM2, RCC_TIM2, RST_TIM2, NVIC_TIM2_IRQ},
+        {TIM3, RCC_TIM3, RST_TIM3, NVIC_TIM3_IRQ}
+    };
 
     using gp_timers = timer_base<true>;
 
-    extern std::weak_ptr<tos::stm32::gp_timers> tmr2;
-
     template <>
-    class timer_base<true>
+    class timer_base<true> :
+            public tracked,
+            public self_pointing<timer_base<true>>,
+            public tracked_driver<timer_base<true>, 3>
     {
     public:
-        timer_base(const tim_def& tim);
+        timer_base(const gp_tim_def& tim);
 
         void set_frequency(uint16_t hertz);
 
@@ -52,7 +51,7 @@ namespace tos::stm32
         void enable();
         void disable();
     private:
-        const tim_def* m_def;
+        const gp_tim_def* m_def;
         tos::function_ref<void()> m_fun;
         uint16_t m_period;
         friend void run_callback(timer_base& tmr){
@@ -68,18 +67,22 @@ namespace tos::stm32
     {
         return num >= 2 && num <= 5;
     }
-
-    template <int TmrNum>
-    using timer = timer_base<is_general_timer(TmrNum)>;
-
 } // namespace tos::stm32
+
+namespace tos
+{
+    inline stm32::timer_base<true> open_impl(tos::devs::timer_t<2>)
+    {
+        return { stm32::gen_timers[0] };
+    }
+} // namespace tos
 
 // impl
 
 namespace tos::stm32
 {
-    inline timer_base<true>::timer_base(const tim_def& def)
-        : m_def{&def}, m_fun{[](void*){}}
+    inline timer_base<true>::timer_base(const gp_tim_def& def)
+        : tracked_driver(0), m_def{&def}, m_fun{[](void*){}}
     {
         rcc_periph_clock_enable(m_def->rcc);
         rcc_periph_reset_pulse(m_def->rst);

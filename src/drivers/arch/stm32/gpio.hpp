@@ -91,4 +91,9 @@ namespace tos
 			return { &stm32::ports[port_index], 1 << (pin % 16) };
 		}
 	}
+
+	stm32::gpio open_impl(tos::devs::gpio_t)
+    {
+	    return {};
+    }
 }

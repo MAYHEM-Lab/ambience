@@ -149,6 +149,10 @@ namespace tos {
             {
                 return obj;
             }
+            tracked* get_base_ptr()
+            {
+                return obj;
+            }
         };
     }
 
@@ -187,8 +191,11 @@ namespace tos {
         T* get() const noexcept
         { return static_cast<T*>(get_base_ptr()); }
 
+        T& operator*() noexcept
+        { return *static_cast<T*>(get_base_ptr()); }
+
         T& operator*() const noexcept
-        { return static_cast<T*>(get_base_ptr()); }
+        { return *static_cast<T*>(get_base_ptr()); }
 
         T* operator->() const noexcept
         { return static_cast<T*>(get_base_ptr()); }
