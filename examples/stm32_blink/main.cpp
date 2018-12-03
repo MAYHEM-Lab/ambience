@@ -17,8 +17,6 @@
 #include <drivers/arch/stm32/timer.hpp>
 #include <nlohmann/json.hpp>
 
-tos::semaphore set{1}, clear{0};
-
 void usart_setup()
 {
     rcc_periph_clock_enable(RCC_GPIOA);
@@ -105,48 +103,22 @@ void blink_task(void*)
 	auto str = j.dump();
 	usart_write(tos::span<const char>{ str.data(), str.size() });
 
+    g.write(5_pin, tos::digital::high);
     while (true)
     {
-        set.down();
+        using namespace std::chrono_literals;
+        alarm.sleep_for(1s);
+        usart_write("l");
+        g.write(5_pin, tos::digital::low);
+
+        alarm.sleep_for(1s);
+        usart_write("h");
         g.write(5_pin, tos::digital::high);
-        while (true)
-        {
-            using namespace std::chrono_literals;
-            alarm.sleep_for(1s);
-            usart_write("l");
-            g.write(5_pin, tos::digital::low);
-
-            alarm.sleep_for(1s);
-            usart_write("h");
-            g.write(5_pin, tos::digital::high);
-        }
-        rx_s.down();
-        uint8_t buf[] = { 'h', 'i', rx_buf.pop(), '\n' };
-        usart_write(buf);
-
-        for (int i = 0; i < 2'000'000; i++) {
-            __asm__("nop");
-        }
-
-        clear.up();
     }
 }
 
-void off_task(void*)
-{
-    while (true)
-    {
-        clear.down();
-        gpio_clear(GPIOA, GPIO5);
-        for (int i = 0; i < 2'000'000; i++) {
-            __asm__("nop");
-        }
-        set.up();
-    }
-}
 
 void tos_main()
 {
     tos::launch(blink_task);
-    tos::launch(off_task);
 }
