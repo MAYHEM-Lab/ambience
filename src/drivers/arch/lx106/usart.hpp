@@ -9,6 +9,7 @@
 #include "src/new_uart_priv.h"
 #include <tos/driver_traits.hpp>
 #include <tos/thread.hpp>
+#include <drivers/common/driver_base.hpp>
 
 namespace tos
 {
@@ -20,15 +21,12 @@ namespace tos
                 el_t<usart_parity, const usart_parity&>,
                 el_t<usart_stop_bit, const usart_stop_bit&>>;
 
-        struct uart0
+        struct uart0 : self_pointing<uart0>
         {
         public:
             uart0(usart_constraint);
 
             static int write(span<const char>);
-
-            uart0*operator->() {return this;}
-            uart0&operator*() {return *this;}
         };
 
         struct sync_uart0
