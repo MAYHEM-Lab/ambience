@@ -24,6 +24,14 @@ void usart_setup(tos::stm32::gpio& g)
                   GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
 }
 
+auto delay = [](std::chrono::microseconds us){
+    auto end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 12;
+    for (int i = 0; i < end; ++i)
+    {
+        asm("nop");
+    }
+};
+
 void blink_task(void*)
 {
 	using namespace tos::tos_literals;
@@ -38,7 +46,7 @@ void blink_task(void*)
 
 	g.set_pin_mode(5_pin, tos::pin_mode::out);
 
-	tos::println(usart, int(rcc_apb1_frequency));
+	tos::println(usart, int(rcc_ahb_frequency), int(rcc_apb1_frequency));
 
     g.write(5_pin, tos::digital::high);
     while (true)
@@ -53,7 +61,6 @@ void blink_task(void*)
         g.write(5_pin, tos::digital::high);
     }
 }
-
 
 void tos_main()
 {

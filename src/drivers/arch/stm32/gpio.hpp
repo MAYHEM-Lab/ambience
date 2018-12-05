@@ -79,6 +79,11 @@ namespace tos
                 gpio_clear(pin.port->which, pin.pin);
             }
 
+            bool read(const pin_type& pin)
+			{
+				return gpio_get(pin.port->which, pin.pin);
+			}
+
 		private:
 		};
 	}
