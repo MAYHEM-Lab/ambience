@@ -13,13 +13,19 @@ namespace tos
     {
         struct input_t{};
         struct output_t{};
+
         struct in_pullup_t{};
         struct in_pulldown_t{};
 
+        struct alternate_output_t {};
+
         static constexpr input_t in{};
         static constexpr output_t out{};
+
         static constexpr in_pullup_t in_pullup{};
         static constexpr in_pulldown_t in_pulldown{};
+
+        static constexpr alternate_output_t alt_out{};
     }
 
     namespace digital
