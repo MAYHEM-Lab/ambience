@@ -94,6 +94,7 @@ elseif(TOS_ARM)
     add_subdirectory(examples/nrf52)
 elseif(TOS_STM32)
     add_subdirectory(examples/stm32_blink)
+    add_subdirectory(examples/stm32_dht22)
 endif()
 
 set(include_dest "include/tos")

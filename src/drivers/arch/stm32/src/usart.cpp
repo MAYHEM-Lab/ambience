@@ -4,6 +4,7 @@
 
 #include <usart.hpp>
 
+bool wait;
 void usart2_isr()
 {
     auto& ins = *tos::stm32::usart::get(1);
@@ -17,11 +18,18 @@ void usart2_isr()
     if ((USART_CR1(USART2) & USART_CR1_TXEIE) &&
         (USART_SR(USART2) & USART_SR_TXE))
     {
-        usart_send(USART2, *ins.tx_it++);
-        if (ins.tx_it == ins.tx_end)
+        if (wait)
         {
             usart_disable_tx_interrupt(USART2);
             ins.tx_s.up_isr();
+            wait = false;
+            return;
+        }
+        usart_send(USART2, *ins.tx_it++);
+        if (ins.tx_it == ins.tx_end)
+        {
+            wait = true;
+            return;
         }
     }
 }

@@ -10,6 +10,7 @@
 #include <tos/fixed_fifo.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
+#include <drivers/common/dht22.hpp>
 
 void usart_setup(tos::stm32::gpio& g)
 {
@@ -24,7 +25,15 @@ void usart_setup(tos::stm32::gpio& g)
                   GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
 }
 
-void blink_task(void*)
+auto delay = [](std::chrono::microseconds us) {
+    uint32_t end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 13.3;
+    for (volatile int i = 0; i < end; ++i)
+    {
+        __asm__ __volatile__ ("nop");
+    }
+};
+
+void dht_task(void*)
 {
 	using namespace tos::tos_literals;
 
@@ -33,28 +42,21 @@ void blink_task(void*)
     usart_setup(g);
     auto usart = tos::open(tos::devs::usart<1>, tos::uart::default_9600);
 
-    auto tmr = tos::open(tos::devs::timer<2>);
-    auto alarm = tos::open(tos::devs::alarm, tmr);
+    tos::println(usart, int(rcc_ahb_frequency), int(rcc_apb1_frequency));
+	auto dht = tos::make_dht(g, delay);
+	auto dht_pin = 8_pin;
 
-	g.set_pin_mode(5_pin, tos::pin_mode::out);
-
-	tos::println(usart, int(rcc_ahb_frequency), int(rcc_apb1_frequency));
-
-    g.write(5_pin, tos::digital::high);
     while (true)
     {
         using namespace std::chrono_literals;
-        alarm.sleep_for(1s);
-        tos::println(usart, "l");
-        g.write(5_pin, tos::digital::low);
+        delay(1s);
 
-        alarm.sleep_for(1s);
-        tos::println(usart, "h");
-        g.write(5_pin, tos::digital::high);
+        auto res = dht.read(dht_pin);
+        tos::println(usart, int(res), int(dht.temperature), int(dht.humidity));
     }
 }
 
 void tos_main()
 {
-    tos::launch(blink_task);
+    tos::launch(dht_task);
 }
