@@ -34,24 +34,28 @@ namespace tos::stm32
         struct i2c_def
         {
             uint32_t i2c;
+            rcc_periph_clken rcc;
         };
 
         static constexpr i2c_def i2cs[] = {
-                { I2C1 }
+                { I2C1, RCC_I2C1 },
+                { I2C2, RCC_I2C2 }
         };
-    }
+    } // namespace detail
 
     class twim
+            : public self_pointing<twim>
+            , public tracked_driver<twim, 2>
     {
     public:
         twim(gpio::pin_type clk, gpio::pin_type data)
+            : tracked_driver(0)
         {
-            rcc_periph_clock_enable(RCC_I2C1);
-            rcc_periph_clock_enable(RCC_AFIO);
+            m_def = detail::i2cs + 0;
 
-            AFIO_MAPR |= AFIO_MAPR_I2C1_REMAP;
+            rcc_periph_clock_enable(m_def->rcc);
 
-            i2c_reset(I2C1);
+            i2c_reset(m_def->i2c);
 
             rcc_periph_clock_enable(data.port->rcc);
             rcc_periph_clock_enable(clk.port->rcc);
@@ -62,13 +66,12 @@ namespace tos::stm32
             gpio_set_mode(clk.port->which, GPIO_MODE_OUTPUT_50_MHZ,
                           GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN, clk.pin);
 
-            i2c_peripheral_disable(I2C1);
-            i2c_set_clock_frequency(I2C1, I2C_CR2_FREQ_36MHZ);
-            i2c_set_ccr(I2C1, 0x1e);
-            i2c_set_trise(I2C1, 0x0b);
-            i2c_set_own_7bit_slave_address(I2C1, 0xab);
-            i2c_peripheral_enable(I2C1);
-            m_def = detail::i2cs + 0;
+            i2c_peripheral_disable(m_def->i2c);
+            i2c_set_clock_frequency(m_def->i2c, I2C_CR2_FREQ_36MHZ);
+            i2c_set_ccr(m_def->i2c, 0x1e);
+            i2c_set_trise(m_def->i2c, 0x0b);
+            i2c_set_own_7bit_slave_address(m_def->i2c, 0xab);
+            i2c_peripheral_enable(m_def->i2c);
         }
 
         twi_tx_res transmit(twi_addr_t to, span<const char> buf) noexcept;
@@ -78,7 +81,7 @@ namespace tos::stm32
 
         const detail::i2c_def* m_def;
     };
-}
+} // namespace tos::stm32
 
 void i2c1_ev_isr()
 {
@@ -110,6 +113,8 @@ tos::twi_tx_res tos::stm32::twim::transmit(tos::twi_addr_t to, tos::span<const c
     while (!(I2C_SR1(m_def->i2c) & (I2C_SR1_BTF | I2C_SR1_TxE)));
 
     i2c_send_stop(m_def->i2c);
+
+    return tos::twi_tx_res::ok;
 }
 
 void lcd_main(void*)
@@ -117,6 +122,9 @@ void lcd_main(void*)
     using namespace tos::tos_literals;
     using namespace tos; using namespace tos::stm32;
 
+    // need a proper API for this alternate function IO business ...
+    rcc_periph_clock_enable(RCC_AFIO);
+    AFIO_MAPR |= AFIO_MAPR_I2C1_REMAP;
     twim t { 24_pin, 25_pin };
 
     lcd<twim> lcd{ t, { 0x27 }, 20, 4 };
