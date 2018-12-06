@@ -53,11 +53,12 @@
 #define Rs 0b00000001 // Register select bit
 
 #include <common/i2c.hpp>
+#include "driver_base.hpp"
 
 namespace tos
 {
     template <class I2cT>
-    class lcd
+    class lcd : public self_pointing<lcd<I2cT>>
     {
     public:
         lcd(I2cT& i2c, twi_addr_t lcd_addr, uint8_t cols, uint8_t rows)
