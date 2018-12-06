@@ -46,26 +46,42 @@ namespace tos
 			void set_pin_mode(const pin_type& pin, pin_mode::output_t)
 			{
 			    rcc_periph_clock_enable(pin.port->rcc);
+#if defined(STM32F1)
 				gpio_set_mode(pin.port->which, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, pin.pin);
+#else
+                gpio_mode_setup(pin.port->which, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, pin.pin);
+#endif
 			}
 
 			void set_pin_mode(const pin_type& pin, pin_mode::input_t)
             {
 			    rcc_periph_clock_enable(pin.port->rcc);
+#if defined(STM32F1)
 			    gpio_set_mode(pin.port->which, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, pin.pin);
+#else
+                gpio_mode_setup(pin.port->which, GPIO_MODE_INPUT, GPIO_PUPD_NONE, pin.pin);
+#endif
             }
 
             void set_pin_mode(const pin_type& pin, pin_mode::in_pullup_t)
             {
                 rcc_periph_clock_enable(pin.port->rcc);
+#if defined(STM32F1)
                 gpio_set_mode(pin.port->which, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, pin.pin);
-                write(pin, digital::high);
+#else
+                gpio_mode_setup(pin.port->which, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, pin.pin);
+#endif
+                //write(pin, digital::high);
             }
 
             void set_pin_mode(const pin_type& pin, pin_mode::in_pulldown_t)
             {
                 rcc_periph_clock_enable(pin.port->rcc);
+#if defined(STM32F1)
                 gpio_set_mode(pin.port->which, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, pin.pin);
+#else
+                gpio_mode_setup(pin.port->which, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, pin.pin);
+#endif
                 write(pin, digital::low);
             }
 

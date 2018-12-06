@@ -30,7 +30,11 @@ void tos_main();
 
 int main()
 {
+#ifdef STM32F1
     rcc_clock_setup_in_hse_8mhz_out_72mhz();
+#else
+    rcc_clock_setup_hse_3v3(&rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_120MHZ]);
+#endif
 
     tos::kern::enable_interrupts();
 
