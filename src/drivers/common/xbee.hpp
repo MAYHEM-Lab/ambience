@@ -26,18 +26,17 @@ namespace tos
 
         UsartT* m_usart;
     };
-}
+} // namespace tos
 
 
 // IMPL
 
 namespace tos
 {
-
     template<class UsartT>
     template<class TxPacket>
     void xbee_s1<UsartT>::transmit(const TxPacket& packet)
     {
         xbee::write_to(*m_usart, packet);
     }
-}
+} // namespace tos

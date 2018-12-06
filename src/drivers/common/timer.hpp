@@ -11,5 +11,5 @@ namespace tos
     namespace devs {
         template<int N> using timer_t = dev<struct _timer_t, N>;
         template<int N> static constexpr timer_t<N> timer{};
-    }
-}
+    } // namespace devs
+} // namespace tos

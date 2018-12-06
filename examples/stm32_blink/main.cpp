@@ -6,7 +6,7 @@
 
 #include <tos/semaphore.hpp>
 
-#include <drivers/arch/stm32/drivers.hpp>
+#include <arch/stm32/drivers.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>

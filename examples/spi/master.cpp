@@ -5,7 +5,7 @@
 #include <drivers/common/spi.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
-#include <drivers/arch/avr/drivers.hpp>
+#include <arch/avr/drivers.hpp>
 
 void master_task(void*)
 {

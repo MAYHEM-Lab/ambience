@@ -2,8 +2,8 @@
 // Created by fatih on 4/15/18.
 //
 
-#include <drivers/common/spi.hpp>
-#include <drivers/arch/avr/drivers.hpp>
+#include <common/spi.hpp>
+#include <arch/avr/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 

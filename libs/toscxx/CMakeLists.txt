@@ -1,18 +1,65 @@
 if (TOS_PROVIDE_LIBCXX)
 add_library(tos_libcxx
     src/vector.cpp
-    include/initializer_list
     include/algorithm
-    include/utility
-    include/type_traits
+    include/array
+    include/bit
+    include/__bit_reference
+    include/cassert
+    include/cctype
+    include/cerrno
+    include/chrono
+    include/ciso646
+    include/climits
     include/__config
-    include/version
-    include/memory
+    include/cstdarg
     include/cstddef
-    include/iosfwd
+    include/cstdint
+    include/cstdio
+    include/cstdlib
+    include/cstring
+    include/ctime
+    include/cwchar
+    include/cwctype
+    include/__debug
+    include/exception
+    include/forward_list
     include/functional
     include/__functional_base
-    include/__nullptr)
+    include/__hash_table
+    include/initializer_list
+    include/iosfwd
+    include/iterator
+    include/limits
+    include/map
+    include/memory
+    include/new
+    include/__node_handle
+    include/__nullptr
+    include/numeric
+    include/optional
+    include/ratio
+    include/span
+    include/__split_buffer
+    include/stdexcept
+    include/string
+    include/__string
+    include/string_view
+    include/__tree
+    include/tuple
+    include/__tuple
+    include/typeinfo
+    include/type_traits
+    include/__undef_macros
+    include/unordered_map
+    include/utility
+    include/valarray
+    include/variant
+    include/vector
+    include/version
+    include/wchar.h
+    include/wctype.h
+)
 
 target_include_directories(tos_libcxx PUBLIC "include")
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_THREADS)

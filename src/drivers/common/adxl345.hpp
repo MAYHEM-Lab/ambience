@@ -12,7 +12,7 @@ namespace tos
     class adxl345
     {
     public:
-        adxl345(esp82::twim& twim);
+        explicit adxl345(esp82::twim& twim);
 
         void powerOn();
 
@@ -26,4 +26,4 @@ namespace tos
         void writeToI2C(uint8_t address, uint8_t val);
         esp82::twim& m_twim;
     };
-}
+} // namespace tos

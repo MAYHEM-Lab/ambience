@@ -24,7 +24,7 @@ namespace tos
 
         static constexpr stop_bit_1_t stop_bit_1{};
         static constexpr stop_bit_2_t stop_bit_2{};
-    }
+    } // namespace uart
 
     namespace uart
     {
@@ -32,8 +32,8 @@ namespace tos
         {
             static constexpr struct sent_t{} sent{};
             static constexpr struct recv_t{} recv{};
-        }
-    }
+        } // namespace events
+    } // namespace uart
 
     enum class usart_stop_bit : uint8_t {
         one = 0b0,
@@ -68,7 +68,7 @@ namespace tos
 			.add(tos::usart_baud_rate{ 9600 })
 			.add(tos::usart_parity::disabled)
 			.add(tos::usart_stop_bit::one);
-	}
+	} // namespace uart
 
     namespace tos_literals
     {
@@ -76,11 +76,11 @@ namespace tos
         {
             return {uint32_t(x)};
         }
-    }
+    } // namespace tos_literals
 
     namespace devs
     {
         template <int N> using usart_t = dev<struct _usart_t, N>;
         template <int N> static constexpr usart_t<N> usart{};
-    }
-}
+    } // namespace devs
+} // namespace tos

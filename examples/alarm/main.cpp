@@ -2,15 +2,13 @@
 // Created by Mehmet Fatih BAKIR on 11/05/2018.
 //
 
-#include <drivers/arch/avr/usart.hpp>
-#include <ft/include/tos/ft.hpp>
+#include <arch/avr/drivers.hpp>
+#include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/arch.hpp>
-#include <drivers/common/gpio.hpp>
-#include <tos/devices.hpp>
-#include <drivers/arch/avr/timer.hpp>
-#include <tos/waitable.hpp>
 #include <drivers/common/alarm.hpp>
+#include <tos/devices.hpp>
+#include <tos/waitable.hpp>
 
 void tick_task(void*)
 {

@@ -70,7 +70,7 @@ private:
     uint32_t ina219_currentDivider_mA;
     float    ina219_powerMultiplier_mW;
 };
-}
+} // namespace tos
 
 // impl
 
@@ -173,4 +173,4 @@ namespace tos
         _twim->receive(_addr, raw_cast<char>(spanify<uint8_t>(buf)));
         *value = (buf[0] << 8 | buf[1]);
     }
-}
+} // namespace tos

@@ -15,5 +15,5 @@ namespace tos
 
         template <uint8_t N>
         static constexpr eeprom_t<N> eeprom{};
-    }
-}
+    } // namespace devs
+} // namespace tos
