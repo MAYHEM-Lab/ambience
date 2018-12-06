@@ -35,6 +35,12 @@ namespace tos
             return read() - m_off;
         }
 
+        void power_down()
+        {
+            auto& g = get_gpio();
+            g.write(m_clk, tos::digital::high);
+        }
+
     private:
 
         uint32_t average(int n)
@@ -51,34 +57,29 @@ namespace tos
 
         uint32_t read()
         {
-            uint8_t d[3];
-            using std::begin, std::end;
-            std::fill(begin(d), end(d), 0);
+            uint32_t res{};
 
             auto& g = get_gpio();
 
             while (g.read(m_data));
 
-            for (int j = 3; j--;)
+            for (int i = 0; i < 24; ++i)
             {
-                for (char i = 8; i--;)
+                g.write(m_clk, tos::digital::high);
+                if (g.read(m_data))
                 {
-                    g.write(m_clk, tos::digital::high);
-                    if (g.read(m_data))
-                    {
-                        d[j] |= (1 << i);
-                    }
-                    g.write(m_clk, tos::digital::low);
+                    res |= 1;
                 }
+                res <<= 1;
+                g.write(m_clk, tos::digital::low);
             }
 
             g.write(m_clk, tos::digital::high);
             g.write(m_clk, tos::digital::low);
 
-            d[2] ^= 0x80;
+            res ^= 0x800000;
 
-            return ((uint32_t) d[2] << 16) | ((uint32_t) d[1] << 8)
-                   | (uint32_t) d[0];
+            return res;
         }
 
         uint32_t m_off;
