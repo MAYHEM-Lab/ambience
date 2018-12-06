@@ -1,9 +1,9 @@
 add_library(stm32_impl main.cpp tos_arch.hpp)
 
-target_include_directories(stm32_impl PUBLIC "/home/fatih/libopencm3/include")
+target_include_directories(stm32_impl PUBLIC "/opt/x-tools/libopencm3/include")
 target_link_libraries(stm32_impl PUBLIC "-Tbluepill.ld")
 target_link_libraries(stm32_impl PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(stm32_impl PUBLIC "-L/home/fatih/libopencm3/lib/")
+target_link_libraries(stm32_impl PUBLIC "-L/opt/x-tools/libopencm3/lib/")
 target_link_libraries(stm32_impl PUBLIC opencm3_stm32f1)
 target_link_libraries(stm32_impl PUBLIC tos_core )
 target_link_libraries(stm32_impl PUBLIC "-specs=nano.specs -specs=nosys.specs -Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group -Wl,--undefined=main")
