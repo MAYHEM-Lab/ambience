@@ -8,6 +8,6 @@ namespace tos
 {
     namespace vcs
     {
-        static constexpr auto commit_hash = TOS_GIT_SHA1;
+        static constexpr char commit_hash[] = TOS_GIT_SHA1;
     }
 }

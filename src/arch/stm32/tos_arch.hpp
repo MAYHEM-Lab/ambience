@@ -6,6 +6,7 @@
 
 #include <libopencmsis/core_cm3.h>
 #include <string.h>
+#include "tos_platform.hpp"
 
 extern "C"
 {

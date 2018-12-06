@@ -1,4 +1,4 @@
-add_library(stm32_impl main.cpp tos_arch.hpp)
+add_library(stm32_impl main.cpp tos_arch.hpp tos_platform.hpp)
 
 target_include_directories(stm32_impl PUBLIC "/opt/x-tools/libopencm3/include")
 target_link_libraries(stm32_impl PUBLIC "-Tbluepill.ld")

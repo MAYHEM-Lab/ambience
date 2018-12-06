@@ -7,6 +7,9 @@
 #include <arch/stm32/drivers.hpp>
 
 #include <libopencm3/stm32/i2c.h>
+#include <tos/version.hpp>
+#include <tos/mem_stream.hpp>
+#include <tos/print.hpp>
 
 namespace tos
 {
@@ -112,17 +115,35 @@ void lcd_main(void*)
 
     lcd<twim> lcd{ t, { 0x27 }, 20, 4 };
 
-    char buf[] = "Hello World";
     char buf2[] = "Tos on STM32";
 
     auto tmr = open(devs::timer<2>);
     auto alarm = open(devs::alarm, tmr);
-    lcd.begin(alarm);
 
+    lcd.begin(alarm);
     lcd.backlight();
-    lcd.print(buf2);
-    lcd.set_cursor(0, 1);
-    lcd.print(buf);
+
+    char mbuf[20];
+    int x = 0;
+    while (true)
+    {
+        ++x;
+        using namespace std::chrono_literals;
+        lcd.set_cursor(0, 0);
+        lcd.print(buf2);
+        lcd.set_cursor(0, 1);
+        lcd.print(tos::platform::arch_name);
+        lcd.print(" ");
+        lcd.print(tos::platform::vendor_name);
+        lcd.set_cursor(0, 2);
+        lcd.print(tos::span<const char>(tos::vcs::commit_hash).slice(0, 7));
+        lcd.set_cursor(0, 3);
+        tos::omemory_stream str{mbuf};
+        tos::print(str, x);
+        lcd.print(str.get());
+
+        alarm.sleep_for(100ms);
+    }
 }
 
 void tos_main()
