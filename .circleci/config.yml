@@ -45,42 +45,42 @@ jobs:
           working_directory: build/
           name: Build Project
           command: ninja
-stm32_build:
-  docker:
-    - image: ubuntu:bionic
-  steps:
-    - checkout
-    - run:
-        name: Update apt
-        command: apt-get update
-    - run:
-        name: Install unzip wget
-        command: apt-get install -y unzip wget ninja-build cmake git
-    - run:
-        name: Get submodules
-        command: git submodule update --init --recursive
-    - run:
-        name: Download toolchain
-        command: wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2
-    - run:
-        name: Extract toolchain
-        command: tar xf gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2
-    - run:
-        name: Move the toolchain
-        command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-7-2017-q4-major /opt/x-tools
-    - run:
-        name: Download libopencm3
-        command: wget http://cs.ucsb.edu/~bakir/libopencm3.zip -O libopencm3.zip
-    - run:
-        name: Extract libopencm3
-        command: unzip libopencm3.zip -d /opt/x-tools
-    - run:
-        name: Generate Project
-        command: mkdir build && cd build && cmake -G Ninja -DTOS_STM32=ON ..
-    - run:
-        working_directory: build/
-        name: Build Project
-        command: ninja
+  stm32_build:
+    docker:
+      - image: ubuntu:bionic
+    steps:
+      - checkout
+      - run:
+          name: Update apt
+          command: apt-get update
+      - run:
+          name: Install unzip wget
+          command: apt-get install -y unzip wget ninja-build cmake git
+      - run:
+          name: Get submodules
+          command: git submodule update --init --recursive
+      - run:
+          name: Download toolchain
+          command: wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2
+      - run:
+          name: Extract toolchain
+          command: tar xf gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2
+      - run:
+          name: Move the toolchain
+          command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-7-2017-q4-major /opt/x-tools
+      - run:
+          name: Download libopencm3
+          command: wget http://cs.ucsb.edu/~bakir/libopencm3.zip -O libopencm3.zip
+      - run:
+          name: Extract libopencm3
+          command: unzip libopencm3.zip -d /opt/x-tools
+      - run:
+          name: Generate Project
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_STM32=ON ..
+      - run:
+          working_directory: build/
+          name: Build Project
+          command: ninja
   x86_build:
     docker:
       - image: ubuntu:bionic
