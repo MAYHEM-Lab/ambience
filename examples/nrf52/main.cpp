@@ -12,13 +12,10 @@
 #include <drivers/include/nrfx_uarte.h>
 #include <tos/compiler.hpp>
 
-#include <drivers/common/gpio.hpp>
-#include <drivers/arch/nrf52/gpio.hpp>
-#include <drivers/arch/nrf52/usart.hpp>
+#include <drivers/arch/nrf52/drivers.hpp>
 #include <algorithm>
 #include <tos/print.hpp>
 
-#include <drivers/arch/nrf52/timer.hpp>
 #include <drivers/common/alarm.hpp>
 #include <drivers/arch/nrf52/radio.hpp>
 #include <drivers/arch/nrf52/twim.hpp>

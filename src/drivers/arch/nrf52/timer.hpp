@@ -7,12 +7,13 @@
 #include <stdint.h>
 #include <drivers/common/timer.hpp>
 #include <tos/function_ref.hpp>
+#include <drivers/common/driver_base.hpp>
 
 namespace tos
 {
     namespace nrf52
     {
-        class timer0
+        class timer0 : public self_pointing<timer0>
         {
         public:
             timer0();

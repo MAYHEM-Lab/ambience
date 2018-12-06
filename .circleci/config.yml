@@ -33,7 +33,7 @@ jobs:
           command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-7-2017-q4-major /opt/x-tools
       - run:
           name: Download nRF52 SDK
-          command: wget https://www.nordicsemi.com/eng/nordic/download_resource/59011/94/80130352/116085 -O nrf5-sdk.zip
+          command: wget http://cs.ucsb.edu/~bakir/nRF5_SDK_15.2.0_9412b96.zip -O nrf5-sdk.zip
       - run:
           name: Extract SDK
           command: unzip nrf5-sdk.zip -d /opt/x-tools
