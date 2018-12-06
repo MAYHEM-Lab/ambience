@@ -4,11 +4,11 @@ workflows:
   all_platforms:
     jobs:
     - esp_build
-    - arm_build
+    - nrf52_build
     - avr_build
     - x86_build
 jobs:
-  arm_build:
+  nrf52_build:
     docker:
       - image: ubuntu:bionic
     steps:
