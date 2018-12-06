@@ -99,6 +99,7 @@ elseif(TOS_STM32)
     add_subdirectory(examples/stm32_blink)
     add_subdirectory(examples/stm32_dht22)
     add_subdirectory(examples/photon)
+    add_subdirectory(examples/hx711)
 endif()
 
 set(include_dest "include/tos")

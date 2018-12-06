@@ -26,7 +26,7 @@ namespace tos
         static constexpr in_pulldown_t in_pulldown{};
 
         static constexpr alternate_output_t alt_out{};
-    }
+    } // namespace pin_mode
 
     namespace digital
     {
@@ -35,11 +35,11 @@ namespace tos
 
         static constexpr high_t high{};
         static constexpr low_t low{};
-    }
+    } // namespace digital
 
     namespace devs
     {
         using gpio_t = dev<struct _gpio_t, 0>;
         static constexpr gpio_t gpio{};
-    }
+    } // namespace devs
 }

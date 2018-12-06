@@ -32,6 +32,12 @@ add_library(tos_dht22 common/dht22.hpp src/dht22.cpp)
 target_link_libraries(tos_dht22 PUBLIC tos_core tos_gpio)
 target_include_directories(tos_dht22 PUBLIC .)
 
+add_library(tos_hx711 common/hx711.hpp src/stub.cpp)
+target_link_libraries(tos_hx711 PUBLIC tos::core tos_gpio)
+target_include_directories(tos_hx711 PUBLIC .)
+
+add_library(tos::hx711 ALIAS tos_hx711)
+
 add_library(tos_xbee
         common/xbee.hpp
         common/xbee/constants.hpp
