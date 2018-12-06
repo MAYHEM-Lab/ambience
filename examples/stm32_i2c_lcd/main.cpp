@@ -44,18 +44,23 @@ namespace tos::stm32
     class twim
     {
     public:
-        twim(gpio::pin_type, gpio::pin_type)
+        twim(gpio::pin_type clk, gpio::pin_type data)
         {
             rcc_periph_clock_enable(RCC_I2C1);
-            rcc_periph_clock_enable(RCC_GPIOB);
             rcc_periph_clock_enable(RCC_AFIO);
 
             AFIO_MAPR |= AFIO_MAPR_I2C1_REMAP;
 
             i2c_reset(I2C1);
 
-            gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ,
-                          GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN, GPIO_I2C1_RE_SCL | GPIO_I2C1_RE_SDA);
+            rcc_periph_clock_enable(data.port->rcc);
+            rcc_periph_clock_enable(clk.port->rcc);
+
+            gpio_set_mode(data.port->which, GPIO_MODE_OUTPUT_50_MHZ,
+                          GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN, data.pin);
+
+            gpio_set_mode(clk.port->which, GPIO_MODE_OUTPUT_50_MHZ,
+                          GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN, clk.pin);
 
             i2c_peripheral_disable(I2C1);
             i2c_set_clock_frequency(I2C1, I2C_CR2_FREQ_36MHZ);
@@ -111,7 +116,8 @@ void lcd_main(void*)
 {
     using namespace tos::tos_literals;
     using namespace tos; using namespace tos::stm32;
-    twim t {30_pin, 31_pin};
+
+    twim t { 24_pin, 25_pin };
 
     lcd<twim> lcd{ t, { 0x27 }, 20, 4 };
 
