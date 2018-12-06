@@ -70,7 +70,6 @@ elseif(TOS_ESP)
         add_subdirectory(libs/mqtt)
     endif()
 
-    #add_subdirectory(examples/esp_fault)
     add_subdirectory(examples/esp_lwip)
     add_subdirectory(examples/esp_conn)
     #add_subdirectory(examples/esp_mqtt)
