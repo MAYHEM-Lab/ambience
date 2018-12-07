@@ -76,7 +76,7 @@ namespace tos
         using namespace std::chrono_literals;
 
         expanderWrite(m_backlight);
-        alarm.sleep_for(1s);
+        alarm.sleep_for(200ms);
 
         write4bits(0x30);
         alarm.sleep_for(5ms);
