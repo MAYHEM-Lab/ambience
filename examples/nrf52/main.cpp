@@ -62,18 +62,18 @@ namespace {
         lcd.begin(alarm);
 
         lcd.backlight();
-        lcd.print(buf2);
+        lcd.write(buf2);
         lcd.set_cursor(0, 2);
-        lcd.print(buf);
+        lcd.write(buf);
         lcd.set_cursor(0, 1);
-        lcd.print(buf);
+        lcd.write(buf);
 
         g->write(17, digital::low);
         while (true)
         {
             send.down();
             g->write(17, digital::high);
-            lcd.print({ &c, 1 });
+            lcd.write({&c, 1});
             sent.up();
             g->write(17, digital::low);
         }

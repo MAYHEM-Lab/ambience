@@ -129,8 +129,6 @@ void lcd_main(void*)
 
     lcd<twim> lcd{ t, { 0x27 }, 20, 4 };
 
-    char buf2[] = "Tos on STM32";
-
     auto tmr = open(devs::timer<2>);
     auto alarm = open(devs::alarm, tmr);
 
@@ -143,18 +141,18 @@ void lcd_main(void*)
     {
         ++x;
         using namespace std::chrono_literals;
+
         lcd.set_cursor(0, 0);
-        lcd.print(buf2);
+        tos::print(lcd, "Tos on STM32");
+
         lcd.set_cursor(0, 1);
-        lcd.print(tos::platform::arch_name);
-        lcd.print(" ");
-        lcd.print(tos::platform::vendor_name);
+        tos::print(lcd, tos::platform::arch_name, tos::platform::vendor_name);
+
         lcd.set_cursor(0, 2);
-        lcd.print(tos::span<const char>(tos::vcs::commit_hash).slice(0, 7));
+        tos::print(lcd, tos::span<const char>(tos::vcs::commit_hash).slice(0, 7));
+
         lcd.set_cursor(0, 3);
-        tos::omemory_stream str{mbuf};
-        tos::print(str, x);
-        lcd.print(str.get());
+        tos::print(lcd, x);
 
         alarm.sleep_for(100ms);
     }

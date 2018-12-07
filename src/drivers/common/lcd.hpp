@@ -37,7 +37,7 @@ namespace tos
         void no_backlight();
 
         void set_cursor(uint8_t col, uint8_t row);
-        void print(span<const char> buf);
+        int write(span<const char> buf);
 
         void write(char c);
     private:
@@ -117,8 +117,8 @@ namespace tos
     void lcd<I2cT>::send(uint8_t value, uint8_t mode) {
         uint8_t highnib = value & 0xF0;
         uint8_t lownib=(value<<4)&0xF0;
-        write4bits((highnib)|mode);
-        write4bits((lownib)|mode);
+        write4bits(highnib | mode);
+        write4bits(lownib | mode);
     }
 
     template<class I2cT>
@@ -129,8 +129,8 @@ namespace tos
 
     template<class I2cT>
     void lcd<I2cT>::expanderWrite(uint8_t _data) {
-        auto data = uint8_t((int)(_data) | m_backlight);
-        auto res = m_i2c.transmit(m_addr, { (char*)&data, 1 });
+        char data[] = {uint8_t( _data | m_backlight) };
+        auto res = m_i2c.transmit(m_addr, data);
         if (res != twi_tx_res::ok)
         {
             //TODO: err
@@ -185,12 +185,13 @@ namespace tos
     }
 
     template<class I2cT>
-    void lcd<I2cT>::print(span<const char> buf) {
+    int lcd<I2cT>::write(span<const char> buf) {
         for (auto c : buf)
         {
             if (c == 0) break;
             write(c);
         }
+        return buf.size();
     }
 
     template<class I2cT>
