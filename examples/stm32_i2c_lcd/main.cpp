@@ -25,7 +25,7 @@ namespace tos
             __asm__ __volatile__ ("nop");
         }
     }
-}
+} // namespace tos
 
 namespace tos::stm32
 {
@@ -135,7 +135,6 @@ void lcd_main(void*)
     lcd.begin(alarm);
     lcd.backlight();
 
-    char mbuf[20];
     int x = 0;
     while (true)
     {
