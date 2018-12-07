@@ -72,7 +72,7 @@ target_include_directories(tos_tty PUBLIC .)
 add_library(tos_i2c common/i2c.hpp src/stub.cpp)
 target_include_directories(tos_i2c PUBLIC .)
 
-add_library(tos_lcd common/lcd.hpp src/stub.cpp)
+add_library(tos_lcd common/lcd.hpp src/stub.cpp common/detail/lcd_constants.hpp)
 target_include_directories(tos_lcd PUBLIC .)
 
 add_library(tos_ina219 common/ina219.hpp src/stub.cpp common/detail/ina219_constants.hpp)
