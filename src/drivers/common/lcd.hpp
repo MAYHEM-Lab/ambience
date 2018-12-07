@@ -64,31 +64,31 @@ namespace tos
     template<class I2cT>
     template <class AlarmT>
     void lcd<I2cT>::begin(AlarmT& alarm) {
-        auto displ_func = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
+        uint8_t displ_func = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
 
         if (m_rows > 1)
         {
             displ_func |= LCD_2LINE;
         }
 
-        using namespace std::chrono_literals;
+        m_display_func = displ_func;
 
-        alarm.sleep_for(50ms);
+        using namespace std::chrono_literals;
 
         expanderWrite(m_backlight);
         alarm.sleep_for(1s);
 
-        write4bits(0x03 << 4);
+        write4bits(0x30);
         alarm.sleep_for(5ms);
 
-        write4bits(0x03 << 4);
+        write4bits(0x30);
         alarm.sleep_for(5ms);
 
-        write4bits(0x03 << 4);
+        write4bits(0x30);
         tos::delay_us(150us);
 
         // finally, set to 4-bit interface
-        write4bits(0x02 << 4);
+        write4bits(0x20);
         // set # lines, font size, etc.
         command(LCD_FUNCTIONSET | m_display_func);
 
@@ -204,4 +204,4 @@ namespace tos
         m_backlight = LCD_NOBACKLIGHT;
         expanderWrite(0);
     }
-}
+} // namespace tos
