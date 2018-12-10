@@ -17,6 +17,7 @@
 #include <util/include/tos/mem_stream.hpp>
 #include "app.hpp"
 #include <drivers/common/ina219.hpp>
+#include <tos/semaphore.hpp>
 
 char trace_buf[128];
 tos::omemory_stream trace{ trace_buf };
@@ -31,13 +32,14 @@ namespace temp
 
 		// wake up the slave and wait for it to boot
         gpio.write(11_pin, tos::digital::high);
-        alarm.sleep_for(100ms);
+        alarm.sleep_for(2000ms);
 
         std::array<char, 2> wait;
         auto res = usart.read(wait, alarm, 5s);
 
         if (res.size() != 2 || res[0] != 'h' || res[1] != 'i')
         {
+            gpio.write(11_pin, tos::digital::low);
 			tos::println(trace, "slave non-responsive");
             return temp::sample{ -1, -1, -1 };
         }
@@ -50,6 +52,7 @@ namespace temp
 
         if (r.size() != buf.size())
         {
+            gpio.write(11_pin, tos::digital::low);
 			tos::println(trace, "slave sent garbage");
             return temp::sample{ -1, -1, -1 };
         }
@@ -59,6 +62,7 @@ namespace temp
         auto chkbuf = usart.read(chk_buf, alarm, 5s);
         if (chkbuf.size() == 0)
         {
+            gpio.write(11_pin, tos::digital::low);
 			tos::println(trace, "slave omitted checksum");
             return temp::sample{ -1, -1, -1 };
         }
@@ -97,56 +101,30 @@ namespace temp
  *
  * System won't sleep if there are other runnable threads in the system.
  *
+ * This function sleeps with the multiples of 8 seconds
+ *
  * @param dur seconds to at least sleep for
  */
 void hibernate(std::chrono::seconds dur)
 {
     using namespace std::chrono_literals;
 
+    wdt_reset();
+    wdt_enable(WDTO_8S);
     while (dur > 8s)
     {
-        wdt_enable(WDTO_8S);
-        WDTCSR |= (1 << WDIE);
         wait_wdt();
         dur -= 8s;
     }
-
-    while (dur > 4s)
-    {
-        wdt_enable(WDTO_4S);
-        WDTCSR |= (1 << WDIE);
-        wait_wdt();
-        dur -= 4s;
-    }
-
-    while (dur > 2s)
-    {
-        wdt_enable(WDTO_2S);
-        WDTCSR |= (1 << WDIE);
-        wait_wdt();
-        dur -= 2s;
-    }
-
-    while (dur > 1s)
-    {
-        wdt_enable(WDTO_1S);
-        WDTCSR |= (1 << WDIE);
-        wait_wdt();
-        dur -= 1s;
-    }
 }
+void reset_cpu();
 
 void tx_task(void*)
 {
     using namespace tos;
     using namespace tos::tos_literals;
 
-    constexpr auto usconf = tos::usart_config()
-            .add(9600_baud_rate)
-            .add(tos::usart_parity::disabled)
-            .add(tos::usart_stop_bit::one);
-
-    auto usart = open(tos::devs::usart<0>, usconf);
+    auto usart = open(tos::devs::usart<0>, tos::uart::default_9600);
     tos::println(usart, "alive");
 
     auto gpio = tos::open(tos::devs::gpio);
@@ -163,6 +141,43 @@ void tx_task(void*)
 
 		// reset the trace stream
 		trace = tos::omemory_stream{ trace_buf };
+
+		struct {
+		    bool b;
+		    tos::semaphore c{0};
+            decltype(usart)* u;
+		} sync;
+		sync.u = &usart;
+
+		static char sstack[256];
+		// watchdog timer task to reset
+		tos::launch(sstack, [](void* x){
+		    auto& tx = *static_cast<decltype(sync)*>(x);
+            wdt_reset();
+            for (int i = 0; i < 1; ++i)
+            {
+		        // 56 seconds to finish
+                tos::println(*tx.u, "will sleep");
+                tos::kern::busy();
+                wdt_enable(WDTO_8S);
+                WDTCSR |= (1 << WDIE);
+		        wait_wdt();
+		        tos::kern::unbusy();
+                tos::println(*tx.u, "slept");
+		        if (tx.b)
+                {
+		            tx.c.up();
+		            return;
+                }
+            }
+
+            tos::println(*tx.u, "ooh");
+            reset_cpu();
+		}, &sync);
+		tos::this_thread::yield();
+
+		while (true) { tos::this_thread::block_forever(); }
+
         {
             auto tmr = tos::open(tos::devs::timer<1>);
             auto alarm = tos::open(tos::devs::alarm, *tmr);
@@ -248,8 +263,10 @@ void tx_task(void*)
 
             gpio.write(7_pin, tos::digital::low);
         }
+        tos::println(usart, trace.get());
 
-		tos::println(usart, trace.get());
+        sync.b = true;
+        sync.c.down();
 
         hibernate(4min + 30s);
     }
@@ -257,5 +274,6 @@ void tx_task(void*)
 
 void tos_main()
 {
-    tos::launch(tx_task);
+    static char sstack[256];
+    tos::launch(sstack, tx_task, nullptr);
 }
