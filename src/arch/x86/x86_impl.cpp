@@ -74,7 +74,7 @@ extern "C" int main()
     {
         auto res = tos::kern::schedule();
         if (io.stopped())
-            io.restart();
+            io.reset();
         io.run_one();
         if (res == tos::exit_reason::restart)
         {
