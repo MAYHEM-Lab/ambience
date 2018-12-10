@@ -110,9 +110,10 @@ void hibernate(std::chrono::seconds dur)
     using namespace std::chrono_literals;
 
     wdt_reset();
-    wdt_enable(WDTO_8S);
     while (dur > 8s)
     {
+        wdt_enable(WDTO_8S);
+        WDTCSR |= (1 << WDIE);
         wait_wdt();
         dur -= 8s;
     }
@@ -154,16 +155,16 @@ void tx_task(void*)
 		tos::launch(sstack, [](void* x){
 		    auto& tx = *static_cast<decltype(sync)*>(x);
             wdt_reset();
-            for (int i = 0; i < 1; ++i)
+            for (int i = 0; i < 7; ++i)
             {
 		        // 56 seconds to finish
-                tos::println(*tx.u, "will sleep");
+
                 tos::kern::busy();
                 wdt_enable(WDTO_8S);
                 WDTCSR |= (1 << WDIE);
 		        wait_wdt();
 		        tos::kern::unbusy();
-                tos::println(*tx.u, "slept");
+
 		        if (tx.b)
                 {
 		            tx.c.up();
@@ -174,9 +175,9 @@ void tx_task(void*)
             tos::println(*tx.u, "ooh");
             reset_cpu();
 		}, &sync);
-		tos::this_thread::yield();
 
-		while (true) { tos::this_thread::block_forever(); }
+		// let the watchdog thread do it's bookkeeping
+		tos::this_thread::yield();
 
         {
             auto tmr = tos::open(tos::devs::timer<1>);
@@ -267,6 +268,8 @@ void tx_task(void*)
 
         sync.b = true;
         sync.c.down();
+
+        tos::println(usart, "hibernating");
 
         hibernate(4min + 30s);
     }
