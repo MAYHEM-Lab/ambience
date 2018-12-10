@@ -91,7 +91,7 @@ jobs:
           command: apt-get update
       - run:
           name: Install Toolchain
-          command: apt-get install -y g++-7 cmake ninja-build git
+          command: apt-get install -y g++-7 cmake ninja-build git libboost-all-dev
       - run:
           name: Get submodules
           command: git submodule update --init --recursive
