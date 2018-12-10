@@ -15,13 +15,18 @@ TEST_CASE("alarm", "[basic]"){
         tos::x86::timer tmr;
         auto alarm = tos::open(tos::devs::alarm, tmr);
 
-        auto tm = std::chrono::system_clock::now();
-        using namespace std::chrono_literals;
-        alarm.sleep_for(5s);
+        for (int i = 0; i < 50; ++i)
+        {
+            auto tm = std::chrono::system_clock::now();
+            using namespace std::chrono_literals;
+            alarm.sleep_for(100ms);
 
-        auto diff = std::chrono::system_clock::now() - tm;
+            auto diff = std::chrono::system_clock::now() - tm;
 
-        REQUIRE(std::abs(std::chrono::duration_cast<std::chrono::milliseconds>(diff - 5s).count()) < 500);
+            REQUIRE(diff >= 100ms);
+            REQUIRE(diff <= 120ms);
+        }
+
         s.up();
     }, &s);
     s.down();
