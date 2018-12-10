@@ -32,12 +32,12 @@ namespace xbee
                 , m_data{ data }
         {}
 
-        const AddrT& get_addr() const { return m_addr; }
-        const tx_options& get_options() const { return m_opts; }
-        const span<const uint8_t>& get_payload() const { return m_data; }
+        constexpr const AddrT& get_addr() const { return m_addr; }
+        constexpr const tx_options& get_options() const { return m_opts; }
+        constexpr const span<const uint8_t>& get_payload() const { return m_data; }
 
         template <class StreamT>
-        void put_to(StreamT& str) const {
+        constexpr void put_to(StreamT& str) const {
 
             // remaining are payload bytes
             tos::print(str, uint8_t( api_id ));
@@ -55,13 +55,13 @@ namespace xbee
     };
 
     template <class StreamT, class ReqT>
-    void write_to(StreamT& str, const ReqT& req)
+    constexpr void write_to(StreamT& str, const ReqT& req)
     {
         struct
         {
             uint8_t chk_sum{ 0 };
             StreamT* str;
-            int write(span<const char> buf)
+            constexpr int write(span<const char> buf)
             {
                 auto res = str->write(buf);
                 for (auto c : buf)

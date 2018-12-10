@@ -16,9 +16,10 @@ namespace tos
     struct sleeper
             : list_node<sleeper>
     {
-        explicit sleeper(uint16_t ticks, const function_ref<void()>& fun) : sleep_ticks(ticks), m_fun(fun) {}
-
+        explicit sleeper(uint16_t ticks, const function_ref<void()>& fun)
+            : sleep_ticks(ticks), m_fun(fun) {}
     private:
+
         uint16_t sleep_ticks;
         function_ref<void()> m_fun;
 
@@ -26,6 +27,18 @@ namespace tos
         friend class alarm;
     };
 
+    /**
+     * This class template implements software alarm functionality over a
+     * single hardware timer.
+     *
+     * The alarm abstraction allows threads to block on timers, also called
+     * sleeping.
+     *
+     * The basic feature of the alarm is that it multiplexes a single
+     * hardware timer to support multiple timer events.
+     *
+     * @tparam T type of the base timer
+     */
     template <class T>
     class alarm
     {
@@ -35,6 +48,12 @@ namespace tos
         explicit alarm(T& t) : m_timer(&t) {
         }
 
+        /**
+         * The calling thread will be block for the given amount
+         * of time.
+         *
+         * @param dur duration to block for
+         */
         void sleep_for(std::chrono::milliseconds dur)
         {
             event ev;
