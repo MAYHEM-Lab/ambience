@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <tos/arch.hpp>
+
 namespace tos
 {
     template <class ErrT>
@@ -31,7 +33,8 @@ namespace tos
         [[noreturn]]
         void fatal(ErrT&&) noexcept {
             // or directly reset?
-            tos::this_thread::block_forever();
+            tos_force_reset();
+            //tos::this_thread::block_forever();
         }
     }
 }

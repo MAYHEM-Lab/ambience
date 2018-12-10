@@ -6,9 +6,11 @@
 
 #include <stddef.h>
 #include <tos_arch.hpp>
+#include <tos/compiler.hpp>
 
 extern "C"
 {
+void tos_force_reset() NORETURN;
 void* tos_stack_alloc(size_t size);
 void tos_stack_free(void*);
 

@@ -30,6 +30,12 @@ namespace tos
     }
 } // namespace tos
 
+void NORETURN reset_cpu()
+{
+    tos_disable_interrupts();
+    asm volatile ("jmp 0");
+}
+
 extern "C"
 {
     /**
@@ -45,6 +51,11 @@ extern "C"
     {
         MCUSR = 0;
         wdt_disable();
+    }
+
+    void NORETURN tos_force_reset()
+    {
+        reset_cpu();
     }
 
     alignas(alignof(std::max_align_t)) char stack[256*2];
@@ -68,12 +79,6 @@ static void power_down(int mode)
     sleep_bod_disable();
     sleep_cpu();
     sleep_disable();
-}
-
-void reset_cpu()
-{
-    tos_disable_interrupts();
-    asm volatile ("jmp 0");
 }
 
 tos::event s;
