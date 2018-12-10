@@ -8,6 +8,5 @@
 [[noreturn]] void WEAK tos_force_get_failed(void*)
 {
     //TODO: die
-    tos_debug_print("force_get failed!");
-    while (true);
+    tos::kern::fatal("force_get failed!");
 }

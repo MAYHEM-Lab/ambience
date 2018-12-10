@@ -30,7 +30,8 @@ namespace tos
         template <class ErrT>
         [[noreturn]]
         void fatal(ErrT&&) noexcept {
-            while(true);
+            // or directly reset?
+            tos::this_thread::block_forever();
         }
     }
 }
