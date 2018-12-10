@@ -7,6 +7,7 @@
 #include <tos/arch.hpp>
 #include <boost/asio.hpp>
 #include <boost/optional.hpp>
+#include <boost/asio/high_resolution_timer.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <tos/function_ref.hpp>
 #include <drivers/common/driver_base.hpp>
