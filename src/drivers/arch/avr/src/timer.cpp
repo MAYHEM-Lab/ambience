@@ -50,17 +50,6 @@ namespace tos
                 //disable();
             }
         }
-
-        uint16_t timer1::get_ticks() {
-            // TODO: should this be atomic?
-
-            uint16_t res;
-            //ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-            {
-                res = TCNT1;
-            }
-            return res;
-        }
     }
 }
 

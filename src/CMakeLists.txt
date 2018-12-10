@@ -32,9 +32,6 @@ target_link_libraries(tos_core PUBLIC tos_mem tos_util)
 target_link_libraries(tos_core PUBLIC tos::libcxx)
 add_library(tos::core ALIAS tos_core)
 
-add_library(tos_ubsan ubsan.cpp)
-target_link_libraries(tos_ubsan PUBLIC tos_core)
-
 add_subdirectory(arch)
 
 add_library(tos_arch tos/arch.hpp stub.cpp)

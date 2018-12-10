@@ -41,8 +41,7 @@ extern "C"
      * .init3 is simply an unused section that's reserved for user code,
      * so we stick it there.
      */
-    void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
-    void wdt_init(void)
+    void __attribute__((naked, used, section(".init3"))) wdt_init(void)
     {
         MCUSR = 0;
         wdt_disable();
@@ -62,12 +61,6 @@ extern "C"
 
 extern void tos_main();
 
-/*static void reboot()
-{
-    wdt_enable(WDTO_15MS);
-    for (;;);
-}*/
-
 static void power_down(int mode)
 {
     set_sleep_mode(mode);
@@ -77,11 +70,16 @@ static void power_down(int mode)
     sleep_disable();
 }
 
+void reset_cpu()
+{
+    tos_disable_interrupts();
+    asm volatile ("jmp 0");
+}
+
 tos::event s;
 ISR (WDT_vect)
 {
     s.fire_isr();
-    // WDIE & WDIF is cleared in hardware upon entering this ISR
     wdt_disable();
 }
 

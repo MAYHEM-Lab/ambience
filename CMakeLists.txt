@@ -90,6 +90,7 @@ elseif(TOS_X86)
     endif()
 
     add_subdirectory(examples/simple_portable)
+    add_subdirectory(examples/x86_timer)
 
     add_subdirectory(tests)
 elseif(TOS_ARM)

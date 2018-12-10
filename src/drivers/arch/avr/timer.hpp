@@ -18,8 +18,6 @@ namespace tos {
 
             static void disable();
 
-            static uint16_t get_ticks();
-
             static void set_callback(const function_ref<void()>&);
 
             timer1() = default;

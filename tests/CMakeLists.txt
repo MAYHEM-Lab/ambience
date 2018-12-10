@@ -20,8 +20,12 @@ target_link_libraries(ft_tests catch_main tos::ft)
 add_executable(expected_tests expected_test.cpp)
 target_link_libraries(expected_tests catch_main tos::ft)
 
+add_executable(alarm_tests alarm_tests.cpp)
+target_link_libraries(alarm_tests catch_main tos::ft)
+
 add_test(xbee_tests xbee_tests)
 add_test(intrusive_list_tests intrusive_tests)
 add_test(utilities_tests util_tests)
 add_test(ft_tests ft_tests)
 add_test(expected_tests expected_tests)
+add_test(alarm_tests alarm_tests)
