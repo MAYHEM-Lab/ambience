@@ -47,7 +47,10 @@ void tos_main();
 
 namespace boost
 {
-    void throw_exception(std::exception const&){}
+    void throw_exception(std::exception const& e){
+        std::cerr << "exception: " << e.what() << '\n';
+        std::abort();
+    }
 }
 
 static asio::io_service* g_io;
@@ -70,10 +73,11 @@ extern "C" int main()
     while (true)
     {
         auto res = tos::kern::schedule();
+        if (io.stopped())
+            io.restart();
         io.run_one();
         if (res == tos::exit_reason::restart)
         {
-            std::abort();
             return 0;
         }
     }
