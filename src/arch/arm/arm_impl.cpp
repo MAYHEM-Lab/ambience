@@ -12,6 +12,11 @@
 
 extern "C"
 {
+    void NORETURN tos_force_reset()
+    {
+        NVIC_SystemReset();
+    }
+
 alignas(8) char stack[512*2];
 int stack_index = 0;
 void* tos_stack_alloc(size_t sz)

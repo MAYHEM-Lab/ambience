@@ -121,6 +121,11 @@ main_task(ETSEvent*)
 
 extern "C"
 {
+    void NORETURN tos_force_reset()
+    {
+        // esp sdk should reset
+        while(true);
+    }
 extern "C" void *__dso_handle;
 void *__dso_handle = 0;
 extern void (*__init_array_start)();

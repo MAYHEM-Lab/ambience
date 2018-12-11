@@ -27,7 +27,7 @@ extern "C"
         free(data);
     }
 
-    void tos_reboot()
+    void tos_force_reset()
     {
         exit(1);
     }
