@@ -61,13 +61,13 @@ namespace tos
         using internal_t = tl::expected<T, ErrT>;
     public:
         template <class U = T, typename = std::enable_if_t<std::is_same<U, void>{}>>
-        expected() : m_internal{} {}
+        constexpr expected() : m_internal{} {}
 
         template <class U = T, typename = std::enable_if_t<!std::is_same<U, expected>{}>>
-        expected(U&& u) : m_internal{std::forward<U>(u)} {}
+        constexpr expected(U&& u) : m_internal{std::forward<U>(u)} {}
 
         template <class ErrU>
-        expected(unexpected_t<ErrU>&& u) : m_internal{tl::make_unexpected(std::move(u.m_err))} {}
+        constexpr expected(unexpected_t<ErrU>&& u) : m_internal{tl::make_unexpected(std::move(u.m_err))} {}
 
         constexpr explicit PURE operator bool() const { return bool(m_internal); }
 
