@@ -60,7 +60,7 @@ namespace xbee
         struct
         {
             uint8_t chk_sum{ 0 };
-            StreamT* str;
+            StreamT* str{};
             constexpr int write(span<const char> buf)
             {
                 auto res = str->write(buf);
@@ -70,7 +70,7 @@ namespace xbee
                 }
                 return res;
             }
-        } chk_str;
+        } chk_str{};
         chk_str.str = &str;
 
         tos::print(str, START_BYTE);
