@@ -47,6 +47,6 @@ TEST_CASE("rn2903 nvm get", "[rn2903,get]")
     uart_driver dr;
     alarm_mock al;
 
-    auto res = rn2903::nvm_get(299, dr, al);
+    auto res = rn2903::nvm_get({299}, dr, al);
     REQUIRE(!res);
 }

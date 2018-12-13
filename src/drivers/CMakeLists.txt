@@ -79,7 +79,7 @@ add_library(tos_ina219 common/ina219.hpp src/stub.cpp common/detail/ina219_const
 target_link_libraries(tos_ina219 PUBLIC tos_i2c)
 add_library(tos::ina219 ALIAS tos_ina219)
 
-add_library(tos_rn2903 common/rn2903/mac.hpp src/stub.cpp common/rn2903/sys.hpp)
+add_library(tos_rn2903 common/rn2903/mac.hpp src/stub.cpp common/rn2903/sys.hpp common/rn2903/rn2903.hpp common/rn2903/rn2903_common.hpp)
 target_link_libraries(tos_rn2903 PUBLIC tos_usart tos::print)
 add_library(tos::rn2903 ALIAS tos_rn2903)
 

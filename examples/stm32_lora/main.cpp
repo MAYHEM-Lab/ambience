@@ -3,6 +3,7 @@
 //
 
 #include <common/rn2903/sys.hpp>
+#include <common/rn2903/rn2903.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <arch/stm32/drivers.hpp>
@@ -15,8 +16,8 @@ void usart_setup(tos::stm32::gpio& g)
     auto rx_pin = 3_pin;
 
     g.set_pin_mode(rx_pin, tos::pin_mode::in);
-    g.set_pin_mode(tx_pin, tos::pin_mode::out);
-    g.write(tx_pin, tos::digital::high);
+    //g.set_pin_mode(tx_pin, tos::pin_mode::out);
+    //g.write(tx_pin, tos::digital::high);
 
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
                   GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
@@ -34,8 +35,8 @@ void usart3_setup(tos::stm32::gpio& g)
     auto rx_pin = 43_pin;
 
     g.set_pin_mode(rx_pin, tos::pin_mode::in);
-    g.set_pin_mode(tx_pin, tos::pin_mode::out);
-    g.write(tx_pin, tos::digital::high);
+    //g.set_pin_mode(tx_pin, tos::pin_mode::out);
+    //g.write(tx_pin, tos::digital::high);
 
     gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_50_MHZ,
                   GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART3_PR_TX);
@@ -63,7 +64,14 @@ void lora_task(void*)
 
     using namespace std::chrono_literals;
     tos::println(usart, "hello world");
-    auto res = tos::rn2903::nvm_get(300, lora_uart, alarm);
+
+    tos::println(lora_uart, "sys reset");
+    static char buf[128];
+    auto r = lora_uart.read(buf, alarm, 10s);
+    tos::println(usart, r.size(), r);
+
+    auto lora = tos::open(tos::devs::rn2903, lora_uart, alarm);
+    auto res = lora.nvm_get({ 300 });
 
     if (!res)
     {
@@ -74,6 +82,9 @@ void lora_task(void*)
 
     auto num = tos::force_get(res);
     tos::println(usart, "got:", int(num));
+
+    auto conn = lora.join_otaa();
+    tos::println(usart, "got:", int(force_get(conn)));
 
     tos::this_thread::block_forever();
 }

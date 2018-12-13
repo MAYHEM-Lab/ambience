@@ -133,6 +133,7 @@ namespace tos
          * @return number of elements
          */
         size_t size() {
+            //return std::distance(begin(), end());
             size_t sz {0};
             for (auto it = m_head; it; it = it->next, ++sz);
             return sz;
