@@ -303,7 +303,12 @@ namespace tos
     {
         auto ptr = it.m_curr;
 
-        if (m_head == ptr)
+        if (m_head == m_tail)
+        {
+            m_head = nullptr;
+            m_tail = nullptr;
+        }
+        else if (m_head == ptr)
         {
             m_head = ptr->next;
             m_head->prev = nullptr;
