@@ -2,6 +2,9 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <iterator>
+#include <utility>
+#include <tos/utility.hpp>
 
 namespace tos
 {
@@ -9,7 +12,7 @@ namespace tos
     template <class T> class intrusive_list_iterator;
 
     template <class T>
-    class list_node
+    class list_node : public non_copy_movable
     {
         friend class intrusive_list<T>;
         friend class intrusive_list_iterator<T>;
@@ -17,11 +20,6 @@ namespace tos
     public:
         T* prev;
         T* next;
-
-    public:
-        list_node() = default;
-        list_node(const list_node&) = delete;
-        list_node(list_node&&) = delete;
     };
 
     template <class T>
@@ -31,9 +29,9 @@ namespace tos
     public:
         T&operator*();
         T*operator->();
-        intrusive_list_iterator operator++(int);
+        const intrusive_list_iterator operator++(int);
         intrusive_list_iterator&operator++();
-        intrusive_list_iterator operator--(int);
+        const intrusive_list_iterator operator--(int);
         intrusive_list_iterator&operator--();
 
         bool operator!=(const intrusive_list_iterator&);
@@ -59,7 +57,7 @@ namespace tos
     }
 
     template<class T>
-    intrusive_list_iterator<T> intrusive_list_iterator<T>::operator++(int) {
+    const intrusive_list_iterator<T> intrusive_list_iterator<T>::operator++(int) {
         auto ret = *this;
         ++(*this);
         return ret;
@@ -72,7 +70,7 @@ namespace tos
     }
 
     template<class T>
-    intrusive_list_iterator<T> intrusive_list_iterator<T>::operator--(int) {
+    const intrusive_list_iterator<T> intrusive_list_iterator<T>::operator--(int) {
         auto ret = *this;
         --(*this);
         return ret;
@@ -454,4 +452,4 @@ namespace tos
 
         return iterator_t{ptr->next};
     }
-}
+} // namespace tos

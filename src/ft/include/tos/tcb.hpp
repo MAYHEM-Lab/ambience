@@ -19,7 +19,7 @@ namespace tos {
          * as starting threads or passing arguments.
          */
         struct alignas(alignof(std::max_align_t)) tcb
-            : public list_node<tcb>, public non_copy_movable
+            : public list_node<tcb>
         {
             /**
              * Returns a reference to the context of the task.
