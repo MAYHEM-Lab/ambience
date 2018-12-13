@@ -25,13 +25,13 @@ else()
     message(FATAL_ERROR "Target architecture cannot be determined!")
 endif()
 
+if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
+    message(FATAL_ERROR "In-source builds are not allowed.")
+endif()
+
 unset(WIN32)
 project(tos)
 message(STATUS "${CMAKE_CXX_FLAGS}")
-
-if(${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR})
-    message(SEND_ERROR "In-source builds are not allowed.")
-endif()
 
 enable_testing()
 
