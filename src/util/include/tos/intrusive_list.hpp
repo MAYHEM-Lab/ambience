@@ -99,7 +99,11 @@ namespace tos
 
     public:
 
+        /**
+         * Constructs an empty list
+         */
         intrusive_list() : m_head(nullptr), m_tail(nullptr) {}
+
         intrusive_list(intrusive_list&&) = default;
         intrusive_list(const intrusive_list&) = delete;
         ~intrusive_list() = default;
@@ -109,6 +113,9 @@ namespace tos
         /**
          * Returns the number of elements in the list
          * Traverses the whole list, prefer `empty` if possible
+         *
+         * Complexity: O(N)
+         *
          * @return number of elements
          */
         size_t size() {
@@ -123,26 +130,120 @@ namespace tos
          */
         bool empty() { return m_head == nullptr; }
 
+        /**
+         * Inserts a new element at the end of the list
+         *
+         * Calling this function with an object that's already in a list
+         * causes undefined behaviour
+         *
+         * Complexity: O(1)
+         *
+         * @param t object to insert
+         * @return iterator to the object
+         */
         iterator_t push_back(T& t);
-        void push_front(T& t);
 
+        /**
+         * Inserts a new element at the beginning of the list
+         *
+         * Calling this function with an object that's already in a list
+         * causes undefined behaviour
+         *
+         * Complexity: O(1)
+         *
+         * @param t object to insert
+         * @return iterator to the object
+         */
+        iterator_t push_front(T& t);
+
+        /**
+         * Returns a reference to the first element of the list
+         *
+         * Calling this function on an empty list is undefined
+         *
+         * @return reference to the first element
+         */
         T& front();
+
+        /**
+         * Returns a reference to the last element of the list
+         *
+         * Calling this function on an empty list is undefined
+         *
+         * @return reference to the last element
+         */
         T& back();
 
+        /**
+         * Returns a reference to the first element of the list
+         *
+         * Calling this function on an empty list is undefined
+         *
+         * @return reference to the first element
+         */
         const T& front() const;
+
+        /**
+         * Returns a reference to the last element of the list
+         *
+         * Calling this function on an empty list is undefined
+         *
+         * @return reference to the last element
+         */
         const T& back() const;
 
+        /**
+         * Inserts a new object to the given location
+         *
+         * The object will be inserted in the place of *at, this means
+         * when the function returns, the returned iterator's next will
+         * point to *at
+         *
+         * Calling this function with an object that's already in a list
+         * causes undefined behaviour
+         *
+         * Complexity: O(1)
+         *
+         * @param at location to insert the object to
+         * @param t object to insert
+         * @return iterator to the inserted object
+         */
         iterator_t insert(iterator_t at, T& t);
 
+        /**
+         * Removes the element at the end of the list
+         *
+         * Complexity: O(1)
+         *
+         * Calling this function on an empty list is undefined
+         */
         void pop_back();
+
+        /**
+         * Removes the element at the beginning of the list
+         *
+         * Complexity: O(1)
+         *
+         * Calling this function on an empty list is undefined
+         */
         void pop_front();
 
         /**
          * Removes all elements from the container
+         *
+         * Complexity: O(1)
          */
         void clear();
 
-        iterator_t erase(iterator_t);
+        /**
+         * Removes the object pointed by the given iterator from the list
+         *
+         * Complexity: O(1)
+         *
+         * @param it iterator to the object to be removed
+         * @return iterator to the next element in the list
+         */
+        iterator_t erase(iterator_t it);
 
         iterator_t begin();
         iterator_t end();
@@ -209,7 +310,7 @@ namespace tos
     }
 
     template <class T>
-    void intrusive_list<T>::push_front(T& t)
+    auto intrusive_list<T>::push_front(T& t) -> iterator_t
     {
         if (empty())
         {
@@ -221,6 +322,7 @@ namespace tos
         }
         m_head = &t;
         t.prev = nullptr;
+        return iterator_t{ &t };
     }
 
     template<class T>
@@ -305,6 +407,7 @@ namespace tos
 
         if (m_head == m_tail)
         {
+            //assert(m_head == ptr);
             m_head = nullptr;
             m_tail = nullptr;
         }
@@ -326,5 +429,4 @@ namespace tos
 
         return iterator_t{ptr->next};
     }
-
 }

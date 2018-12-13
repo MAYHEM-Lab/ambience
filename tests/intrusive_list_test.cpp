@@ -43,6 +43,14 @@ TEST_CASE("insert", "[intrusive_list]")
     REQUIRE(foos.size() == 1);
     REQUIRE(&foos.front() == &a);
     REQUIRE(&foos.back() == &a);
+
+    foo b { 4 };
+
+    foos.insert(foos.begin(), b);
+
+    REQUIRE(foos.size() == 2);
+    REQUIRE(&foos.front() == &b);
+    REQUIRE(&foos.back() == &a);
 }
 
 TEST_CASE("insert at end", "[intrusive_list]")
@@ -98,5 +106,18 @@ TEST_CASE("pop back", "[intrusive_list]")
     foos.pop_back();
     REQUIRE(&foos.back() == &a);
     foos.pop_back();
+    REQUIRE(foos.empty());
+}
+
+TEST_CASE("erase", "[intrusive_list]")
+{
+    using namespace tos;
+
+    intrusive_list<foo> foos;
+
+    foo a{3};
+    auto it = foos.push_back(a);
+    foos.erase(it);
+
     REQUIRE(foos.empty());
 }
