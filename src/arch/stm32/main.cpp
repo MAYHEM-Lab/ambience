@@ -45,6 +45,13 @@ void tos_stack_free(void* ptr)
 
 void tos_main();
 
+void hard_fault_handler()
+{
+    while(true)
+    {
+    }
+}
+
 int main()
 {
 #ifdef STM32F1

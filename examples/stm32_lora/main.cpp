@@ -42,20 +42,12 @@ void usart3_setup(tos::stm32::gpio& g)
 
 }
 
-void hard_fault_handler()
-{
-    while(true)
-    {
-    }
-}
-
 void lora_task(void*)
 {
     auto g = tos::open(tos::devs::gpio);
 
     usart_setup(g);
     auto usart = tos::open(tos::devs::usart<1>, tos::uart::default_9600);
-    usart3_setup(g);
 
     using namespace tos::tos_literals;
     constexpr auto lora_uart_config = tos::usart_config()
@@ -63,16 +55,13 @@ void lora_task(void*)
             .add(tos::usart_parity::disabled)
             .add(tos::usart_stop_bit::one);
 
+    usart3_setup(g);
     auto lora_uart = tos::open(tos::devs::usart<2>, lora_uart_config);
 
     auto tmr = tos::open(tos::devs::timer<2>);
     auto alarm = tos::open(tos::devs::alarm, tmr);
 
-    char buf[5];
     using namespace std::chrono_literals;
-    auto r = lora_uart.read(buf, alarm, 1s);
-    tos::println(usart, int(r.size()), r);
-
     tos::println(usart, "hello world");
     auto res = tos::rn2903::nvm_get(300, lora_uart, alarm);
 
