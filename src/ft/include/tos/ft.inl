@@ -197,8 +197,12 @@ namespace tos {
             this_thread::exit(nullptr);
         }
 
-        inline void busy() { sched.busy++; }
-        inline void unbusy() { sched.busy--; }
+        inline void busy() {
+            sched.busy++;
+        }
+        inline void unbusy() {
+            sched.busy--;
+        }
 
         inline exit_reason scheduler::schedule()
         {
@@ -267,7 +271,7 @@ namespace tos {
         return sched.start(t);
     }
 
-    inline thread_id_t launch(tos::span<char> task_span, void(*e)(void*), void* d)
+    inline thread_id_t launch(tos::span<char> task_span, void(*e)(void*), void* d = nullptr)
     {
         auto& t = kern::prep_raw_layout(task_span, e, d);
         return sched.start(t);

@@ -13,6 +13,7 @@
 #include <tos/track_ptr.hpp>
 #include <drivers/common/timer.hpp>
 #include <drivers/common/driver_base.hpp>
+#include <tos/scheduler.hpp>
 
 namespace tos::stm32
 {
@@ -113,9 +114,11 @@ namespace tos::stm32
         timer_enable_counter(m_def->tim);
         nvic_enable_irq(m_def->irq);
         timer_enable_irq(m_def->tim, TIM_DIER_CC1IE);
+        tos::kern::busy();
     }
 
     inline void general_timer::disable() {
+        tos::kern::unbusy();
         timer_disable_irq(m_def->tim, TIM_DIER_CC1IE);
         nvic_disable_irq(m_def->irq);
         timer_disable_counter(m_def->tim);

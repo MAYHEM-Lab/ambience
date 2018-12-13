@@ -60,7 +60,9 @@ int main()
     while (true)
     {
         auto res = tos::kern::schedule();
-        //if (res == tos::exit_reason::restart) NVIC_SystemReset();// reboot();
+        if (res == tos::exit_reason::restart) {
+            while (true);
+        }
         if (res == tos::exit_reason::power_down) __WFI();// power_down(SLEEP_MODE_PWR_DOWN);
         if (res == tos::exit_reason::idle) __asm__("wfe");// power_down(SLEEP_MODE_IDLE);
     }
