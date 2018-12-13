@@ -26,6 +26,7 @@ namespace tos
 
     template <class T>
     class intrusive_list_iterator
+        : std::iterator<std::bidirectional_iterator_tag, T>
     {
     public:
         T&operator*();
@@ -36,6 +37,7 @@ namespace tos
         intrusive_list_iterator&operator--();
 
         bool operator!=(const intrusive_list_iterator&);
+
         bool operator==(const intrusive_list_iterator& rhs)
         {
             return !(*this != rhs);
@@ -104,9 +106,23 @@ namespace tos
          */
         intrusive_list() : m_head(nullptr), m_tail(nullptr) {}
 
-        intrusive_list(intrusive_list&&) = default;
+        intrusive_list(intrusive_list&& rhs) noexcept
+            : m_head{std::exchange(rhs.m_head, nullptr)}
+            , m_tail{std::exchange(rhs.m_tail, nullptr)}
+        {
+        }
+
         intrusive_list(const intrusive_list&) = delete;
         ~intrusive_list() = default;
+
+        intrusive_list& operator=(intrusive_list&& rhs) noexcept
+        {
+            m_head = std::exchange(rhs.m_head, nullptr);
+            m_tail = std::exchange(rhs.m_tail, nullptr);
+            return *this;
+        }
+
+        intrusive_list&operator=(const intrusive_list&) = delete;
 
         using iterator_t = intrusive_list_iterator<T>;
 
@@ -245,7 +261,16 @@ namespace tos
          */
         iterator_t erase(iterator_t it);
 
+        /**
+         * Returns an iterator to the beginning of the list
+         * @return the begin iterator
+         */
         iterator_t begin();
+
+        /**
+         * Returns an iterator to one past the last element of the list
+         * @return the end iterator
+         */
         iterator_t end();
 
         template <class ErrHandle>
