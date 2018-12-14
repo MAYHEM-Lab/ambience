@@ -92,7 +92,7 @@ int TOS_EXPORT TOS_MAIN NORETURN main()
     {
         auto res = tos::kern::schedule();
         if (res == tos::exit_reason::restart) {
-            tos_main();
+            tos_force_reset();
         }
         if (res == tos::exit_reason::power_down) {
             power_down(SLEEP_MODE_PWR_DOWN);

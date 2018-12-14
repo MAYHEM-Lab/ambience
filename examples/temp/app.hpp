@@ -26,8 +26,8 @@ void print(StreamT& str, int id, const sample& s)
 {
     static char fl_buf[10];
     tos::print(str, -999, "");
-    tos::print(str, 0, "");
     tos::print(str, id, "");
+    tos::print(str, 0, 0, "");
     tos::print(str, 1, dtostrf(s.temp, 2, 2, fl_buf), "");
     tos::print(str, 2, dtostrf(s.humid, 2, 2, fl_buf), "");
     tos::println(str, 3, dtostrf(s.cpu, 2, 2, fl_buf));

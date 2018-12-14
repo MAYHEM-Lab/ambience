@@ -32,8 +32,9 @@ namespace temp
         using namespace std::chrono_literals;
 
 		// wake up the slave and wait for it to boot
+		//usart.clear();
         gpio.write(11_pin, tos::digital::high);
-        alarm.sleep_for(2000ms);
+        alarm.sleep_for(5000ms);
 
         std::array<char, 2> wait;
         auto res = usart.read(wait, alarm, 5s);
@@ -41,7 +42,7 @@ namespace temp
         if (res.size() != 2 || res[0] != 'h' || res[1] != 'i')
         {
             gpio.write(11_pin, tos::digital::low);
-			tos::println(trace, "slave non-responsive");
+			tos::println(trace, "slave non-responsive", res.size(), res);
             return temp::sample{ -1, -1, -1 };
         }
 
@@ -150,9 +151,6 @@ void tx_task(void*)
             tos::avr::wdt_resetter res;
             res.start(50s);
 
-            // let the watchdog thread do it's bookkeeping
-            tos::this_thread::yield();
-
             {
                 auto tmr = tos::open(tos::devs::timer<1>);
                 auto alarm = tos::open(tos::devs::alarm, *tmr);
@@ -242,6 +240,6 @@ void tx_task(void*)
 
 void tos_main()
 {
-    static char sstack[256];
+    static char sstack[512];
     tos::launch(sstack, tx_task, nullptr);
 }
