@@ -64,6 +64,22 @@ namespace stm32
             return write(tos::span<const uint8_t>{ (const uint8_t*)buf.data(), buf.size() });
         }
 
+        tos::span<char> read(tos::span<char> b)
+        {
+            size_t total = 0;
+            auto len = b.size();
+            auto buf = b.data();
+            tos::kern::busy();
+            while (total < len) {
+                rx_s.down();
+                *buf = rx_buf.pop();
+                ++buf;
+                ++total;
+            }
+            tos::kern::unbusy();
+            return b.slice(0, total);
+        }
+
         template <class AlarmT>
         tos::span<char> read(tos::span<char> b, AlarmT& alarm, std::chrono::milliseconds to)
         {
