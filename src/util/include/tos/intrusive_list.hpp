@@ -261,13 +261,13 @@ namespace tos
          * Returns an iterator to the beginning of the list
          * @return the begin iterator
          */
-        iterator_t begin();
+        iterator_t begin() const;
 
         /**
          * Returns an iterator to one past the last element of the list
          * @return the end iterator
          */
-        iterator_t end();
+        iterator_t end() const;
 
         template <class ErrHandle>
         friend void validate(const intrusive_list<T>& list, ErrHandle&& assrt)
@@ -305,12 +305,12 @@ namespace tos
     }
 
     template<class T>
-    auto intrusive_list<T>::begin() -> iterator_t {
+    auto intrusive_list<T>::begin() const -> iterator_t {
         return iterator_t{m_head};
     }
 
     template<class T>
-    auto intrusive_list<T>::end() -> iterator_t {
+    auto intrusive_list<T>::end() const -> iterator_t {
         return iterator_t{nullptr};
     }
 
