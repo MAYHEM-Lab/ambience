@@ -36,5 +36,3 @@ extern "C"
         cli();
     }
 }
-void wait_wdt();
-

@@ -33,7 +33,8 @@ namespace tos
 void NORETURN reset_cpu()
 {
     tos_disable_interrupts();
-    asm volatile ("jmp 0");
+    wdt_enable(WDTO_15MS);
+    while (true){}
 }
 
 extern "C"
@@ -79,18 +80,6 @@ static void power_down(int mode)
     sleep_bod_disable();
     sleep_cpu();
     sleep_disable();
-}
-
-tos::event s;
-ISR (WDT_vect)
-{
-    s.fire_isr();
-    wdt_disable();
-}
-
-void wait_wdt()
-{
-    s.wait();
 }
 
 int TOS_EXPORT TOS_MAIN NORETURN main()
