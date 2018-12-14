@@ -18,6 +18,7 @@
 #include "app.hpp"
 #include <drivers/common/ina219.hpp>
 #include <tos/semaphore.hpp>
+#include <drivers/arch/avr/wdt.hpp>
 
 char trace_buf[128];
 tos::omemory_stream trace{ trace_buf };
@@ -105,19 +106,22 @@ namespace temp
  *
  * @param dur seconds to at least sleep for
  */
-void hibernate(std::chrono::seconds dur)
+void hibernate(tos::avr::wdt& wdt, std::chrono::seconds dur)
 {
     using namespace std::chrono_literals;
 
     wdt_reset();
     while (dur > 8s)
     {
-        wdt_enable(WDTO_8S);
-        WDTCSR |= (1 << WDIE);
-        wait_wdt();
+        wdt.wait(tos::avr::wdt_times::to_8s);
         dur -= 8s;
+
+        //wdt_enable(WDTO_8S);
+        //WDTCSR |= (1 << WDIE);
+        //wait_wdt();
     }
 }
+
 void reset_cpu();
 
 void tx_task(void*)
@@ -136,142 +140,103 @@ void tx_task(void*)
     gpio.write(7_pin, tos::digital::low);
     gpio.write(11_pin, tos::digital::low);
 
-    while (true)
-    {
+    while (true) {
         using namespace std::chrono_literals;
 
-		// reset the trace stream
-		trace = tos::omemory_stream{ trace_buf };
-
-		struct {
-		    bool b;
-		    tos::semaphore c{0};
-            decltype(usart)* u;
-		} sync;
-		sync.u = &usart;
-
-		static char sstack[256];
-		// watchdog timer task to reset
-		tos::launch(sstack, [](void* x){
-		    auto& tx = *static_cast<decltype(sync)*>(x);
-            wdt_reset();
-            for (int i = 0; i < 7; ++i)
-            {
-		        // 56 seconds to finish
-
-                tos::kern::busy();
-                wdt_enable(WDTO_8S);
-                WDTCSR |= (1 << WDIE);
-		        wait_wdt();
-		        tos::kern::unbusy();
-
-		        if (tx.b)
-                {
-		            tx.c.up();
-		            return;
-                }
-            }
-
-            tos::println(*tx.u, "ooh");
-            reset_cpu();
-		}, &sync);
-
-		// let the watchdog thread do it's bookkeeping
-		tos::this_thread::yield();
+        // reset the trace stream
+        trace = tos::omemory_stream{trace_buf};
 
         {
-            auto tmr = tos::open(tos::devs::timer<1>);
-            auto alarm = tos::open(tos::devs::alarm, *tmr);
+            tos::avr::wdt_resetter res;
+            res.start(50s);
 
-            using namespace std::chrono_literals;
-            alarm.sleep_for(2s);
+            // let the watchdog thread do it's bookkeeping
+            tos::this_thread::yield();
 
-            gpio.set_pin_mode(12_pin, tos::pin_mode::in_pullup);
-
-            auto d = tos::make_dht(gpio, [](std::chrono::microseconds us) {
-                _delay_us(us.count());
-            });
-
-            int tries = 1;
-            auto res = d.read(12_pin);
-
-            while (res != tos::dht_res::ok && tries < 5)
             {
-                tos::println(trace, "dht non-responsive");
+                auto tmr = tos::open(tos::devs::timer<1>);
+                auto alarm = tos::open(tos::devs::alarm, *tmr);
+
+                using namespace std::chrono_literals;
                 alarm.sleep_for(2s);
-                res = d.read(12_pin);
-                ++tries;
-            }
 
-            if (tries == 5)
-            {
-                d.temperature = -1;
-                d.humidity = -1;
-            }
+                gpio.set_pin_mode(12_pin, tos::pin_mode::in_pullup);
 
-            std::array<temp::sample, 2> samples = {
-                temp::sample{ d.temperature, d.humidity, temp::GetTemp(alarm) },
-                temp::read_slave(gpio, alarm, usart)
-            };
+                auto d = tos::make_dht(gpio, [](std::chrono::microseconds us) {
+                    _delay_us(us.count());
+                });
 
-            tos::println(trace, int(samples[0].temp), int(samples[0].cpu));
-            tos::println(trace, int(samples[1].cpu));
+                int tries = 1;
+                auto res = d.read(12_pin);
 
-            namespace xbee = tos::xbee;
-            gpio.write(7_pin, tos::digital::high);
+                while (res != tos::dht_res::ok && tries < 5) {
+                    tos::println(trace, "dht non-responsive");
+                    alarm.sleep_for(2s);
+                    res = d.read(12_pin);
+                    ++tries;
+                }
 
-            alarm.sleep_for(100ms);
-            auto r = xbee::read_modem_status(usart, alarm);
+                if (tries == 5) {
+                    d.temperature = -1;
+                    d.humidity = -1;
+                }
 
-            if (r)
-            {
-                tos::xbee_s1<tos::avr::usart0> x {usart};
+                std::array<temp::sample, 2> samples = {
+                        temp::sample{d.temperature, d.humidity, temp::GetTemp(alarm)},
+                        temp::read_slave(gpio, alarm, usart)
+                };
 
-                static char msg_buf[100];
-                tos::omemory_stream buff{msg_buf};
+                tos::println(trace, int(samples[0].temp), int(samples[0].cpu));
+                tos::println(trace, int(samples[1].cpu));
 
-                temp::print(buff, temp::master_id, samples[0]);
-                temp::print(buff, temp::slave_id, samples[1]);
-
-                constexpr xbee::addr_16 base_addr{ 0x0010 };
-                xbee::tx16_req req { base_addr, tos::raw_cast<const uint8_t>(buff.get()), xbee::frame_id_t{1} };
-                x.transmit(req);
+                namespace xbee = tos::xbee;
+                gpio.write(7_pin, tos::digital::high);
 
                 alarm.sleep_for(100ms);
-                auto tx_r = xbee::read_tx_status(usart, alarm);
+                auto r = xbee::read_modem_status(usart, alarm);
 
-				if (tx_r)
-				{
-					auto& res = force_get(tx_r);
-					if (res.status == xbee::tx_status::statuses::success)
-					{
-						tos::println(trace, "xbee sent!");
-					}
-					else
-					{
-						tos::println(trace, "xbee send failed");
-					}
-				}
-				else
-				{
-					tos::println(trace, "xbee non responsive");
-				}
+                if (r) {
+                    tos::xbee_s1<tos::avr::usart0> x{usart};
+
+                    static char msg_buf[100];
+                    tos::omemory_stream buff{msg_buf};
+
+                    temp::print(buff, temp::master_id, samples[0]);
+                    temp::print(buff, temp::slave_id, samples[1]);
+
+                    constexpr xbee::addr_16 base_addr{0x0010};
+                    xbee::tx16_req req{base_addr, tos::raw_cast<const uint8_t>(buff.get()), xbee::frame_id_t{1}};
+                    x.transmit(req);
+
+                    alarm.sleep_for(100ms);
+                    auto tx_r = xbee::read_tx_status(usart, alarm);
+
+                    if (tx_r) {
+                        auto &res = force_get(tx_r);
+                        if (res.status == xbee::tx_status::statuses::success) {
+                            tos::println(trace, "xbee sent!");
+                        } else {
+                            tos::println(trace, "xbee send failed");
+                        }
+                    } else {
+                        tos::println(trace, "xbee non responsive");
+                    }
+                } else {
+                    tos::println(trace, "xbee non responsive");
+                }
+
+                gpio.write(7_pin, tos::digital::low);
             }
-			else
-			{
-				tos::println(trace, "xbee non responsive");
-			}
 
-            gpio.write(7_pin, tos::digital::low);
+            tos::println(usart, trace.get());
         }
-        tos::println(usart, trace.get());
-
-        sync.b = true;
-        sync.c.down();
+        //sync.b = true;
+        //sync.c.down();
 
         tos::println(usart, "hibernating");
 
-        hibernate(4min + 30s);
+        tos::avr::wdt wdt;
+        hibernate(wdt, 4min + 30s);
     }
 }
 
