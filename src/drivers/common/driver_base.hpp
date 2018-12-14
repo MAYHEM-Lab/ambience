@@ -5,6 +5,7 @@
 #pragma once
 
 #include <array>
+#include <tos/debug.hpp>
 
 namespace tos
 {
@@ -58,6 +59,10 @@ namespace tos
     public:
         explicit tracked_driver(int num) {
             m_which = &instances[num];
+            if (*m_which)
+            {
+                tos::kern::fatal("driver already exists!");
+            }
             assign();
         }
 
