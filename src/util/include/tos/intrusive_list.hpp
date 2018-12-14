@@ -24,7 +24,7 @@ namespace tos
 
     template <class T>
     class intrusive_list_iterator
-        : std::iterator<std::bidirectional_iterator_tag, T>
+        : public std::iterator<std::bidirectional_iterator_tag, T>
     {
     public:
         T&operator*();
@@ -132,18 +132,15 @@ namespace tos
          *
          * @return number of elements
          */
-        size_t size() {
-            //return std::distance(begin(), end());
-            size_t sz {0};
-            for (auto it = m_head; it; it = it->next, ++sz);
-            return sz;
+        size_t size() const {
+            return std::distance(begin(), end());
         }
 
         /**
          * Returns whether the list is empty or not
          * @return list contains any elements
          */
-        bool empty() { return m_head == nullptr; }
+        bool empty() const { return m_head == nullptr; }
 
         /**
          * Inserts a new element at the end of the list

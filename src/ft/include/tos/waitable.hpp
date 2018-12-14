@@ -35,8 +35,29 @@ namespace tos {
          */
         void signal_one();
 
+        /**
+         * Places the given tcb to the waiters list of this
+         * waitable object.
+         *
+         * @param t task to place in this waitable
+         * @return handle to the task
+         */
         waiter_handle add(kern::tcb& t);
-        kern::tcb& remove(waiter_handle);
+
+        kern::tcb& remove(waiter_handle handle);
+
+        /**
+         * Number of tasks in this waitable
+         *
+         * @return number of tasks
+         */
+        size_t size() const {
+            return m_waiters.size();
+        }
+
+        bool empty() const {
+            return m_waiters.empty();
+        }
 
     private:
 

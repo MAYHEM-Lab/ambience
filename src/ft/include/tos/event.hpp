@@ -41,6 +41,7 @@ namespace tos {
 
     private:
         waitable m_wait;
+        friend waitable& get_waiters(event& e) { return e.m_wait; }
     };
 }
 
