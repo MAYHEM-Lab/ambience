@@ -26,5 +26,16 @@ add_library(avr_adc adc.hpp src/adc.cpp)
 target_link_libraries(avr_adc PUBLIC tos::core)
 target_include_directories(avr_adc PUBLIC .)
 
+add_library(avr_wdt wdt.hpp src/wdt.cpp)
+target_link_libraries(avr_wdt PUBLIC tos::core)
+target_include_directories(avr_wdt PUBLIC .)
+
 add_library(avr_drivers src/stub.cpp drivers.hpp)
-target_link_libraries(avr_drivers PUBLIC avr_gpio avr_usart avr_spi avr_timer avr_eeprom avr_twim)
+target_link_libraries(avr_drivers PUBLIC
+        avr_gpio
+        avr_usart
+        avr_spi
+        avr_timer
+        avr_eeprom
+        avr_twim
+        avr_wdt)
