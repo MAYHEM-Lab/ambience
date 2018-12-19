@@ -228,8 +228,6 @@ void tx_task(void*)
 
             tos::println(usart, trace.get());
         }
-        //sync.b = true;
-        //sync.c.down();
 
         tos::println(usart, "hibernating");
 

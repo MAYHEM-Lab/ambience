@@ -47,6 +47,7 @@ void main_task(void*)
 
     tos::print(usart, "hi");
 
+    usart.clear();
     std::array<char, 2> buf;
     usart.read(buf);
 
@@ -65,7 +66,8 @@ void main_task(void*)
         res = d.read(10_pin);
     }
 
-    if (buf[1] == 'o')
+
+    if (true || buf[1] == 'o')
     {
         temp::sample s { d.temperature, d.humidity, temp::GetTemp(alarm) };
         struct
@@ -74,17 +76,20 @@ void main_task(void*)
             decltype(usart)* str;
             int write(span<const char> buf)
             {
-                auto res = str->write(buf);
                 for (auto c : buf)
                 {
                     chk_sum += uint8_t(c);
                 }
-                return res;
+                static char b[13];
+                std::memcpy(b, buf.data(), 12);
+                b[12] = chk_sum;
+                auto res = str->write(b);
+                return res - 1;
             }
         } chk_str;
         chk_str.str = &usart;
         chk_str.write({ (const char*)&s, sizeof s });
-        usart.write({ (const char*)&chk_str.chk_sum, 1 });
+        //usart.write({ (const char*)&chk_str.chk_sum, 1 });
     }
     else
     {
