@@ -19,7 +19,7 @@ namespace tos
 {
     template <class CharOstreamT>
     void print(CharOstreamT& ostr, char c) {
-        ostr.write({&c, 1});
+        ostr->write({&c, 1});
     }
 
     template <class CharOstreamT>
@@ -36,13 +36,13 @@ namespace tos
     void print(CharOstreamT & ostr, const char *str) {
         auto len = strlen(str);
         if (len == 0) return;
-        ostr.write({str, len});
+        ostr->write({str, len});
     }
 
     template <class CharOstreamT>
     void print(CharOstreamT& ostr, span<const char> buf)
     {
-        ostr.write(buf);
+        ostr->write(buf);
     }
 
     template <class CharOstreamT,

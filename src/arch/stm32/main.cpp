@@ -68,7 +68,7 @@ int main()
     {
         auto res = tos::kern::schedule();
         if (res == tos::exit_reason::restart) {
-            while (true);
+            tos_force_reset();
         }
         if (res == tos::exit_reason::power_down) __WFI();// power_down(SLEEP_MODE_PWR_DOWN);
         if (res == tos::exit_reason::idle) __asm__("wfe");// power_down(SLEEP_MODE_IDLE);

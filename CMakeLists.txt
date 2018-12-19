@@ -102,6 +102,7 @@ elseif(TOS_STM32)
     add_subdirectory(examples/photon)
     add_subdirectory(examples/hx711)
     add_subdirectory(examples/stm32_i2c_lcd)
+    add_subdirectory(examples/stm32_hm10)
 endif()
 
 set(include_dest "include/tos")
