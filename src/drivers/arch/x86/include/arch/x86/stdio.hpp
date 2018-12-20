@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <drivers/common/tty.hpp>
-#include <drivers/common/usart.hpp>
+#include <common/tty.hpp>
+#include <common/usart.hpp>
 #include <tos/span.hpp>
 #undef putc
 

@@ -10,7 +10,7 @@
 #include <boost/asio/high_resolution_timer.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <tos/function_ref.hpp>
-#include <drivers/common/driver_base.hpp>
+#include <common/driver_base.hpp>
 
 namespace tos
 {

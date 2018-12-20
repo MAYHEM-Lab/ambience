@@ -4,8 +4,8 @@
 
 #include <tos/ft.hpp>
 #include "catch.hpp"
-#include <drivers/arch/x86/drivers.hpp>
-#include <drivers/common/alarm.hpp>
+#include <arch/x86/drivers.hpp>
+#include <common/alarm.hpp>
 #include <tos/semaphore.hpp>
 
 TEST_CASE("alarm", "[basic]"){
