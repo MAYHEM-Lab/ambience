@@ -1,4 +1,6 @@
-#include <drivers/common/gpio.hpp>
+#pragma once
+
+#include <common/gpio.hpp>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <cstdint>

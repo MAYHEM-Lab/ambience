@@ -26,7 +26,7 @@ else()
 endif()
 
 unset(WIN32)
-project(tos)
+project(tos VERSION 0.1.0)
 message(STATUS "${CMAKE_CXX_FLAGS}")
 
 enable_testing()
@@ -104,6 +104,3 @@ elseif(TOS_STM32)
     add_subdirectory(examples/stm32_i2c_lcd)
     add_subdirectory(examples/stm32_hm10)
 endif()
-
-set(include_dest "include/tos")
-set(lib_dest "lib/tos")

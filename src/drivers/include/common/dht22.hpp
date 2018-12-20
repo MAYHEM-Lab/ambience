@@ -7,7 +7,7 @@
 #include <tos/utility.hpp>
 #include <chrono>
 #include <tos/interrupt.hpp>
-#include <drivers/common/gpio.hpp>
+#include <common/gpio.hpp>
 
 #include <tos/fixed_point.hpp>
 #include <algorithm>

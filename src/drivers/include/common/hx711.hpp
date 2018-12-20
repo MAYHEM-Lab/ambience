@@ -3,7 +3,7 @@
 //
 
 #include <chrono>
-#include <drivers/common/gpio.hpp>
+#include <common/gpio.hpp>
 #include <algorithm>
 #include <common/driver_base.hpp>
 

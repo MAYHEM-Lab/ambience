@@ -7,7 +7,7 @@
 #include <tos/compiler.hpp>
 #include <tos/scheduler.hpp>
 #include <tos/ft.hpp>
-#include <tos_arch.hpp>
+#include "include/tos_arch.hpp"
 #include <libopencmsis/core_cm3.h>
 
 #define NVIC_AIRCR_VECTKEY    (0x5FA << 16)   /*!< AIRCR Key for write access   */

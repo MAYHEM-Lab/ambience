@@ -1,20 +1,20 @@
-add_library(stm32_rcc rcc.hpp src/stub.cpp)
+add_library(stm32_rcc include/arch/stm32/rcc.hpp src/stub.cpp)
 target_link_libraries(stm32_rcc PUBLIC tos::core)
-target_include_directories(stm32_rcc PUBLIC ".")
+tos_install(stm32_rcc ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(stm32_gpio gpio.hpp src/stub.cpp)
+add_library(stm32_gpio include/arch/stm32/gpio.hpp src/stub.cpp)
 target_link_libraries(stm32_gpio PUBLIC tos_gpio tos::core)
-target_include_directories(stm32_gpio PUBLIC ".")
+tos_install(stm32_gpio ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(stm32_usart usart.hpp src/stub.cpp src/usart.cpp)
+add_library(stm32_usart include/arch/stm32/usart.hpp src/stub.cpp src/usart.cpp)
 target_link_libraries(stm32_usart PUBLIC tos_usart tos::core)
-target_include_directories(stm32_usart PUBLIC ".")
+tos_install(stm32_usart ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(stm32_timer timer.hpp src/stub.cpp src/timer.cpp)
+add_library(stm32_timer include/arch/stm32/timer.hpp src/stub.cpp src/timer.cpp)
 target_link_libraries(stm32_timer PUBLIC tos::core)
-target_include_directories(stm32_timer PUBLIC ".")
+tos_install(stm32_timer ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(stm32_drivers drivers.hpp src/stub.cpp)
+add_library(stm32_drivers include/arch/stm32/drivers.hpp src/stub.cpp)
 target_link_libraries(stm32_drivers PUBLIC
         stm32_gpio
         stm32_usart
@@ -22,3 +22,4 @@ target_link_libraries(stm32_drivers PUBLIC
         stm32_timer
         )
 target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> -Wl,--no-whole-archive")
+tos_install(stm32_drivers)

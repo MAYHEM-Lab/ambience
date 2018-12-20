@@ -6,10 +6,10 @@
 
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/usart.h>
-#include <drivers/common/driver_base.hpp>
+#include <common/driver_base.hpp>
 #include <tos/ring_buf.hpp>
 #include <tos/fixed_fifo.hpp>
-#include <drivers/common/usart.hpp>
+#include <common/usart.hpp>
 
 void usart1_isr();
 void usart2_isr();

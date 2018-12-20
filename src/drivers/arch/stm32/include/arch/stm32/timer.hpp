@@ -8,11 +8,11 @@
 #include <libopencm3/stm32/timer.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencmsis/core_cm3.h>
-#include <util/include/tos/function_ref.hpp>
+#include <tos/function_ref.hpp>
 #include <memory>
 #include <tos/track_ptr.hpp>
-#include <drivers/common/timer.hpp>
-#include <drivers/common/driver_base.hpp>
+#include <common/timer.hpp>
+#include <common/driver_base.hpp>
 #include <tos/scheduler.hpp>
 
 namespace tos::stm32

@@ -29,7 +29,6 @@ public:
     constexpr ble::address_t get_address() const;
 
 private:
-
     mutable UsartT m_usart;
 };
 } // namespace tos
@@ -37,8 +36,14 @@ private:
 namespace tos
 {
     template<class UsartT>
+    constexpr void hm10<UsartT>::reset() {
+        tos::print(m_usart, "AT+RESET");
+    }
+
+    template<class UsartT>
     constexpr ble::address_t hm10<UsartT>::get_address() const {
-        tos::print(m_usart, "AT+ADDR?\n");
+        tos::print(m_usart, "AT+ADDR?");
+
         char buf[12]{};
         auto res = m_usart->read(buf);
 
@@ -46,4 +51,4 @@ namespace tos
         std::copy(buf, buf + 12, result.addr);
         return result;
     }
-}
+} // namespace tos

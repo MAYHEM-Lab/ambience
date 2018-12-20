@@ -6,8 +6,8 @@
 #include <tos/ft.hpp>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
-#include <drivers/arch/stm32/drivers.hpp>
-#include <drivers/common/usart.hpp>
+#include <arch/stm32/drivers.hpp>
+#include <common/usart.hpp>
 
 void usart_setup(tos::stm32::gpio& g)
 {
@@ -50,11 +50,15 @@ auto hm10_task = [](void*){
 
     usart3_setup(g);
     auto lora_uart = tos::open(tos::devs::usart<2>, tos::uart::default_9600);
-    tos::println(lora_uart, "AT+MODE1");
+    tos::print(lora_uart, "AT\r\n");
+    char buf[2];
+    auto r = lora_uart.read(buf);
 
-    tos::println(usart, "hi");
+    tos::println(usart, "hi", r);
 
     tos::hm10<decltype(&lora_uart)> hm10(&lora_uart);
+
+    hm10.reset();
     tos::println(usart, "ok");
 
     for (auto n : hm10.get_address().addr)

@@ -2,7 +2,7 @@
 
 #include <chrono>
 #include <tos/waitable.hpp>
-#include <drivers/common/alarm.hpp>
+#include <common/alarm.hpp>
 #include <tos/barrier.hpp>
 
 namespace tos {
