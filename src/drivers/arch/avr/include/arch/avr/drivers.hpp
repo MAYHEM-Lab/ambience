@@ -11,3 +11,4 @@
 #include "usart.hpp"
 #include "twim.hpp"
 #include "adc.hpp"
+#include "wdt.hpp"

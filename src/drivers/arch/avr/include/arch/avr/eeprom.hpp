@@ -6,7 +6,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <drivers/common/eeprom.hpp>
+#include <common/eeprom.hpp>
 
 namespace tos
 {

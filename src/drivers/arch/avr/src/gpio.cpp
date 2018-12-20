@@ -3,7 +3,7 @@
 //
 
 #include <avr/interrupt.h>
-#include <gpio.hpp>
+#include <arch/avr/gpio.hpp>
 #include <avr/sleep.h>
 
 namespace tos

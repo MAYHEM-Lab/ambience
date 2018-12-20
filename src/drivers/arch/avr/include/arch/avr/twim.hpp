@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <drivers/common/i2c.hpp>
-#include <drivers/arch/avr/gpio.hpp>
+#include <common/i2c.hpp>
+#include <arch/avr/gpio.hpp>
 #include <tos/span.hpp>
 
 namespace tos

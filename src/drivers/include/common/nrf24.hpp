@@ -4,12 +4,10 @@
 
 #pragma once
 
-#include <drivers/arch/avr/drivers.hpp>
 #include <tos/span.hpp>
 #include <util/delay.h>
 #include <algorithm>
 #include "spi.hpp"
-#include <avr/pgmspace.h>
 
 namespace tos
 {
@@ -50,13 +48,16 @@ namespace tos
         w_5_bytes = 0b11
     };
 
+    struct channel_t { uint8_t channel; };
+    struct reg_id_t { uint8_t reg; };
+
+    template <class GpioT, class SpiT>
     class nrf24
     {
     public:
-        struct channel_t { uint8_t channel; };
-        struct reg_id_t { uint8_t reg; };
+        using pin_t = typename GpioT::pin_type;
 
-        nrf24(pin_t ce, pin_t cs, pin_t interrupt);
+        nrf24(GpioT, SpiT, pin_t ce, pin_t cs, pin_t interrupt);
 
         bool set_speed(nrf24_speeds speed);
 
@@ -94,7 +95,7 @@ namespace tos
 
         uint8_t write_cmd(nrf24_mnemonics::mnemonics cmd);
 
-        spi_transaction<tos::avr::spi0> begin_transaction() const;
+        spi_transaction<SpiT> begin_transaction() const;
 
         void enable_chip();
         void disable_chip();
@@ -105,27 +106,29 @@ namespace tos
         pin_t m_cs_pin;
         pin_t m_ce_pin;
         pin_t m_int_pin;
+
+        GpioT m_g;
     };
 
     namespace regs
     {
-        static constexpr nrf24::reg_id_t config{0x00};
-        static constexpr nrf24::reg_id_t EN_RXADDR {0x02};
-        static constexpr nrf24::reg_id_t setup_aw{0x03};
-        static constexpr nrf24::reg_id_t setup_retr{0x04};
-        static constexpr nrf24::reg_id_t rf_ch{0x05};
-        static constexpr nrf24::reg_id_t setup{0x06};
-        static constexpr nrf24::reg_id_t nrf_status{0x07};
-        static constexpr nrf24::reg_id_t feature{0x1D};
-        static constexpr nrf24::reg_id_t dynpd{0x1C};
+        static constexpr reg_id_t config{0x00};
+        static constexpr reg_id_t EN_RXADDR {0x02};
+        static constexpr reg_id_t setup_aw{0x03};
+        static constexpr reg_id_t setup_retr{0x04};
+        static constexpr reg_id_t rf_ch{0x05};
+        static constexpr reg_id_t setup{0x06};
+        static constexpr reg_id_t nrf_status{0x07};
+        static constexpr reg_id_t feature{0x1D};
+        static constexpr reg_id_t dynpd{0x1C};
 
         template <uint8_t N>
-        static constexpr nrf24::reg_id_t RX_ADDR_P {0x0A + N};
+        static constexpr reg_id_t RX_ADDR_P {0x0A + N};
 
-        static constexpr nrf24::reg_id_t TX_ADDR {0x10};
+        static constexpr reg_id_t TX_ADDR {0x10};
 
         template <uint8_t N>
-        static constexpr nrf24::reg_id_t RX_PW_P {0x11 + N};
+        static constexpr reg_id_t RX_PW_P {0x11 + N};
     }
 }
 
@@ -158,11 +161,11 @@ namespace tos
         static constexpr auto ERX_P = N;
     }
 
-    static tos::avr::gpio g;
-    inline nrf24::nrf24(pin_t ce, pin_t cs, pin_t interrupt)
-            : m_cs_pin{cs}, m_ce_pin{ce}, m_int_pin{interrupt} {
-        g.set_pin_mode(ce, tos::pin_mode::out);
-        g.write(ce, false);
+    template <class GpioT, class SpiT>
+    inline nrf24<GpioT, SpiT>::nrf24(GpioT g, SpiT, pin_t ce, pin_t cs, pin_t interrupt)
+            : m_g{g}, m_cs_pin{cs}, m_ce_pin{ce}, m_int_pin{interrupt} {
+        g->set_pin_mode(ce, tos::pin_mode::out);
+        g->write(ce, false);
 
         // TODO: use an alarm here
         _delay_ms(5);
@@ -182,7 +185,8 @@ namespace tos
         write_reg(tos::regs::config, read_reg(regs::config) & ~(1 << PRIM_RX));
     }
 
-    inline bool nrf24::set_speed(nrf24_speeds speed) {
+    template <class GpioT, class SpiT>
+    inline bool nrf24<GpioT, SpiT>::set_speed(nrf24_speeds speed) {
         using namespace bits;
 
         auto setup_reg = read_reg(regs::setup);
@@ -202,7 +206,8 @@ namespace tos
         return read_reg(regs::setup) == setup_reg;
     }
 
-    inline bool nrf24::set_retries(uint8_t delay, uint8_t count) {
+    template <class GpioT, class SpiT>
+    inline bool nrf24<GpioT, SpiT>::set_retries(uint8_t delay, uint8_t count) {
         using namespace bits;
 
         auto reg = (delay & 0xf) << ARD | (count & 0xf) << ARC;
@@ -210,7 +215,8 @@ namespace tos
         return read_reg(regs::setup_retr) == reg;
     }
 
-    inline void nrf24::enable_dyn_payloads() {
+    template <class GpioT, class SpiT>
+    inline void nrf24<GpioT, SpiT>::enable_dyn_payloads() {
         using namespace bits;
 
         write_reg(regs::feature, read_reg(regs::feature) | (1 << EN_ACK_PAY));
@@ -218,32 +224,38 @@ namespace tos
                                                        1 << DPL_P<2> | 1 << DPL_P<1> | 1 << DPL_P<0>);
     }
 
-    inline void nrf24::disable_dyn_payloads() {
+    template <class GpioT, class SpiT>
+    inline void nrf24<GpioT, SpiT>::disable_dyn_payloads() {
         write_reg(regs::feature, 0);
         write_reg(regs::dynpd, 0);
     }
 
-    inline void nrf24::set_channel(nrf24::channel_t channel) {
+    template <class GpioT, class SpiT>
+    inline void nrf24<GpioT, SpiT>::set_channel(channel_t channel) {
         constexpr uint8_t max_channel = 125;
         write_reg(regs::rf_ch, std::min(channel.channel, max_channel));
     }
 
-    inline nrf24::channel_t nrf24::get_channel() const {
+    template <class GpioT, class SpiT>
+    inline channel_t nrf24<GpioT, SpiT>::get_channel() const {
         return { read_reg(regs::rf_ch) };
     }
 
-    inline bool nrf24::is_connected() const {
+    template <class GpioT, class SpiT>
+    inline bool nrf24<GpioT, SpiT>::is_connected() const {
         uint8_t setup = read_reg(regs::setup_aw);
         return setup >= 1 && setup <= 3;
     }
 
-    inline void nrf24::power_down() {
+    template <class GpioT, class SpiT>
+    inline void nrf24<GpioT, SpiT>::power_down() {
         using namespace bits;
-        g.write(m_ce_pin, false);
+        m_g->write(m_ce_pin, false);
         write_reg(regs::config, read_reg(regs::config) & ~(1 << PWR_UP));
     }
 
-    inline void nrf24::power_up() {
+    template <class GpioT, class SpiT>
+    inline void nrf24<GpioT, SpiT>::power_up() {
         using namespace bits;
         uint8_t cfg = read_reg(regs::config);
 
@@ -256,67 +268,74 @@ namespace tos
         }
     }
 
-    inline uint8_t nrf24::write_cmd(nrf24_mnemonics::mnemonics cmd) {
+    template <class GpioT, class SpiT>
+    inline uint8_t nrf24<GpioT, SpiT>::write_cmd(nrf24_mnemonics::mnemonics cmd) {
         return begin_transaction().exchange(cmd);
     }
 
-    inline void nrf24::flush_rx() {
+    template <class GpioT, class SpiT>
+    inline void nrf24<GpioT, SpiT>::flush_rx() {
         write_cmd(nrf24_mnemonics::FLUSH_RX);
     }
 
-    inline void nrf24::flush_tx() {
+    template <class GpioT, class SpiT>
+    inline void nrf24<GpioT, SpiT>::flush_tx() {
         write_cmd(nrf24_mnemonics::FLUSH_TX);
     }
 
-    inline size_t nrf24::get_next_length() const {
+    template <class GpioT, class SpiT>
+    inline size_t nrf24<GpioT, SpiT>::get_next_length() const {
         auto trans = begin_transaction();
         trans.exchange(nrf24_mnemonics::R_RX_PL_WID);
         return trans.exchange(0xff);
     }
 
-    inline void nrf24::set_addr_width(nrf24_addr_width w) {
+    template <class GpioT, class SpiT>
+    inline void nrf24<GpioT, SpiT>::set_addr_width(nrf24_addr_width w) {
         write_reg(regs::setup_aw, static_cast<uint8_t>(w));
     }
 
-    inline nrf24_addr_width nrf24::get_addr_width() const {
+    template <class GpioT, class SpiT>
+    inline nrf24_addr_width nrf24<GpioT, SpiT>::get_addr_width() const {
         return static_cast<nrf24_addr_width>(read_reg(regs::setup_aw) & 0b11);
     }
 
-
-    inline void nrf24::open_read_pipe(uint8_t num, span<const uint8_t> addr)
+    template <class GpioT, class SpiT>
+    inline void nrf24<GpioT, SpiT>::open_read_pipe(uint8_t num, span<const uint8_t> addr)
     {
         using namespace regs;
         using namespace bits;
 
-        static constexpr reg_id_t child_pipe[] PROGMEM =
+        static constexpr reg_id_t child_pipe[] =
         {
             RX_ADDR_P<0>, RX_ADDR_P<1>, RX_ADDR_P<2>, RX_ADDR_P<3>, RX_ADDR_P<4>, RX_ADDR_P<5>
         };
 
-        static constexpr reg_id_t child_payload_size[] PROGMEM =
+        static constexpr reg_id_t child_payload_size[] =
         {
             RX_PW_P<0>, RX_PW_P<1>, RX_PW_P<2>, RX_PW_P<3>, RX_PW_P<4>, RX_PW_P<5>
         };
-        static constexpr uint8_t child_pipe_enable[] PROGMEM =
+        static constexpr uint8_t child_pipe_enable[] =
         {
             ERX_P<0>, ERX_P<1>, ERX_P<2>, ERX_P<3>, ERX_P<4>, ERX_P<5>
         };
 
         if (num >= 2)
         {
-            write_reg(reg_id_t{pgm_read_byte(&child_pipe[num])}, addr[0]);
+            write_reg(reg_id_t{child_pipe[num]}, addr[0]);
         }
         else
         {
-            write_reg(reg_id_t{pgm_read_byte(&child_pipe[num])}, addr);
+            write_reg(reg_id_t{child_pipe[num]}, addr);
         }
 
-        write_reg(reg_id_t{pgm_read_byte(&child_payload_size[num])}, 32);
+        write_reg(reg_id_t{child_payload_size[num]}, 32);
 
-        write_reg(EN_RXADDR, read_reg(EN_RXADDR) | (1 << (pgm_read_byte(&child_pipe_enable[num]))));
+        write_reg(EN_RXADDR, read_reg(EN_RXADDR) | (1 << (child_pipe_enable[num])));
     }
 
-    inline void nrf24::start_listening() {
+    template <class GpioT, class SpiT>
+    inline void nrf24<GpioT, SpiT>::start_listening() {
         write_reg(regs::config, read_reg(regs::config) | (1 << bits::PRIM_RX));
         write_reg(regs::nrf_status, 1 << bits::RX_DR | 1 << bits::TX_DS | 1 << bits::MAX_RT);
 
@@ -328,11 +347,57 @@ namespace tos
         }
     }
 
-    inline void nrf24::enable_chip() {
-        g.write(m_ce_pin, true);
+    template <class GpioT, class SpiT>
+    inline void nrf24<GpioT, SpiT>::enable_chip() {
+        m_g->write(m_ce_pin, true);
     }
 
-    inline void nrf24::disable_chip() {
-        g.write(m_ce_pin, false);
+    template <class GpioT, class SpiT>
+    inline void nrf24<GpioT, SpiT>::disable_chip() {
+        m_g->write(m_ce_pin, false);
+    }
+
+    template <class GpioT, class SpiT>
+    spi_transaction<SpiT> nrf24<GpioT, SpiT>::begin_transaction() const {
+        return spi_transaction<SpiT>{m_cs_pin};
+    }
+
+    static constexpr auto reg_mask = 0x1F;
+
+    template <class GpioT, class SpiT>
+    uint8_t nrf24<GpioT, SpiT>::write_reg(reg_id_t reg, uint8_t val) {
+        auto trans = begin_transaction();
+        auto res = trans.exchange(nrf24_mnemonics::write_reg | (reg_mask & reg.reg));
+        trans.exchange(val);
+        return res;
+    }
+
+    template <class GpioT, class SpiT>
+    uint8_t nrf24<GpioT, SpiT>::write_reg(reg_id_t reg, span<const uint8_t> val) {
+        auto trans = begin_transaction();
+        auto res = trans.exchange(nrf24_mnemonics::write_reg | (reg_mask & reg.reg));
+        for (auto byte : val)
+        {
+            trans.exchange(byte);
+        }
+        return res;
+    }
+
+    template <class GpioT, class SpiT>
+    uint8_t nrf24<GpioT, SpiT>::read_reg(reg_id_t reg, span<uint8_t> b) const {
+        auto trans = begin_transaction();
+        auto res = trans.exchange(nrf24_mnemonics::read_reg | (reg_mask & reg.reg));
+        for (auto& byte : b)
+        {
+            byte = trans.exchange(0xff);
+        }
+        return res;
+    }
+
+    template <class GpioT, class SpiT>
+    uint8_t nrf24<GpioT, SpiT>::read_reg(reg_id_t reg) const {
+        auto trans = begin_transaction();
+        trans.exchange(nrf24_mnemonics::read_reg | (reg_mask & reg.reg));
+        return trans.exchange(0xff);
     }
 }

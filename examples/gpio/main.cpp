@@ -2,19 +2,16 @@
 // Created by Mehmet Fatih BAKIR on 29/03/2018.
 //
 
-#include <ft/include/tos/ft.hpp>
+#include <tos/ft.hpp>
 #include <tos/semaphore.hpp>
-#include <tos_arch.hpp>
 #include <tos/print.hpp>
 #include <tos/devices.hpp>
 
-#include <drivers/arch/avr/usart.hpp>
+#include <arch/avr/drivers.hpp>
 
 #include <avr/interrupt.h>
 #include <tos/intrusive_ptr.hpp>
-#include <drivers/arch/avr/gpio.hpp>
-#include <drivers/arch/avr/timer.hpp>
-#include <drivers/common/alarm.hpp>
+#include <common/alarm.hpp>
 
 auto gp = open(tos::devs::gpio);
 

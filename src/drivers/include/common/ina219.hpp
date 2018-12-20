@@ -6,7 +6,7 @@
 
 #include <cstdint>
 #include <array>
-#include <drivers/common/i2c.hpp>
+#include <common/i2c.hpp>
 #include <tos/span.hpp>
 #include "detail/ina219_constants.hpp"
 

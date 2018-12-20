@@ -2,10 +2,10 @@
 // Created by fatih on 11/8/18.
 //
 
-#include <drivers/common/ina219.hpp>
-#include <drivers/arch/avr/drivers.hpp>
+#include <common/ina219.hpp>
+#include <arch/avr/drivers.hpp>
 #include <tos/ft.hpp>
-#include <drivers/common/alarm.hpp>
+#include <common/alarm.hpp>
 #include <tos/print.hpp>
 
 void main_task(void*)

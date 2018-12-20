@@ -57,7 +57,7 @@ namespace xbee
     template <class StreamT, class ReqT>
     constexpr void write_to(StreamT& str, const ReqT& req)
     {
-        struct
+        struct chk_str_t : self_pointing<chk_str_t>
         {
             uint8_t chk_sum{ 0 };
             StreamT* str{};

@@ -5,7 +5,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <drivers/common/timer.hpp>
+#include <common/timer.hpp>
 #include <tos/function_ref.hpp>
 
 namespace tos {

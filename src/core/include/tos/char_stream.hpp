@@ -8,16 +8,17 @@
 #include <tos/span.hpp>
 #include "driver_traits.hpp"
 #include <type_traits>
+#include <common/driver_base.hpp>
 
 namespace tos
 {
-    struct char_istream
+    struct char_istream : self_pointing<char_istream>
     {
         virtual span<char> read(span<char>) = 0;
         virtual ~char_istream() = default;
     };
 
-    struct char_ostream
+    struct char_ostream : self_pointing<char_ostream>
     {
         virtual int write(span<const char>) = 0;
         virtual ~char_ostream() = default;

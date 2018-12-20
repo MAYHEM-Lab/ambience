@@ -6,8 +6,8 @@
 
 #include <stdint.h>
 #include <tos/devices.hpp>
-#include <drivers/common/spi.hpp>
-#include <util/include/tos/span.hpp>
+#include <common/spi.hpp>
+#include <tos/span.hpp>
 #include "gpio.hpp"
 
 namespace tos {

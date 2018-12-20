@@ -5,15 +5,14 @@
 #include <avr/io.h>
 #include <avr/wdt.h>
 
-#include <tos_arch.hpp>
+#include <arch/avr/include/tos_arch.hpp>
 #include <tos/arch.hpp>
 
 #include <avr/power.h>
 #include <avr/sleep.h>
 #include <tos/compiler.hpp>
 #include <tos/ft.hpp>
-#include <ft/include/tos/semaphore.hpp>
-#include <drivers/arch/avr/gpio.hpp>
+#include <tos/semaphore.hpp>
 #include <tos/delay.hpp>
 #include <util/delay.h>
 

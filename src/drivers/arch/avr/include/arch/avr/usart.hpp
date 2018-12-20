@@ -8,10 +8,10 @@
 #include <stddef.h>
 #include <tos/devices.hpp>
 #include <tos/char_stream.hpp>
-#include <drivers/common/usart.hpp>
-#include <drivers/common/tty.hpp>
+#include <common/usart.hpp>
+#include <common/tty.hpp>
 #include <tos/span.hpp>
-#include <drivers/common/alarm.hpp>
+#include <common/alarm.hpp>
 #include "timer.hpp"
 
 namespace tos {

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <drivers/common/driver_base.hpp>
+#include <common/driver_base.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/event.hpp>
 #include <avr/wdt.h>
