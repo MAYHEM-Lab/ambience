@@ -15,7 +15,6 @@
 #include <arch/lx106/tcp.hpp>
 #include <tos/version.hpp>
 #include <tos/fixed_fifo.hpp>
-#include <tos_arch.hpp>
 
 #include <lwip/init.h>
 #include <common/inet/tcp_stream.hpp>

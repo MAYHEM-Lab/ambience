@@ -6,7 +6,7 @@
 
 #include <tos/devices.hpp>
 #include <tos/span.hpp>
-#include <drivers/common/inet/tcp_ip.hpp>
+#include <common/inet/tcp_ip.hpp>
 #include <stdint.h>
 #include <tos/expected.hpp>
 #include <tos/track_ptr.hpp>

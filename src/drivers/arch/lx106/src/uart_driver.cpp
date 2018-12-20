@@ -38,7 +38,7 @@ struct uart_state
 extern "C"
 {
 #include <user_interface.h>
-#include <arch/lx106/lx106_missing.hpp>
+#include <lx106_missing.hpp>
 #include "new_uart_priv.h"
 
 #include "osapi.h"

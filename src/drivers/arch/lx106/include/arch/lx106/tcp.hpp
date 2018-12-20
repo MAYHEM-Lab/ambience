@@ -7,14 +7,14 @@
 #include <tos/intrusive_list.hpp>
 #include "wifi.hpp"
 #include <tos/arch.hpp>
-#include <drivers/common/inet/tcp_ip.hpp>
+#include <common/inet/tcp_ip.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/track_ptr.hpp>
 #include <lwip/tcp.h>
 #include <lwip/init.h>
 #include <tos/expected.hpp>
 #include <algorithm>
-#include <drivers/common/inet/lwip.hpp>
+#include <common/inet/lwip.hpp>
 #include <tos/debug.hpp>
 
 #ifdef TOS_HAVE_SSL

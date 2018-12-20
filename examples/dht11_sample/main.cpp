@@ -10,7 +10,7 @@
 
 #include <lwip/init.h>
 #include <common/inet/tcp_stream.hpp>
-#include <drivers/common/dht22.hpp>
+#include <common/dht22.hpp>
 
 #include <cwpack.hpp>
 

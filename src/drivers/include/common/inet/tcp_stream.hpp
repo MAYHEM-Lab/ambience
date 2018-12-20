@@ -4,13 +4,14 @@
 
 #pragma once
 
-#include <drivers/arch/lx106/tcp.hpp>
+#include <arch/lx106/tcp.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/mutex.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/event.hpp>
 #include <tos/span.hpp>
 #include <tos/expected.hpp>
+#include <common/driver_base.hpp>
 
 namespace tos
 {
@@ -21,7 +22,7 @@ namespace tos
     };
 
     template <class BaseEndpointT>
-    class tcp_stream
+    class tcp_stream : public self_pointing<tcp_stream<BaseEndpointT>>
     {
     public:
         explicit tcp_stream(BaseEndpointT&& ep);

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <drivers/common/i2c.hpp>
+#include <common/i2c.hpp>
 #include <tos/span.hpp>
 #include "gpio.hpp"
 

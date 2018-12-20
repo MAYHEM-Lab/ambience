@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <drivers/arch/lx106/gpio.hpp>
+#include <arch/lx106/gpio.hpp>
 #include <tos/span.hpp>
 
 namespace tos

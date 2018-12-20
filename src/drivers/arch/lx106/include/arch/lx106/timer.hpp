@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 #include <tos/function_ref.hpp>
-#include <drivers/common/timer.hpp>
+#include <common/timer.hpp>
 
 extern "C"
 {
