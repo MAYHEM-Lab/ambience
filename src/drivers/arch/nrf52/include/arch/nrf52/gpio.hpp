@@ -5,7 +5,7 @@
 #pragma once
 #include <nrf_gpio.h>
 #include <nrf52.h>
-#include <drivers/common/gpio.hpp>
+#include <common/gpio.hpp>
 #include <tos/compiler.hpp>
 
 namespace tos

@@ -5,9 +5,10 @@
 #pragma once
 
 #include "gpio.hpp"
-#include <drivers/common/usart.hpp>
+#include <common/usart.hpp>
 #include <tos/mutex.hpp>
 #include <tos/span.hpp>
+#include <common/driver_base.hpp>
 
 namespace tos
 {
@@ -18,7 +19,8 @@ namespace tos
                     el_t<usart_baud_rate, const usart_baud_rate&>,
                     el_t<usart_parity, const usart_parity&>,
                     el_t<usart_stop_bit, const usart_stop_bit&>>;
-        class uart
+
+        class uart : public self_pointing<uart>
         {
         public:
             explicit uart(usart_constraint&& config, gpio::pin_type rx = 8, gpio::pin_type tx = 6) noexcept;
