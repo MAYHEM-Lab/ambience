@@ -66,7 +66,8 @@ namespace tos
             assign();
         }
 
-        tracked_driver(tracked_driver&& rhs) noexcept : m_which(rhs.m_which)
+        tracked_driver(tracked_driver&& rhs) noexcept
+            : m_which(rhs.m_which)
         {
             rhs.m_which = nullptr;
             assign();

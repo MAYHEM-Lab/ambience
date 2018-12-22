@@ -66,8 +66,8 @@ namespace tos
 
     template <class CharOstreamT>
     void print(CharOstreamT & ostr, uintptr_t ptr) {
-        print(ostr, '0');
-        print(ostr, 'x');
+        //print(ostr, '0');
+        //print(ostr, 'x');
         print(ostr, itoa(ptr, 16));
     }
 
