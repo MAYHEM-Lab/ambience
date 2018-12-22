@@ -21,7 +21,7 @@ add_executable(expected_tests expected_test.cpp)
 target_link_libraries(expected_tests catch_main tos::ft)
 
 add_executable(alarm_tests alarm_tests.cpp)
-target_link_libraries(alarm_tests catch_main tos::ft)
+target_link_libraries(alarm_tests catch_main tos::ft x86_drivers)
 
 add_executable(rn2903_test rn2903_test.cpp)
 target_link_libraries(rn2903_test catch_main tos::ft tos::rn2903)

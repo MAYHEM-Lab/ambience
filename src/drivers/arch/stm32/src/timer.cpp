@@ -2,7 +2,7 @@
 // Created by fatih on 11/30/18.
 //
 
-#include <timer.hpp>
+#include <arch/stm32/timer.hpp>
 #include <memory>
 #include <tos/track_ptr.hpp>
 

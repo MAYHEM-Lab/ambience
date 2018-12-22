@@ -2,7 +2,7 @@
 // Created by fatih on 11/7/18.
 //
 
-#include <drivers/arch/lx106/drivers.hpp>
+#include <arch/lx106/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 

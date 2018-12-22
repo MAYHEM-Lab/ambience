@@ -2,7 +2,7 @@
 // Created by fatih on 6/8/18.
 //
 
-#include <timer.hpp>
+#include <arch/nrf52/timer.hpp>
 #include <nrfx_timer.h>
 #include <drivers/include/nrfx_timer.h>
 #include <nrf52.h>

@@ -3,15 +3,16 @@
 //
 
 #include "catch.hpp"
-#include <drivers/common/xbee/response.hpp>
+#include <common/xbee/response.hpp>
 #include <tos/span.hpp>
 #include <common/xbee/request.hpp>
+#include <common/driver_base.hpp>
 
 TEST_CASE("xbee req gen", "[tos-xbee]")
 {
     namespace xbee = tos::xbee;
 
-    struct {
+    struct to_dev_t : tos::self_pointing<to_dev_t> {
         int write(tos::span<const char> buf){
             for (auto c : buf)
             {

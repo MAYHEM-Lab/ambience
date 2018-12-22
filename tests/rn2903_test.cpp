@@ -7,11 +7,12 @@
 #include <string>
 #include <chrono>
 #include <cstring>
-#include <drivers/common/rn2903/sys.hpp>
+#include <common/rn2903/sys.hpp>
+#include <common/driver_base.hpp>
 
 using namespace tos;
 
-struct uart_driver
+struct uart_driver : self_pointing<uart_driver>
 {
     int write(tos::span<const char> buf)
     {

@@ -61,7 +61,6 @@ add_library(tos_libcxx
     include/wctype.h
 )
 
-target_include_directories(tos_libcxx PUBLIC "include")
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_THREADS)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_EXCEPTIONS)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_RTTI)
@@ -74,6 +73,7 @@ target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NA
 target_compile_definitions(tos_libcxx PUBLIC TOS)
 
 target_compile_features(tos_libcxx PUBLIC cxx_std_17)
+tos_install(tos_libcxx ${CMAKE_CURRENT_SOURCE_DIR}/include)
 endif()
 
 add_library(base_libcxx src/compile.cpp)
@@ -83,3 +83,5 @@ else()
     target_compile_features(base_libcxx PUBLIC cxx_std_17)
 endif()
 add_library(tos::libcxx ALIAS base_libcxx)
+
+tos_install(base_libcxx)

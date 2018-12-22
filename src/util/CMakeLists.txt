@@ -23,8 +23,9 @@ add_library(tos_util
     include/tos/byte.hpp
 )
 
-target_include_directories(tos_util PUBLIC "include")
 target_compile_options(tos_util PUBLIC "-std=c++14")
 target_link_libraries(tos_util PUBLIC tos::ft tos::libcxx)
 
 add_library(tos::util ALIAS tos_util)
+
+tos_install(tos_util ${CMAKE_CURRENT_SOURCE_DIR}/include)

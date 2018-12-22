@@ -15,12 +15,12 @@ add_library(tos_ft
         include/tos/thread.hpp
         include/tos/types.hpp)
 
-target_include_directories(tos_ft PUBLIC "include")
-
 target_link_libraries(tos_ft PUBLIC tos_arch)
 target_link_libraries(tos_ft PUBLIC tos_util)
 target_link_libraries(tos_ft PUBLIC tos_interrupt)
 target_link_libraries(tos_ft PUBLIC tos_core tos::libcxx)
-target_compile_definitions(tos_ft PUBLIC TOS)
+target_link_libraries(tos_ft PUBLIC tos_alarm)
 
 add_library(tos::ft ALIAS tos_ft)
+
+tos_install(tos_ft ${CMAKE_CURRENT_SOURCE_DIR}/include)

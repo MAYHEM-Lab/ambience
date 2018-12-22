@@ -2,20 +2,20 @@
 // Created by Mehmet Fatih BAKIR on 15/04/2018.
 //
 
-#include <drivers/arch/avr/drivers.hpp>
+#include <arch/avr/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/arch.hpp>
-#include <drivers/common/gpio.hpp>
+#include <common/gpio.hpp>
 #include <tos/devices.hpp>
 #include <stdlib.h>
-#include <drivers/common/dht22.hpp>
+#include <common/dht22.hpp>
 #include <util/delay.h>
 #include <tos/event.hpp>
-#include <drivers/common/alarm.hpp>
+#include <common/alarm.hpp>
 #include <avr/io.h>
 #include <tos/compiler.hpp>
-#include <ft/include/tos/semaphore.hpp>
+#include <tos/semaphore.hpp>
 #include "app.hpp"
 
 

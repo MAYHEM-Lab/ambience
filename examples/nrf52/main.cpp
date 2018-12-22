@@ -12,15 +12,12 @@
 #include <drivers/include/nrfx_uarte.h>
 #include <tos/compiler.hpp>
 
-#include <drivers/arch/nrf52/drivers.hpp>
+#include <arch/nrf52/drivers.hpp>
 #include <algorithm>
 #include <tos/print.hpp>
 
-#include <drivers/common/alarm.hpp>
-#include <drivers/arch/nrf52/radio.hpp>
-#include <drivers/arch/nrf52/twim.hpp>
-
-#include <drivers/common/lcd.hpp>
+#include <common/alarm.hpp>
+#include <common/lcd.hpp>
 
 namespace {
     auto g = tos::open(tos::devs::gpio);

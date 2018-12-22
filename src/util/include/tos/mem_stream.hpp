@@ -9,7 +9,7 @@
 
 namespace tos
 {
-    class omemory_stream
+    class omemory_stream : public self_pointing<omemory_stream>
     {
     public:
         explicit constexpr omemory_stream(tos::span<char> buf) : m_buffer{buf}, m_wr_it{m_buffer.begin()} {}
@@ -32,7 +32,7 @@ namespace tos
         char* m_wr_it;
     };
 
-    class imemory_stream
+    class imemory_stream : public self_pointing<imemory_stream>
     {
     public:
         explicit constexpr imemory_stream(tos::span<const char> buf) : m_buffer{buf}, m_it{m_buffer.begin()} {}

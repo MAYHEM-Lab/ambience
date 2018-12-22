@@ -6,7 +6,7 @@
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/arch.hpp>
-#include <drivers/common/alarm.hpp>
+#include <common/alarm.hpp>
 #include <tos/devices.hpp>
 #include <tos/waitable.hpp>
 

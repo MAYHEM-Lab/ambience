@@ -3,8 +3,7 @@
 //
 
 #include <tos/zmtp/zmtplib.h>
-#include <drivers/arch/lx106/tcp.hpp>
-#include <drivers/common/inet/tcp_stream.hpp>
+#include <common/inet/tcp_stream.hpp>
 
 using namespace tos;
 

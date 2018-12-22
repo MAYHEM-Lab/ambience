@@ -2,12 +2,12 @@
 // Created by fatih on 11/8/18.
 //
 
-#include <twim.hpp>
+#include <arch/avr/twim.hpp>
 #include <tos/debug.hpp>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/twi.h>
-#include <ft/include/tos/semaphore.hpp>
+#include <tos/semaphore.hpp>
 
 #ifndef TWI_FREQ
 #define TWI_FREQ 100000UL

@@ -3,8 +3,8 @@
 //
 
 #include <lwip/init.h>
-#include <ft/include/tos/ft.hpp>
-#include <drivers/arch/lx106/drivers.hpp>
+#include <tos/ft.hpp>
+#include <arch/lx106/drivers.hpp>
 #include <tos/print.hpp>
 #include <tos/version.hpp>
 

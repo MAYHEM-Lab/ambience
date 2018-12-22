@@ -1,38 +1,42 @@
 project(tos)
 
-add_library(lx106_usart usart.hpp src/uart_register.h src/new_uart_priv.h src/uart_driver.cpp)
+add_library(lx106_usart include/arch/lx106/usart.hpp src/uart_register.h src/new_uart_priv.h src/uart_driver.cpp)
 target_link_libraries(lx106_usart PRIVATE tos_core lx106_impl)
+tos_install(lx106_usart ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(esp82_timer timer.hpp src/timer.cpp)
-target_include_directories(esp82_timer PUBLIC .)
+add_library(esp82_timer include/arch/lx106/timer.hpp src/timer.cpp)
+tos_install(esp82_timer ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_definitions(esp82_timer PUBLIC USE_US_TIMER) # without this, sdk only provides ms timers
 target_link_libraries(esp82_timer PRIVATE tos_core lx106_impl)
 
-add_library(esp82_wifi wifi.hpp src/wifi.cpp)
-target_include_directories(esp82_wifi PUBLIC .)
+add_library(esp82_wifi include/arch/lx106/wifi.hpp src/wifi.cpp)
+tos_install(esp82_wifi ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_wifi PUBLIC tos_core lx106_impl)
 
-add_library(esp82_tcp tcp.hpp src/tcp.cpp)
-target_include_directories(esp82_tcp PUBLIC .)
+add_library(esp82_tcp include/arch/lx106/tcp.hpp src/tcp.cpp)
+tos_install(esp82_tcp ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_tcp PUBLIC esp82_wifi tos_inet)
 
-add_library(esp82_gpio gpio.hpp src/gpio.cpp)
-target_include_directories(esp82_gpio PUBLIC .)
+add_library(esp82_gpio include/arch/lx106/gpio.hpp src/gpio.cpp)
+tos_install(esp82_gpio ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_gpio PUBLIC tos_core tos_gpio)
 
-add_library(esp82_i2c src/twim.cpp twim.hpp src/si2c.cpp)
-target_include_directories(esp82_i2c PUBLIC . PRIVATE src)
+add_library(esp82_i2c src/twim.cpp include/arch/lx106/twim.hpp src/si2c.cpp)
+target_include_directories(esp82_i2c PRIVATE src)
+tos_install(esp82_i2c ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_i2c PUBLIC esp82_gpio)
 
-add_library(esp82_spi spi.hpp src/spi.cpp src/spi.h src/spi_register.h)
-target_include_directories(esp82_spi PUBLIC . PRIVATE src)
+add_library(esp82_spi include/arch/lx106/spi.hpp src/spi.cpp src/spi.h src/spi_register.h)
+target_include_directories(esp82_spi PRIVATE src)
+tos_install(esp82_spi ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_spi PUBLIC esp82_gpio)
 
-add_library(esp82_adc adc.hpp src/adc.cpp)
-target_include_directories(esp82_adc PUBLIC . PRIVATE src)
+add_library(esp82_adc include/arch/lx106/adc.hpp src/adc.cpp)
+target_include_directories(esp82_adc PRIVATE src)
+tos_install(esp82_adc ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_adc PUBLIC tos_core)
 
-add_library(esp82_drivers src/stub.cpp drivers.hpp)
+add_library(esp82_drivers src/stub.cpp include/arch/lx106/drivers.hpp)
 target_link_libraries(esp82_drivers PUBLIC
         lx106_usart
         esp82_timer
@@ -40,3 +44,4 @@ target_link_libraries(esp82_drivers PUBLIC
         esp82_tcp
         esp82_i2c
         esp82_spi)
+tos_install(esp82_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)

@@ -40,7 +40,7 @@ jobs:
           command: unzip nrf5-sdk.zip -d /opt/x-tools
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_ARM=ON ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_NRF52=ON ..
       - run:
           working_directory: build/
           name: Build Project

@@ -4,8 +4,8 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <usart.hpp>
-#include <ft/include/tos/ft.hpp>
+#include <arch/avr/usart.hpp>
+#include <tos/ft.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/mutex.hpp>
 #include <optional>

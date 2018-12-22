@@ -2,13 +2,13 @@
 // Created by Mehmet Fatih BAKIR on 15/04/2018.
 //
 
-#include <drivers/arch/avr/drivers.hpp>
+#include <arch/avr/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
-#include <drivers/common/sd/spi_sd.hpp>
-#include <drivers/common/gpio.hpp>
-#include <drivers/common/spi.hpp>
-#include <drivers/common/alarm.hpp>
+#include <common/sd/spi_sd.hpp>
+#include <common/gpio.hpp>
+#include <common/spi.hpp>
+#include <common/alarm.hpp>
 #include <tos/devices.hpp>
 #include <tos/waitable.hpp>
 #include <stdlib.h>

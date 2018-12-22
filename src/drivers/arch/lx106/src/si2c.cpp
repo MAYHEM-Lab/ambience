@@ -1,4 +1,4 @@
-#include <gpio.hpp>
+#include <arch/lx106/gpio.hpp>
 #include <tos/ft.hpp>
 
 extern "C"
