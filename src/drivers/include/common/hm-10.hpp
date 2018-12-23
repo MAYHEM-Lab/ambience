@@ -131,12 +131,21 @@ public:
         return bool(res[7] - '0');
     }
 
-    constexpr void enable_notifications()
-    {
+    constexpr void enable_notifications();
 
+    /**
+     * Returns whether there exists a connection at this moment
+     *
+     * @return whether a connection is established
+     */
+    constexpr bool is_connected() const
+    {
+        return m_connected;
     }
 
 private:
+    bool m_connected = false;
+    char m_buf[32];
     mutable UsartT m_usart;
 };
 } // namespace tos
@@ -148,7 +157,7 @@ namespace tos
         tos::print(m_usart, "AT+RESET");
     }
 
-    inline uint8_t parse_hex(char c)
+    inline constexpr uint8_t parse_hex(char c)
     {
         if (c >= '0' && c <= '9') { return c - '0'; }
         if (c >= 'A' && c <= 'F') { return 10 + c - 'A'; }
@@ -156,10 +165,14 @@ namespace tos
         return -1;
     }
 
-    inline uint8_t parse_hex(char high_nibble, char low_nibble)
+    inline constexpr uint8_t parse_hex(char high_nibble, char low_nibble)
     {
         return (parse_hex(high_nibble) << 4) | parse_hex(low_nibble);
     }
+
+    static_assert(parse_hex('F', 'F') == 255, "");
+    static_assert(parse_hex('0', '0') == 0, "");
+    static_assert(parse_hex('D', 'B') == 219, "");
 
     template<class UsartT>
     constexpr ble::address_t hm10<UsartT>::get_address() const {

@@ -17,8 +17,6 @@ void usart_setup(tos::stm32::gpio& g)
     auto rx_pin = 3_pin;
 
     g.set_pin_mode(rx_pin, tos::pin_mode::in);
-    //g.set_pin_mode(tx_pin, tos::pin_mode::out);
-    //g.write(tx_pin, tos::digital::high);
 
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
                   GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
@@ -35,8 +33,6 @@ void usart3_setup(tos::stm32::gpio& g)
     auto rx_pin = 43_pin;
 
     g.set_pin_mode(rx_pin, tos::pin_mode::in);
-    gpio_set_mode(GPIO_BANK_USART3_PR_TX, GPIO_MODE_OUTPUT_50_MHZ,
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART3_PR_TX);
 }
 
 auto hm10_task = [](void*){
@@ -47,6 +43,8 @@ auto hm10_task = [](void*){
 
     usart3_setup(g);
     auto lora_uart = tos::open(tos::devs::usart<2>, tos::uart::default_9600);
+    gpio_set_mode(GPIO_BANK_USART3_PR_TX, GPIO_MODE_OUTPUT_50_MHZ,
+                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART3_PR_TX);
 
     auto tmr = tos::open(tos::devs::timer<2>);
     auto alarm = tos::open(tos::devs::alarm, tmr);
@@ -57,15 +55,22 @@ auto hm10_task = [](void*){
     tos::println(usart, "hello");
 
     auto hm10 = tos::open(tos::devs::hm10, &lora_uart);
-    hm10->test(alarm);
 
     tos::println(usart, hm10.get_address());
     tos::println(usart, hm10.notifications_enabled());
 
+    tos::launch_lambda([&]{
+        while (true)
+        {
+            char b[1];
+            tos::print(hm10, usart->read(b));
+        }
+    });
+
     while (true)
     {
         char b[1];
-        tos::print(hm10, hm10->read(b));
+        tos::print(usart, hm10->read(b));
     }
 };
 
