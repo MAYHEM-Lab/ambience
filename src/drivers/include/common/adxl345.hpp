@@ -5,7 +5,9 @@
 #pragma once
 
 #include <common/i2c.hpp>
+#include <common/adxl345/constants.hpp>
 #include <stdint.h>
+#include <tos/span.hpp>
 
 namespace tos
 {
@@ -15,16 +17,16 @@ namespace tos
     public:
         explicit adxl345(TwimT& twim);
 
-        void powerOn();
+        bool powerOn();
 
         void readAccel(int *x, int *y, int *z);
 
         void setRangeSetting(int val);
     private:
-        void writeTo(uint8_t address, uint8_t val) { return writeToI2C(address, val); }
-        void readFrom(uint8_t address, int num, uint8_t buff[]) { return readFromI2C(address, num, buff); }
-        void readFromI2C(uint8_t address, int num, uint8_t* buff);
-        void writeToI2C(uint8_t address, uint8_t val);
+        bool writeTo(uint8_t address, uint8_t val) { return writeToI2C(address, val); }
+        bool readFrom(uint8_t address, int num, uint8_t buff[]) { return readFromI2C(address, num, buff); }
+        bool readFromI2C(uint8_t address, int num, uint8_t* buff);
+        bool writeToI2C(uint8_t address, uint8_t val);
         TwimT& m_twim;
     };
 } // namespace tos
@@ -38,10 +40,11 @@ namespace tos
     }
 
 	template <class TwimT>
-    void adxl345<TwimT>::powerOn() {
+    bool adxl345<TwimT>::powerOn() {
         writeTo(ADXL345_POWER_CTL, 0);    // Wakeup
         writeTo(ADXL345_POWER_CTL, 16);    // Auto_Sleep
         writeTo(ADXL345_POWER_CTL, 8); // Measure
+        return true;
     }
 
 	template <class TwimT>
@@ -82,27 +85,32 @@ namespace tos
     }
 
 	template <class TwimT>
-    void adxl345<TwimT>::readFromI2C(uint8_t address, int num, uint8_t *buff) {
+    bool adxl345<TwimT>::readFromI2C(uint8_t address, int num, uint8_t *buff) {
         char buf[] = { address };
         auto wres = m_twim.transmit({ADXL345_DEVICE}, buf);
         if (wres != tos::twi_tx_res::ok) {
             //TODO: ERR
+            return false;
         }
         auto res = m_twim.receive({ADXL345_DEVICE}, tos::span<char>((char *) buff, num));
         if (res != tos::twi_rx_res::ok) {
             //ets_printf("read error!");
 
             //TODO: ERR
+            return false;
         }
+        return true;
     }
 
 	template <class TwimT>
-    void adxl345<TwimT>::writeToI2C(uint8_t address, uint8_t val) {
+    bool adxl345<TwimT>::writeToI2C(uint8_t address, uint8_t val) {
         char buf[] = { address, val };
         auto res = m_twim.transmit({ADXL345_DEVICE}, buf);
         if (res != tos::twi_tx_res::ok) {
             //ets_printf("write error!");
             //TODO: ERR
+            return false;
         }
+        return true;
     }
 }
