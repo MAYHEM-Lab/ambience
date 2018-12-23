@@ -31,9 +31,10 @@ namespace tos
     };
 
     template <class T>
-    struct istream_facade : char_istream
+    struct istream_facade : char_istream, self_pointing<istream_facade<T>>
     {
-        explicit istream_facade(T t) : m_t{std::move(t)} {}
+        template <class U = T>
+        explicit istream_facade(U t) : m_t{std::forward<U>(t)} {}
 
         span<char> read(span<char> buf) override
         {
@@ -45,13 +46,14 @@ namespace tos
     };
 
     template <class T>
-    struct ostream_facade : char_ostream
+    struct ostream_facade : char_ostream, self_pointing<ostream_facade<T>>
     {
-        explicit ostream_facade(T t) : m_t{std::move(t)} {}
+        template <class U = T>
+        explicit ostream_facade(U&& t) : m_t{std::forward<U>(t)} {}
 
         int write(span<const char> buf) override
         {
-            return m_t.write(buf);
+            return m_t->write(buf);
         }
 
     private:
@@ -59,8 +61,9 @@ namespace tos
     };
 
     template <class T>
-    struct iostream_facade : char_iostream {
-        explicit iostream_facade(T t) : m_t{std::move(t)} {}
+    struct iostream_facade : char_iostream, self_pointing<iostream_facade<T>> {
+        template <class U = T>
+        explicit iostream_facade(U&& t) : m_t{std::forward<U>(t)} {}
 
         span<char> read(span<char> buf) override
         {
