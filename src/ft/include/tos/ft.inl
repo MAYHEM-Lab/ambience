@@ -285,11 +285,11 @@ namespace tos {
         }
     }
 
-    inline thread_id_t launch(launch_params params)
+    /*inline thread_id_t launch(launch_params params)
     {
         auto& t = kern::prep_raw_layout(params);
         return sched.start(t);
-    }
+    }*/
 
     inline thread_id_t launch(tos::span<char> task_span, void(*e)(void*), void* d = nullptr)
     {

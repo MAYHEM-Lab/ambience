@@ -6,6 +6,17 @@ function(print_size target)
     )
 endfunction()
 
+function(get_implicit_flags FLAGS)
+execute_process(
+	COMMAND cmd.exe /c "${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} -xc++ -E -v -"
+	TIMEOUT 1
+	ERROR_VARIABLE FOO
+	RESULT_VARIABLE RES
+)
+string(REGEX MATCH "cc1plus\.exe (.*)\\n" _ ${FOO})
+set(${FLAGS} ${CMAKE_MATCH_1} PARENT_SCOPE)
+endfunction()
+
 set(TOS_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -Wpedantic \
      -ffunction-sections -fdata-sections -ffreestanding -g -pedantic -freorder-functions \
         -Wno-unknown-pragmas")

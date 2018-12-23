@@ -25,7 +25,7 @@ struct uart_driver : self_pointing<uart_driver>
             return buf.size();
         }
 
-        REQUIRE(m_buf.substr(0, index + 2) == "sys get nvm 299\r\n");
+        REQUIRE(m_buf.substr(0, index + 2) == "sys get nvm 300\r\n");
         return buf.size();
     }
 
@@ -33,10 +33,9 @@ struct uart_driver : self_pointing<uart_driver>
     span<char> read(span<char> data, AlarmT& alarm, std::chrono::milliseconds timeout)
     {
         REQUIRE(data.size() >= 20);
-        auto r = std::strncpy(data.begin(), "invalid_param\r\n", data.size());
+        auto r = std::strncpy(data.begin(), "FF\r\n", data.size());
         return data.slice(0, std::distance(data.begin(), r));
     }
-
 private:
     std::string m_buf;
 };
