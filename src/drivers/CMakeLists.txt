@@ -91,17 +91,14 @@ target_link_libraries(tos_rn2903 PUBLIC tos_usart tos::print)
 add_library(tos::rn2903 ALIAS tos_rn2903)
 tos_install(tos_rn2903 ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-
 add_library(tos_hm10 include/common/hm-10.hpp src/stub.cpp)
 target_link_libraries(tos_hm10 PUBLIC tos_usart tos::print)
 add_library(tos::hm10 ALIAS tos_hm10)
 tos_install(tos_hm10 ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-if (TOS_ESP)
-    add_library(tos_adxl345 include/common/adxl345.hpp src/adxl345.cpp)
-    target_link_libraries(tos_adxl345 PUBLIC tos_core esp82_drivers)
-    tos_install(tos_adxl345 ${CMAKE_CURRENT_SOURCE_DIR}/include)
-endif()
+add_library(tos_adxl345 include/common/adxl345.hpp src/adxl345.cpp)
+target_link_libraries(tos_adxl345 PUBLIC tos_core tos_i2c)
+tos_install(tos_adxl345 ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(tos_inet
         include/common/inet/tcp_ip.hpp
