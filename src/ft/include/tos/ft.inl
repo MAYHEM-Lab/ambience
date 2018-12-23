@@ -140,6 +140,9 @@ namespace tos {
 
         using raw_task = super_tcb<void(*)(void*), void*>;
 
+        template <class FuncT, class... ArgTs>
+        using lambda_task = super_tcb<std::remove_reference_t <FuncT>, std::remove_reference_t <ArgTs>...>;
+
         inline raw_task& prep_raw_layout(launch_params& params)
         {
             const auto st_size = get<tags::stack_sz_t>(params);
@@ -163,6 +166,22 @@ namespace tos {
             const auto t_ptr = stack_top - sizeof(raw_task);
 
             auto thread = new (t_ptr) raw_task(task_data.size(), e, d);
+
+            return *thread;
+        }
+
+        template <class FuncT, class... ArgTs>
+        lambda_task<FuncT, ArgTs...>&
+        prep_lambda_layout(tos::span<char> task_data, FuncT&& func, ArgTs&&... args)
+        {
+            const auto stack_top = task_data.end();
+
+            const auto t_ptr = stack_top - sizeof(lambda_task<FuncT>);
+
+            auto thread = new (t_ptr) lambda_task<FuncT, ArgTs...>(
+                    task_data.size(),
+                    std::forward<FuncT>(func),
+                    std::forward<ArgTs>(args)...);
 
             return *thread;
         }
@@ -200,6 +219,7 @@ namespace tos {
         inline void busy() {
             sched.busy++;
         }
+
         inline void unbusy() {
             sched.busy--;
         }
@@ -282,6 +302,21 @@ namespace tos {
         constexpr size_t stack_size = TOS_DEFAULT_STACK_SIZE;
         tos::span<char> task_span((char*)tos_stack_alloc(stack_size), stack_size);
         return launch(task_span, e, arg);
+    }
+
+    template <class FuncT, class... ArgTs>
+    inline thread_id_t launch_lambda(tos::span<char> task_span, FuncT&& func, ArgTs&&... args)
+    {
+        auto& t = kern::prep_lambda_layout(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
+        return sched.start(t);
+    }
+
+    template <class FuncT, class... ArgTs>
+    inline thread_id_t launch_lambda(FuncT&& func, ArgTs&&... args)
+    {
+        constexpr size_t stack_size = TOS_DEFAULT_STACK_SIZE;
+        tos::span<char> task_span((char*)tos_stack_alloc(stack_size), stack_size);
+        return launch_lambda(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     }
 
     inline void this_thread::exit(void*)
