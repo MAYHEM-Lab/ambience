@@ -11,5 +11,6 @@ namespace tos
         constexpr const char* arch_name = "avr";
         constexpr const char* proc_name = "atmega328p";
         constexpr const char* board_name = "UNO";
+        constexpr const char* vendor_name = "atmel";
     }
 }
