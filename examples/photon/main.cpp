@@ -11,7 +11,7 @@
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
 
-void blink_task(void*)
+void blink_task()
 {
 	using namespace tos::tos_literals;
 

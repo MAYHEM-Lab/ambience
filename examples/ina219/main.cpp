@@ -8,7 +8,7 @@
 #include <common/alarm.hpp>
 #include <tos/print.hpp>
 
-void main_task(void*)
+void main_task()
 {
     using namespace tos;
     using namespace tos_literals;

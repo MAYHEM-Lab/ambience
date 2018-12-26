@@ -6,7 +6,7 @@
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 
-void adc_main(void*)
+void adc_main()
 {
     using namespace tos::tos_literals;
 

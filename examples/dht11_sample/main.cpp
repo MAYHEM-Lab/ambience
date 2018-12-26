@@ -41,7 +41,7 @@ void send(tos::esp82::wifi_connection& c)
 }
 
 char buf[512];
-void task(void*)
+void task()
 {
     using namespace tos::tos_literals;
 

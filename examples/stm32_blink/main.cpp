@@ -24,7 +24,7 @@ void usart_setup(tos::stm32::gpio& g)
                   GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
 }
 
-void blink_task(void*)
+void blink_task()
 {
 	using namespace tos::tos_literals;
 

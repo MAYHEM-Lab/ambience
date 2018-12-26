@@ -24,7 +24,7 @@ namespace {
 
     tos::semaphore sem{0};
 
-    void led1_task(void*) {
+    void led1_task() {
         using namespace tos;
 
         auto tmr = open(tos::devs::timer<0>);
@@ -44,7 +44,7 @@ namespace {
     char c;
     tos::semaphore send{0};
     tos::semaphore sent{0};
-    void i2c_task(void*)
+    void i2c_task()
     {
         using namespace tos;
         nrf52::twim i2c{26, 25};
@@ -76,7 +76,7 @@ namespace {
         }
     }
 
-    void led2_task(void*) {
+    void led2_task() {
         using namespace tos;
         using namespace tos_literals;
         constexpr auto usconf = tos::usart_config()

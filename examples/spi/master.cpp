@@ -7,7 +7,7 @@
 #include <tos/print.hpp>
 #include <arch/avr/drivers.hpp>
 
-void master_task(void*)
+void master_task()
 {
     using namespace tos::tos_literals;
     auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);

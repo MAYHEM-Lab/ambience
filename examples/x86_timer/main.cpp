@@ -9,7 +9,7 @@
 
 void tos_main()
 {
-    tos::launch([](void*){
+    tos::launch([]{
          tos::x86::timer tmr;
          auto alarm = tos::open(tos::devs::alarm, tmr);
 

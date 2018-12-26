@@ -13,7 +13,7 @@
 
 #include <tuple>
 
-void tick_task(void*)
+void tick_task()
 {
     using namespace tos;
     using namespace tos::tos_literals;

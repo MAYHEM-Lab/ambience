@@ -35,5 +35,5 @@ auto task = []{
 
 void tos_main()
 {
-    tos::launch_lambda(task);
+    tos::launch(task);
 }

@@ -124,7 +124,7 @@ void hibernate(tos::avr::wdt& wdt, std::chrono::seconds dur)
 
 void reset_cpu();
 
-void tx_task(void*)
+void tx_task()
 {
     using namespace tos;
     using namespace tos::tos_literals;
@@ -238,5 +238,5 @@ void tx_task(void*)
 void tos_main()
 {
     static char sstack[512];
-    tos::launch(sstack, tx_task, nullptr);
+    tos::launch(tos::span<char>(sstack), tx_task);
 }

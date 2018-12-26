@@ -25,7 +25,7 @@ tos::semaphore sem(0);
 tos::char_ostream* out_str;
 
 tos::mutex m;
-void TOS_TASK hello_task(void*)
+void TOS_TASK hello_task()
 {
     {
         tos::lock_guard<tos::mutex> lock{m};
@@ -41,7 +41,7 @@ void TOS_TASK hello_task(void*)
     }
 }
 
-void TOS_TASK yo_task(void*)
+void TOS_TASK yo_task()
 {
     {
         tos::lock_guard<tos::mutex> lock{m};

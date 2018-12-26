@@ -17,7 +17,7 @@
 #include <common/inet/tcp_stream.hpp>
 
 char buf[512];
-void task(void*)
+void task()
 {
     using namespace tos::tos_literals;
 

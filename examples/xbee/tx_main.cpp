@@ -13,7 +13,7 @@
 
 #include <tos/mem_stream.hpp>
 
-void tx_task(void*)
+void tx_task()
 {
     using namespace tos::tos_literals;
     using namespace std::chrono_literals;

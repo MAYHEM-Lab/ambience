@@ -117,7 +117,7 @@ tos::twi_tx_res tos::stm32::twim::transmit(tos::twi_addr_t to, tos::span<const c
     return tos::twi_tx_res::ok;
 }
 
-void lcd_main(void*)
+void lcd_main()
 {
     using namespace tos::tos_literals;
     using namespace tos; using namespace tos::stm32;

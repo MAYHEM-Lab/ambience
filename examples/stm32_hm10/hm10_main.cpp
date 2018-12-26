@@ -35,7 +35,7 @@ void usart3_setup(tos::stm32::gpio& g)
     g.set_pin_mode(rx_pin, tos::pin_mode::in);
 }
 
-auto hm10_task = [](void*){
+auto hm10_task = []{
     auto g = tos::open(tos::devs::gpio);
 
     usart_setup(g);
@@ -59,7 +59,7 @@ auto hm10_task = [](void*){
     tos::println(usart, hm10.get_address());
     tos::println(usart, hm10.notifications_enabled());
 
-    tos::launch_lambda([&]{
+    tos::launch([&]{
         while (true)
         {
             char b[1];

@@ -25,7 +25,7 @@ constexpr auto usconf = tos::usart_config()
 
 auto usart = open(tos::devs::usart<0>, usconf);
 
-void hello_task(void*)
+void hello_task()
 {
     using namespace tos::tos_literals;
     gp->set_pin_mode(13_pin, tos::pin_mode::out);
@@ -47,7 +47,7 @@ void hello_task(void*)
     }
 }
 
-void tick_task(void*)
+void tick_task()
 {
     using namespace tos::tos_literals;
     gp->set_pin_mode(8_pin, tos::pin_mode::in_pullup);

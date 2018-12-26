@@ -8,7 +8,7 @@
 
 void tos_main()
 {
-    tos::launch([](void*){
+    tos::launch([]{
         Catch::Session().run();
     });
 }

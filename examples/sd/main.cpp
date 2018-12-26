@@ -27,7 +27,7 @@ void print_hex(StreamT& c, unsigned char n) {
         tos::print(c, 'A' + ((n>>4)&15) - 10);
 }
 
-void main_task(void*)
+void main_task()
 {
     using namespace tos::tos_literals;
 

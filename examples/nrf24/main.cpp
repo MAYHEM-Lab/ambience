@@ -9,7 +9,7 @@
 #include <arch/avr/drivers.hpp>
 #include <common/alarm.hpp>
 
-void nrf_task(void*)
+void nrf_task()
 {
     using namespace tos;
     using namespace tos::tos_literals;

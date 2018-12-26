@@ -8,7 +8,7 @@
 #include <tos/print.hpp>
 #include <tos/version.hpp>
 
-void spi_task(void*)
+void spi_task()
 {
     if (tos::this_thread::get_id().id == 3) { lwip_init(); }
 

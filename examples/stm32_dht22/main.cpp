@@ -33,7 +33,7 @@ auto delay = [](std::chrono::microseconds us) {
     }
 };
 
-void dht_task(void*)
+void dht_task()
 {
 	using namespace tos::tos_literals;
 
