@@ -7,7 +7,7 @@
 #include <tos/print.hpp>
 #include <tos/version.hpp>
 
-void lcd_main(void*)
+void lcd_main()
 {
     using namespace tos::tos_literals;
     using namespace tos; using namespace tos::avr;

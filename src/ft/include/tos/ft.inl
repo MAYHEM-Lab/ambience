@@ -138,39 +138,10 @@ namespace tos {
             std::tuple<Args...> m_args;
         };
 
-        using raw_task = super_tcb<void(*)(void*), void*>;
-
         template <class FuncT, class... ArgTs>
-        using lambda_task = super_tcb<std::remove_reference_t <FuncT>, std::remove_reference_t <ArgTs>...>;
+        using lambda_task = super_tcb<std::decay_t<std::remove_reference_t <FuncT>>, std::decay_t<std::remove_reference_t <ArgTs>>...>;
 
-        inline raw_task& prep_raw_layout(launch_params& params)
-        {
-            const auto st_size = get<tags::stack_sz_t>(params);
-            const auto task_base = static_cast<char*>(get<tags::stack_ptr_t>(params));
-
-            const auto stack_top = task_base + st_size;
-
-            const auto t_ptr = stack_top - sizeof(raw_task);
-
-            void (*entry)(void*) = get<tags::entry_pt_t>(params);
-            void* user_arg = get<tags::argument_t>(params);
-            auto thread = new (t_ptr) raw_task(st_size, entry, user_arg);
-
-            return *thread;
-        }
-
-        inline raw_task& prep_raw_layout(tos::span<char> task_data, void(*e)(void*), void* d)
-        {
-            const auto stack_top = task_data.end();
-
-            const auto t_ptr = stack_top - sizeof(raw_task);
-
-            auto thread = new (t_ptr) raw_task(task_data.size(), e, d);
-
-            return *thread;
-        }
-
-        template <class FuncT, class... ArgTs>
+		template <class FuncT, class... ArgTs>
         lambda_task<FuncT, ArgTs...>&
         prep_lambda_layout(tos::span<char> task_data, FuncT&& func, ArgTs&&... args)
         {
@@ -285,38 +256,19 @@ namespace tos {
         }
     }
 
-    /*inline thread_id_t launch(launch_params params)
-    {
-        auto& t = kern::prep_raw_layout(params);
-        return sched.start(t);
-    }*/
-
-    inline thread_id_t launch(tos::span<char> task_span, void(*e)(void*), void* d = nullptr)
-    {
-        auto& t = kern::prep_raw_layout(task_span, e, d);
-        return sched.start(t);
-    }
-
-    inline thread_id_t launch(void(*e)(void*), void* arg)
-    {
-        constexpr size_t stack_size = TOS_DEFAULT_STACK_SIZE;
-        tos::span<char> task_span((char*)tos_stack_alloc(stack_size), stack_size);
-        return launch(task_span, e, arg);
-    }
-
-    template <class FuncT, class... ArgTs>
-    inline thread_id_t launch_lambda(tos::span<char> task_span, FuncT&& func, ArgTs&&... args)
+	template <class FuncT, class... ArgTs>
+    inline thread_id_t launch(tos::span<char> task_span, FuncT&& func, ArgTs&&... args)
     {
         auto& t = kern::prep_lambda_layout(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
         return sched.start(t);
     }
 
     template <class FuncT, class... ArgTs>
-    inline thread_id_t launch_lambda(FuncT&& func, ArgTs&&... args)
+    inline thread_id_t launch(FuncT&& func, ArgTs&&... args)
     {
         constexpr size_t stack_size = TOS_DEFAULT_STACK_SIZE;
         tos::span<char> task_span((char*)tos_stack_alloc(stack_size), stack_size);
-        return launch_lambda(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
+        return launch(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     }
 
     inline void this_thread::exit(void*)
