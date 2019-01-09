@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-include(${CMAKE_SOURCE_DIR}/cmake/Tos.cmake)
+include(Tos)
 
 if(TOS_AVR)
     set(AVR_CPU atmega328p)
@@ -93,6 +93,7 @@ elseif(TOS_X86)
 
     add_subdirectory(examples/simple_portable)
     add_subdirectory(examples/x86_timer)
+    add_subdirectory(examples/capabilities)
 
     add_subdirectory(tests)
 elseif(TOS_NRF52)

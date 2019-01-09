@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
+#include <memory>
 
 namespace caps
 {
@@ -26,37 +27,29 @@ namespace caps
     template <class CapabilityT>
     inline const CapabilityT* end(const cap_list<CapabilityT>& cl) { return cl.all + cl.num_caps; }
 
-    struct sign_t
-    {
-        uint8_t buf[32];
-    };
+    template <class CapabilityT, class SignerT>
+    struct token {
+        using sign_t = typename SignerT::sign_t;
 
-    struct hash_t {
-        uint8_t buf[32];
-    };
-
-    template <class CapabilityT>
-    struct cap_root {
         sign_t signature {};
         cap_list<CapabilityT> c;
     };
 
-    template <class CapabilityT>
-    constexpr size_t size_of(cap_root<CapabilityT>& cr)
+    template <class CapabilityT, class SignerT>
+    constexpr size_t size_of(token<CapabilityT, SignerT>& cr)
     {
         return sizeof cr + cr.c.num_caps * sizeof(CapabilityT);
     }
-}
 
-namespace caps
-{
-    inline bool operator!=(const sign_t& a, const sign_t& b)
+    struct raw_deleter
     {
-        return memcmp(a.buf, b.buf, 32) != 0;
-    }
+        template <class T>
+        void operator()(T* ptr) const
+        {
+            delete[] (char*)ptr;
+        }
+    };
 
-    inline bool operator==(const sign_t& a, const sign_t& b)
-    {
-        return !(a != b);
-    }
+    template <class CapT, class SignT>
+    using token_ptr = std::unique_ptr<token<CapT, SignT>, raw_deleter>;
 }

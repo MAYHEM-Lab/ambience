@@ -5,89 +5,81 @@
 #pragma once
 
 #include "common.hpp"
-#include "signer.hpp"
+#include "emsha_signer.hpp"
 #include <string.h>
 #include <initializer_list>
 #include <new>
 #include <memory>
 #include <algorithm>
-#include <util/include/tos/streams.hpp>
+#include <tos/streams.hpp>
 
 namespace caps
 {
-    template <class CapabilityT>
-    caps::sign_t sign(const caps::cap_root<CapabilityT> &c, caps::signer &s);
+    template <class CapabilityT, class SignerT>
+    auto sign(const caps::token<CapabilityT, SignerT> &c, SignerT &s) -> typename SignerT::sign_t;
 
-    template <class CapabilityT>
-    caps::hash_t hash(const caps::cap_list<CapabilityT> &c);
+    template <class CapabilityT, class SignerT>
+    auto hash(const caps::cap_list<CapabilityT> &c, SignerT& h) -> typename SignerT::hash_t;
 
-    template <class CapabilityT>
-    bool verify(const caps::cap_root<CapabilityT> &c, caps::signer &s);
+    template <class CapabilityT, class SignerT>
+    bool verify(const caps::token<CapabilityT, SignerT> &c, SignerT &s);
 
     template <class CapabilityT, class SatisfyCheckerT>
-    inline bool validate(const caps::cap_root<CapabilityT>& cr, const CapabilityT& needle, SatisfyCheckerT&& satisfies);
+    bool validate(
+            const caps::cap_list<CapabilityT>& haystack,
+            const CapabilityT& needle,
+            SatisfyCheckerT&& satisfies);
 
-    template <class CapabilityT>
-    void attach(caps::cap_root<CapabilityT> &c, caps::cap_list<CapabilityT> &child);
+    template <class CapabilityT, class SignerT, class SatisfyCheckerT>
+    bool validate(
+            const caps::token<CapabilityT, SignerT>& haystack,
+            const CapabilityT& needle,
+            SatisfyCheckerT&& satisfies)
+    {
+        return validate(haystack.c, needle, std::forward<SatisfyCheckerT>(satisfies));
+    }
 
-    template <class StreamT, class CapabilityT>
-    void serialize(StreamT& to, const caps::cap_root<CapabilityT>& caps);
-
-    template <class CapabilityT, class StreamT>
-    auto deserialize(StreamT& from);
+    template <class CapabilityT, class SignerT>
+    void attach(caps::token<CapabilityT, SignerT> &c, caps::cap_list<CapabilityT> &child);
 }
 
 namespace caps
 {
     template<class CapabilityT, class SatisfyCheckerT>
     bool validate(
-            const caps::cap_root<CapabilityT> &haystack,
+            const caps::cap_list<CapabilityT> &haystack,
             const CapabilityT &needle,
             SatisfyCheckerT &&satisfies) {
-        auto* leaf = &haystack.c;
+        auto* leaf = &haystack;
         for (; leaf->child; leaf = leaf->child); // find the end of the hmac chain
 
         return std::any_of(begin(*leaf), end(*leaf), [&needle, &satisfies](auto& cap){
-            return satisfies(needle, cap);
+            return satisfies(cap, needle);
         });
     }
 
-    template <class CapabilityT>
-    inline caps::sign_t sign(const caps::cap_root<CapabilityT> &c, caps::signer &s)
+    template <class CapabilityT, class SignerT>
+    auto sign(const caps::token<CapabilityT, SignerT> &c, SignerT &s) -> typename SignerT::sign_t
     {
-        caps::sign_t res{};
+        typename SignerT::sign_t res{};
         auto beg = (const uint8_t *) c.c.all;
         size_t sz = sizeof(CapabilityT) * c.c.num_caps;
         s.sign({beg, sz}, res.buf);
         return res;
     }
 
-    template <class CapabilityT>
-    inline caps::hash_t hash(const caps::cap_list<CapabilityT> &c)
+    template <class CapabilityT, class Hasher>
+    auto hash(const caps::cap_list<CapabilityT> &c, Hasher& h) -> typename Hasher::hash_t
     {
-        caps::hash_t res{};
         const auto beg = (const uint8_t *) c.all;
         const auto sz = sizeof(CapabilityT) * c.num_caps;
-        emsha::sha256_digest(beg, sz, (uint8_t*)res.buf);
-        return res;
-    }
-
-    inline void merge_into(sign_t& s, const hash_t& h)
-    {
-        auto i = s.buf;
-        auto i_end = s.buf + 32;
-        auto j = h.buf;
-        for (; i != i_end; ++i, ++j)
-        {
-            *i ^= *j;
-        }
-        emsha::sha256_digest(s.buf, 32, s.buf);
+        return h.hash({beg, sz});
     }
 
     template <class CapabilityT>
-    inline cap_list<CapabilityT>* get_leaf_cap(caps::cap_root<CapabilityT>& c)
+    inline cap_list<CapabilityT>* get_leaf_cap(caps::cap_list<CapabilityT>& c)
     {
-        auto it = &c.c;
+        auto it = &c;
         while (it->child)
         {
             it = it->child;
@@ -95,23 +87,23 @@ namespace caps
         return it;
     }
 
-    template <class CapabilityT>
-    inline void attach(caps::cap_root<CapabilityT> &c, caps::cap_list<CapabilityT> &child)
+    template <class CapabilityT, class SignerT>
+    inline void attach(caps::token<CapabilityT, SignerT> &c, caps::cap_list<CapabilityT> &child)
     {
         //TODO: do verification here
         auto child_hash = hash(child);
         merge_into(c.signature, child_hash);
-        get_leaf_cap(c)->child = &child;
+        get_leaf_cap(c.c)->child = &child;
     }
 
-    template <class CapabilityT>
-    inline bool verify(const caps::cap_root<CapabilityT> &c, caps::signer &s)
+    template <class CapabilityT, class SignerT>
+    inline bool verify(const caps::token<CapabilityT, SignerT> &c, SignerT &s)
     {
-        caps::sign_t signature = sign(c, s);
+        auto signature = sign(c, s);
 
         for (auto child = c.c.child; child; child = child->child)
         {
-            auto child_hash = hash(*child);
+            auto child_hash = hash(*child, s);
             merge_into(signature, child_hash);
         }
 
@@ -132,20 +124,12 @@ namespace caps
         return cps;
     }
 
-    struct raw_deleter
+    template <class CapabilityT, class SignerT>
+    token_ptr<CapabilityT, SignerT>
+    mkcaps(std::initializer_list<CapabilityT> capabs, SignerT &s)
     {
-        template <class T>
-        void operator()(T* ptr) const
-        {
-            delete[] (char*)ptr;
-        }
-    };
-
-    template <class CapabilityT>
-    std::unique_ptr<caps::cap_root<CapabilityT>, raw_deleter> mkcaps(std::initializer_list<CapabilityT> capabs, caps::signer &s)
-    {
-        auto mem = new char[sizeof(caps::cap_root<CapabilityT>) + sizeof(CapabilityT) * capabs.size()];
-        auto cps = new(mem) caps::cap_root<CapabilityT>;
+        auto mem = new char[sizeof(token<CapabilityT, SignerT>) + sizeof(CapabilityT) * capabs.size()];
+        auto cps = new(mem) token<CapabilityT, SignerT>;
         int i = 0;
         for (auto &c : capabs) {
             new(cps->c.all + i++) CapabilityT(c);
@@ -153,112 +137,6 @@ namespace caps
         cps->c.num_caps = i;
         cps->c.child = nullptr;
         cps->signature = sign(*cps, s);
-        return std::unique_ptr<caps::cap_root<CapabilityT>, raw_deleter>{cps};
-    }
-
-    namespace detail
-    {
-        template <class StreamT>
-        void serialize(StreamT& to, const sign_t& signature)
-        {
-            static_assert(std::is_trivially_copyable<sign_t>{}, "signature must be a pod");
-            to.write({ (const char*)&signature, sizeof signature });
-        }
-
-        template <class StreamT, class CapabilityT>
-        void serialize(StreamT& to, const cap_list<CapabilityT>& list)
-        {
-            to.write({ (const char*)&list.num_caps, sizeof list.num_caps });
-            for (auto& cap : list)
-            {
-                static_assert(std::is_trivially_copyable<std::remove_reference_t<decltype(cap)>>{}, "capabilities must be pods");
-                to.write({ (const char*)&cap, sizeof cap });
-            }
-        }
-
-        template <class StreamT>
-        sign_t deserialize_sign(StreamT& from)
-        {
-            sign_t signature;
-            tos::read_to_end(from, { (char*)&signature, sizeof signature });
-            return signature;
-        }
-
-        template <class CapabilityT, class StreamT>
-        void read_list(StreamT& from, cap_list<CapabilityT>& to, int16_t len)
-        {
-            for (int i = 0; i < len; ++i)
-            {
-                tos::read_to_end(from, { (char*)&to.all[i], sizeof to.all[i] });
-            }
-            to.num_caps = len;
-        }
-
-        template <class CapabilityT, class StreamT>
-        std::unique_ptr<cap_root<CapabilityT>, raw_deleter> deserialize_root(StreamT& from)
-        {
-            decltype(cap_list<CapabilityT>::num_caps) len;
-            tos::read_to_end(from, { (char*)&len, sizeof len });
-            auto mem = new char[sizeof(caps::cap_root<CapabilityT>) + sizeof(CapabilityT) * len];
-            auto cps = new(mem) caps::cap_root<CapabilityT>;
-            read_list(from, cps->c, len);
-            return std::unique_ptr<caps::cap_root<CapabilityT>, raw_deleter>{cps};
-        }
-
-        template <class CapabilityT, class StreamT>
-        std::unique_ptr<cap_list<CapabilityT>, raw_deleter> deserialize_list(StreamT& from)
-        {
-            decltype(cap_list<CapabilityT>::num_caps) len;
-            tos::read_to_end(from, { (char*)&len, sizeof len });
-            if (len == 0) return nullptr;
-            auto mem = new char[sizeof(caps::cap_list<CapabilityT>) + sizeof(CapabilityT) * len];
-            auto cps = new(mem) caps::cap_list<CapabilityT>;
-            read_list(from, *cps, len);
-            return std::unique_ptr<caps::cap_list<CapabilityT>, raw_deleter>{cps};
-        }
-    }
-
-    template<class StreamT, class CapabilityT>
-    void serialize(StreamT& to, const cap_root<CapabilityT>& caps)
-    {
-        for (auto child = &caps.c; child; child = child->child)
-        {
-            detail::serialize(to, *child);
-        }
-        decltype(caps.c.num_caps) c[] = {0};
-        to.write({(const char*)&c, sizeof c});
-
-        /*
-         * The signature goes last into the wire
-         *
-         * If it went first, since the receiver couldn't know the size of the
-         * overall object, it'd have to store the signature in a temporary location
-         * probably on the stack. Signatures could be huge, so we prefer not to
-         * store a temporary signature and then copy it.
-         *
-         * When the signature goes last, the receiver can actually construct the
-         * whole capability chain and just copy the signature to the signature
-         * field of the root. This way, we save stack space and avoid copying
-         * large signatures.
-         */
-        detail::serialize(to, caps.signature);
-    }
-
-    template<class CapabilityT, class StreamT>
-    auto deserialize(StreamT& from)
-    {
-        auto root = detail::deserialize_root<CapabilityT>(from);
-        auto tail = &root->c;
-        for (
-                auto l = detail::deserialize_list<CapabilityT>(from);
-                l;
-                l = detail::deserialize_list<CapabilityT>(from))
-        {
-            tail->child = l.release();
-            tail = tail->child;
-        }
-        tail->child = nullptr;
-        root->signature = detail::deserialize_sign(from);
-        return root;
+        return token_ptr<CapabilityT, SignerT>{cps};
     }
 }
