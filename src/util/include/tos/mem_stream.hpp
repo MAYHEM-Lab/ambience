@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <common/driver_base.hpp>
 #include "span.hpp"
 #include "expected.hpp"
 
