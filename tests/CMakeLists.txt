@@ -3,7 +3,7 @@ project(tos)
 add_library(catch_main catch_main.cpp)
 target_compile_features(catch_main PUBLIC cxx_std_14)
 target_compile_options(catch_main PUBLIC -fexceptions)
-target_link_libraries(catch_main PRIVATE tos::ft)
+target_link_libraries(catch_main PRIVATE tos::ft tos::core)
 
 add_executable(util_tests util_test.cpp)
 target_link_libraries(util_tests catch_main tos_util)

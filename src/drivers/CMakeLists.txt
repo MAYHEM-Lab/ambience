@@ -60,7 +60,7 @@ if (TOS_AVR)
 endif()
 
 add_library(tos_alarm include/common/alarm.hpp src/stub.cpp)
-target_link_libraries(tos_alarm PUBLIC tos_core)
+target_link_libraries(tos_alarm PUBLIC tos_util_core)
 tos_install(tos_alarm ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(tos_eeprom include/common/eeprom.hpp src/stub.cpp)

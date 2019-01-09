@@ -15,10 +15,9 @@ add_library(tos_ft
         include/tos/thread.hpp
         include/tos/types.hpp)
 
-target_link_libraries(tos_ft PUBLIC tos_arch)
-target_link_libraries(tos_ft PUBLIC tos_util)
+target_link_libraries(tos_ft PUBLIC tos_util_core)
 target_link_libraries(tos_ft PUBLIC tos_interrupt)
-target_link_libraries(tos_ft PUBLIC tos_core tos::libcxx)
+target_link_libraries(tos_ft PUBLIC tos::libcxx)
 target_link_libraries(tos_ft PUBLIC tos_alarm)
 
 add_library(tos::ft ALIAS tos_ft)

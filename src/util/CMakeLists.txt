@@ -2,30 +2,40 @@ project(tos)
 
 add_library(tos_util
     src/stub.cpp
+    src/expected.cpp
+    include/tos/expected.hpp
+
+    include/tos/fixed_fifo.hpp
+    include/tos/sync_ring_buf.hpp
+)
+
+add_library(tos_util_core
+    src/stub.cpp
+
+    include/tos/compiler.hpp
     include/tos/intrusive_list.hpp
     include/tos/intrusive_ptr.hpp
     include/tos/ring_buf.hpp
-    include/tos/expected.hpp
     include/tos/function_ref.hpp
     include/tos/utility.hpp
     src/new.cpp
     src/cxxrt.cpp
     include/tos/span.hpp
     include/tos/ct_map.hpp
-    include/tos/fixed_fifo.hpp
-    include/tos/sync_ring_buf.hpp
     include/tos/track_ptr.hpp
     include/tos/mem_stream.hpp
-    src/expected.cpp
     include/tos/streams.hpp
     include/tos/fixed_point.hpp
     include/nonstd/expected.hpp
     include/tos/byte.hpp
 )
 
-target_compile_options(tos_util PUBLIC "-std=c++14")
-target_link_libraries(tos_util PUBLIC tos::ft tos::libcxx)
+target_compile_options(tos_util_core PUBLIC "-std=c++14")
+target_link_libraries(tos_util_core PUBLIC tos::libcxx)
+
+target_link_libraries(tos_util PUBLIC tos_util_core tos::ft)
 
 add_library(tos::util ALIAS tos_util)
 
 tos_install(tos_util ${CMAKE_CURRENT_SOURCE_DIR}/include)
+tos_install(tos_util_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
