@@ -8,11 +8,11 @@
 #include <avr/interrupt.h>
 #include <string.h>
 #include "tos_platform.hpp"
+#include <tos/compiler.hpp>
 
 extern "C"
 {
-    void tos_set_stack_ptr(char* ptr) __attribute__((always_inline));
-    inline void tos_set_stack_ptr(char* ptr)
+    void ALWAYS_INLINE tos_set_stack_ptr(char* ptr)
     {
         // return address is in the stack
         // if we just change the stack pointer
@@ -20,8 +20,8 @@ extern "C"
         // copying the last 10 bytes from the original
         // stack to this stack so that we'll be able
         // to return
-        memcpy(ptr - 2, (void*)SP, 2);
-        SP = reinterpret_cast<uint16_t>(ptr - 2);
+        //  memcpy(ptr - 2, (void*)SP, 2);
+        SP = reinterpret_cast<uint16_t>(ptr);
     }
 
     inline void tos_enable_interrupts() __attribute__((always_inline));
