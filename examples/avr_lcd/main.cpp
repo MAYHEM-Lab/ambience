@@ -22,7 +22,7 @@ void lcd_main()
     lcd.begin(alarm);
     lcd.backlight();
 
-    int x = 0;
+    int64_t x = 0;
     while (true)
     {
         ++x;
@@ -38,9 +38,9 @@ void lcd_main()
         tos::print(lcd, tos::span<const char>(tos::vcs::commit_hash).slice(0, 7));
 
         lcd.set_cursor(0, 3);
-        tos::print(lcd, x);
+        tos::print(lcd, int32_t(x));
 
-        alarm.sleep_for(100ms);
+        alarm.sleep_for(1000ms);
     }
 }
 
