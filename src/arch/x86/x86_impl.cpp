@@ -11,38 +11,6 @@
 
 namespace asio = boost::asio;
 
-extern "C"
-{
-    void tos_power_down()
-    {
-    }
-
-    void* tos_stack_alloc(size_t size)
-    {
-        return malloc(size);
-    }
-
-    void tos_stack_free(void* data)
-    {
-        free(data);
-    }
-
-    void tos_force_reset()
-    {
-        exit(1);
-    }
-
-    void tos_enable_interrupts()
-    {
-
-    }
-
-    void tos_disable_interrupts()
-    {
-
-    }
-}
-
 void tos_main();
 
 namespace boost
@@ -59,7 +27,7 @@ asio::io_service& get_io()
     return *g_io;
 }
 
-extern "C" int main()
+int main()
 {
     asio::io_service io;
     g_io = &io;
