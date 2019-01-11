@@ -49,7 +49,7 @@ namespace tos
         }
 
         /**
-         * The calling thread will be block for the given amount
+         * The calling thread will be blocked for the given amount
          * of time.
          *
          * @param dur duration to block for
@@ -144,11 +144,11 @@ namespace tos
     {
         using alarm_t = tos::dev<struct alarm_t_, 0>;
         static constexpr alarm_t alarm{};
-    }
+    } // namespace devs
 
     template <class T>
     auto open_impl(devs::alarm_t, T& tmr)
     {
         return alarm<std::remove_reference_t<T>>{tmr};
     }
-}
+} // namespace tos
