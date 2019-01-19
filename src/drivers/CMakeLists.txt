@@ -100,6 +100,10 @@ add_library(tos_adxl345 include/common/adxl345.hpp src/adxl345.cpp)
 target_link_libraries(tos_adxl345 PUBLIC tos_core tos_i2c)
 tos_install(tos_adxl345 ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(tos_bmp280 include/common/bmp280.hpp src/bmp280.cpp)
+target_link_libraries(tos_bmp280 PUBLIC tos_core tos_i2c)
+tos_install(tos_bmp280 ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 add_library(tos_inet
         include/common/inet/tcp_ip.hpp
         include/common/inet/tcp_stream.hpp
