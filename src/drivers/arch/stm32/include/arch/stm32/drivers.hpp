@@ -2,3 +2,4 @@
 #include "usart.hpp"
 #include "rcc.hpp"
 #include "timer.hpp"
+#include "i2c.hpp"
