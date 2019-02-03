@@ -111,9 +111,13 @@ namespace tos {
                       m_fun{std::forward<FunU>(fun)},
                       m_args{std::forward<ArgUs>(args)...} {}
 
-            void start()
+            void NORETURN NO_INLINE start()
             {
+                kern::enable_interrupts();
+
                 std::apply(m_fun, m_args);
+
+                this_thread::exit(nullptr);
             }
             
             /**
@@ -147,7 +151,7 @@ namespace tos {
         {
             const auto stack_top = task_data.end();
 
-            const auto t_ptr = stack_top - sizeof(lambda_task<FuncT>);
+            const auto t_ptr = stack_top - sizeof(lambda_task<FuncT, ArgTs...>);
 
             auto thread = new (t_ptr) lambda_task<FuncT, ArgTs...>(
                     task_data.size(),
@@ -181,10 +185,9 @@ namespace tos {
              */
             tos_set_stack_ptr(reinterpret_cast<char*>(impl::cur_thread));
 
-            kern::enable_interrupts();
-
             static_cast<TaskT *>(impl::cur_thread)->start();
-            this_thread::exit(nullptr);
+
+            __builtin_unreachable();
         }
 
         inline void busy() {
@@ -257,14 +260,15 @@ namespace tos {
     }
 
 	template <class FuncT, class... ArgTs>
-    inline thread_id_t launch(tos::span<char> task_span, FuncT&& func, ArgTs&&... args)
+    inline auto& launch(tos::span<char> task_span, FuncT&& func, ArgTs&&... args)
     {
         auto& t = kern::prep_lambda_layout(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
-        return sched.start(t);
+        sched.start(t);
+        return t;
     }
 
     template <class FuncT, class... ArgTs>
-    inline thread_id_t launch(FuncT&& func, ArgTs&&... args)
+    inline auto& launch(FuncT&& func, ArgTs&&... args)
     {
         constexpr size_t stack_size = TOS_DEFAULT_STACK_SIZE;
         tos::span<char> task_span((char*)tos_stack_alloc(stack_size), stack_size);
