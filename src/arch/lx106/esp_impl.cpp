@@ -19,39 +19,6 @@ extern "C"
 #include <tos/compiler.hpp>
 #include <tos/debug.hpp>
 
-extern "C"
-{
-static_assert(sizeof(int) == 4, "");
-
-void* ICACHE_FLASH_ATTR tos_stack_alloc(size_t size)
-{
-    auto res = os_malloc(size);
-    if (res == nullptr)
-    {
-        tos_debug_print("can't alloc stack!");
-        while (true);
-    }
-    return res;
-}
-
-void ICACHE_FLASH_ATTR
-tos_stack_free(void* data) {
-    os_free(data);
-}
-
-void ICACHE_FLASH_ATTR
-tos_enable_interrupts()
-{
-    ets_intr_unlock();
-}
-
-void ICACHE_FLASH_ATTR
-tos_disable_interrupts()
-{
-    ets_intr_lock();
-}
-}
-
 void tos_main();
 static void entry();
 
@@ -121,11 +88,6 @@ main_task(ETSEvent*)
 
 extern "C"
 {
-    void NORETURN tos_force_reset()
-    {
-        // esp sdk should reset
-        while(true);
-    }
 extern "C" void *__dso_handle;
 void *__dso_handle = 0;
 extern void (*__init_array_start)();

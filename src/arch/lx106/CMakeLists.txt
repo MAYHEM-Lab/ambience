@@ -1,6 +1,12 @@
 project(tos CXX ASM)
 
-add_library(lx106_impl esp_impl.cpp include/tos_arch.hpp user_config.h native.s include/lx106_missing.hpp include/tos_platform.hpp)
+add_library(lx106_core esp_core.cpp include/tos_arch.hpp include/user_config.h native.s include/lx106_missing.hpp include/tos_platform.hpp)
+target_link_libraries(lx106_core PUBLIC tos_util_core)
+tos_install(lx106_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(lx106_core PUBLIC "-L${TOOLS_BASE}/xtensa-lx106-elf/xtensa-lx106-elf/sysroot/usr/lib")
+target_include_directories(lx106_core PUBLIC "${SDK_ROOT}/sdk/include")
+
+add_library(lx106_impl esp_impl.cpp)
 tos_install(lx106_impl ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_options(lx106_impl PUBLIC -std=gnu++14)
 target_include_directories(lx106_impl PUBLIC "${SDK_ROOT}/sdk/include")
