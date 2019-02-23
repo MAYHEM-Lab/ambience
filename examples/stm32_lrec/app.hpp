@@ -20,6 +20,11 @@ struct sample
     float cpu;
 };
 
+float to_fahrenheits(float centigrades)
+{
+    return centigrades * 9 / 5 + 32;
+}
+
 template <class StreamT>
 void print(StreamT& str, int id, const sample& s)
 {

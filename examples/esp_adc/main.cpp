@@ -27,8 +27,6 @@ void adc_main()
         using namespace std::chrono_literals;
         alarm.sleep_for(500ms);
         auto x = a.read();
-        //auto x = rand();
-        if (x == 13333) lwip_init();
         tos::println(usart, int(x));
     }
 }

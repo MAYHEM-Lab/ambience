@@ -93,6 +93,9 @@ void master_task()
             static std::array<char, 100> msg_buf;
             tos::omemory_stream buff{msg_buf};
 
+            sample.temp = temp::to_fahrenheits(sample.temp);
+            sample.cpu = temp::to_fahrenheits(sample.cpu);
+
             temp::print(buff, temp::master_id, sample);
 
             constexpr xbee::addr_16 base_addr{0x0010};
