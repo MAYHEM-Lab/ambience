@@ -242,8 +242,8 @@ private:
         _bmp280_calib.dig_P9 = readS16_LE(BMP280_REGISTER_DIG_P9);
     }
 
-    twi_addr_t m_addr;
     TwimT m_twim;
+    twi_addr_t m_addr;
 
     struct config
     {
