@@ -12,10 +12,6 @@ extern "C"
 void tos_set_stack_ptr(char* ptr) __attribute__((always_inline));
 inline void tos_set_stack_ptr(char* ptr)
 {
-    //ptr -= 32;
-    //char* sp;
-    //__asm__ __volatile__("mov %0, sp" : "=r"(sp) : : "memory");
-    //memcpy(ptr, sp, 32);
     __asm__ __volatile__("mov sp, %0" : : "r"(ptr) : "memory");
 }
 
