@@ -44,8 +44,12 @@ namespace xbee
             tos::print(str, uint8_t( m_frame_id.id ));
             write_addr(str, get_addr());
             tos::print(str, uint8_t( get_options() ));
-            auto pl = get_payload();
-            tos::print(str, span<const char>((const char*)pl.data(), pl.size()));
+            span<const uint8_t> pl = get_payload();
+            for (auto b : pl)
+            {
+                tos::print(str, b);
+            }
+            //tos::print(str, span<const char>(reinterpret_cast<const char*>(pl.data()), pl.size()));
         }
 
     private:
@@ -54,23 +58,27 @@ namespace xbee
         span<const uint8_t> m_data;
     };
 
+    template <class StreamT>
+    struct chk_str_t : self_pointing<chk_str_t<StreamT>>
+    {
+        StreamT* str{};
+        uint8_t chk_sum{ 0 };
+
+        constexpr int write(span<const char> buf)
+        {
+            auto res = str->write(buf);
+            for (auto c : buf)
+            {
+                chk_sum += uint8_t(c);
+            }
+            return res;
+        }
+    };
+
     template <class StreamT, class ReqT>
     constexpr void write_to(StreamT& str, const ReqT& req)
     {
-        struct chk_str_t : self_pointing<chk_str_t>
-        {
-            uint8_t chk_sum{ 0 };
-            StreamT* str{};
-            constexpr int write(span<const char> buf)
-            {
-                auto res = str->write(buf);
-                for (auto c : buf)
-                {
-                    chk_sum += uint8_t(c);
-                }
-                return res;
-            }
-        } chk_str{};
+        chk_str_t<StreamT> chk_str{};
         chk_str.str = &str;
 
         tos::print(str, START_BYTE);
