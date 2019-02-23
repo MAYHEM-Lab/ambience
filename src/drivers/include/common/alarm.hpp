@@ -10,6 +10,7 @@
 #include <chrono>
 #include <tos/function_ref.hpp>
 #include <tos/devices.hpp>
+#include <common/driver_base.hpp>
 
 namespace tos
 {
@@ -40,7 +41,7 @@ namespace tos
      * @tparam T type of the base timer
      */
     template <class T>
-    class alarm
+    class alarm : public self_pointing<alarm<T>>
     {
     public:
         using alarm_handle = intrusive_list<sleeper>::iterator_t;
