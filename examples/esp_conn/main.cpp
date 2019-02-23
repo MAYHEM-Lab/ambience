@@ -20,6 +20,7 @@ char buf[512];
 void task()
 {
     using namespace tos::tos_literals;
+    using namespace std::chrono_literals;
 
     constexpr auto usconf = tos::usart_config()
             .add(115200_baud_rate)
@@ -32,11 +33,33 @@ void task()
     tos::println(usart, tos::platform::board_name);
     tos::println(usart, tos::vcs::commit_hash);
 
+    int state = 0;
+    int i = 0;
+    tos::semaphore s{0};
+    auto log_ip_task = [&, tcb = tos::impl::cur_thread]
+    {
+        auto timer = tos::open(tos::devs::timer<0>);
+        auto alarm = tos::open(tos::devs::alarm, timer);
+
+        tos::println(usart, "Logger thread running");
+        tos::println(usart, "Logger thread:", tos::impl::cur_thread->get_context()[0]);
+
+        while (true)
+        {
+            alarm.sleep_for(1s);
+
+            tos::println(usart, "Main thread:", state, i, tcb->get_context()[0]);
+        }
+    };
+
+    tos::launch(log_ip_task);
+
     tos::esp82::wifi w;
     conn_:
-    auto res = w.connect("UCSB Wireless Web", "");
+    auto res = w.connect("cs190b", "cs190bcs190b");
+    state = 1;
 
-    tos::println(usart, "connected?", bool(res));
+    //tos::println(usart, "connected?", bool(res));
     if (!res) goto conn_;
 
     auto& wconn = force_get(res);
@@ -44,49 +67,50 @@ void task()
     wconn.wait_for_dhcp();
 
     auto addr = force_get(wconn.get_addr());
+    state = 2;
 
-    tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
+    //tos::println(usart, "ip:", int(addr.addr[0]), int(addr.addr[1]), int(addr.addr[2]), int(addr.addr[3]));
 
     lwip_init();
 
-    for (int i = 0; i < 3'000'000; ++i) {
-        auto try_conn = tos::esp82::connect(wconn, {{45, 55, 149, 110}}, {80});
+    for (; true; ++i) {
+        auto try_conn = tos::esp82::connect(wconn, {{192, 168, 2, 14}}, {8080});
+        state = 3;
 
         if (!try_conn)
         {
-            tos::println(usart, "couldn't connect");
+            //tos::println(usart, "couldn't connect");
             continue;
         }
+
+        state = 4;
 
         auto& conn = force_get(try_conn);
         tos::tcp_stream<tos::esp82::tcp_endpoint> stream{std::move(conn)};
 
+        state = 5;
+
         stream.write("GET / HTTP/1.1\r\n"
-                     "Host: bakirbros.com\r\n"
+                     "Host: 192.168.2.14\r\n"
                      "Connection: close\r\n"
                      "\r\n");
-        
+
+        state = 6;
+
         while (true)
         {
             auto read_res = stream.read(buf);
             if (!read_res) break;
 
             auto& r = force_get(read_res);
-            tos::print(usart, r);
+            //tos::print(usart, r);
             tos::this_thread::yield();
         }
 
-        tos::println(usart, "done", i, int(system_get_free_heap_size()));
-    }
+        state = 7;
 
-    auto tmr = open(tos::devs::timer<0>);
-    auto alarm = open(tos::devs::alarm, tmr);
-
-    while (true)
-    {
-        using namespace std::chrono_literals;
-        alarm.sleep_for(10s);
-        tos::println(usart, "tick!");
+        //alarm.sleep_for(1s);
+        //tos::println(usart, "done", i, int(system_get_free_heap_size()));
     }
 }
 
