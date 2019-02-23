@@ -111,6 +111,8 @@ namespace tos {
                       m_fun{std::forward<FunU>(fun)},
                       m_args{std::forward<ArgUs>(args)...} {}
 
+            // This must not be inlined so that we don't mess up with the compiler's
+            // stack allocation assumptions.
             void NORETURN NO_INLINE start()
             {
                 kern::enable_interrupts();

@@ -17,12 +17,12 @@ void usart_setup(tos::stm32::gpio& g)
     using namespace tos::tos_literals;
 
     auto tx_pin = 2_pin;
-    auto rx_pin = 3_pin;
+    auto rx_pin = 10_pin;
 
     g.set_pin_mode(rx_pin, tos::pin_mode::in);
 
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
+                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART1_TX);
 }
 
 auto delay = [](std::chrono::microseconds us) {
@@ -40,11 +40,11 @@ void dht_task()
 	auto g = tos::open(tos::devs::gpio);
 
     usart_setup(g);
-    auto usart = tos::open(tos::devs::usart<1>, tos::uart::default_9600);
+    auto usart = tos::open(tos::devs::usart<0>, tos::uart::default_9600);
 
     tos::println(usart, int(rcc_ahb_frequency), int(rcc_apb1_frequency));
 	auto dht = tos::make_dht(g, delay);
-	auto dht_pin = 8_pin;
+	auto dht_pin = 1_pin;
 
     while (true)
     {

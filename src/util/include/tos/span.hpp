@@ -120,6 +120,8 @@ namespace tos
         constexpr const T* begin() const { return m_base; }
         constexpr const T* end() const { return m_base + m_len; }
 
+        constexpr bool empty() const { return m_len == 0; }
+
         /**
          * Spans convert to a const version of them automatically
          *
