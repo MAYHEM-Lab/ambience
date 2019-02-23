@@ -71,14 +71,18 @@ namespace tos
     inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::sent_t, BaseEndpointT &, uint16_t len) {
         m_sent_bytes += len;
         m_write_sync.up();
+#ifdef ESP_TCP_VERBOSE
         tos_debug_print("sent: %d\n", int(len));
+#endif
     }
 
     template <class BaseEndpointT>
     inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t, BaseEndpointT &, lwip::discon_reason r) {
         m_discon = true;
         m_write_sync.up();
+#ifdef ESP_TCP_VERBOSE
         tos_debug_print("closed: %d\n", int(r));
+#endif
     }
 
     template <class BaseEndpointT>
@@ -87,18 +91,24 @@ namespace tos
         if (m_discon) { return 0; }
         m_sent_bytes = 0;
         auto to_send = m_ep.send(buf);
+#ifdef ESP_TCP_VERBOSE
         tos_debug_print("sending: %d\n", int(to_send));
+#endif
         while (m_sent_bytes != to_send && !m_discon)
         {
             m_write_sync.down();
         }
+#ifdef ESP_TCP_VERBOSE
         tos_debug_print("sentt: %d\n", int(m_sent_bytes));
+#endif
         return m_sent_bytes;
     }
 
     template <class BaseEndpointT>
     inline void tcp_stream<BaseEndpointT>::operator()(lwip::events::recv_t, BaseEndpointT &, lwip::buffer&& buf) {
+#ifdef ESP_TCP_VERBOSE
         tos_debug_print("recved %d\n", buf.size());
+#endif
         if (m_buffer.has_more())
         {
             m_buffer.append(std::move(buf));

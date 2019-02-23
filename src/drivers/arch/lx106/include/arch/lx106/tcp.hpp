@@ -199,9 +199,13 @@ namespace tos
         }
 
         inline tcp_endpoint::~tcp_endpoint() {
+#ifdef ESP_TCP_VERBOSE
             tos_debug_print("close called\n");
+#endif
             if (!m_conn) return;
+#ifdef ESP_TCP_VERBOSE
             tos_debug_print("closing\n");
+#endif
             tcp_recv(m_conn, nullptr);
             tcp_err(m_conn, nullptr);
             tcp_sent(m_conn, nullptr);
@@ -224,7 +228,9 @@ namespace tos
             template <class CallbackT>
             static err_t recv_handler(void* user, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
             {
+#ifdef ESP_TCP_VERBOSE
                 tos_debug_print("recv stack: %p\n", read_sp());
+#endif
 
                 auto self = static_cast<tcp_endpoint*>(user);
                 auto& handler = *(CallbackT*)self->m_event_handler;
@@ -241,7 +247,9 @@ namespace tos
                     handler(lwip::events::recv, *self, lwip::buffer{ p });
                 } else {
                     // conn closed
+#ifdef ESP_TCP_VERBOSE
                     tos_debug_print("close received\n");
+#endif
                     handler(lwip::events::discon, *self, lwip::discon_reason::closed);
                 }
                 return ERR_OK;
@@ -250,7 +258,9 @@ namespace tos
             template <class CallbackT>
             static err_t sent_handler(void* user, struct tcp_pcb *, u16_t len)
             {
+#ifdef ESP_TCP_VERBOSE
                 tos_debug_print("sent stack: %p\n", read_sp());
+#endif
 
                 auto self = static_cast<tcp_endpoint*>(user);
 
@@ -264,8 +274,9 @@ namespace tos
             template <class EventHandlerT>
             static void err_handler(void *user, err_t err)
             {
+#ifdef ESP_TCP_VERBOSE
                 tos_debug_print("err stack: %p\n", read_sp());
-
+#endif
                 auto self = static_cast<tcp_endpoint*>(user);
 
                 auto& handler = *(EventHandlerT*)self->m_event_handler;
@@ -273,7 +284,9 @@ namespace tos
                                         lwip::discon_reason::aborted : lwip::discon_reason::reset);
                 self->m_conn = nullptr;
                 system_os_post(tos::esp82::main_task_prio, 0, 0);
+#ifdef ESP_TCP_VERBOSE
                 tos_debug_print("ok");
+#endif
             }
         };
 

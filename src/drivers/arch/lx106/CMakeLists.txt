@@ -13,6 +13,10 @@ add_library(esp82_wifi include/arch/lx106/wifi.hpp src/wifi.cpp)
 tos_install(esp82_wifi ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_wifi PUBLIC tos_core lx106_impl)
 
+add_library(esp82_udp include/arch/lx106/udp.hpp src/udp.cpp)
+tos_install(esp82_udp ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(esp82_udp PUBLIC esp82_wifi tos_inet)
+
 add_library(esp82_tcp include/arch/lx106/tcp.hpp src/tcp.cpp)
 tos_install(esp82_tcp ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_tcp PUBLIC esp82_wifi tos_inet)
@@ -42,6 +46,7 @@ target_link_libraries(esp82_drivers PUBLIC
         esp82_timer
         esp82_wifi
         esp82_tcp
+        esp82_udp
         esp82_i2c
         esp82_spi)
 tos_install(esp82_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
