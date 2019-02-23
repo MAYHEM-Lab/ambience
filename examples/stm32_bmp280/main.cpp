@@ -49,12 +49,27 @@ void dht_task()
 
     tos::bmp280<tos::stm32::twim*> bmp(&t, {0x76});
 
+    tos::stm32::adc a { &tos::stm32::detail::adcs[0] };
+
+    uint8_t x[1];
+    x[0] = 16;
+    a.set_channels(x);
+
+    constexpr auto v25 = 1700;
+    constexpr auto slope = 2;
+
+    auto read_c = [&]{
+        float v = a.read();
+        return (v25 - v) / slope + 25;
+    };
+
     while (true)
     {
         using namespace std::chrono_literals;
-        delay(1s);
 
-        tos::println(usart, int(bmp.readTemperature() * 1000));
+        tos::println(usart, int(bmp.readTemperature() * 1000), int(read_c() * 1000));
+
+        delay(10s);
     }
 }
 

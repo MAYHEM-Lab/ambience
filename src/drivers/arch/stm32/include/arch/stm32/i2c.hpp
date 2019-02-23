@@ -65,26 +65,7 @@ namespace tos
 namespace stm32
 {
     inline tos::twi_tx_res tos::stm32::twim::transmit(tos::twi_addr_t to, tos::span<const char> buf) noexcept {
-        i2c_send_start(m_def->i2c);
-
-        while (!((I2C_SR1(m_def->i2c) & I2C_SR1_SB)
-                 & (I2C_SR2(m_def->i2c) & (I2C_SR2_MSL | I2C_SR2_BUSY))));
-
-        i2c_send_7bit_address(m_def->i2c, to.addr, I2C_WRITE);
-
-        while (!(I2C_SR1(m_def->i2c) & I2C_SR1_ADDR));
-
-        auto reg32 = I2C_SR2(m_def->i2c);
-
-        for (auto c : buf)
-        {
-            i2c_send_data(m_def->i2c, c);
-            while (!(I2C_SR1(m_def->i2c) & I2C_SR1_BTF));
-        }
-        while (!(I2C_SR1(m_def->i2c) & (I2C_SR1_BTF | I2C_SR1_TxE)));
-
-        i2c_send_stop(m_def->i2c);
-
+        i2c_transfer7(m_def->i2c, to.addr, const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(buf.data())), buf.size(), nullptr, 0);
         return tos::twi_tx_res::ok;
     }
 
@@ -92,5 +73,5 @@ namespace stm32
         i2c_transfer7(m_def->i2c, from.addr, nullptr, 0, reinterpret_cast<uint8_t*>(buf.data()), buf.size());
         return tos::twi_rx_res::ok;
     }
-}
-}
+} // namespace stm32
+} // namespace tos

@@ -41,7 +41,7 @@ namespace tos
 		{
 		public:
 			using pin_type = pin_t;
-			
+
 			/**
 			 * Sets the given pin to be an output
 			 */
@@ -111,7 +111,9 @@ namespace tos
 		constexpr stm32::pin_t operator""_pin(unsigned long long pin)
 		{
 			auto port_index = pin / 16;
-			return { &stm32::ports[port_index], 1 << (pin % 16) };
+			auto pin_index = pin % 16;
+			uint16_t p = 1 << pin_index;
+			return { &stm32::ports[port_index], p };
 		}
 	}
 

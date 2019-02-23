@@ -20,9 +20,10 @@ struct sample
     float cpu;
 };
 
-float to_fahrenheits(float centigrades)
+float to_fahrenheits(float c)
 {
-    return centigrades * 9 / 5 + 32;
+    if (c == -1) return -1;
+    return c * 9 / 5 + 32;
 }
 
 template <class StreamT>
@@ -31,11 +32,9 @@ void print(StreamT& str, int id, const sample& s)
     tos::print(str, -999, "");
     tos::print(str, id, "");
     tos::print(str, 0, 0, "");
-    auto string = std::to_string(s.temp);
-    tos::print(str, 1, tos::span<const char>(string.data(), string.size()), "");
-    string = std::to_string(s.humid);
-    tos::print(str, 2, tos::span<const char>(string.data(), string.size()), "");
-    string = std::to_string(s.cpu);
-    tos::print(str, 3, tos::span<const char>(string.data(), string.size()), "");
+    tos::print(str, 1, int(s.temp), "");
+    tos::print(str, 2, int(s.humid), "");
+    tos::print(str, 3, int(s.cpu), "");
+    tos::println(str);
 }
 }
