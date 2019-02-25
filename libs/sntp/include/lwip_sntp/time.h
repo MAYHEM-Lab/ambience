@@ -14,6 +14,7 @@ extern "C"
 #include "os_type.h"
 #include "sntp.h"
 #include <sys/time.h>
+#include <c_types.h>
 /***************************RTC TIME OPTION***************************************/
 // daylight settings
 // Base calculated with value obtained from NTP server (64 bits)
@@ -40,7 +41,7 @@ extern "C"
 #define RTC_DST_GET()       ((READ_PERI_REG(RTC_STORE3) & 0x00010000)>>16)
 #define RTC_TZ_GET()        ((((int)READ_PERI_REG(RTC_STORE3)) & ((int)0xFF000000))>>24)
 void system_update_rtc(time_t t, uint32_t us);
-time_t sntp_get_rtc_time(sint32_t *us);
+time_t sntp_get_rtc_time(int32_t *us);
 
 int gettimeofday(struct timeval *t, void *timezone);
 void updateTime(uint32 ms);
