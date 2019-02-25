@@ -12,3 +12,4 @@
 #include "twim.hpp"
 #include "spi.hpp"
 #include "adc.hpp"
+#include "nvm.hpp"

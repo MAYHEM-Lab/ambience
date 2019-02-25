@@ -40,6 +40,10 @@ target_include_directories(esp82_adc PRIVATE src)
 tos_install(esp82_adc ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_adc PUBLIC tos_core)
 
+add_library(esp82_nvm include/arch/lx106/nvm.hpp)
+tos_install(esp82_nvm ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(esp82_nvm PUBLIC tos_core)
+
 add_library(esp82_drivers src/stub.cpp include/arch/lx106/drivers.hpp)
 target_link_libraries(esp82_drivers PUBLIC
         lx106_usart
@@ -48,5 +52,6 @@ target_link_libraries(esp82_drivers PUBLIC
         esp82_tcp
         esp82_udp
         esp82_i2c
+        esp82_nvm
         esp82_spi)
 tos_install(esp82_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
