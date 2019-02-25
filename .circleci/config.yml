@@ -151,7 +151,7 @@ jobs:
         command: wget http://cs.ucsb.edu/~bakir/esp-tos-sdk.tar.bz2
     - run:
         name: Create toolchain dir
-        command: mkdir -p /opt/x-tools/esp-open-sdk
+        command: mkdir -p /opt/x-tools/tos-esp-sdk
     - run:
         name: Extract toolchain
         command: tar xf esp-tos-sdk.tar.bz2 -C /opt/x-tools/tos-esp-sdk
