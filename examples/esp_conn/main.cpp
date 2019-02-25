@@ -33,6 +33,9 @@ void task()
     tos::println(usart, tos::platform::board_name);
     tos::println(usart, tos::vcs::commit_hash);
 
+    int rd_loop = 0;
+    int success = 0;
+    int fail = 0;
     int state = 0;
     int i = 0;
     tos::semaphore s{0};
@@ -48,7 +51,7 @@ void task()
         {
             alarm.sleep_for(1s);
 
-            tos::println(usart, "Main thread:", state, i, tcb->get_context()[0]);
+            tos::println(usart, "Main thread:", state, i, success, rd_loop, fail);
         }
     };
 
@@ -74,11 +77,12 @@ void task()
     lwip_init();
 
     for (; true; ++i) {
-        auto try_conn = tos::esp82::connect(wconn, {{192, 168, 2, 14}}, {8080});
+        auto try_conn = tos::esp82::connect(wconn, {{3, 122, 138, 41}}, {80});
         state = 3;
 
         if (!try_conn)
         {
+            ++fail;
             //tos::println(usart, "couldn't connect");
             continue;
         }
@@ -91,23 +95,30 @@ void task()
         state = 5;
 
         stream.write("GET / HTTP/1.1\r\n"
-                     "Host: 192.168.2.14\r\n"
+                     "Host: bakir.io\r\n"
                      "Connection: close\r\n"
                      "\r\n");
 
         state = 6;
 
+        rd_loop = 0;
         while (true)
         {
             auto read_res = stream.read(buf);
+            state = 8;
             if (!read_res) break;
 
             auto& r = force_get(read_res);
             //tos::print(usart, r);
+            ++rd_loop;
+            if (rd_loop > 10'000)
+                break;
+            state = 9;
             tos::this_thread::yield();
         }
 
         state = 7;
+        ++success;
 
         //alarm.sleep_for(1s);
         //tos::println(usart, "done", i, int(system_get_free_heap_size()));
