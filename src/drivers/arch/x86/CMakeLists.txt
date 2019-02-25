@@ -1,12 +1,13 @@
 
-add_library(x86_stdio stdio.hpp src/stdio.cpp)
-target_include_directories(x86_stdio PUBLIC .)
+add_library(x86_stdio include/arch/x86/stdio.hpp src/stdio.cpp)
 target_compile_options(x86_stdio PUBLIC -std=c++14)
 target_link_libraries(x86_stdio PUBLIC tos_core tos_util)
+tos_install(x86_stdio ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(x86_timer timer.hpp src/stub.cpp)
-target_include_directories(x86_timer PUBLIC .)
+add_library(x86_timer include/arch/x86/timer.hpp src/stub.cpp)
 target_link_libraries(x86_timer PUBLIC tos::core x86_impl)
+tos_install(x86_timer ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(x86_drivers drivers.hpp src/stub.cpp)
+add_library(x86_drivers include/arch/x86/drivers.hpp src/stub.cpp)
 target_link_libraries(x86_drivers PUBLIC x86_stdio x86_timer)
+tos_install(x86_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)

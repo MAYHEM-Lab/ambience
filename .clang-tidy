@@ -1,1 +1,1 @@
-Checks: "*"
+Checks: "llvm-*, modernize-*,clang-analyzer-*"

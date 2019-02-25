@@ -6,11 +6,11 @@
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/arch.hpp>
-#include <drivers/common/alarm.hpp>
+#include <common/alarm.hpp>
 #include <tos/devices.hpp>
 #include <tos/waitable.hpp>
 
-void tick_task(void*)
+void tick_task()
 {
     using namespace tos;
     using namespace tos::tos_literals;

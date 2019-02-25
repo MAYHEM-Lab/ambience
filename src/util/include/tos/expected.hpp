@@ -8,7 +8,6 @@
 #include <memory>
 #include <type_traits>
 #include <tos/compiler.hpp>
-#include <tos/debug.hpp>
 #include <new>
 #include <nonstd/expected.hpp>
 

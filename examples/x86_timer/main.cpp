@@ -3,13 +3,13 @@
 //
 
 #include <tos/ft.hpp>
-#include <drivers/arch/x86/drivers.hpp>
-#include <drivers/common/alarm.hpp>
+#include <arch/x86/drivers.hpp>
+#include <common/alarm.hpp>
 #include <iostream>
 
 void tos_main()
 {
-    tos::launch([](void*){
+    tos::launch([]{
          tos::x86::timer tmr;
          auto alarm = tos::open(tos::devs::alarm, tmr);
 

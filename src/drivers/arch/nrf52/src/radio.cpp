@@ -2,7 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 09/06/2018.
 //
 
-#include <radio.hpp>
+#include <arch/nrf52/radio.hpp>
 #include <stdint.h>
 #include <nrf52.h>
 #include <mdk/nrf.h>

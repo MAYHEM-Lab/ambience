@@ -7,7 +7,7 @@
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 
-void slave_task(void*)
+void slave_task()
 {
     using namespace tos::tos_literals;
     auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);

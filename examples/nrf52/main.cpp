@@ -12,22 +12,19 @@
 #include <drivers/include/nrfx_uarte.h>
 #include <tos/compiler.hpp>
 
-#include <drivers/arch/nrf52/drivers.hpp>
+#include <arch/nrf52/drivers.hpp>
 #include <algorithm>
 #include <tos/print.hpp>
 
-#include <drivers/common/alarm.hpp>
-#include <drivers/arch/nrf52/radio.hpp>
-#include <drivers/arch/nrf52/twim.hpp>
-
-#include <drivers/common/lcd.hpp>
+#include <common/alarm.hpp>
+#include <common/lcd.hpp>
 
 namespace {
     auto g = tos::open(tos::devs::gpio);
 
     tos::semaphore sem{0};
 
-    void led1_task(void*) {
+    void led1_task() {
         using namespace tos;
 
         auto tmr = open(tos::devs::timer<0>);
@@ -47,7 +44,7 @@ namespace {
     char c;
     tos::semaphore send{0};
     tos::semaphore sent{0};
-    void i2c_task(void*)
+    void i2c_task()
     {
         using namespace tos;
         nrf52::twim i2c{26, 25};
@@ -79,7 +76,7 @@ namespace {
         }
     }
 
-    void led2_task(void*) {
+    void led2_task() {
         using namespace tos;
         using namespace tos_literals;
         constexpr auto usconf = tos::usart_config()

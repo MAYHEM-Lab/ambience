@@ -140,7 +140,7 @@ void sample_task(void* arg)
     tos::esp82::gpio g;
     tos::esp82::twim twim{ {4}, {5} };
 
-    tos::adxl345 sens{twim};
+    tos::adxl345<tos::esp82::twim> sens{twim};
     sens.powerOn();
     sens.setRangeSetting(2);
 

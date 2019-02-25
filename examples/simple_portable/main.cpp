@@ -7,15 +7,15 @@
 #include <tos/print.hpp>
 #include <tos/compiler.hpp>
 
-#include <drivers/common/tty.hpp>
-#include <drivers/common/usart.hpp>
+#include <common/tty.hpp>
+#include <common/usart.hpp>
 
 #ifdef TOS_ARCH_avr
-#include <drivers/arch/avr/usart.hpp>
+#include <arch/avr/usart.hpp>
 #elif defined(TOS_ARCH_x86)
-#include <drivers/arch/x86/drivers.hpp>
+#include <arch/x86/drivers.hpp>
 #elif defined(TOS_ARCH_arm)
-#include <drivers/arch/nrf52/usart.hpp>
+#include <arch/nrf52/usart.hpp>
 #endif
 
 #include <tos/mutex.hpp>
@@ -25,7 +25,7 @@ tos::semaphore sem(0);
 tos::char_ostream* out_str;
 
 tos::mutex m;
-void TOS_TASK hello_task(void*)
+void TOS_TASK hello_task()
 {
     {
         tos::lock_guard<tos::mutex> lock{m};
@@ -41,7 +41,7 @@ void TOS_TASK hello_task(void*)
     }
 }
 
-void TOS_TASK yo_task(void*)
+void TOS_TASK yo_task()
 {
     {
         tos::lock_guard<tos::mutex> lock{m};

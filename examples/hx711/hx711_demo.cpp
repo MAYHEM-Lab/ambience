@@ -29,7 +29,7 @@ void usart_setup(tos::stm32::gpio& g)
                   GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
 }
 
-void hx711_task(void*)
+void hx711_task()
 {
     using namespace tos::tos_literals;
     using namespace std::chrono_literals;

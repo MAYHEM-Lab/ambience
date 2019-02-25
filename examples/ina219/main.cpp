@@ -2,13 +2,13 @@
 // Created by fatih on 11/8/18.
 //
 
-#include <drivers/common/ina219.hpp>
-#include <drivers/arch/avr/drivers.hpp>
+#include <common/ina219.hpp>
+#include <arch/avr/drivers.hpp>
 #include <tos/ft.hpp>
-#include <drivers/common/alarm.hpp>
+#include <common/alarm.hpp>
 #include <tos/print.hpp>
 
-void main_task(void*)
+void main_task()
 {
     using namespace tos;
     using namespace tos_literals;
@@ -22,7 +22,7 @@ void main_task(void*)
 
     tos::println(usart, "hello");
 
-    avr::twim t{18_pin, 19_pin};
+    avr::twim t{19_pin, 18_pin};
     ina219<avr::twim> ina{ {0x41}, t };
 
     auto tmr = open(devs::timer<1>);

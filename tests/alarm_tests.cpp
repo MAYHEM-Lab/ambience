@@ -4,14 +4,13 @@
 
 #include <tos/ft.hpp>
 #include "catch.hpp"
-#include <drivers/arch/x86/drivers.hpp>
-#include <drivers/common/alarm.hpp>
+#include <arch/x86/drivers.hpp>
+#include <common/alarm.hpp>
 #include <tos/semaphore.hpp>
 
 TEST_CASE("alarm", "[basic]"){
     tos::semaphore s{0};
-    tos::launch([](void* ptr){
-        auto& s = *static_cast<tos::semaphore*>(ptr);
+    tos::launch([&]{
         tos::x86::timer tmr;
         auto alarm = tos::open(tos::devs::alarm, tmr);
 
@@ -24,11 +23,11 @@ TEST_CASE("alarm", "[basic]"){
             auto diff = std::chrono::system_clock::now() - tm;
 
             REQUIRE(diff >= 100ms);
-            REQUIRE(diff <= 120ms);
+            REQUIRE(diff <= 130ms);
         }
 
         s.up();
-    }, &s);
+    });
     s.down();
     REQUIRE(true);
 }

@@ -40,7 +40,7 @@ jobs:
           command: unzip nrf5-sdk.zip -d /opt/x-tools
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_ARM=ON ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_NRF52=ON ..
       - run:
           working_directory: build/
           name: Build Project
@@ -148,13 +148,13 @@ jobs:
         command: git submodule update --init --recursive
     - run:
         name: Download toolchain
-        command: wget http://cs.ucsb.edu/~bakir/tos-esp-sdk.tar.bz2
+        command: wget http://cs.ucsb.edu/~bakir/esp-tos-sdk.tar.bz2
     - run:
         name: Create toolchain dir
-        command: mkdir -p /opt/x-tools/esp-open-sdk
+        command: mkdir -p /opt/x-tools/tos-esp-sdk
     - run:
         name: Extract toolchain
-        command: tar xf tos-esp-sdk.tar.bz2 -C /opt/x-tools/esp-open-sdk
+        command: tar xf esp-tos-sdk.tar.bz2 -C /opt/x-tools/tos-esp-sdk
     - run:
         name: Generate Project
         command: mkdir build && cd build && cmake -G Ninja -DTOS_ESP=ON -DCMAKE_BUILD_TYPE=MinSizeRel ..

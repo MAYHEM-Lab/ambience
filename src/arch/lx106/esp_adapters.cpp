@@ -5,7 +5,7 @@
 extern "C"
 {
 #include <mem.h>
-void *malloc(size_t sz) {
+/*void *malloc(size_t sz) {
     return os_malloc(sz);
 }
 
@@ -16,5 +16,5 @@ void free(void *ptr) {
 void* calloc(size_t nitems, size_t size)
 {
     return os_zalloc(nitems * size);
-}
+}*/
 }

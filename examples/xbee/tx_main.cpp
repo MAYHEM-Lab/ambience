@@ -2,9 +2,9 @@
 // Created by Mehmet Fatih BAKIR on 11/10/2018.
 //
 
-#include <drivers/arch/avr/drivers.hpp>
-#include <drivers/common/xbee.hpp>
-#include <drivers/common/alarm.hpp>
+#include <arch/avr/drivers.hpp>
+#include <common/xbee.hpp>
+#include <common/alarm.hpp>
 
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
@@ -13,7 +13,7 @@
 
 #include <tos/mem_stream.hpp>
 
-void tx_task(void*)
+void tx_task()
 {
     using namespace tos::tos_literals;
     using namespace std::chrono_literals;

@@ -2,12 +2,12 @@
 // Created by fatih on 4/15/18.
 //
 
-#include <drivers/common/spi.hpp>
+#include <common/spi.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <arch/avr/drivers.hpp>
 
-void master_task(void*)
+void master_task()
 {
     using namespace tos::tos_literals;
     auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);

@@ -2,7 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 15/04/2018.
 //
 
-#include <drivers/arch/avr/drivers.hpp>
+#include <arch/avr/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/arch.hpp>
@@ -13,7 +13,7 @@
 
 #include <tuple>
 
-void tick_task(void*)
+void tick_task()
 {
     using namespace tos;
     using namespace tos::tos_literals;

@@ -2,7 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 13/06/2018.
 //
 
-#include <twim.hpp>
+#include <arch/nrf52/twim.hpp>
 #include <nrfx_twim.h>
 #include <tos/semaphore.hpp>
 #include <drivers/include/nrfx_twim.h>

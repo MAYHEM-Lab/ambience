@@ -2,9 +2,9 @@
 // Created by Mehmet Fatih BAKIR on 11/10/2018.
 //
 
-#include <drivers/arch/avr/drivers.hpp>
-#include <drivers/common/xbee.hpp>
-#include <drivers/common/alarm.hpp>
+#include <arch/avr/drivers.hpp>
+#include <common/xbee.hpp>
+#include <common/alarm.hpp>
 
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
@@ -12,13 +12,12 @@
 
 #include <array>
 #include <avr/wdt.h>
-#include <drivers/common/dht22.hpp>
+#include <common/dht22.hpp>
 #include <util/delay.h>
-#include <util/include/tos/mem_stream.hpp>
+#include <tos/mem_stream.hpp>
 #include "app.hpp"
-#include <drivers/common/ina219.hpp>
+#include <common/ina219.hpp>
 #include <tos/semaphore.hpp>
-#include <drivers/arch/avr/wdt.hpp>
 
 char trace_buf[128];
 tos::omemory_stream trace{ trace_buf };
@@ -125,7 +124,7 @@ void hibernate(tos::avr::wdt& wdt, std::chrono::seconds dur)
 
 void reset_cpu();
 
-void tx_task(void*)
+void tx_task()
 {
     using namespace tos;
     using namespace tos::tos_literals;
@@ -239,5 +238,5 @@ void tx_task(void*)
 void tos_main()
 {
     static char sstack[512];
-    tos::launch(sstack, tx_task, nullptr);
+    tos::launch(tos::span<char>(sstack), tx_task);
 }

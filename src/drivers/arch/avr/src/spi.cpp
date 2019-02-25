@@ -2,13 +2,13 @@
 // Created by fatih on 4/15/18.
 //
 
-#include <spi.hpp>
+#include <arch/avr/spi.hpp>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <gpio.hpp>
+#include <arch/avr/gpio.hpp>
 #include <tos/event.hpp>
 #include <tos/semaphore.hpp>
-#include <drivers/common/gpio.hpp>
+#include <common/gpio.hpp>
 
 namespace {
     struct spi_ctrl

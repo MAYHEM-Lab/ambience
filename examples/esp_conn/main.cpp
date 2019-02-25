@@ -12,15 +12,15 @@
 #include <arch/lx106/drivers.hpp>
 #include <tos/version.hpp>
 #include <tos/fixed_fifo.hpp>
-#include <tos_arch.hpp>
 
 #include <lwip/init.h>
 #include <common/inet/tcp_stream.hpp>
 
 char buf[512];
-void task(void*)
+void task()
 {
     using namespace tos::tos_literals;
+    using namespace std::chrono_literals;
 
     constexpr auto usconf = tos::usart_config()
             .add(115200_baud_rate)
@@ -33,11 +33,36 @@ void task(void*)
     tos::println(usart, tos::platform::board_name);
     tos::println(usart, tos::vcs::commit_hash);
 
+    int rd_loop = 0;
+    int success = 0;
+    int fail = 0;
+    int state = 0;
+    int i = 0;
+    tos::semaphore s{0};
+    auto log_ip_task = [&, tcb = tos::impl::cur_thread]
+    {
+        auto timer = tos::open(tos::devs::timer<0>);
+        auto alarm = tos::open(tos::devs::alarm, timer);
+
+        tos::println(usart, "Logger thread running");
+        tos::println(usart, "Logger thread:", tos::impl::cur_thread->get_context()[0]);
+
+        while (true)
+        {
+            alarm.sleep_for(1s);
+
+            tos::println(usart, "Main thread:", state, i, success, rd_loop, fail);
+        }
+    };
+
+    tos::launch(log_ip_task);
+
     tos::esp82::wifi w;
     conn_:
-    auto res = w.connect("UCSB Wireless Web", "");
+    auto res = w.connect("cs190b", "cs190bcs190b");
+    state = 1;
 
-    tos::println(usart, "connected?", bool(res));
+    //tos::println(usart, "connected?", bool(res));
     if (!res) goto conn_;
 
     auto& wconn = force_get(res);
@@ -45,49 +70,58 @@ void task(void*)
     wconn.wait_for_dhcp();
 
     auto addr = force_get(wconn.get_addr());
+    state = 2;
 
-    tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
+    //tos::println(usart, "ip:", int(addr.addr[0]), int(addr.addr[1]), int(addr.addr[2]), int(addr.addr[3]));
 
     lwip_init();
 
-    for (int i = 0; i < 3'000'000; ++i) {
-        auto try_conn = tos::esp82::connect(wconn, {{45, 55, 149, 110}}, {80});
+    for (; true; ++i) {
+        auto try_conn = tos::esp82::connect(wconn, {{3, 122, 138, 41}}, {80});
+        state = 3;
 
         if (!try_conn)
         {
-            tos::println(usart, "couldn't connect");
+            ++fail;
+            //tos::println(usart, "couldn't connect");
             continue;
         }
+
+        state = 4;
 
         auto& conn = force_get(try_conn);
         tos::tcp_stream<tos::esp82::tcp_endpoint> stream{std::move(conn)};
 
+        state = 5;
+
         stream.write("GET / HTTP/1.1\r\n"
-                     "Host: bakirbros.com\r\n"
+                     "Host: bakir.io\r\n"
                      "Connection: close\r\n"
                      "\r\n");
-        
+
+        state = 6;
+
+        rd_loop = 0;
         while (true)
         {
             auto read_res = stream.read(buf);
+            state = 8;
             if (!read_res) break;
 
             auto& r = force_get(read_res);
-            tos::print(usart, r);
+            //tos::print(usart, r);
+            ++rd_loop;
+            if (rd_loop > 10'000)
+                break;
+            state = 9;
             tos::this_thread::yield();
         }
 
-        tos::println(usart, "done", i, int(system_get_free_heap_size()));
-    }
+        state = 7;
+        ++success;
 
-    auto tmr = open(tos::devs::timer<0>);
-    auto alarm = open(tos::devs::alarm, tmr);
-
-    while (true)
-    {
-        using namespace std::chrono_literals;
-        alarm.sleep_for(10s);
-        tos::println(usart, "tick!");
+        //alarm.sleep_for(1s);
+        //tos::println(usart, "done", i, int(system_get_free_heap_size()));
     }
 }
 

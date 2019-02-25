@@ -6,6 +6,17 @@ function(print_size target)
     )
 endfunction()
 
+function(get_implicit_flags FLAGS)
+execute_process(
+	COMMAND cmd.exe /c "${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} -xc++ -E -v -"
+	TIMEOUT 1
+	ERROR_VARIABLE FOO
+	RESULT_VARIABLE RES
+)
+string(REGEX MATCH "cc1plus\.exe (.*)\\n" _ ${FOO})
+set(${FLAGS} ${CMAKE_MATCH_1} PARENT_SCOPE)
+endfunction()
+
 set(TOS_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -Wpedantic \
      -ffunction-sections -fdata-sections -ffreestanding -g -pedantic -freorder-functions \
         -Wno-unknown-pragmas")
@@ -27,10 +38,42 @@ set(TOS_CXX_FLAGS "${TOS_FLAGS} -fno-rtti -fno-exceptions \
 
 set(TOS ON)
 
-set(CMAKE_C_FLAGS ${TOS_C_FLAGS})
-set(CMAKE_CXX_FLAGS ${TOS_CXX_FLAGS})
-set(CMAKE_EXE_LINKER_FLAGS ${TOS_LINKER_FLAGS})
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TOS_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOS_CXX_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${TOS_LINKER_FLAGS}")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS "${CMAKE_EXPORT_COMPILE_COMMANDS}" CACHE STRING "CMAKE_EXPORT_COMPILE_COMMANDS")
+
+set(THIS_DIR ${CMAKE_CURRENT_LIST_DIR})
+function(tos_install _target)
+    set(INCLUDE_DEST "include")
+    set(LIB_DEST "lib/${_target}")
+    set(SHARE_DEST "share/${_target}")
+
+    if (${ARGC} GREATER 1)
+        set(HEADER_PATH ${ARGV1})
+        install(DIRECTORY ${HEADER_PATH}/ DESTINATION "${INCLUDE_DEST}")
+    endif()
+
+    target_include_directories(${_target} PUBLIC
+            $<BUILD_INTERFACE:${HEADER_PATH}>
+            $<INSTALL_INTERFACE:${INCLUDE_DEST}>)
+
+    install(TARGETS ${_target} DESTINATION "${LIB_DEST}")
+
+    configure_file("${THIS_DIR}/cmake-config.cmake.in" ${CMAKE_CURRENT_BINARY_DIR}/${_target}-config.cmake @ONLY)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${_target}-config.cmake DESTINATION ${LIB_DEST})
+
+    install(TARGETS ${_target} EXPORT ${_target} DESTINATION "${LIB_DEST}")
+    install(EXPORT ${_target} DESTINATION "${LIB_DEST}")
+
+    if (${ARGC} GREATER 2)
+        message(STATUS "Have a share dir, install it")
+        set(SHARE_PATH ${ARGV2})
+        install(DIRECTORY ${SHARE_PATH} DESTINATION "${SHARE_DEST}")
+    endif()
+endfunction()
+
+install(FILES ${THIS_DIR}/tos-config.cmake DESTINATION "lib/tos")

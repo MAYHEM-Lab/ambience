@@ -43,7 +43,7 @@ void usart3_setup(tos::stm32::gpio& g)
 
 }
 
-void lora_task(void*)
+void lora_task()
 {
     auto g = tos::open(tos::devs::gpio);
 

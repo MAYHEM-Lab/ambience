@@ -1,0 +1,8 @@
+find_package(base_libcxx REQUIRED)
+find_package(tos_arch REQUIRED)
+find_package(tos_interrupt REQUIRED)
+find_package(tos_alarm REQUIRED)
+find_package(tos_ft REQUIRED)
+find_package(tos_util REQUIRED)
+find_package(tos_mem REQUIRED)
+find_package(tos_core REQUIRED)

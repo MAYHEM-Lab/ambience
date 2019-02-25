@@ -19,38 +19,47 @@ extern "C"
 #include <tos/compiler.hpp>
 #include <tos/debug.hpp>
 
-extern "C"
-{
-static_assert(sizeof(int) == 4, "");
-
-void* ICACHE_FLASH_ATTR tos_stack_alloc(size_t size)
-{
-    auto res = os_malloc(size);
-    if (res == nullptr)
-    {
-        tos_debug_print("can't alloc stack!");
-        while (true);
-    }
-    return res;
-}
-
-void ICACHE_FLASH_ATTR
-tos_stack_free(void* data) {
-    os_free(data);
-}
-
-void ICACHE_FLASH_ATTR
-tos_enable_interrupts()
-{
-    ets_intr_unlock();
-}
-
-void ICACHE_FLASH_ATTR
-tos_disable_interrupts()
-{
-    ets_intr_lock();
-}
-}
+#if ((SPI_FLASH_SIZE_MAP == 0) || (SPI_FLASH_SIZE_MAP == 1))
+#error "The flash map is not supported"
+#elif (SPI_FLASH_SIZE_MAP == 2)
+#define SYSTEM_PARTITION_OTA_SIZE							0x6A000
+#define SYSTEM_PARTITION_OTA_2_ADDR							0x81000
+#define SYSTEM_PARTITION_RF_CAL_ADDR						0xfb000
+#define SYSTEM_PARTITION_PHY_DATA_ADDR						0xfc000
+#define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR				0xfd000
+#define SYSTEM_PARTITION_CUSTOMER_PRIV_PARAM_ADDR           0x7c000
+#elif (SPI_FLASH_SIZE_MAP == 3)
+#define SYSTEM_PARTITION_OTA_SIZE							0x6A000
+#define SYSTEM_PARTITION_OTA_2_ADDR							0x81000
+#define SYSTEM_PARTITION_RF_CAL_ADDR						0x1fb000
+#define SYSTEM_PARTITION_PHY_DATA_ADDR						0x1fc000
+#define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR				0x1fd000
+#define SYSTEM_PARTITION_CUSTOMER_PRIV_PARAM_ADDR           0x7c000
+#elif (SPI_FLASH_SIZE_MAP == 4)
+#define SYSTEM_PARTITION_OTA_SIZE							0x6A000
+#define SYSTEM_PARTITION_OTA_2_ADDR							0x81000
+#define SYSTEM_PARTITION_RF_CAL_ADDR						0x3fb000
+#define SYSTEM_PARTITION_PHY_DATA_ADDR						0x3fc000
+#define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR				0x3fd000
+#define SYSTEM_PARTITION_CUSTOMER_PRIV_PARAM_ADDR           0x7c000
+#elif (SPI_FLASH_SIZE_MAP == 5)
+#define SYSTEM_PARTITION_OTA_SIZE							0x6A000
+#define SYSTEM_PARTITION_OTA_2_ADDR							0x101000
+#define SYSTEM_PARTITION_RF_CAL_ADDR						0x1fb000
+#define SYSTEM_PARTITION_PHY_DATA_ADDR						0x1fc000
+#define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR				0x1fd000
+#define SYSTEM_PARTITION_CUSTOMER_PRIV_PARAM_ADDR           0xfc000
+#elif (SPI_FLASH_SIZE_MAP == 6)
+#define SYSTEM_PARTITION_OTA_SIZE							0x6A000
+#define SYSTEM_PARTITION_OTA_2_ADDR							0x101000
+#define SYSTEM_PARTITION_RF_CAL_ADDR						0x3fb000
+#define SYSTEM_PARTITION_PHY_DATA_ADDR						0x3fc000
+#define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR				0x3fd000
+#define SYSTEM_PARTITION_CUSTOMER_PRIV_PARAM_ADDR           0xfc000
+#else
+#error "The flash map is not supported"
+#endif
+#define SYSTEM_PARTITION_CUSTOMER_PRIV_PARAM                SYSTEM_PARTITION_CUSTOMER_BEGIN
 
 void tos_main();
 static void entry();
@@ -63,6 +72,29 @@ user_init()
     system_init_done_cb(entry);
     //entry();
 }
+#define EAGLE_FLASH_BIN_ADDR				(SYSTEM_PARTITION_CUSTOMER_BEGIN + 1)
+#define EAGLE_IROM0TEXT_BIN_ADDR			(SYSTEM_PARTITION_CUSTOMER_BEGIN + 2)
+
+static const partition_item_t at_partition_table[] = {
+        { SYSTEM_PARTITION_BOOTLOADER, 						0x0, 												0x1000},
+        { SYSTEM_PARTITION_OTA_1,   						0x1000, 											SYSTEM_PARTITION_OTA_SIZE},
+        { SYSTEM_PARTITION_OTA_2,   						SYSTEM_PARTITION_OTA_2_ADDR, 						SYSTEM_PARTITION_OTA_SIZE},
+        { SYSTEM_PARTITION_RF_CAL,  						SYSTEM_PARTITION_RF_CAL_ADDR, 						0x1000},
+        { SYSTEM_PARTITION_PHY_DATA, 						SYSTEM_PARTITION_PHY_DATA_ADDR, 					0x1000},
+        { SYSTEM_PARTITION_SYSTEM_PARAMETER, 				SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR, 			0x3000},
+        { SYSTEM_PARTITION_CUSTOMER_PRIV_PARAM,             SYSTEM_PARTITION_CUSTOMER_PRIV_PARAM_ADDR,          0x1000},
+};
+
+void ICACHE_FLASH_ATTR user_pre_init(void)
+{
+    if(!system_partition_table_regist(at_partition_table, sizeof(at_partition_table)/sizeof(at_partition_table[0]),SPI_FLASH_SIZE_MAP)) {
+        os_printf("system_partition_table_regist fail\r\n");
+        while(1);
+    } else{
+
+    }
+}
+
 void ICACHE_FLASH_ATTR
 user_rf_pre_init()
 {
@@ -121,11 +153,6 @@ main_task(ETSEvent*)
 
 extern "C"
 {
-    void NORETURN tos_force_reset()
-    {
-        // esp sdk should reset
-        while(true);
-    }
 extern "C" void *__dso_handle;
 void *__dso_handle = 0;
 extern void (*__init_array_start)();

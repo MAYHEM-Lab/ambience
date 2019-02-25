@@ -2,7 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 07/06/2018.
 //
 
-#include <usart.hpp>
+#include <arch/nrf52/usart.hpp>
 #include <nrfx_uarte.h>
 #include <drivers/include/nrfx_uarte.h>
 
