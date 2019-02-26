@@ -14,6 +14,7 @@ namespace tos
     {
     public:
         explicit constexpr omemory_stream(tos::span<char> buf) : m_buffer{buf}, m_wr_it{m_buffer.begin()} {}
+        explicit constexpr omemory_stream(tos::span<uint8_t> buf) : omemory_stream({(char*)buf.data(), buf.size()}) {}
 
         constexpr size_t write(tos::span<const char> buf){
             auto buf_it = buf.begin();
@@ -37,6 +38,8 @@ namespace tos
     {
     public:
         explicit constexpr imemory_stream(tos::span<const char> buf) : m_buffer{buf}, m_it{m_buffer.begin()} {}
+        explicit constexpr imemory_stream(tos::span<const uint8_t> buf)
+        : imemory_stream({(const char*)buf.data(), buf.size()}) {}
 
         tos::expected<tos::span<char>, int> read(tos::span<char> buf)
         {
