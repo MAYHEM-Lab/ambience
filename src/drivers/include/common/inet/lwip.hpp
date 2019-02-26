@@ -20,9 +20,10 @@ namespace tos
          */
         namespace events
         {
-            static struct recv_t{} recv{};
-            static struct sent_t{} sent{};
-            static struct discon_t{} discon{};
+            static constexpr struct recvfrom_t{} recvfrom{};
+            static constexpr struct recv_t{} recv{};
+            static constexpr struct sent_t{} sent{};
+            static constexpr struct discon_t{} discon{};
         }
 
         enum class connect_error

@@ -7,16 +7,13 @@
 #include <tos/span.hpp>
 #include <common/inet/tcp_ip.hpp>
 #include <lwip/udp.h>
+#include <tos/expected.hpp>
+#include <common/inet/lwip.hpp>
 
 namespace tos
 {
-namespace esp
+namespace esp82
 {
-    struct udp_endpoint_t
-    {
-        ipv4_addr_t addr;
-        port_num_t port;
-    };
 
     template <class CbT>
     void udp_receiver(void* arg, udp_pcb* pcb, pbuf* pbuf, ip_addr_t* addr, u16 port);
@@ -24,34 +21,78 @@ namespace esp
     class async_udp_socket
     {
     public:
-        void send_to(tos::span<const uint8_t> buf, udp_endpoint_t to)
+        async_udp_socket()
         {
+            m_pcb = udp_new();
+            m_handler = nullptr;
         }
 
-        void recv_from(tos::span<uint8_t> buf){
-            udp_recv(m_pcb, m_recv, m_handler);
+        expected<void, err_t> bind(port_num_t port)
+        {
+            auto err = udp_bind(m_pcb, IP_ADDR_ANY, port.port);
+            if (err != ERR_OK)
+            {
+                return unexpected(err);
+            }
+            return {};
+        }
+
+        expected<void, err_t> send_to(tos::span<const uint8_t> buf, const udp_endpoint_t& to)
+        {
+            auto pbuf = pbuf_alloc(PBUF_TRANSPORT, buf.size(), PBUF_RAM);
+
+            pbuf->payload = const_cast<uint8_t*>(buf.data());
+            pbuf->len = buf.size();
+            pbuf->tot_len = buf.size();
+
+            auto err = udp_sendto(m_pcb, pbuf,
+                    reinterpret_cast<ip_addr_t*>(const_cast<uint8_t*>(&to.addr.addr[0])), to.port.port);
+
+            pbuf_free(pbuf);
+
+            if (err != ERR_OK)
+            {
+                return unexpected(err);
+            }
+
+            return {};
         }
 
         template <class EvHandlerT>
         void attach(EvHandlerT& handler)
         {
             m_handler = &handler;
-            m_recv = &udp_receiver<EvHandlerT>;
+            udp_recv(m_pcb, &udp_receiver<EvHandlerT>, this);
+        }
+
+        ~async_udp_socket()
+        {
+            if (!m_pcb) return;
+
+            udp_recv(m_pcb, nullptr, nullptr);
+            udp_remove(m_pcb);
         }
 
     private:
 
+        template <class CbT>
+        friend void udp_receiver(void* arg, udp_pcb* pcb, pbuf* pbuf, ip_addr_t* addr, u16 port);
+
         udp_pcb* m_pcb;
-        udp_recv_fn m_recv;
         void* m_handler;
     };
 
-    class udp_socket
+    template <class CbT>
+    void udp_receiver(void* arg, udp_pcb* pcb, pbuf* pbuf, ip_addr_t* addr, u16 port)
     {
-    public:
+        auto self = static_cast<async_udp_socket*>(arg);
+        auto& handler = *static_cast<CbT*>(self->m_handler);
 
-        void send_to(tos::span<const uint8_t>, ipv4_addr_t addr, port_num_t port);
-    private:
-    };
+        udp_endpoint_t ep;
+        ep.port.port = port;
+        std::memcpy(ep.addr.addr, addr, 4);
+
+        handler(lwip::events::recvfrom, self, ep, lwip::buffer{pbuf});
+    }
 }
 }

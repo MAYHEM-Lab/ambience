@@ -42,6 +42,12 @@ namespace tos {
     }
 
     inline ipv4_addr_t parse_ip(tos::span<const char> addr);
+
+    struct udp_endpoint_t
+    {
+        ipv4_addr_t addr;
+        port_num_t port;
+    };
 }
 
 namespace tos{
