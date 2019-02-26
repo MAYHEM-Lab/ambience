@@ -8,7 +8,11 @@
 
 extern "C"
 {
-void tos_set_stack_ptr(void*);
+void tos_set_stack_ptr(char* ptr) __attribute__((always_inline));
+inline void tos_set_stack_ptr(char* ptr)
+{
+    __asm__ __volatile__("mov sp, %0" : : "r"(ptr) : "memory");
+}
 
 inline void* read_sp()
 {
