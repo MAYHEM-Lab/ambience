@@ -27,6 +27,8 @@ namespace esp82
             m_handler = nullptr;
         }
 
+        async_udp_socket(async_udp_socket&&) = delete;
+
         expected<void, err_t> bind(port_num_t port)
         {
             auto err = udp_bind(m_pcb, IP_ADDR_ANY, port.port);
@@ -41,9 +43,12 @@ namespace esp82
         {
             auto pbuf = pbuf_alloc(PBUF_TRANSPORT, buf.size(), PBUF_RAM);
 
-            pbuf->payload = const_cast<uint8_t*>(buf.data());
-            pbuf->len = buf.size();
-            pbuf->tot_len = buf.size();
+            if (!pbuf)
+            {
+                return unexpected(ERR_MEM);
+            }
+
+            memcpy(pbuf->payload, buf.data(), buf.size());
 
             auto err = udp_sendto(m_pcb, pbuf,
                     reinterpret_cast<ip_addr_t*>(const_cast<uint8_t*>(&to.addr.addr[0])), to.port.port);
@@ -70,6 +75,7 @@ namespace esp82
             if (!m_pcb) return;
 
             udp_recv(m_pcb, nullptr, nullptr);
+            udp_disconnect(m_pcb);
             udp_remove(m_pcb);
         }
 

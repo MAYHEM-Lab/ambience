@@ -31,6 +31,7 @@ namespace tos
             expected<void, flash_errors>
             erase(sector_id_t sector)
             {
+                tos::int_guard ig;
                 auto res = spi_flash_erase_sector(sector);
                 if (res == SPI_FLASH_RESULT_OK)
                     return {};
@@ -43,6 +44,8 @@ namespace tos
             expected<void, flash_errors>
             write(sector_id_t sector, tos::span<const uint8_t> data, size_t offset = 0)
             {
+                tos::int_guard ig;
+
                 if (reinterpret_cast<uintptr_t>(data.data()) % 4 != 0)
                 {
                     return unexpected(flash_errors::misaligned_data);
@@ -66,6 +69,8 @@ namespace tos
             expected<span<uint8_t>, flash_errors>
             read(sector_id_t sector, tos::span<uint8_t> buf, size_t offset = 0)
             {
+                tos::int_guard ig;
+
                 if (reinterpret_cast<uintptr_t>(buf.data()) % 4 != 0)
                 {
                     return unexpected(flash_errors::misaligned_data);
