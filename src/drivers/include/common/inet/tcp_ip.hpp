@@ -17,7 +17,7 @@ namespace tos {
         uint16_t port;
     };
 
-    struct ipv4_addr_t {
+    struct alignas(std::uint32_t) ipv4_addr_t {
         uint8_t addr[4];
     };
 
