@@ -49,7 +49,7 @@ namespace tos
         void unlock() noexcept { m_sem.up(); }
 
     private:
-        tos::semaphore m_sem;
+        tos::semaphore_base<int8_t> m_sem;
     };
 
     template <class MutexT>

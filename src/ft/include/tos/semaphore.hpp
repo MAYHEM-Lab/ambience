@@ -25,7 +25,8 @@ namespace tos {
      * Multiple threads could be holding different units of the
      * semaphore at the same time.
      */
-    class semaphore : public non_copy_movable
+    template <class CountT>
+    class semaphore_base : public non_copy_movable
     {
     public:
         /**
@@ -78,12 +79,12 @@ namespace tos {
         /**
          * Initializes a semaphore with the given value
          */
-        explicit semaphore(int16_t n) noexcept
+        explicit semaphore_base(CountT n) noexcept
                 :m_count(n)
         { }
 
     private:
-        int16_t m_count;
+        CountT m_count;
         waitable m_wait;
 
         /**
@@ -92,7 +93,7 @@ namespace tos {
          * @param s the semaphore to extract from
          * @return counter value
          */
-        friend int16_t get_count(const semaphore& s)
+        friend CountT get_count(const semaphore_base& s)
         {
             return s.m_count;
         }
@@ -103,17 +104,17 @@ namespace tos {
          * @param s the semaphore to extract from
          * @return waiting threads
          */
-        friend const waitable& get_waiters(const semaphore& s)
+        friend const waitable& get_waiters(const semaphore_base& s)
         {
             return s.m_wait;
         }
 
-        friend void reset(semaphore& s, int16_t val)
+        friend void reset(semaphore_base& s, CountT val)
         {
             s.m_count = val;
         }
 
-        friend bool try_down_isr(semaphore& s)
+        friend bool try_down_isr(semaphore_base& s)
         {
             if (s.m_count > 0)
             {
@@ -123,10 +124,13 @@ namespace tos {
             return false;
         }
     };
-}
+
+    using semaphore = semaphore_base<int16_t>;
+} // namespace tos
 
 namespace tos {
-    inline void semaphore::up() noexcept
+    template <class CountT>
+    inline void semaphore_base<CountT>::up() noexcept
     {
         detail::memory_barrier_enter();
         tos::int_guard ig;
@@ -134,7 +138,8 @@ namespace tos {
         detail::memory_barrier_exit();
     }
 
-    inline void semaphore::down() & noexcept
+    template <class CountT>
+    inline void semaphore_base<CountT>::down() & noexcept
     {
         detail::memory_barrier_enter();
         tos::int_guard ig;
@@ -145,8 +150,9 @@ namespace tos {
         detail::memory_barrier_exit();
     }
 
+    template <class CountT>
     template<class AlarmT>
-    sem_ret semaphore::down(AlarmT &alarm, std::chrono::milliseconds ms) noexcept {
+    sem_ret semaphore_base<CountT>::down(AlarmT &alarm, std::chrono::milliseconds ms) noexcept {
         detail::memory_barrier_enter();
         tos::int_guard ig;
 
@@ -180,10 +186,11 @@ namespace tos {
         return ret_val;
     }
 
-    inline void semaphore::up_isr() noexcept
+    template <class CountT>
+    inline void semaphore_base<CountT>::up_isr() noexcept
     {
         ++m_count;
         m_wait.signal_one();
     }
-}
+} // namespace tos
 
