@@ -115,6 +115,7 @@ namespace tos {
             // stack allocation assumptions.
             void NORETURN NO_INLINE start()
             {
+                // interrupts should be enabled before entering _user space_
                 kern::enable_interrupts();
 
                 std::apply(m_fun, m_args);
@@ -151,6 +152,7 @@ namespace tos {
         lambda_task<FuncT, ArgTs...>&
         prep_lambda_layout(tos::span<char> task_data, FuncT&& func, ArgTs&&... args)
         {
+            // the tcb lives at the top of the stack
             const auto stack_top = task_data.end();
 
             const auto t_ptr = stack_top - sizeof(lambda_task<FuncT, ArgTs...>);
