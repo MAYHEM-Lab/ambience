@@ -12,6 +12,7 @@ add_library(tos_util
 add_library(tos_util_core
     src/stub.cpp
 
+    include/tos/stack_storage.hpp
     include/tos/compiler.hpp
     include/tos/intrusive_list.hpp
     include/tos/intrusive_ptr.hpp
