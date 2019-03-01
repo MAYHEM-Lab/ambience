@@ -8,6 +8,8 @@
 #include <tos/mutex.hpp>
 #include <tos/expected.hpp>
 
+#include <tos/debug.hpp>
+
 namespace tos
 {
     template <class T>
@@ -21,6 +23,7 @@ namespace tos
             m_ready.up();
         }
 
+        uint8_t ref_cnt = 1;
     protected:
         semaphore_base<int8_t> m_ready{0};
     };
@@ -83,27 +86,45 @@ namespace tos
     };
 
     template <class T>
-    class promise : private promise_info<T>
+    class promise
     {
     public:
-        promise() = default;
+        promise() : m_info(new promise_info<T>) {}
         promise(const promise&) = delete;
-        promise(promise&&) = delete;
+        promise(promise&& p) : m_info(std::exchange(p.m_info, nullptr)) {}
 
-        promise&operator=(promise&&) = delete;
-        promise&operator=(const promise&) = delete;
-
-        using promise_info<T>::set;
-
-        future<T> get_future();
+        promise&operator=(promise p) {
+            std::swap(p.m_info, m_info);
+            return *this;
+        }
 
         ~promise()
         {
-            //TODO: signal future if set wasn't called!
+            if (!m_info) return;
+
+            tos::int_guard ig;
+
+            if (m_info->ref_cnt == 1)
+            {
+                delete m_info;
+            }
+            else
+            {
+                --m_info->ref_cnt;
+            }
         }
 
+        template <class... Ts>
+        void set(Ts&&... ts)
+        {
+            static_assert(sizeof...(Ts) <= 1, "can't set more than 1 value for a promise");
+            m_info->set(std::forward<Ts>(ts)...);
+        }
+
+        future<T> get_future();
     private:
 
+        promise_info<T>* m_info;
         friend class future<T>;
     };
 
@@ -111,27 +132,59 @@ namespace tos
     class future
     {
     public:
+        future() = default;
+
         void wait()
         {
+            Expects(m_ptr);
             m_ptr->wait();
         }
 
         auto get()
         {
+            Expects(m_ptr);
             static_assert(!std::is_same_v<T, void>, "Can't get a future<void>");
             return m_ptr->get();
+        }
+
+        ~future(){
+            if (!m_ptr) return;
+
+            tos::int_guard ig;
+
+            if (m_ptr->ref_cnt == 1)
+            {
+                delete m_ptr;
+            }
+            else
+            {
+                --m_ptr->ref_cnt;
+            }
+        }
+
+        future(future&& f) : m_ptr{std::exchange(f.m_ptr, nullptr)} {}
+
+        future(const future&) = delete;
+
+        future& operator=(future&& f)
+        {
+            std::swap(f.m_ptr, m_ptr);
+            return *this;
         }
 
     private:
         friend class promise<T>;
 
-        future(promise_info<T>& ptr) : m_ptr{&ptr} {}
+        future(promise_info<T>& ptr) : m_ptr{&ptr} {
+            tos::int_guard ig;
+            m_ptr->ref_cnt++;
+        }
 
-        promise_info<T>* m_ptr;
+        promise_info<T>* m_ptr = nullptr;
     };
 
     template<class T>
     future<T> promise<T>::get_future() {
-        return future<T>(*this);
+        return future<T>(*this->m_info);
     }
 }

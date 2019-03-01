@@ -18,16 +18,37 @@ TEST_CASE("future", "[future]")
 
 TEST_CASE("future across threads", "[future]")
 {
-    tos::promise<int> p;
-
-    tos::future<int> f = p.get_future();
+    tos::future<int> f;
 
     tos::semaphore s{0};
     tos::launch([&]{
-        s.down();
+        tos::promise<int> p;
+        f = p.get_future();
+        s.up();
         p.set(42);
     });
 
-    s.up();
+    s.down();
+
     REQUIRE(f.get() == 42);
+}
+
+
+TEST_CASE("future across threads, moving the future", "[future]")
+{
+    tos::future<int> f;
+
+    tos::semaphore s{0};
+    tos::launch([&]{
+        tos::promise<int> p;
+        f = p.get_future();
+        s.up();
+        p.set(42);
+    });
+
+    s.down();
+
+    auto f2 = std::move(f);
+
+    REQUIRE(f2.get() == 42);
 }

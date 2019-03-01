@@ -63,3 +63,6 @@ extern "C" int ets_printf(const char *format, ...)  __attribute__ ((format (prin
 
 #if !defined(tos_debug_print)
 #endif
+
+#define Expects(x)
+#define Ensures(x)
