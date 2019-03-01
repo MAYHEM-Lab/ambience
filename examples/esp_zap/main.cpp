@@ -16,11 +16,11 @@
 #include <lwip/init.h>
 #include <common/inet/tcp_stream.hpp>
 #include <arch/lx106/udp.hpp>
+#include <tos/mem_stream.hpp>
+#include <tos/future.hpp>
 
-//#include <flatbuffers/flatbuffers.h>
-//#include "req_generated.h"
-
-auto zap_task = []{
+auto wifi_connect()
+{
     tos::esp82::wifi w;
 
     conn_:
@@ -30,20 +30,47 @@ auto zap_task = []{
     auto& wconn = force_get(res);
 
     wconn.wait_for_dhcp();
-
-    auto addr = force_get(wconn.get_addr());
     lwip_init();
 
-    tos::esp82::async_udp_socket udp;
-    udp.bind(tos::port_num_t{9993});
+    return std::make_pair(w, std::move(wconn));
+}
 
-    auto handler = [&](tos::lwip::events::recvfrom_t, auto* sock, auto from, tos::lwip::buffer&& buf){
-    };
+auto zap_task = []{
+    auto [w, wconn] = wifi_connect();
 
-    udp.attach(handler);
+    alignas(std::max_align_t) uint8_t buf[128];
+    //alignas(std::max_align_t) uint8_t sbuf[] = {'h', 'e', 'l', 'l', 'o'};
 
-    //flatbuffers::FlatBufferBuilder builder(256);
-    //zap::cloud::RequestBuilder b(builder);
+    tos::udp_endpoint_t ep;
+    ep.addr = tos::parse_ip("169.231.9.60");
+    ep.port = {9993};
+    auto timer = tos::open(tos::devs::timer<0>);
+    auto alarm = tos::open(tos::devs::alarm, timer);
+
+    tos_debug_print("\nhi\n");
+    int i = 0;
+    for (;;)
+    {
+        tos::esp82::async_udp_socket udp;
+
+        auto r = udp.bind(tos::port_num_t{9993});
+        if (!r)
+        {
+            goto end;
+        }
+
+        {
+            tos::omemory_stream str(buf);
+            tos::println(str, "hello", i++);
+            udp.send_to({(const uint8_t*)str.get().data(), str.get().size()}, ep);
+            //udp.send_to(sbuf, ep);
+        }
+        //tos_debug_print("\nafter send\n");
+
+        end:
+        using namespace std::chrono_literals;
+        alarm.sleep_for(10ms);
+    }
 };
 
 void tos_main()
