@@ -1,6 +1,7 @@
 project(tos)
 
 add_library(tos_ft
+        include/tos/future.hpp
         include/tos/ft.hpp
         include/tos/tcb.hpp
         include/tos/mutex.hpp
