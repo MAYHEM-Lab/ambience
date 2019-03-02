@@ -114,11 +114,14 @@ namespace tos
             }
         }
 
-        template <class... Ts>
-        void set(Ts&&... ts)
+        void set()
         {
-            static_assert(sizeof...(Ts) <= 1, "can't set more than 1 value for a promise");
-            m_info->set(std::forward<Ts>(ts)...);
+            m_info->set();
+        }
+
+        void set(T&& t)
+        {
+            m_info->set(std::move(t));
         }
 
         future<T> get_future();
