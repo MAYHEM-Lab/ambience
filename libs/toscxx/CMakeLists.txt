@@ -1,6 +1,8 @@
 if (TOS_PROVIDE_LIBCXX)
 add_library(tos_libcxx
     src/vector.cpp
+    src/string.cpp
+
     include/algorithm
     include/array
     include/bit
@@ -73,6 +75,7 @@ target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NA
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)
 
 target_compile_definitions(tos_libcxx PUBLIC TOS)
+target_compile_definitions(tos_libcxx PUBLIC TOS_ARCH_${TOS_ARCH_NAME})
 
 target_compile_features(tos_libcxx PUBLIC cxx_std_17)
 tos_install(tos_libcxx ${CMAKE_CURRENT_SOURCE_DIR}/include)

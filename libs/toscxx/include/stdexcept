@@ -225,7 +225,9 @@ void __throw_length_error(const char*__msg)
     throw length_error(__msg);
 #else
     ((void)__msg);
-    _VSTD::abort();
+    while (true);
+    // TODO: fix here!
+    //_VSTD::abort();
 #endif
 }
 
