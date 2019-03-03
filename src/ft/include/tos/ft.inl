@@ -12,6 +12,7 @@
 #include <tos/debug.hpp>
 #include <tos/compiler.hpp>
 #include <tos/span.hpp>
+#include <tos/stack_storage.hpp>
 
 namespace tos {
     namespace this_thread {
@@ -272,11 +273,17 @@ namespace tos {
     }
 
     template <class FuncT, class... ArgTs>
+    inline auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args)
+    {
+        tos::span<char> task_span((char*)tos_stack_alloc(stack_sz.sz), stack_sz.sz);
+        return launch(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
+    }
+
+    template <class FuncT, class... ArgTs>
     inline auto& launch(FuncT&& func, ArgTs&&... args)
     {
-        constexpr size_t stack_size = TOS_DEFAULT_STACK_SIZE;
-        tos::span<char> task_span((char*)tos_stack_alloc(stack_size), stack_size);
-        return launch(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
+        constexpr stack_size_t stack_size{TOS_DEFAULT_STACK_SIZE};
+        return launch(stack_size, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     }
 
     inline void this_thread::exit(void*)

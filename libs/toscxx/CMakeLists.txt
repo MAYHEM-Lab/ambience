@@ -70,6 +70,8 @@ target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_WCHAR)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIO)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIN _LIBCPP_HAS_NO_STDOUT)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)
+
 target_compile_definitions(tos_libcxx PUBLIC TOS)
 
 target_compile_features(tos_libcxx PUBLIC cxx_std_17)

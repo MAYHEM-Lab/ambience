@@ -10,6 +10,11 @@
 
 namespace tos
 {
+    struct stack_size_t
+    {
+        uint16_t sz;
+    };
+
     template <std::size_t Len>
     using stack_storage = std::aligned_storage_t<Len, alignof(std::max_align_t)>;
 } // namespace tos
