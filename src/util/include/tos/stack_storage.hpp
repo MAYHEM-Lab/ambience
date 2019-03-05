@@ -16,5 +16,9 @@ namespace tos
     };
 
     template <std::size_t Len>
-    using stack_storage = std::aligned_storage_t<Len, alignof(std::max_align_t)>;
+    struct stack_storage
+    {
+        using StorageT = std::aligned_storage_t<Len, alignof(std::max_align_t)>;
+        StorageT m_storage;
+    };
 } // namespace tos
