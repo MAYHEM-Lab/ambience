@@ -90,14 +90,15 @@ namespace tos
              *
              * @param buf buffer to take ownership of.
              */
-            explicit buffer(pbuf* buf) : m_root{buf}, m_read_off{0} {}
+            explicit buffer(pbuf* buf) : m_root{buf}, m_read_off{0}, m_len(buf->tot_len) {}
 
             buffer(const buffer&) = delete;
 
             buffer(buffer&& rhs) noexcept
-                : m_root{rhs.m_root}, m_read_off{rhs.m_read_off}
+                : m_root{rhs.m_root}, m_read_off{rhs.m_read_off}, m_len(get_count(rhs.m_len))
             {
                 rhs.m_root = nullptr;
+                reset(rhs.m_len, 0);
             }
 
             buffer& operator=(buffer&& rhs) noexcept
@@ -106,9 +107,12 @@ namespace tos
                 {
                     pbuf_free(m_root);
                 }
-                m_root = rhs.m_root;
+
+                auto len = get_count(rhs.m_len);
+                reset(rhs.m_len, 0);
+                m_root = std::exchange(rhs.m_root, nullptr);
                 m_read_off = rhs.m_read_off;
-                rhs.m_root = nullptr;
+                up_many(m_len, len);
                 return *this;
             }
 
@@ -129,6 +133,9 @@ namespace tos
              */
             span<char> read(span<char> buf)
             {
+                m_len.down();
+                m_len.up();
+
                 auto remaining = std::min(buf.size(), size());
 
                 auto total = 0;
@@ -141,7 +148,6 @@ namespace tos
                     total += bucket_sz;
                     remaining -= bucket_sz;
                     consume(bucket_sz);
-                    tos::this_thread::yield();
                 }
 
                 return buf.slice(0, total);
@@ -178,6 +184,8 @@ namespace tos
                 auto buf = b.m_root;
                 b.m_root = nullptr;
                 pbuf_cat(m_root, buf);
+                up_many(m_len, b.size());
+                reset(b.m_len, 0);
             }
 
         private:
@@ -191,6 +199,11 @@ namespace tos
              */
             void consume(size_t sz)
             {
+                for (size_t i = 0; i < sz; ++i)
+                {
+                    m_len.down();
+                }
+
                 if (sz < cur_bucket().size())
                 {
                     m_read_off += sz;
@@ -222,6 +235,7 @@ namespace tos
                 return { (const char*)m_root->payload + m_read_off, m_root->len - m_read_off};
             }
 
+            tos::semaphore m_len{0};
             pbuf* m_root;
             size_t m_read_off;
         };

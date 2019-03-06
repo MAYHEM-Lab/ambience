@@ -69,11 +69,11 @@ namespace tos
 
     template <class BaseEndpointT>
     inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::sent_t, BaseEndpointT &, uint16_t len) {
-        m_sent_bytes += len;
-        m_write_sync.up();
 #ifdef ESP_TCP_VERBOSE
         tos_debug_print("sent: %d\n", int(len));
 #endif
+        m_sent_bytes += len;
+        m_write_sync.up();
     }
 
     template <class BaseEndpointT>
@@ -121,7 +121,7 @@ namespace tos
 
     template <class BaseEndpointT>
     expected<span<char>, read_error> tcp_stream<BaseEndpointT>::read(tos::span<char> to) {
-        if (m_discon && !m_buffer.has_more())
+        if (m_discon)
         {
             return unexpected(read_error::disconnected);
         }
@@ -129,7 +129,12 @@ namespace tos
         tos::lock_guard<tos::mutex> lk{ m_busy };
 
         auto res = m_buffer.read(to);
-        tos::this_thread::yield();
+
+        if (m_discon)
+        {
+            return unexpected(read_error::disconnected);
+        }
+
         return res;
     }
 }

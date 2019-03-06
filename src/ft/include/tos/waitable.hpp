@@ -36,6 +36,12 @@ namespace tos {
         void signal_one();
 
         /**
+         * Wakes up to n threads
+         * @param n number of threads to wake
+         */
+        void signal_n(size_t n);
+
+        /**
          * Places the given tcb to the waiters list of this
          * waitable object.
          *
@@ -100,6 +106,13 @@ namespace tos {
         auto& front = m_waiters.front();
         m_waiters.pop_front();
         make_runnable(front);
+    }
+
+    inline void waitable::signal_n(size_t n) {
+        for (size_t i = 0; i < n; ++i)
+        {
+            signal_one();
+        }
     }
 }
 

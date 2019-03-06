@@ -114,6 +114,20 @@ namespace tos {
             s.m_count = val;
         }
 
+        friend void up_many_isr(semaphore_base& s, CountT n)
+        {
+            s.m_count += n;
+            s.m_wait.signal_n(n);
+        }
+
+        friend void up_many(semaphore_base& s, CountT n)
+        {
+            detail::memory_barrier_enter();
+            tos::int_guard ig;
+            up_many_isr(s, n);
+            detail::memory_barrier_exit();
+        }
+
         friend bool try_down_isr(semaphore_base& s)
         {
             if (s.m_count > 0)

@@ -200,7 +200,7 @@ namespace tos
 
         inline tcp_endpoint::~tcp_endpoint() {
 #ifdef ESP_TCP_VERBOSE
-            tos_debug_print("close called\n");
+            tos_debug_print("tcp dtor called\n");
 #endif
             if (!m_conn) return;
 #ifdef ESP_TCP_VERBOSE
@@ -238,6 +238,9 @@ namespace tos
 
                 if (err != ERR_OK)
                 {
+                    #ifdef ESP_TCP_VERBOSE
+                        tos_debug_print("recv error\n");
+                    #endif
                     handler(lwip::events::discon, *self, lwip::discon_reason::recv_error);
                     return ERR_OK;
                 }
