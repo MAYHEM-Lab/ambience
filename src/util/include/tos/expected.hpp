@@ -55,6 +55,15 @@ namespace tos
     }
 
     template <class T, class ErrT>
+    class expected;
+
+    template <class T>
+    struct is_expected : std::false_type {};
+
+    template <class U, class V>
+    struct is_expected<expected<U, V>> : std::true_type {};
+
+    template <class T, class ErrT>
     class expected
     {
         using internal_t = tl::expected<T, ErrT>;
@@ -62,13 +71,25 @@ namespace tos
         template <class U = T, typename = std::enable_if_t<std::is_same<U, void>{}>>
         constexpr expected() : m_internal{} {}
 
-        template <class U = T, typename = std::enable_if_t<!std::is_same<U, expected>{}>>
+        template <class U = T, typename = std::enable_if_t<!is_expected<U>{}>>
         constexpr expected(U&& u) : m_internal{std::forward<U>(u)} {}
 
         template <class ErrU>
         constexpr expected(unexpected_t<ErrU>&& u) : m_internal{tl::make_unexpected(std::move(u.m_err))} {}
 
         constexpr explicit PURE operator bool() const { return bool(m_internal); }
+
+        template <class ResT>
+        constexpr operator expected<ResT, ErrT>()
+        {
+            if (*this)
+            {
+                tos_force_get_failed(nullptr);
+                __builtin_unreachable();
+            }
+
+            return unexpected(m_internal.error());
+        }
 
         using value_type = typename internal_t::value_type;
         using error_type = typename internal_t::error_type;
