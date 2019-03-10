@@ -71,7 +71,7 @@ namespace tos
         template <class U = T, typename = std::enable_if_t<std::is_same<U, void>{}>>
         constexpr expected() : m_internal{} {}
 
-        template <class U = T, typename = std::enable_if_t<!is_expected<U>{}>>
+        template <class U = T, typename = std::enable_if_t<!is_expected<std::remove_reference_t <U>>{}>>
         constexpr expected(U&& u) : m_internal{std::forward<U>(u)} {}
 
         template <class ErrU>
@@ -102,6 +102,8 @@ namespace tos
 
         template <class ExpectedT>
         friend decltype(auto) force_get(ExpectedT&&);
+        template <class ExpectedT>
+        friend decltype(auto) force_error(ExpectedT&&);
     };
 
     template <class ExpectedT, class HandlerT, class ErrHandlerT>
@@ -113,6 +115,17 @@ namespace tos
             return have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal));
         }
         return err_handler(std::forward<decltype(e.m_internal.error())>(e.m_internal.error()));
+    }
+
+    template <class ExpectedT>
+    decltype(auto) ALWAYS_INLINE force_error(ExpectedT&& e)
+    {
+        if (!e)
+        {
+            return e.m_internal.error();
+        }
+
+        tos_force_get_failed(nullptr);
     }
 
     template <class ExpectedT>

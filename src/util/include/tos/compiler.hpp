@@ -21,3 +21,5 @@
 #define WEAK __attribute__((weak))
 
 #define PURE __attribute__((pure))
+
+#define TOS_UNREACHABLE() __builtin_unreachable()

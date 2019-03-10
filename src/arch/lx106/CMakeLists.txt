@@ -23,7 +23,7 @@ target_compile_options(lx106_impl PUBLIC -Wno-literal-suffix)
 
 add_library(esp_adapters esp_adapters.cpp)
 target_link_libraries(esp_adapters PUBLIC tos_core)
-target_link_libraries(esp_adapters PUBLIC "-Wl,--undefined=malloc -Wl,--undefined=free")
+target_link_libraries(esp_adapters PUBLIC "-Wl,--undefined=malloc -Wl,--undefined=free -Wl,--undefined=isxdigit")
 tos_install(esp_adapters)
 
 if (USE_SSL)
