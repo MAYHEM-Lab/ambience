@@ -137,9 +137,10 @@ namespace tos {
 
             ~super_tcb() final
             {
-                tos_stack_free(get_task_base());
+                if (free_stack) tos_stack_free(get_task_base());
             }
 
+            bool free_stack = false;
         private:
             uint16_t m_tcb_off; // we store the offset of this object from the task base
             FunT m_fun;
@@ -276,11 +277,22 @@ namespace tos {
     inline auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args)
     {
         tos::span<char> task_span((char*)tos_stack_alloc(stack_sz.sz), stack_sz.sz);
+        auto& res = launch(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
+        res.free_stack = true;
+        return res;
+    }
+
+    template <class FuncT, class... ArgTs, size_t StSz>
+    inline auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args)
+    {
+        tos::span<char> task_span((char*)&stack, StSz);
         return launch(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     }
 
+    constexpr struct def_stack_t {} def_stack;
+
     template <class FuncT, class... ArgTs>
-    inline auto& launch(FuncT&& func, ArgTs&&... args)
+    inline auto& launch(def_stack_t, FuncT&& func, ArgTs&&... args)
     {
         constexpr stack_size_t stack_size{TOS_DEFAULT_STACK_SIZE};
         return launch(stack_size, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
