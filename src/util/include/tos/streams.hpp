@@ -14,7 +14,7 @@ namespace tos
         auto b = buf;
         while (b.size() != 0)
         {
-            auto rd = str.read(b);
+            auto rd = str->read(b);
             if (!rd)
             {
                 break;
@@ -25,4 +25,4 @@ namespace tos
         }
         return buf.slice(0, buf.size() - b.size());
     }
-}
+} // namespace tos
