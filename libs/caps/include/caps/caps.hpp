@@ -97,7 +97,7 @@ namespace caps
     }
 
     template <class CapabilityT, class SignerT>
-    inline bool verify(const caps::token<CapabilityT, SignerT> &c, SignerT &s)
+    inline auto get_signature(const caps::token<CapabilityT, SignerT> &c, SignerT &s)
     {
         auto signature = sign(c, s);
 
@@ -107,7 +107,28 @@ namespace caps
             merge_into(signature, child_hash);
         }
 
-        return signature == c.signature;
+        return signature;
+    }
+
+    template <class CapabilityT, class SignerT>
+    inline bool verify(const caps::token<CapabilityT, SignerT> &c, SignerT &s)
+    {
+        return get_signature(c, s) == c.signature;
+    }
+
+    template <class CapabilityT, class SignerT>
+    inline bool verify(const caps::token<CapabilityT, SignerT> &c, SignerT &s,
+            const uint64_t& seq, const typename SignerT::hash_t& req_hash)
+    {
+        auto sign = get_signature(c, s);
+
+        auto h = s.hash(seq);
+
+        merge_into(sign, h);
+
+        merge_into(sign, req_hash);
+
+        return sign == c.signature;
     }
 
     template <class CapabilityT>

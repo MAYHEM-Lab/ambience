@@ -25,17 +25,17 @@ namespace caps
         void serialize(StreamT& to, const SignT& signature)
         {
             static_assert(std::is_trivially_copyable<SignT>{}, "signature must be a pod");
-            to.write({ (const char*)&signature, sizeof signature });
+            to->write({ (const char*)&signature, sizeof signature });
         }
 
         template <class StreamT, class CapabilityT>
         void serialize(StreamT& to, const cap_list<CapabilityT>& list)
         {
-            to.write({ (const char*)&list.num_caps, sizeof list.num_caps });
+            to->write({ (const char*)&list.num_caps, sizeof list.num_caps });
             for (auto& cap : list)
             {
                 static_assert(std::is_trivially_copyable<std::remove_reference_t<decltype(cap)>>{}, "capabilities must be pods");
-                to.write({ (const char*)&cap, sizeof cap });
+                to->write({ (const char*)&cap, sizeof cap });
             }
         }
 
@@ -92,7 +92,7 @@ namespace caps
             detail::serialize(to, *child);
         }
         decltype(caps.c.num_caps) c[] = {0};
-        to.write({(const char*)&c, sizeof c});
+        to->write({(const char*)&c, sizeof c});
 
         /*
          * The signature goes last into the wire

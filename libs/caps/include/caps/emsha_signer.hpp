@@ -62,6 +62,11 @@ namespace emsha
             return h;
         }
 
+        hash_t hash(const uint64_t& seq)
+        {
+            return hash(tos::span<const uint8_t>{ (const uint8_t*)&seq, sizeof seq });
+        }
+
     private:
         ::emsha::HMAC m_hmac;
     };
