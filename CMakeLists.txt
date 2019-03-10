@@ -84,6 +84,7 @@ elseif(TOS_ESP)
     add_subdirectory(examples/dht11_sample)
     add_subdirectory(examples/esp_zap)
 
+    add_subdirectory(examples/capabilities)
     add_subdirectory(libs/zmtp)
     add_subdirectory(libs/sntp)
 elseif(TOS_X86)

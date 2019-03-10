@@ -1,3 +1,11 @@
 
-add_executable(capabilities main.cpp)
-target_link_libraries(capabilities tos::core tos::print caps nlohmann::json)
+add_executable(capabilities apps.hpp common.hpp)
+target_link_libraries(capabilities tos::core tos::print caps)
+
+if (TOS_ESP)
+    target_link_libraries(capabilities esp82_drivers)
+    target_sources(capabilities PRIVATE esp_main.cpp)
+elseif(TOS_X86)
+    target_link_libraries(capabilities x86_drivers)
+    target_sources(capabilities PRIVATE x86_main.cpp)
+endif()
