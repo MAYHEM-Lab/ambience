@@ -9,15 +9,29 @@
 #include <tos/print.hpp>
 #include <tos/version.hpp>
 #include <tos/streams.hpp>
+#include <fstream>
+#include <vector>
 
 
 #include "common.hpp"
 #include "apps.hpp"
 
+std::vector<char> read_file(const std::string& path)
+{
+    std::ifstream file(path);
+    return std::vector<char>(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>{});
+}
+
 static void x86_main()
 {
     auto tty = tos::open(tos::devs::tty<0>);
     tos::println(tty, "hello");
+
+//    auto f = read_file("/home/fatih/req.bin");
+//
+//    tos::imemory_stream is{f};
+
+    sink_task(tty);
 }
 
 void tos_main()

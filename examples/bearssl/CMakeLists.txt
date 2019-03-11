@@ -1,5 +1,5 @@
 
-add_executable(bear main.cpp)
+add_executable(bear main.cpp keys.hpp)
 target_link_libraries(bear PUBLIC tos::core tos::print)
 
 

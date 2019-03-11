@@ -16,12 +16,78 @@
 #include "common.hpp"
 #include "apps.hpp"
 
+#include "monotonic_clock.hpp"
+#include <numeric>
+
+static void time_emsha()
+{
+    std::array<uint8_t , 32> in;
+    std::iota(in.begin(), in.end(), 0);
+
+    std::vector<std::chrono::microseconds> expr;
+    expr.reserve(100);
+    caps::emsha::signer s{"foo"};
+    for (int j = 0; j < 100; ++j)
+    {
+        auto begin = tos::high_resolution_clock::now();
+        for (int i = 0; i < 1000; ++i)
+        {
+            volatile auto sign = s.sign(in);
+        }
+        auto end = tos::high_resolution_clock::now();
+        tos::this_thread::yield();
+        expr.emplace_back(end - begin);
+    }
+
+    for (auto& r : expr)
+    {
+        tos_debug_print("%u\n", size_t(r.count()));
+    }
+}
+
+struct bench_range_end_t {};
+
+struct bench_range
+{
+    constexpr bool operator==(bench_range_end_t)
+    {
+        return m_i == m_end;
+    }
+
+    constexpr bool operator!=(bench_range_end_t)
+    {
+        return m_i != m_end;
+    }
+
+private:
+    int m_i;
+    int m_end;
+};
+
+template <class T>
+auto bench(T&& t)
+{
+    std::vector<std::chrono::microseconds> expr;
+
+    for (int j = 0; j < 100; ++j) {
+        auto begin = tos::high_resolution_clock::now();
+        t();
+        auto end = tos::high_resolution_clock::now();
+        tos::this_thread::yield();
+        expr.emplace_back(end - begin);
+    }
+
+    return expr;
+}
+
 static void esp_main()
 {
     using namespace tos;
     using namespace tos::tos_literals;
 
     auto usart = tos::open(tos::devs::usart<0>, tos::uart::default_9600);
+
+    time_emsha();
 
     tos::esp82::wifi w;
     conn:

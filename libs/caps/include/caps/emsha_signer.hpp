@@ -55,6 +55,13 @@ namespace emsha
             m_hmac.reset();
         }
 
+        sign_t sign(tos::span<const uint8_t> msg) noexcept
+        {
+            sign_t signature;
+            sign(msg, signature.buf);
+            return signature;
+        }
+
         hash_t hash(tos::span<const uint8_t> msg)
         {
             hash_t h;

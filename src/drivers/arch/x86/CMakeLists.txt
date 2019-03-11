@@ -8,6 +8,10 @@ add_library(x86_timer include/arch/x86/timer.hpp src/stub.cpp)
 target_link_libraries(x86_timer PUBLIC tos::core x86_impl)
 tos_install(x86_timer ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(x86_tcp include/arch/x86/tcp.hpp src/stub.cpp)
+target_link_libraries(x86_tcp PUBLIC tos::core x86_impl)
+tos_install(x86_tcp ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 add_library(x86_drivers include/arch/x86/drivers.hpp src/stub.cpp)
-target_link_libraries(x86_drivers PUBLIC x86_stdio x86_timer)
+target_link_libraries(x86_drivers PUBLIC x86_stdio x86_timer x86_tcp)
 tos_install(x86_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)

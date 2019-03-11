@@ -17,7 +17,8 @@ namespace tos
 
         span<char> stdio::read(span<char> buf)
         {
-            return buf.slice(0, ::std::cin.readsome(buf.data(), buf.size()));
+            ::std::cin.read(buf.data(), buf.size());
+            return buf;
         }
     } // namespace x86
 } // namespace tos

@@ -175,10 +175,15 @@ uint32 ICACHE_FLASH_ATTR espconn_init(uint32)
 }
 }
 
+rst_info rst;
 static os_event_t arr[16];
 static void ICACHE_FLASH_ATTR
 entry()
 {
+    uart_div_modify(0, UART_CLK_FREQ / (9600));
+    struct rst_info *rtc_info_ptr = system_get_rst_info();
+    rst = *rtc_info_ptr;
+
     do_global_ctors();
     tos::kern::enable_interrupts();
     tos_main();

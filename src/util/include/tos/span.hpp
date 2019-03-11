@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <array>
 #include <cstddef>
+#include <vector>
 
 namespace tos
 {
@@ -87,6 +88,20 @@ namespace tos
         template <size_t Sz>
         constexpr span(const std::array<std::remove_const_t<T>, Sz>& arr)
         : m_base(arr.data()), m_len(arr.size()) {}
+
+        /**
+         * Constructs a span from the given C++ vector object
+         *
+         * @param arr the vector
+         */
+        constexpr span(std::vector<T>& arr) : m_base(arr.data()), m_len(arr.size()) {}
+        /**
+         * Constructs a const span from the given C++ vector to const objects
+         *
+         * @param arr the vector
+         */
+        constexpr span(const std::vector<std::remove_const_t<T>>& arr)
+                : m_base(arr.data()), m_len(arr.size()) {}
 
         /**
          * Returns the number of elements in the span

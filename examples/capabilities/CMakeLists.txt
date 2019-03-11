@@ -1,4 +1,3 @@
-
 add_executable(capabilities apps.hpp common.hpp)
 target_link_libraries(capabilities tos::core tos::print caps)
 

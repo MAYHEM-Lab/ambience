@@ -170,7 +170,7 @@ SECTIONS
     *libwps.a:(.literal.* .text.*)
     *libpp.a:(.text .text.* .literal .literal.*)
 
-    *libmbedtls.a:(.literal.* .text.*)
+    *libbearssl.a:(.literal.* .text.* .irom.text.src*)
 
     *libm.a:(.literal .text .literal.* .text.*)
 
