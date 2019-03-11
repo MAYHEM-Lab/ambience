@@ -78,6 +78,7 @@ elseif(TOS_ESP)
     #add_subdirectory(examples/esp_ssl)
     add_subdirectory(examples/esp_spi)
     add_subdirectory(examples/esp_adc)
+    add_subdirectory(examples/bearssl)
 
     #add_subdirectory(examples/aws_push)
 
@@ -93,6 +94,7 @@ elseif(TOS_X86)
         add_subdirectory(apps/cspot_lite)
     endif()
 
+    add_subdirectory(examples/bearssl)
     add_subdirectory(examples/simple_portable)
     add_subdirectory(examples/x86_timer)
     add_subdirectory(examples/capabilities)
