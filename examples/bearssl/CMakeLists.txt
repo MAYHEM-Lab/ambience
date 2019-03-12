@@ -1,6 +1,6 @@
 
 add_executable(bear main.cpp keys.hpp)
-target_link_libraries(bear PUBLIC tos::core tos::print)
+target_link_libraries(bear PUBLIC tos::core tos::print caps)
 
 
 if (TOS_ESP)

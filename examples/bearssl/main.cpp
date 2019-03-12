@@ -14,6 +14,7 @@
 #include <common/usart.hpp>
 #include <tos/print.hpp>
 #include <common/inet/tcp_stream.hpp>
+#include <caps/emsha_signer.hpp>
 
 uint32_t last_yield = 0;
 
@@ -133,6 +134,21 @@ void handle_sock(StreamT& p, UsartT& usart)
     }
 }
 
+static unsigned char sign_buf[512];
+auto sign(tos::span<const uint8_t> buf)
+{
+    caps::emsha::signer s("foo");
+    auto hash = s.hash(buf);
+
+    br_rsa_i15_pkcs1_sign(nullptr, (const unsigned char*)hash.buf, 32, &RSA, sign_buf);
+    tos_debug_print("\n");
+    for (auto x : sign_buf)
+    {
+        tos_debug_print("%02x", int(x));
+    }
+    tos_debug_print("\n");
+}
+
 extern rst_info rst;
 tos::stack_storage<1024 * 8> s;
 void server()
@@ -152,6 +168,14 @@ void server()
     lwip_init();
 
     br_ssl_server_init_full_rsa(&sc, CHAIN, CHAIN_LEN, &RSA);
+
+    tos::semaphore wait{0};
+    tos::launch(s, [&]{
+        uint8_t buf[] = "hello world";
+        sign(buf);
+        wait.up();
+    });
+    wait.down();
 
     tos::esp82::tcp_socket src_sock{wconn, port_num_t{ 9993 }};
 
