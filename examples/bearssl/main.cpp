@@ -15,6 +15,7 @@
 #include <tos/print.hpp>
 #include <common/inet/tcp_stream.hpp>
 #include <caps/emsha_signer.hpp>
+#include "monotonic_clock.hpp"
 
 uint32_t last_yield = 0;
 
@@ -98,7 +99,7 @@ void handle_sock(StreamT& p, UsartT& usart)
 
     br_sslio_init(&ioc, &sc.eng, sock_read, &p, sock_write, &p);
 
-    system_update_cpu_freq(SYS_CPU_160MHZ);
+    //system_update_cpu_freq(SYS_CPU_160MHZ);
     system_soft_wdt_stop();
     auto lcwn = 0;
     for (;;) {
@@ -120,7 +121,7 @@ void handle_sock(StreamT& p, UsartT& usart)
     }
     system_soft_wdt_restart();
 
-    system_update_cpu_freq(SYS_CPU_80MHZ);
+    //system_update_cpu_freq(SYS_CPU_80MHZ);
 
     br_sslio_write_all(&ioc, HTTP_RES, strlen(HTTP_RES));
     br_sslio_close(&ioc);
@@ -135,18 +136,31 @@ void handle_sock(StreamT& p, UsartT& usart)
 }
 
 static unsigned char sign_buf[512];
-auto sign(tos::span<const uint8_t> buf)
+auto sign(caps::emsha::hash_t hash)
 {
-    caps::emsha::signer s("foo");
-    auto hash = s.hash(buf);
-
     br_rsa_i15_pkcs1_sign(nullptr, (const unsigned char*)hash.buf, 32, &RSA, sign_buf);
-    tos_debug_print("\n");
-    for (auto x : sign_buf)
-    {
-        tos_debug_print("%02x", int(x));
-    }
-    tos_debug_print("\n");
+}
+
+auto ctx_ptr = std::make_unique<br_pkey_decoder_context>();
+auto get_pubkey()
+{
+    br_pkey_decoder_init(ctx_ptr.get());
+    br_pkey_decoder_push(ctx_ptr.get(), pubkey, sizeof(pubkey));
+
+    tos_debug_print("err: %d\n", br_pkey_decoder_last_error(ctx_ptr.get()));
+
+    auto key = br_pkey_decoder_get_rsa(ctx_ptr.get());
+    tos_debug_print("pubkey: %d\n", key->nlen);
+    return key;
+}
+
+auto verify()
+{
+    caps::emsha::hash_t h;
+    auto r = br_rsa_i15_pkcs1_vrfy(
+            sign_buf, 512, nullptr, 32,
+            br_pkey_decoder_get_rsa(ctx_ptr.get()), (unsigned char*)h.buf);
+    return h;
 }
 
 extern rst_info rst;
@@ -159,7 +173,7 @@ void server()
 
     tos::esp82::wifi w;
     conn:
-    auto res = w.connect("UCSB Wireless Web");
+    auto res = w.connect("cs190b", "cs190bcs190b");
     tos::println(usart, "connected?", bool(res));
     if (!res) goto conn;
 
@@ -169,13 +183,26 @@ void server()
 
     br_ssl_server_init_full_rsa(&sc, CHAIN, CHAIN_LEN, &RSA);
 
+    /*get_pubkey();
     tos::semaphore wait{0};
     tos::launch(s, [&]{
         uint8_t buf[] = "hello world";
-        sign(buf);
+        caps::emsha::signer s("foo");
+        for (int i = 0; i < 30; ++i)
+        {
+            auto vbeg = tos::high_resolution_clock::now();
+            auto hash = s.hash(buf);
+            sign(hash);
+            auto end = tos::high_resolution_clock::now();
+            tos::println(usart, "sign", int((end - vbeg).count()));
+            vbeg = tos::high_resolution_clock::now();
+            auto h = verify();
+            end = tos::high_resolution_clock::now();
+            tos::println(usart, "eq", h == hash, int((end - vbeg).count()));
+        }
         wait.up();
     });
-    wait.down();
+    wait.down();*/
 
     tos::esp82::tcp_socket src_sock{wconn, port_num_t{ 9993 }};
 

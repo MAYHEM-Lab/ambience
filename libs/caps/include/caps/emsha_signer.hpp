@@ -16,6 +16,11 @@ namespace emsha
         uint8_t buf[32];
     };
 
+    bool operator==(const hash_t& h, const hash_t& b)
+    {
+        return memcmp(h.buf, b.buf, 32) == 0;
+    }
+
     struct sign_t
     {
         uint8_t buf[32];

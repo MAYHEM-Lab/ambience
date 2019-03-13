@@ -52,4 +52,8 @@ namespace caps
 
     template <class CapT, class SignT>
     using token_ptr = std::unique_ptr<token<CapT, SignT>, raw_deleter>;
+
+    template <class CapT>
+    using list_ptr = std::unique_ptr<cap_list<CapT>, raw_deleter>;
+
 }

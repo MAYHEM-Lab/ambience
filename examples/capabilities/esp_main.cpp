@@ -26,13 +26,28 @@ static void time_emsha()
 
     std::vector<std::chrono::microseconds> expr;
     expr.reserve(100);
-    caps::emsha::signer s{"foo"};
-    for (int j = 0; j < 100; ++j)
+    caps::emsha::signer s{"0123456789abcdef"};
+
+    auto cap = caps::mkcaps({
+        authn::cap_t{ authn::id_t{"foo"}, authn::rights::full },
+        authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::full }
+    }, s);
+
+    caps::attach(*cap, *caps::mkcaps({
+        authn::cap_t{ authn::id_t{"foo"}, authn::rights::read },
+        authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::full }
+    }), s);
+
+    caps::attach(*cap, *caps::mkcaps({
+        authn::cap_t{ authn::id_t{"foo"}, authn::rights::read },
+        authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::read }
+    }), s);
+    for (int j = 0; j < 30; ++j)
     {
         auto begin = tos::high_resolution_clock::now();
-        for (int i = 0; i < 1000; ++i)
+        for (int i = 0; i < 100; ++i)
         {
-            volatile auto sign = s.sign(in);
+            caps::verify(*cap, s, 0, {});
         }
         auto end = tos::high_resolution_clock::now();
         tos::this_thread::yield();
@@ -47,7 +62,7 @@ static void time_emsha()
 
 struct bench_range_end_t {};
 
-struct bench_range
+struct bench_it
 {
     constexpr bool operator==(bench_range_end_t)
     {
@@ -59,10 +74,56 @@ struct bench_range
         return m_i != m_end;
     }
 
+    constexpr int operator*()
+    {
+        return m_i;
+    }
+
+    constexpr bench_it& operator++()
+    {
+        ++m_i;
+        return *this;
+    }
+
+    constexpr bench_it operator++(int)
+    {
+        auto cp = *this;
+        ++*this;
+        return cp;
+    }
+
+    explicit constexpr bench_it(int end) : m_end{end} {}
+
 private:
-    int m_i;
+    int m_i = 0;
     int m_end;
 };
+
+struct bench_range
+{
+    explicit constexpr bench_range(int len) : m_len{len} {}
+
+    constexpr bench_it begin() {
+        return bench_it{m_len};
+    }
+
+    constexpr bench_range_end_t end() { return {}; };
+
+private:
+    int m_len;
+};
+
+constexpr int foo(int x)
+{
+    int sum = 0;
+    for (auto _ : bench_range{x})
+    {
+        sum += _;
+    }
+    return sum;
+}
+
+static_assert(foo(5) == 10);
 
 template <class T>
 auto bench(T&& t)
@@ -130,5 +191,5 @@ static void esp_main()
 
 void tos_main()
 {
-    tos::launch(tos::stack_size_t{2048}, esp_main);
+    tos::launch(tos::stack_size_t{8096}, esp_main);
 }

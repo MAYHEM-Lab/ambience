@@ -88,10 +88,10 @@ namespace caps
     }
 
     template <class CapabilityT, class SignerT>
-    inline void attach(caps::token<CapabilityT, SignerT> &c, caps::cap_list<CapabilityT> &child)
+    inline void attach(caps::token<CapabilityT, SignerT> &c, caps::cap_list<CapabilityT> &child, SignerT& s)
     {
         //TODO: do verification here
-        auto child_hash = hash(child);
+        auto child_hash = hash(child, s);
         merge_into(c.signature, child_hash);
         get_leaf_cap(c.c)->child = &child;
     }
@@ -132,7 +132,7 @@ namespace caps
     }
 
     template <class CapabilityT>
-    caps::cap_list<CapabilityT>* mkcaps(std::initializer_list<CapabilityT> capabs)
+    cap_list<CapabilityT>* mkcaps(std::initializer_list<CapabilityT> capabs)
     {
         auto mem = new char[sizeof(caps::cap_list<CapabilityT>) + sizeof(CapabilityT) * capabs.size()];
         auto cps = new(mem) caps::cap_list<CapabilityT>;
@@ -142,7 +142,7 @@ namespace caps
         }
         cps->num_caps = i;
         cps->child = nullptr;
-        return cps;
+        return (cps);
     }
 
     template <class CapabilityT, class SignerT>
