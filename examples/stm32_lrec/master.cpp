@@ -9,6 +9,7 @@
 #include <common/xbee.hpp>
 #include <tos/mem_stream.hpp>
 #include "app.hpp"
+#include <common/ina219.hpp>
 
 auto delay = [](std::chrono::microseconds us) {
     uint32_t end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 13.3;
@@ -76,8 +77,19 @@ auto xbee_task = [](auto& g, auto& log)
     g.write(11_pin, tos::digital::low);
     alarm.sleep_for(100ms); // let it die
 
+    // need a proper API for this alternate function IO business ...
+    //rcc_periph_clock_enable(RCC_AFIO);
+    //AFIO_MAPR |= AFIO_MAPR_I2C1_REMAP;
+
+    tos::stm32::twim t { 22_pin, 23_pin };
+
+    tos::ina219<tos::stm32::twim&> ina{ tos::twi_addr_t{0x40}, t };
+
     while (true)
     {
+        int curr = ina.getCurrent_mA();
+        int v = ina.getBusVoltage_V();
+
         int tries = 1;
         auto res = d.read(dht_pin);
 
@@ -111,13 +123,20 @@ auto xbee_task = [](auto& g, auto& log)
         samples[0].temp = temp::to_fahrenheits(samples[0].temp);
         samples[0].cpu = temp::to_fahrenheits(samples[0].cpu);
 
-        char buf[50];
-        tos::omemory_stream str{buf};
-        temp::print(str, temp::master_id, samples[0]);
+        std::array<char, 40> buf;
+        tos::msgpack::packer p{buf};
+        auto arr = p.insert_arr(6);
+
+        arr.insert(101);
+        arr.insert(samples[0].temp);
+        arr.insert(samples[0].humid);
+        arr.insert(samples[0].cpu);
+        arr.insert(curr);
+        arr.insert(v);
 
         constexpr xbee::addr_16 base_addr{0x0010};
 
-        xbee::tx16_req req{base_addr, tos::raw_cast<const uint8_t>(str.get()), xbee::frame_id_t{0xAB}};
+        xbee::tx16_req req{base_addr, tos::raw_cast<const uint8_t>(p.get()), xbee::frame_id_t{0xAB}};
         xbee::write_to(xbee_ser, req);
 
         alarm.sleep_for(100ms);
@@ -142,7 +161,7 @@ auto xbee_task = [](auto& g, auto& log)
 };
 
 tos::kern::tcb* tcb;
-static std::array<char, 1024> sstack alignas(std::max_align_t);
+static tos::stack_storage<1024> sstack;
 void master_task()
 {
     using namespace tos::tos_literals;
@@ -152,21 +171,12 @@ void master_task()
 
     auto g = tos::open(tos::devs::gpio);
 
-    //setup_usart1(g);
-    //auto log = tos::open(tos::devs::usart<1>, tos::uart::default_9600);
-    //setup_usart2(g);
-    //auto xbee_ser = tos::open(tos::devs::usart<2>, tos::uart::default_9600);
-    //setup_usart0(g);
-    //auto slave = tos::open(tos::devs::usart<0>, tos::uart::default_9600);
-
     struct x : tos::self_pointing<x> {
         int write(tos::span<const char> x) { return x.size(); }
     } l;
 
-    //xbee_task(g, log);
-    //return;
     tos::semaphore s{0};
-    auto& t = tos::launch(tos::span<char>(sstack), [&]{
+    auto& t = tos::launch(sstack, [&]{
         xbee_task(g, l);
        s.up();
     });
@@ -174,8 +184,8 @@ void master_task()
     s.down();
 }
 
-static std::array<char, 1024> stack;
+static tos::stack_storage<1024> stack;
 void tos_main()
 {
-    tos::launch(tos::span<char>(stack), master_task);
+    tos::launch(stack, master_task);
 }

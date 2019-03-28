@@ -22,12 +22,7 @@ void task()
     using namespace tos::tos_literals;
     using namespace std::chrono_literals;
 
-    constexpr auto usconf = tos::usart_config()
-            .add(115200_baud_rate)
-            .add(tos::usart_parity::disabled)
-            .add(tos::usart_stop_bit::one);
-
-    auto usart = open(tos::devs::usart<0>, usconf);
+    auto usart = open(tos::devs::usart<0>, tos::uart::default_9600);
 
     tos::println(usart, "\n\n\n\n");
     tos::println(usart, tos::platform::board_name);
@@ -55,7 +50,7 @@ void task()
         }
     };
 
-    tos::launch(log_ip_task);
+    tos::launch(tos::def_stack, log_ip_task);
 
     tos::esp82::wifi w;
     conn_:
@@ -127,5 +122,5 @@ void task()
 
 void tos_main()
 {
-    tos::launch(task);
+    tos::launch(tos::def_stack, task);
 }

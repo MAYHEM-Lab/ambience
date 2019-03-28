@@ -87,5 +87,5 @@ void task()
 
 void tos_main()
 {
-    tos::launch(task);
+    tos::launch(tos::def_stack, task);
 }

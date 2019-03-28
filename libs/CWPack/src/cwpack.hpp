@@ -181,6 +181,7 @@ namespace tos
         void arr_packer::insert(T val) {
             if (m_done == m_len)
             {
+                return;
                 //TODO: error
             }
             m_packer.insert(val);
