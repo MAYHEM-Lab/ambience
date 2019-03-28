@@ -34,7 +34,7 @@ endif()
 
 set(TOS_C_FLAGS "${TOS_FLAGS} -U__STRICT_ANSI__")
 set(TOS_CXX_FLAGS "${TOS_FLAGS} -fno-rtti -fno-exceptions \
-    -fno-unwind-tables -fno-threadsafe-statics -std=c++14")
+    -fno-unwind-tables -fno-threadsafe-statics -Werror=return-type -std=c++14")
 
 set(TOS ON)
 
