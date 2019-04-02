@@ -51,7 +51,7 @@ namespace caps
             const CapabilityT &needle,
             SatisfyCheckerT &&satisfies) {
         auto* leaf = &haystack;
-        for (; leaf->child; leaf = leaf->child); // find the end of the hmac chain
+        for (; leaf->child; leaf = leaf->child.get()); // find the end of the hmac chain
 
         return std::any_of(begin(*leaf), end(*leaf), [&needle, &satisfies](auto& cap){
             return satisfies(cap, needle);
@@ -82,18 +82,18 @@ namespace caps
         auto it = &c;
         while (it->child)
         {
-            it = it->child;
+            it = it->child.get();
         }
         return it;
     }
 
     template <class CapabilityT, class SignerT>
-    inline void attach(caps::token<CapabilityT, SignerT> &c, caps::cap_list<CapabilityT> &child, SignerT& s)
+    inline void attach(caps::token<CapabilityT, SignerT> &c, list_ptr<CapabilityT> child, SignerT& s)
     {
         //TODO: do verification here
-        auto child_hash = hash(child, s);
+        auto child_hash = hash(*child, s);
         merge_into(c.signature, child_hash);
-        get_leaf_cap(c.c)->child = &child;
+        get_leaf_cap(c.c)->child = std::move(child);
     }
 
     template <class CapabilityT, class SignerT>
@@ -101,7 +101,7 @@ namespace caps
     {
         auto signature = sign(c, s);
 
-        for (auto child = c.c.child; child; child = child->child)
+        for (auto child = c.c.child.get(); child; child = child->child.get())
         {
             auto child_hash = hash(*child, s);
             merge_into(signature, child_hash);
@@ -114,6 +114,21 @@ namespace caps
     inline bool verify(const caps::token<CapabilityT, SignerT> &c, SignerT &s)
     {
         return get_signature(c, s) == c.signature;
+    }
+
+    template <class CapabilityT, class SignerT>
+    inline typename SignerT::sign_t get_req_sign(const caps::token<CapabilityT, SignerT> &c, SignerT &s,
+                       const uint64_t& seq, const typename SignerT::hash_t& req_hash)
+    {
+        auto sign = c.signature;
+
+        auto h = s.hash(seq);
+
+        merge_into(sign, h);
+
+        merge_into(sign, req_hash);
+
+        return sign;
     }
 
     template <class CapabilityT, class SignerT>
@@ -132,7 +147,7 @@ namespace caps
     }
 
     template <class CapabilityT>
-    cap_list<CapabilityT>* mkcaps(std::initializer_list<CapabilityT> capabs)
+    list_ptr <CapabilityT> mkcaps(std::initializer_list<CapabilityT> capabs)
     {
         auto mem = new char[sizeof(caps::cap_list<CapabilityT>) + sizeof(CapabilityT) * capabs.size()];
         auto cps = new(mem) caps::cap_list<CapabilityT>;
@@ -142,7 +157,7 @@ namespace caps
         }
         cps->num_caps = i;
         cps->child = nullptr;
-        return (cps);
+        return list_ptr<CapabilityT>(cps);
     }
 
     template <class CapabilityT, class SignerT>

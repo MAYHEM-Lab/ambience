@@ -65,6 +65,7 @@ namespace caps
         {
             decltype(cap_list<CapabilityT>::num_caps) len;
             tos::read_to_end(from, { (char*)&len, sizeof len });
+            tos_debug_print("len: %d\n", int(len));
             auto mem = new char[sizeof(token<CapabilityT, SignerT>) + sizeof(CapabilityT) * len];
             auto cps = new(mem) token<CapabilityT, SignerT>;
             read_list(from, cps->c, len);
@@ -72,7 +73,7 @@ namespace caps
         }
 
         template <class CapabilityT, class StreamT>
-        std::unique_ptr<cap_list<CapabilityT>, raw_deleter> deserialize_list(StreamT& from)
+        list_ptr<CapabilityT> deserialize_list(StreamT& from)
         {
             decltype(cap_list<CapabilityT>::num_caps) len;
             tos::read_to_end(from, { (char*)&len, sizeof len });
@@ -80,14 +81,14 @@ namespace caps
             auto mem = new char[sizeof(caps::cap_list<CapabilityT>) + sizeof(CapabilityT) * len];
             auto cps = new(mem) caps::cap_list<CapabilityT>;
             read_list(from, *cps, len);
-            return std::unique_ptr<caps::cap_list<CapabilityT>, raw_deleter>{cps};
+            return list_ptr<CapabilityT>{cps};
         }
     }
 
     template<class StreamT, class SignerT, class CapabilityT>
     void serialize(StreamT& to, const token<CapabilityT, SignerT>& caps)
     {
-        for (auto child = &caps.c; child; child = child->child)
+        for (auto child = &caps.c; child; child = child->child.get())
         {
             detail::serialize(to, *child);
         }
@@ -120,8 +121,8 @@ namespace caps
                 l;
                 l = detail::deserialize_list<CapabilityT>(from))
         {
-            tail->child = l.release();
-            tail = tail->child;
+            tail->child = std::move(l);
+            tail = tail->child.get();
         }
         tail->child = nullptr;
         root->signature = detail::deserialize_sign<typename SignerT::sign_t>(from);

@@ -11,6 +11,7 @@
 #include <cwpack.hpp>
 #include <tos/mem_stream.hpp>
 #include "raw_serdes.hpp"
+#include "caps.hpp"
 
 namespace caps
 {
@@ -50,18 +51,18 @@ namespace caps
             {
                 return tos::unexpected(deser_errors::no_token);
             }
-
+            
             tos::imemory_stream cap_str({ (const char*)uc.item.as.bin.start, (size_t)uc.item.as.bin.length });
 
             auto cps = caps::deserialize<CapT, SignerT>(cap_str);
 
             cw_unpack_next(&uc);
-            if (uc.item.type != CWP_ITEM_STR)
+            if (uc.item.type != CWP_ITEM_BIN)
             {
                 return tos::unexpected(deser_errors::no_req);
             }
 
-            auto req_str = tos::span<const uint8_t>((uint8_t*)uc.item.as.str.start, uc.item.as.str.length);
+            auto req_str = tos::span<const uint8_t>((uint8_t*)uc.item.as.bin.start, uc.item.as.bin.length);
             auto req_obj = parse(req_str);
             auto req_hash = signer.hash(req_str);
 
