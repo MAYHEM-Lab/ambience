@@ -33,5 +33,5 @@ void adc_main()
 
 void tos_main()
 {
-    tos::launch(adc_main);
+    tos::launch(tos::alloc_stack, adc_main);
 }

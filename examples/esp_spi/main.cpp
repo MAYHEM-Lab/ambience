@@ -46,5 +46,5 @@ void spi_task()
 
 void tos_main()
 {
-    tos::launch(spi_task);
+    tos::launch(tos::alloc_stack, spi_task);
 }
