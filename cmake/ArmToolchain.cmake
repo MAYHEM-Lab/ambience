@@ -2,7 +2,6 @@ set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
 set(tools /opt/x-tools/gcc-arm-none-eabi-7-2017-q4-major)
-set(CMAKE_SYSROOT "sysroot")
 
 set(CMAKE_C_COMPILER ${tools}/bin/arm-none-eabi-gcc)
 set(CMAKE_CXX_COMPILER ${tools}/bin/arm-none-eabi-g++)

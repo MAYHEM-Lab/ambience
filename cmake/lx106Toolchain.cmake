@@ -7,7 +7,6 @@ set(SDK_ROOT ${TOOLS_BASE})
 set(CMAKE_C_COMPILER ${TOOLS_BASE}/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc)
 set(CMAKE_CXX_COMPILER ${TOOLS_BASE}/xtensa-lx106-elf/bin/xtensa-lx106-elf-g++)
 set(CMAKE_SIZE ${TOOLS_BASE}/xtensa-lx106-elf/bin/xtensa-lx106-elf-size)
-set(CMAKE_SYSROOT "sysroot")
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)

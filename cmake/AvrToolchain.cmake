@@ -1,8 +1,6 @@
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR avr)
 
-set(CMAKE_SYSROOT "sysroot")
-
 set(CMAKE_C_COMPILER avr-gcc)
 set(CMAKE_CXX_COMPILER avr-g++)
 set(CMAKE_SIZE avr-size)
