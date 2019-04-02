@@ -46,8 +46,7 @@ namespace tos
     public:
         using alarm_handle = intrusive_list<sleeper>::iterator_t;
 
-        explicit alarm(T& t) : m_timer(&t) {
-        }
+        explicit alarm(T& t) : m_timer(&t) {}
 
         /**
          * The calling thread will be blocked for the given amount
@@ -104,7 +103,7 @@ namespace tos
             }
         }
 
-        constexpr std::chrono::milliseconds min_resolution() const { return { 1 }; }
+        constexpr std::chrono::milliseconds min_resolution() const { return std::chrono::milliseconds{ 1 }; }
 
     private:
 
