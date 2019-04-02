@@ -36,5 +36,5 @@ static void x86_main()
 
 void tos_main()
 {
-    tos::launch(tos::def_stack, x86_main);
+    tos::launch(tos::alloc_stack, x86_main);
 }

@@ -18,12 +18,7 @@ auto gp = open(tos::devs::gpio);
 using namespace tos;
 using namespace tos::tos_literals;
 
-constexpr auto usconf = tos::usart_config()
-        .add(115200_baud_rate)
-        .add(usart_parity::disabled)
-        .add(usart_stop_bit::one);
-
-auto usart = open(tos::devs::usart<0>, usconf);
+auto usart = open(tos::devs::usart<0>, tos::uart::default_9600);
 
 void hello_task()
 {
@@ -32,7 +27,6 @@ void hello_task()
     gp->write(13_pin, false);
     char buf;
     while (true) {
-
         usart->read({&buf ,1});
         if (buf == '1')
         {
@@ -50,7 +44,6 @@ void hello_task()
 void tick_task()
 {
     using namespace tos::tos_literals;
-    gp->set_pin_mode(8_pin, tos::pin_mode::in_pullup);
 
     auto tmr = open(tos::devs::timer<1>);
     auto alarm = open(tos::devs::alarm, *tmr);
@@ -59,12 +52,12 @@ void tick_task()
     {
         using namespace std::chrono_literals;
         alarm.sleep_for(1s);
-        tos::println(*usart, "Tick", (int)gp->read(8_pin));
+        tos::println(*usart, "Tick");
     }
 }
 
 void tos_main()
 {
-    tos::launch(hello_task);
-    tos::launch(tick_task);
+    tos::launch(tos::alloc_stack, hello_task);
+    tos::launch(tos::alloc_stack, tick_task);
 }

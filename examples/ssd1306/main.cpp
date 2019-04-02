@@ -228,11 +228,6 @@ void lcd_main()
 
     auto g = tos::open(tos::devs::gpio);
 
-    usart_setup(g);
-    auto usart = tos::open(tos::devs::usart<1>, tos::uart::default_9600);
-
-    tos::println(usart, "hello");
-
     rcc_periph_clock_enable(RCC_AFIO);
     AFIO_MAPR |= AFIO_MAPR_I2C1_REMAP;
     twim t { 24_pin, 25_pin };
@@ -244,7 +239,7 @@ void lcd_main()
     auto alarm = open(devs::alarm, tmr);
 
     bool go = true;
-    int x = 0;
+    uint32_t x = 0;
     while (true)
     {
         using namespace std::chrono_literals;
@@ -256,14 +251,23 @@ void lcd_main()
             l.set_pixel(x % 64, i, go);
         }
         l.display();
-        if (x % 64 == 63) go ^= true;
+        if (x % 64 == 63){
+            go ^= true;
+            alarm->sleep_for(5s);
+        }
 
+        usart_setup(g);
+        auto usart = tos::open(tos::devs::usart<1>, tos::uart::default_9600);
+
+        tos::println(usart, "tick", int(x));
         ++x;
-        //alarm.sleep_for(100ms);
+
+        std::array<char, 1> b;
+        usart->read(b, alarm, 10ms);
     }
 }
 
 void tos_main()
 {
-    tos::launch(tos::def_stack, lcd_main);
+    tos::launch(tos::stack_size_t{512}, lcd_main);
 }

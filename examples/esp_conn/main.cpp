@@ -50,7 +50,7 @@ void task()
         }
     };
 
-    tos::launch(tos::def_stack, log_ip_task);
+    tos::launch(tos::alloc_stack, log_ip_task);
 
     tos::esp82::wifi w;
     conn_:
@@ -122,5 +122,5 @@ void task()
 
 void tos_main()
 {
-    tos::launch(tos::def_stack, task);
+    tos::launch(tos::alloc_stack, task);
 }

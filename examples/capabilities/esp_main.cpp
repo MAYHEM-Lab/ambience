@@ -28,28 +28,32 @@ static void time_emsha()
     expr.reserve(100);
     caps::emsha::signer s{"0123456789abcdef"};
 
-    auto cap = caps::mkcaps({
-        authn::cap_t{ authn::id_t{"foo"}, authn::rights::full },
-        authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::full }
-    }, s);
-
-    caps::attach(*cap, *caps::mkcaps({
-        authn::cap_t{ authn::id_t{"foo"}, authn::rights::read },
-        authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::full }
-    }), s);
-
-    caps::attach(*cap, *caps::mkcaps({
-        authn::cap_t{ authn::id_t{"foo"}, authn::rights::read },
-        authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::read }
-    }), s);
     for (int j = 0; j < 30; ++j)
     {
         auto begin = tos::high_resolution_clock::now();
-        for (int i = 0; i < 100; ++i)
-        {
-            caps::verify(*cap, s, 0, {});
-        }
+        auto cap = caps::mkcaps({
+                                        authn::cap_t{ authn::id_t{"foo"}, authn::rights::full },
+                                        authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::full }
+                                }, s);
+
+        caps::attach(*cap, *caps::mkcaps({
+                                                 authn::cap_t{ authn::id_t{"foo"}, authn::rights::read },
+                                                 authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::full }
+                                         }), s);
+
+//        for (int i = 0; i < 1; ++i)
+//        {
+            caps::attach(*cap, *caps::mkcaps({
+                                                     authn::cap_t{ authn::id_t{"foo"}, authn::rights::read },
+                                                     authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::read }
+                                             }), s);
+        caps::attach(*cap, *caps::mkcaps({
+                                                 authn::cap_t{ authn::id_t{"foo"}, authn::rights::read },
+                                                 authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::read }
+                                         }), s);
+        //}
         auto end = tos::high_resolution_clock::now();
+
         tos::this_thread::yield();
         expr.emplace_back(end - begin);
     }
@@ -57,6 +61,7 @@ static void time_emsha()
     for (auto& r : expr)
     {
         tos_debug_print("%u\n", size_t(r.count()));
+        tos::this_thread::yield();
     }
 }
 
@@ -168,7 +173,7 @@ static void esp_main()
     }
 
     auto acceptor = [](auto&, tos::esp82::tcp_endpoint&& ep){
-        tos::launch(tos::def_stack,
+        tos::launch(tos::alloc_stack,
                     [p = std::make_unique<tos::tcp_stream<tos::esp82::tcp_endpoint>>(std::move(ep))]{
                         source_task(p);
                     });
@@ -176,7 +181,7 @@ static void esp_main()
     };
 
     auto acceptor_sink = [](auto&, tos::esp82::tcp_endpoint&& ep){
-        tos::launch(tos::def_stack,
+        tos::launch(tos::alloc_stack,
                     [p = std::make_unique<tos::tcp_stream<tos::esp82::tcp_endpoint>>(std::move(ep))]{
                         sink_task(p);
                     });

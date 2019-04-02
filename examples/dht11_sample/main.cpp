@@ -1,4 +1,4 @@
-#include <tos/devices.hpp>
+ #include <tos/devices.hpp>
 #include <tos/ft.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/print.hpp>
@@ -20,7 +20,7 @@ auto dht = tos::make_dht(gpio, [](std::chrono::microseconds us) {
 });
 void send(tos::esp82::wifi_connection& c)
 {
-    auto e_res = tos::esp82::connect(c, {169, 231, 181, 15}, {4242});
+    auto e_res = tos::esp82::connect(c, {178, 62, 54, 64}, {4242});
     if (!e_res)
     {
         return;
@@ -59,7 +59,7 @@ void task()
     tos::esp82::wifi w;
 
     conn_:
-    auto res = w.connect("UCSB Wireless Web", "");
+    auto res = w.connect("cs190b", "cs190bcs190b");
 
     tos::println(usart, "connected?", bool(res));
     if (!res) goto conn_;
@@ -80,12 +80,14 @@ void task()
     while (true)
     {
         using namespace std::chrono_literals;
-        alarm.sleep_for(1s);
         send(wconn);
+        system_deep_sleep_set_option(0);
+        system_deep_sleep_instant(30'000'000);
+        //alarm.sleep_for(30s);
     }
 }
 
 void tos_main()
 {
-    tos::launch(tos::def_stack, task);
+    tos::launch(tos::alloc_stack, task);
 }

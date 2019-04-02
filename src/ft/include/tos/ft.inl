@@ -103,7 +103,7 @@ namespace tos {
             return sched.schedule();
         }
 
-        template <class FunT, class... Args>
+        template <bool FreeStack, class FunT, class... Args>
         struct super_tcb : tcb
         {
             template <class FunU, class... ArgUs>
@@ -137,29 +137,28 @@ namespace tos {
 
             ~super_tcb() final
             {
-                if (free_stack) tos_stack_free(get_task_base());
+                if (FreeStack) tos_stack_free(get_task_base());
             }
 
-            bool free_stack = false;
         private:
             uint16_t m_tcb_off; // we store the offset of this object from the task base
             FunT m_fun;
             std::tuple<Args...> m_args;
         };
 
-        template <class FuncT, class... ArgTs>
-        using lambda_task = super_tcb<std::decay_t<std::remove_reference_t <FuncT>>, std::decay_t<std::remove_reference_t <ArgTs>>...>;
+        template <bool FreeStack, class FuncT, class... ArgTs>
+        using lambda_task = super_tcb<FreeStack, std::decay_t<std::remove_reference_t <FuncT>>, std::decay_t<std::remove_reference_t <ArgTs>>...>;
 
-		template <class FuncT, class... ArgTs>
-        lambda_task<FuncT, ArgTs...>&
+		template <bool FreeStack, class FuncT, class... ArgTs>
+        lambda_task<FreeStack, FuncT, ArgTs...>&
         prep_lambda_layout(tos::span<char> task_data, FuncT&& func, ArgTs&&... args)
         {
             // the tcb lives at the top of the stack
             const auto stack_top = task_data.end();
 
-            const auto t_ptr = stack_top - sizeof(lambda_task<FuncT, ArgTs...>);
+            const auto t_ptr = stack_top - sizeof(lambda_task<FreeStack, FuncT, ArgTs...>);
 
-            auto thread = new (t_ptr) lambda_task<FuncT, ArgTs...>(
+            auto thread = new (t_ptr) lambda_task<FreeStack, FuncT, ArgTs...>(
                     task_data.size(),
                     std::forward<FuncT>(func),
                     std::forward<ArgTs>(args)...);
@@ -265,10 +264,10 @@ namespace tos {
         }
     }
 
-	template <class FuncT, class... ArgTs>
+	template <bool FreeStack, class FuncT, class... ArgTs>
     inline auto& launch(tos::span<char> task_span, FuncT&& func, ArgTs&&... args)
     {
-        auto& t = kern::prep_lambda_layout(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
+        auto& t = kern::prep_lambda_layout<FreeStack>(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
         sched.start(t);
         return t;
     }
@@ -277,8 +276,7 @@ namespace tos {
     inline auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args)
     {
         tos::span<char> task_span((char*)tos_stack_alloc(stack_sz.sz), stack_sz.sz);
-        auto& res = launch(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
-        res.free_stack = true;
+        auto& res = launch<true>(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
         return res;
     }
 
@@ -286,13 +284,13 @@ namespace tos {
     inline auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args)
     {
         tos::span<char> task_span((char*)&stack, StSz);
-        return launch(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
+        return launch<false>(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     }
 
-    constexpr struct def_stack_t {} def_stack;
+    constexpr struct alloc_stack_t {} alloc_stack;
 
     template <class FuncT, class... ArgTs>
-    inline auto& launch(def_stack_t, FuncT&& func, ArgTs&&... args)
+    inline auto& launch(alloc_stack_t, FuncT&& func, ArgTs&&... args)
     {
         constexpr stack_size_t stack_size{TOS_DEFAULT_STACK_SIZE};
         return launch(stack_size, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);

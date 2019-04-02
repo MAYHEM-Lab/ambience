@@ -56,5 +56,5 @@ void blink_task()
 
 void tos_main()
 {
-    tos::launch(blink_task);
+    tos::launch(tos::alloc_stack, blink_task);
 }

@@ -24,51 +24,58 @@ void main_task()
     using namespace tos;
     using namespace tos::tos_literals;
 
-    constexpr auto usconf = tos::usart_config()
-            .add(9600_baud_rate)
-            .add(usart_parity::disabled)
-            .add(usart_stop_bit::one);
-
-    auto usart = open(tos::devs::usart<0>, usconf);
+    auto usart = open(tos::devs::usart<0>, tos::uart::default_9600);
 
     auto g = tos::open(tos::devs::gpio);
 
-    g.set_pin_mode(10_pin, tos::pin_mode::in_pullup);
+    g->set_pin_mode(2_pin, tos::pin_mode::in_pullup);
 
-    auto tmr = open(tos::devs::timer<1>);
-    auto alarm = open(tos::devs::alarm, *tmr);
+    tos::event pinsem;
+    auto handler = [&]{
+        pinsem.fire();
+    };
 
-    auto d = tos::make_dht(g, [](std::chrono::microseconds us) {
-        _delay_us(us.count());
-    });
+    g->attach_interrupt(2_pin, tos::pin_change::rising, handler);
 
-    using namespace std::chrono_literals;
-    alarm.sleep_for(2s);
-
-    tos::print(usart, "hi");
-
-    usart.clear();
-    std::array<char, 2> buf;
-    usart.read(buf);
-
-    auto res = d.read(10_pin);
-
-    int retries = 0;
-    while (res != tos::dht_res::ok)
+    while (true)
     {
-        //tos::println(usart, int8_t(res));
+        g.set_pin_mode(13_pin, tos::pin_mode::out);
+        g.write(13_pin, tos::digital::high);
+
+        g.set_pin_mode(10_pin, tos::pin_mode::in_pullup);
+
+        auto tmr = open(tos::devs::timer<1>);
+        auto alarm = open(tos::devs::alarm, *tmr);
+
+        auto d = tos::make_dht(g, [](std::chrono::microseconds us) {
+            _delay_us(us.count());
+        });
+
+        using namespace std::chrono_literals;
         alarm.sleep_for(2s);
-        if (retries == 5)
+
+        tos::print(usart, "hi");
+
+        usart.clear();
+        std::array<char, 2> buf;
+        usart.read(buf);
+
+        auto res = d.read(10_pin);
+
+        int retries = 0;
+        while (res != tos::dht_res::ok)
         {
-            // err
+            //tos::println(usart, int8_t(res));
+            alarm.sleep_for(2s);
+            if (retries == 5)
+            {
+                break;
+                // err
+            }
+            ++retries;
+            res = d.read(10_pin);
         }
-        ++retries;
-        res = d.read(10_pin);
-    }
 
-
-    if (true || buf[1] == 'o')
-    {
         temp::sample s { d.temperature, d.humidity, temp::GetTemp(alarm) };
         struct
         {
@@ -90,22 +97,14 @@ void main_task()
         chk_str.str = &usart;
         chk_str.write({ (const char*)&s, sizeof s });
         //usart.write({ (const char*)&chk_str.chk_sum, 1 });
-    }
-    else
-    {
-        static char b[32];
-        tos::println(usart, int8_t(res));
-        tos::println(usart, "Temperature:", dtostrf(d.temperature, 2, 2, b));
-        tos::println(usart, "Humidity:", dtostrf(d.humidity, 2, 2, b));
-    }
 
-    tos::this_thread::block_forever();
-    //tos::semaphore{0}.down();
-    //auto st = GetTemp(alarm);
-    //tos::println(usart, "Internal:", dtostrf(st, 2, 2, b));
+        g.write(13_pin, tos::digital::low);
+
+        pinsem.wait();
+    }
 }
 
 void tos_main()
 {
-    tos::launch(main_task);
+    tos::launch(tos::alloc_stack, main_task);
 }
