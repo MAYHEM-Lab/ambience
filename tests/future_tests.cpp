@@ -21,7 +21,7 @@ TEST_CASE("future across threads", "[future]")
     tos::future<int> f;
 
     tos::semaphore s{0};
-    tos::launch([&]{
+    tos::launch(tos::alloc_stack, [&]{
         tos::promise<int> p;
         f = p.get_future();
         s.up();
@@ -39,7 +39,7 @@ TEST_CASE("future across threads, moving the future", "[future]")
     tos::future<int> f;
 
     tos::semaphore s{0};
-    tos::launch([&]{
+    tos::launch(tos::alloc_stack, [&]{
         tos::promise<int> p;
         f = p.get_future();
         s.up();

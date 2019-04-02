@@ -6,6 +6,7 @@
 
 #include <emsha/hmac.hh>
 #include <tos/span.hpp>
+#include <cstring>
 
 namespace caps
 {

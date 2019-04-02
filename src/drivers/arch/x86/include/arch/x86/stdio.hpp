@@ -7,20 +7,19 @@
 #include <common/tty.hpp>
 #include <common/usart.hpp>
 #include <tos/span.hpp>
+#include <common/driver_base.hpp>
+
 #undef putc
 
 namespace tos
 {
     namespace x86
     {
-        class stdio
+        class stdio : public self_pointing<stdio>
         {
         public:
             static int write(span<const char> buf);
             static span<char> read(span<char> buf);
-
-            stdio*operator->() { return this; }
-            stdio&operator*() { return *this; }
         };
     } // namespace x86
 

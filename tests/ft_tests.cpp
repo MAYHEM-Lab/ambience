@@ -9,7 +9,7 @@
 TEST_CASE("launch & semaphore task", "[ft]")
 {
     tos::semaphore s{0};
-    tos::launch([](void* sp){
+    tos::launch(tos::alloc_stack, [](void* sp){
         static_cast<tos::semaphore *>(sp)->up();
         REQUIRE(true);
     }, &s);
@@ -20,10 +20,10 @@ TEST_CASE("launch & semaphore task", "[ft]")
 TEST_CASE("lambda launch & semaphore task", "[ft]")
 {
     tos::semaphore s{0};
-    tos::launch(+[](void* sp){
-        static_cast<tos::semaphore *>(sp)->up();
+    tos::launch(tos::alloc_stack, [&]{
+        s.up();
         REQUIRE(true);
-    }, &s);
+    });
     s.down();
     REQUIRE(true);
 }
@@ -32,7 +32,7 @@ TEST_CASE("lambda", "[ft]")
 {
     int x{};
     tos::semaphore s{0};
-    tos::launch([&]{
+    tos::launch(tos::alloc_stack, [&]{
         x = 10;
         s.up();
     });
@@ -44,7 +44,7 @@ TEST_CASE("lambda with args", "[ft]")
 {
     int x{};
     tos::semaphore s{0};
-    tos::launch([&](int a, int b){
+    tos::launch(tos::alloc_stack, [&](int a, int b){
         x = a + b;
         s.up();
     }, 42, 42);
