@@ -135,33 +135,48 @@ void handle_sock(StreamT& p, UsartT& usart)
     }
 }
 
+//static unsigned char sign_buf[512];
+//auto sign(caps::emsha::hash_t hash)
+//{
+//    br_rsa_i15_pkcs1_sign(nullptr, (const unsigned char*)hash.buf, 32, &RSA, sign_buf);
+//}
+
 static unsigned char sign_buf[512];
 auto sign(caps::emsha::hash_t hash)
 {
-    br_rsa_i15_pkcs1_sign(nullptr, (const unsigned char*)hash.buf, 32, &RSA, sign_buf);
+    return br_ecdsa_i15_sign_raw(br_ec_get_default(), &br_sha256_vtable, hash.buf, &EC, sign_buf);
 }
 
-auto ctx_ptr = std::make_unique<br_pkey_decoder_context>();
-auto get_pubkey()
+//auto ctx_ptr = std::make_unique<br_pkey_decoder_context>();
+//auto get_pubkey()
+//{
+//    br_pkey_decoder_init(ctx_ptr.get());
+//    br_pkey_decoder_push(ctx_ptr.get(), pubkey, sizeof(pubkey));
+//
+//    tos_debug_print("err: %d\n", br_pkey_decoder_last_error(ctx_ptr.get()));
+//
+//    auto key = br_pkey_decoder_get_ec(ctx_ptr.get());
+//    tos_debug_print("pubkey: %d %d\n", key->curve, key->qlen);
+//    return key;
+//}
+
+char kbuf[128];
+br_ec_public_key k;
+
+auto verify(caps::emsha::hash_t hash)
 {
-    br_pkey_decoder_init(ctx_ptr.get());
-    br_pkey_decoder_push(ctx_ptr.get(), pubkey, sizeof(pubkey));
-
-    tos_debug_print("err: %d\n", br_pkey_decoder_last_error(ctx_ptr.get()));
-
-    auto key = br_pkey_decoder_get_rsa(ctx_ptr.get());
-    tos_debug_print("pubkey: %d\n", key->nlen);
-    return key;
+    auto r = br_ecdsa_i15_vrfy_raw(br_ec_get_default(),
+                                   (unsigned char*)hash.buf, 32, &k, sign_buf, 64);
+    return r == 1;
 }
-
-auto verify()
-{
-    caps::emsha::hash_t h;
-    auto r = br_rsa_i15_pkcs1_vrfy(
-            sign_buf, 512, nullptr, 32,
-            br_pkey_decoder_get_rsa(ctx_ptr.get()), (unsigned char*)h.buf);
-    return h;
-}
+//auto verify()
+//{
+//    caps::emsha::hash_t h;
+//    auto r = br_rsa_i15_pkcs1_vrfy(
+//            sign_buf, 512, nullptr, 32,
+//            br_pkey_decoder_get_rsa(ctx_ptr.get()), (unsigned char*)h.buf);
+//    return h;
+//}
 
 extern rst_info rst;
 tos::stack_storage<1024 * 8> s;
@@ -173,7 +188,7 @@ void server()
 
     tos::esp82::wifi w;
     conn:
-    auto res = w.connect("cs190b", "cs190bcs190b");
+    auto res = w.connect("UCSB Wireless Web");
     tos::println(usart, "connected?", bool(res));
     if (!res) goto conn;
 
@@ -181,9 +196,13 @@ void server()
 
     lwip_init();
 
-    br_ssl_server_init_full_rsa(&sc, CHAIN, CHAIN_LEN, &RSA);
+    br_ssl_server_init_full_ec(&sc, CHAIN, CHAIN_LEN, BR_KEYTYPE_EC, &EC);
 
-    /*get_pubkey();
+    tos::this_thread::yield();
+
+    br_ec_compute_pub(br_ec_get_default(), &k, kbuf, &EC);
+
+    //get_pubkey();
     tos::semaphore wait{0};
     tos::launch(s, [&]{
         uint8_t buf[] = "hello world";
@@ -192,17 +211,24 @@ void server()
         {
             auto vbeg = tos::high_resolution_clock::now();
             auto hash = s.hash(buf);
-            sign(hash);
+            auto sz = sign(hash);
             auto end = tos::high_resolution_clock::now();
-            tos::println(usart, "sign", int((end - vbeg).count()));
+            tos::println(usart, "sign", int((end - vbeg).count()), int(sz));
+//
+//            sign_buf[0] ^= 3;
+
+            bool r;
             vbeg = tos::high_resolution_clock::now();
-            auto h = verify();
+            {
+                auto hash = s.hash(buf);
+                r = verify(hash);
+            }
             end = tos::high_resolution_clock::now();
-            tos::println(usart, "eq", h == hash, int((end - vbeg).count()));
+            tos::println(usart, "eq", r, int((end - vbeg).count()));
         }
         wait.up();
     });
-    wait.down();*/
+    wait.down();
 
     tos::esp82::tcp_socket src_sock{wconn, port_num_t{ 9993 }};
 
@@ -218,7 +244,8 @@ void server()
     tos::this_thread::block_forever();
 }
 
+tos::stack_storage<4096> store;
 void tos_main()
 {
-    tos::launch(tos::def_stack, server);
+    tos::launch(store, server);
 }
