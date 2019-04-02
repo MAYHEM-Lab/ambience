@@ -137,7 +137,7 @@ void TOS_EXPORT tos_main()
     g->set_pin_mode(17, pin_mode::out);
     g->set_pin_mode(19, pin_mode::out);
 
-    tos::launch(led1_task);
+    tos::launch(tos::alloc_stack, led1_task);
     //tos::launch(i2c_task);
-    tos::launch(led2_task);
+    tos::launch(tos::alloc_stack, led2_task);
 }
