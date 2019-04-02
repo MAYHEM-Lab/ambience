@@ -13,7 +13,7 @@
 extern "C"
 {
 void *kt_fork(void *(*func)(void *), void *arg) {
-    //tos::launch(func, arg);
+    return &tos::launch(tos::alloc_stack, func, arg);
 }
 
 void kt_exit() {
