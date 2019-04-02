@@ -16,30 +16,35 @@ namespace tos
     {
         struct port
         {
-            decltype((PORTD))& data;
-            decltype((DDRD))& dir;
-            decltype((PIND))& pin;
+            decltype((PORTB))& data;
+            decltype((DDRB))& dir;
+            decltype((PINB))& pin;
         };
 
         struct ports
         {
-            inline static port* D()
-            {
-                static port res { PORTD, DDRD, PIND };
-                return &res;
-            }
             inline static port* B()
             {
                 static port res { PORTB, DDRB, PINB };
                 return &res;
             }
+
+#if defined(PORTC)
             inline static port* C()
             {
                 static port res { PORTC, DDRC, PINC };
                 return &res;
             }
+#endif
+#if defined(PORTD)
+            inline static port* D()
+            {
+                static port res { PORTD, DDRD, PIND };
+                return &res;
+            }
+#endif
         };
-    }
+    } //namespace avr
 
     struct pin_t
     {
@@ -58,13 +63,21 @@ namespace tos
     }
 
     inline pin_t from_gpio_num(uint16_t gpio) {
+#if defined(PORTD)
         if (gpio < 8) {
             return { avr::ports::D(), uint8_t(gpio) };
-        } else if (gpio < 14) {
+        }
+#endif
+#if defined(PORTB)
+        if (gpio < 14) {
             return { avr::ports::B(), uint8_t(gpio - 8)};
-        } else if (gpio < 20) {
+        }
+#endif
+#if defined(PORTC)
+        if (gpio < 20) {
             return { avr::ports::C(), uint8_t(gpio - 14)};
         }
+#endif
         // TODO: report error
         return { nullptr, 0 };
     }
@@ -75,7 +88,7 @@ namespace tos
         {
             return from_gpio_num(pin);
         }
-    }
+    } // namespace tos_literals
 
     enum class pin_change
     {
@@ -111,13 +124,13 @@ namespace tos
             gpio&operator*() { return *this; }
             gpio*operator->() { return this; }
         };
-    }
+    } // namespace avr
 
     inline avr::gpio open_impl(devs::gpio_t)
     {
         return {};
     }
-}
+} // namespace tos
 
 ///// Implementation
 
@@ -158,6 +171,7 @@ namespace tos
             return port & (1 << pin.pin);
         }
 
+#if defined(EICRA)
         extern tos::function_ref<void()> exint_handlers[2];
         inline void gpio::attach_interrupt(const pin_t& pin, pin_change p, tos::function_ref<void()> handler)
         {
@@ -169,5 +183,7 @@ namespace tos
             EICRA |= mask;
             EIMSK |= (1 << (pin.pin-2));
         }
-    }
-}
+#endif
+
+    } // namespace avr
+} // namespace tos

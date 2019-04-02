@@ -7,19 +7,18 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <common/eeprom.hpp>
+#include <common/driver_base.hpp>
+#include <tos/span.hpp>
 
 namespace tos
 {
     namespace avr
     {
-        class eeprom
+        class eeprom : public self_pointing<eeprom>
         {
         public:
-            size_t read(uint64_t iop, void* buf, uint16_t bufsz);
-            void write(uint64_t iop, const void* buf, uint16_t bufsz);
-
-            eeprom*operator->(){ return this; }
-            eeprom&operator*(){ return *this; }
+            tos::span<char> read(uint64_t iop, tos::span<char> buf);
+            size_t write(uint64_t iop, tos::span<const char> data);
         };
     }
 
@@ -39,15 +38,16 @@ namespace tos
 {
     namespace avr
     {
-        inline size_t eeprom::read(uint64_t iop, void* buf, uint16_t bufsz)
+        inline tos::span<char> eeprom::read(uint64_t iop, tos::span<char> buf)
         {
-            eeprom_read_block(buf, (const void*)iop, bufsz);
-            return bufsz;
+            eeprom_read_block(buf.data(), (const void*)iop, buf.size());
+            return buf;
         }
 
-        inline void eeprom::write(uint64_t iop, const void* buf, uint16_t bufsz)
+        inline size_t eeprom::write(uint64_t iop, tos::span<const char> data)
         {
-            eeprom_update_block(buf, (void*)iop, bufsz);
+            eeprom_update_block(data.data(), (void*)iop, data.size());
+            return data.size();
         }
     }
 }

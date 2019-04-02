@@ -38,7 +38,8 @@ namespace tos {
                 el_t<usart_parity, const usart_parity&>,
                 el_t<usart_stop_bit, const usart_stop_bit&>>;
 
-        class usart0 {
+        class usart0 : self_pointing<usart0>
+        {
         public:
             static void enable();
 
@@ -53,9 +54,6 @@ namespace tos {
             static span<char> read(span<char> buf, tos::alarm<tos::avr::timer1>&, const std::chrono::milliseconds&);
 
             static int write(span<const char> buf);
-
-            usart0&operator*() { return *this; }
-            usart0*operator->() { return this; }
 
             ~usart0() { if(m_disable) disable(); }
             usart0(usart0&& rhs)

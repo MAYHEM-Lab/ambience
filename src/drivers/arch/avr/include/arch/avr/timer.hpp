@@ -7,10 +7,12 @@
 #include <stdint.h>
 #include <common/timer.hpp>
 #include <tos/function_ref.hpp>
+#include <common/driver_base.hpp>
 
 namespace tos {
     namespace avr {
-        class timer1 {
+        class timer1 : public self_pointing<timer1>
+        {
         public:
             static void set_frequency(uint16_t hertz);
 
@@ -25,11 +27,7 @@ namespace tos {
             timer1(timer1&& tmr) noexcept { tmr.m_disable = false; }
             ~timer1();
 
-            timer1* operator->() { return this; }
-            timer1& operator*() { return *this; }
-
         private:
-
             bool m_disable{true};
         };
         class timer0 {

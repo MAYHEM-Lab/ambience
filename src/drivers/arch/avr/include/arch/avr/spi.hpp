@@ -8,6 +8,7 @@
 #include <tos/devices.hpp>
 #include <common/spi.hpp>
 #include <tos/span.hpp>
+#include <common/driver_base.hpp>
 #include "gpio.hpp"
 
 namespace tos {
@@ -23,7 +24,7 @@ namespace tos {
          *
          * Also, it does not support setting the clock speed for now.
          */
-        class spi0
+        class spi0 : public self_pointing<spi0>
         {
         public:
             using gpio_type = avr::gpio;
@@ -44,9 +45,6 @@ namespace tos {
             static void deselect_slave(pin_t pin);
 
             spi0() = default;
-
-            spi0*operator->() { return this; }
-            spi0&operator*() { return *this; }
         };
     }
 
