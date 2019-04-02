@@ -28,8 +28,7 @@ void NORETURN tos_force_reset()
     NVIC_SystemReset();
 }
 
-extern "C" void *__dso_handle;
-void *__dso_handle = 0;
+void *__dso_handle;
 
 void* tos_stack_alloc(size_t sz)
 {
@@ -44,6 +43,7 @@ void tos_stack_free(void* ptr)
 
 void hard_fault_handler()
 {
+    tos_force_reset();
     while(true)
     {
     }
