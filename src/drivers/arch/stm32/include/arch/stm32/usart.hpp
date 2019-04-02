@@ -44,7 +44,8 @@ namespace stm32
 
     class usart :
             public self_pointing<usart>,
-            public tracked_driver<usart, 3>
+            public tracked_driver<usart, 3>,
+            public non_copyable
     {
     public:
         explicit usart(const detail::usart_def&, usart_constraint&&);
@@ -99,6 +100,14 @@ namespace stm32
             }
             tos::kern::unbusy();
             return b.slice(0, total);
+        }
+
+        ~usart()
+        {
+            usart_disable(m_def->usart);
+            usart_disable_rx_interrupt(m_def->usart);
+            nvic_disable_irq(m_def->irq);
+            rcc_periph_clock_disable(m_def->clk);
         }
 
     private:
