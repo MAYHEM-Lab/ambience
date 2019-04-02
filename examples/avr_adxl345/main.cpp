@@ -35,5 +35,5 @@ auto task = []{
 
 void tos_main()
 {
-    tos::launch(task);
+    tos::launch(tos::alloc_stack, task);
 }

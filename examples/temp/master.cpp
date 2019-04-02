@@ -237,6 +237,6 @@ void tx_task()
 
 void tos_main()
 {
-    static char sstack[512];
-    tos::launch(tos::span<char>(sstack), tx_task);
+    static tos::stack_storage<512> sstack;
+    tos::launch(sstack, tx_task);
 }

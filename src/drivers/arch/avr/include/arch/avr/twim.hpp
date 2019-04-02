@@ -13,7 +13,7 @@ namespace tos
 {
 namespace avr
 {
-    class twim : self_pointing<twim>
+    class twim : public self_pointing<twim>
     {
     public:
         twim(gpio::pin_type clock_pin, gpio::pin_type data_pin);

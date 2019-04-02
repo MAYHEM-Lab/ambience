@@ -31,5 +31,5 @@ void slave_task()
 
 void tos_main()
 {
-    tos::launch(slave_task);
+    tos::launch(tos::alloc_stack, slave_task);
 }

@@ -42,5 +42,5 @@ void main_task()
 
 void tos_main()
 {
-    tos::launch(main_task);
+    tos::launch(tos::alloc_stack, main_task);
 }

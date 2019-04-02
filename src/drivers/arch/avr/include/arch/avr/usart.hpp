@@ -38,7 +38,7 @@ namespace tos {
                 el_t<usart_parity, const usart_parity&>,
                 el_t<usart_stop_bit, const usart_stop_bit&>>;
 
-        class usart0 : self_pointing<usart0>
+        class usart0 : public self_pointing<usart0>
         {
         public:
             static void enable();

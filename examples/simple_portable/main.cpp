@@ -76,6 +76,6 @@ void tos_main()
     out_str = sf;
 #endif
 
-    tos::launch(hello_task);
-    tos::launch(yo_task);
+    tos::launch(tos::alloc_stack, hello_task);
+    tos::launch(tos::alloc_stack, yo_task);
 }
