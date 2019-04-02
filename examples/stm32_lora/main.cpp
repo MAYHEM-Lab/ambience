@@ -92,5 +92,5 @@ void lora_task()
 void tos_main()
 {
     //static char lora_stack[2048];
-    tos::launch(lora_task);
+    tos::launch(tos::alloc_stack, lora_task);
 }

@@ -73,5 +73,5 @@ void dht_task()
 
 void tos_main()
 {
-    tos::launch(dht_task);
+    tos::launch(tos::alloc_stack, dht_task);
 }
