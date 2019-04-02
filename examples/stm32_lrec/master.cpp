@@ -255,8 +255,8 @@ auto xbee_task = [](auto& g, auto& log)
         arr.insert(samples[1].humid);
         arr.insert(samples[1].cpu);
 
-        arr.insert(curr);
-        arr.insert(v);
+        arr.insert(int32_t(curr));
+        arr.insert(int32_t(v));
         arr.insert(bool(slv));
 
         g.write(11_pin, tos::digital::high);
