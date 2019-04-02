@@ -51,5 +51,5 @@ void nrf_task()
 
 void tos_main()
 {
-    tos::launch(nrf_task);
+    tos::launch(tos::alloc_stack, nrf_task);
 }

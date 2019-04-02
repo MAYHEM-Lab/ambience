@@ -36,19 +36,22 @@ void tick_task()
     g->attach_interrupt(2_pin, tos::pin_change::falling, handler);
 
     auto eeprom = tos::open(tos::devs::eeprom<0>);
-    int num = 0;
-    eeprom->read(0, &num, sizeof num);
+    char numb[sizeof(int)];
+    eeprom->read(0, numb);
 
     while (true)
     {
         pinsem.wait();
+        int num;
+        std::memcpy(&num, numb, sizeof num);
         ++num;
-        eeprom->write(0, &num, sizeof num);
+        std::memcpy(numb, &num, sizeof num);
+        eeprom->write(0, numb);
         tos::println(*usart, "Pin Change!", num);
     }
 }
 
 void tos_main()
 {
-    tos::launch(tick_task);
+    tos::launch(tos::alloc_stack, tick_task);
 }

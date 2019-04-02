@@ -36,5 +36,5 @@ void tick_task()
 
 void tos_main()
 {
-    tos::launch(tick_task);
+    tos::launch(tos::alloc_stack, tick_task);
 }

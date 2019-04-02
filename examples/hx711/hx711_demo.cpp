@@ -60,5 +60,5 @@ void hx711_task()
 
 void tos_main()
 {
-    tos::launch(hx711_task);
+    tos::launch(tos::alloc_stack, hx711_task);
 }

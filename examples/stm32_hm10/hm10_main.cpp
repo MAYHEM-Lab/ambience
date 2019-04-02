@@ -59,7 +59,7 @@ auto hm10_task = []{
     tos::println(usart, hm10.get_address());
     tos::println(usart, hm10.notifications_enabled());
 
-    tos::launch([&]{
+    tos::launch(tos::alloc_stack, [&]{
         while (true)
         {
             char b[1];
@@ -76,5 +76,5 @@ auto hm10_task = []{
 
 void tos_main()
 {
-    tos::launch(hm10_task);
+    tos::launch(tos::alloc_stack, hm10_task);
 }

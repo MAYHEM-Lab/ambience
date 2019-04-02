@@ -36,18 +36,18 @@ static void time_emsha()
                                         authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::full }
                                 }, s);
 
-        caps::attach(*cap, *caps::mkcaps({
+        caps::attach(*cap, caps::mkcaps({
                                                  authn::cap_t{ authn::id_t{"foo"}, authn::rights::read },
                                                  authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::full }
                                          }), s);
 
 //        for (int i = 0; i < 1; ++i)
 //        {
-            caps::attach(*cap, *caps::mkcaps({
+            caps::attach(*cap, caps::mkcaps({
                                                      authn::cap_t{ authn::id_t{"foo"}, authn::rights::read },
                                                      authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::read }
                                              }), s);
-        caps::attach(*cap, *caps::mkcaps({
+        caps::attach(*cap, caps::mkcaps({
                                                  authn::cap_t{ authn::id_t{"foo"}, authn::rights::read },
                                                  authn::cap_t{ authn::path_t{"bar.txt"}, authn::rights::read }
                                          }), s);

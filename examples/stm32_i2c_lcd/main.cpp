@@ -68,5 +68,5 @@ void lcd_main()
 
 void tos_main()
 {
-    tos::launch(lcd_main);
+    tos::launch(tos::alloc_stack, lcd_main);
 }

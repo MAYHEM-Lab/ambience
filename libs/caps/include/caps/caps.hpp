@@ -38,9 +38,6 @@ namespace caps
     {
         return validate(haystack.c, needle, std::forward<SatisfyCheckerT>(satisfies));
     }
-
-    template <class CapabilityT, class SignerT>
-    void attach(caps::token<CapabilityT, SignerT> &c, caps::cap_list<CapabilityT> &child);
 }
 
 namespace caps

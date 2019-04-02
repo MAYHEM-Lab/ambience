@@ -109,5 +109,5 @@ void tx_task()
 
 void tos_main()
 {
-    tos::launch(tx_task);
+    tos::launch(tos::alloc_stack, tx_task);
 }

@@ -10,7 +10,7 @@
 
 TEST_CASE("alarm", "[basic]"){
     tos::semaphore s{0};
-    tos::launch([&]{
+    tos::launch(tos::alloc_stack, [&]{
         tos::x86::timer tmr;
         auto alarm = tos::open(tos::devs::alarm, tmr);
 
