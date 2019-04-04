@@ -22,7 +22,7 @@ namespace tos {
         } // namespace detail
 
         class twim
-                : public self_pointing<twim>, public tracked_driver<twim, 2> {
+                : public self_pointing<twim>, public tracked_driver<twim, 2>, non_copy_movable {
         public:
             twim(gpio::pin_type clk, gpio::pin_type data)
                     : tracked_driver(0) {
