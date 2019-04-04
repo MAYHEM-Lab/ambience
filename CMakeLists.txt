@@ -98,7 +98,7 @@ elseif(TOS_X86)
     #add_subdirectory(examples/bearssl)
     add_subdirectory(examples/simple_portable)
     add_subdirectory(examples/x86_timer)
-    add_subdirectory(examples/capabilities)
+    #add_subdirectory(examples/capabilities)
 
     add_subdirectory(tests)
 elseif(TOS_NRF52)
