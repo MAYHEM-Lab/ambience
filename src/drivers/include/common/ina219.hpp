@@ -169,7 +169,7 @@ namespace tos
 
         // should there be a delay here?
 
-        std::array<uint8_t, 2> buf;
+        std::array<uint8_t, 2> buf{};
         _twim->receive(_addr, raw_cast<char>(spanify<uint8_t>(buf)));
         *value = (buf[0] << 8 | buf[1]);
     }

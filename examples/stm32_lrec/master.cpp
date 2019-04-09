@@ -13,6 +13,11 @@
 #include <libopencm3/stm32/iwdg.h>
 #include <common/bme280.hpp>
 
+#include <libopencm3/stm32/dbgmcu.h>
+#include <libopencm3/cm3/scs.h>
+#include <libopencm3/cm3/tpiu.h>
+#include <libopencm3/cm3/itm.h>
+
 auto delay = [](std::chrono::microseconds us) {
     uint32_t end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 13.3;
     for (volatile int i = 0; i < end; ++i)
@@ -165,6 +170,8 @@ auto xbee_task = [](auto& g, auto& log)
 
     tos::stm32::twim t { 22_pin, 23_pin };
 
+    bool bme_scan = tos::scan_address(t, {0x40});
+
     tos::ina219<tos::stm32::twim&> ina{ tos::twi_addr_t{0x40}, t };
     using namespace tos::bme280;
     bme280 b{ {BME280_I2C_ADDR_PRIM}, &t, delay };
@@ -311,8 +318,7 @@ auto xbee_task = [](auto& g, auto& log)
     }
 };
 
-static char buf[1024];
-static tos::stack_storage<1024> sstack __attribute__ ((section (".noinit")));
+static tos::stack_storage<1576> sstack __attribute__ ((section (".noinit")));
 void master_task()
 {
     iwdg_set_period_ms(15'000);
@@ -327,14 +333,6 @@ void master_task()
     struct x : tos::self_pointing<x> {
         int write(tos::span<const char> x) { return x.size(); }
     } l;
-
-    if (sstack.m_storage.__data[0] == 0x6B)
-    {
-        // something ran
-        std::copy(std::begin(sstack.m_storage.__data), std::end(sstack.m_storage.__data), buf);
-    }
-
-    sstack.m_storage.__data[0] = 0x6B;
 
     tos::semaphore s{0};
     tos::launch(sstack, [&]{

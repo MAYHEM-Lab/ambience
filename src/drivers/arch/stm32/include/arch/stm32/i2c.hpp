@@ -65,12 +65,86 @@ namespace tos
 namespace stm32
 {
     inline tos::twi_tx_res tos::stm32::twim::transmit(tos::twi_addr_t to, tos::span<const char> buf) noexcept {
-        i2c_transfer7(m_def->i2c, to.addr, const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(buf.data())), buf.size(), nullptr, 0);
+        int wait = 0;
+        while ((I2C_SR2(m_def->i2c) & I2C_SR2_BUSY)) {
+            if (wait++ > 10'000) {
+                return tos::twi_tx_res::other;
+            }
+        }
+
+        i2c_send_start(m_def->i2c);
+
+        while (!((I2C_SR1(m_def->i2c)) & I2C_SR1_SB)
+                 & (I2C_SR2(m_def->i2c)) & (I2C_SR2_MSL | I2C_SR2_BUSY));
+
+        i2c_send_7bit_address(m_def->i2c, to.addr, I2C_WRITE);
+
+        wait = 0;
+        // wait for address ack
+        while (!(I2C_SR1(m_def->i2c) & I2C_SR1_ADDR)){
+            if (wait++ > 10'000) {
+                i2c_send_stop(m_def->i2c);
+                return tos::twi_tx_res::addr_nack;
+            }
+        }
+
+        (void)I2C_SR2(m_def->i2c);
+
+        for (char c : buf) {
+            i2c_send_data(m_def->i2c, c);
+
+            wait = 0;
+            while (!(I2C_SR1(m_def->i2c) & (I2C_SR1_BTF))) {
+                if (wait++ > 10'000) {
+                    i2c_send_stop(m_def->i2c);
+                    return tos::twi_tx_res::data_nack;
+                }
+            }
+        }
+
+        i2c_send_stop(m_def->i2c);
+
         return tos::twi_tx_res::ok;
     }
 
     twi_rx_res twim::receive(twi_addr_t from, span<char> buf) noexcept {
-        i2c_transfer7(m_def->i2c, from.addr, nullptr, 0, reinterpret_cast<uint8_t*>(buf.data()), buf.size());
+        i2c_send_start(m_def->i2c);
+        i2c_enable_ack(m_def->i2c);
+
+        /* Wait for master mode selected */
+        while (!((I2C_SR1(m_def->i2c) & I2C_SR1_SB)
+                 & (I2C_SR2(m_def->i2c) & (I2C_SR2_MSL | I2C_SR2_BUSY))));
+
+        i2c_send_7bit_address(m_def->i2c, from.addr, I2C_READ);
+        int wait = 0;
+
+        /* Waiting for address is transferred. */
+        // wait for address ack
+        while (!(I2C_SR1(m_def->i2c) & I2C_SR1_ADDR)){
+            if (wait++ > 10'000) {
+                i2c_send_stop(m_def->i2c);
+                return tos::twi_rx_res::addr_nack;
+            }
+        }
+
+        /* Clearing ADDR condition sequence. */
+        (void)I2C_SR2(m_def->i2c);
+
+        for (size_t i = 0; i < buf.size(); ++i) {
+            if (i == buf.size() - 1) {
+                i2c_disable_ack(m_def->i2c);
+            }
+            wait = 0;
+            while (!(I2C_SR1(m_def->i2c) & I2C_SR1_RxNE)){
+                if (wait++ > 10'000) {
+                    i2c_send_stop(m_def->i2c);
+                    return tos::twi_rx_res::data_nack;
+                }
+            }
+            buf[i] = i2c_get_data(m_def->i2c);
+        }
+        i2c_send_stop(m_def->i2c);
+
         return tos::twi_rx_res::ok;
     }
 } // namespace stm32

@@ -47,9 +47,10 @@ namespace tos
                 {
                     auto self = static_cast<bme280*>(user);
                     const char wb[] = {reg_addr};
-                    self->m_i2c->transmit({dev_id}, wb);
-                    self->m_i2c->receive({dev_id}, tos::span<char>(reinterpret_cast<char*>(reg_data), len));
-                    return 0;
+                    auto t = self->m_i2c->transmit({dev_id}, wb);
+                    if (t != twi_tx_res::ok) return 1;
+                    auto r = self->m_i2c->receive({dev_id}, tos::span<char>(reinterpret_cast<char*>(reg_data), len));
+                    return r == twi_rx_res::ok;
                 };
 
                 m_dev.write = [](uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len, void* user) -> int8_t
@@ -59,10 +60,11 @@ namespace tos
                     if (len > std::size(wb) - 1) return 1;
 
                     std::copy(reg_data, reg_data + len, wb + 1);
-                    self->m_i2c->transmit({dev_id}, wb);
+                    auto r = self->m_i2c->transmit({dev_id}, wb);
 
-                    return 0;
+                    return r == twi_tx_res::ok;
                 };
+
                 m_dev.user = this;
                 bme280_init(&m_dev);
             }

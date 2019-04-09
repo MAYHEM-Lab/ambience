@@ -41,7 +41,6 @@ namespace stm32
             adc_set_sample_time_on_all_channels(m_def->adc, ADC_SMPR_SMP_71DOT5CYC);
 
             adc_power_on(ADC1);
-
             for (int i = 0; i < 800000; i++) __asm__("nop");
 
             adc_reset_calibration(ADC1);
