@@ -44,15 +44,17 @@ void bme_task()
 
     tos::stm32::twim t { 24_pin, 25_pin };
 
-    tos::bme280 b{ {BME280_I2C_ADDR_PRIM}, &t, delay };
+    using namespace tos::bme280;
+    bme280 b{ {BME280_I2C_ADDR_PRIM}, &t, delay };
     b.set_config();
+    b.enable();
 
     tos::println(usart, "Temperature, Pressure, Humidity");
     while(true)
     {
         using namespace std::chrono_literals;
         delay(70ms);
-        with(b.read(), [&](auto& comp_data){
+        with(b.read(components::all), [&](auto& comp_data){
             tos::println(usart, int(comp_data.temperature), int(comp_data.pressure), int(comp_data.humidity));
         }, tos::ignore);
     }

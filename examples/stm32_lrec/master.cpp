@@ -11,7 +11,7 @@
 #include "app.hpp"
 #include <common/ina219.hpp>
 #include <libopencm3/stm32/iwdg.h>
-#include <unwind.h>
+#include <common/bme280.hpp>
 
 auto delay = [](std::chrono::microseconds us) {
     uint32_t end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 13.3;
@@ -163,13 +163,12 @@ auto xbee_task = [](auto& g, auto& log)
     g.write(11_pin, tos::digital::low);
     alarm.sleep_for(100ms); // let it die
 
-    // need a proper API for this alternate function IO business ...
-    //rcc_periph_clock_enable(RCC_AFIO);
-    //AFIO_MAPR |= AFIO_MAPR_I2C1_REMAP;
-
     tos::stm32::twim t { 22_pin, 23_pin };
 
     tos::ina219<tos::stm32::twim&> ina{ tos::twi_addr_t{0x40}, t };
+    using namespace tos::bme280;
+    bme280 b{ {BME280_I2C_ADDR_PRIM}, &t, delay };
+    b.set_config();
 
     auto rd_slv = [&g, &alarm] {
         iwdg_reset();
@@ -235,15 +234,9 @@ auto xbee_task = [](auto& g, auto& log)
             samples[1] = force_get(slv);
         }
 
-        samples[0].temp = temp::to_fahrenheits(samples[0].temp);
-        samples[0].cpu = temp::to_fahrenheits(samples[0].cpu);
-
-        samples[1].temp = temp::to_fahrenheits(samples[1].temp);
-        samples[1].cpu = temp::to_fahrenheits(samples[1].cpu);
-
-        std::array<char, 60> buf;
+        std::array<char, 80> buf;
         tos::msgpack::packer p{buf};
-        auto arr = p.insert_arr(10);
+        auto arr = p.insert_arr(13);
 
         arr.insert(lp++);
 
@@ -258,6 +251,25 @@ auto xbee_task = [](auto& g, auto& log)
         arr.insert(int32_t(curr));
         arr.insert(int32_t(v));
         arr.insert(bool(slv));
+
+        b->enable();
+        delay(70ms);
+        auto bme_res = b->read();
+        if (bme_res)
+        {
+            auto [pres, temp, humid] = force_get(bme_res);
+
+            arr.insert(pres);
+            arr.insert(temp);
+            arr.insert(humid);
+        }
+        else
+        {
+            arr.insert(-1.0);
+            arr.insert(-1.0);
+            arr.insert(-1.0);
+        }
+        b->sleep();
 
         g.write(11_pin, tos::digital::high);
 

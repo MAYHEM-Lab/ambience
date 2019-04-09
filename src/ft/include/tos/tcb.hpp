@@ -11,6 +11,11 @@
 namespace tos {
     namespace kern
     {
+        struct ctx
+        {
+            jmp_buf buf;
+        };
+
         /**
          * This type represents an execution context in the system.
          *
@@ -29,9 +34,13 @@ namespace tos {
              *
              * @return execution context of the task
              */
-            jmp_buf& get_context()
+            ctx& get_ctx()
             {
-                return m_context;
+                return *m_ctx;
+            }
+
+            void set_ctx(ctx& buf) {
+                m_ctx = &buf;
             }
 
             /**
@@ -41,9 +50,14 @@ namespace tos {
              */
             virtual ~tcb() = 0;
         private:
+
             jmp_buf m_context;
+            ctx *m_ctx;
         };
 
         inline tcb::~tcb() = default;
     } // namespace kern
 } //namespace tos
+
+#define save_context(tcb, ctx) \
+    (tcb).set_ctx((ctx)), setjmp((ctx).buf)
