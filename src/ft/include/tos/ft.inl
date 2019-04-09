@@ -76,18 +76,18 @@ namespace tos {
         }
     }
 
-    [[noreturn]]
-    inline void thread_exit()
-    {
-        kern::disable_interrupts();
-
-        // no need to save the current context, we'll exit
-
-        switch_context(sched.main_context, return_codes::do_exit);
-    }
-
     namespace kern
     {
+        [[noreturn]]
+        inline void thread_exit()
+        {
+            kern::disable_interrupts();
+
+            // no need to save the current context, we'll exit
+
+            switch_context(sched.main_context, return_codes::do_exit);
+        }
+
         inline void suspend_self()
         {
             // interrupts are assumed to be disabled for this function to be called
@@ -298,7 +298,7 @@ namespace tos {
 
     inline void this_thread::exit(void*)
     {
-        thread_exit();
+        kern::thread_exit();
     }
 }
 
