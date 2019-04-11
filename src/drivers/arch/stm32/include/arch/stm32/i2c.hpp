@@ -65,7 +65,7 @@ namespace tos
 namespace stm32
 {
     inline tos::twi_tx_res tos::stm32::twim::transmit(tos::twi_addr_t to, tos::span<const char> buf) noexcept {
-        int wait = 0;
+        int32_t wait = 0;
         while ((I2C_SR2(m_def->i2c) & I2C_SR2_BUSY)) {
             if (wait++ > 10'000) {
                 return tos::twi_tx_res::other;
@@ -74,8 +74,8 @@ namespace stm32
 
         i2c_send_start(m_def->i2c);
 
-        while (!((I2C_SR1(m_def->i2c)) & I2C_SR1_SB)
-                 & (I2C_SR2(m_def->i2c)) & (I2C_SR2_MSL | I2C_SR2_BUSY));
+        while (!((I2C_SR1(m_def->i2c) & I2C_SR1_SB)
+                 & (I2C_SR2(m_def->i2c) & (I2C_SR2_MSL | I2C_SR2_BUSY))));
 
         i2c_send_7bit_address(m_def->i2c, to.addr, I2C_WRITE);
 

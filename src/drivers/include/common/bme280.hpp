@@ -50,7 +50,7 @@ namespace tos
                     auto t = self->m_i2c->transmit({dev_id}, wb);
                     if (t != twi_tx_res::ok) return 1;
                     auto r = self->m_i2c->receive({dev_id}, tos::span<char>(reinterpret_cast<char*>(reg_data), len));
-                    return r == twi_rx_res::ok;
+                    return r != twi_rx_res::ok;
                 };
 
                 m_dev.write = [](uint8_t dev_id, uint8_t reg_addr, uint8_t *reg_data, uint16_t len, void* user) -> int8_t
@@ -62,7 +62,7 @@ namespace tos
                     std::copy(reg_data, reg_data + len, wb + 1);
                     auto r = self->m_i2c->transmit({dev_id}, wb);
 
-                    return r == twi_tx_res::ok;
+                    return r != twi_tx_res::ok;
                 };
 
                 m_dev.user = this;
