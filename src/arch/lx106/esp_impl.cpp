@@ -70,10 +70,7 @@ void ICACHE_FLASH_ATTR
 user_init()
 {
     system_init_done_cb(entry);
-    //entry();
 }
-#define EAGLE_FLASH_BIN_ADDR				(SYSTEM_PARTITION_CUSTOMER_BEGIN + 1)
-#define EAGLE_IROM0TEXT_BIN_ADDR			(SYSTEM_PARTITION_CUSTOMER_BEGIN + 2)
 
 static const partition_item_t at_partition_table[] = {
         { SYSTEM_PARTITION_BOOTLOADER, 						0x0, 												0x1000},
@@ -87,8 +84,8 @@ static const partition_item_t at_partition_table[] = {
 
 void ICACHE_FLASH_ATTR user_pre_init(void)
 {
-    if(!system_partition_table_regist(at_partition_table, sizeof(at_partition_table)/sizeof(at_partition_table[0]),SPI_FLASH_SIZE_MAP)) {
-        os_printf("system_partition_table_regist fail\r\n");
+    if(!system_partition_table_regist(at_partition_table, sizeof(at_partition_table)/sizeof(at_partition_table[0]), SPI_FLASH_SIZE_MAP)) {
+        os_printf("TOS: system_partition_table_regist fail\r\n");
         while(1);
     } else{
 

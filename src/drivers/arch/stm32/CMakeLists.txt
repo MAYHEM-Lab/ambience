@@ -19,7 +19,7 @@ add_library(stm32_i2c include/arch/stm32/i2c.hpp src/stub.cpp)
 target_link_libraries(stm32_i2c PUBLIC tos::core)
 tos_install(stm32_i2c ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(stm32_adc include/arch/stm32/adc.hpp src/stub.cpp)
+add_library(stm32_adc include/arch/stm32/adc.hpp src/stub.cpp src/adc.cpp)
 target_link_libraries(stm32_adc PUBLIC tos::core)
 tos_install(stm32_adc ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

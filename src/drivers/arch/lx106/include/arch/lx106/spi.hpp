@@ -6,12 +6,13 @@
 
 #include <arch/lx106/gpio.hpp>
 #include <tos/span.hpp>
+#include <common/driver_base.hpp>
 
 namespace tos
 {
     namespace esp82
     {
-        class spi
+        class spi : public self_pointing<spi>
         {
         public:
             using gpio_type = esp82::gpio;

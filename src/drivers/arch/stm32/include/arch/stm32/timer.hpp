@@ -104,17 +104,19 @@ namespace tos::stm32
     }
 
     inline void general_timer::set_frequency(uint16_t hertz) {
-        // for 1000 hertz, we need a period of 2, thus hertz * 2 / 1000
-        m_period = ((hertz * 2) / 1'000);
-        timer_set_prescaler(m_def->tim, ((rcc_apb1_frequency * 2) / 2'000));
+        /*
+         * For whatever reason, the apb1 frequency is twice what it should be, so we multiply by 2 as well...
+         */
+        m_period = 2000 / hertz;
+        timer_set_prescaler(m_def->tim, ((rcc_apb1_frequency) / 1'000));
     }
 
     inline void general_timer::enable() {
-        timer_set_oc_value(m_def->tim, TIM_OC1, timer_get_counter(m_def->tim) + m_period);
-        timer_enable_counter(m_def->tim);
+        TIM_CCR1(m_def->tim) = uint16_t(timer_get_counter(m_def->tim) + get_period(*this));
         nvic_enable_irq(m_def->irq);
         timer_enable_irq(m_def->tim, TIM_DIER_CC1IE);
         tos::kern::busy();
+        timer_enable_counter(m_def->tim);
     }
 
     inline void general_timer::disable() {

@@ -4,6 +4,10 @@
 
 #pragma once
 
+#include <tos/span.hpp>
+#include <tos/utility.hpp>
+#include <common/driver_base.hpp>
+#include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/adc.h>
 
 namespace tos
@@ -23,7 +27,7 @@ namespace stm32
         };
     }
 
-    class adc
+    class adc : public self_pointing<adc>, public non_copy_movable
     {
     public:
 
@@ -31,20 +35,21 @@ namespace stm32
         {
             rcc_periph_clock_enable(m_def->rcc);
 
-            adc_disable_scan_mode(m_def->adc);
+            adc_power_off(m_def->adc);
+
             adc_disable_scan_mode(m_def->adc);
             adc_set_single_conversion_mode(m_def->adc);
             adc_disable_external_trigger_regular(m_def->adc);
             adc_set_right_aligned(m_def->adc);
 
             adc_enable_temperature_sensor();
-            adc_set_sample_time_on_all_channels(m_def->adc, ADC_SMPR_SMP_71DOT5CYC);
+            adc_set_sample_time_on_all_channels(m_def->adc, ADC_SMPR_SMP_28DOT5CYC);
 
-            adc_power_on(ADC1);
-            for (int i = 0; i < 800000; i++) __asm__("nop");
+            adc_power_on(m_def->adc);
+            for (int i = 0; i < 800'000; i++) __asm__("nop");
 
-            adc_reset_calibration(ADC1);
-            adc_calibrate(ADC1);
+            adc_reset_calibration(m_def->adc);
+            adc_calibrate(m_def->adc);
         }
 
         void set_channels(span<uint8_t> chs)
@@ -57,6 +62,13 @@ namespace stm32
             adc_start_conversion_direct(m_def->adc);
             while (!adc_eoc(m_def->adc));
             return adc_read_regular(m_def->adc);
+        }
+
+        ~adc()
+        {
+            adc_power_off(m_def->adc);
+            adc_disable_temperature_sensor();
+            rcc_periph_clock_disable(m_def->rcc);
         }
 
     private:

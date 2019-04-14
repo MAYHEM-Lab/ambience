@@ -17,6 +17,7 @@
 #include <libopencm3/cm3/scs.h>
 #include <libopencm3/cm3/tpiu.h>
 #include <libopencm3/cm3/itm.h>
+#include <libopencm3/stm32/rtc.h>
 
 auto delay = [](std::chrono::microseconds us) {
     uint32_t end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 13.3;
@@ -141,6 +142,14 @@ tos::expected<temp::sample, slave_errors>  read_slave(GpioT& g, UartT& usart, Al
     return s;
 }
 
+tos::event rtc_ev;
+void rtc_isr(void)
+{
+    rtc_clear_flag(RTC_SEC);
+
+    rtc_ev.fire_isr();
+}
+
 auto xbee_task = [](auto& g, auto& log)
 {
     using namespace tos::tos_literals;
@@ -170,8 +179,6 @@ auto xbee_task = [](auto& g, auto& log)
 
     tos::stm32::twim t { 22_pin, 23_pin };
 
-    bool bme_scan = tos::scan_address(t, {0x40});
-
     tos::ina219<tos::stm32::twim&> ina{ tos::twi_addr_t{0x40}, t };
     using namespace tos::bme280;
     bme280 b{ {BME280_I2C_ADDR_PRIM}, &t, delay };
@@ -192,23 +199,37 @@ auto xbee_task = [](auto& g, auto& log)
         return r;
     };
 
-    tos::stm32::adc a { &tos::stm32::detail::adcs[0] };
-
-    uint8_t x[1];
-    x[0] = 16;
-    a.set_channels(x);
-
-    constexpr auto v25 = 1700;
-    constexpr auto slope = 2;
-
-    auto read_c = [&]{
-        float v = a.read();
-        return (v25 - v) / slope + 25;
-    };
-
     uint32_t lp = 0;
     while (true)
     {
+        g.write(45_pin, tos::digital::low);
+
+        iwdg_reset();
+
+        tos::stm32::adc a { &tos::stm32::detail::adcs[0] };
+
+        uint8_t x[1];
+        x[0] = 16;
+        a.set_channels(x);
+
+        uint32_t cpu_temp = [&]{
+            tos::int_guard ig;
+            uint32_t total = 0;
+            for (int i = 0; i < 100; ++i)
+            {
+                total += a.read();
+            }
+            return total / 100;
+        }();
+
+        constexpr auto v25 = 1700;
+        constexpr auto slope = 2;
+
+        auto read_c = [&]{
+            float v = a.read();
+            return (v25 - v) / slope + 25;
+        };
+
         auto slv = rd_slv();
 
         int curr = ina.getCurrent_mA();
@@ -232,7 +253,7 @@ auto xbee_task = [](auto& g, auto& log)
         }
 
         std::array<temp::sample, 2> samples = {
-                temp::sample{d.temperature, d.humidity, read_c()},
+                temp::sample{d.temperature, d.humidity, float(cpu_temp)},
                 {}
         };
 
@@ -241,27 +262,34 @@ auto xbee_task = [](auto& g, auto& log)
             samples[1] = force_get(slv);
         }
 
+        b->enable();
+        delay(70ms);
+        auto bme_res = b->read();
+        b->sleep();
+
         std::array<char, 80> buf;
         tos::msgpack::packer p{buf};
-        auto arr = p.insert_arr(13);
+        auto arr = p.insert_arr(8 + (slv ? 4 : 0) + (bme_res ? 3 : 0));
 
         arr.insert(lp++);
 
+        arr.insert(uint32_t(temp::master_id));
         arr.insert(samples[0].temp);
         arr.insert(samples[0].humid);
         arr.insert(samples[0].cpu);
 
-        arr.insert(samples[1].temp);
-        arr.insert(samples[1].humid);
-        arr.insert(samples[1].cpu);
+        arr.insert(bool(slv));
+        if (slv)
+        {
+            arr.insert(uint32_t(temp::slave_id));
+            arr.insert(samples[1].temp);
+            arr.insert(samples[1].humid);
+            arr.insert(samples[1].cpu);
+        }
 
         arr.insert(int32_t(curr));
         arr.insert(int32_t(v));
-        arr.insert(bool(slv));
 
-        b->enable();
-        delay(70ms);
-        auto bme_res = b->read();
         if (bme_res)
         {
             auto [pres, temp, humid] = force_get(bme_res);
@@ -270,13 +298,6 @@ auto xbee_task = [](auto& g, auto& log)
             arr.insert(temp);
             arr.insert(humid);
         }
-        else
-        {
-            arr.insert(-1.0);
-            arr.insert(-1.0);
-            arr.insert(-1.0);
-        }
-        b->sleep();
 
         g.write(11_pin, tos::digital::high);
 
@@ -288,7 +309,7 @@ auto xbee_task = [](auto& g, auto& log)
             tos::println(log, "xbee non responsive");
         }
 
-        constexpr xbee::addr_16 base_addr{0x0010};
+        constexpr xbee::addr_16 base_addr{0x0001};
 
         xbee::tx16_req req{base_addr, tos::raw_cast<const uint8_t>(p.get()), xbee::frame_id_t{0xAB}};
         iwdg_reset();
@@ -313,14 +334,31 @@ auto xbee_task = [](auto& g, auto& log)
         tos::println(log, "sleeping...");
         iwdg_reset();
         //tos::this_thread::block_forever();
-        alarm.sleep_for(5s);
-        iwdg_reset();
+
+        auto slept = 0s;
+
+        g.write(45_pin, tos::digital::high);
+        nvic_enable_irq(NVIC_RTC_IRQ);
+        rtc_interrupt_enable(RTC_SEC);
+
+        while (slept < 5s)
+        {
+            rtc_ev.wait();
+            iwdg_reset();
+            slept += 1s;
+        }
+
+        rtc_interrupt_disable(RTC_SEC);
+        nvic_disable_irq(NVIC_RTC_IRQ);
     }
 };
 
 static tos::stack_storage<1576> sstack __attribute__ ((section (".noinit")));
 void master_task()
 {
+    rtc_auto_awake(RCC_LSE, 0x7fff);
+    nvic_set_priority(NVIC_RTC_IRQ, 1);
+
     iwdg_set_period_ms(15'000);
     iwdg_start();
     using namespace tos::tos_literals;
@@ -329,6 +367,17 @@ void master_task()
     namespace xbee = tos::xbee;
 
     auto g = tos::open(tos::devs::gpio);
+
+    g.set_pin_mode(45_pin, tos::pin_mode::out);
+
+    for (int i = 0; i < 3; ++i)
+    {
+        g.write(45_pin, tos::digital::high);
+        delay(500ms);
+        g.write(45_pin, tos::digital::low);
+        delay(500ms);
+    }
+    g.write(45_pin, tos::digital::high);
 
     struct x : tos::self_pointing<x> {
         int write(tos::span<const char> x) { return x.size(); }

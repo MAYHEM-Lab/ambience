@@ -42,10 +42,12 @@ namespace tos {
                               GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN, clk.pin);
 
                 i2c_peripheral_disable(m_def->i2c);
+
                 i2c_set_clock_frequency(m_def->i2c, I2C_CR2_FREQ_36MHZ);
                 i2c_set_ccr(m_def->i2c, 0x1e);
                 i2c_set_trise(m_def->i2c, 0x0b);
                 i2c_set_own_7bit_slave_address(m_def->i2c, 0xab);
+
                 i2c_peripheral_enable(m_def->i2c);
             }
 

@@ -6,13 +6,14 @@
 
 #include <common/i2c.hpp>
 #include <tos/span.hpp>
+#include <common/driver_base.hpp>
 #include "gpio.hpp"
 
 namespace tos
 {
     namespace esp82
     {
-        class twim
+        class twim : public self_pointing<twim>
         {
         public:
             twim(pin_t clock_pin, pin_t data_pin);

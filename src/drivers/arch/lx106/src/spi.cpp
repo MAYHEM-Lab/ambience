@@ -47,7 +47,6 @@ void spi_init(uint8 spi_no){
 
     SET_PERI_REG_MASK(SPI_USER(spi_no), SPI_CS_SETUP|SPI_CS_HOLD);
     CLEAR_PERI_REG_MASK(SPI_USER(spi_no), SPI_FLASH_MODE);
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
