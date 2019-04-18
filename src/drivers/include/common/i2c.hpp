@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <tos/span.hpp>
 
 namespace tos
 {
@@ -18,8 +19,10 @@ namespace tos
 
     enum class twi_rx_res
     {
-        ok = 0,
-        other = 1
+        ok,
+        addr_nack,
+        data_nack,
+        other
     };
 
     struct twim_data_rate
@@ -31,4 +34,11 @@ namespace tos
     {
         uint8_t addr : 7;
     };
+
+    template <class I2C>
+    bool scan_address(I2C& dev, twi_addr_t addr)
+    {
+        auto res = dev->transmit(addr, empty_span<char>());
+        return res == twi_tx_res::ok;
+    }
 }

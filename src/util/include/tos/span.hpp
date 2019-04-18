@@ -34,7 +34,7 @@ namespace tos
          * Spans cannot be null, thus this constructor
          * is deleted.
          */
-        constexpr span(std::nullptr_t, size_t) = delete;
+        constexpr span(std::nullptr_t) : span(static_cast<T*>(nullptr), size_t(0)) {};
 
         /**
          * Constructs a span from the given pointer-length pair.
@@ -161,6 +161,12 @@ namespace tos
         T* m_base;
         ptrdiff_t m_len;
     };
+
+    template <class T>
+    span<T> empty_span()
+    {
+        return span<T>(nullptr);
+    }
 
     template <class U, class T>
     span<U> spanify(T&& t)

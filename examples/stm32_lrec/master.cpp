@@ -11,7 +11,12 @@
 #include "app.hpp"
 #include <common/ina219.hpp>
 #include <libopencm3/stm32/iwdg.h>
-#include <unwind.h>
+#include <common/bme280.hpp>
+
+#include <libopencm3/stm32/dbgmcu.h>
+#include <libopencm3/cm3/scs.h>
+#include <libopencm3/cm3/tpiu.h>
+#include <libopencm3/cm3/itm.h>
 
 auto delay = [](std::chrono::microseconds us) {
     uint32_t end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 13.3;
@@ -163,13 +168,14 @@ auto xbee_task = [](auto& g, auto& log)
     g.write(11_pin, tos::digital::low);
     alarm.sleep_for(100ms); // let it die
 
-    // need a proper API for this alternate function IO business ...
-    //rcc_periph_clock_enable(RCC_AFIO);
-    //AFIO_MAPR |= AFIO_MAPR_I2C1_REMAP;
-
     tos::stm32::twim t { 22_pin, 23_pin };
 
+    bool bme_scan = tos::scan_address(t, {0x40});
+
     tos::ina219<tos::stm32::twim&> ina{ tos::twi_addr_t{0x40}, t };
+    using namespace tos::bme280;
+    bme280 b{ {BME280_I2C_ADDR_PRIM}, &t, delay };
+    b.set_config();
 
     auto rd_slv = [&g, &alarm] {
         iwdg_reset();
@@ -235,15 +241,9 @@ auto xbee_task = [](auto& g, auto& log)
             samples[1] = force_get(slv);
         }
 
-        samples[0].temp = temp::to_fahrenheits(samples[0].temp);
-        samples[0].cpu = temp::to_fahrenheits(samples[0].cpu);
-
-        samples[1].temp = temp::to_fahrenheits(samples[1].temp);
-        samples[1].cpu = temp::to_fahrenheits(samples[1].cpu);
-
-        std::array<char, 60> buf;
+        std::array<char, 80> buf;
         tos::msgpack::packer p{buf};
-        auto arr = p.insert_arr(10);
+        auto arr = p.insert_arr(13);
 
         arr.insert(lp++);
 
@@ -258,6 +258,25 @@ auto xbee_task = [](auto& g, auto& log)
         arr.insert(int32_t(curr));
         arr.insert(int32_t(v));
         arr.insert(bool(slv));
+
+        b->enable();
+        delay(70ms);
+        auto bme_res = b->read();
+        if (bme_res)
+        {
+            auto [pres, temp, humid] = force_get(bme_res);
+
+            arr.insert(pres);
+            arr.insert(temp);
+            arr.insert(humid);
+        }
+        else
+        {
+            arr.insert(-1.0);
+            arr.insert(-1.0);
+            arr.insert(-1.0);
+        }
+        b->sleep();
 
         g.write(11_pin, tos::digital::high);
 
@@ -299,8 +318,7 @@ auto xbee_task = [](auto& g, auto& log)
     }
 };
 
-static char buf[1024];
-static tos::stack_storage<1024> sstack __attribute__ ((section (".noinit")));
+static tos::stack_storage<1576> sstack __attribute__ ((section (".noinit")));
 void master_task()
 {
     iwdg_set_period_ms(15'000);
@@ -315,14 +333,6 @@ void master_task()
     struct x : tos::self_pointing<x> {
         int write(tos::span<const char> x) { return x.size(); }
     } l;
-
-    if (sstack.m_storage.__data[0] == 0x6B)
-    {
-        // something ran
-        std::copy(std::begin(sstack.m_storage.__data), std::end(sstack.m_storage.__data), buf);
-    }
-
-    sstack.m_storage.__data[0] = 0x6B;
 
     tos::semaphore s{0};
     tos::launch(sstack, [&]{

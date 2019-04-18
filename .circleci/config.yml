@@ -25,13 +25,13 @@ jobs:
           command: git submodule update --init --recursive
       - run:
           name: Download toolchain
-          command: wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2
+          command: wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/8-2018q4/gcc-arm-none-eabi-8-2018-q4-major-linux.tar.bz2
       - run:
           name: Extract toolchain
-          command: tar xf gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2
+          command: tar xf gcc-arm-none-eabi-8-2018-q4-major-linux.tar.bz2
       - run:
           name: Move the toolchain
-          command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-7-2017-q4-major /opt/x-tools
+          command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-8-2018-q4-major /opt/x-tools
       - run:
           name: Download nRF52 SDK
           command: wget http://cs.ucsb.edu/~bakir/nRF5_SDK_15.2.0_9412b96.zip -O nrf5-sdk.zip
@@ -61,13 +61,13 @@ jobs:
           command: git submodule update --init --recursive
       - run:
           name: Download toolchain
-          command: wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2
+          command: wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/8-2018q4/gcc-arm-none-eabi-8-2018-q4-major-linux.tar.bz2
       - run:
           name: Extract toolchain
-          command: tar xf gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2
+          command: tar xf gcc-arm-none-eabi-8-2018-q4-major-linux.tar.bz2
       - run:
           name: Move the toolchain
-          command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-7-2017-q4-major /opt/x-tools
+          command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-8-2018-q4-major /opt/x-tools
       - run:
           name: Download libopencm3
           command: wget http://cs.ucsb.edu/~bakir/libopencm3.zip -O libopencm3.zip

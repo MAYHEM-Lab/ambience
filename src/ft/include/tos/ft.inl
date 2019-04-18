@@ -47,6 +47,12 @@ namespace tos {
 
 namespace tos
 {
+    [[noreturn]] inline void switch_context(kern::ctx& j, return_codes rc)
+    {
+        longjmp(j.buf, static_cast<int>(rc));
+
+        __builtin_unreachable();
+    }
     [[noreturn]] inline void switch_context(jmp_buf& j, return_codes rc)
     {
         longjmp(j, static_cast<int>(rc));
@@ -63,7 +69,8 @@ namespace tos {
         inline void yield()
         {
             tos::int_guard ig;
-            if (setjmp(impl::cur_thread->get_context())==(int) return_codes::saved) {
+            kern::ctx ctx;
+            if (save_context(*impl::cur_thread, ctx) == (int) return_codes::saved) {
                 kern::make_runnable(*impl::cur_thread);
                 switch_context(sched.main_context, return_codes::yield);
             }
@@ -76,24 +83,25 @@ namespace tos {
         }
     }
 
-    [[noreturn]]
-    inline void thread_exit()
-    {
-        kern::disable_interrupts();
-
-        // no need to save the current context, we'll exit
-
-        switch_context(sched.main_context, return_codes::do_exit);
-    }
-
     namespace kern
     {
+        [[noreturn]]
+        inline void thread_exit()
+        {
+            kern::disable_interrupts();
+
+            // no need to save the current context, we'll exit
+
+            switch_context(sched.main_context, return_codes::do_exit);
+        }
+
         inline void suspend_self()
         {
             // interrupts are assumed to be disabled for this function to be called
             //tos_debug_print("suspend %p\n", impl::cur_thread);
 
-            if (setjmp(impl::cur_thread->get_context())==(int) return_codes::saved) {
+            kern::ctx ctx;
+            if (save_context(*impl::cur_thread, ctx) == (int) return_codes::saved) {
                 switch_context(sched.main_context, return_codes::suspend);
             }
         }
@@ -175,8 +183,11 @@ namespace tos {
             run_queue.push_back(t);
             num_threads++;
 
+            // prepare the initial ctx for the new task
+            auto ctx_ptr = new ((char*)&t - sizeof(ctx)) ctx;
+
             kern::disable_interrupts();
-            if (setjmp(t.get_context())==(int) return_codes::saved) {
+            if (save_context(t, *ctx_ptr) == (int) return_codes::saved) {
                 kern::enable_interrupts();
                 return { reinterpret_cast<uintptr_t>(static_cast<tcb*>(&t)) };
             }
@@ -239,7 +250,7 @@ namespace tos {
                         impl::cur_thread = &run_queue.front();
                         run_queue.pop_front();
 
-                        switch_context(impl::cur_thread->get_context(), return_codes::scheduled);
+                        switch_context(impl::cur_thread->get_ctx(), return_codes::scheduled);
                     }
                     case return_codes::do_exit:
                     {
@@ -298,7 +309,7 @@ namespace tos {
 
     inline void this_thread::exit(void*)
     {
-        thread_exit();
+        kern::thread_exit();
     }
 }
 

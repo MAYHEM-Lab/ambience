@@ -41,10 +41,20 @@ void tos_stack_free(void* ptr)
 }
 }
 
+static bool tried_bkpt = false;
 void hard_fault_handler()
 {
-    tos_force_reset();
-    while(true)
+    if (!tried_bkpt)
     {
+        tried_bkpt = true;
+        asm("bkpt");
     }
+    else
+    {
+        tos_force_reset();
+        while(true)
+        {
+        }
+    }
+
 }
