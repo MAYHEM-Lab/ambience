@@ -33,6 +33,7 @@ enable_testing()
 
 add_subdirectory(src)
 
+add_subdirectory(libs/pfr)
 add_subdirectory(libs/kthreads)
 add_subdirectory(libs/posix)
 add_subdirectory(libs/caps)
