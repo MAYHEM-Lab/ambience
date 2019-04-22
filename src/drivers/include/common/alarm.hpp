@@ -56,13 +56,13 @@ namespace tos
          */
         void sleep_for(std::chrono::milliseconds dur)
         {
-            event ev;
-            auto fun = [&ev]{
-                ev.fire_isr();
-            };
-            sleeper s { uint16_t(dur.count()), fun };
-            set_alarm(s);
-            ev.wait();
+          event ev;
+          auto fun = [&ev]{
+            ev.fire_isr();
+          };
+          sleeper s { uint16_t(dur.count()), fun };
+          set_alarm(s);
+          ev.wait();
         }
 
         auto set_alarm(sleeper& s) -> alarm_handle
@@ -72,15 +72,16 @@ namespace tos
             auto it = m_sleepers.begin();
             while (it != m_sleepers.end() && it->sleep_ticks < s.sleep_ticks)
             {
-                ++it;
+              s.sleep_ticks -= it->sleep_ticks;
+              ++it;
             }
             if (it != m_sleepers.end())
             {
-                s.sleep_ticks -= it->sleep_ticks;
+              it->sleep_ticks -= s.sleep_ticks;
             }
             else
             {
-                start();
+              start();
             }
             return m_sleepers.insert(it, s);
         }
@@ -136,7 +137,7 @@ namespace tos
             }
         }
 
-        int m_period = 10; // in milliseconds
+        int m_period = 1; // in milliseconds
         intrusive_list<sleeper> m_sleepers;
         T* m_timer;
     };
