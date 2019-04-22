@@ -67,17 +67,23 @@ namespace tos
 namespace stm32
 {
     inline tos::twi_tx_res tos::stm32::twim::transmit(tos::twi_addr_t to, tos::span<const char> buf) noexcept {
-        int32_t wait = 0;
-        while ((I2C_SR2(m_def->i2c) & I2C_SR2_BUSY)) {
-            if (wait++ > 10'000) {
-                return tos::twi_tx_res::other;
-            }
-        }
+      int32_t wait = 0;
+      while ((I2C_SR2(m_def->i2c) & I2C_SR2_BUSY)) {
+          if (wait++ > 10'000) {
+              return tos::twi_tx_res::other;
+          }
+      }
 
-        i2c_send_start(m_def->i2c);
+      i2c_send_start(m_def->i2c);
 
+      wait = 0;
         while (!((I2C_SR1(m_def->i2c) & I2C_SR1_SB)
-                 & (I2C_SR2(m_def->i2c) & (I2C_SR2_MSL | I2C_SR2_BUSY))));
+                 & (I2C_SR2(m_def->i2c) & (I2C_SR2_MSL | I2C_SR2_BUSY)))){
+          if (wait++ > 10'000) {
+            i2c_send_stop(m_def->i2c);
+            return tos::twi_tx_res::other;
+          }
+        }
 
         i2c_send_7bit_address(m_def->i2c, to.addr, I2C_WRITE);
 
@@ -113,13 +119,18 @@ namespace stm32
         i2c_send_start(m_def->i2c);
         i2c_enable_ack(m_def->i2c);
 
+      int wait = 0;
         /* Wait for master mode selected */
         while (!((I2C_SR1(m_def->i2c) & I2C_SR1_SB)
-                 & (I2C_SR2(m_def->i2c) & (I2C_SR2_MSL | I2C_SR2_BUSY))));
+                 & (I2C_SR2(m_def->i2c) & (I2C_SR2_MSL | I2C_SR2_BUSY)))){
+          if (wait++ > 10'000) {
+            i2c_send_stop(m_def->i2c);
+            return tos::twi_rx_res::other;
+          }
+        }
 
         i2c_send_7bit_address(m_def->i2c, from.addr, I2C_READ);
-        int wait = 0;
-
+        wait = 0;
         /* Waiting for address is transferred. */
         // wait for address ack
         while (!(I2C_SR1(m_def->i2c) & I2C_SR1_ADDR)){
