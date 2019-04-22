@@ -10,6 +10,7 @@
 #include <tos/compiler.hpp>
 #include <new>
 #include <nonstd/expected.hpp>
+#include <optional>
 
 /**
  * This function is called upon a force_get execution on an
@@ -80,7 +81,7 @@ namespace tos
         constexpr explicit PURE operator bool() const { return bool(m_internal); }
 
         template <class ResT, typename = std::enable_if_t<!std::is_same_v<T, ResT>>>
-        constexpr operator expected<ResT, ErrT>()
+        constexpr operator expected<ResT, ErrT>() const
         {
             if (*this)
             {
@@ -89,6 +90,16 @@ namespace tos
             }
 
             return unexpected(m_internal.error());
+        }
+
+        constexpr operator std::optional<T>() const
+        {
+          if (!*this)
+          {
+            return std::nullopt;
+          }
+
+          return force_get(*this);
         }
 
         using value_type = typename internal_t::value_type;

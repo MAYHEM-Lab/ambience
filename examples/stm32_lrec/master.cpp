@@ -19,380 +19,419 @@
 #include <libopencm3/cm3/itm.h>
 #include <libopencm3/stm32/rtc.h>
 
-auto delay = [](std::chrono::microseconds us) {
-    uint32_t end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 13.3;
-    for (volatile int i = 0; i < end; ++i)
-    {
-        __asm__ __volatile__ ("nop");
-    }
-};
-
-auto setup_usart1 = [](auto& g){
-    using namespace tos::tos_literals;
-
-    auto tx_pin = 2_pin;
-    auto rx_pin = 3_pin;
-
-    g.set_pin_mode(rx_pin, tos::pin_mode::in);
-};
-
-auto disable_usart1 = [](auto& g){
-    using namespace tos::tos_literals;
-
-    auto tx_pin = 2_pin;
-    auto rx_pin = 3_pin;
-    g.set_pin_mode(rx_pin, tos::pin_mode::in_pullup);
-    g.set_pin_mode(tx_pin, tos::pin_mode::in_pullup);
-};
-
-auto setup_usart2 = [](auto& g){
-    using namespace tos::tos_literals;
-
-    rcc_periph_clock_enable(RCC_AFIO);
-    AFIO_MAPR |= AFIO_MAPR_USART3_REMAP_PARTIAL_REMAP;
-
-    auto tx_pin = 42_pin;
-    auto rx_pin = 43_pin;
-
-    g.set_pin_mode(rx_pin, tos::pin_mode::in);
-    gpio_set_mode(GPIO_BANK_USART3_PR_TX, GPIO_MODE_OUTPUT_50_MHZ,
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART3_PR_TX);
-};
-
-auto setup_usart0 = [](auto& g){
-    using namespace tos::tos_literals;
-
-    auto tx_pin = 9_pin;
-    auto rx_pin = 10_pin;
-
-    g.set_pin_mode(rx_pin, tos::pin_mode::in);
-};
-
-enum class slave_errors
+auto delay = [](std::chrono::microseconds us)
 {
-    non_responsive,
-    garbage,
-    no_checksum,
-    checksum_error
+  uint32_t end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 13.3;
+  for (volatile int i = 0; i < end; ++i) {
+    __asm__ __volatile__ ("nop");
+  }
 };
 
-template <class GpioT, class UartT, class AlarmT>
-tos::expected<temp::sample, slave_errors>  read_slave(GpioT& g, UartT& usart, AlarmT& alarm)
-{
-    using namespace tos::tos_literals;
-    using namespace std::chrono_literals;
+auto setup_usart1 = [](auto &g) {
+  using namespace tos::tos_literals;
 
-    auto mosfet_pin = 7_pin;
+  auto tx_pin = 2_pin;
+  auto rx_pin = 3_pin;
 
-    // wake up the slave and wait for it to boot
-    //usart.clear();
-    g.write(mosfet_pin, tos::digital::high);
-    alarm.sleep_for(1000ms);
-    iwdg_reset();
+  g.set_pin_mode(rx_pin, tos::pin_mode::in);
+};
 
-    std::array<char, 2> wait;
-    auto res = usart.read(wait, alarm, 5s);
+auto disable_usart1 = [](auto &g) {
+  using namespace tos::tos_literals;
 
-    if (res.size() != 2 || res[0] != 'h' || res[1] != 'i')
-    {
-        g.write(mosfet_pin, tos::digital::low);
-        return tos::unexpected(slave_errors::non_responsive);
-    }
+  auto tx_pin = 2_pin;
+  auto rx_pin = 3_pin;
+  g.set_pin_mode(rx_pin, tos::pin_mode::in_pullup);
+  g.set_pin_mode(tx_pin, tos::pin_mode::in_pullup);
+};
 
-    std::array<char, sizeof(temp::sample)> buf;
+auto setup_usart2 = [](auto &g) {
+  using namespace tos::tos_literals;
 
-    tos::print(usart, "go");
-    alarm.sleep_for(10s);
-    iwdg_reset();
-    auto r = usart.read(buf, alarm, 5s);
+  rcc_periph_clock_enable(RCC_AFIO);
+  AFIO_MAPR |= AFIO_MAPR_USART3_REMAP_PARTIAL_REMAP;
 
-    if (r.size() != buf.size())
-    {
-        g.write(mosfet_pin, tos::digital::low);
-        return tos::unexpected(slave_errors::garbage);
-    }
+  auto tx_pin = 42_pin;
+  auto rx_pin = 43_pin;
 
-    std::array<char, 1> chk_buf;
+  g.set_pin_mode(rx_pin, tos::pin_mode::in);
+  gpio_set_mode(GPIO_BANK_USART3_PR_TX, GPIO_MODE_OUTPUT_50_MHZ,
+                GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART3_PR_TX);
+};
 
-    auto chkbuf = usart.read(chk_buf, alarm, 5s);
-    if (chkbuf.size() == 0)
-    {
-        g.write(mosfet_pin, tos::digital::low);
-        return tos::unexpected(slave_errors::no_checksum);
-    }
-    iwdg_reset();
+auto setup_usart0 = [](auto &g) {
+  using namespace tos::tos_literals;
 
+  auto tx_pin = 9_pin;
+  auto rx_pin = 10_pin;
+
+  g.set_pin_mode(rx_pin, tos::pin_mode::in);
+};
+
+auto disable_usart0 = [](auto &g) {
+  using namespace tos::tos_literals;
+
+  auto tx_pin = 9_pin;
+  auto rx_pin = 10_pin;
+
+  g.set_pin_mode(rx_pin, tos::pin_mode::in_pullup);
+  g.set_pin_mode(tx_pin, tos::pin_mode::in_pullup);
+};
+
+enum class slave_errors {
+  non_responsive,
+  garbage,
+  no_checksum,
+  checksum_error
+};
+
+struct dht_data {
+  float temp;
+  float humid;
+};
+
+struct node_data {
+  dht_data dht;
+  float cpu;
+};
+
+template<class GpioT, class UartT, class AlarmT>
+tos::expected<node_data, slave_errors> read_slave(GpioT &g, UartT &usart, AlarmT &alarm) {
+  using namespace tos::tos_literals;
+  using namespace std::chrono_literals;
+
+  auto mosfet_pin = 7_pin;
+
+  // wake up the slave and wait for it to boot
+  //usart.clear();
+  g.write(mosfet_pin, tos::digital::high);
+  alarm.sleep_for(1000ms);
+  iwdg_reset();
+
+  std::array<char, 2> wait;
+  auto res = usart.read(wait, alarm, 5s);
+
+  if (res.size() != 2 || res[0] != 'h' || res[1] != 'i') {
     g.write(mosfet_pin, tos::digital::low);
+    return tos::unexpected(slave_errors::non_responsive);
+  }
 
-    alarm.sleep_for(5ms);
+  std::array<char, sizeof(node_data)> buf;
 
-    uint8_t chk = 0;
-    for (char c : buf)
-    {
-        chk += uint8_t (c);
-    }
+  tos::print(usart, "go");
+  alarm.sleep_for(10s);
+  iwdg_reset();
+  auto r = usart.read(buf, alarm, 5s);
 
-    if (uint8_t(chkbuf[0]) != chk)
-    {
-        return tos::unexpected(slave_errors::checksum_error);
-    }
+  if (r.size() != buf.size()) {
+    g.write(mosfet_pin, tos::digital::low);
+    return tos::unexpected(slave_errors::garbage);
+  }
 
-    temp::sample s;
-    memcpy(&s, buf.data(), sizeof(temp::sample));
-    return s;
+  std::array<char, 1> chk_buf;
+
+  auto chkbuf = usart.read(chk_buf, alarm, 5s);
+  if (chkbuf.size() == 0) {
+    g.write(mosfet_pin, tos::digital::low);
+    return tos::unexpected(slave_errors::no_checksum);
+  }
+  iwdg_reset();
+
+  g.write(mosfet_pin, tos::digital::low);
+
+  alarm.sleep_for(5ms);
+
+  uint8_t chk = 0;
+  for (char c : buf) {
+    chk += uint8_t(c);
+  }
+
+  if (uint8_t(chkbuf[0]) != chk) {
+    return tos::unexpected(slave_errors::checksum_error);
+  }
+
+  node_data s;
+  memcpy(&s, buf.data(), sizeof(node_data));
+  return s;
 }
 
 tos::event rtc_ev;
-void rtc_isr(void)
-{
-    rtc_clear_flag(RTC_SEC);
 
-    rtc_ev.fire_isr();
+void rtc_isr(void) {
+  rtc_clear_flag(RTC_SEC);
+  rtc_ev.fire_isr();
 }
 
-auto xbee_task = [](auto& g, auto& log)
-{
-    using namespace tos::tos_literals;
-    using namespace std::chrono_literals;
-    namespace xbee = tos::xbee;
-
-    auto tmr = tos::open(tos::devs::timer<2>);
-    auto alarm = tos::open(tos::devs::alarm, tmr);
-
-    setup_usart0(g);
-    auto xbee_ser = tos::open(tos::devs::usart<0>, tos::uart::default_9600);
-    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART1_TX);
-
-    auto dht_pin = 1_pin;
-    g.set_pin_mode(dht_pin, tos::pin_mode::in_pullup);
-
-    disable_usart1(g);
-    g.set_pin_mode(7_pin, tos::pin_mode::out);
-    g.write(7_pin, tos::digital::low);
-
-    auto d = tos::make_dht(g, delay);
-
-    g.set_pin_mode(11_pin, tos::pin_mode::out);
-    g.write(11_pin, tos::digital::low);
-    alarm.sleep_for(100ms); // let it die
-
-    tos::stm32::twim t { 22_pin, 23_pin };
-
-    tos::ina219<tos::stm32::twim&> ina{ tos::twi_addr_t{0x40}, t };
-    using namespace tos::bme280;
-    bme280 b{ {BME280_I2C_ADDR_PRIM}, &t, delay };
-    b.set_config();
-
-    auto rd_slv = [&g, &alarm] {
-        iwdg_reset();
-
-        setup_usart1(g);
-        auto slave_uart = tos::open(tos::devs::usart<1>, tos::uart::default_9600);
-        gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-                      GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
-
-        auto r = read_slave(g, slave_uart, alarm);
-        iwdg_reset();
-
-        disable_usart1(g);
-        return r;
-    };
-
-    uint32_t lp = 0;
-    while (true)
-    {
-        g.write(45_pin, tos::digital::low);
-
-        iwdg_reset();
-
-        tos::stm32::adc a { &tos::stm32::detail::adcs[0] };
-
-        uint8_t x[1];
-        x[0] = 16;
-        a.set_channels(x);
-
-        uint32_t cpu_temp = [&]{
-            tos::int_guard ig;
-            uint32_t total = 0;
-            for (int i = 0; i < 100; ++i)
-            {
-                total += a.read();
-            }
-            return total / 100;
-        }();
-
-        constexpr auto v25 = 1700;
-        constexpr auto slope = 2;
-
-        auto read_c = [&]{
-            float v = a.read();
-            return (v25 - v) / slope + 25;
-        };
-
-        auto slv = rd_slv();
-
-        int curr = ina.getCurrent_mA();
-        int v = ina.getBusVoltage_V();
-        iwdg_reset();
-
-        int tries = 1;
-        auto res = d.read(dht_pin);
-
-        while (res != tos::dht_res::ok && tries < 5) {
-            tos::println(log, "dht non-responsive");
-            alarm.sleep_for(2s);
-            res = d.read(dht_pin);
-            ++tries;
-            iwdg_reset();
-        }
-
-        if (tries == 5) {
-            d.temperature = -1;
-            d.humidity = -1;
-        }
-
-        std::array<temp::sample, 2> samples = {
-                temp::sample{d.temperature, d.humidity, float(cpu_temp)},
-                {}
-        };
-
-        if (slv)
-        {
-            samples[1] = force_get(slv);
-        }
-
-        b->enable();
-        delay(70ms);
-        auto bme_res = b->read();
-        b->sleep();
-
-        std::array<char, 80> buf;
-        tos::msgpack::packer p{buf};
-        auto arr = p.insert_arr(8 + (slv ? 4 : 0) + (bme_res ? 3 : 0));
-
-        arr.insert(lp++);
-
-        arr.insert(uint32_t(temp::master_id));
-        arr.insert(samples[0].temp);
-        arr.insert(samples[0].humid);
-        arr.insert(samples[0].cpu);
-
-        arr.insert(bool(slv));
-        if (slv)
-        {
-            arr.insert(uint32_t(temp::slave_id));
-            arr.insert(samples[1].temp);
-            arr.insert(samples[1].humid);
-            arr.insert(samples[1].cpu);
-        }
-
-        arr.insert(int32_t(curr));
-        arr.insert(int32_t(v));
-
-        if (bme_res)
-        {
-            auto [pres, temp, humid] = force_get(bme_res);
-
-            arr.insert(pres);
-            arr.insert(temp);
-            arr.insert(humid);
-        }
-
-        g.write(11_pin, tos::digital::high);
-
-        alarm.sleep_for(100ms); // let it wake up
-        auto r = xbee::read_modem_status(xbee_ser, alarm);
-
-        if (!r)
-        {
-            tos::println(log, "xbee non responsive");
-        }
-
-        constexpr xbee::addr_16 base_addr{0x0001};
-
-        xbee::tx16_req req{base_addr, tos::raw_cast<const uint8_t>(p.get()), xbee::frame_id_t{0xAB}};
-        iwdg_reset();
-        xbee::write_to(xbee_ser, req);
-
-        alarm.sleep_for(100ms);
-        auto tx_r = xbee::read_tx_status(xbee_ser, alarm);
-
-        if (tx_r) {
-            auto &res = tos::force_get(tx_r);
-            if (res.status == xbee::tx_status::statuses::success) {
-                tos::println(log, "xbee sent!");
-            } else {
-                tos::println(log, "xbee send failed");
-            }
-        } else {
-            tos::println(log, "xbee non responsive");
-        }
-
-        g.write(11_pin, tos::digital::low);
-
-        tos::println(log, "sleeping...");
-        iwdg_reset();
-        //tos::this_thread::block_forever();
-
-        auto slept = 0s;
-
-        g.write(45_pin, tos::digital::high);
-        nvic_enable_irq(NVIC_RTC_IRQ);
-        rtc_interrupt_enable(RTC_SEC);
-
-        while (slept < 5s)
-        {
-            rtc_ev.wait();
-            iwdg_reset();
-            slept += 1s;
-        }
-
-        rtc_interrupt_disable(RTC_SEC);
-        nvic_disable_irq(NVIC_RTC_IRQ);
-    }
+struct ina_data {
+  int32_t voltage;
+  int32_t current;
 };
 
-static tos::stack_storage<1576> sstack __attribute__ ((section (".noinit")));
-void master_task()
+struct data {
+  uint32_t seq;
+  node_data master;
+  std::optional<node_data> slave;
+  std::optional<bme280_data> bme;
+  ina_data ina;
+};
+
+void pack(tos::msgpack::packer &p, const data &d) {
+  auto arr = p.insert_arr(8 + (d.slave ? 4 : 0) + (d.bme ? 3 : 0));
+  arr.insert(d.seq);
+
+  arr.insert(uint32_t(temp::master_id));
+  arr.insert(d.master.dht.temp);
+  arr.insert(d.master.dht.humid);
+  arr.insert(d.master.cpu);
+
+  arr.insert(bool(d.slave));
+  if (d.slave) {
+    arr.insert(uint32_t(temp::slave_id));
+    arr.insert(d.slave->dht.temp);
+    arr.insert(d.slave->dht.humid);
+    arr.insert(d.slave->cpu);
+  }
+
+  arr.insert(int32_t(d.ina.current));
+  arr.insert(int32_t(d.ina.voltage));
+
+  if (d.bme) {
+    auto[pres, temp, humid] = *d.bme;
+
+    arr.insert(pres);
+    arr.insert(temp);
+    arr.insert(humid);
+  }
+}
+
+void rtc_sleep(std::chrono::seconds len) {
+  using namespace std::chrono_literals;
+  auto slept = 0s;
+
+  nvic_enable_irq(NVIC_RTC_IRQ);
+  rtc_interrupt_enable(RTC_SEC);
+
+  while (slept < len) {
+    rtc_ev.wait();
+    iwdg_reset();
+    slept += 1s;
+  }
+
+  rtc_interrupt_disable(RTC_SEC);
+  nvic_disable_irq(NVIC_RTC_IRQ);
+}
+
+static tos::fixed_fifo<data, 20> backlog;
+auto sense_task = [](auto &g, auto &alarm)
 {
-    rtc_auto_awake(RCC_LSE, 0x7fff);
-    nvic_set_priority(NVIC_RTC_IRQ, 1);
+  using namespace tos::tos_literals;
+  using namespace std::chrono_literals;
 
-    iwdg_set_period_ms(15'000);
-    iwdg_start();
-    using namespace tos::tos_literals;
-    using namespace std::chrono_literals;
+  auto dht_pin = 1_pin;
+  g.set_pin_mode(dht_pin, tos::pin_mode::in_pullup);
 
-    namespace xbee = tos::xbee;
+  disable_usart1(g);
+  g.set_pin_mode(7_pin, tos::pin_mode::out);
+  g.write(7_pin, tos::digital::low);
 
-    auto g = tos::open(tos::devs::gpio);
+  auto d = tos::make_dht(g, delay);
 
-    g.set_pin_mode(45_pin, tos::pin_mode::out);
+  tos::stm32::twim t{22_pin, 23_pin};
 
-    for (int i = 0; i < 3; ++i)
-    {
-        g.write(45_pin, tos::digital::high);
-        delay(500ms);
-        g.write(45_pin, tos::digital::low);
-        delay(500ms);
+  tos::ina219<tos::stm32::twim &> ina{tos::twi_addr_t{0x40}, t};
+
+  using namespace tos::bme280;
+  bme280 b{{BME280_I2C_ADDR_PRIM}, &t, delay};
+  b.set_config();
+
+  auto rd_slv = [&g, &alarm] {
+    iwdg_reset();
+
+    setup_usart1(g);
+    auto slave_uart = tos::open(tos::devs::usart<1>, tos::uart::default_9600);
+    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
+                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
+
+    auto r = read_slave(g, slave_uart, alarm);
+    iwdg_reset();
+
+    disable_usart1(g);
+    return r;
+  };
+
+  uint32_t lp = 0;
+  while (true)
+  {
+    g.write(45_pin, tos::digital::low);
+    iwdg_reset();
+
+    tos::stm32::adc a{&tos::stm32::detail::adcs[0]};
+
+    uint8_t x[1];
+    x[0] = 16;
+    a.set_channels(x);
+
+    uint32_t cpu_temp = [&] {
+      tos::int_guard ig;
+      uint32_t total = 0;
+      for (int i = 0; i < 100; ++i) {
+        total += a.read();
+      }
+      return total / 100;
+    }();
+
+    auto slv = rd_slv();
+
+    int tries = 1;
+    auto res = d.read(dht_pin);
+
+    while (res != tos::dht_res::ok && tries < 5) {
+      alarm.sleep_for(2s);
+      res = d.read(dht_pin);
+      ++tries;
+      iwdg_reset();
     }
+
+    if (tries == 5) {
+      d.temperature = -1;
+      d.humidity = -1;
+    }
+
+    data sample;
+    b->enable();
+    alarm->sleep_for(70ms);
+    sample.bme = b->read();
+    b->sleep();
+
+    sample.seq = lp++;
+    sample.slave = slv;
+    sample.master.dht.temp = d.temperature;
+    sample.master.dht.humid = d.humidity;
+    sample.master.cpu = cpu_temp;
+    sample.ina.current = ina.getCurrent_mA();
+    sample.ina.voltage = ina.getBusVoltage_V();
+
+    backlog.push(std::move(sample));
+
+    iwdg_reset();
     g.write(45_pin, tos::digital::high);
+    rtc_sleep(5s);
+  }
+};
 
-    struct x : tos::self_pointing<x> {
-        int write(tos::span<const char> x) { return x.size(); }
-    } l;
+auto xbee_task = [](auto &g, auto &log, auto &alarm) {
+  using namespace tos::tos_literals;
+  using namespace std::chrono_literals;
+  namespace xbee = tos::xbee;
 
-    tos::semaphore s{0};
-    tos::launch(sstack, [&]{
-        xbee_task(g, l);
-       s.up();
-    });
-    s.down();
+  setup_usart0(g);
+  auto xbee_ser = tos::open(tos::devs::usart<0>, tos::uart::default_9600);
+  gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
+                GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART1_TX);
+
+  g.set_pin_mode(11_pin, tos::pin_mode::out);
+  g.write(11_pin, tos::digital::low);
+  alarm.sleep_for(100ms); // let it die
+
+  while (true) {
+    auto sample = backlog.pop();
+
+    std::array<char, 80> buf;
+    tos::msgpack::packer p{buf};
+
+    pack(p, sample);
+
+    bool sent = false;
+    do {
+      g.write(11_pin, tos::digital::high);
+
+      alarm.sleep_for(100ms); // let it wake up
+      auto r = xbee::read_modem_status(xbee_ser, alarm);
+
+      if (!r) {
+        tos::println(log, "xbee non responsive");
+      }
+
+      constexpr xbee::addr_16 base_addr{0x0001};
+
+      xbee::tx16_req req{base_addr, tos::raw_cast<const uint8_t>(p.get()), xbee::frame_id_t{0xAB}};
+      iwdg_reset();
+      xbee::write_to(xbee_ser, req);
+
+      alarm.sleep_for(100ms);
+      auto tx_r = xbee::read_tx_status(xbee_ser, alarm);
+
+      if (tx_r) {
+        auto &res = tos::force_get(tx_r);
+        if (res.status == xbee::tx_status::statuses::success) {
+          tos::println(log, "xbee sent!");
+          sent = true;
+        } else {
+          tos::println(log, "xbee send failed");
+        }
+      } else {
+        tos::println(log, "xbee non responsive");
+      }
+
+      g.write(11_pin, tos::digital::low);
+
+      if (!sent)
+      {
+        alarm.sleep_for(5s);
+        iwdg_reset();
+        alarm.sleep_for(5s);
+        iwdg_reset();
+      }
+    } while (!sent);
+  }
+};
+
+static tos::stack_storage<1576> xbee_stack;
+static tos::stack_storage<1576> sense_stack;
+
+void master_task() {
+  rtc_auto_awake(RCC_LSE, 0x7fff);
+  nvic_set_priority(NVIC_RTC_IRQ, 1);
+
+  iwdg_set_period_ms(15'000);
+  iwdg_start();
+  using namespace tos::tos_literals;
+  using namespace std::chrono_literals;
+
+  namespace xbee = tos::xbee;
+
+  auto g = tos::open(tos::devs::gpio);
+
+  g.set_pin_mode(45_pin, tos::pin_mode::out);
+
+  for (int i = 0; i < 3; ++i) {
+    g.write(45_pin, tos::digital::high);
+    delay(200ms);
+    g.write(45_pin, tos::digital::low);
+    delay(200ms);
+  }
+  g.write(45_pin, tos::digital::high);
+
+  struct x : tos::self_pointing<x> {
+    int write(tos::span<const char> x) { return x.size(); }
+  } l;
+
+  auto tmr = tos::open(tos::devs::timer<2>);
+  auto alarm = tos::open(tos::devs::alarm, tmr);
+
+  tos::launch(sense_stack, [&] {
+    sense_task(g, alarm);
+  });
+
+  tos::launch(xbee_stack, [&] {
+    xbee_task(g, l, alarm);
+  });
+
+  tos::this_thread::block_forever();
 }
 
 static tos::stack_storage<1024> stack;
-void tos_main()
-{
-    tos::launch(stack, master_task);
+
+void tos_main() {
+  tos::launch(stack, master_task);
 }
