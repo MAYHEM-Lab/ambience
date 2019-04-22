@@ -40,7 +40,7 @@ void task()
         auto alarm = tos::open(tos::devs::alarm, timer);
 
         tos::println(usart, "Logger thread running");
-        tos::println(usart, "Logger thread:", tos::impl::cur_thread->get_context()[0]);
+        tos::println(usart, "Logger thread:", tos::impl::cur_thread->get_ctx().buf[0]);
 
         while (true)
         {
