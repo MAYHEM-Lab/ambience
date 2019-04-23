@@ -63,12 +63,10 @@ static int
 sock_write(void *ctx, const unsigned char *buf, size_t len)
 {
     auto ptr = static_cast<tcp_ptr>(ctx);
-    for (;;) {
-        tos_debug_print("write %d\n", int(len));
-        if (ptr->disconnected())
-            return -1;
-        return ptr->write({ (const char*)buf, len });
-    }
+    tos_debug_print("write %d\n", int(len));
+    if (ptr->disconnected())
+        return -1;
+    return ptr->write({ (const char*)buf, len });
 }
 
 /*
