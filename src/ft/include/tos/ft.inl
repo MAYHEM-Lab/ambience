@@ -22,43 +22,6 @@ namespace tos {
             return { reinterpret_cast<uintptr_t>(impl::cur_thread) };
         }
     }
-
-    enum class return_codes : uint8_t
-    {
-        saved = 0,
-        /**
-         * the running thread yielded
-         */
-        yield,
-        /**
-         * the running thread has been suspended
-         */
-        suspend,
-        /**
-         * a thread exited
-         */
-        do_exit,
-        /**
-         * this thread was assigned the cpu
-         */
-        scheduled
-    };
-}
-
-namespace tos
-{
-    [[noreturn]] inline void switch_context(kern::ctx& j, return_codes rc)
-    {
-        longjmp(j.buf, static_cast<int>(rc));
-
-        __builtin_unreachable();
-    }
-    [[noreturn]] inline void switch_context(jmp_buf& j, return_codes rc)
-    {
-        longjmp(j, static_cast<int>(rc));
-
-        __builtin_unreachable();
-    }
 }
 
 namespace tos {
@@ -70,7 +33,7 @@ namespace tos {
         {
             tos::int_guard ig;
             kern::ctx ctx;
-            if (save_context(*impl::cur_thread, ctx) == (int) return_codes::saved) {
+            if (save_context(*impl::cur_thread, ctx) == return_codes::saved) {
                 kern::make_runnable(*impl::cur_thread);
                 switch_context(sched.main_context, return_codes::yield);
             }
@@ -101,7 +64,7 @@ namespace tos {
             //tos_debug_print("suspend %p\n", impl::cur_thread);
 
             kern::ctx ctx;
-            if (save_context(*impl::cur_thread, ctx) == (int) return_codes::saved) {
+            if (save_context(*impl::cur_thread, ctx) == return_codes::saved) {
                 switch_context(sched.main_context, return_codes::suspend);
             }
         }
@@ -187,7 +150,7 @@ namespace tos {
             auto ctx_ptr = new ((char*)&t - sizeof(ctx)) ctx;
 
             kern::disable_interrupts();
-            if (save_context(t, *ctx_ptr) == (int) return_codes::saved) {
+            if (save_context(t, *ctx_ptr) == return_codes::saved) {
                 kern::enable_interrupts();
                 return { reinterpret_cast<uintptr_t>(static_cast<tcb*>(&t)) };
             }
@@ -242,7 +205,7 @@ namespace tos {
                     return exit_reason::power_down;
                 }
 
-                auto why = static_cast<return_codes>(setjmp(sched.main_context));
+                auto why = static_cast<return_codes>(save_ctx(sched.main_context));
 
                 switch (why) {
                     case return_codes::saved:

@@ -101,7 +101,7 @@ namespace tos {
     namespace kern {
         struct scheduler
         {
-            jmp_buf main_context{};
+            ctx main_context{};
             int8_t  num_threads = 0;
             uint8_t busy = 0;
 
