@@ -21,6 +21,12 @@
 #include <common/inet/tcp_stream.hpp>
 
 #include <bearssl.h>
+#include <lwip_sntp/sntp.h>
+
+br_ssl_client_context sc;
+br_x509_minimal_context xc;
+unsigned char iobuf[BR_SSL_BUFSIZE_MONO];
+br_sslio_context ioc;
 
 using tcp_ptr = tos::tcp_stream<tos::esp82::tcp_endpoint>*;
 /*
@@ -32,6 +38,7 @@ sock_read(void *ctx, unsigned char *buf, size_t len)
     auto ptr = static_cast<tcp_ptr>(ctx);
     for (;;) {
         auto res = ptr->read({ (char*)buf, len });
+        tos_debug_print("heap: %d\n", int(int(system_get_free_heap_size())));
 
         if (!res)
         {
@@ -55,13 +62,12 @@ sock_read(void *ctx, unsigned char *buf, size_t len)
 static int
 sock_write(void *ctx, const unsigned char *buf, size_t len)
 {
+    tos::this_thread::yield();
     auto ptr = static_cast<tcp_ptr>(ctx);
-    for (;;) {
-        tos_debug_print("write %d\n", int(len));
-        if (ptr->disconnected())
-            return -1;
-        return ptr->write({ (const char*)buf, len });
-    }
+    tos_debug_print("write %p %d\n", buf, int(len));
+    if (ptr->disconnected())
+        return -1;
+    return ptr->write({ (const char*)buf, len });
 }
 
 extern "C" void optimistic_yield(uint32_t){
@@ -75,10 +81,6 @@ extern "C" void optimistic_yield(uint32_t){
     }
 }
 
-br_ssl_client_context sc;
-br_x509_minimal_context xc;
-unsigned char iobuf[BR_SSL_BUFSIZE_MONO];
-br_sslio_context ioc;
 static const unsigned char TA0_DN[] = {
     0x30, 0x13, 0x31, 0x11, 0x30, 0x0F, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13,
     0x08, 0x62, 0x61, 0x6B, 0x69, 0x72, 0x2E, 0x69, 0x6F
@@ -127,16 +129,20 @@ static const br_x509_trust_anchor TAs[1] = {
     }
 };
 
+
 template <class BaseT>
 struct ssl_wrapper : public tos::self_pointing<ssl_wrapper<BaseT>>
 {
 public:
-    template <class BaseU>
-    ssl_wrapper(BaseU&& base) : m_base(std::forward<BaseU>(base)) {
+    ssl_wrapper(tos::tcp_stream<tos::esp82::tcp_endpoint>& base) : m_base(base) {
         br_ssl_client_init_full(&sc, &xc, TAs, 1);
         br_ssl_engine_set_buffer(&sc.eng, iobuf, sizeof iobuf, 1);
+        tos_debug_print("err %d\n", int(br_ssl_engine_last_error(&sc.eng)));
 
-        br_ssl_client_reset(&sc, "bakir.io", 0);
+        if (!br_ssl_client_reset(&sc, "bakir.io", 0))
+        {
+            tos_debug_print("ssl_reset failed\n");
+        }
 
         br_sslio_init(&ioc, &sc.eng, sock_read, &m_base, sock_write, &m_base);
     }
@@ -144,20 +150,29 @@ public:
     size_t write(tos::span<const char> buf)
     {
         auto res = br_sslio_write_all(&ioc, buf.data(), buf.size());
-        if (res == -1) return 0;
+        if (res != 0) {
+            tos_debug_print("err %d %d\n", res, int(br_ssl_engine_last_error(&sc.eng)));
+            return 0;
+        }
         br_sslio_flush(&ioc);
         return buf.size();
     }
 
-    tos::span<char> read(tos::span<char> buf)
+    tos::expected<tos::span<char>, int> read(tos::span<char> buf)
     {
-        auto len = br_sslio_read_all(&ioc, buf.data(), buf.size());
+        auto len = br_sslio_read(&ioc, buf.data(), buf.size());
+        if (len == -1)
+        {
+            tos_debug_print("errr %d\n", int(br_ssl_engine_last_error(&sc.eng)));
+            return tos::unexpected(5);
+            // error
+        }
         return buf.slice(0, len);
     }
 
 private:
 
-    BaseT m_base;
+    tos::tcp_stream<tos::esp82::tcp_endpoint>& m_base;
 };
 
 char buf[512];
@@ -188,6 +203,15 @@ void task()
             tos::println(usart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
         }, tos::ignore);
 
+        sntp_set_timezone(0);
+        tos::ipv4_addr_t taddr { 128, 111, 1, 5 };
+        ip_addr_t addr;
+        memcpy(&addr.addr, &taddr, 4);
+        sntp_setserver(0, &addr);
+        sntp_init();
+
+        do_sntp_request();
+
         for (int i = 0; i < 1500; ++i)
         {
             with(tos::esp82::connect(conn, { { 3, 122, 138, 41 } }, { 443 }), [&](tos::esp82::tcp_endpoint& conn){
@@ -196,22 +220,23 @@ void task()
                 tos::tcp_stream<tos::esp82::tcp_endpoint> stream(std::move(conn));
 
                 ssl_wrapper<decltype((stream))> ssl(stream);
+                system_soft_wdt_stop();
 
                 ssl.write("GET / HTTP/1.1\r\n"
                              "Host: bakir.io\r\n"
                              "Connection: close\r\n"
                              "\r\n");
 
-                tos::println(usart);
-
                 while (true)
                 {
                     auto res = ssl.read(buf);
-                    if (res.empty()) break;
-                    tos::print(usart, res);
+                    if (!res) break;
+                    auto r = force_get(res);
+                    tos::print(usart, r);
                     tos::this_thread::yield();
                 }
                 tos::println(usart);
+                system_soft_wdt_restart();
             }, [&](auto& err){
                 tos::println(usart, "couldn't connect", int(err));
             });
@@ -226,7 +251,8 @@ void task()
     tos::this_thread::block_forever();
 }
 
+tos::stack_storage<1024 * 6> stk;
 void tos_main()
 {
-    tos::launch(tos::alloc_stack, task);
+    tos::launch(stk, task);
 }
