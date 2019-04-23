@@ -186,14 +186,14 @@ void task()
     tos::println(usart, tos::platform::board_name);
     tos::println(usart, tos::vcs::commit_hash);
 
-    lwip_init();
-
     tos::esp82::wifi w;
     conn:
-    auto res = w.connect("cs190b", "cs190bcs190b");
+    auto res = w.connect("mayhem", "z00mz00m");
 
-    tos::println(usart, "connected?", bool(res));
-    if (!res) goto conn;
+    tos::println(usart, "connectedd?", bool(res));
+    if (!res) {
+        goto conn;
+    }
 
     with (std::move(res), [&](tos::esp82::wifi_connection& conn){
         tos::println(usart, "in");
@@ -235,6 +235,7 @@ void task()
                     tos::print(usart, r);
                     tos::this_thread::yield();
                 }
+                
                 tos::println(usart);
                 system_soft_wdt_restart();
             }, [&](auto& err){
