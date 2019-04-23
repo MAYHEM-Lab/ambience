@@ -11,7 +11,7 @@ namespace tos
 {
     namespace nrf52
     {
-        static constexpr nrfx_twim_t twim0 { NRF_TWIM0, NRFX_TWIM0_INST_IDX };
+        static const nrfx_twim_t twim0 { NRF_TWIM0, NRFX_TWIM0_INST_IDX };
 
         struct data_t
         {
