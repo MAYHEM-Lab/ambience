@@ -11,23 +11,6 @@
 
 namespace tos
 {
-    namespace tags
-    {
-        struct stack_ptr_t {};
-        struct entry_pt_t {};
-        struct stack_sz_t {};
-        struct argument_t {};
-    } // namespace tags
-
-    using launch_params =
-    ct_map<
-        base_key_policy,
-        el_t<tags::stack_ptr_t, void* const &>,
-        el_t<tags::stack_sz_t, const size_t&>,
-        el_t<tags::entry_pt_t, void(* const&)(void*)>,
-        el_t<tags::argument_t, void* const&>
-    >;
-
     namespace this_thread {
         /**
          * Returns a platform dependent identifier of the current task.

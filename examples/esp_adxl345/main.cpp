@@ -9,6 +9,9 @@
 #include <common/gpio.hpp>
 #include <common/inet/tcp_stream.hpp>
 #include <cwpack.hpp>
+#include <boost/pfr/flat/core.hpp>
+#include <boost/pfr/detail/for_each_field_impl.hpp>
+#include <boost/pfr/detail/core17.hpp>
 
 struct vec3i {
   int32_t x, y, z;
@@ -53,6 +56,67 @@ auto wifi_connect()
 
   return std::make_pair(w, std::move(wconn));
 }
+namespace tos
+{
+  namespace msgpack
+  {
+    template <class PackerT, class T>
+    void pack(PackerT& p, const T& value);
+
+    template <class PackerT>
+    void pack_one(PackerT& p, int32_t i) { p.insert(i); }
+
+    template <class PackerT>
+    void pack_one(PackerT& p, const std::string& i) { p.insert(i); }
+
+    template <class PackerT>
+    void pack_one(PackerT& p, float i) { p.insert(i); }
+
+    template <class PackerT>
+    void pack_one(PackerT& p, double i) { p.insert(i); }
+
+    template <class PackerT, class T>
+    void pack_one(PackerT& p, const T& t)
+    {
+      pack(p, t);
+    }
+
+    template <template <class...> class TupleT, class... Ts, size_t... Is>
+    void pack_tup(arr_packer& ap, const TupleT<Ts...>& tup, std::index_sequence<Is...>)
+    {
+      using std::get;
+      (pack_one(ap, get<Is>(tup)), ...);
+    }
+
+    template <class PackerT, class T>
+    void pack(PackerT& p, const T& value) {
+      constexpr std::size_t fields_count_val = boost::pfr::detail::fields_count<std::remove_reference_t<T>>();
+
+      auto arr = p.insert_arr(fields_count_val);
+
+      boost::pfr::detail::for_each_field_dispatcher(
+          value,
+          [&arr](const auto& val) {
+            pack_tup(arr, val, std::make_index_sequence<fields_count_val>{});
+          },
+          boost::pfr::detail::make_index_sequence<fields_count_val>{}
+      );
+    }
+  }
+}
+
+template <class StreamT, class ElemT>
+void push(StreamT& stream, const char* schema, const ElemT& elem)
+{
+  std::array<char, 32> buf;
+  tos::msgpack::packer p{buf};
+  pack(p, elem);
+  auto sp = p.get();
+  std::strncpy(buf.begin() + sp.size(), schema, buf.size() - sp.size());
+  buf[sp.size() + strlen(schema)] = strlen(schema);
+  stream->write(tos::span(buf).slice(0, sp.size() + strlen(schema) + 1));
+  tos::this_thread::yield();
+}
 
 auto wifi_task = []{
   auto [w, conn] = wifi_connect();
@@ -63,22 +127,10 @@ auto wifi_task = []{
     if (!try_conn) continue;
 
     auto& conn = force_get(try_conn);
-
-    auto elem = fifo.pop();
-    std::array<char, 32> buf;
-    tos::msgpack::packer p{buf};
-    auto arr = p.insert_arr(3);
-    arr.insert(elem.x);
-    arr.insert(elem.y);
-    arr.insert(elem.z);
-    auto sp = p.get();
-    auto schema = "bakir/adxl";
-    std::strncpy(buf.begin() + sp.size(), schema, buf.size() - sp.size());
-    buf[sp.size() + strlen(schema)] = strlen(schema);
-
     tos::tcp_stream<tos::esp82::tcp_endpoint> stream{std::move(conn)};
 
-    stream->write(tos::span(buf).slice(0, sp.size() + strlen(schema) + 1));
+    auto elem = fifo.pop();
+    push(stream, "bakir/adxl", elem);
   }
 };
 

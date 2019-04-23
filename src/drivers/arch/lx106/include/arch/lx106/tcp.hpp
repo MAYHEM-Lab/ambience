@@ -54,7 +54,8 @@ namespace tos
 
             friend struct ep_handlers;
 
-            friend expected<tcp_endpoint, lwip::connect_error> connect(wifi_connection&, ipv4_addr_t, port_num_t);
+            friend expected<tcp_endpoint, lwip::connect_error>
+            connect(wifi_connection&, ipv4_addr_t, port_num_t);
 
             friend void null_err_handler(void *user, err_t err);
 
@@ -464,6 +465,9 @@ namespace tos
             return ERR_OK;
         }
 
+        /**
+         * Handles the err event of lwip during the initial TCP connection
+         */
         inline void conn_err_handler(void* arg, err_t err)
         {
             auto state = static_cast<conn_state*>(arg);
