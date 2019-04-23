@@ -164,7 +164,7 @@ public:
         if (len == -1)
         {
             tos_debug_print("errr %d\n", int(br_ssl_engine_last_error(&sc.eng)));
-            return tos::unexpected(5);
+            return tos::unexpected(br_ssl_engine_last_error(&sc.eng));
             // error
         }
         return buf.slice(0, len);
