@@ -26,13 +26,5 @@ target_link_libraries(esp_adapters PUBLIC tos_core)
 target_link_libraries(esp_adapters PUBLIC "-Wl,--undefined=malloc -Wl,--undefined=free -Wl,--undefined=isxdigit")
 tos_install(esp_adapters)
 
-if (USE_SSL)
-  target_include_directories(lx106_impl PUBLIC "${SDK_ROOT}/axtls-8266/")
-  target_include_directories(lx106_impl PUBLIC "${SDK_ROOT}/axtls-8266/crypto")
-  target_include_directories(lx106_impl PUBLIC "${SDK_ROOT}/axtls-8266/ssl")
-  target_compile_definitions(lx106_impl PUBLIC TOS_HAVE_SSL)
-  target_link_libraries(lx106_impl PUBLIC axtls)
-endif()
-
 set_target_properties(lx106_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)
 target_link_libraries(lx106_impl PUBLIC "-Wl,--start-group -lmain -lnet80211 -lwpa -lpp -lphy -lssl -lcrypto -Wl,--end-group -lgcc")

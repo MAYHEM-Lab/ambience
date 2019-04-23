@@ -7,23 +7,10 @@
 
 extern "C"
 {
-#include <mem.h>
-/*void *malloc(size_t sz) {
-    return os_malloc(sz);
+int gettimeofday(struct timeval *t, void *timezone) {
+  return -1;
 }
 
-void free(void *ptr) {
-    os_free(ptr);
-}
-
-void* calloc(size_t nitems, size_t size)
-{
-    return os_zalloc(nitems * size);
-}*/
-}
-
-extern "C"
-{
 int isxdigit(int c)
 {
     auto in_range = [](auto c, auto lo, auto up)
