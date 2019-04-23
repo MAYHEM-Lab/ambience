@@ -80,6 +80,7 @@ namespace tos
     inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t, BaseEndpointT &, lwip::discon_reason r) {
         m_discon = true;
         m_write_sync.up();
+        m_buffer.eof();
 #ifdef ESP_TCP_VERBOSE
         tos_debug_print("closed: %d\n", int(r));
 #endif
@@ -121,7 +122,7 @@ namespace tos
 
     template <class BaseEndpointT>
     expected<span<char>, read_error> tcp_stream<BaseEndpointT>::read(tos::span<char> to) {
-        if (m_discon)
+        if (m_discon && m_buffer.size() == 0)
         {
             return unexpected(read_error::disconnected);
         }
@@ -130,7 +131,7 @@ namespace tos
 
         auto res = m_buffer.read(to);
 
-        if (m_discon)
+        if (m_discon && res.size() == 0)
         {
             return unexpected(read_error::disconnected);
         }
