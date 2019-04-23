@@ -80,6 +80,10 @@ namespace tos
 
         constexpr explicit PURE operator bool() const { return bool(m_internal); }
 
+        constexpr bool operator!() {
+            return bool(*this);
+        }
+
         template <class ResT, typename = std::enable_if_t<!std::is_same_v<T, ResT>>>
         constexpr operator expected<ResT, ErrT>() const
         {
@@ -92,7 +96,7 @@ namespace tos
             return unexpected(m_internal.error());
         }
 
-        constexpr operator std::optional<T>() const
+        explicit constexpr operator std::optional<T>() const
         {
           if (!*this)
           {

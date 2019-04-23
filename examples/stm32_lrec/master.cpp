@@ -300,11 +300,11 @@ auto sense_task = [](auto &g, auto &alarm)
     data sample;
     b->enable();
     alarm->sleep_for(70ms);
-    sample.bme = b->read();
+    sample.bme = std::optional<bme280_data>(b->read());
     b->sleep();
 
     sample.seq = lp++;
-    sample.slave = slv;
+    sample.slave = std::optional<node_data>(slv);
     sample.master.dht.temp = d.temperature;
     sample.master.dht.humid = d.humidity;
     sample.master.cpu = cpu_temp;

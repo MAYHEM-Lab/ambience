@@ -26,10 +26,9 @@ auto task = []{
     sensor.setRangeSetting(2);
     tos::println(usart, "on");
 
-    int x, y, z;
-    sensor.readAccel(&x, &y, &z);
+    auto res = sensor.read();
 
-    tos::println(usart, x, y, z);
+    tos::println(usart, res.x, res.y, res.z);
     tos::this_thread::block_forever();
 };
 
