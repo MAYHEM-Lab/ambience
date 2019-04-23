@@ -71,11 +71,11 @@ elseif(TOS_ESP)
 
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/mqtt")
         add_subdirectory(libs/mqtt)
+        add_subdirectory(examples/esp_mqtt)
     endif()
 
     add_subdirectory(examples/esp_lwip)
     add_subdirectory(examples/esp_conn)
-    #add_subdirectory(examples/esp_mqtt)
     #add_subdirectory(examples/esp_ssl)
     add_subdirectory(examples/esp_spi)
     add_subdirectory(examples/esp_adc)
@@ -92,7 +92,6 @@ elseif(TOS_ESP)
 
     add_subdirectory(examples/esp_adxl345)
 elseif(TOS_X86)
-
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/cspot_lite")
         add_subdirectory(apps/cspot_lite)
     endif()
