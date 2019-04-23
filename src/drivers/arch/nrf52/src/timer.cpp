@@ -12,7 +12,7 @@ namespace tos
 {
     namespace nrf52
     {
-        static constexpr nrfx_timer_t tmr = { NRF_TIMER0, NRFX_TIMER0_INST_IDX, TIMER0_CC_NUM };
+        static const nrfx_timer_t tmr = { NRF_TIMER0, NRFX_TIMER0_INST_IDX, TIMER0_CC_NUM };
 
         timer0::timer0() : m_cb(+[](void*){}) {
             nrfx_timer_config_t conf;
