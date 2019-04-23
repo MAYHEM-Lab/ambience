@@ -12,26 +12,6 @@ extern "C"
 
 extern "C"
 {
-void* malloc(size_t sz)
-{
-    return os_malloc(sz);
-}
-
-void free(void* ptr)
-{
-    os_free(ptr);
-}
-
-void* calloc(size_t nitems, size_t size)
-{
-    return os_zalloc(nitems * size);
-}
-
-void* realloc(void* base, size_t sz)
-{
-    return os_realloc(base, sz);
-}
-
 void ax_wdt_feed()
 {
     system_soft_wdt_feed();

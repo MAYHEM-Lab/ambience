@@ -17,9 +17,9 @@
 #include <caps/emsha_signer.hpp>
 #include "monotonic_clock.hpp"
 
-uint32_t last_yield = 0;
 
 extern "C" void optimistic_yield(uint32_t){
+    static uint32_t last_yield = 0;
     if (system_get_time() - last_yield > 1'000'000  || last_yield == 0)
     {
         tos_debug_print("yielding\n");

@@ -29,13 +29,13 @@ namespace tos
 {
     namespace esp82
     {
-        class tcp_endpoint
+        class tcp_endpoint : public non_copyable
         {
         public:
             tcp_endpoint() = delete;
 
             tcp_endpoint(tcp_endpoint&& rhs) noexcept;
-            tcp_endpoint(const tcp_endpoint&) = delete;
+            tcp_endpoint& operator=(tcp_endpoint&&) = delete;
 
             template <class EventHandlerT>
             void attach(EventHandlerT& cb);
@@ -57,9 +57,13 @@ namespace tos
             friend expected<tcp_endpoint, lwip::connect_error>
             connect(wifi_connection&, ipv4_addr_t, port_num_t);
 
+            friend void null_err_handler(void *user, err_t err);
+
             tcp_pcb* m_conn;
             void* m_event_handler;
         };
+
+      void null_err_handler(void *user, err_t err);
 
 #if defined(TOS_HAVE_SSL)
         class secure_tcp_endpoint
@@ -188,6 +192,7 @@ namespace tos
         inline tcp_endpoint::tcp_endpoint(tcp_pcb *conn)
                 : m_conn{conn} {
             tcp_arg(m_conn, this);
+            tcp_err(m_conn, &null_err_handler);
         }
 
         inline tcp_endpoint::tcp_endpoint(tos::esp82::tcp_endpoint &&rhs) noexcept
@@ -211,6 +216,9 @@ namespace tos
             tcp_err(m_conn, nullptr);
             tcp_sent(m_conn, nullptr);
             tcp_close(m_conn);
+            // this is required, as otherwise LWIP just keeps the control block
+            // alive for as long as it can, don't delete it unless you solve the
+            // deallocation problem!
             tcp_abort(m_conn);
         }
 
@@ -294,7 +302,14 @@ namespace tos
             }
         };
 
-        template <class EventHandlerT>
+      inline void null_err_handler(void *user, err_t err)
+      {
+        auto self = static_cast<tcp_endpoint*>(user);
+        self->m_conn = nullptr;
+        system_os_post(tos::esp82::main_task_prio, 0, 0);
+      }
+
+      template <class EventHandlerT>
         void tcp_endpoint::attach(EventHandlerT &cb) {
             m_event_handler = &cb;
             tcp_arg(m_conn, this);
@@ -302,6 +317,7 @@ namespace tos
             tcp_recv(m_conn, &ep_handlers::recv_handler<EventHandlerT>);
             tcp_err(m_conn, &ep_handlers::err_handler<EventHandlerT>);
         }
+
 #if defined(TOS_HAVE_SSL)
         inline secure_tcp_endpoint::secure_tcp_endpoint(tcp_pcb *conn, SSL* obj, SSLCTX* ctx)
                 : m_conn{conn}, ssl_obj{obj}, ssl_ctx{ctx} {
