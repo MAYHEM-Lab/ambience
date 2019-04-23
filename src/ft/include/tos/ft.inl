@@ -52,7 +52,7 @@ inline void thread_exit() {
     switch_context(sched.main_context, return_codes::do_exit);
 }
 
-inline void suspend_self() {
+inline void suspend_self(const int_guard&) {
     // interrupts are assumed to be disabled for this function to be called
     //tos_debug_print("suspend %p\n", impl::cur_thread);
 
