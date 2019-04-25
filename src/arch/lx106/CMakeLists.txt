@@ -22,7 +22,7 @@ target_compile_definitions(lx106_impl PRIVATE SPI_FLASH_SIZE_MAP=4)
 target_compile_options(lx106_impl PUBLIC -Wno-literal-suffix)
 
 add_library(esp_adapters esp_adapters.cpp)
-target_link_libraries(esp_adapters PUBLIC tos_core)
+target_link_libraries(esp_adapters PUBLIC tos_core tos_ft)
 target_link_libraries(esp_adapters PUBLIC "-Wl,--undefined=malloc -Wl,--undefined=free -Wl,--undefined=isxdigit")
 tos_install(esp_adapters)
 
