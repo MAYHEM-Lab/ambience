@@ -269,7 +269,7 @@ namespace tos
             }
         };
 
-      inline void null_err_handler(void *user, err_t err)
+      inline void null_err_handler(void *user, err_t)
       {
         auto self = static_cast<tcp_endpoint*>(user);
         self->m_conn = nullptr;
