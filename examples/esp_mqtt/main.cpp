@@ -179,7 +179,7 @@ void ICACHE_FLASH_ATTR task() {
         }
 
         tos::println(usart, "done");
-    }, [&](auto &err) {
+    }, [&](auto &) {
         tos::println(usart, "uuuh, shouldn't have happened!");
     });
 }
