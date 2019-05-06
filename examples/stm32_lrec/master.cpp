@@ -221,7 +221,7 @@ void rtc_sleep(std::chrono::seconds len) {
   nvic_disable_irq(NVIC_RTC_IRQ);
 }
 
-static tos::fixed_fifo<data, 20> backlog;
+static tos::fixed_fifo<data, 40> backlog;
 auto sense_task = [](auto &g, auto &alarm)
 {
   using namespace tos::tos_literals;
@@ -315,7 +315,7 @@ auto sense_task = [](auto &g, auto &alarm)
 
     iwdg_reset();
     g.write(45_pin, tos::digital::high);
-    rtc_sleep(5s);
+    rtc_sleep(4min + 50s);
   }
 };
 
