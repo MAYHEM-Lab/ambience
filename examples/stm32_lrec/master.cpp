@@ -381,12 +381,13 @@ auto xbee_task = [](auto &g, auto &log, auto &alarm) {
             g.write(11_pin, tos::digital::low);
 
             if (!sent) {
-                if (retry % 3 == 0) {
+                if (retry % 3 == 2) {
                     rtc_sleep(4min + 30s);
                 } else {
                     rtc_sleep(10s);
                 }
             }
+            ++retry;
         } while (!sent);
     }
 };
