@@ -240,9 +240,9 @@ namespace tos
                 return { (const char*)m_root->payload + m_read_off, m_root->len - m_read_off};
             }
 
-            tos::semaphore m_len{0};
             pbuf* m_root;
             size_t m_read_off;
+            tos::semaphore m_len{0};
         };
     }
 }

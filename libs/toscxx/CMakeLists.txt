@@ -75,6 +75,10 @@ target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIN _LIBCPP_HAS_NO
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)
 
+    if(TOS_AVR)
+        target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_FLOATING_POINT)
+    endif()
+
 target_compile_definitions(tos_libcxx PUBLIC TOS)
 target_compile_definitions(tos_libcxx PUBLIC TOS_ARCH_${TOS_ARCH_NAME})
 

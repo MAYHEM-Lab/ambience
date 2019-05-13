@@ -238,7 +238,8 @@ void __throw_out_of_range(const char*__msg)
     throw out_of_range(__msg);
 #else
     ((void)__msg);
-    _VSTD::abort();
+    while (true);
+    //_VSTD::abort();
 #endif
 }
 
