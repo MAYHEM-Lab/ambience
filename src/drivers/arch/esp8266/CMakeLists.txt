@@ -56,3 +56,7 @@ target_link_libraries(esp82_drivers PUBLIC
         esp82_nvm
         esp82_spi)
 tos_install(esp82_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+set_target_properties(esp82_drivers PROPERTIES
+        EXPORT_NAME arch_drivers)
+add_library(arch_drivers ALIAS esp82_drivers)

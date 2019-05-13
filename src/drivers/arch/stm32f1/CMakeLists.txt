@@ -34,3 +34,7 @@ target_link_libraries(stm32_drivers PUBLIC
         )
 target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> -Wl,--no-whole-archive")
 tos_install(stm32_drivers)
+
+set_target_properties(stm32_drivers PROPERTIES
+        EXPORT_NAME arch_drivers)
+add_library(arch_drivers ALIAS stm32_drivers)

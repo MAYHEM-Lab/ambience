@@ -40,3 +40,7 @@ target_link_libraries(avr_drivers PUBLIC
         avr_twim
         avr_wdt)
 tos_install(avr_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+set_target_properties(avr_drivers PROPERTIES
+        EXPORT_NAME arch_drivers)
+add_library(arch_drivers ALIAS avr_drivers)

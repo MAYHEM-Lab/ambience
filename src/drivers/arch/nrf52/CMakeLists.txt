@@ -37,3 +37,6 @@ target_link_libraries(nrf52_drivers PUBLIC
     nrf52_twim
 )
 tos_install(nrf52_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set_target_properties(nrf52_drivers PROPERTIES
+        EXPORT_NAME arch_drivers)
+add_library(arch_drivers ALIAS nrf52_drivers)

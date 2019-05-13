@@ -15,3 +15,6 @@ tos_install(x86_tcp ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_library(x86_drivers include/arch/drivers.hpp src/stub.cpp)
 target_link_libraries(x86_drivers PUBLIC x86_stdio x86_timer x86_tcp)
 tos_install(x86_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set_target_properties(x86_drivers PROPERTIES
+        EXPORT_NAME arch_drivers)
+add_library(arch_drivers ALIAS x86_drivers)
