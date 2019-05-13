@@ -310,11 +310,11 @@ long double    truncl(long double x);
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+#if !defined(_LIBCPP_HAS_NO_FLOATING_POINT)
 using ::signbit;
 using ::isfinite;
 using ::isinf;
 using ::isnan;
-#if !defined(_LIBCPP_HAS_NO_FLOATING_POINT)
 using ::fpclassify;
 using ::isnormal;
 using ::isgreater;
