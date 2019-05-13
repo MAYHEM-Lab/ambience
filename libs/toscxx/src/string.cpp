@@ -8,7 +8,7 @@
 
 #include "string"
 #include "cstdlib"
-#if !defined(TOS_ARCH_avr)
+#if !defined(_LIBCPP_HAS_NO_WCHAR)
 #include "cwchar"
 #endif
 #include "cerrno"
@@ -112,7 +112,7 @@ as_integer( const string& func, const string& s, size_t* idx, int base )
     return as_integer_helper<unsigned long>( func, s, idx, base, strtoul );
 }
 
-#if !defined(TOS_ARCH_avr)
+#if !defined(_LIBCPP_HAS_NO_WCHAR)
 template<>
 inline
 long long
@@ -311,7 +311,7 @@ stoull(const wstring& str, size_t* idx, int base)
     return as_integer<unsigned long long>( "stoull", str, idx, base );
 }
 
-#if !defined(TOS_ARCH_avr)
+#if !defined(_LIBCPP_HAS_NO_STOF)
 float
 stof(const string& str, size_t* idx)
 {
@@ -427,7 +427,7 @@ struct initial_string<wstring, V, true>
 
 typedef int (*wide_printf)(wchar_t* __restrict, size_t, const wchar_t*__restrict, ...);
 
-#if !defined(TOS_ARCH_avr)
+#if !defined(_LIBCPP_HAS_NO_WCHAR)
 inline
 wide_printf
 get_swprintf()
@@ -487,7 +487,7 @@ string to_string(long double val)
     return as_string(snprintf, initial_string<string, long double>()(), "%Lf", val);
 }
 
-#if !defined(TOS_ARCH_avr)
+#if !defined(_LIBCPP_HAS_NO_WCHAR)
 wstring to_wstring(int val)
 {
     return as_string(get_swprintf(), initial_string<wstring, int>()(), L"%d", val);
