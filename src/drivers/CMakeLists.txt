@@ -1,16 +1,6 @@
 project(tos)
 
-if (TOS_ATMEGA328P)
-    add_subdirectory(arch/atmega328p)
-elseif(TOS_ESP8266)
-    add_subdirectory(arch/esp8266)
-elseif(TOS_X86)
-    add_subdirectory(arch/x86)
-elseif(TOS_NRF52)
-    add_subdirectory(arch/nrf52)
-elseif(TOS_STM32F1)
-	add_subdirectory(arch/stm32f1)
-endif()
+add_subdirectory(arch/${TOS_DRIVERS})
 
 add_library(tos_drivers include/common/driver_base.hpp src/stub.cpp)
 target_link_libraries(tos_drivers PUBLIC tos::core tos::util)
