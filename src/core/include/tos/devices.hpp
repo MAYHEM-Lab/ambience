@@ -25,7 +25,7 @@ namespace tos
     }
 
     template <class... Args>
-    using open_impl_exists =typename details::open_impl_exists<void, void, Args...>::type;
+    using open_impl_exists = typename details::open_impl_exists<void, void, Args...>::type;
 
     /**
      * This function template opens a device denoted by the device tag argument. The tag is expected
