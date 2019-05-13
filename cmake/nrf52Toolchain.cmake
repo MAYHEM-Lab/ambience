@@ -1,6 +1,6 @@
 include(ArmToolchain)
 
-set(TOS_NRF52_FLAGS "-mcpu=cortex-m4 -DNRF52 -DFLOAT_ABI_HARD -DCONFIG_GPIO_AS_PINRESET -DNRF52832_XXAA -DNRF52_PAN_74 -mthumb -mabi=aapcs -mfloat-abi=hard -mfpu=fpv4-sp-d16 -u _printf_float -fno-builtin -fshort-enums -g3")
+set(TOS_NRF52_FLAGS "-mcpu=${TOS_CPU_ARCH} -DNRF52 -DFLOAT_ABI_HARD -DCONFIG_GPIO_AS_PINRESET -D${NRFSDK_DEF} -DNRF52_PAN_74 -mthumb -mabi=aapcs -mfloat-abi=hard -mfpu=fpv4-sp-d16 -u _printf_float -fno-builtin -fshort-enums -g3")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TOS_NRF52_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOS_NRF52_FLAGS}")

@@ -61,18 +61,30 @@ add_library(tos_libcxx
     include/version
     include/wchar.h
     include/wctype.h
+    include/cmath
 )
 
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_THREADS)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_EXCEPTIONS)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_RTTI)
-target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_INT128 _LIBCPP_HAS_NO_LONG_LONG)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_LONG_LONG)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_INT128)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_UNICODE_CHARS)
-target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_WCHAR)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STOF)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIO)
-target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIN _LIBCPP_HAS_NO_STDOUT)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDOUT)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIN)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)
+
+if(${TOS_CORE} MATCHES "atmega")
+    target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_FLOATING_POINT)
+    target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_WCHAR)
+endif()
+if(${TOS_CORE} MATCHES "esp8266")
+    target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_FLOATING_POINT)
+    target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_WCHAR)
+endif()
 
 target_compile_definitions(tos_libcxx PUBLIC TOS)
 target_compile_definitions(tos_libcxx PUBLIC TOS_ARCH_${TOS_ARCH_NAME})

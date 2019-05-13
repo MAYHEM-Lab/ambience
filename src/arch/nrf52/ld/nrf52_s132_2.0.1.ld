@@ -32,7 +32,7 @@ SECTIONS
   } > RAM
 } INSERT AFTER .data;
 
-INCLUDE "nrf5x_common.ld"
+INCLUDE nrf5x_common.ld
 
 /* S132 v2.0.1 role configuration SRAM usage */
 /* APP_RAM_BASE_CENTRAL_LINKS_0_PERIPH_LINKS_1_SEC_COUNT_0_MID_BW 0x20001fe8 */

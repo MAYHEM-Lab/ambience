@@ -1,16 +1,6 @@
 project(tos)
 
-if (TOS_AVR)
-    add_subdirectory(arch/avr)
-elseif(TOS_ESP)
-    add_subdirectory(arch/lx106)
-elseif(TOS_X86)
-    add_subdirectory(arch/x86)
-elseif(TOS_NRF52)
-    add_subdirectory(arch/nrf52)
-elseif(TOS_STM32)
-	add_subdirectory(arch/stm32)
-endif()
+add_subdirectory(arch/${TOS_DRIVERS})
 
 add_library(tos_drivers include/common/driver_base.hpp src/stub.cpp)
 target_link_libraries(tos_drivers PUBLIC tos::core tos::util)

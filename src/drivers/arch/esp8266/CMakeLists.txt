@@ -1,17 +1,17 @@
 project(tos)
 
 add_library(lx106_usart include/arch/lx106/usart.hpp src/uart_register.h src/new_uart_priv.h src/uart_driver.cpp)
-target_link_libraries(lx106_usart PRIVATE tos_core lx106_impl)
+target_link_libraries(lx106_usart PRIVATE tos_core esp8266_impl)
 tos_install(lx106_usart ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(esp82_timer include/arch/lx106/timer.hpp src/timer.cpp)
 tos_install(esp82_timer ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_definitions(esp82_timer PUBLIC USE_US_TIMER) # without this, sdk only provides ms timers
-target_link_libraries(esp82_timer PRIVATE tos_core lx106_impl)
+target_link_libraries(esp82_timer PRIVATE tos_core esp8266_impl)
 
 add_library(esp82_wifi include/arch/lx106/wifi.hpp src/wifi.cpp)
 tos_install(esp82_wifi ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(esp82_wifi PUBLIC tos_core lx106_impl)
+target_link_libraries(esp82_wifi PUBLIC tos_core esp8266_impl)
 
 add_library(esp82_udp include/arch/lx106/udp.hpp src/udp.cpp)
 tos_install(esp82_udp ${CMAKE_CURRENT_SOURCE_DIR}/include)
