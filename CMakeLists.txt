@@ -7,6 +7,10 @@ include(config/HandleConfig.cmake)
 
 include(Tos)
 
+if (NOT ${CMAKE_BUILD_TYPE} MATCHES "MinSizeRel")
+    message(WARNING "Build is not optimized for minimum size\nThis is not an error, but binaries will be large.")
+endif()
+
 if (TOS_TOOLCHAIN)
     set(CMAKE_TOOLCHAIN_FILE cmake/${TOS_TOOLCHAIN}.cmake)
 endif()
