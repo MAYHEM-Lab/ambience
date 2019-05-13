@@ -4,7 +4,7 @@
 
 #include <tos/ft.hpp>
 #include "catch.hpp"
-#include <arch/x86/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <common/alarm.hpp>
 #include <tos/semaphore.hpp>
 
