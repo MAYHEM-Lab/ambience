@@ -57,7 +57,7 @@ extern "C" int ets_printf(const char *format, ...)  __attribute__ ((format (prin
 #define tos_debug_print printf
 #endif
 
-#if defined(TOS_ARCH_avr)
+#if defined(TOS_ARCH_atmega)
 #define tos_debug_print(...)
 #endif
 

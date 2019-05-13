@@ -10,7 +10,7 @@
 #include <common/tty.hpp>
 #include <common/usart.hpp>
 
-#ifdef TOS_ARCH_avr
+#ifdef TOS_ARCH_atmega
 #include <arch/avr/usart.hpp>
 #elif defined(TOS_ARCH_x86)
 #include <arch/x86/drivers.hpp>
