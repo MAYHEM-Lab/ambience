@@ -39,7 +39,7 @@ namespace tos
     }
 }
 
-#if defined(TOS_ARCH_lx106)
+#if defined(TOS_ARCH_esp8266)
 extern "C" int ets_printf(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 #define tos_debug_print ets_printf
 #endif

@@ -12,7 +12,7 @@
 
 namespace tos
 {
-    const char* itoa(int64_t i, int base) {
+    inline const char* itoa(int64_t i, int base) {
         static char intbuf[std::numeric_limits<decltype(i)>::digits10 + 1];
         static constexpr char lookup[] = {\
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
