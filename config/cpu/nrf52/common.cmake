@@ -1,0 +1,3 @@
+set(TOS_CORE nrf52)
+set(TOS_DRIVERS NRF52)
+SET(TOS_CPU_ARCH cortex-m4)

@@ -1,0 +1,1 @@
+set(TOS_CPU atmega/328p8)

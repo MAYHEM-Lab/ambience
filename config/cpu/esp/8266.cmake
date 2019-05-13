@@ -1,0 +1,2 @@
+set(TOS_CORE esp8266)
+set(TOS_DRIVERS ESP8266)
