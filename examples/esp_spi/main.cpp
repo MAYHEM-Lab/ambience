@@ -4,7 +4,7 @@
 
 #include <lwip/init.h>
 #include <tos/ft.hpp>
-#include <arch/lx106/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/print.hpp>
 #include <tos/version.hpp>
 

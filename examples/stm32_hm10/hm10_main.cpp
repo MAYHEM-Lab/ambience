@@ -6,7 +6,7 @@
 #include <tos/ft.hpp>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
-#include <arch/stm32/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <common/usart.hpp>
 
 void usart_setup(tos::stm32::gpio& g)

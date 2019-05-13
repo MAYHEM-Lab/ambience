@@ -4,7 +4,7 @@
 
 #include <tos/ft.hpp>
 #include <common/adxl345.hpp>
-#include <arch/lx106/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/print.hpp>
 #include <common/gpio.hpp>
 #include <common/inet/tcp_stream.hpp>

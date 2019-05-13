@@ -2,7 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 11/05/2018.
 //
 
-#include <arch/avr/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/arch.hpp>
