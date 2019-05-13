@@ -9,7 +9,7 @@
 
 extern "C"
 {
-#include <user_interface.h>
+#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/sdk/include/user_interface.h"
 }
 
 namespace tos

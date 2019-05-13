@@ -10,10 +10,10 @@
 #include <common/inet/tcp_ip.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/track_ptr.hpp>
-#include <lwip/tcp.h>
-#include <lwip/init.h>
+#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/sdk/third_party/include/lwip/tcp.h"
+#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/sdk/third_party/include/lwip/init.h"
 #include <tos/expected.hpp>
-#include <algorithm>
+#include "../../../../../../libs/toscxx/include/algorithm"
 #include <common/inet/lwip.hpp>
 #include <tos/debug.hpp>
 

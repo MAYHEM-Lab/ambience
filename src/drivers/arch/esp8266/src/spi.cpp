@@ -2,7 +2,7 @@
 // Created by fatih on 10/8/18.
 //
 
-#include <arch/lx106/spi.hpp>
+#include <arch/spi.hpp>
 #include <tos/thread.hpp>
 #include <tos/ft.hpp>
 

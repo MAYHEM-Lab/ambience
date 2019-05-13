@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include <stdint.h>
+#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/xtensa-lx106-elf/lib/gcc/xtensa-lx106-elf/8.3.0/include/stdint.h"
 #include <tos/function_ref.hpp>
 #include <common/timer.hpp>
 
 extern "C"
 {
-#include <osapi.h>
+#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/sdk/include/osapi.h"
 }
 
 namespace tos

@@ -2,7 +2,7 @@
 // Created by fatih on 8/24/18.
 //
 
-#include <arch/lx106/twim.hpp>
+#include <arch/twim.hpp>
 #include <tos/interrupt.hpp>
 
 extern "C"

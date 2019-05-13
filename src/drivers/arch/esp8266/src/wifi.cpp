@@ -2,7 +2,7 @@
 // Created by fatih on 6/27/18.
 //
 
-#include <arch/lx106/wifi.hpp>
+#include <arch/wifi.hpp>
 #include <string.h>
 #include <tos/semaphore.hpp>
 #include <tos/fixed_fifo.hpp>
