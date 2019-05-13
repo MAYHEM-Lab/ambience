@@ -5,7 +5,7 @@
 #pragma once
 
 #include <common/i2c.hpp>
-#include <arch/avr/gpio.hpp>
+#include "gpio.hpp"
 #include <tos/span.hpp>
 #include <common/driver_base.hpp>
 

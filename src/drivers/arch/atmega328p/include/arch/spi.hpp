@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include "../../../../../../../../../usr/lib/gcc/avr/5.4.0/include/stdint.h"
 #include <tos/devices.hpp>
 #include <common/spi.hpp>
 #include <tos/span.hpp>

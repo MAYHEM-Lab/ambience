@@ -7,7 +7,7 @@
 #include <common/driver_base.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/event.hpp>
-#include <avr/wdt.h>
+#include "../../../../../../../../../usr/lib/avr/include/avr/wdt.h"
 
 extern "C" void WDT_vect();
 

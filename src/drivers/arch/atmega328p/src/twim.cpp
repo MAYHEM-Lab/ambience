@@ -2,7 +2,7 @@
 // Created by fatih on 11/8/18.
 //
 
-#include <arch/avr/twim.hpp>
+#include <arch/twim.hpp>
 #include <tos/debug.hpp>
 #include <avr/io.h>
 #include <avr/interrupt.h>

@@ -4,7 +4,7 @@
 
 #include <avr/interrupt.h>
 #include <avr/io.h>
-#include <arch/avr/timer.hpp>
+#include <arch/timer.hpp>
 #include <tos/event.hpp>
 #include <util/atomic.h>
 #include <tos/semaphore.hpp>
