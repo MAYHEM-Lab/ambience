@@ -19,16 +19,16 @@ struct pin_t {
 };
 
 constexpr inline std::array<port_def, 8> ports = {
-    port_def{
+    port_def {
         GPIOA,
         RCC_GPIOA
-    }, port_def{
+    }, port_def {
         GPIOB,
         RCC_GPIOB
-    }, port_def{
+    }, port_def {
         GPIOC,
         RCC_GPIOC
-    }, port_def{
+    }, port_def {
         GPIOD,
         RCC_GPIOD
     }
@@ -50,6 +50,19 @@ public:
 #endif
     }
 
+    /**
+     * Sets the given pin to be an output, and configures it
+     * to use the fastest IO speed as possible
+     */
+    void set_pin_mode(const pin_type &pin, pin_mode::output_t, pin_mode::fast_t) {
+        rcc_periph_clock_enable(pin.port->rcc);
+#if defined(STM32F1)
+        gpio_set_mode(pin.port->which, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, pin.pin);
+#else
+        gpio_mode_setup(pin.port->which, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, pin.pin);
+#endif
+    }
+
     void set_pin_mode(const pin_type &pin, pin_mode::input_t) {
         rcc_periph_clock_enable(pin.port->rcc);
 #if defined(STM32F1)
@@ -66,7 +79,6 @@ public:
 #else
         gpio_mode_setup(pin.port->which, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, pin.pin);
 #endif
-        //write(pin, digital::high);
     }
 
     void set_pin_mode(const pin_type &pin, pin_mode::in_pulldown_t) {
