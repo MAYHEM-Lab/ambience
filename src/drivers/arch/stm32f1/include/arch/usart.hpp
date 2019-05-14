@@ -55,7 +55,7 @@ namespace stm32
             if (buf.size() == 0) return 0;
             tx_it = buf.begin();
             tx_end = buf.end();
-            usart_enable_tx_interrupt(m_def->usart);
+            USART_CR1(m_def->usart) |= USART_CR1_TXEIE;
             tx_s.down();
             return buf.size();
         }
