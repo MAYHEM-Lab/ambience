@@ -7,7 +7,7 @@
 #include <tos/print.hpp>
 #include <tos/devices.hpp>
 
-#include <arch/avr/drivers.hpp>
+#include <arch/drivers.hpp>
 
 #include <avr/interrupt.h>
 #include <tos/intrusive_ptr.hpp>

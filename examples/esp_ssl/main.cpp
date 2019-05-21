@@ -9,10 +9,10 @@
 #include <tos/mutex.hpp>
 #include <tos/utility.hpp>
 
-#include <arch/lx106/timer.hpp>
-#include <arch/lx106/usart.hpp>
-#include <arch/lx106/wifi.hpp>
-#include <arch/lx106/tcp.hpp>
+#include <arch/timer.hpp>
+#include <arch/usart.hpp>
+#include <arch/wifi.hpp>
+#include <arch/tcp.hpp>
 #include <tos/version.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos_arch.hpp>

@@ -68,7 +68,7 @@ extern "C"
 #define UART_STATUS_RECEIVING   0x01
 #define UART_STATUS_OVERFLOW    0x02
 
-#include <c_types.h>
+#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/sdk/include/c_types.h"
 
 void uart0_open(uint32 baud_rate, uint32 flags);
 void uart0_reset();

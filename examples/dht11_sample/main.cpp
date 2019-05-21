@@ -5,7 +5,7 @@
 #include <tos/mutex.hpp>
 #include <tos/utility.hpp>
 
-#include <arch/lx106/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/version.hpp>
 
 #include <lwip/init.h>

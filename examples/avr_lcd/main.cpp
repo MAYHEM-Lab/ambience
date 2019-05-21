@@ -3,7 +3,7 @@
 //
 
 #include <common/lcd.hpp>
-#include <arch/avr/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/print.hpp>
 #include <tos/version.hpp>
 

@@ -3,7 +3,7 @@
 //
 
 #include <tos/ft.hpp>
-#include <arch/x86/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <common/alarm.hpp>
 #include <iostream>
 

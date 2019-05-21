@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include "../../../../../../../../../usr/lib/gcc/avr/5.4.0/include/stdint.h"
 #include <common/timer.hpp>
 #include <tos/function_ref.hpp>
 #include <common/driver_base.hpp>

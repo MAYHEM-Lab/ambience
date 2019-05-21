@@ -12,7 +12,7 @@
 #include <drivers/include/nrfx_uarte.h>
 #include <tos/compiler.hpp>
 
-#include <arch/nrf52/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <algorithm>
 #include <tos/print.hpp>
 #include <tos/fixed_fifo.hpp>

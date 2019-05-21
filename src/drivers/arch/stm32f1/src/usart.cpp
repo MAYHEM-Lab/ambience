@@ -2,7 +2,7 @@
 // Created by fatih on 12/5/18.
 //
 
-#include <arch/stm32/usart.hpp>
+#include <arch/usart.hpp>
 
 void usart1_isr()
 {

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <arch/lx106/gpio.hpp>
+#include "gpio.hpp"
 #include <tos/span.hpp>
 #include <common/driver_base.hpp>
 

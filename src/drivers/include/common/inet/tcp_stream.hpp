@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <arch/lx106/tcp.hpp>
+#include <arch/tcp.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/mutex.hpp>
 #include <tos/semaphore.hpp>

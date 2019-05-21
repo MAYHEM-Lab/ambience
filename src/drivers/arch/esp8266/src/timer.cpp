@@ -2,7 +2,7 @@
 // Created by fatih on 6/26/18.
 //
 
-#include <arch/lx106/timer.hpp>
+#include <arch/timer.hpp>
 #include <tos/arch.hpp>
 
 extern "C"

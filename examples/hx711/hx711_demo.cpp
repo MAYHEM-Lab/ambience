@@ -4,7 +4,7 @@
 
 #include <common/hx711.hpp>
 #include <tos/ft.hpp>
-#include <arch/stm32/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/print.hpp>
 #include <tos/devices.hpp>
 

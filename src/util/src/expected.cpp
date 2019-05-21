@@ -5,7 +5,7 @@
 #include <tos/compiler.hpp>
 #include <tos/debug.hpp>
 
-[[noreturn]] void WEAK tos_force_get_failed(void*)
+[[noreturn]] void tos_force_get_failed(void*)
 {
     //TODO: die
     tos::kern::fatal("force_get failed!");

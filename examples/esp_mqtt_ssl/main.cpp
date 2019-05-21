@@ -4,7 +4,7 @@
 
 #include <tos/print.hpp>
 
-#include <arch/lx106/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/version.hpp>
 #include <tos/fixed_fifo.hpp>
 
