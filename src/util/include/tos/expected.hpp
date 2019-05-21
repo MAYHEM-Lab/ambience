@@ -23,7 +23,7 @@
  * The implementation must never return to the caller, otherwise
  * the behaviour is undefined.
  */
-[[noreturn]] void tos_force_get_failed(void*);
+[[noreturn]] void tos_force_get_failed(void*) NO_INLINE;
 
 namespace tos
 {
