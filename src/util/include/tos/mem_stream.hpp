@@ -31,7 +31,7 @@ namespace tos
 
     private:
         tos::span<char> m_buffer;
-        char* m_wr_it;
+        tos::span<char>::iterator m_wr_it;
     };
 
     class imemory_stream : public self_pointing<imemory_stream>

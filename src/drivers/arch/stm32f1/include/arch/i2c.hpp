@@ -6,6 +6,10 @@
 
 #include <libopencm3/stm32/i2c.h>
 #include <common/i2c.hpp>
+#include <common/driver_base.hpp>
+#include <libopencm3/stm32/rcc.h>
+#include <arch/stm32/gpio.hpp>
+#include <tos/utility.hpp>
 
 namespace tos {
     namespace stm32 {
