@@ -1,4 +1,4 @@
-/* Linker script for Nordic Semiconductor nRF52 devices
+/* Linker script for Nordic Semiconductor nRF devices
  *
  * Version: Sourcery G++ 4.5-1
  * Support: https://support.codesourcery.com/GNUToolchain/
@@ -45,20 +45,6 @@ OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
  *   __stack
  */
 ENTRY(Reset_Handler)
-
-/* Adafruit
- * Stack is used by ISR and SoftDevice only,
- * other code run on thread's allocated stack from heap
- * Maximum stack used by S132's spec is 1536 byte.
- * Therefore 2KB should be enough
- */
-__StackSize = 1024*2;
-
-/* Set stack top to end of RAM, and stack limit move down by
- * size of stack_dummy section */
-PROVIDE(__StackTop   = ORIGIN(RAM) + LENGTH(RAM));
-PROVIDE(__StackLimit = __StackTop - __StackSize);
-PROVIDE(__stack      = __StackTop);
 
 SECTIONS
 {
@@ -147,26 +133,36 @@ SECTIONS
         __bss_end__ = .;
     } > RAM
 
-    /*.heap (COPY):*/
-    .heap :
+    .heap (COPY):
     {
+        __HeapBase = .;
         __end__ = .;
         PROVIDE(end = .);
-        __HeapBase = .;
-        *(.heap*)
-        . = ALIGN(__StackLimit);
+        KEEP(*(.heap*))
         __HeapLimit = .;
     } > RAM
 
-
-    /* .stack section doesn't contains any symbols. It is only
-     * used for linker to calculate size of stack sections */
-    .stack :
+    /* .stack_dummy section doesn't contains any symbols. It is only
+     * used for linker to calculate size of stack sections, and assign
+     * values to stack symbols later */
+    .stack_dummy (COPY):
     {
-      . = ALIGN(__StackLimit);
-      . = ALIGN(__StackTop);
+        KEEP(*(.stack*))
     } > RAM
+
+    /* Set stack top to end of RAM, and stack limit move down by
+     * size of stack_dummy section */
+    __StackTop = ORIGIN(RAM) + LENGTH(RAM);
+    __StackLimit = __StackTop - SIZEOF(.stack_dummy);
+    PROVIDE(__stack = __StackTop);
 
     /* Check if data + heap + stack exceeds RAM limit */
     ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed with stack")
+
+    /* Check if text sections + data exceeds FLASH limit */
+    DataInitFlashUsed = __bss_start__ - __data_start__;
+    CodeFlashUsed = __etext - ORIGIN(FLASH);
+    TotalFlashUsed = CodeFlashUsed + DataInitFlashUsed;
+    ASSERT(TotalFlashUsed <= LENGTH(FLASH), "region FLASH overflowed with .data and user data")
+
 }

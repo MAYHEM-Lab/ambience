@@ -22,16 +22,6 @@ MEMORY
   /* RAM (rwx) :  ORIGIN = 0x20001B00 + (0x0B00 + 0x1F08), LENGTH = 0xE500 - (0x0B00 + 0x1F08) */
 }
 
-SECTIONS
-{
-  .fs_data :
-  {
-    PROVIDE(__start_fs_data = .);
-    KEEP(*(.fs_data))
-    PROVIDE(__stop_fs_data = .);
-  } > RAM
-} INSERT AFTER .data;
-
 INCLUDE nrf5x_common.ld
 
 /* S132 v2.0.1 role configuration SRAM usage */
