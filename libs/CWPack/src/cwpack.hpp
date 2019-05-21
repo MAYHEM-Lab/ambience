@@ -11,6 +11,8 @@ extern "C"
 
 #include <string.h>
 #include <tos/span.hpp>
+#include <cstddef>
+
 //#include <string>
 
 namespace tos
