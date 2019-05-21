@@ -2,7 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 11/10/2018.
 //
 
-#include <arch/avr/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <common/xbee.hpp>
 #include <common/alarm.hpp>
 

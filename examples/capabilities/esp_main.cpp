@@ -3,7 +3,7 @@
 //
 
 
-#include <arch/lx106/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <common/inet/tcp_stream.hpp>
 
 #include <tos/ft.hpp>

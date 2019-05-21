@@ -7,12 +7,12 @@
 #include <tos/devices.hpp>
 #include <tos/span.hpp>
 #include <common/inet/tcp_ip.hpp>
-#include <stdint.h>
+#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/xtensa-lx106-elf/lib/gcc/xtensa-lx106-elf/8.3.0/include/stdint.h"
 #include <tos/expected.hpp>
 #include <tos/track_ptr.hpp>
 extern "C"
 {
-#include <user_interface.h>
+#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/sdk/include/user_interface.h"
 }
 
 namespace tos

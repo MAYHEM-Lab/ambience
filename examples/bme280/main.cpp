@@ -2,7 +2,7 @@
 // Created by fatih on 4/4/19.
 //
 
-#include <arch/stm32/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <common/bme280/bme280.h>
 #include <common/bme280.hpp>
 #include <tos/print.hpp>

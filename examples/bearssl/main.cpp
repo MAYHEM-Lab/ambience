@@ -9,8 +9,8 @@
 #include "keys.hpp"
 #include <bearssl.h>
 
-#include <arch/lx106/drivers.hpp>
-#include <arch/lx106/tcp.hpp>
+#include <arch/drivers.hpp>
+#include <arch/tcp.hpp>
 #include <common/usart.hpp>
 #include <tos/print.hpp>
 #include <common/inet/tcp_stream.hpp>

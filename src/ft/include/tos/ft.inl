@@ -114,6 +114,9 @@ prep_lambda_layout(tos::span<char> task_data, FuncT &&func, ArgTs &&... args) {
     // the tcb lives at the top of the stack
     const auto stack_top = task_data.end();
 
+    static_assert(std::is_invocable_v<FuncT, ArgTs...>,
+        "Arguments passed to tos::launch do not match the function!");
+
     const auto t_ptr = stack_top - sizeof(lambda_task<FreeStack, FuncT, ArgTs...>);
 
     auto thread = new(t_ptr) lambda_task<FreeStack, FuncT, ArgTs...>(

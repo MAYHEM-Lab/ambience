@@ -6,7 +6,7 @@
 
 #include <tos/span.hpp>
 #include <common/inet/tcp_ip.hpp>
-#include <lwip/udp.h>
+#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/sdk/third_party/include/lwip/udp.h"
 #include <tos/expected.hpp>
 #include <common/inet/lwip.hpp>
 

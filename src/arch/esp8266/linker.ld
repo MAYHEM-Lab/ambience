@@ -156,6 +156,18 @@ SECTIONS
 
     *libtos_ft.a:(.text .text.* .literal .literal.*)
     *libtos_core.a:(.text .text.* .literal .literal.*)
+    *liblx106_impl.a:(.text .text.* .literal .literal.*)
+    *liblx106_core.a:(.text .text.* .literal .literal.*)
+
+    *libemsha.a:(.text .literal.* .text.* .irom.text.src*)
+    *libcwpack.a:(.text .literal.* .text.* .irom.text.src*)
+    *libtos_libcxx.a:(.text .literal.* .text.* .irom.text.src*)
+    *libcppspot.a:(.text .literal.* .text.* .irom.text.src*)
+    *libraw_remote_esp.a:(.text .literal.* .text.* .irom.text.src*)
+    *libcspot_facade.a:(.text .literal.* .text.* .irom.text.src*)
+    *liblwip_sntp.a:(.text .literal.* .text.* .irom.text.src*)
+    *libesp_adapters.a:(.text .literal.* .text.* .irom.text.src*)
+    *liburiparser2.a:(.text .text.* .literal .literal.*)
 
     *libat.a:(.literal.* .text.*)
     *libaxtls.a:(.text.* .literal.*)

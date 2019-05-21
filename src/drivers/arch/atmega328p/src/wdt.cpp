@@ -2,7 +2,7 @@
 // Created by fatih on 12/13/18.
 //
 
-#include <arch/avr/wdt.hpp>
+#include <arch/wdt.hpp>
 
 namespace tos
 {

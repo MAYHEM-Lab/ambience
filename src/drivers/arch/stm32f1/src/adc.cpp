@@ -4,7 +4,7 @@
 
 
 #include <libopencm3/stm32/adc.h>
-#include <arch/stm32/adc.hpp>
+#include <arch/adc.hpp>
 
 /*void adc1_2_isr()
 {

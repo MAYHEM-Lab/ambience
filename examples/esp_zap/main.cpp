@@ -9,13 +9,13 @@
 #include <tos/mutex.hpp>
 #include <tos/utility.hpp>
 
-#include <arch/lx106/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/version.hpp>
 #include <tos/fixed_fifo.hpp>
 
 #include <lwip/init.h>
 #include <common/inet/tcp_stream.hpp>
-#include <arch/lx106/udp.hpp>
+#include <arch/udp.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/future.hpp>
 

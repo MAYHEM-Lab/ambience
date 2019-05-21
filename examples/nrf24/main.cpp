@@ -6,7 +6,7 @@
 #include <tos/interrupt.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
-#include <arch/avr/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <common/alarm.hpp>
 
 void nrf_task()

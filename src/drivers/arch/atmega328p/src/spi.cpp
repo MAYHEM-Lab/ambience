@@ -2,10 +2,10 @@
 // Created by fatih on 4/15/18.
 //
 
-#include <arch/avr/spi.hpp>
+#include <arch/spi.hpp>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <arch/avr/gpio.hpp>
+#include <arch/gpio.hpp>
 #include <tos/event.hpp>
 #include <tos/semaphore.hpp>
 #include <common/gpio.hpp>

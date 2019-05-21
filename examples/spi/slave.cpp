@@ -3,7 +3,7 @@
 //
 
 #include <common/spi.hpp>
-#include <arch/avr/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 

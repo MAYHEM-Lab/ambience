@@ -3,7 +3,7 @@
 //
 
 #include <common/ina219.hpp>
-#include <arch/avr/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/ft.hpp>
 #include <common/alarm.hpp>
 #include <tos/print.hpp>
