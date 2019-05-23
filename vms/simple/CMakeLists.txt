@@ -6,13 +6,7 @@ target_include_directories(simple_vm PUBLIC ".")
 
 if (TOS)
     add_executable(svm tos_exec.cpp)
-    target_link_libraries(svm PUBLIC simple_vm tos_print)
-
-    if (TOS_ESP)
-        target_link_libraries(svm PUBLIC esp82_drivers)
-    elseif(TOS_AVR)
-        target_link_libraries(svm PUBLIC avr_drivers)
-    endif()
+    target_link_libraries(svm PUBLIC simple_vm tos_print arch_drivers)
 endif()
 
 if (NOT TOS)
