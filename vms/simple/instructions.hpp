@@ -105,34 +105,6 @@ struct pop
     }
 };
 
-#if defined(TOS) && defined(TOS_ARCH_avr)
-template <class AlarmT>
-uint16_t GetTemp(AlarmT&& alarm)
-{
-    ADMUX = (3 << REFS0) | (8 << MUX0); // 1.1V REF, channel#8 is temperature
-    ADCSRA |= (1 << ADEN) | (6 << ADPS0);       // enable the ADC div64
-    alarm.sleep_for({20});
-    ADCSRA |= (1 << ADSC);      // Start the ADC
-
-    while (ADCSRA & (1 << ADSC));       // Detect end-of-conversion
-    // The offset of 324.31 could be wrong. It is just an indication.
-    // The returned temperature is in degrees Celcius.
-    return ADCW;
-}
-#endif
-
-struct read_temp
-{
-    void operator()(svm::vm_state* state)
-    {
-#if defined(TOS) && defined(TOS_ARCH_avr)
-        auto tmr = open(tos::devs::timer<1>);
-        auto alarm = open(tos::devs::alarm, *tmr);
-        state->registers[0] = GetTemp(alarm);
-#endif
-    }
-};
-
 struct call
 {
     constexpr void operator()(svm::vm_state* state, tvm::address_t<16> abs)
@@ -257,11 +229,5 @@ namespace tvm
     struct instr_name<read_word>
     {
         static constexpr auto value() { return "rw"; }
-    };
-
-    template <>
-    struct instr_name<read_temp>
-    {
-        static constexpr auto value() { return "rt"; }
     };
 }

@@ -21,7 +21,6 @@ namespace svm
         tvm::ins<0x0A, jumpi>,
         tvm::ins<0x0B, ret>,
         tvm::ins<0x0C, read_byte>,
-        tvm::ins<0x0D, read_word>,
-        tvm::ins<0x0E, read_temp>
+        tvm::ins<0x0D, read_word>
     >;
 }
