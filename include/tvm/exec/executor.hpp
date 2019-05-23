@@ -5,15 +5,6 @@
 #pragma once
 
 #include <tvm/exec/isa.hpp>
-#ifdef TOS
-#include <tos/utility.hpp>
-namespace std
-{
-    using namespace tos::std;
-}
-#else
-using std::move;
-#endif
 
 namespace tvm
 {

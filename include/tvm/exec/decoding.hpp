@@ -4,18 +4,9 @@
 
 #pragma once
 
-#include <tvm/instr_traits.hpp>
-#ifdef TOS
-#include <tos/tuple.hpp>
-namespace std
-{
-    using namespace tos::std;
-}
-#else
 #include <tuple>
-    using std::tuple;
-    using std::index_sequence;
-#endif
+using std::tuple;
+using std::index_sequence;
 
 namespace tvm
 {

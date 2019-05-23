@@ -7,11 +7,6 @@
 #include "vm_state.hpp"
 #include <tvm/tvm_types.hpp>
 #include <tvm/instr_traits.hpp>
-#ifdef TOS
-#include <drivers/arch/avr/timer.hpp>
-#include <drivers/common/alarm.hpp>
-#include <drivers/common/timer.hpp>
-#endif
 
 struct add
 {

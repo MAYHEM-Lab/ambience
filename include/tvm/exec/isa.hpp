@@ -7,11 +7,9 @@
 #include <tvm/meta.hpp>
 #include <tvm/exec/execution.hpp>
 #include <tvm/util/array.hpp>
-#ifdef TOS
-#include <tos/algorithm.hpp>
-#else
+
 #include <algorithm>
-#endif
+
 
 namespace tvm
 {
@@ -24,12 +22,7 @@ namespace tvm
      */
     template<uint8_t... opcodes, class... Ts>
     struct max_opcode<list<ins<opcodes, Ts>...>> {
-#ifndef TOS
         static constexpr auto value = std::max(std::initializer_list<uint8_t>{opcodes...});
-#else
-        static constexpr uint8_t ops[] = { opcodes... };
-        static constexpr auto value = tos::max_range(ops, ops + sizeof...(opcodes));
-#endif
     };
 
     template<class...>

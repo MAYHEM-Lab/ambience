@@ -8,18 +8,12 @@
 #include <stddef.h>
 #include <tvm/tvm_types.hpp>
 #include <tvm/util/array.hpp>
-#ifdef TOS
-#include <tos/utility.hpp>
-namespace std
-{
-    using namespace tos::std;
-}
-#else
+
+
 #include <utility>
-    using std::tuple;
-    using std::index_sequence;
-    using std::integral_constant;
-#endif
+using std::tuple;
+using std::index_sequence;
+using std::integral_constant;
 
 namespace tvm
 {

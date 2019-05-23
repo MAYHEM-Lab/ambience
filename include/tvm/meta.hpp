@@ -8,25 +8,16 @@
 
 #pragma once
 
-#ifdef TOS
-#include <tos/tuple.hpp>
-#include <tos/type_traits.hpp>
-namespace std
-{
-    using namespace tos::std;
-}
-#else
 #include <tuple>
-    using std::tuple;
-    using std::index_sequence;
-    using std::integral_constant;
-    using std::remove_const_t;
-    using std::get;
-    using std::remove_reference_t;
-    using std::forward;
-    using std::tuple_size;
-    using std::make_index_sequence;
-#endif
+using std::tuple;
+using std::index_sequence;
+using std::integral_constant;
+using std::remove_const_t;
+using std::get;
+using std::remove_reference_t;
+using std::forward;
+using std::tuple_size;
+using std::make_index_sequence;
 
 namespace tvm
 {
