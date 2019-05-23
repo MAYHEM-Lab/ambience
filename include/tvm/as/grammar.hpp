@@ -6,7 +6,7 @@
 
 #include <tvm/as/token.hpp>
 #include <tvm/as/tokens.hpp>
-#include <variant.hpp>
+#include <nonstd/variant.hpp>
 #include <vector>
 #include <tuple>
 #include <string>

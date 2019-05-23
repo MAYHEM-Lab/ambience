@@ -5,7 +5,7 @@
 #pragma once
 
 #include <ostream>
-#include <variant.hpp>
+#include <nonstd/variant.hpp>
 #include <tvm/as/grammar.hpp>
 
 namespace tvm::as {
