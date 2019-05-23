@@ -5,32 +5,14 @@
 #include <tvm/exec/executor.hpp>
 
 #include <tos/print.hpp>
-#include <tos/interrupt.hpp>
 #include <tos/ft.hpp>
 
 #include <tos/semaphore.hpp>
-#include <drivers/common/eeprom.hpp>
 
 #include "vm_def.hpp"
 #include "vm_state.hpp"
 
-#if defined(TOS_ARCH_avr)
-#include <arch/avr/usart.hpp>
-#include <arch/avr/eeprom.hpp>
-
-#elif defined(TOS_ARCH_lx106)
-#include <arch/lx106/usart.hpp>
-#endif
-
-#include <arch/lx106/tcp.hpp>
-#include <arch/lx106/wifi.hpp>
-#include <arch/lx106/tcp.hpp>
-#include <common/inet/tcp_stream.hpp>
-
-extern "C"
-{
-#include <mem.h>
-}
+#include <arch/drivers.hpp>
 
 struct ptr_fetcher
 {
@@ -75,111 +57,123 @@ void tvm_task()
 }
 
 static uint8_t prog_index = -1;
-static uint8_t prog[128];
+static uint8_t prog[128] = {
+0x04, 0x00, 0x01, 0x40, 0x04, 0x20, 0x00, 0x00, 0x04, 0x40, 0x00, 0x00,
+0x08, 0x04, 0x00, 0x3e, 0x02, 0x20, 0x04, 0x5f, 0xff, 0xe0, 0x02, 0x04,
+0x04, 0x40, 0x00, 0x00, 0x06, 0x00, 0x18, 0x0c, 0x02, 0x0a, 0x00, 0x00,
+0x00, 0x00
+};
 
 void main_task()
 {
     using namespace tos::tos_literals;
 
-    constexpr auto usconf = tos::usart_config()
-            .add(19200_baud_rate)
-            .add(tos::usart_parity::disabled)
-            .add(tos::usart_stop_bit::one);
+    auto uart = open(tos::devs::usart<0>, tos::uart::default_9600);
 
-    auto uart = open(tos::devs::usart<0>, usconf);
+    tos::println(uart, "hello");
+    fetch = ptr_fetcher{prog};
+    wait.up();
 
-    conn:
-    tos::esp82::wifi w;
-    auto res = w.connect("WIFI", "PASS");
-
-    tos::println(uart, "connected?", res);
-
-    if (!res) goto conn;
-
-    while (!w.wait_for_dhcp());
-
-    if (res)
+    s_wait.down();
+    for (auto& reg : state.registers)
     {
-        tos::esp82::wifi_connection conn;
-        auto addr = conn.get_addr();
-        tos::println(uart, "ip:", addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]);
+        tos::print(uart, reg, " ");
     }
+    tos::println(uart, "");
 
-    tos::esp82::tcp_socket sock{ w, { 80 } };
-    //auto eeprom = open(tos::devs::eeprom<0>);
+//    tos::esp82::wifi w;
+//    conn_:
+//    auto res = w.connect("cs190b", "cs190bcs190b");
+//
+//    if (!res) goto conn_;
+//
+//    auto& wconn = force_get(res);
+//
+//    wconn.wait_for_dhcp();
+//
+//    tos::esp82::tcp_socket sock{ wconn, tos::port_num_t{ 80 } };
 
-    tos::println(*uart, "hello");
-
-    tos::tcp_stream* str = nullptr;
-    tos::semaphore conn {0};
-    auto acceptor = [&](tos::esp82::tcp_socket&, tos::esp82::tcp_endpoint new_ep){
-        auto mem = os_malloc(sizeof(tos::tcp_stream));
-        str = new (mem) tos::tcp_stream(std::move(new_ep));
-        conn.up_isr();
-    };
-    sock.accept(acceptor);
-
-    while (true)
-    {
-        conn.down();
-        tos::println(*str, "Welcome!");
-
-        char buffer[1];
-        auto rd = str->read(buffer);
-
-        if (rd[0] == 'x')
-        {
-            tos::println(*uart, "execute", rd);
-            rd = str->read(buffer);
-            tos::println(*uart, rd);
-
-            auto wi = uint8_t(rd[0] - '0');
-            tos::println(*uart, "partition:", wi);
-            if (prog_index != wi);
-            {
-                //eeprom->read(wi * 128, prog, 128);
-                prog_index = wi;
-            }
-
-            fetch = ptr_fetcher{prog};
-            wait.up();
-
-            s_wait.down();
-            for (auto& reg : state.registers)
-            {
-                tos::print(*str, reg, " ");
-            }
-            tos::println(*str, "");
-        }
-        else if (rd[0] == 'p')
-        {
-            tos::println(*uart, "program", rd);
-            tos::println(*str, "send");
-            rd = str->read(buffer);
-            tos::println(*uart, rd);
-
-            auto wi = uint8_t(rd[0] - '0');
-            rd = str->read(buffer);
-
-            if (uint8_t (rd[0]) > 128)
-            {
-                tos::println(*str, "too large");
-                continue;
-            }
-
-            tos::println(*str, "ok");
-            str->read({ (char*)prog, rd[0] });
-            prog_index = wi;
-            //eeprom->write(wi * 128, prog, 128);
-            tos::println(*str, "okay");
-        }
-
-        tos::std::destroy_at(str);
-        os_free(str);
-    }
+//    using sock_ptr = std::unique_ptr<tos::tcp_stream<tos::esp82::tcp_endpoint>>;
+//    sock_ptr str;
+//    tos::semaphore conn {0};
+//    auto acceptor = [&](tos::esp82::tcp_socket&, tos::esp82::tcp_endpoint&& new_ep){
+//        str = std::make_unique<tos::tcp_stream<tos::esp82::tcp_endpoint>>(std::move(new_ep));
+//        conn.up_isr();
+//    };
+//    sock.accept(acceptor);
+//
+//    while (true)
+//    {
+//        conn.down();
+//        tos::println(*str, "Welcome!");
+//
+//        char buffer[1];
+//        auto rdx = str->read(buffer);
+//
+//        if (!rdx) continue;
+//        auto rd = force_get(rdx);
+//
+//        if (rd[0] == 'x')
+//        {
+//            tos::println(*uart, "execute", rd);
+//            rdx = str->read(buffer);
+//
+//            if (!rdx) continue;
+//
+//            rd = force_get(rdx);
+//
+//            tos::println(*uart, rd);
+//
+//            auto wi = uint8_t(rd[0] - '0');
+//            tos::println(*uart, "partition:", wi);
+//
+//            prog_index = wi;
+//
+//            fetch = ptr_fetcher{prog};
+//            wait.up();
+//
+//            s_wait.down();
+//            for (auto& reg : state.registers)
+//            {
+//                tos::print(*str, reg, " ");
+//            }
+//            tos::println(*str, "");
+//        }
+//        else if (rd[0] == 'p')
+//        {
+//            tos::println(*uart, "program", rd);
+//            tos::println(*str, "send");
+//            rdx = str->read(buffer);
+//
+//            if (!rdx) continue;
+//
+//            rd = force_get(rdx);
+//            tos::println(*uart, rd);
+//
+//            auto wi = uint8_t(rd[0] - '0');
+//
+//            rdx = str->read(buffer);
+//
+//            if (!rdx) continue;
+//
+//            rd = force_get(rdx);
+//
+//            if (uint8_t (rd[0]) > 128)
+//            {
+//                tos::println(*str, "too large");
+//                continue;
+//            }
+//
+//            tos::println(*str, "ok");
+//            str->read({ (char*)prog, rd[0] });
+//            prog_index = wi;
+//            tos::println(*str, "okay");
+//        }
+//        str.reset();
+//    }
 }
 
 void tos_main() {
-    tos::launch(tvm_task);
-    tos::launch(main_task);
+    tos::launch(tos::alloc_stack, tvm_task);
+    tos::launch(tos::alloc_stack, main_task);
 }
