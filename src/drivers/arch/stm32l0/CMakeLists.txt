@@ -14,7 +14,7 @@ add_library(stm32_timer include/arch/timer.hpp src/stub.cpp src/timer.cpp)
 target_link_libraries(stm32_timer PUBLIC tos::core)
 tos_install(stm32_timer ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(stm32_spi include/arch/spi.hpp src/stub.cpp)
+add_library(stm32_spi include/arch/spi.hpp src/spi.cpp)
 target_link_libraries(stm32_spi PUBLIC tos::core)
 tos_install(stm32_spi ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -36,7 +36,7 @@ target_link_libraries(stm32_drivers PUBLIC
         stm32_adc
         stm32_spi
         )
-target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> -Wl,--no-whole-archive")
+target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> $<TARGET_FILE:stm32_spi> -Wl,--no-whole-archive")
 tos_install(stm32_drivers)
 
 set_target_properties(stm32_drivers PROPERTIES

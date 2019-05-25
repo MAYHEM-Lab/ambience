@@ -99,7 +99,7 @@ public:
         tos::stm32::gpio g;
         g.write(m_dc, tos::digital::low);
         g.write(m_cs, tos::digital::low);
-        m_spi->write(cmd);
+        m_spi->write({&cmd, 1});
         g.write(m_dc, tos::digital::high);
         m_spi->write({data, numDataBytes});
         g.write(m_cs, tos::digital::high);
