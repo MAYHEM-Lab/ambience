@@ -90,81 +90,16 @@ public:
         , m_reset{reset}
         , m_busy{busy}
         {
-            m_g.set_pin_mode(m_reset, tos::pin_mode::in);
-            m_g.write(m_reset, tos::digital::low);
-            m_g.set_pin_mode(m_busy, tos::pin_mode::out);
+            m_g.set_pin_mode(m_reset, tos::pin_mode::out);
+            m_g.write(m_reset, tos::digital::high);
+            m_g.set_pin_mode(m_busy, tos::pin_mode::in);
         }
-
-    void gde021a1_Init(void)
-    {
-        uint8_t nb_bytes = 0;
-
-        /* Initialize the GDE021A11 */
-
-        _writeCommand(EPD_REG_16);  /* Deep sleep mode disable */
-        _writeData(0x00);
-        _writeCommand(EPD_REG_17);  /* Data Entry Mode Setting */
-        _writeData(0x03);
-        _writeCommand(EPD_REG_68);  /* Set the RAM X start/end address */
-        _writeData(0x00);       /* RAM X address start = 00h */
-        _writeData(0x11);       /* RAM X adress end = 11h (17 * 4pixels by address = 72 pixels) */
-        _writeCommand(EPD_REG_69);  /* Set the RAM Y start/end address */
-        _writeData(0x00);       /* RAM Y address start = 0 */
-        _writeData(0xAB);       /* RAM Y adress end = 171 */
-        _writeCommand(EPD_REG_78);  /* Set RAM X Address counter */
-        _writeData(0x00);
-        _writeCommand(EPD_REG_79);  /* Set RAM Y Address counter */
-        _writeData(0x00);
-        _writeCommand(EPD_REG_240); /* Booster Set Internal Feedback Selection */
-        _writeData(0x1F);
-        _writeCommand(EPD_REG_33);  /* Disable RAM bypass and set GS transition to GSA = GS0 and GSB = GS3 */
-        _writeData(0x03);
-        _writeCommand(EPD_REG_44);  /* Write VCOMregister */
-        _writeData(0xA0);
-        _writeCommand(EPD_REG_60);  /* Border waveform */
-        _writeData(0x64);
-        _writeCommand(EPD_REG_50);  /* Write LUT register */
-
-        for (nb_bytes=0; nb_bytes<90; nb_bytes++)
-        {
-            _writeData(WF_LUT[nb_bytes]);
-        }
-    }
-
-    void gde021a1_WritePixel(uint8_t HEX_Code)
-    {
-        /* Prepare the register to write data on the RAM */
-        _writeCommand(EPD_REG_36);
-
-        /* Send the data to write */
-        _writeData(HEX_Code);
-    }
-
-    void gde021a1_WriteReg(uint8_t EPD_Reg, uint8_t EPD_RegValue)
-    {
-        _writeCommand(EPD_Reg);
-
-        _writeData(EPD_RegValue);
-    }
-
-    void gde021a1_RefreshDisplay(void)
-    {
-        /* Write on the Display update control register */
-        _writeCommand(EPD_REG_34);
-
-        /* Display update data sequence option */
-        _writeData(0xC4);
-
-        /* Launching the update: Nothing should interrupt this sequence in order
-           to avoid display corruption */
-        _writeCommand(EPD_REG_32);
-    }
 
     void gde021a1WriteRegArray(uint8_t cmd, uint8_t *data, uint8_t numDataBytes) {
         tos::stm32::gpio g;
         g.write(m_dc, tos::digital::low);
         g.write(m_cs, tos::digital::low);
-        m_spi->exchange(cmd);
+        m_spi->write(cmd);
         g.write(m_dc, tos::digital::high);
         m_spi->write({data, numDataBytes});
         g.write(m_cs, tos::digital::high);
@@ -203,99 +138,16 @@ public:
         // to GSA = GS0 and GSB = GS3
         writeReg(EPD_REG_44, 0xA0); // Write VCOM Register
         writeReg(EPD_REG_60, 0x64); // Border waveform
-        gde021a1WriteRegArray(EPD_REG_50, (uint8_t *)WF_LUT, 90); //Write LUT
-    }
-
-    void _Init_Full()
-    {
-        _InitDisplay();
-        _writeCommandDataPGM(WF_LUT, sizeof(WF_LUT));
-        _PowerOn();
-        //_using_partial_mode = false;
-    }
-
-    void _Update_Full()
-    {
-        _writeCommand(0x22);
-        _writeData(0xc4);
-        _writeCommand(0x20);
-        _waitWhileBusy();//"_Update_Full", full_refresh_time);
-        _writeCommand(0xff);
-    }
-
-    void clear_init(uint8_t val)
-    {
-        _Init_Full();
-        _setPartialRamArea(0, 0, WIDTH, HEIGHT);
-        _writeCommand(0x24);
-        for (uint32_t i = 0; i < uint32_t(WIDTH) * uint32_t(HEIGHT) / 8; i++)
-        {
-            _writeData(val);
-        }
-        _Update_Full();
-    }
-
-    void _PowerOn()
-    {
-        //if (!_power_is_on)
-        {
-            _writeCommand(0x22);
-            _writeData(0xc0);
-            _writeCommand(0x20);
-            _waitWhileBusy();//"_PowerOn", power_on_time);
-        }
-        //_power_is_on = true;
-    }
-
-
-    void _InitDisplay()
-    {
-        _writeCommand(0x01); // Panel configuration, Gate selection
-        _writeData((HEIGHT - 1) % 256);
-        _writeData((HEIGHT - 1) / 256);
-        _writeData(0x00);
-        _writeCommand(0x0c); // softstart
-        _writeData(0xd7);
-        _writeData(0xd6);
-        _writeData(0x9d);
-        _writeCommand(0x2c); // VCOM setting
-        _writeData(0xa8);    // * different
-        _writeCommand(0x3a); // DummyLine
-        _writeData(0x1a);    // 4 dummy line per gate
-        _writeCommand(0x3b); // Gatetime
-        _writeData(0x08);    // 2us per line
-        _setPartialRamArea(0, 0, WIDTH, HEIGHT);
-
-    }
-
-    void _setPartialRamArea(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
-    {
-        _writeCommand(0x11); // set ram entry mode
-        _writeData(0x01);    // x increase, y decrease : as in demo code
-        _writeCommand(0x44);
-        _writeData(x / 8);
-        _writeData((x + w - 1) / 8);
-        _writeCommand(0x45);
-        _writeData((y + h - 1) % 256);
-        _writeData((y + h - 1) / 256);
-        _writeData(y % 256);
-        _writeData(y / 256);
-        _writeCommand(0x4e);
-        _writeData(x / 8);
-        _writeCommand(0x4f);
-        _writeData((y + h - 1) % 256);
-        _writeData((y + h - 1) / 256);
+        gde021a1WriteRegArray(EPD_REG_50, (uint8_t *) WF_LUT, 90); //Write LUT
     }
 
     void _reset()
     {
-        m_g.write(m_reset, tos::digital::high);
         using namespace std::chrono_literals;
-        delay(20ms);
         m_g.write(m_reset, tos::digital::low);
         delay(20ms);
         m_g.write(m_reset, tos::digital::high);
-        delay(200ms);
+        delay(20ms);
     }
 
     void _waitWhileBusy()
@@ -367,15 +219,21 @@ void blink_task()
     rcc_periph_clock_enable(RCC_GPIOB);
 
     gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLDOWN,
-                    GPIO3 | GPIO4 | GPIO5);
-    gpio_set_af(GPIOB, GPIO_AF5, GPIO3 | GPIO4 | GPIO5);
+                    GPIO3 | GPIO5);
+    gpio_set_af(GPIOB, GPIO_AF0, GPIO3 | GPIO5);
     gpio_set_output_options(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ,
-                            GPIO4 | GPIO5);
+                            GPIO3 | GPIO5);
 
     auto cs = 15_pin;
     auto dc = 27_pin;
 
+    auto power_pin = 26_pin;
+
     auto g = tos::open(tos::devs::gpio);
+
+    g.set_pin_mode(power_pin, tos::pin_mode::out);
+    g.write(power_pin, tos::digital::low);
+
     g.set_pin_mode(cs, tos::pin_mode::out);
     g.write(cs, tos::digital::high);
 
@@ -386,12 +244,24 @@ void blink_task()
     auto alarm = tos::open(tos::devs::alarm, tmr);
 
     tos::stm32::spi spi(tos::stm32::detail::spis[0]);
+//
+//    g.write(cs, tos::digital::low);
+//    constexpr uint8_t buf[] = "hello";
+//    spi.write(buf);
+//    g.write(cs, tos::digital::high);
+//
+//    tos::this_thread::block_forever();
+
+    g.set_pin_mode(5_pin, tos::pin_mode::out);
 
     epd<decltype(&spi)> display(&spi, cs, dc, 18_pin, 8_pin);
+    g.write(5_pin, tos::digital::high);
+    display._reset();
+    g.write(5_pin, tos::digital::low);
     display.gde021a1Init();
     display.refreshDisplay();
 
-    g.set_pin_mode(5_pin, tos::pin_mode::out);
+    tos::this_thread::block_forever();
 
     g.write(5_pin, tos::digital::high);
     while (true)

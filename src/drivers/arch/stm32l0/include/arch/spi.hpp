@@ -9,6 +9,9 @@
 #include <libopencm3/stm32/rcc.h>
 #include <tos/span.hpp>
 
+inline char buf[4000];
+inline int idx = 0;
+
 namespace tos
 {
 namespace stm32
@@ -34,24 +37,14 @@ namespace stm32
             rcc_periph_reset_pulse(m_def->rst);
             rcc_periph_clock_enable(m_def->clk);
 
-            spi_set_master_mode(m_def->spi);
-            spi_set_baudrate_prescaler(m_def->spi, SPI_CR1_BR_FPCLK_DIV_64);
-            spi_set_clock_polarity_0(m_def->spi);
-            spi_set_clock_phase_0(m_def->spi);
-            spi_set_full_duplex_mode(m_def->spi);
-            spi_set_unidirectional_mode(m_def->spi); /* bidirectional but in 3-wire */
-            spi_enable_software_slave_management(m_def->spi);
-            spi_send_msb_first(m_def->spi);
-            spi_set_nss_high(m_def->spi);
-            //spi_
-            //spi_enable_ss_output(SPI1);
-            //spi_fifo_reception_threshold_8bit(SPI1);
-            SPI_I2SCFGR(m_def->spi) &= ~SPI_I2SCFGR_I2SMOD;
-            spi_enable(m_def->spi);
+            SPI_CR1(m_def->spi) = 0;
+            SPI_CR1(m_def->spi) |= SPI_CR1_BAUDRATE_FPCLK_DIV_4 | SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI;
+            SPI_CR1(m_def->spi) |= SPI_CR1_SPE;
         }
 
         uint8_t exchange(uint8_t byte)
         {
+            buf[idx++] = byte;
             return spi_xfer(m_def->spi, byte);
         }
 
@@ -63,11 +56,19 @@ namespace stm32
             }
         }
 
+        void write(uint8_t c)
+        {
+            buf[idx++] = c;
+            SPI_DR(m_def->spi) = c;
+            while(!(SPI_SR(m_def->spi) & SPI_SR_TXE));
+            while(SPI_SR(m_def->spi) & SPI_SR_BSY);
+        }
+
         void write(tos::span<const uint8_t> buffer)
         {
             for (uint8_t c : buffer)
             {
-                exchange(c);
+                write(c);
             }
         }
 
