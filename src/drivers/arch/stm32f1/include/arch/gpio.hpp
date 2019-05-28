@@ -116,7 +116,7 @@ constexpr stm32::pin_t operator ""_pin(unsigned long long pin) {
 }
 } // namespace tos_literals
 
-stm32::gpio open_impl(tos::devs::gpio_t) {
+inline stm32::gpio open_impl(tos::devs::gpio_t) {
     return {};
 }
 }

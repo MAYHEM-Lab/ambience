@@ -6,3 +6,4 @@
 #include "timer.hpp"
 #include "i2c.hpp"
 #include "adc.hpp"
+#include "spi.hpp"

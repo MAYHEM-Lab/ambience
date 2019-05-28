@@ -10,12 +10,6 @@
 
 namespace tos
 {
-    struct spi_interface final
-    {
-        uint8_t exchange(uint8_t);
-        void exchange_many(uint8_t* buffer, uint16_t len);
-    };
-
     template<class T>
     struct spi_transaction
     {
