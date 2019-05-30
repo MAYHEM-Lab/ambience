@@ -44,8 +44,9 @@ public:
         rcc_periph_clock_enable(m_def->clk);
 
         SPI_CR1(m_def->spi) = 0;
-        SPI_CR1(m_def->spi) |= SPI_CR1_BAUDRATE_FPCLK_DIV_16 | SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI;
+        SPI_CR1(m_def->spi) = SPI_CR1_BAUDRATE_FPCLK_DIV_32 | SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI;
         SPI_CR1(m_def->spi) |= SPI_CR1_SPE;
+        SPI_CR2(m_def->spi) = 0;
         nvic_enable_irq(m_def->irq);
     }
 

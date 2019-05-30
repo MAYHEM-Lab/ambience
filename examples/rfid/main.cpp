@@ -39,7 +39,7 @@ void blink_task()
 
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
                   GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO5 |
-                                                  GPIO7 );
+                                                  GPIO7);
 
     gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT,
                   GPIO6);
@@ -64,6 +64,16 @@ void blink_task()
     auto alarm = tos::open(tos::devs::alarm, tmr);
 
     tos::stm32::spi spi(tos::stm32::detail::spis[0]);
+
+    while (true)
+    {
+        tos::spi_transaction<decltype(spi)> tr{spi, g, cs};
+        tos::println(*usart, "exchange", int(tr->exchange(0)));
+        using namespace std::chrono_literals;
+        alarm.sleep_for(1s);
+    }
+
+    tos::this_thread::block_forever();
 
     tos::mfrc522<decltype(&spi)> rfid{ &spi, &g, cs, reset_pin };
     rfid.init(delay);

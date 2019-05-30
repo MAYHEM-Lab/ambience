@@ -32,7 +32,7 @@ void main_task()
     using namespace tos::tos_literals;
 
     constexpr auto usconf = tos::usart_config()
-            .add(19200_baud_rate)
+            .add(9600_baud_rate)
             .add(tos::usart_parity::disabled)
             .add(tos::usart_stop_bit::one);
 

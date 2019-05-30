@@ -10,38 +10,41 @@
 
 namespace tos
 {
+    struct moved_flag
+    {
+        moved_flag() = default;
+        moved_flag(moved_flag&& rhs) noexcept { rhs.m_moved = true; }
+
+        explicit operator bool() const { return m_moved; }
+
+        moved_flag& operator=(moved_flag&& rhs) = delete;
+
+    private:
+        bool m_moved = false;
+    };
+
     template<class T>
     struct spi_transaction
     {
     public:
-        explicit spi_transaction(typename T::gpio_type::pin_type pin)
-                :m_omit{false}, m_pin{pin}
+        explicit spi_transaction(T& spi, typename T::gpio_type& gpio, typename T::gpio_type::pin_type pin)
+                : m_pin{pin}, m_g{gpio}, m_spi{spi}
         {
-            T::select_slave(pin);
+            m_g->write(m_pin, tos::digital::low);
         }
 
         ~spi_transaction()
         {
             if (!m_omit) {
-                T::deselect_slave(m_pin);
+                m_g->write(m_pin, tos::digital::high);
             }
         }
 
-        spi_transaction(spi_transaction&& rhs) noexcept
-                :m_omit(false), m_pin{rhs.m_pin}
-        {
-            rhs.m_omit = true;
+        T* operator->() {
+            return &m_spi;
         }
 
-        uint8_t exchange(uint8_t byte)
-        {
-            return T::exchange(byte);
-        }
-
-        void exchange_many(uint8_t* buf, uint16_t sz)
-        {
-            return T::exchange_many({buf, sz});
-        }
+        spi_transaction(spi_transaction&& rhs) noexcept = default;
 
         spi_transaction(const spi_transaction&) = delete;
 
@@ -50,7 +53,9 @@ namespace tos
         spi_transaction& operator=(spi_transaction&&) = delete;
 
     private:
-        bool m_omit;
+        moved_flag m_omit;
+        T& m_spi;
+        typename T::gpio_type& m_g;
         typename T::gpio_type::pin_type m_pin;
     };
 
