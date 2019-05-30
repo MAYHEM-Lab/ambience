@@ -26,6 +26,8 @@ namespace tos
         static constexpr in_pulldown_t in_pulldown{};
 
         static constexpr alternate_output_t alt_out{};
+
+        static constexpr struct fast_t {} fast;
     } // namespace pin_mode
 
     namespace digital
@@ -36,6 +38,12 @@ namespace tos
         static constexpr high_t high{};
         static constexpr low_t low{};
     } // namespace digital
+
+    template <class BasePin>
+    struct digital_out : BasePin
+    {
+
+    };
 
     namespace devs
     {

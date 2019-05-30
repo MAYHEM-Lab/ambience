@@ -11,9 +11,8 @@
 #include <tos/fixed_fifo.hpp>
 #include <common/usart.hpp>
 
-void usart1_isr();
-void usart2_isr();
-void usart3_isr();
+template <int num, uint32_t BASE>
+void usart_isr();
 
 namespace tos
 {
@@ -32,7 +31,6 @@ namespace stm32
         static constexpr usart_def usarts[] = {
             { USART1, RCC_USART1, RST_USART1, NVIC_USART1_IRQ },
             { USART2, RCC_USART2, RST_USART2, NVIC_USART2_IRQ },
-            { USART3, RCC_USART3, RST_USART3, NVIC_USART3_IRQ }
         };
     } // namespace detail
 
@@ -116,9 +114,8 @@ namespace stm32
         const uint8_t* tx_end;
         tos::semaphore rx_s{0};
         tos::semaphore tx_s{0};
-        friend void ::usart1_isr();
-        friend void ::usart2_isr();
-        friend void ::usart3_isr();
+        template <int num, uint32_t BASE>
+        friend void ::usart_isr();
 
         const detail::usart_def* m_def;
     };

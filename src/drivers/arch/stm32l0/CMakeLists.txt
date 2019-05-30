@@ -18,7 +18,7 @@ add_library(stm32_spi include/arch/spi.hpp src/spi.cpp)
 target_link_libraries(stm32_spi PUBLIC tos::core)
 tos_install(stm32_spi ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(stm32_i2c include/arch/i2c.hpp src/stub.cpp)
+add_library(stm32_i2c src/stub.cpp)
 target_link_libraries(stm32_i2c PUBLIC tos::core)
 tos_install(stm32_i2c ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
