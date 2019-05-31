@@ -38,7 +38,5 @@ target_link_libraries(nrf52_impl PUBLIC "--specs=nano.specs -lc -lnosys -lm")
 target_link_libraries(nrf52_impl PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}/ld")
 target_link_libraries(nrf52_impl PUBLIC "-T${TOS_LD_FILE}")
 
-target_link_libraries(nrf52_impl PUBLIC "-Wl,--undefined=nrf_ble_gatt_on_ble_evt")
-
 set_target_properties(nrf52_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ld/${TOS_LD_FILE})
 set_target_properties(nrf52_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ld/nrf5x_common.ld)

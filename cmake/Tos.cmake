@@ -21,7 +21,7 @@ set(TOS_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -Wpedantic \
      -ffunction-sections -fdata-sections -ffreestanding -g -pedantic -freorder-functions \
         -Wno-unknown-pragmas")
 
-set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions -fno-exceptions -fno-rtti -fno-unwind-tables -fno-threadsafe-statics")
+set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions -fno-exceptions -fno-rtti -fno-unwind-tables")
 
 set(TOS_FLAGS "${TOS_FLAGS} -fstack-usage")
 set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,--gc-sections -Xlinker -Map=output.map")
