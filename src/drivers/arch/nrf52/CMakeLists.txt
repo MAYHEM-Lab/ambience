@@ -24,6 +24,16 @@ target_compile_definitions(nrf52_twim PRIVATE
     NRFX_TWIM0_ENABLED=1
     TWIM_LEGACY_SUPPORT=0)
 
+
+add_library(nrf52_spim
+        ${SDK_ROOT}/modules/nrfx/drivers/src/nrfx_spim.c include/arch/spi.hpp src/stub.cpp)
+target_link_libraries(nrf52_spim PUBLIC tos_core)
+tos_install(nrf52_spim ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_definitions(nrf52_spim PUBLIC
+        NRFX_SPIM_ENABLED=1
+        NRFX_SPIM0_ENABLED=1
+        SPIM_LEGACY_SUPPORT=0)
+
 add_library(nrf52_radio include/arch/radio.hpp src/radio.cpp)
 target_link_libraries(nrf52_radio PUBLIC tos_core)
 tos_install(nrf52_radio ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -35,6 +45,7 @@ target_link_libraries(nrf52_drivers PUBLIC
     nrf52_timer
     nrf52_radio
     nrf52_twim
+    nrf52_spim
 )
 tos_install(nrf52_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set_target_properties(nrf52_drivers PROPERTIES

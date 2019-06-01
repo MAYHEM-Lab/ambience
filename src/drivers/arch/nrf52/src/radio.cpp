@@ -4,8 +4,7 @@
 
 #include <arch/radio.hpp>
 #include <stdint.h>
-#include <nrf52.h>
-#include <mdk/nrf.h>
+#include <nrf.h>
 #include <tos/semaphore.hpp>
 
 #define PACKET_BASE_ADDRESS_LENGTH  (4UL)                   //!< Packet base address length field size in bytes

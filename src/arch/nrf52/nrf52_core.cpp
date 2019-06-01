@@ -11,16 +11,17 @@ extern "C"
     void NORETURN tos_force_reset()
     {
         NVIC_SystemReset();
+        TOS_UNREACHABLE();
     }
 
-void* tos_stack_alloc(size_t sz)
-{
-    return malloc(sz);
-}
+    void* tos_stack_alloc(size_t sz)
+    {
+        return malloc(sz);
+    }
 
-void tos_stack_free(void* ptr)
-{
-    return free(ptr);
-}
+    void tos_stack_free(void* ptr)
+    {
+        return free(ptr);
+    }
 }
 

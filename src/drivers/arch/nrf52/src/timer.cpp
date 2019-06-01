@@ -5,7 +5,7 @@
 #include <arch/timer.hpp>
 #include <nrfx_timer.h>
 #include <drivers/include/nrfx_timer.h>
-#include <nrf52.h>
+#include <nrf.h>
 #include <tos/interrupt.hpp>
 
 namespace tos

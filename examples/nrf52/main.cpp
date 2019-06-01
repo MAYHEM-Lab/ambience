@@ -310,11 +310,6 @@ public:
         return {};
     }
 
-    void set_conn_params()
-    {
-
-    }
-
 private:
 };
 }
@@ -350,7 +345,8 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
         buf.push('\n');
         for (uint32_t i = 0; i < p_evt->params.rx_data.length; i++)
         {
-            g->write(14, tos::digital::low);
+            using namespace tos;
+            g->write(14_pin, tos::digital::low);
             buf.push(p_evt->params.rx_data.p_data[i]);
         }
         if (p_evt->params.rx_data.p_data[p_evt->params.rx_data.length - 1] == '\r')
@@ -442,6 +438,217 @@ static void conn_params_init()
     APP_ERROR_CHECK(err_code);
 }
 
+
+#define DRIVER_OUTPUT_CONTROL                       0x01
+#define BOOSTER_SOFT_START_CONTROL                  0x0C
+#define GATE_SCAN_START_POSITION                    0x0F
+#define DEEP_SLEEP_MODE                             0x10
+#define DATA_ENTRY_MODE_SETTING                     0x11
+#define SW_RESET                                    0x12
+#define TEMPERATURE_SENSOR_CONTROL                  0x1A
+#define MASTER_ACTIVATION                           0x20
+#define DISPLAY_UPDATE_CONTROL_1                    0x21
+#define DISPLAY_UPDATE_CONTROL_2                    0x22
+#define WRITE_RAM                                   0x24
+#define WRITE_VCOM_REGISTER                         0x2C
+#define WRITE_LUT_REGISTER                          0x32
+#define SET_DUMMY_LINE_PERIOD                       0x3A
+#define SET_GATE_TIME                               0x3B
+#define BORDER_WAVEFORM_CONTROL                     0x3C
+#define SET_RAM_X_ADDRESS_START_END_POSITION        0x44
+#define SET_RAM_Y_ADDRESS_START_END_POSITION        0x45
+#define SET_RAM_X_ADDRESS_COUNTER                   0x4E
+#define SET_RAM_Y_ADDRESS_COUNTER                   0x4F
+#define TERMINATE_FRAME_READ_WRITE 0xFF
+
+static const uint8_t LUTDefault_full[] =
+    {
+        WRITE_LUT_REGISTER,  // command
+        0x02, 0x02, 0x01, 0x11, 0x12, 0x12, 0x22, 0x22,
+        0x66, 0x69, 0x69, 0x59, 0x58, 0x99, 0x99, 0x88,
+        0x00, 0x00, 0x00, 0x00, 0xF8, 0xB4, 0x13, 0x51,
+        0x35, 0x51, 0x51, 0x19, 0x01, 0x00
+    };
+
+static const uint8_t LUTDefault_part[] =
+    {
+        WRITE_LUT_REGISTER,  // command
+        0x10, 0x18, 0x18, 0x08, 0x18, 0x18, 0x08, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x13, 0x14, 0x44, 0x12,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+
+template <class SpiT>
+class epd {
+public:
+    using PinT = typename std::remove_pointer_t<SpiT>::gpio_type::pin_type;
+    static const uint16_t WIDTH = 128;
+    static const uint16_t HEIGHT = 296;
+
+    uint16_t width = 128;
+    uint16_t height = 296;
+
+    explicit epd(SpiT spi, PinT cs, PinT dc, PinT reset, PinT busy)
+        : m_spi{std::move(spi)}
+        , m_cs{cs}
+        , m_dc{dc}
+        , m_reset{reset}
+        , m_busy{busy}
+    {
+        m_g.set_pin_mode(m_dc, tos::pin_mode::out);
+        m_g.write(m_dc, tos::digital::high);
+
+        m_g.set_pin_mode(m_reset, tos::pin_mode::out);
+        m_g.write(m_reset, tos::digital::high);
+
+        m_g.set_pin_mode(m_busy, tos::pin_mode::in);
+    }
+
+    void _reset()
+    {
+        using namespace std::chrono_literals;
+        m_g.write(m_reset, tos::digital::low);
+        nrf_delay_ms(200);
+        //tos::delay_ms(20ms);
+        m_g.write(m_reset, tos::digital::high);
+        nrf_delay_ms(200);
+        //tos::delay_ms(20ms);
+    }
+
+    void Init()
+    {
+        _reset();
+        _writeCommand(DRIVER_OUTPUT_CONTROL); // Panel configuration, Gate selection
+        _writeData((HEIGHT - 1) % 256);
+        _writeData((HEIGHT - 1) / 256);
+        _writeData(0x00);
+        _writeCommand(BOOSTER_SOFT_START_CONTROL); // softstart
+        _writeData(0xd7);
+        _writeData(0xd6);
+        _writeData(0x9d);
+        _writeCommand(WRITE_VCOM_REGISTER); // VCOM setting
+        _writeData(0xa8);    // * different
+        _writeCommand(SET_DUMMY_LINE_PERIOD); // DummyLine
+        _writeData(0x1a);    // 4 dummy line per gate
+        _writeCommand(SET_GATE_TIME); // Gatetime
+        _writeData(0x08);    // 2us per line
+        _writeCommand(BORDER_WAVEFORM_CONTROL);
+        _writeData(0x03);
+        _writeCommand(DATA_ENTRY_MODE_SETTING);
+        _writeData(0x03); // X increment; Y increment
+        _writeCommandDataPGM(LUTDefault_full, sizeof(LUTDefault_full));
+        //_setPartialRamArea(0, 0, WIDTH, HEIGHT);
+    }
+
+    void SetMemoryArea(int x_start, int y_start, int x_end, int y_end) {
+        SendCommand(SET_RAM_X_ADDRESS_START_END_POSITION);
+        /* x point must be the multiple of 8 or the last 3 bits will be ignored */
+        SendData((x_start >> 3) & 0xFF);
+        SendData((x_end >> 3) & 0xFF);
+        SendCommand(SET_RAM_Y_ADDRESS_START_END_POSITION);
+        SendData(y_start & 0xFF);
+        SendData((y_start >> 8) & 0xFF);
+        SendData(y_end & 0xFF);
+        SendData((y_end >> 8) & 0xFF);
+    }
+
+    void SetMemoryPointer(int x, int y) {
+        SendCommand(SET_RAM_X_ADDRESS_COUNTER);
+        /* x point must be the multiple of 8 or the last 3 bits will be ignored */
+        SendData((x >> 3) & 0xFF);
+        SendCommand(SET_RAM_Y_ADDRESS_COUNTER);
+        SendData(y & 0xFF);
+        SendData((y >> 8) & 0xFF);
+        WaitUntilIdle();
+    }
+
+    void ClearFrameMemory(unsigned char color) {
+        SetMemoryArea(0, 0, this->width - 1, this->height - 1);
+        SetMemoryPointer(0, 0);
+        SendCommand(WRITE_RAM);
+        /* send the color data */
+        for (int i = 0; i < this->width / 8 * this->height; i++) {
+            SendData(color);
+        }
+    }
+
+    void DisplayFrame(void) {
+        SendCommand(DISPLAY_UPDATE_CONTROL_2);
+        SendData(0xC4);
+        SendCommand(MASTER_ACTIVATION);
+        SendCommand(TERMINATE_FRAME_READ_WRITE);
+        WaitUntilIdle();
+    }
+
+    void WaitUntilIdle()
+    {
+        // active low
+        while (m_g.read(m_busy)) {
+            tos::this_thread::yield();
+        }
+    }
+
+private:
+
+    void SendCommand(unsigned char command) {
+        _writeCommand(command);
+    }
+
+    void SendData(unsigned char data) {
+        _writeData(data);
+    }
+
+    void _writeCommand(uint8_t c)
+    {
+        m_g.write(m_dc, tos::digital::low);
+        m_g.write(m_cs, tos::digital::low);
+        m_spi->write(c);
+        m_g.write(m_cs, tos::digital::high);
+        m_g.write(m_dc, tos::digital::high);
+    }
+
+    void _writeData(uint8_t d)
+    {
+        m_g.write(m_cs, tos::digital::low);
+        m_spi->write(d);
+        m_g.write(m_cs, tos::digital::high);
+    }
+
+    void _writeData(const uint8_t* data, uint16_t n) {
+        m_g.write(m_cs, tos::digital::low);
+        m_spi->write({data, n});
+        m_g.write(m_cs, tos::digital::high);
+    }
+
+    void _writeCommandData(const uint8_t* pCommandData, uint8_t datalen)
+    {
+        m_g.write(m_dc, tos::digital::low);
+        m_g.write(m_cs, tos::digital::low);
+        m_spi->write(*pCommandData++);
+        datalen--;
+        m_g.write(m_dc, tos::digital::high);
+        m_spi->write({pCommandData, datalen});
+        m_g.write(m_cs, tos::digital::high);
+    }
+
+    void _writeCommandDataPGM(const uint8_t* pCommandData, uint8_t datalen)
+    {
+        std::vector<uint8_t> buf(pCommandData, pCommandData + datalen);
+        _writeCommandData(buf.data(), buf.size());
+    }
+
+    void _writeDataPGM(const uint8_t* data, uint16_t n)
+    {
+        std::vector<uint8_t> buf(data, data + n);
+        _writeData(buf.data(), buf.size());
+    }
+
+    SpiT m_spi;
+    tos::nrf52::gpio m_g;
+    tos::nrf52::gpio::pin_type m_cs, m_dc, m_reset, m_busy;
+};
+
 auto ble_task = [](auto& g)
 {
     using namespace tos;
@@ -453,7 +660,32 @@ auto ble_task = [](auto& g)
 
     auto usart = open(tos::devs::usart<0>, usconf);
 
-    g->write(13, digital::low);
+    auto mosi = 33_pin;
+    auto clk = 34_pin;
+    auto cs = 35_pin;
+    auto dc = 36_pin;
+    auto reset = 37_pin;
+    auto busy = 38_pin;
+
+    g->set_pin_mode(cs, tos::pin_mode::out);
+    g->write(cs, tos::digital::high);
+
+    tos::nrf52::spi s(clk, 39_pin, mosi);
+
+    epd<decltype(&s)> epd(&s, cs, dc, reset, busy);
+    epd.Init();
+
+    epd.ClearFrameMemory(0x00);
+    epd.DisplayFrame();
+    epd.ClearFrameMemory(0x00);
+    epd.DisplayFrame();
+
+    epd.ClearFrameMemory(0xFF);
+    epd.DisplayFrame();
+    epd.ClearFrameMemory(0xFF);
+    epd.DisplayFrame();
+
+    g->write(13_pin, digital::low);
 
     tos::println(usart, "hello");
 
@@ -486,8 +718,8 @@ auto ble_task = [](auto& g)
 void TOS_EXPORT tos_main()
 {
     using namespace tos;
-    g->set_pin_mode(13, pin_mode::out);
-    g->set_pin_mode(14, pin_mode::out);
+    g->set_pin_mode(13_pin, pin_mode::out);
+    g->set_pin_mode(14_pin, pin_mode::out);
 
     tos::launch(tos::alloc_stack, ble_task, g);
     //tos::launch(i2c_task);

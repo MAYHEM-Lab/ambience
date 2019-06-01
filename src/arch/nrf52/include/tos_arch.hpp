@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <nrf52.h>
+#include <nrf.h>
 #include <string.h>
 
 extern "C"

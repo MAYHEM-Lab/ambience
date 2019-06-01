@@ -9,3 +9,4 @@
 #include "timer.hpp"
 #include "twim.hpp"
 #include "usart.hpp"
+#include "spi.hpp"

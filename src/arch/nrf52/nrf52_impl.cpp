@@ -5,10 +5,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <tos/ft.hpp>
-#include <nrf52.h>
 #include <nrf.h>
 #include <tos/interrupt.hpp>
 #include <stdlib.h>
+#include <app_util_platform.h>
+
 #ifdef SOFTDEVICE_PRESENT
 #include "nrf_soc.h"
 #include "nrf_sdh.h"

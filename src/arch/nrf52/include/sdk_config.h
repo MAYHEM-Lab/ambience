@@ -3515,6 +3515,16 @@
 #define APP_TIMER_CONFIG_SWI_NUMBER 0
 #endif
 
+// <o> NRFX_SPIM_MISO_PULL_CFG  - MISO pin pull configuration.
+
+// <0=> NRF_GPIO_PIN_NOPULL
+// <1=> NRF_GPIO_PIN_PULLDOWN
+// <3=> NRF_GPIO_PIN_PULLUP
+
+#ifndef NRFX_SPIM_MISO_PULL_CFG
+#define NRFX_SPIM_MISO_PULL_CFG 1
+#endif
+
 // <<< end of configuration section >>>
 #endif //SDK_CONFIG_H
 

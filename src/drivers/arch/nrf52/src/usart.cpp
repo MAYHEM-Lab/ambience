@@ -23,8 +23,8 @@ namespace tos
             conf.baudrate = NRF_UARTE_BAUDRATE_115200;
             conf.pselcts = NRF_UARTE_PSEL_DISCONNECTED;
             conf.pselrts = NRF_UARTE_PSEL_DISCONNECTED;
-            conf.pselrxd = rx;
-            conf.pseltxd = tx;
+            conf.pselrxd = detail::to_sdk_pin(rx);
+            conf.pseltxd = detail::to_sdk_pin(tx);
             conf.p_context = this;
 
             auto res = nrfx_uarte_init(&uart0, &conf, [](nrfx_uarte_event_t const *p_event, void *p_context){

@@ -4,7 +4,7 @@
 
 #pragma once
 #include <nrf_gpio.h>
-#include <nrf52.h>
+#include <nrf52840.h>
 #include <common/gpio.hpp>
 #include <tos/compiler.hpp>
 
@@ -12,10 +12,29 @@ namespace tos
 {
     namespace nrf52
     {
+        struct pin_t
+        {
+            NRF_GPIO_Type* m_port;
+            uint8_t m_pin;
+        };
+
+        namespace detail
+        {
+            inline int to_sdk_pin(const pin_t& pin)
+            {
+                if (pin.m_pin == 0xFF) return 0xFF;
+                int num = pin.m_pin;
+                if (pin.m_port == NRF_P1) num += 32;
+                return num;
+            }
+        }
+
         class gpio
         {
         public:
-            using pin_type = int;
+            using pin_type = pin_t;
+
+            bool read(pin_type pin);
 
             static void init();
 
@@ -48,6 +67,13 @@ namespace tos
         nrf52::gpio::init();
         return nullptr;
     }
+
+    inline nrf52::pin_t operator""_pin(unsigned long long pin)
+    {
+        if (pin == 255) return { nullptr, 0xFF };
+        NRF_GPIO_Type* port = (pin >= 32) ? NRF_P1 : NRF_P0;
+        return { port, uint8_t(pin % 32) };
+    }
 }
 
 // IMPL
@@ -56,17 +82,21 @@ namespace tos
 {
     namespace nrf52
     {
-        void ALWAYS_INLINE gpio::write(int pin, digital::low_t)
-        {
-            NRF_P0->OUTCLR = (1UL << pin);
+        inline bool gpio::read(pin_type pin) {
+            return pin.m_port->IN & (1UL << pin.m_pin);
         }
 
-        void ALWAYS_INLINE gpio::write(int pin, digital::high_t)
+        inline void gpio::write(pin_type pin, digital::low_t)
         {
-            NRF_P0->OUTSET = (1UL << pin);
+            pin.m_port->OUTCLR = (1UL << pin.m_pin);
         }
 
-        inline void gpio::write(int pin, bool val)
+        inline void gpio::write(pin_type pin, digital::high_t)
+        {
+            pin.m_port->OUTSET = (1UL << pin.m_pin);
+        }
+
+        inline void gpio::write(pin_type pin, bool val)
         {
             if (!val)
             {
@@ -75,18 +105,18 @@ namespace tos
             return write(pin, std::true_type{});
         }
 
-        inline void gpio::set_pin_mode(int pin, pin_mode::output_t)
+        inline void gpio::set_pin_mode(pin_type pin, pin_mode::output_t)
         {
-            NRF_P0->PIN_CNF[pin] = ((uint32_t)GPIO_PIN_CNF_DIR_Output       << GPIO_PIN_CNF_DIR_Pos)
+            pin.m_port->PIN_CNF[pin.m_pin] = ((uint32_t)GPIO_PIN_CNF_DIR_Output       << GPIO_PIN_CNF_DIR_Pos)
                     | ((uint32_t)GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos)
                     | ((uint32_t)GPIO_PIN_CNF_PULL_Disabled    << GPIO_PIN_CNF_PULL_Pos)
                     | ((uint32_t)GPIO_PIN_CNF_DRIVE_S0S1       << GPIO_PIN_CNF_DRIVE_Pos)
                     | ((uint32_t)GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos);
         }
 
-        inline void gpio::set_pin_mode(int pin, pin_mode::input_t)
+        inline void gpio::set_pin_mode(pin_type pin, pin_mode::input_t)
         {
-            NRF_P0->PIN_CNF[pin] = ((uint32_t)GPIO_PIN_CNF_DIR_Input        << GPIO_PIN_CNF_DIR_Pos)
+            pin.m_port->PIN_CNF[pin.m_pin] = ((uint32_t)GPIO_PIN_CNF_DIR_Input        << GPIO_PIN_CNF_DIR_Pos)
                     | ((uint32_t)GPIO_PIN_CNF_INPUT_Connect    << GPIO_PIN_CNF_INPUT_Pos)
                     | ((uint32_t)GPIO_PIN_CNF_PULL_Disabled    << GPIO_PIN_CNF_PULL_Pos)
                     | ((uint32_t)GPIO_PIN_CNF_DRIVE_S0S1       << GPIO_PIN_CNF_DRIVE_Pos)
@@ -96,6 +126,9 @@ namespace tos
         inline void gpio::init()
         {
             NRF_P0->OUTSET = UINT32_MAX;
+#ifdef NRF_P1
+            NRF_P1->OUTSET = UINT32_MAX;
+#endif
         }
     }
 }
