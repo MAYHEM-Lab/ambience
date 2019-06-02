@@ -4,6 +4,7 @@
 
 #include <tos/ft.hpp>
 #include <tos/semaphore.hpp>
+#include <tos/track_ptr.hpp>
 
 #include <nrf_delay.h>
 #include <nrf_gpio.h>
@@ -20,9 +21,9 @@
 #include <common/lcd.hpp>
 #include <tos/expected.hpp>
 #include <string_view>
-#include <ble_services/ble_nus/ble_nus.h>
-#include <ble.h>
+#include <common/epd/waveshare/bw29.hpp>
 
+#include <ble.h>
 #include "nordic_common.h"
 #include "nrf.h"
 #include "ble_hci.h"
@@ -56,36 +57,54 @@ static nrf_sdh_ble_evt_observer_t m_nus_obs __attribute__((section(".sdh_ble_obs
     ble_nus_on_ble_evt,
     &m_nus
 };
+
 static nrf_ble_gatt_t m_gatt;
 static nrf_sdh_ble_evt_observer_t m_gatt_obs __attribute__((section(".sdh_ble_observers1")))__attribute__((used)) = {nrf_ble_gatt_on_ble_evt, &m_gatt};
+
 static nrf_ble_qwr_t m_qwr;
-static nrf_sdh_ble_evt_observer_t m_qwr_obs __attribute__((section(".sdh_ble_observers2")))__attribute__((used)) = {nrf_ble_qwr_on_ble_evt, &m_qwr};                                                             /**< Context for the Queued Write module.*/
-static ble_advertising_t m_advertising;
+static nrf_sdh_ble_evt_observer_t m_qwr_obs __attribute__((section(".sdh_ble_observers2")))__attribute__((used)) = {nrf_ble_qwr_on_ble_evt, &m_qwr};
 
-static nrf_sdh_ble_evt_observer_t m_advertising_ble_obs __attribute__((section(".sdh_ble_observers1")))__attribute__((used)) = {ble_advertising_on_ble_evt, &m_advertising};
+struct soc_observer : tos::list_node<soc_observer>
+{
+    // nrf sdk defines the observer_ts to be const by default -_-
+    // so remove the const here
+    std::remove_const_t <nrf_sdh_soc_evt_observer_t> obs;
+};
 
-static nrf_sdh_soc_evt_observer_t m_advertising_soc_obs __attribute__((section(".sdh_soc_observers1")))__attribute__((used)) = {ble_advertising_on_sys_evt, &m_advertising};                                                 /**< Advertising module instance. */
+struct ble_observer : tos::list_node<ble_observer>
+{
+    // nrf sdk defines the observer_ts to be const by default -_-
+    // so remove the const here
+    std::remove_const_t <nrf_sdh_ble_evt_observer_t> obs;
+};
 
-static uint16_t   m_conn_handle          = BLE_CONN_HANDLE_INVALID;                 /**< Handle of the current connection. */
-static ble_uuid_t m_adv_uuids[]          =                                          /**< Universally unique service identifier. */
-    {
-        {0xDDDD, BLE_UUID_TYPE_VENDOR_BEGIN}
-    };
+tos::intrusive_list<ble_observer> ble_observers;
+tos::intrusive_list<soc_observer> soc_observers;
 
-#define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
+static nrf_sdh_soc_evt_observer_t tos_soc_observer
+    __attribute__((section(".sdh_soc_observers1"))) __attribute__((used))
+    { [](uint32_t ev, void*) {
+        for (auto& obs : soc_observers)
+        {
+            obs.obs.handler(ev, obs.obs.p_context);
+        }
+    }, nullptr };
 
-#define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGI N                 /**< UUID type for the Nordic UART Service (vendor specific). */
+static nrf_sdh_ble_evt_observer_t tos_ble_observer
+    __attribute__((section(".sdh_ble_observers1"))) __attribute__((used))
+    { [](ble_evt_t const* ev, void*) {
+        for (auto& obs : ble_observers)
+        {
+            obs.obs.handler(ev, obs.obs.p_context);
+        }
+    }, nullptr };
 
-#define APP_BLE_OBSERVER_PRIO           3                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
+static uint16_t   m_conn_handle          = BLE_CONN_HANDLE_INVALID;
+static ble_uuid_t m_adv_uuids[]          =
+{
+    {0xDDDD, BLE_UUID_TYPE_VENDOR_BEGIN}
+};
 
-#define APP_ADV_INTERVAL                64                                          /**< The advertising interval (in units of 0.625 ms. This value corresponds to 40 ms). */
-
-#define APP_ADV_DURATION                1800//0                                       /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
-
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(40, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
-#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(150, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
-#define SLAVE_LATENCY                   0                                           /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds), Supervision Timeout uses 10 ms units. */
 #define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                       /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
 #define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000)                      /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
 #define MAX_CONN_PARAMS_UPDATE_COUNT    3                                           /**< Number of attempts before giving up the connection parameter negotiation. */
@@ -165,22 +184,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 static nrf_sdh_ble_evt_observer_t m_ble_observer __attribute__((section(".sdh_ble_observers3")))__attribute__((used)) = {
     ble_evt_handler, nullptr};
 
-tos::function_ref<void(const ble_evt_t&)> obs{[](ble_evt_t const&, void*) {}};
-
-static nrf_sdh_ble_evt_observer_t tos_ble_observer
-    __attribute__((section(".sdh_ble_observers1"))) __attribute__((used))
-    { [](ble_evt_t const* ev, void*) {
-        obs(*ev);
-    }, nullptr };
-
-auto handler = [](ble_evt_t const & ev){
-    if (ev.header.evt_id == BLE_GAP_EVT_CONNECTED)
-    {
-        buf.push('C');
-        buf.push('\n');
-    }
-};
-
 /**@brief Function for handling events from the GATT library. */
 void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const * p_evt)
 {
@@ -201,6 +204,7 @@ void gatt_init()
     err_code = nrf_ble_gatt_att_mtu_periph_set(&m_gatt, NRF_SDH_BLE_GATT_MAX_MTU_SIZE);
     APP_ERROR_CHECK(err_code);
 }
+
 static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 {
     uint32_t err_code;
@@ -223,37 +227,6 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     }
 }
 
-static void advertising_init()
-{
-    uint32_t               err_code;
-    ble_advertising_init_t init;
-
-    memset(&init, 0, sizeof(init));
-
-    init.advdata.name_type          = BLE_ADVDATA_FULL_NAME;
-    init.advdata.include_appearance = false;
-    init.advdata.flags              = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
-
-    init.srdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
-    init.srdata.uuids_complete.p_uuids  = m_adv_uuids;
-
-    init.config.ble_adv_fast_enabled  = true;
-    init.config.ble_adv_fast_interval = APP_ADV_INTERVAL;
-    init.config.ble_adv_fast_timeout  = APP_ADV_DURATION;
-    init.evt_handler = on_adv_evt;
-
-    err_code = ble_advertising_init(&m_advertising, &init);
-    APP_ERROR_CHECK(err_code);
-
-    ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
-}
-
-static void advertising_start()
-{
-    uint32_t err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
-    APP_ERROR_CHECK(err_code);
-}
-
 namespace tos
 {
 namespace nrf52
@@ -264,6 +237,80 @@ enum class setname_errors
     invalid_param = NRF_ERROR_INVALID_PARAM,
     bad_size = NRF_ERROR_DATA_SIZE,
     forbidden = NRF_ERROR_FORBIDDEN
+};
+
+enum class advertising_errors
+{
+    module_not_initialized = NRF_ERROR_INVALID_STATE
+};
+
+class softdev;
+
+class advertising
+{
+public:
+    advertising() {
+        ble_advertising_init_t init{};
+
+        init.advdata.name_type          = BLE_ADVDATA_FULL_NAME;
+        init.advdata.include_appearance = false;
+        init.advdata.flags              = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
+
+        init.srdata.uuids_complete.uuid_cnt = std::size(m_adv_uuids);
+        init.srdata.uuids_complete.p_uuids  = m_adv_uuids;
+
+        init.config.ble_adv_fast_enabled  = true;
+        init.config.ble_adv_fast_interval = 64; /**< The advertising interval (in units of 0.625 ms. This value corresponds to 40 ms). */
+        init.config.ble_adv_fast_timeout  = 1800; /**< The advertising duration (18 seconds) in units of 10 milliseconds. */
+        init.evt_handler = on_adv_evt;
+
+        auto err_code = ble_advertising_init(&m_advertising, &init);
+        APP_ERROR_CHECK(err_code);
+
+        m_ble_obs.obs.handler = ble_advertising_on_ble_evt;
+        m_ble_obs.obs.p_context = &m_advertising;
+
+        m_soc_obs.obs.handler = ble_advertising_on_sys_evt;
+        m_soc_obs.obs.p_context = &m_advertising;
+
+        ble_observers.push_back(m_ble_obs);
+        soc_observers.push_back(m_soc_obs);
+
+        // https://devzone.nordicsemi.com/f/nordic-q-a/33504/what-does-app_ble_conn_cfg_tag-do
+        constexpr auto tag = 1;
+
+        ble_advertising_conn_cfg_tag_set(&m_advertising, tag);
+    }
+
+    advertising(const advertising&) = delete;
+    advertising(advertising&&) = delete;
+
+    expected<void,advertising_errors>
+    start() {
+        uint32_t err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
+        if (err_code == NRF_SUCCESS) return {};
+        return unexpected((advertising_errors)err_code);
+    }
+
+    ~advertising()
+    {
+        auto ble_it = std::find_if(ble_observers.begin(), ble_observers.end(), [&](auto& a) {
+            return &a == &m_ble_obs;
+        });
+        if (ble_it != ble_observers.end())
+            ble_observers.erase(ble_it);
+
+        auto soc_it = std::find_if(soc_observers.begin(), soc_observers.end(), [&](auto& a) {
+            return &a == &m_soc_obs;
+        });
+        if (soc_it != soc_observers.end())
+            soc_observers.erase(soc_it);
+    }
+
+private:
+    ble_observer m_ble_obs;
+    soc_observer m_soc_obs;
+    ble_advertising_t m_advertising;
 };
 
 class softdev
@@ -283,7 +330,7 @@ public:
         // Configure the BLE stack using the default settings.
         // Fetch the start address of the application RAM.
         uint32_t ram_start = 0;
-        err_code = nrf_sdh_ble_default_cfg_set(APP_BLE_CONN_CFG_TAG, &ram_start);
+        err_code = nrf_sdh_ble_default_cfg_set(1, &ram_start);
         APP_ERROR_CHECK(err_code);
 
         // Enable BLE stack.
@@ -323,10 +370,10 @@ static void gap_params_init(tos::nrf52::softdev& sd)
 
     ble_gap_conn_params_t gap_conn_params {};
 
-    gap_conn_params.min_conn_interval = MIN_CONN_INTERVAL;
-    gap_conn_params.max_conn_interval = MAX_CONN_INTERVAL;
-    gap_conn_params.slave_latency     = SLAVE_LATENCY;
-    gap_conn_params.conn_sup_timeout  = CONN_SUP_TIMEOUT;
+    gap_conn_params.min_conn_interval = MSEC_TO_UNITS(40, UNIT_1_25_MS);
+    gap_conn_params.max_conn_interval = MSEC_TO_UNITS(150, UNIT_1_25_MS);
+    gap_conn_params.slave_latency     = 0;
+    gap_conn_params.conn_sup_timeout  = MSEC_TO_UNITS(4000, UNIT_10_MS);
 
     auto err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
     APP_ERROR_CHECK(err_code);
@@ -438,217 +485,6 @@ static void conn_params_init()
     APP_ERROR_CHECK(err_code);
 }
 
-
-#define DRIVER_OUTPUT_CONTROL                       0x01
-#define BOOSTER_SOFT_START_CONTROL                  0x0C
-#define GATE_SCAN_START_POSITION                    0x0F
-#define DEEP_SLEEP_MODE                             0x10
-#define DATA_ENTRY_MODE_SETTING                     0x11
-#define SW_RESET                                    0x12
-#define TEMPERATURE_SENSOR_CONTROL                  0x1A
-#define MASTER_ACTIVATION                           0x20
-#define DISPLAY_UPDATE_CONTROL_1                    0x21
-#define DISPLAY_UPDATE_CONTROL_2                    0x22
-#define WRITE_RAM                                   0x24
-#define WRITE_VCOM_REGISTER                         0x2C
-#define WRITE_LUT_REGISTER                          0x32
-#define SET_DUMMY_LINE_PERIOD                       0x3A
-#define SET_GATE_TIME                               0x3B
-#define BORDER_WAVEFORM_CONTROL                     0x3C
-#define SET_RAM_X_ADDRESS_START_END_POSITION        0x44
-#define SET_RAM_Y_ADDRESS_START_END_POSITION        0x45
-#define SET_RAM_X_ADDRESS_COUNTER                   0x4E
-#define SET_RAM_Y_ADDRESS_COUNTER                   0x4F
-#define TERMINATE_FRAME_READ_WRITE 0xFF
-
-static const uint8_t LUTDefault_full[] =
-    {
-        WRITE_LUT_REGISTER,  // command
-        0x02, 0x02, 0x01, 0x11, 0x12, 0x12, 0x22, 0x22,
-        0x66, 0x69, 0x69, 0x59, 0x58, 0x99, 0x99, 0x88,
-        0x00, 0x00, 0x00, 0x00, 0xF8, 0xB4, 0x13, 0x51,
-        0x35, 0x51, 0x51, 0x19, 0x01, 0x00
-    };
-
-static const uint8_t LUTDefault_part[] =
-    {
-        WRITE_LUT_REGISTER,  // command
-        0x10, 0x18, 0x18, 0x08, 0x18, 0x18, 0x08, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x13, 0x14, 0x44, 0x12,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-    };
-
-template <class SpiT>
-class epd {
-public:
-    using PinT = typename std::remove_pointer_t<SpiT>::gpio_type::pin_type;
-    static const uint16_t WIDTH = 128;
-    static const uint16_t HEIGHT = 296;
-
-    uint16_t width = 128;
-    uint16_t height = 296;
-
-    explicit epd(SpiT spi, PinT cs, PinT dc, PinT reset, PinT busy)
-        : m_spi{std::move(spi)}
-        , m_cs{cs}
-        , m_dc{dc}
-        , m_reset{reset}
-        , m_busy{busy}
-    {
-        m_g.set_pin_mode(m_dc, tos::pin_mode::out);
-        m_g.write(m_dc, tos::digital::high);
-
-        m_g.set_pin_mode(m_reset, tos::pin_mode::out);
-        m_g.write(m_reset, tos::digital::high);
-
-        m_g.set_pin_mode(m_busy, tos::pin_mode::in);
-    }
-
-    void _reset()
-    {
-        using namespace std::chrono_literals;
-        m_g.write(m_reset, tos::digital::low);
-        nrf_delay_ms(200);
-        //tos::delay_ms(20ms);
-        m_g.write(m_reset, tos::digital::high);
-        nrf_delay_ms(200);
-        //tos::delay_ms(20ms);
-    }
-
-    void Init()
-    {
-        _reset();
-        _writeCommand(DRIVER_OUTPUT_CONTROL); // Panel configuration, Gate selection
-        _writeData((HEIGHT - 1) % 256);
-        _writeData((HEIGHT - 1) / 256);
-        _writeData(0x00);
-        _writeCommand(BOOSTER_SOFT_START_CONTROL); // softstart
-        _writeData(0xd7);
-        _writeData(0xd6);
-        _writeData(0x9d);
-        _writeCommand(WRITE_VCOM_REGISTER); // VCOM setting
-        _writeData(0xa8);    // * different
-        _writeCommand(SET_DUMMY_LINE_PERIOD); // DummyLine
-        _writeData(0x1a);    // 4 dummy line per gate
-        _writeCommand(SET_GATE_TIME); // Gatetime
-        _writeData(0x08);    // 2us per line
-        _writeCommand(BORDER_WAVEFORM_CONTROL);
-        _writeData(0x03);
-        _writeCommand(DATA_ENTRY_MODE_SETTING);
-        _writeData(0x03); // X increment; Y increment
-        _writeCommandDataPGM(LUTDefault_full, sizeof(LUTDefault_full));
-        //_setPartialRamArea(0, 0, WIDTH, HEIGHT);
-    }
-
-    void SetMemoryArea(int x_start, int y_start, int x_end, int y_end) {
-        SendCommand(SET_RAM_X_ADDRESS_START_END_POSITION);
-        /* x point must be the multiple of 8 or the last 3 bits will be ignored */
-        SendData((x_start >> 3) & 0xFF);
-        SendData((x_end >> 3) & 0xFF);
-        SendCommand(SET_RAM_Y_ADDRESS_START_END_POSITION);
-        SendData(y_start & 0xFF);
-        SendData((y_start >> 8) & 0xFF);
-        SendData(y_end & 0xFF);
-        SendData((y_end >> 8) & 0xFF);
-    }
-
-    void SetMemoryPointer(int x, int y) {
-        SendCommand(SET_RAM_X_ADDRESS_COUNTER);
-        /* x point must be the multiple of 8 or the last 3 bits will be ignored */
-        SendData((x >> 3) & 0xFF);
-        SendCommand(SET_RAM_Y_ADDRESS_COUNTER);
-        SendData(y & 0xFF);
-        SendData((y >> 8) & 0xFF);
-        WaitUntilIdle();
-    }
-
-    void ClearFrameMemory(unsigned char color) {
-        SetMemoryArea(0, 0, this->width - 1, this->height - 1);
-        SetMemoryPointer(0, 0);
-        SendCommand(WRITE_RAM);
-        /* send the color data */
-        for (int i = 0; i < this->width / 8 * this->height; i++) {
-            SendData(color);
-        }
-    }
-
-    void DisplayFrame(void) {
-        SendCommand(DISPLAY_UPDATE_CONTROL_2);
-        SendData(0xC4);
-        SendCommand(MASTER_ACTIVATION);
-        SendCommand(TERMINATE_FRAME_READ_WRITE);
-        WaitUntilIdle();
-    }
-
-    void WaitUntilIdle()
-    {
-        // active low
-        while (m_g.read(m_busy)) {
-            tos::this_thread::yield();
-        }
-    }
-
-private:
-
-    void SendCommand(unsigned char command) {
-        _writeCommand(command);
-    }
-
-    void SendData(unsigned char data) {
-        _writeData(data);
-    }
-
-    void _writeCommand(uint8_t c)
-    {
-        m_g.write(m_dc, tos::digital::low);
-        m_g.write(m_cs, tos::digital::low);
-        m_spi->write(c);
-        m_g.write(m_cs, tos::digital::high);
-        m_g.write(m_dc, tos::digital::high);
-    }
-
-    void _writeData(uint8_t d)
-    {
-        m_g.write(m_cs, tos::digital::low);
-        m_spi->write(d);
-        m_g.write(m_cs, tos::digital::high);
-    }
-
-    void _writeData(const uint8_t* data, uint16_t n) {
-        m_g.write(m_cs, tos::digital::low);
-        m_spi->write({data, n});
-        m_g.write(m_cs, tos::digital::high);
-    }
-
-    void _writeCommandData(const uint8_t* pCommandData, uint8_t datalen)
-    {
-        m_g.write(m_dc, tos::digital::low);
-        m_g.write(m_cs, tos::digital::low);
-        m_spi->write(*pCommandData++);
-        datalen--;
-        m_g.write(m_dc, tos::digital::high);
-        m_spi->write({pCommandData, datalen});
-        m_g.write(m_cs, tos::digital::high);
-    }
-
-    void _writeCommandDataPGM(const uint8_t* pCommandData, uint8_t datalen)
-    {
-        std::vector<uint8_t> buf(pCommandData, pCommandData + datalen);
-        _writeCommandData(buf.data(), buf.size());
-    }
-
-    void _writeDataPGM(const uint8_t* data, uint16_t n)
-    {
-        std::vector<uint8_t> buf(data, data + n);
-        _writeData(buf.data(), buf.size());
-    }
-
-    SpiT m_spi;
-    tos::nrf52::gpio m_g;
-    tos::nrf52::gpio::pin_type m_cs, m_dc, m_reset, m_busy;
-};
-
 auto ble_task = [](auto& g)
 {
     using namespace tos;
@@ -673,7 +509,9 @@ auto ble_task = [](auto& g)
     tos::nrf52::spi s(clk, 39_pin, mosi);
 
     epd<decltype(&s)> epd(&s, cs, dc, reset, busy);
-    epd.Init();
+    epd.initialize([](std::chrono::milliseconds ms) {
+        nrf_delay_ms(ms.count());
+    });
 
     epd.ClearFrameMemory(0x00);
     epd.DisplayFrame();
@@ -697,14 +535,21 @@ auto ble_task = [](auto& g)
     tos::println(usart, "gatt initd");
     services_init();
     tos::println(usart, "services initd");
-    advertising_init();
+    tos::nrf52::advertising adv;
     tos::println(usart, "adv initd");
     ret_code_t err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
     conn_params_init();
     tos::println(usart, "conn initd");
-    advertising_start();
-    tos::println(usart, "began adv");
+    auto started = adv.start();
+    if (started)
+    {
+        tos::println(usart, "began adv");
+    }
+    else
+    {
+        tos::println(usart, "adv failed");
+    }
 
     while (true)
     {
