@@ -100,6 +100,9 @@ tos_install(tos_bme280 ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_features(tos_bme280 PUBLIC cxx_std_14)
 target_compile_definitions(tos_bme280 PUBLIC BME280_FLOAT_ENABLE)
 
+add_library(tos_epd include/common/epd/waveshare/bw29.hpp src/stub.cpp)
+target_link_libraries(tos_epd PUBLIC tos_core tos_spi)
+tos_install(tos_epd ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(tos_inet
         include/common/inet/tcp_ip.hpp
