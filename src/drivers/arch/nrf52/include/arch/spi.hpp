@@ -62,9 +62,14 @@ public:
         sync.down();
     }
 
+    ~spi()
+    {
+        nrfx_spim_uninit(&details::spis[0]);
+    }
+
 private:
 
-    void isr(nrfx_spim_evt_t const & ev)
+    void isr(nrfx_spim_evt_t const &)
     {
         sync.up_isr();
     }
