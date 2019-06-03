@@ -10,3 +10,4 @@
 #include "twim.hpp"
 #include "usart.hpp"
 #include "spi.hpp"
+#include "ble.hpp"
