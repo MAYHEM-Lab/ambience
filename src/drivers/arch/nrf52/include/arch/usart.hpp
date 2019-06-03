@@ -31,6 +31,8 @@ namespace tos
             void write(span<const char> buf);
             span<char> read(span<char> buf);
 
+            ~uart();
+
         private:
 
             void handle_callback(const void *p_event);

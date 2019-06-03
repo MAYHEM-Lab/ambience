@@ -75,5 +75,9 @@ namespace tos
 
             return buf;
         }
+
+        uart::~uart() {
+            nrfx_uarte_uninit(&uart0);
+        }
     }
 }
