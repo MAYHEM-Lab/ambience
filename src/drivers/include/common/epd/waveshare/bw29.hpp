@@ -58,11 +58,8 @@ public:
     using gpio_type = typename std::remove_pointer_t<SpiT>::gpio_type;
     using PinT = typename gpio_type::pin_type;
 
-    static const uint16_t WIDTH = 128;
-    static const uint16_t HEIGHT = 296;
-
-    uint16_t width = 128;
-    uint16_t height = 296;
+    static constexpr uint16_t width = 128;
+    static constexpr uint16_t height = 296;
 
     explicit epd(SpiT spi, PinT cs, PinT dc, PinT reset, PinT busy)
         : m_spi{std::move(spi)}
@@ -95,8 +92,8 @@ public:
     {
         hard_reset(delay);
         _writeCommand(DRIVER_OUTPUT_CONTROL); // Panel configuration, Gate selection
-        _writeData((HEIGHT - 1) % 256);
-        _writeData((HEIGHT - 1) / 256);
+        _writeData((height - 1) % 256);
+        _writeData((height - 1) / 256);
         _writeData(0x00);
         _writeCommand(BOOSTER_SOFT_START_CONTROL); // softstart
         _writeData(0xd7);

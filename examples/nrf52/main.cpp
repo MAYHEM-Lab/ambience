@@ -34,6 +34,9 @@
 #include "nrf_ble_gatt.h"
 #include "bakir_ble.hpp"
 
+#include "text.hpp"
+#include "canvas.hpp"
+
 static nrf_ble_gatt_t m_gatt;
 static nrf_sdh_ble_evt_observer_t m_gatt_obs __attribute__((section(".sdh_ble_observers1")))__attribute__((used)) = {nrf_ble_gatt_on_ble_evt, &m_gatt};
 
@@ -134,7 +137,8 @@ static void gap_params_init()
     APP_ERROR_CHECK(err_code);
 }
 
-extern const unsigned char IMAGE_DATA[4736];
+bakir::canvas<128, 296> framebuf;
+constexpr bakir::charset font = bakir::charset{}.inverted().flip_horizontal();
 
 auto ble_task = []()
 {
@@ -183,6 +187,29 @@ auto ble_task = []()
         tos::println(usart, "adv failed");
     }
 
+    {
+        tos::nrf52::spi s(clk, 39_pin, mosi);
+        epd<decltype(&s)> epd(&s, cs, dc, reset, busy);
+        epd.initialize([](std::chrono::milliseconds ms) {
+            nrf_delay_ms(ms.count());
+        });
+
+        framebuf.fill(0xFF);
+        framebuf.set_word(0, 0, 0);
+        framebuf.set_pixel(0, 1, false);
+        framebuf.set_pixel(0, 2, false);
+        framebuf.set_pixel(0, 3, false);
+        framebuf.set_pixel(7, 1, false);
+        framebuf.set_pixel(7, 2, false);
+        framebuf.set_pixel(7, 3, false);
+        framebuf.set_word(0, 4, 0);
+        framebuf.copy(*font.get('A'), 24, 20);
+        framebuf.copy(*font.get('B'), 32, 20);
+        framebuf.copy(*font.get('C'), 40, 20);
+        epd.SetFrameMemory(framebuf.data(), 0, 0, epd.width, epd.height);
+        epd.DisplayFrame();
+    }
+
     while (true)
     {
         std::array<char, 1> c;
@@ -197,7 +224,7 @@ auto ble_task = []()
                 nrf_delay_ms(ms.count());
             });
 
-            epd.SetFrameMemory(IMAGE_DATA, 0, 0, epd.width, epd.height);
+            epd.SetFrameMemory(framebuf.data(), 0, 0, epd.width, epd.height);
             epd.DisplayFrame();
         }
         else if (c[0] == 'c')
