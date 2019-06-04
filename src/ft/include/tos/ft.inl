@@ -200,10 +200,10 @@ inline exit_reason scheduler::schedule() {
                 impl::cur_thread = &run_queue.front();
                 run_queue.pop_front();
 
-                switch_context(impl::cur_thread->get_ctx(), return_codes::scheduled);
+                switch_context(self()->get_ctx(), return_codes::scheduled);
             }
             case return_codes::do_exit: {
-                std::destroy_at(impl::cur_thread);
+                std::destroy_at(self());
                 num_threads--;
                 break;
             }
@@ -242,9 +242,6 @@ inline auto &launch(stack_storage<StSz> &stack, FuncT &&func, ArgTs &&... args) 
     tos::span<char> task_span((char *) &stack, StSz);
     return launch<false>(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
 }
-
-constexpr struct alloc_stack_t {
-} alloc_stack;
 
 template<class FuncT, class... ArgTs>
 inline auto &launch(alloc_stack_t, FuncT &&func, ArgTs &&... args) {
