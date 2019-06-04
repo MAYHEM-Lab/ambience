@@ -10,6 +10,7 @@
 #include <frozen/unordered_map.h>
 #include <frozen/algorithm.h>
 #include <type_traits>
+#include "canvas.hpp"
 
 namespace bakir
 {
@@ -49,14 +50,27 @@ public:
         return {res};
     }
 
-    constexpr character transpose() const {
-        std::array<uint8_t, 8> res{};
-        for (int i = 0; i < m_buf.size(); ++i)
+    constexpr character transposed() const {
+        canvas<8, 8> self{};
+        for (int row = 0; row < 8; ++row)
         {
-            uint8_t line{};
-            for (int j = 0; j < m_buf.size(); ++j)
+            self.set_word(0, row, m_buf[row]);
+        }
+
+        canvas<8, 8> out{};
+
+        for (int i = 0; i < out.height(); ++i)
+        {
+            for (int j = 0; j < out.width(); ++j)
             {
+                out.set_pixel(j, i, self.get_pixel(i, j));
             }
+        }
+
+        std::array<uint8_t, 8> res{};
+        for (int row = 0; row < 8; ++row)
+        {
+            res[row] = out.get_word(0, row);
         }
         return {res};
     }
@@ -69,11 +83,57 @@ constexpr auto get_def_chars()
     constexpr character A {{ 0x0C, 0x1E, 0x33, 0x33, 0x3F, 0x33, 0x33, 0x00}};
     constexpr character B {{ 0x3F, 0x66, 0x66, 0x3E, 0x66, 0x66, 0x3F, 0x00}};
     constexpr character C {{ 0x3C, 0x66, 0x03, 0x03, 0x03, 0x66, 0x3C, 0x00}};
+    constexpr character D {{ 0x1F, 0x36, 0x66, 0x66, 0x66, 0x36, 0x1F, 0x00}};
+    constexpr character E {{ 0x7F, 0x46, 0x16, 0x1E, 0x16, 0x46, 0x7F, 0x00}};
+    constexpr character F {{ 0x7F, 0x46, 0x16, 0x1E, 0x16, 0x06, 0x0F, 0x00}};
+    constexpr character G {{ 0x3C, 0x66, 0x03, 0x03, 0x73, 0x66, 0x7C, 0x00}};
+    constexpr character H {{ 0x33, 0x33, 0x33, 0x3F, 0x33, 0x33, 0x33, 0x00}};
+    constexpr character I {{ 0x1E, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x1E, 0x00}};
+    constexpr character J {{ 0x78, 0x30, 0x30, 0x30, 0x33, 0x33, 0x1E, 0x00}};
+    constexpr character K {{ 0x67, 0x66, 0x36, 0x1E, 0x36, 0x66, 0x67, 0x00}};
+    constexpr character L {{ 0x0F, 0x06, 0x06, 0x06, 0x46, 0x66, 0x7F, 0x00}};
+    constexpr character M {{ 0x63, 0x77, 0x7F, 0x7F, 0x6B, 0x63, 0x63, 0x00}};
+    constexpr character N {{ 0x63, 0x67, 0x6F, 0x7B, 0x73, 0x63, 0x63, 0x00}};
+    constexpr character O {{ 0x1C, 0x36, 0x63, 0x63, 0x63, 0x36, 0x1C, 0x00}};
+    constexpr character P {{ 0x3F, 0x66, 0x66, 0x3E, 0x06, 0x06, 0x0F, 0x00}};
+    constexpr character Q {{ 0x1E, 0x33, 0x33, 0x33, 0x3B, 0x1E, 0x38, 0x00}};
+    constexpr character R {{ 0x3F, 0x66, 0x66, 0x3E, 0x36, 0x66, 0x67, 0x00}};
+    constexpr character S {{ 0x1E, 0x33, 0x07, 0x0E, 0x38, 0x33, 0x1E, 0x00}};
+    constexpr character T {{ 0x3F, 0x2D, 0x0C, 0x0C, 0x0C, 0x0C, 0x1E, 0x00}};
+    constexpr character U {{ 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x3F, 0x00}};
+    constexpr character V {{ 0x33, 0x33, 0x33, 0x33, 0x33, 0x1E, 0x0C, 0x00}};
+    constexpr character W {{ 0x63, 0x63, 0x63, 0x6B, 0x7F, 0x77, 0x63, 0x00}};
+    constexpr character X {{ 0x63, 0x63, 0x36, 0x1C, 0x1C, 0x36, 0x63, 0x00}};
+    constexpr character Y {{ 0x33, 0x33, 0x33, 0x1E, 0x0C, 0x0C, 0x1E, 0x00}};
+    constexpr character Z {{ 0x7F, 0x63, 0x31, 0x18, 0x4C, 0x66, 0x7F, 0x00}};
 
-    return frozen::unordered_map<char, character, 3>{
+    return frozen::unordered_map<char, character, 26> {
         { 'A', A },
         { 'B', B },
-        { 'C', C }
+        { 'C', C },
+        { 'D', D },
+        { 'E', E },
+        { 'F', F },
+        { 'G', G },
+        { 'H', H },
+        { 'I', I },
+        { 'J', J },
+        { 'K', K },
+        { 'L', L },
+        { 'M', M },
+        { 'N', N },
+        { 'O', O },
+        { 'P', P },
+        { 'Q', Q },
+        { 'R', R },
+        { 'S', S },
+        { 'T', T },
+        { 'U', U },
+        { 'V', V },
+        { 'W', W },
+        { 'X', X },
+        { 'Y', Y },
+        { 'Z', Z }
     };
 }
 
@@ -113,10 +173,14 @@ public:
         return charset{ map([](auto x) { return std::pair<char, character>(x.first, x.second.flip_horizontal()); }, m_chars) };
     }
 
-private:
-    constexpr charset(frozen::unordered_map<char, character, 3> chars) : m_chars{chars} {}
+    constexpr auto transposed() const {
+        return charset{ map([](auto x) { return std::pair<char, character>(x.first, x.second.transposed()); }, m_chars) };
+    }
 
-    frozen::unordered_map<char, character, 3> m_chars;
+private:
+    constexpr charset(frozen::unordered_map<char, character, 26> chars) : m_chars{chars} {}
+
+    frozen::unordered_map<char, character, 26> m_chars;
 };
 
 } // namespace bakir
