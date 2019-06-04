@@ -138,7 +138,11 @@ static void gap_params_init()
 }
 
 bakir::canvas<128, 296> framebuf;
-constexpr bakir::charset font = bakir::charset{}.inverted().flip_horizontal();
+constexpr auto font =
+    bakir::basic_font()
+        .inverted()             // black on white
+        .mirror_horizontal()    // left to right
+        .rotate_90_cw();        // screen is rotated
 
 auto ble_task = []()
 {
@@ -188,24 +192,26 @@ auto ble_task = []()
     }
 
     {
+        framebuf.fill(true);
+        auto print_str = [&](auto& str, size_t x, size_t y) {
+            for (char c : str) {
+                if (c == 0) return;
+                auto ch = font.get(c);
+                if (!ch)
+                {
+                    ch = font.get('?');
+                }
+                framebuf.copy(*ch, x, y);
+                y += ch->height();
+            }
+        };
+        print_str("Hello world", 96, 24);
+
         tos::nrf52::spi s(clk, 39_pin, mosi);
         epd<decltype(&s)> epd(&s, cs, dc, reset, busy);
         epd.initialize([](std::chrono::milliseconds ms) {
             nrf_delay_ms(ms.count());
         });
-
-        framebuf.fill(0xFF);
-        framebuf.set_word(0, 0, 0);
-        framebuf.set_pixel(0, 1, false);
-        framebuf.set_pixel(0, 2, false);
-        framebuf.set_pixel(0, 3, false);
-        framebuf.set_pixel(7, 1, false);
-        framebuf.set_pixel(7, 2, false);
-        framebuf.set_pixel(7, 3, false);
-        framebuf.set_word(0, 4, 0);
-        framebuf.copy(*font.get('A'), 24, 20);
-        framebuf.copy(*font.get('B'), 32, 20);
-        framebuf.copy(*font.get('C'), 40, 20);
         epd.SetFrameMemory(framebuf.data(), 0, 0, epd.width, epd.height);
         epd.DisplayFrame();
     }

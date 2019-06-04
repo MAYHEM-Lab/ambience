@@ -15,13 +15,13 @@ void usart_setup(tos::stm32::gpio& g)
 {
     using namespace tos::tos_literals;
 
-    auto tx_pin = 2_pin;
-    auto rx_pin = 3_pin;
+    auto tx_pin = 9_pin;
+    auto rx_pin = 10_pin;
 
     g.set_pin_mode(rx_pin, tos::pin_mode::in);
 
-    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
+    gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO9);
+    gpio_set_af(GPIOA, GPIO_AF7, GPIO9| GPIO10);
 }
 
 void blink_task()
@@ -31,7 +31,7 @@ void blink_task()
 	auto g = tos::open(tos::devs::gpio);
 
     usart_setup(g);
-    auto usart = tos::open(tos::devs::usart<1>, tos::uart::default_9600);
+    auto usart = tos::open(tos::devs::usart<0>, tos::uart::default_9600);
 
     auto tmr = tos::open(tos::devs::timer<2>);
     auto alarm = tos::open(tos::devs::alarm, tmr);

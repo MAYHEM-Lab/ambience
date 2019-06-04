@@ -79,15 +79,15 @@ public:
 
     constexpr bool get_pixel(size_t x, size_t y) const {
         auto word_idx = (W * y + x) / 8;
+        auto word_off = (W * y + x) % 8;
         auto& word = m_buf[word_idx];
-        return word;
+        return word & (0x80 >> word_off);
     }
 
     constexpr uint8_t get_word(size_t x, size_t y) const {
         auto word_idx = (W * y + x) / 8;
-        auto word_off = (W * y + x) % 8;
         auto& word = m_buf[word_idx];
-        return word & (0x80 >> word_off);
+        return word;
     }
 
 private:
