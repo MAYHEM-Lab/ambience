@@ -4,7 +4,7 @@
 
 #pragma once
 #include <nrf_gpio.h>
-#include <nrf52840.h>
+#include <nrf.h>
 #include <common/gpio.hpp>
 #include <tos/compiler.hpp>
 
@@ -24,7 +24,9 @@ namespace tos
             {
                 if (pin.m_pin == 0xFF) return 0xFF;
                 int num = pin.m_pin;
+#if defined(NRF_P1)
                 if (pin.m_port == NRF_P1) num += 32;
+#endif
                 return num;
             }
         }
@@ -71,7 +73,11 @@ namespace tos
     inline nrf52::pin_t operator""_pin(unsigned long long pin)
     {
         if (pin == 255) return { nullptr, 0xFF };
+#if defined(NRF_P1)
         NRF_GPIO_Type* port = (pin >= 32) ? NRF_P1 : NRF_P0;
+#else
+        NRF_GPIO_Type* port = NRF_P0;
+#endif
         return { port, uint8_t(pin % 32) };
     }
 }
