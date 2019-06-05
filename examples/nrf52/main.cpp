@@ -12,7 +12,6 @@
 #include <nrf_gpio.h>
 
 #include <nrfx_uarte.h>
-#include <drivers/include/nrfx_uarte.h>
 #include <tos/compiler.hpp>
 
 #include <algorithm>
@@ -144,17 +143,12 @@ constexpr auto font =
         .mirror_horizontal()    // left to right
         .rotate_90_cw();        // screen is rotated
 
-auto ble_task = []()
-{
+tos::fixed_fifo<char, 2> cmds;
+
+auto epd_task = []{
     using namespace tos;
     using namespace tos_literals;
-    constexpr auto usconf = tos::usart_config()
-        .add(115200_baud_rate)
-        .add(usart_parity::disabled)
-        .add(usart_stop_bit::one);
-
     auto g = open(tos::devs::gpio);
-    auto usart = open(tos::devs::usart<0>, usconf);
 
     auto mosi = 33_pin;
     auto clk = 34_pin;
@@ -165,31 +159,6 @@ auto ble_task = []()
 
     g->set_pin_mode(cs, tos::pin_mode::out);
     g->write(cs, tos::digital::high);
-
-    tos::println(usart, "hello");
-
-    tos::nrf52::softdev sd;
-    auto setname_res = sd.set_device_name("Tos BLE");
-    auto tx_pow_res = sd.set_tx_power();
-    tos::println(usart, "sd initd", bool(setname_res));
-    gap_params_init();
-    tos::println(usart, "gap initd");
-    gatt_init();
-    tos::println(usart, "gatt initd");
-    auto serv = bakir::make_ble_service(usart);
-    tos::println(usart, "services initd");
-    tos::nrf52::advertising adv;
-    tos::println(usart, "adv initd");
-
-    auto started = adv.start();
-    if (started)
-    {
-        tos::println(usart, "began adv");
-    }
-    else
-    {
-        tos::println(usart, "adv failed");
-    }
 
     {
         framebuf.fill(true);
@@ -218,10 +187,9 @@ auto ble_task = []()
 
     while (true)
     {
-        std::array<char, 1> c;
-        serv->read(c);
+        auto c = cmds.pop();
 
-        if (c[0] == 'a')
+        if (c == 'a')
         {
             tos::nrf52::spi s(clk, 39_pin, mosi);
 
@@ -233,7 +201,7 @@ auto ble_task = []()
             epd.SetFrameMemory(framebuf.data(), 0, 0, epd.width, epd.height);
             epd.DisplayFrame();
         }
-        else if (c[0] == 'c')
+        else if (c == 'c')
         {
             tos::nrf52::spi s(clk, 39_pin, mosi);
 
@@ -245,8 +213,63 @@ auto ble_task = []()
             epd.ClearFrameMemory(0xFF);
             epd.DisplayFrame();
         }
+    }
+};
 
-        usart->write(c);
+auto ble_task = [](bool have_epd)
+{
+    using namespace tos;
+    using namespace tos_literals;
+    constexpr auto usconf = tos::usart_config()
+        .add(115200_baud_rate)
+        .add(usart_parity::disabled)
+        .add(usart_stop_bit::one);
+
+    auto usart = open(tos::devs::usart<0>, usconf);
+
+    tos::println(usart, "hello");
+
+    tos::nrf52::softdev sd;
+    auto setname_res = sd.set_device_name("Tos BLE");
+    auto tx_pow_res = sd.set_tx_power();
+    tos::println(usart, "sd initd", bool(setname_res));
+    gap_params_init();
+    tos::println(usart, "gap initd");
+    gatt_init();
+    tos::println(usart, "gatt initd");
+    auto serv = bakir::make_ble_service(usart);
+    tos::println(usart, "services initd");
+    tos::nrf52::advertising adv;
+    tos::println(usart, "adv initd");
+
+    auto started = adv.start();
+    if (started)
+    {
+        tos::println(usart, "began adv");
+    }
+    else
+    {
+        tos::println(usart, "adv failed");
+    }
+
+    if (have_epd)
+    {
+        tos::println(usart, "Have epaper, initializing display task");
+        tos::launch(alloc_stack, epd_task);
+    }
+
+    using namespace std::chrono_literals;
+    while (true)
+    {
+        std::array<char, 1> c;
+        auto r = serv->read(c);
+
+        if (have_epd)
+        {
+            cmds.push(r[0]);
+        }
+
+        usart->write(r);
     }
 
     tos::this_thread::block_forever();
@@ -254,5 +277,5 @@ auto ble_task = []()
 
 void TOS_EXPORT tos_main()
 {
-    tos::launch(tos::alloc_stack, ble_task);
+    tos::launch(tos::alloc_stack, ble_task, true);
 }
