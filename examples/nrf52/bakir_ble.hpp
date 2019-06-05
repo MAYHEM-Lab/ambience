@@ -38,6 +38,27 @@ public:
         tos::nrf52::nrf_events.attach(m_obs);
     }
 
+    template <class AlarmT>
+    tos::span<char> read(tos::span<char> b, AlarmT& alarm, std::chrono::milliseconds to)
+    {
+        size_t total = 0;
+        auto len = b.size();
+        auto buf = b.data();
+        tos::kern::busy();
+        while (total < len) {
+            auto res = rx_len.down(alarm, to);
+            if (res == tos::sem_ret::timeout)
+            {
+                break;
+            }
+            *buf = rx_buf.pop();
+            ++buf;
+            ++total;
+        }
+        tos::kern::unbusy();
+        return b.slice(0, total);
+    }
+
     tos::span<char> read(tos::span<char> b) {
         size_t total = 0;
         auto len = b.size();
