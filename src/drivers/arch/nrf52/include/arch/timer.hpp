@@ -16,7 +16,7 @@ namespace tos
         class timer0 : public self_pointing<timer0>
         {
         public:
-            timer0();
+            timer0(int idx);
 
             void set_frequency(uint16_t hertz);
 
@@ -34,11 +34,17 @@ namespace tos
 
             function_ref<void()> m_cb;
             uint32_t m_ticks;
+            int m_idx;
         };
     }
 
     inline nrf52::timer0 open_impl(devs::timer_t<0>)
     {
-        return nrf52::timer0{};
+        return nrf52::timer0{0};
+    }
+
+    inline nrf52::timer0 open_impl(devs::timer_t<1>)
+    {
+        return nrf52::timer0{1};
     }
 }

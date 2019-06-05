@@ -13,7 +13,11 @@ add_library(nrf52_timer include/arch/timer.hpp src/timer.cpp
     ${SDK_ROOT}/modules/nrfx/drivers/src/nrfx_timer.c)
 target_link_libraries(nrf52_timer PUBLIC tos_core)
 tos_install(nrf52_timer ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_compile_definitions(nrf52_timer PRIVATE NRFX_TIMER_ENABLED=1 NRFX_TIMER0_ENABLED=1 TIMER_LEGACY_SUPPORT=0)
+target_compile_definitions(nrf52_timer PRIVATE
+        NRFX_TIMER_ENABLED=1
+        NRFX_TIMER0_ENABLED=1
+        NRFX_TIMER1_ENABLED=1
+        TIMER_LEGACY_SUPPORT=0)
 
 add_library(nrf52_twim
     ${SDK_ROOT}/modules/nrfx/drivers/src/nrfx_twim.c include/arch/twim.hpp src/twim.cpp)
