@@ -55,15 +55,20 @@ namespace tos
             if (nrfx_is_in_ram(buf.data()))
             {
                 err = nrfx_uarte_tx(&uart0, (const uint8_t*)buf.data(), buf.size());
+                m_write_sync.down();
             }
             else
             {
-                uint8_t tbuf[32];
-                memcpy(tbuf, buf.data(), buf.size());
-                err = nrfx_uarte_tx(&uart0, tbuf, buf.size());
+                while (!buf.empty())
+                {
+                    uint8_t tbuf[32];
+                    auto len = std::min<size_t>(32, buf.size());
+                    std::copy_n(buf.begin(), len, std::begin(tbuf));
+                    buf = buf.slice(len);
+                    err = nrfx_uarte_tx(&uart0, tbuf, len);
+                    m_write_sync.down();
+                }
             }
-
-            m_write_sync.down();
         }
 
         span<char> uart::read(span<char> buf) {
