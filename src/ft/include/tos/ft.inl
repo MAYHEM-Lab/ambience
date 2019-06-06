@@ -96,7 +96,8 @@ struct super_tcb : tcb {
     }
 
     ~super_tcb() final {
-        if constexpr (FreeStack) tos_stack_free(get_task_base());
+        // no if constexpr in C++14
+        if /*constexpr*/ (FreeStack) tos_stack_free(get_task_base());
     }
 
 private:
