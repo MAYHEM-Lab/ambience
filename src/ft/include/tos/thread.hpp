@@ -53,7 +53,7 @@ namespace tos
          * Causes the current thread to exit, stopping the execution
          * and destroying the stack.
          *
-         * No other resource will be returned to the OS through an
+         * No resource will be returned to the OS through an
          * exit. Thus, it must be used with care. Prefer exiting a
          * thread through returning from the entry point function.
          *
