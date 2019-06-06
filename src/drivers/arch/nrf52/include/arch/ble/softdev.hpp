@@ -11,6 +11,7 @@
 #include "nrf_sdh.h"
 #include "nrf_sdh_soc.h"
 #include "nrf_sdh_ble.h"
+#include <string_view>
 
 namespace tos
 {
