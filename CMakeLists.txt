@@ -75,7 +75,7 @@ elseif(${TOS_CORE} MATCHES "esp")
 
     add_subdirectory(examples/esp_lwip)
     add_subdirectory(examples/esp_conn)
-    add_subdirectory(examples/esp_ssl)
+    #add_subdirectory(examples/esp_ssl)
     add_subdirectory(examples/esp_spi)
     add_subdirectory(examples/esp_adc)
     #add_subdirectory(examples/bearssl)
