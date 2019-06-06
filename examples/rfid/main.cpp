@@ -6,6 +6,7 @@
 #include <arch/drivers.hpp>
 #include <common/mfrc522.hpp>
 #include <tos/print.hpp>
+#include <common/spi.hpp>
 
 auto delay = [](std::chrono::microseconds us) {
     uint32_t end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 13.3;

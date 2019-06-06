@@ -15,6 +15,7 @@ void usart_setup(tos::stm32::gpio& g)
 {
     using namespace tos::tos_literals;
 
+#if defined(STM32L0)
     auto tx_pin = 9_pin;
     auto rx_pin = 10_pin;
 
@@ -22,6 +23,15 @@ void usart_setup(tos::stm32::gpio& g)
 
     gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO9);
     gpio_set_af(GPIOA, GPIO_AF7, GPIO9| GPIO10);
+#elif defined(STM32F1)
+    auto tx_pin = 2_pin;
+    auto rx_pin = 3_pin;
+
+    g.set_pin_mode(rx_pin, tos::pin_mode::in);
+
+    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
+                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
+#endif
 }
 
 void blink_task()
