@@ -4,9 +4,9 @@
 
 #include <tos/ft.hpp>
 #include <tos/semaphore.hpp>
-#include "catch.hpp"
+#include "doctest.h"
 
-TEST_CASE("launch & semaphore task", "[ft]")
+TEST_CASE("launch & semaphore task")
 {
     tos::semaphore s{0};
     tos::launch(tos::alloc_stack, [](void* sp){
@@ -17,7 +17,7 @@ TEST_CASE("launch & semaphore task", "[ft]")
     REQUIRE(true);
 }
 
-TEST_CASE("lambda launch & semaphore task", "[ft]")
+TEST_CASE("lambda launch & semaphore task")
 {
     tos::semaphore s{0};
     tos::launch(tos::alloc_stack, [&]{
@@ -28,7 +28,7 @@ TEST_CASE("lambda launch & semaphore task", "[ft]")
     REQUIRE(true);
 }
 
-TEST_CASE("lambda", "[ft]")
+TEST_CASE("lambda")
 {
     int x{};
     tos::semaphore s{0};
@@ -40,7 +40,7 @@ TEST_CASE("lambda", "[ft]")
     REQUIRE(x == 10);
 }
 
-TEST_CASE("lambda with args", "[ft]")
+TEST_CASE("lambda with args")
 {
     int x{};
     tos::semaphore s{0};

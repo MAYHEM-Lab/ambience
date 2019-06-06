@@ -2,10 +2,10 @@
 // Created by fatih on 12/14/18.
 //
 
-#include "catch.hpp"
+#include "doctest.h"
 #include <tos/function_ref.hpp>
 
-TEST_CASE("simple", "[tos, func_ref]")
+TEST_CASE("simple")
 {
     tos::function_ref<bool()> fr {[](void*){ return true; }};
     REQUIRE(fr());
