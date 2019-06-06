@@ -57,7 +57,7 @@ namespace tos
     public:
         using pin_t = typename GpioT::pin_type;
 
-        nrf24(GpioT, SpiT, pin_t ce, pin_t cs, pin_t interrupt);
+        nrf24(GpioT g, SpiT spi, pin_t ce, pin_t cs, pin_t interrupt);
 
         bool set_speed(nrf24_speeds speed);
 
@@ -107,7 +107,8 @@ namespace tos
         pin_t m_ce_pin;
         pin_t m_int_pin;
 
-        GpioT m_g;
+        mutable GpioT m_g;
+        mutable SpiT m_spi;
     };
 
     namespace regs
@@ -162,8 +163,8 @@ namespace tos
     }
 
     template <class GpioT, class SpiT>
-    inline nrf24<GpioT, SpiT>::nrf24(GpioT g, SpiT, pin_t ce, pin_t cs, pin_t interrupt)
-            : m_g{g}, m_cs_pin{cs}, m_ce_pin{ce}, m_int_pin{interrupt} {
+    inline nrf24<GpioT, SpiT>::nrf24(GpioT g, SpiT spi, pin_t ce, pin_t cs, pin_t interrupt)
+            : m_spi{spi}, m_g{g}, m_cs_pin{cs}, m_ce_pin{ce}, m_int_pin{interrupt} {
         g->set_pin_mode(ce, tos::pin_mode::out);
         g->write(ce, false);
 
@@ -270,7 +271,7 @@ namespace tos
 
     template <class GpioT, class SpiT>
     inline uint8_t nrf24<GpioT, SpiT>::write_cmd(nrf24_mnemonics::mnemonics cmd) {
-        return begin_transaction().exchange(cmd);
+        return begin_transaction()->exchange(cmd);
     }
 
     template <class GpioT, class SpiT>
@@ -286,8 +287,8 @@ namespace tos
     template <class GpioT, class SpiT>
     inline size_t nrf24<GpioT, SpiT>::get_next_length() const {
         auto trans = begin_transaction();
-        trans.exchange(nrf24_mnemonics::R_RX_PL_WID);
-        return trans.exchange(0xff);
+        trans->exchange(nrf24_mnemonics::R_RX_PL_WID);
+        return trans->exchange(0xff);
     }
 
     template <class GpioT, class SpiT>
@@ -359,7 +360,7 @@ namespace tos
 
     template <class GpioT, class SpiT>
     spi_transaction<SpiT> nrf24<GpioT, SpiT>::begin_transaction() const {
-        return spi_transaction<SpiT>{m_cs_pin};
+        return spi_transaction<SpiT>{m_spi, m_g, m_cs_pin};
     }
 
     static constexpr auto reg_mask = 0x1F;
@@ -367,18 +368,18 @@ namespace tos
     template <class GpioT, class SpiT>
     uint8_t nrf24<GpioT, SpiT>::write_reg(reg_id_t reg, uint8_t val) {
         auto trans = begin_transaction();
-        auto res = trans.exchange(nrf24_mnemonics::write_reg | (reg_mask & reg.reg));
-        trans.exchange(val);
+        auto res = trans->exchange(nrf24_mnemonics::write_reg | (reg_mask & reg.reg));
+        trans->exchange(val);
         return res;
     }
 
     template <class GpioT, class SpiT>
     uint8_t nrf24<GpioT, SpiT>::write_reg(reg_id_t reg, span<const uint8_t> val) {
         auto trans = begin_transaction();
-        auto res = trans.exchange(nrf24_mnemonics::write_reg | (reg_mask & reg.reg));
+        auto res = trans->exchange(nrf24_mnemonics::write_reg | (reg_mask & reg.reg));
         for (auto byte : val)
         {
-            trans.exchange(byte);
+            trans->exchange(byte);
         }
         return res;
     }
@@ -386,10 +387,10 @@ namespace tos
     template <class GpioT, class SpiT>
     uint8_t nrf24<GpioT, SpiT>::read_reg(reg_id_t reg, span<uint8_t> b) const {
         auto trans = begin_transaction();
-        auto res = trans.exchange(nrf24_mnemonics::read_reg | (reg_mask & reg.reg));
+        auto res = trans->exchange(nrf24_mnemonics::read_reg | (reg_mask & reg.reg));
         for (auto& byte : b)
         {
-            byte = trans.exchange(0xff);
+            byte = trans->exchange(0xff);
         }
         return res;
     }
@@ -397,7 +398,7 @@ namespace tos
     template <class GpioT, class SpiT>
     uint8_t nrf24<GpioT, SpiT>::read_reg(reg_id_t reg) const {
         auto trans = begin_transaction();
-        trans.exchange(nrf24_mnemonics::read_reg | (reg_mask & reg.reg));
-        return trans.exchange(0xff);
+        trans->exchange(nrf24_mnemonics::read_reg | (reg_mask & reg.reg));
+        return trans->exchange(0xff);
     }
 }

@@ -39,15 +39,13 @@ add_library(tos_xbee
 target_link_libraries(tos_xbee PUBLIC tos_core tos_usart Boost::sml)
 tos_install(tos_xbee ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-if (TOS_AVR)
-    add_library(tos_spi_sd src/spi_sd.cpp include/common/sd/spi_sd.hpp include/common/sd/sd_info.hpp)
-    target_link_libraries(tos_spi_sd PUBLIC tos_core tos_spi tos_gpio)
-    target_include_directories(tos_spi_sd PRIVATE .)
+add_library(tos_spi_sd src/spi_sd.cpp include/common/sd/spi_sd.hpp include/common/sd/sd_info.hpp)
+target_link_libraries(tos_spi_sd PUBLIC tos_core tos_spi tos_gpio)
+target_include_directories(tos_spi_sd PRIVATE .)
 
-    add_library(tos_nrf24 include/common/nrf24.hpp src/nrf24.cpp)
-    target_link_libraries(tos_nrf24 PUBLIC tos_core)
-    tos_install(tos_nrf24 ${CMAKE_CURRENT_SOURCE_DIR}/include)
-endif()
+add_library(tos_nrf24 include/common/nrf24.hpp src/nrf24.cpp)
+target_link_libraries(tos_nrf24 PUBLIC tos_core)
+tos_install(tos_nrf24 ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(tos_alarm include/common/alarm.hpp src/stub.cpp)
 target_link_libraries(tos_alarm PUBLIC tos_util_core)

@@ -31,17 +31,14 @@ void main_task()
 {
     using namespace tos::tos_literals;
 
-    constexpr auto usconf = tos::usart_config()
-            .add(9600_baud_rate)
-            .add(tos::usart_parity::disabled)
-            .add(tos::usart_stop_bit::one);
+    auto usart = open(tos::devs::usart<0>, tos::uart::default_9600);
 
-    auto usart = open(tos::devs::usart<0>, usconf);
+    auto g = open(tos::devs::gpio);
 
     auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);
     spi.enable();
 
-    auto sd = open(tos::devs::sd, spi, 10_pin);
+    auto sd = open(tos::devs::sd, spi, g, 10_pin);
     if (!sd.init())
     {
         tos::println(*usart, "that didn't work");
