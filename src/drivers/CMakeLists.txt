@@ -43,7 +43,7 @@ add_library(tos_spi_sd src/spi_sd.cpp include/common/sd/spi_sd.hpp include/commo
 target_link_libraries(tos_spi_sd PUBLIC tos_core tos_spi tos_gpio)
 target_include_directories(tos_spi_sd PRIVATE .)
 
-if (${TOS_CORE} MATCHES "avr")
+if (${TOS_CORE} MATCHES "atmega")
     add_library(tos_nrf24 include/common/nrf24.hpp src/nrf24.cpp)
     target_link_libraries(tos_nrf24 PUBLIC tos_core)
     tos_install(tos_nrf24 ${CMAKE_CURRENT_SOURCE_DIR}/include)
