@@ -9,6 +9,7 @@
 #include "utility.hpp"
 #include <tos/span.hpp>
 #include <tos/print.hpp>
+#include <common/driver_base.hpp>
 
 namespace tos
 {

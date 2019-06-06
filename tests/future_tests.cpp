@@ -2,10 +2,10 @@
 // Created by fatih on 2/28/19.
 //
 
-#include "catch.hpp"
+#include "doctest.h"
 #include <tos/future.hpp>
 
-TEST_CASE("future", "[future]")
+TEST_CASE("future")
 {
     tos::promise<int> p;
 
@@ -16,7 +16,7 @@ TEST_CASE("future", "[future]")
     REQUIRE(f.get() == 42);
 }
 
-TEST_CASE("future across threads", "[future]")
+TEST_CASE("future across threads")
 {
     tos::future<int> f;
 
@@ -34,7 +34,7 @@ TEST_CASE("future across threads", "[future]")
 }
 
 
-TEST_CASE("future across threads, moving the future", "[future]")
+TEST_CASE("future across threads, moving the future")
 {
     tos::future<int> f;
 

@@ -96,7 +96,7 @@ struct super_tcb : tcb {
     }
 
     ~super_tcb() final {
-        if (FreeStack) tos_stack_free(get_task_base());
+        if constexpr (FreeStack) tos_stack_free(get_task_base());
     }
 
 private:
@@ -203,6 +203,7 @@ inline exit_reason scheduler::schedule() {
                 switch_context(self()->get_ctx(), return_codes::scheduled);
             }
             case return_codes::do_exit: {
+                //TODO: keeps calling destructors after freeing memory -_-
                 std::destroy_at(self());
                 num_threads--;
                 break;

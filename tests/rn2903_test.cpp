@@ -3,7 +3,7 @@
 //
 
 #include <tos/span.hpp>
-#include "catch.hpp"
+#include "doctest.h"
 #include <string>
 #include <chrono>
 #include <cstring>
@@ -42,7 +42,7 @@ private:
 
 struct alarm_mock {};
 
-TEST_CASE("rn2903 nvm get", "[rn2903,get]")
+TEST_CASE("rn2903 nvm get")
 {
     uart_driver dr;
     alarm_mock al;

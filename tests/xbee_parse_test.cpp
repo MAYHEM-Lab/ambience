@@ -2,13 +2,13 @@
 // Created by fatih on 10/10/18.
 //
 
-#include "catch.hpp"
+#include "doctest.h"
 #include <common/xbee/response.hpp>
 #include <tos/span.hpp>
 #include <common/xbee/request.hpp>
 #include <common/driver_base.hpp>
 
-TEST_CASE("xbee req gen", "[tos-xbee]")
+TEST_CASE("xbee req gen")
 {
     namespace xbee = tos::xbee;
 
@@ -46,7 +46,7 @@ TEST_CASE("xbee req gen", "[tos-xbee]")
     REQUIRE(r[10] == uint8_t(0xE6)); // checksum
 }
 
-TEST_CASE("xbee sm res parse", "[tos-xbee]")
+TEST_CASE("xbee sm res parse")
 {
     namespace xbee = tos::xbee;
     xbee::sm_response_parser<xbee::tx_status> p;
@@ -74,7 +74,7 @@ TEST_CASE("xbee sm res parse", "[tos-xbee]")
     REQUIRE(p.get_api_id() == xbee::api_ids::TX_STATUS_RESPONSE);
 }
 
-TEST_CASE("xbee res parse", "[tos-xbee]")
+TEST_CASE("xbee res parse")
 {
     namespace xbee = tos::xbee;
     xbee::response_parser p;

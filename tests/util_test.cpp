@@ -2,12 +2,12 @@
 // Created by fatih on 5/3/18.
 //
 
-#include "catch.hpp"
+#include "doctest.h"
 
 #include <tos/ring_buf.hpp>
 #include <tos/fixed_fifo.hpp>
 
-TEST_CASE("base ring buffer", "[base_ring_buf]")
+TEST_CASE("base ring buffer")
 {
     tos::ring_buf rb{ 4 };
     REQUIRE(rb.capacity() == 4);
@@ -33,7 +33,7 @@ TEST_CASE("base ring buffer", "[base_ring_buf]")
     REQUIRE(rb.push() == 3);
 }
 
-TEST_CASE("fifo test", "[fixed_fifo]")
+TEST_CASE("fifo test")
 {
     tos::fixed_fifo<char, 4, tos::ring_buf> ff;
     ff.push('a');
