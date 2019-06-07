@@ -112,11 +112,9 @@ namespace tos::stm32
     }
 
     inline void general_timer::set_frequency(uint16_t hertz) {
-        /*
-         * For whatever reason, the apb1 frequency is twice what it should be, so we multiply by 2 as well...
-         */
-        m_period = 2000 / hertz;
-        timer_set_prescaler(m_def->tim, ((rcc_apb1_frequency) / 1'000));
+        m_period = 1000 / hertz;
+        // prescaler
+        TIM_PSC(m_def->tim) = rcc_apb1_frequency / 1'000;
     }
 
     inline void general_timer::enable() {
