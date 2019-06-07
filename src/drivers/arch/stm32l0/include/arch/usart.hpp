@@ -144,6 +144,7 @@ namespace tos::stm32
     inline usart::usart(const detail::usart_def & x, usart_constraint&& params) :
         tracked_driver(std::distance(detail::usarts, &x)), m_def{&x}
     {
+        rcc_periph_reset_pulse(x.rst);
         rcc_periph_clock_enable(x.clk);
 
         usart_set_baudrate(x.usart, tos::get<usart_baud_rate>(params).rate);
