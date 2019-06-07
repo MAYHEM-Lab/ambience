@@ -1,0 +1,8 @@
+set(TOS_CORE stm32)
+set(TOS_DRIVERS stm32l0)
+SET(LIBOPENCM_LIB opencm3_stm32l4)
+SET(LIBOPENCM_DEF STM32L4)
+SET(TOS_CPU_ARCH cortex-m4)
+set(TOS_DEF_STACK 1024)
+set(TOS_TOOLCHAIN stm32Toolchain)
+set(COMPILE_FLAGS "-mfloat-abi=hard -mfpu=fpv4-sp-d16")

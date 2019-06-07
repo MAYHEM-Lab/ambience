@@ -15,7 +15,7 @@ void usart_setup(tos::stm32::gpio& g)
 {
     using namespace tos::tos_literals;
 
-#if defined(STM32L0)
+#if defined(STM32L0) || defined(STM32L4)
     auto tx_pin = 9_pin;
     auto rx_pin = 10_pin;
 
@@ -36,12 +36,17 @@ void usart_setup(tos::stm32::gpio& g)
 
 void blink_task()
 {
-	using namespace tos::tos_literals;
+    using namespace tos;
+    using namespace tos_literals;
+    constexpr auto usconf = tos::usart_config()
+        .add(115200_baud_rate)
+        .add(usart_parity::disabled)
+        .add(usart_stop_bit::one);
 
 	auto g = tos::open(tos::devs::gpio);
 
     usart_setup(g);
-    auto usart = tos::open(tos::devs::usart<0>, tos::uart::default_9600);
+    auto usart = tos::open(tos::devs::usart<0>, usconf);
 
     auto tmr = tos::open(tos::devs::timer<2>);
     auto alarm = tos::open(tos::devs::alarm, tmr);
