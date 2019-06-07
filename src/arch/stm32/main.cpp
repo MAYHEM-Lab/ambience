@@ -27,7 +27,7 @@ int main()
 	flash_dcache_enable();
 	flash_icache_enable();
 	/* 16MHz / 4 = > 4 * 40 = 160MHz VCO => 80MHz main pll  */
-	rcc_set_main_pll(RCC_PLLCFGR_PLLSRC_HSI16, 4, 40,
+	rcc_set_main_pll(RCC_PLLCFGR_PLLSRC_HSI16, 4, 20,
 			0, 0, RCC_PLLCFGR_PLLR_DIV2);
     rcc_osc_on(RCC_PLL);
     while (rcc_is_osc_ready(RCC_PLL));
@@ -38,9 +38,9 @@ int main()
     rcc_set_sysclk_source(RCC_CFGR_SW_PLL); /* careful with the param here! */
     rcc_wait_for_sysclk_status(RCC_PLL);
     /* FIXME - eventually handled internally */
-    rcc_ahb_frequency = 80e6;
-    rcc_apb1_frequency = 80e6;
-    rcc_apb2_frequency = 80e6;
+    rcc_ahb_frequency = 40e6;
+    rcc_apb1_frequency = 40e6;
+    rcc_apb2_frequency = 40e6;
 #endif
 
     tos::kern::enable_interrupts();
