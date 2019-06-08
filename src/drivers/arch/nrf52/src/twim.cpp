@@ -2,7 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 13/06/2018.
 //
 
-#include <arch/nrf52/twim.hpp>
+#include <arch/twim.hpp>
 #include <nrfx_twim.h>
 #include <tos/semaphore.hpp>
 #include <drivers/include/nrfx_twim.h>
@@ -11,7 +11,7 @@ namespace tos
 {
     namespace nrf52
     {
-        static constexpr nrfx_twim_t twim0 { NRF_TWIM0, NRFX_TWIM0_INST_IDX };
+        static const nrfx_twim_t twim0 { NRF_TWIM0, NRFX_TWIM0_INST_IDX };
 
         struct data_t
         {
@@ -25,8 +25,8 @@ namespace tos
             conf.frequency = NRF_TWIM_FREQ_250K;
             conf.interrupt_priority = 7;
             conf.hold_bus_uninit = false;
-            conf.scl = clock_pin;
-            conf.sda = data_pin;
+            conf.scl = detail::to_sdk_pin(clock_pin);
+            conf.sda = detail::to_sdk_pin(data_pin);
 
             auto res = nrfx_twim_init(&twim0, &conf, [](nrfx_twim_evt_t const *p_event, void *p_context){
                 data.evt = p_event->type;
@@ -63,12 +63,13 @@ namespace tos
             }
         }
 
-        twi_tx_res twim::receive(twi_addr_t from, span<char> buf) noexcept
+        twi_rx_res twim::receive(twi_addr_t from, span<char> buf) noexcept
         {
             auto ret = nrfx_twim_rx(&twim0, from.addr, (uint8_t*)buf.data(), buf.size());
 
             if (ret != NRFX_SUCCESS)
             {
+                return twi_rx_res::other;
                 // reset?
             }
 
@@ -76,12 +77,12 @@ namespace tos
             auto ev = data.evt;
             switch (ev)
             {
-            case NRFX_TWIM_EVT_ADDRESS_NACK: return twi_tx_res::addr_nack;
-            case NRFX_TWIM_EVT_DATA_NACK: return twi_tx_res::data_nack;
+            case NRFX_TWIM_EVT_ADDRESS_NACK: return twi_rx_res::addr_nack;
+            case NRFX_TWIM_EVT_DATA_NACK: return twi_rx_res::data_nack;
 
             case NRFX_TWIM_EVT_DONE:
             default:
-                return twi_tx_res::ok;
+                return twi_rx_res::ok;
             }
         }
     }

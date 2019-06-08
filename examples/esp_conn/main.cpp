@@ -9,7 +9,7 @@
 #include <tos/mutex.hpp>
 #include <tos/utility.hpp>
 
-#include <arch/lx106/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/version.hpp>
 #include <tos/fixed_fifo.hpp>
 
@@ -34,13 +34,13 @@ void task()
     int state = 0;
     int i = 0;
     tos::semaphore s{0};
-    auto log_ip_task = [&, tcb = tos::impl::cur_thread]
+    auto log_ip_task = [&]
     {
         auto timer = tos::open(tos::devs::timer<0>);
         auto alarm = tos::open(tos::devs::alarm, timer);
 
         tos::println(usart, "Logger thread running");
-        tos::println(usart, "Logger thread:", tos::impl::cur_thread->get_context()[0]);
+        tos::println(usart, "Logger thread:", tos::impl::cur_thread->get_ctx().buf[0]);
 
         while (true)
         {
@@ -66,8 +66,6 @@ void task()
 
     auto addr = force_get(wconn.get_addr());
     state = 2;
-
-    //tos::println(usart, "ip:", int(addr.addr[0]), int(addr.addr[1]), int(addr.addr[2]), int(addr.addr[3]));
 
     lwip_init();
 

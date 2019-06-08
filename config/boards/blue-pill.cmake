@@ -1,0 +1,1 @@
+set(TOS_CPU stm32/f1/03c8)

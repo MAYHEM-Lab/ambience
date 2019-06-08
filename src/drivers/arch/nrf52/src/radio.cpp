@@ -2,10 +2,9 @@
 // Created by Mehmet Fatih BAKIR on 09/06/2018.
 //
 
-#include <arch/nrf52/radio.hpp>
+#include <arch/radio.hpp>
 #include <stdint.h>
-#include <nrf52.h>
-#include <mdk/nrf.h>
+#include <nrf.h>
 #include <tos/semaphore.hpp>
 
 #define PACKET_BASE_ADDRESS_LENGTH  (4UL)                   //!< Packet base address length field size in bytes

@@ -8,6 +8,7 @@
 #include <common/adxl345/constants.hpp>
 #include <stdint.h>
 #include <tos/span.hpp>
+#include <tos/debug.hpp>
 
 namespace tos
 {
@@ -19,10 +20,18 @@ namespace tos
 
         bool powerOn();
 
-        void readAccel(int *x, int *y, int *z);
+        struct accel { int x, y, z; };
+        accel read() {
+            accel res;
+            readAccel(&res.x, &res.y, &res.z);
+            return res;
+        }
 
         void setRangeSetting(int val);
     private:
+
+        void readAccel(int *x, int *y, int *z);
+
         bool writeTo(uint8_t address, uint8_t val) { return writeToI2C(address, val); }
         bool readFrom(uint8_t address, int num, uint8_t buff[]) { return readFromI2C(address, num, buff); }
         bool readFromI2C(uint8_t address, int num, uint8_t* buff);
@@ -94,7 +103,7 @@ namespace tos
         }
         auto res = m_twim.receive({ADXL345_DEVICE}, tos::span<char>((char *) buff, num));
         if (res != tos::twi_rx_res::ok) {
-            //ets_printf("read error!");
+            tos_debug_print("read error! %d", int(res));
 
             //TODO: ERR
             return false;
@@ -107,7 +116,7 @@ namespace tos
         char buf[] = { address, val };
         auto res = m_twim.transmit({ADXL345_DEVICE}, buf);
         if (res != tos::twi_tx_res::ok) {
-            //ets_printf("write error!");
+            tos_debug_print("write error! %d", int(res));
             //TODO: ERR
             return false;
         }

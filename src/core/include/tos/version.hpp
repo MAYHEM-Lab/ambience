@@ -6,8 +6,11 @@
 
 namespace tos
 {
-    namespace vcs
-    {
-        static constexpr char commit_hash[] = TOS_GIT_SHA1;
-    }
-}
+  namespace vcs
+  {
+    /**
+     * This constant contains the GIT hash signature when the OS was built
+     */
+    static constexpr char commit_hash[] = TOS_GIT_SHA1;
+  } // namespace vcs
+} // namespace tos

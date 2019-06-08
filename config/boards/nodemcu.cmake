@@ -1,0 +1,1 @@
+set(TOS_CPU esp/8266)

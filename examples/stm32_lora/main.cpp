@@ -6,7 +6,7 @@
 #include <common/rn2903/rn2903.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
-#include <arch/stm32/drivers.hpp>
+#include <arch/drivers.hpp>
 
 void usart_setup(tos::stm32::gpio& g)
 {

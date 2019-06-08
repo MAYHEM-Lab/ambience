@@ -58,7 +58,7 @@ namespace tos {
     {
         detail::memory_barrier_enter();
         tos::int_guard ig;
-        m_wait.wait();
+        m_wait.wait(ig);
         detail::memory_barrier_exit();
     }
 

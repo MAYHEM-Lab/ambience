@@ -2,7 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 15/04/2018.
 //
 
-#include <arch/avr/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <common/sd/spi_sd.hpp>
@@ -31,17 +31,14 @@ void main_task()
 {
     using namespace tos::tos_literals;
 
-    constexpr auto usconf = tos::usart_config()
-            .add(19200_baud_rate)
-            .add(tos::usart_parity::disabled)
-            .add(tos::usart_stop_bit::one);
+    auto usart = open(tos::devs::usart<0>, tos::uart::default_9600);
 
-    auto usart = open(tos::devs::usart<0>, usconf);
+    auto g = open(tos::devs::gpio);
 
     auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);
     spi.enable();
 
-    auto sd = open(tos::devs::sd, spi, 10_pin);
+    auto sd = open(tos::devs::sd, spi, g, 10_pin);
     if (!sd.init())
     {
         tos::println(*usart, "that didn't work");

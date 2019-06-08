@@ -4,6 +4,7 @@
 #include <setjmp.h>
 #include <tos/tcb.hpp>
 #include "thread.hpp"
+#include <tos/interrupt.hpp>
 
 namespace tos {
 
@@ -74,7 +75,7 @@ namespace tos {
          * If the interrupts are not disabled when this function
          * is called, the behaviour is undefined
          */
-        void suspend_self();
+        void suspend_self(const int_guard&);
         // pre-condition: interrupts must be disabled
 
         /**
@@ -101,7 +102,7 @@ namespace tos {
     namespace kern {
         struct scheduler
         {
-            jmp_buf main_context{};
+            ctx main_context{};
             int8_t  num_threads = 0;
             uint8_t busy = 0;
 

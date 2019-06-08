@@ -124,6 +124,11 @@ namespace tos
                 }
             }
 
+            void eof()
+            {
+                m_len.up();
+            }
+
             /**
              * Reads up to buf.size() bytes from the current pbuf. If the current
              * pbuf has less than buf.size() bytes, a short read will occur.
@@ -182,9 +187,9 @@ namespace tos
             void append(buffer&& b)
             {
                 auto buf = b.m_root;
-                b.m_root = nullptr;
                 pbuf_cat(m_root, buf);
                 up_many(m_len, b.size());
+                b.m_root = nullptr;
                 reset(b.m_len, 0);
             }
 
@@ -235,9 +240,9 @@ namespace tos
                 return { (const char*)m_root->payload + m_read_off, m_root->len - m_read_off};
             }
 
-            tos::semaphore m_len{0};
             pbuf* m_root;
             size_t m_read_off;
+            tos::semaphore m_len{0};
         };
     }
 }

@@ -10,6 +10,7 @@
 #include <tos/compiler.hpp>
 #include <new>
 #include <nonstd/expected.hpp>
+#include <optional>
 
 /**
  * This function is called upon a force_get execution on an
@@ -22,7 +23,7 @@
  * The implementation must never return to the caller, otherwise
  * the behaviour is undefined.
  */
-[[noreturn]] void tos_force_get_failed(void*);
+[[noreturn]] void tos_force_get_failed(void*) NO_INLINE;
 
 namespace tos
 {
@@ -79,8 +80,12 @@ namespace tos
 
         constexpr explicit PURE operator bool() const { return bool(m_internal); }
 
+        constexpr bool operator!() {
+            return !bool(m_internal);
+        }
+
         template <class ResT, typename = std::enable_if_t<!std::is_same_v<T, ResT>>>
-        constexpr operator expected<ResT, ErrT>()
+        constexpr operator expected<ResT, ErrT>() const
         {
             if (*this)
             {
@@ -89,6 +94,16 @@ namespace tos
             }
 
             return unexpected(m_internal.error());
+        }
+
+        explicit constexpr operator std::optional<T>() const
+        {
+          if (!*this)
+          {
+            return std::nullopt;
+          }
+
+          return force_get(*this);
         }
 
         using value_type = typename internal_t::value_type;

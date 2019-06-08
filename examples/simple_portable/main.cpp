@@ -9,14 +9,9 @@
 
 #include <common/tty.hpp>
 #include <common/usart.hpp>
+#include <tos/char_stream.hpp>
 
-#ifdef TOS_ARCH_avr
-#include <arch/avr/usart.hpp>
-#elif defined(TOS_ARCH_x86)
-#include <arch/x86/drivers.hpp>
-#elif defined(TOS_ARCH_arm)
-#include <arch/nrf52/usart.hpp>
-#endif
+#include <arch/drivers.hpp>
 
 #include <tos/mutex.hpp>
 

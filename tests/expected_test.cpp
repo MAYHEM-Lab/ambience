@@ -2,7 +2,7 @@
 // Created by fatih on 11/21/18.
 //
 
-#include "catch.hpp"
+#include "doctest.h"
 #include <tos/expected.hpp>
 #include <tos/compiler.hpp>
 
@@ -21,27 +21,27 @@ auto NO_INLINE fwd()
     return bar();
 }
 
-TEST_CASE("expected", "[expected]")
+TEST_CASE("expected")
 {
     auto res = bar();
     REQUIRE(res);
     REQUIRE(force_get(res) == 3);
 }
 
-TEST_CASE("expected fwd", "[expected]")
+TEST_CASE("expected fwd")
 {
     auto res = fwd();
     REQUIRE(res);
     REQUIRE(force_get(res) == 3);
 }
 
-TEST_CASE("unexpected", "[expected]")
+TEST_CASE("unexpected")
 {
     auto res = foo();
     REQUIRE(!res);
 }
 
-TEST_CASE("move", "[expected]")
+TEST_CASE("move")
 {
     auto res = bar();
     auto res2 = std::move(res);
@@ -50,7 +50,7 @@ TEST_CASE("move", "[expected]")
     REQUIRE(res);
 }
 
-TEST_CASE("with", "[expected]")
+TEST_CASE("with")
 {
     REQUIRE(with(foo(), [](int x) { return x; }, [](int x){ return x; }) == 3);
     REQUIRE(with(bar(), [](int x) { return x; }, [](int x){ return x; }) == 3);
@@ -70,7 +70,7 @@ public:
 
 tos::expected<move_only, int> test_move_only() { return move_only{}; }
 
-TEST_CASE("move only", "[expected]")
+TEST_CASE("move only")
 {
     auto res = test_move_only();
     auto res2 = std::move(res);

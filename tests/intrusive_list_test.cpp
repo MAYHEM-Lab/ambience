@@ -2,7 +2,7 @@
 // Created by fatih on 5/18/18.
 //
 
-#include "catch.hpp"
+#include "doctest.h"
 #include <tos/intrusive_list.hpp>
 
 class foo : public tos::list_node<foo>
@@ -12,7 +12,7 @@ public:
     foo(int x) : x{x} {}
 };
 
-TEST_CASE("push_back", "[intrusive_list]")
+TEST_CASE("push_back")
 {
     using namespace tos;
     intrusive_list<foo> foos;
@@ -30,7 +30,7 @@ TEST_CASE("push_back", "[intrusive_list]")
     REQUIRE(foos.size() == 0);
 }
 
-TEST_CASE("insert", "[intrusive_list]")
+TEST_CASE("insert")
 {
     using namespace tos;
     intrusive_list<foo> foos;
@@ -53,7 +53,7 @@ TEST_CASE("insert", "[intrusive_list]")
     REQUIRE(&foos.back() == &a);
 }
 
-TEST_CASE("insert at end", "[intrusive_list]")
+TEST_CASE("insert at end")
 {
     using namespace tos;
     intrusive_list<foo> foos;
@@ -68,7 +68,7 @@ TEST_CASE("insert at end", "[intrusive_list]")
     REQUIRE(&foos.back() == &a);
 }
 
-TEST_CASE("insert in middle", "[intrusive_list]")
+TEST_CASE("insert in middle")
 {
     using namespace tos;
     intrusive_list<foo> foos;
@@ -87,7 +87,7 @@ TEST_CASE("insert in middle", "[intrusive_list]")
     REQUIRE(&*(++foos.begin()) == &b);
 }
 
-TEST_CASE("pop back", "[intrusive_list]")
+TEST_CASE("pop back")
 {
     using namespace tos;
     intrusive_list<foo> foos;
@@ -109,7 +109,7 @@ TEST_CASE("pop back", "[intrusive_list]")
     REQUIRE(foos.empty());
 }
 
-TEST_CASE("erase", "[intrusive_list]")
+TEST_CASE("erase")
 {
     using namespace tos;
 

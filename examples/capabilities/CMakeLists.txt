@@ -1,10 +1,10 @@
 add_executable(capabilities apps.hpp common.hpp)
 target_link_libraries(capabilities tos::core tos::print caps)
 
-if (TOS_ESP)
+if (${TOS_CORE} MATCHES "esp")
     target_link_libraries(capabilities esp82_drivers)
     target_sources(capabilities PRIVATE esp_main.cpp)
-elseif(TOS_X86)
+elseif(${TOS_CORE} MATCHES "x86")
     target_link_libraries(capabilities x86_drivers)
     target_sources(capabilities PRIVATE x86_main.cpp)
 endif()

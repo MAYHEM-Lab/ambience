@@ -21,7 +21,7 @@ namespace tos {
          * If this function is called from a non-task
          * context, the behaviour is undefined.
          */
-        void wait();
+        void wait(const int_guard&);
 
         /**
          * Wakes all of the threads that are waiting on
@@ -72,14 +72,14 @@ namespace tos {
 }
 
 namespace tos {
-    inline void waitable::wait()
+    inline void waitable::wait(const int_guard& ni)
     {
         if (self() == nullptr)
         {
             kern::fatal("wait called from non thread ctx!");
         }
         add(*self());
-        kern::suspend_self();
+        kern::suspend_self(ni);
     }
 
     inline auto waitable::add(kern::tcb& t) -> waiter_handle

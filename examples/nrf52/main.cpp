@@ -2,142 +2,163 @@
 // Created by Mehmet Fatih BAKIR on 29/03/2018.
 //
 
-#include <tos/ft.hpp>
-#include <tos/semaphore.hpp>
+#include <arch/drivers.hpp>
+#include <common/alarm.hpp>
+#include <common/epd/waveshare/bw29.hpp>
 
 #include <nrf_delay.h>
-#include <nrf_gpio.h>
 
-#include <nrfx_uarte.h>
-#include <drivers/include/nrfx_uarte.h>
-#include <tos/compiler.hpp>
-
-#include <arch/nrf52/drivers.hpp>
-#include <algorithm>
+#include <tos/ft.hpp>
 #include <tos/print.hpp>
+#include <tos/fixed_fifo.hpp>
 
-#include <common/alarm.hpp>
-#include <common/lcd.hpp>
+#include "text.hpp"
+#include "canvas.hpp"
+#include "bakir_ble.hpp"
 
-namespace {
-    auto g = tos::open(tos::devs::gpio);
+void gap_params_init();
+void gatt_init();
 
-    tos::semaphore sem{0};
+bakir::canvas<128, 296> framebuf;
+constexpr auto font =
+    bakir::basic_font()
+        .inverted()             // black on white
+        .mirror_horizontal()    // left to right
+        .rotate_90_cw();        // screen is rotated
 
-    void led1_task() {
-        using namespace tos;
+tos::fixed_fifo<char, 2> cmds;
 
-        auto tmr = open(tos::devs::timer<0>);
-        auto alarm = open(devs::alarm, tmr);
+auto epd_task = []{
+    using namespace tos;
+    using namespace tos_literals;
+    auto g = open(tos::devs::gpio);
 
-        g->write(17, digital::low);
-        while (true) {
-            g->write(17, digital::high);
-            using namespace std::chrono_literals;
-            sem.down(alarm, 1s);
+    auto mosi = 33_pin;
+    auto clk = 34_pin;
+    auto cs = 35_pin;
+    auto dc = 36_pin;
+    auto reset = 37_pin;
+    auto busy = 38_pin;
 
-            g->write(17, digital::low);
-            sem.down(alarm, 1s);
-        }
-    }
+    g->set_pin_mode(cs, tos::pin_mode::out);
+    g->write(cs, tos::digital::high);
 
-    char c;
-    tos::semaphore send{0};
-    tos::semaphore sent{0};
-    void i2c_task()
     {
-        using namespace tos;
-        nrf52::twim i2c{26, 25};
-
-        lcd<nrf52::twim> lcd{ i2c, { 0x27 }, 20, 4 };
-
-        char buf[] = "Hello World";
-        char buf2[] = "Tos (c631797)";
-
-        auto tmr = open(devs::timer<0>);
-        auto alarm = open(devs::alarm, tmr);
-        lcd.begin(alarm);
-
-        lcd.backlight();
-        lcd.write(buf2);
-        lcd.set_cursor(0, 2);
-        lcd.write(buf);
-        lcd.set_cursor(0, 1);
-        lcd.write(buf);
-
-        g->write(17, digital::low);
-        while (true)
-        {
-            send.down();
-            g->write(17, digital::high);
-            lcd.write({&c, 1});
-            sent.up();
-            g->write(17, digital::low);
-        }
-    }
-
-    void led2_task() {
-        using namespace tos;
-        using namespace tos_literals;
-        constexpr auto usconf = tos::usart_config()
-                .add(115200_baud_rate)
-                .add(usart_parity::disabled)
-                .add(usart_stop_bit::one);
-
-        auto usart = open(tos::devs::usart<0>, usconf);
-
-        g->write(19, digital::low);
-
-        nrf52::radio rad;
-
-        tos::println(usart, "hello world!");
-
-        char x;
-        uint32_t i = 0;
-        while (true) {
-            usart.read({&x, 1});
-            g->write(19, digital::high);
-            if (x == 'r')
-            {
-                for (int j = 0; j < 50; ++j)
+        framebuf.fill(true);
+        auto print_str = [&](auto& str, size_t x, size_t y) {
+            for (char c : str) {
+                if (c == 0) return;
+                auto ch = font.get(c);
+                if (!ch)
                 {
-                    auto res = rad.receive();
-                    tos::println(usart, (int32_t)res);
-                    rad.transmit(res);
+                    ch = font.get('?');
                 }
+                framebuf.copy(*ch, x, y);
+                y += ch->height();
             }
-            else if (x == 't')
-            {
-                for (int j = 0; j < 50; ++j) {
-                    auto s = ++i;
-                    rad.transmit(s);
-                    //rad.transmit(s);
-                    auto r = rad.receive();
-                    tos::println(usart, "sent", (int32_t) s, "got", (int32_t) r);
-                }
-            }
-            else if (x == 'a')
-            {
-                sem.up();
-            }
-            else if (x == 'i')
-            {
-                usart.read({&c, 1});
-                send.up();
-                sent.down();
-                tos::println(usart, "sent");
-            }
+        };
+        print_str("Hello world", 96, 24);
+
+        tos::nrf52::spi s(clk, 255_pin, mosi);
+        epd<decltype(&s)> epd(&s, cs, dc, reset, busy);
+        epd.initialize([](std::chrono::milliseconds ms) {
+            nrf_delay_ms(ms.count());
+        });
+        epd.SetFrameMemory(framebuf.data(), 0, 0, epd.width, epd.height);
+        epd.DisplayFrame();
+    }
+
+    while (true)
+    {
+        auto c = cmds.pop();
+
+        if (c == 'a')
+        {
+            tos::nrf52::spi s(clk, 255_pin, mosi);
+
+            epd<decltype(&s)> epd(&s, cs, dc, reset, busy);
+            epd.initialize([](std::chrono::milliseconds ms) {
+                nrf_delay_ms(ms.count());
+            });
+
+            epd.SetFrameMemory(framebuf.data(), 0, 0, epd.width, epd.height);
+            epd.DisplayFrame();
+        }
+        else if (c == 'c')
+        {
+            tos::nrf52::spi s(clk, 255_pin, mosi);
+
+            epd<decltype(&s)> epd(&s, cs, dc, reset, busy);
+            epd.initialize([](std::chrono::milliseconds ms) {
+                nrf_delay_ms(ms.count());
+            });
+
+            epd.ClearFrameMemory(0xFF);
+            epd.DisplayFrame();
         }
     }
-}
+};
+
+auto ble_task = [](bool have_epd)
+{
+    using namespace tos;
+    using namespace tos_literals;
+    constexpr auto usconf = tos::usart_config()
+        .add(115200_baud_rate)
+        .add(usart_parity::disabled)
+        .add(usart_stop_bit::one);
+
+    auto usart = open(tos::devs::usart<0>, usconf);
+
+    tos::println(usart, "hello");
+
+    tos::nrf52::softdev sd;
+    auto setname_res = sd.set_device_name("Tos BLE");
+    auto tx_pow_res = sd.set_tx_power();
+    tos::println(usart, "sd initd", bool(setname_res));
+    gap_params_init();
+    tos::println(usart, "gap initd");
+    gatt_init();
+    tos::println(usart, "gatt initd");
+    auto serv = bakir::make_ble_service(usart);
+    tos::println(usart, "services initd");
+    tos::nrf52::advertising adv;
+    tos::println(usart, "adv initd");
+
+    auto started = adv.start();
+    if (started)
+    {
+        tos::println(usart, "began adv");
+    }
+    else
+    {
+        tos::println(usart, "adv failed");
+    }
+
+    if (have_epd)
+    {
+        tos::println(usart, "Have epaper, initializing display task");
+        tos::launch(alloc_stack, epd_task);
+    }
+
+    using namespace std::chrono_literals;
+    while (true)
+    {
+        std::array<char, 1> c;
+        auto r = serv->read(c);
+
+        if (have_epd)
+        {
+            cmds.push(r[0]);
+        }
+
+        usart->write(r);
+    }
+
+    tos::this_thread::block_forever();
+};
 
 void TOS_EXPORT tos_main()
 {
-    using namespace tos;
-    g->set_pin_mode(17, pin_mode::out);
-    g->set_pin_mode(19, pin_mode::out);
-
-    tos::launch(tos::alloc_stack, led1_task);
-    //tos::launch(i2c_task);
-    tos::launch(tos::alloc_stack, led2_task);
+    tos::launch(tos::alloc_stack, ble_task, true);
 }

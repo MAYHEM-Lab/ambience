@@ -31,8 +31,7 @@ namespace tos
         using iterator = T*;
 
         /**
-         * Spans cannot be null, thus this constructor
-         * is deleted.
+         * Constructs an empty span
          */
         constexpr span(std::nullptr_t) : span(static_cast<T*>(nullptr), size_t(0)) {};
 
@@ -137,6 +136,10 @@ namespace tos
 
         constexpr bool empty() const { return m_len == 0; }
 
+        constexpr span<const uint8_t> as_bytes() const {
+            return span<const uint8_t>{reinterpret_cast<const uint8_t*>(data()), size() * sizeof(T) };
+        }
+
         /**
          * Spans convert to a const version of them automatically
          *
@@ -155,6 +158,16 @@ namespace tos
          */
         constexpr span slice(size_t begin, size_t len){
             return { m_base + begin, len };
+        }
+
+        /**
+         * Takes a slice from this span.
+         *
+         * @param begin beginning index of the slice
+         * @return a new span
+         */
+        constexpr span slice(size_t begin){
+            return { m_base + begin, size() - begin };
         }
 
     private:

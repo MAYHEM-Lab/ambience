@@ -11,6 +11,8 @@ extern "C"
 
 #include <string.h>
 #include <tos/span.hpp>
+#include <cstddef>
+
 //#include <string>
 
 namespace tos
@@ -79,6 +81,7 @@ namespace tos
             void insert(uint32_t val);
 
             void insert(uint8_t val) { insert((uint32_t)val); }
+            void insert(uint16_t val) { insert((uint32_t)val); }
 
             void insert(const char *str);
             void insert(span<const char> str);

@@ -56,13 +56,13 @@ namespace tos
          */
         void sleep_for(std::chrono::milliseconds dur)
         {
-            event ev;
-            auto fun = [&ev]{
-                ev.fire_isr();
-            };
-            sleeper s { uint16_t(dur.count()), fun };
-            set_alarm(s);
-            ev.wait();
+          event ev;
+          auto fun = [&ev]{
+            ev.fire_isr();
+          };
+          sleeper s { uint16_t(dur.count()), fun };
+          set_alarm(s);
+          ev.wait();
         }
 
         auto set_alarm(sleeper& s) -> alarm_handle
@@ -72,15 +72,16 @@ namespace tos
             auto it = m_sleepers.begin();
             while (it != m_sleepers.end() && it->sleep_ticks < s.sleep_ticks)
             {
-                ++it;
+              s.sleep_ticks -= it->sleep_ticks;
+              ++it;
             }
             if (it != m_sleepers.end())
             {
-                s.sleep_ticks -= it->sleep_ticks;
+              it->sleep_ticks -= s.sleep_ticks;
             }
             else
             {
-                start();
+              start();
             }
             return m_sleepers.insert(it, s);
         }
@@ -103,8 +104,6 @@ namespace tos
             }
         }
 
-        constexpr std::chrono::milliseconds min_resolution() const { return std::chrono::milliseconds{ 1 }; }
-
     private:
 
         void start()
@@ -112,7 +111,7 @@ namespace tos
             (*m_timer)->set_callback({[](void* data){
                 static_cast<alarm*>(data)->tick_handler();
             }, this});
-            (*m_timer)->set_frequency(1000);
+            (*m_timer)->set_frequency(1000 / m_period);
             (*m_timer)->enable();
         }
 
@@ -124,8 +123,10 @@ namespace tos
         void tick_handler()
         {
             sleeper& front = m_sleepers.front();
-            front.sleep_ticks--;
-            if (front.sleep_ticks == 0)
+            auto prev = front.sleep_ticks;
+            front.sleep_ticks -= m_period;
+            if (front.sleep_ticks == 0
+                || front.sleep_ticks > prev) // may underflow
             {
                 m_sleepers.pop_front();
                 front.m_fun();
@@ -136,6 +137,7 @@ namespace tos
             }
         }
 
+        int m_period = 1; // in milliseconds
         intrusive_list<sleeper> m_sleepers;
         T* m_timer;
     };

@@ -11,8 +11,8 @@
 namespace temp
 {
 
-    static constexpr auto master_id = 101;
-    static constexpr auto slave_id = 102;
+    static constexpr auto master_id = 103;
+    static constexpr auto slave_id = 104;
 
 struct sample
 {

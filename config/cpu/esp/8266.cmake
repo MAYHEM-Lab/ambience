@@ -1,0 +1,4 @@
+set(TOS_CORE esp8266)
+set(TOS_DRIVERS esp8266)
+set(TOS_DEF_STACK 2048)
+set(TOS_TOOLCHAIN esp8266Toolchain)

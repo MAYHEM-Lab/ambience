@@ -3,12 +3,12 @@
 //
 
 #include <tos/ft.hpp>
-#include "catch.hpp"
-#include <arch/x86/drivers.hpp>
+#include "doctest.h"
+#include <arch/drivers.hpp>
 #include <common/alarm.hpp>
 #include <tos/semaphore.hpp>
 
-TEST_CASE("alarm", "[basic]"){
+TEST_CASE("alarm"){
     tos::semaphore s{0};
     tos::launch(tos::alloc_stack, [&]{
         tos::x86::timer tmr;

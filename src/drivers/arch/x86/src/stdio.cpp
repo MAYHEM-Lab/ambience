@@ -2,7 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 29/04/2018.
 //
 
-#include <arch/x86/stdio.hpp>
+#include <arch/stdio.hpp>
 #include <iostream>
 
 namespace tos

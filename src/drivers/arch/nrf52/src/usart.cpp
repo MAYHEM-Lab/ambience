@@ -2,7 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 07/06/2018.
 //
 
-#include <arch/nrf52/usart.hpp>
+#include <arch/usart.hpp>
 #include <nrfx_uarte.h>
 #include <drivers/include/nrfx_uarte.h>
 
@@ -10,7 +10,7 @@ namespace tos
 {
     namespace nrf52
     {
-        constexpr nrfx_uarte_t uart0 { NRF_UARTE0, NRFX_UARTE0_INST_IDX };
+        static const nrfx_uarte_t uart0 { NRF_UARTE0, NRFX_UARTE0_INST_IDX };
 
         uart::uart(usart_constraint&& config, gpio::pin_type rx, gpio::pin_type tx) noexcept
                 : m_write_sync{0}, m_read_sync{0}
@@ -23,8 +23,8 @@ namespace tos
             conf.baudrate = NRF_UARTE_BAUDRATE_115200;
             conf.pselcts = NRF_UARTE_PSEL_DISCONNECTED;
             conf.pselrts = NRF_UARTE_PSEL_DISCONNECTED;
-            conf.pselrxd = rx;
-            conf.pseltxd = tx;
+            conf.pselrxd = detail::to_sdk_pin(rx);
+            conf.pseltxd = detail::to_sdk_pin(tx);
             conf.p_context = this;
 
             auto res = nrfx_uarte_init(&uart0, &conf, [](nrfx_uarte_event_t const *p_event, void *p_context){
@@ -55,15 +55,20 @@ namespace tos
             if (nrfx_is_in_ram(buf.data()))
             {
                 err = nrfx_uarte_tx(&uart0, (const uint8_t*)buf.data(), buf.size());
+                m_write_sync.down();
             }
             else
             {
-                uint8_t tbuf[32];
-                memcpy(tbuf, buf.data(), buf.size());
-                err = nrfx_uarte_tx(&uart0, tbuf, buf.size());
+                while (!buf.empty())
+                {
+                    uint8_t tbuf[32];
+                    auto len = std::min<size_t>(32, buf.size());
+                    std::copy_n(buf.begin(), len, std::begin(tbuf));
+                    buf = buf.slice(len);
+                    err = nrfx_uarte_tx(&uart0, tbuf, len);
+                    m_write_sync.down();
+                }
             }
-
-            m_write_sync.down();
         }
 
         span<char> uart::read(span<char> buf) {
@@ -74,6 +79,10 @@ namespace tos
             m_read_sync.down();
 
             return buf;
+        }
+
+        uart::~uart() {
+            nrfx_uarte_uninit(&uart0);
         }
     }
 }

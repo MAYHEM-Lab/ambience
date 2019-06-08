@@ -56,6 +56,13 @@ namespace tos {
         }
     }
 
+    struct no_interrupts {
+    private:
+        no_interrupts() = default;
+        friend struct int_guard;
+        friend struct int_ctx;
+    };
+
     /**
      * This type implements a scoped interrupt disable
      * mechanism.
@@ -63,7 +70,7 @@ namespace tos {
      * Disabling interrupts should be avoided as much
      * as possible, specifically in user code.
      */
-    struct int_guard
+    struct int_guard : no_interrupts
     {
     public:
         int_guard()

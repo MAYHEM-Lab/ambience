@@ -3,18 +3,18 @@
 //
 
 #include <common/spi.hpp>
-#include <arch/avr/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 
 void slave_task()
 {
     using namespace tos::tos_literals;
-    auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);
+    auto spi = open(tos::devs::spi<0>, tos::spi_mode::slave);
     spi.enable();
 
     constexpr auto usconf = tos::usart_config()
-            .add(19200_baud_rate)
+            .add(9600_baud_rate)
             .add(tos::usart_parity::disabled)
             .add(tos::usart_stop_bit::one);
 
@@ -24,7 +24,7 @@ void slave_task()
 
     while (true)
     {
-        char c = spi.exchange(0xFF);
+        char c = spi.exchange(42);
         tos::println(usart, c);
     }
 }

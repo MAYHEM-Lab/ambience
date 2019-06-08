@@ -2,7 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 15/04/2018.
 //
 
-#include <arch/avr/drivers.hpp>
+#include <arch/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/arch.hpp>
@@ -58,45 +58,48 @@ void main_task()
 
         usart.clear();
         std::array<char, 2> buf;
-        usart.read(buf);
+        auto r = usart.read(buf, alarm, 5s);
 
-        auto res = d.read(10_pin);
-
-        int retries = 0;
-        while (res != tos::dht_res::ok)
+        if (r.size() == 2)
         {
-            //tos::println(usart, int8_t(res));
-            alarm.sleep_for(2s);
-            if (retries == 5)
-            {
-                break;
-                // err
-            }
-            ++retries;
-            res = d.read(10_pin);
-        }
+            auto res = d.read(10_pin);
 
-        temp::sample s { d.temperature, d.humidity, temp::GetTemp(alarm) };
-        struct
-        {
-            uint8_t chk_sum{ 0 };
-            decltype(usart)* str;
-            int write(span<const char> buf)
+            int retries = 0;
+            while (res != tos::dht_res::ok)
             {
-                for (auto c : buf)
+                //tos::println(usart, int8_t(res));
+                alarm.sleep_for(2s);
+                if (retries == 5)
                 {
-                    chk_sum += uint8_t(c);
+                    break;
+                    // err
                 }
-                static char b[13];
-                std::memcpy(b, buf.data(), 12);
-                b[12] = chk_sum;
-                auto res = str->write(b);
-                return res - 1;
+                ++retries;
+                res = d.read(10_pin);
             }
-        } chk_str;
-        chk_str.str = &usart;
-        chk_str.write({ (const char*)&s, sizeof s });
-        //usart.write({ (const char*)&chk_str.chk_sum, 1 });
+
+            temp::sample s { d.temperature, d.humidity, temp::GetTemp(alarm) };
+            struct
+            {
+                uint8_t chk_sum{ 0 };
+                decltype(usart)* str;
+                int write(span<const char> buf)
+                {
+                    for (auto c : buf)
+                    {
+                        chk_sum += uint8_t(c);
+                    }
+                    static char b[13];
+                    std::memcpy(b, buf.data(), 12);
+                    b[12] = chk_sum;
+                    auto res = str->write(b);
+                    return res - 1;
+                }
+            } chk_str;
+            chk_str.str = &usart;
+            chk_str.write({ (const char*)&s, sizeof s });
+            //usart.write({ (const char*)&chk_str.chk_sum, 1 });
+        }
 
         g.write(13_pin, tos::digital::low);
 

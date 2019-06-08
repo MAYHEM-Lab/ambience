@@ -34,13 +34,13 @@ jobs:
           command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-8-2018-q4-major /opt/x-tools
       - run:
           name: Download nRF52 SDK
-          command: wget http://cs.ucsb.edu/~bakir/nRF5_SDK_15.2.0_9412b96.zip -O nrf5-sdk.zip
+          command: wget http://cs.ucsb.edu/~bakir/nRF5_SDK_15.3.0_59ac345.zip -O nrf5-sdk.zip
       - run:
           name: Extract SDK
           command: unzip nrf5-sdk.zip -d /opt/x-tools
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_NRF52=ON ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=bluefruit ..
       - run:
           working_directory: build/
           name: Build Project
@@ -76,7 +76,7 @@ jobs:
           command: unzip libopencm3.zip -d /opt/x-tools
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_STM32=ON ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=blue-pill ..
       - run:
           working_directory: build/
           name: Build Project
@@ -99,7 +99,7 @@ jobs:
           environment:
             CXX: g++-7
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_X86=ON ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=hosted/x86 ..
       - run:
           working_directory: build/
           name: Build Project
@@ -127,7 +127,7 @@ jobs:
             CXX: avr-g++
             CC: avr-gcc
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_AVR=ON .. && cmake ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=arduino/pro-mini-8 .. && cmake ..
       - run:
           working_directory: build/
           name: Build Project
@@ -157,7 +157,7 @@ jobs:
         command: tar xf esp-tos-sdk.tar.bz2 -C /opt/x-tools/tos-esp-sdk
     - run:
         name: Generate Project
-        command: mkdir build && cd build && cmake -G Ninja -DTOS_ESP=ON -DCMAKE_BUILD_TYPE=MinSizeRel ..
+        command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=nodemcu -DCMAKE_BUILD_TYPE=MinSizeRel ..
     - run:
         working_directory: build/
         name: Build Project

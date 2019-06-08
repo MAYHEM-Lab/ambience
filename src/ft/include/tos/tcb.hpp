@@ -11,10 +11,7 @@
 namespace tos {
     namespace kern
     {
-        struct ctx
-        {
-            jmp_buf buf;
-        };
+        struct ctx;
 
         /**
          * This type represents an execution context in the system.
@@ -59,5 +56,47 @@ namespace tos {
     } // namespace kern
 } //namespace tos
 
+namespace tos
+{
+  enum class return_codes : uint8_t
+  {
+    saved = 0,
+    /**
+     * the running thread yielded
+     */
+        yield,
+    /**
+     * the running thread has been suspended
+     */
+        suspend,
+    /**
+     * a thread exited
+     */
+        do_exit,
+    /**
+     * this thread was assigned the cpu
+     */
+        scheduled
+  };
+
+  namespace kern
+  {
+    struct ctx
+    {
+      jmp_buf buf;
+    };
+
+    [[noreturn]] inline void switch_context(kern::ctx& j, return_codes rc)
+    {
+      longjmp(j.buf, static_cast<int>(rc));
+
+      __builtin_unreachable();
+    }
+  }
+} // namespace tos
+
+#define save_ctx(ctx) \
+  (return_codes)setjmp((ctx).buf)
+
 #define save_context(tcb, ctx) \
-    (tcb).set_ctx((ctx)), setjmp((ctx).buf)
+    (tcb).set_ctx((ctx)), save_ctx(ctx)

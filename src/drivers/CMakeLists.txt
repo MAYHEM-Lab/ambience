@@ -1,16 +1,6 @@
 project(tos)
 
-if (TOS_AVR)
-    add_subdirectory(arch/avr)
-elseif(TOS_ESP)
-    add_subdirectory(arch/lx106)
-elseif(TOS_X86)
-    add_subdirectory(arch/x86)
-elseif(TOS_NRF52)
-    add_subdirectory(arch/nrf52)
-elseif(TOS_STM32)
-	add_subdirectory(arch/stm32)
-endif()
+add_subdirectory(arch/${TOS_DRIVERS})
 
 add_library(tos_drivers include/common/driver_base.hpp src/stub.cpp)
 target_link_libraries(tos_drivers PUBLIC tos::core tos::util)
@@ -49,11 +39,11 @@ add_library(tos_xbee
 target_link_libraries(tos_xbee PUBLIC tos_core tos_usart Boost::sml)
 tos_install(tos_xbee ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-if (TOS_AVR)
-    add_library(tos_spi_sd src/spi_sd.cpp include/common/sd/spi_sd.hpp include/common/sd/sd_info.hpp)
-    target_link_libraries(tos_spi_sd PUBLIC tos_core tos_spi tos_gpio)
-    target_include_directories(tos_spi_sd PRIVATE .)
+add_library(tos_spi_sd src/spi_sd.cpp include/common/sd/spi_sd.hpp include/common/sd/sd_info.hpp)
+target_link_libraries(tos_spi_sd PUBLIC tos_core tos_spi tos_gpio)
+target_include_directories(tos_spi_sd PRIVATE .)
 
+if (${TOS_CORE} MATCHES "atmega")
     add_library(tos_nrf24 include/common/nrf24.hpp src/nrf24.cpp)
     target_link_libraries(tos_nrf24 PUBLIC tos_core)
     tos_install(tos_nrf24 ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -110,6 +100,9 @@ tos_install(tos_bme280 ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_features(tos_bme280 PUBLIC cxx_std_14)
 target_compile_definitions(tos_bme280 PUBLIC BME280_FLOAT_ENABLE)
 
+add_library(tos_epd include/common/epd/waveshare/bw29.hpp src/stub.cpp)
+target_link_libraries(tos_epd PUBLIC tos_core tos_spi)
+tos_install(tos_epd ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(tos_inet
         include/common/inet/tcp_ip.hpp

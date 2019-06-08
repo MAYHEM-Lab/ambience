@@ -159,7 +159,7 @@ namespace tos {
         tos::int_guard ig;
         --m_count;
         if (m_count < 0) {
-            m_wait.wait();
+            m_wait.wait(ig);
         }
         detail::memory_barrier_exit();
     }
@@ -189,7 +189,7 @@ namespace tos {
         sleeper s { uint16_t(ms.count()), timeout };
         auto handle = alarm.set_alarm(s);
 
-        kern::suspend_self();
+        kern::suspend_self(ig);
 
         if (ret_val != sem_ret::timeout)
         {

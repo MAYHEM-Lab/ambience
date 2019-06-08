@@ -3,7 +3,7 @@ add_executable(bear main.cpp keys.hpp)
 target_link_libraries(bear PUBLIC tos::core tos::print caps)
 
 
-if (TOS_ESP)
+if (${TOS_CORE} MATCHES "esp8266")
     target_link_libraries(bear PUBLIC esp82_drivers)
     target_include_directories(bear PUBLIC "/home/fatih/bearssl-esp8266/inc")
     target_link_libraries(bear PUBLIC /home/fatih/bearssl-esp8266/esp8266/libbearssl.a)

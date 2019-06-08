@@ -11,12 +11,11 @@ Supported and tested targets:
 |------|-----|
 | AVR    | atmega328p |
 | ARM    | STM32F103 (cortex m3) |
+| ARM    | STM32L053 (cortex m0+) |
 | ARM    | nRF528232 (cortex m4) |
+| ARM    | nRF528240 (cortex m4) |
 | Xtensa | ESP8266 |
-| ARM    | any (runs in userspace) |
 | x86    | any (runs in userspace) |
-
-Tos does not depend on the exact board the  as the IO is completely generic. It should run unmodified on any board as long as the controller is supported. For instance, it will work fine on your custom board with an atmega328p or esp8266.
 
 ## In a nutshell
 

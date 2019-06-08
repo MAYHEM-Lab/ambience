@@ -9,17 +9,17 @@
 #include "keys.hpp"
 #include <bearssl.h>
 
-#include <arch/lx106/drivers.hpp>
-#include <arch/lx106/tcp.hpp>
+#include <arch/drivers.hpp>
+#include <arch/tcp.hpp>
 #include <common/usart.hpp>
 #include <tos/print.hpp>
 #include <common/inet/tcp_stream.hpp>
 #include <caps/emsha_signer.hpp>
 #include "monotonic_clock.hpp"
 
-uint32_t last_yield = 0;
 
 extern "C" void optimistic_yield(uint32_t){
+    static uint32_t last_yield = 0;
     if (system_get_time() - last_yield > 1'000'000  || last_yield == 0)
     {
         tos_debug_print("yielding\n");
@@ -63,12 +63,10 @@ static int
 sock_write(void *ctx, const unsigned char *buf, size_t len)
 {
     auto ptr = static_cast<tcp_ptr>(ctx);
-    for (;;) {
-        tos_debug_print("write %d\n", int(len));
-        if (ptr->disconnected())
-            return -1;
-        return ptr->write({ (const char*)buf, len });
-    }
+    tos_debug_print("write %d\n", int(len));
+    if (ptr->disconnected())
+        return -1;
+    return ptr->write({ (const char*)buf, len });
 }
 
 /*
