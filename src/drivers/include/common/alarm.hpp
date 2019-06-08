@@ -69,6 +69,9 @@ namespace tos
         {
             tos::int_guard no_int;
 
+            /**
+             * find the first sleeper who'll wake up before s
+             */
             auto it = m_sleepers.begin();
             while (it != m_sleepers.end() && it->sleep_ticks < s.sleep_ticks)
             {
