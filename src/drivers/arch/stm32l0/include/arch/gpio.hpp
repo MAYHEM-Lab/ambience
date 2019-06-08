@@ -5,6 +5,7 @@
 #include <libopencm3/stm32/gpio.h>
 #include <cstdint>
 #include <array>
+#include <common/driver_base.hpp>
 
 namespace tos {
 namespace stm32 {
@@ -37,7 +38,7 @@ constexpr inline std::array<port_def, 8> ports = {
     }
 };
 
-class gpio {
+class gpio : public self_pointing<gpio> {
 public:
     using pin_type = pin_t;
 
@@ -119,7 +120,7 @@ constexpr stm32::pin_t operator ""_pin(unsigned long long pin) {
 }
 } // namespace tos_literals
 
-stm32::gpio open_impl(tos::devs::gpio_t) {
+inline stm32::gpio open_impl(tos::devs::gpio_t) {
     return {};
 }
 }

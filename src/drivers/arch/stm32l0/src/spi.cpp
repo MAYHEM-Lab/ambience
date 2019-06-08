@@ -15,3 +15,9 @@ void spi2_isr()
     const auto instance = tos::stm32::spi::get(1);
     instance->isr();
 }
+
+void spi3_isr()
+{
+    const auto instance = tos::stm32::spi::get(2);
+    instance->isr();
+}
