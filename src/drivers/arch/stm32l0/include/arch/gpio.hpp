@@ -31,6 +31,9 @@ constexpr inline std::array<port_def, 8> ports = {
     }, port_def {
         GPIOD,
         RCC_GPIOD
+    }, port_def {
+        GPIOE,
+        RCC_GPIOE
     }
 };
 

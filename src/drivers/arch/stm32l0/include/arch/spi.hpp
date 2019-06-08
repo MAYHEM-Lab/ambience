@@ -24,13 +24,14 @@ namespace stm32
             uint8_t irq;
         };
 
-        constexpr std::array<spi_def, 2> spis {
+        constexpr std::array<spi_def, 3> spis {
             spi_def{ SPI1, RCC_SPI1, RST_SPI1, NVIC_SPI1_IRQ },
-            spi_def{ SPI2, RCC_SPI2, RST_SPI2, NVIC_SPI2_IRQ }
+            spi_def{ SPI2, RCC_SPI2, RST_SPI2, NVIC_SPI2_IRQ },
+            spi_def{ SPI3, RCC_SPI3, RST_SPI3, NVIC_SPI3_IRQ },
         };
     }
 
-    class spi : public self_pointing<spi>, public tracked_driver<spi, 2>
+    class spi : public self_pointing<spi>, public tracked_driver<spi, 3>
     {
     public:
         explicit spi(const detail::spi_def& def)
