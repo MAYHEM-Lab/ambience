@@ -40,7 +40,7 @@ void NORETURN tos_force_reset()
     reset_cpu();
 }
 
-alignas(alignof(std::max_align_t)) char stack[TOS_DEFAULT_STACK_SIZE*2];
+alignas(alignof(std::max_align_t)) static char stack[TOS_DEFAULT_STACK_SIZE*2];
 int stack_index = 0;
 void* tos_stack_alloc(size_t)
 {
