@@ -10,6 +10,9 @@
 #include <tos/span.hpp>
 #include <tos/semaphore.hpp>
 #include <arch/gpio.hpp>
+#include <tos/fixed_fifo.hpp>
+
+extern tos::fixed_fifo<char, 128> pr;
 
 namespace tos
 {
@@ -47,18 +50,25 @@ public:
         rcc_periph_clock_enable(m_def->clk);
 
         SPI_CR1(m_def->spi) = 0;
-        SPI_CR1(m_def->spi) = SPI_CR1_BAUDRATE_FPCLK_DIV_32 | SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI;
+        SPI_CR1(m_def->spi) = SPI_CR1_BAUDRATE_FPCLK_DIV_8 | SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI;
+
+        // phase 0, polarity 0
+        // not really needed
+//        SPI_CR1(m_def->spi) &= ~SPI_CR1_CPHA;
+//        SPI_CR1(m_def->spi) &= ~SPI_CR1_CPOL;
 
         SPI_CR2(m_def->spi) = 0;
-        SPI_CR2(m_def->spi) |= SPI_CR2_DS_16BIT;
+        SPI_CR2(m_def->spi) |= SPI_CR2_FRXTH;
 
         SPI_CR1(m_def->spi) |= SPI_CR1_SPE;
 
         nvic_enable_irq(m_def->irq);
     }
 
-    uint16_t exchange(uint16_t data)
+    uint16_t exchange16(uint16_t data)
     {
+        set_16_bit_mode();
+
         m_write = {&data, 1};
         uint16_t out;
         m_read = {&out, 1};
@@ -67,6 +77,34 @@ public:
         m_done.down();
         while(SPI_SR(m_def->spi) & SPI_SR_BSY);
         return out;
+    }
+
+    uint8_t exchange8(uint8_t data) {
+        set_8_bit_mode();
+
+        uint16_t d = data;
+        m_write = {&d, 1};
+        uint16_t out;
+        m_read = {&out, 1};
+        enable_rx_isr();
+        enable_tx_isr();
+        m_done.down();
+        while(SPI_SR(m_def->spi) & SPI_SR_BSY);
+        return out;
+    }
+
+    void set_8_bit_mode() {
+        SPI_CR2(m_def->spi) &= ~SPI_CR2_DS_16BIT;
+        SPI_CR2(m_def->spi) |= SPI_CR2_DS_8BIT;
+    }
+
+    void set_16_bit_mode() {
+        SPI_CR2(m_def->spi) &= ~SPI_CR2_DS_8BIT;
+        SPI_CR2(m_def->spi) |= SPI_CR2_DS_16BIT;
+    }
+
+    bool in_16_bit_mode() const {
+        return SPI_CR2(m_def->spi) & SPI_CR2_DS_16BIT;
     }
 
 private:
@@ -108,7 +146,7 @@ private:
             }
             else
             {
-                SPI_DR(m_def->spi) = m_write[0];
+                SPI_DR8(m_def->spi) = m_write[0];
                 m_write = m_write.slice(1);
                 return;
             }
@@ -117,7 +155,8 @@ private:
         if (rx_isr_enabled() && SPI_SR(m_def->spi) & SPI_SR_RXNE)
         {
             Expects(!m_read.empty());
-            m_read[0] = SPI_DR(m_def->spi);
+            m_read[0] = SPI_DR8(m_def->spi);
+            //pr.push(m_read[0]);
             m_read = m_read.slice(1);
 
             if (m_read.empty())

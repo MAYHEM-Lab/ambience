@@ -4,7 +4,6 @@
 
 #include <arch/drivers.hpp>
 #include <tos/ft.hpp>
-#include <libopencm3/stm32/exti.h>
 #include <tos/print.hpp>
 
 using namespace tos;
@@ -44,6 +43,7 @@ void usart_setup(tos::stm32::gpio& g)
 
 void wifi_task()
 {
+    rcc_periph_clock_enable(RCC_GPIOB);
     rcc_periph_clock_enable(RCC_GPIOC);
     gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO10 | GPIO11 | GPIO12);
     gpio_set_af(GPIOC, GPIO_AF6, GPIO10 | GPIO11 | GPIO12);
@@ -80,6 +80,7 @@ void wifi_task()
     tos::println(usart, "hello");
 
     spi s(stm32::detail::spis[2]);
+    s.set_16_bit_mode();
 
     using namespace std::chrono_literals;
     g->write(reset_pin, tos::digital::low);
@@ -89,9 +90,9 @@ void wifi_task()
 
     tos::println(usart, "xchg");
     g->write(cs_pin, digital::low);
-    auto res = s.exchange(0x0a0a);
-    auto res2 = s.exchange(0x0a0a);
-    auto res3 = s.exchange(0x0a0a);
+    auto res = s.exchange16(0x0a0a);
+    auto res2 = s.exchange16(0x0a0a);
+    auto res3 = s.exchange16(0x0a0a);
     g->write(cs_pin, digital::high);
     tos::println(usart, "got", int(res & 0xFF), int(res >> 8));
     tos::println(usart, "got", int(res2 & 0xFF), int(res2 >> 8));
@@ -100,8 +101,8 @@ void wifi_task()
     uint16_t scan[] = {('Z' | ('5' << 8)), ('\r' | ('\n' << 8))};
 
     g->write(cs_pin, digital::low);
-    s.exchange(scan[0]);
-    s.exchange(scan[1]);
+    s.exchange16(scan[0]);
+    s.exchange16(scan[1]);
     g->write(cs_pin, digital::high);
 
     while (g->read(dr_pin));
@@ -109,7 +110,7 @@ void wifi_task()
     g->write(cs_pin, digital::low);
     for (int i = 0; i < 11; ++i)
     {
-        auto c = s.exchange(0x0a0a);
+        auto c = s.exchange16(0x0a0a);
         char buf[2];
         memcpy(buf, &c, 2);
         tos::println(usart, buf);
