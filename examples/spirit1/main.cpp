@@ -8,6 +8,7 @@
 #include <tos/print.hpp>
 #include <MCU_Interface.h>
 #include <SPIRIT_Config.h>
+#include <libopencm3/stm32/exti.h>
 
 using namespace tos;
 using namespace tos::stm32;
@@ -27,7 +28,7 @@ void usart_setup(tos::stm32::gpio& g)
     gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO9);
     gpio_set_af(GPIOA, GPIO_AF7, GPIO9 | GPIO10);
 #elif defined(STM32L4)
-    auto tx_pin = 22_pin;
+    //auto tx_pin = 22_pin;
     auto rx_pin = 23_pin;
 
     g.set_pin_mode(rx_pin, tos::pin_mode::in);
@@ -76,27 +77,34 @@ tos::fixed_fifo<char, 128> pr;
 
 auto delay = [](std::chrono::microseconds us) {
     uint32_t end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 13.3;
-    for (volatile int i = 0; i < end; ++i) {
+    for (volatile uint32_t i = 0; i < end; ++i) {
         __asm__ __volatile__ ("nop");
     }
 };
+
+StatusBytes to_stat(uint16_t stat)
+{
+    StatusBytes s;
+    memcpy(&s, &stat, sizeof s);
+    return s;
+}
+
 extern "C" {
 StatusBytes RadioSpiWriteRegisters(uint8_t address, uint8_t n_regs, uint8_t *buffer) {
-    static uint16_t tmpstatus;
-
-    auto status = (StatusBytes *) &tmpstatus;
     gp->write(cs_pin, digital::low);
     delay(5us);
 
-    tmpstatus = (uint16_t) (radio_spi->exchange8(WRITE_HEADER) << 8 | radio_spi->exchange8(address));
+    uint16_t msb = radio_spi->exchange8(WRITE_HEADER);
+    uint16_t lsb = radio_spi->exchange8(address);
 
+    auto tmpstatus = msb << 8 | lsb;
     for (int i = 0; i < n_regs; i++) {
         radio_spi->exchange8(buffer[i]);
     }
 
     gp->write(cs_pin, digital::high);
 
-    return *status;
+    return to_stat(tmpstatus);
 }
 
 StatusBytes RadioSpiReadRegisters(uint8_t address, uint8_t n_regs, uint8_t *buffer) {
@@ -112,7 +120,7 @@ StatusBytes RadioSpiReadRegisters(uint8_t address, uint8_t n_regs, uint8_t *buff
 
     gp->write(cs_pin, digital::high);
 
-    return *(StatusBytes *)tmpstatus;
+    return to_stat(tmpstatus);
 }
 
 StatusBytes RadioSpiWriteFifo(uint8_t n_regs, uint8_t *buffer) {
@@ -163,7 +171,7 @@ StatusBytes RadioSpiCommandStrobes(uint8_t cmd_code) {
 
     gp->write(cs_pin, digital::high);
 
-    return *(StatusBytes *) &tmpstatus;
+    return to_stat(tmpstatus);
 }
 
 /* This is the function that initializes the SPIRIT with the configuration
@@ -326,7 +334,59 @@ auto print_task = [](auto&& usart)
     }
 };
 
-void radio_task()
+tos::semaphore interrupt{0};
+
+extern "C" void exti9_5_isr() {
+    interrupt.up_isr();
+    EXTI_PR = EXTI5;
+}
+
+auto tx = [](){
+    SpiritIrq(TX_DATA_SENT, S_ENABLE);
+
+    SpiritIrqClearStatus();
+
+    SpiritCmdStrobeFlushTxFifo();
+    SpiritSpiWriteLinearFifo(5, (uint8_t *)"HELLO");
+
+    /* send the TX command */
+    SpiritManagementWaCmdStrobeTx();
+    SpiritCmdStrobeTx();
+
+    //while(g->read(exti_pin));
+    interrupt.down();
+
+    SpiritIrqs xIrqStatus;
+    SpiritIrqGetStatus(&xIrqStatus);
+    SpiritIrqClearStatus();
+
+    return xIrqStatus;
+};
+
+auto rx = []() {
+    SpiritIrq(RX_DATA_DISC,S_ENABLE);
+    SpiritIrq(RX_DATA_READY,S_ENABLE);
+
+    /* enable SQI check */
+    SpiritQiSetSqiThreshold(SQI_TH_0);
+    SpiritQiSqiCheck(S_ENABLE);
+
+    /* RX timeout config */
+    SpiritTimerSetRxTimeoutMs(1500.0);
+    SpiritTimerSetRxTimeoutStopCondition(SQI_ABOVE_THRESHOLD);
+
+    SpiritCmdStrobeRx();
+
+    interrupt.down();
+
+    SpiritIrqs xIrqStatus;
+    SpiritIrqGetStatus(&xIrqStatus);
+    SpiritIrqClearStatus();
+
+    return xIrqStatus;
+};
+
+void radio_task(bool is_tx)
 {
     rcc_periph_clock_enable(RCC_GPIOC);
     gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO10 | GPIO11 | GPIO12);
@@ -344,6 +404,8 @@ void radio_task()
     g->set_pin_mode(cs_pin, tos::pin_mode::out);
     g->write(cs_pin, tos::digital::high);
 
+    g->set_pin_mode(exti_pin, pin_mode::in_pullup);
+
     auto timer = open(tos::devs::timer<2>);
     auto alarm = open(tos::devs::alarm, timer);
 
@@ -355,10 +417,6 @@ void radio_task()
     usart_setup(g);
     auto usart = tos::open(tos::devs::usart<0>, usconf);
     tos::println(usart, "hello");
-
-    tos::launch(tos::alloc_stack, [&]{
-        print_task(usart);
-    });
 
     spi s(stm32::detail::spis[2]);
     s.set_8_bit_mode();
@@ -386,21 +444,78 @@ void radio_task()
 
     SpiritBaseConfiguration();
 
-    SpiritRadioSetPALeveldBm(7, -5);
-    SpiritRadioSetPALevelMaxIndex(7);
-
-    SpiritIrqClearStatus();
-
     SRadioInit xradio;
     SpiritRadioGetInfo(&xradio);
 
     tos::println(usart, "datarate", int(xradio.lDatarate));
+    tos::println(usart, "channel", int(xradio.nChannelSpace), int(xradio.cChannelNumber));
     tos::println(usart, "bw", int(xradio.lBandwidth));
 
-    tos::this_thread::block_forever();
+    SGpioInit xGpioIRQ;
+    xGpioIRQ.xSpiritGpioPin = SPIRIT_GPIO_3;
+    xGpioIRQ.xSpiritGpioMode = SPIRIT_GPIO_MODE_DIGITAL_OUTPUT_LP;
+    xGpioIRQ.xSpiritGpioIO = SPIRIT_GPIO_DIG_OUT_IRQ;
+
+    SpiritGpioInit(&xGpioIRQ);
+
+    if (is_tx) {
+        SpiritRadioSetPALeveldBm(7, 5);
+        SpiritRadioSetPALevelMaxIndex(7);
+    }
+
+    SpiritIrqClearStatus();
+    SpiritIrqDeInit(nullptr);
+    alarm->sleep_for(1s);
+
+    exti_select_source(EXTI5, GPIOE);
+    exti_set_trigger(EXTI5, EXTI_TRIGGER_FALLING);
+    exti_enable_request(EXTI5);
+    nvic_enable_irq(NVIC_EXTI9_5_IRQ);
+
+    reset(interrupt, 0);
+
+    while (true) {
+        tos::println(usart, "clear");
+        SpiritIrqClearStatus();
+        tos::println(usart, "deinit");
+        SpiritIrqDeInit(nullptr);
+        tos::println(usart, "mm");
+        if (is_tx) {
+            tos::println(usart, "call tx");
+
+            auto xIrqStatus = tx();
+
+            tos::println(usart, "tx:", bool(xIrqStatus.IRQ_TX_DATA_SENT));
+            alarm->sleep_for(1s);
+            tos::println(usart, "woke");
+        }
+        else {
+            auto xIrqStatus = rx();
+            tos::println(usart, "rx:", bool(xIrqStatus.IRQ_RX_DATA_READY), bool(xIrqStatus.IRQ_RX_DATA_DISC));
+
+            if (xIrqStatus.IRQ_RX_DATA_DISC) {
+                SpiritCmdStrobeFlushRxFifo();
+            }
+            if (!xIrqStatus.IRQ_RX_DATA_READY)
+            {
+                continue;
+            }
+
+            auto cRxData = SpiritLinearFifoReadNumElementsRxFifo();
+            tos::println(usart, "rx:", cRxData);
+
+            /* Read the RX FIFO */
+            std::vector<char> buff(cRxData);
+            SpiritSpiReadLinearFifo(cRxData, (uint8_t *)buff.data());
+            tos::println(usart, "rx:", buff);
+
+            /* Flush the RX FIFO */
+            SpiritCmdStrobeFlushRxFifo();
+        }
+    }
 }
 
 void tos_main()
 {
-    tos::launch(tos::alloc_stack, radio_task);
+    tos::launch(tos::alloc_stack, radio_task, true);
 }
