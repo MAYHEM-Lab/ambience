@@ -17,7 +17,7 @@ string(REGEX MATCH "cc1plus\.exe (.*)\\n" _ ${FOO})
 set(${FLAGS} ${CMAKE_MATCH_1} PARENT_SCOPE)
 endfunction()
 
-set(TOS_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -Wpedantic \
+set(TOS_FLAGS "-Wall -Wextra -Wpedantic \
      -ffunction-sections -fdata-sections -ffreestanding -g -pedantic -freorder-functions \
         -Wno-unknown-pragmas")
 
@@ -33,7 +33,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif()
 
 set(TOS_C_FLAGS "${TOS_FLAGS} -U__STRICT_ANSI__")
-set(TOS_CXX_FLAGS "${TOS_FLAGS} -fno-rtti -fno-exceptions \
+set(TOS_CXX_FLAGS "${TOS_FLAGS} -Wnon-virtual-dtor -fno-rtti -fno-exceptions \
     -fno-unwind-tables -fno-threadsafe-statics -Werror=return-type -std=c++14")
 
 set(TOS ON)
