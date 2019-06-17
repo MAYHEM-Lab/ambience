@@ -354,17 +354,21 @@ auto tx = [](){
     SpiritCmdStrobeTx();
 
     //while(g->read(exti_pin));
-    interrupt.down();
 
     SpiritIrqs xIrqStatus;
-    SpiritIrqGetStatus(&xIrqStatus);
-    SpiritIrqClearStatus();
+    do {
+        interrupt.down();
+        SpiritIrqGetStatus(&xIrqStatus);
+        SpiritIrqClearStatus();
+        if (!xIrqStatus.IRQ_TX_DATA_SENT) continue;
+        break;
+    } while(true);
 
     return xIrqStatus;
 };
 
 auto rx = []() {
-    SpiritIrq(RX_DATA_DISC,S_ENABLE);
+    SpiritIrq(RX_DATA_DISC, S_ENABLE);
     SpiritIrq(RX_DATA_READY,S_ENABLE);
 
     /* enable SQI check */
@@ -372,7 +376,7 @@ auto rx = []() {
     SpiritQiSqiCheck(S_ENABLE);
 
     /* RX timeout config */
-    SpiritTimerSetRxTimeoutMs(1500.0);
+    SpiritTimerSetRxTimeoutMs(2000.0);
     SpiritTimerSetRxTimeoutStopCondition(SQI_ABOVE_THRESHOLD);
 
     SpiritCmdStrobeRx();
@@ -486,7 +490,7 @@ void radio_task(bool is_tx)
             auto xIrqStatus = tx();
 
             tos::println(usart, "tx:", bool(xIrqStatus.IRQ_TX_DATA_SENT));
-            alarm->sleep_for(1s);
+            alarm->sleep_for(1000ms);
             tos::println(usart, "woke");
         }
         else {
