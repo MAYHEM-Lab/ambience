@@ -22,7 +22,7 @@ namespace tos
          *
          * In a debug environment, the OS will idle forever.
          *
-         * In a release environemnt, if possible, the incident will be
+         * In a release environment, if possible, the incident will be
          * logged and the system will be rebooted.
          *
          * Should be used only for fatal errors such as broken invariants.
