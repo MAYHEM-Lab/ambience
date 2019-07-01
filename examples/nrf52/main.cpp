@@ -59,7 +59,7 @@ auto epd_task = []{
         };
         print_str("Hello world", 96, 24);
 
-        tos::nrf52::spi s(clk, 255_pin, mosi);
+        tos::nrf52::spi s(clk, std::nullopt, mosi);
         epd<decltype(&s)> epd(&s, cs, dc, reset, busy);
         epd.initialize([](std::chrono::milliseconds ms) {
             nrf_delay_ms(ms.count());
@@ -74,7 +74,7 @@ auto epd_task = []{
 
         if (c == 'a')
         {
-            tos::nrf52::spi s(clk, 255_pin, mosi);
+            tos::nrf52::spi s(clk, std::nullopt, mosi);
 
             epd<decltype(&s)> epd(&s, cs, dc, reset, busy);
             epd.initialize([](std::chrono::milliseconds ms) {
@@ -86,7 +86,7 @@ auto epd_task = []{
         }
         else if (c == 'c')
         {
-            tos::nrf52::spi s(clk, 255_pin, mosi);
+            tos::nrf52::spi s(clk, std::nullopt, mosi);
 
             epd<decltype(&s)> epd(&s, cs, dc, reset, busy);
             epd.initialize([](std::chrono::milliseconds ms) {

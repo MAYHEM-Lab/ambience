@@ -8,6 +8,7 @@
 #include <nrfx_spim.h>
 #include <arch/gpio.hpp>
 #include <tos/span.hpp>
+#include <optional>
 
 namespace tos
 {
@@ -32,7 +33,7 @@ class spi : public self_pointing<spi>, public tracked_driver<spi, NRFX_SPIM_ENAB
 public:
     using gpio_type = nrf52::gpio;
 
-    explicit spi(gpio::pin_type sck, gpio::pin_type miso, gpio::pin_type mosi);
+    explicit spi(gpio::pin_type sck, std::optional<gpio::pin_type> miso, gpio::pin_type mosi);
 
     uint8_t exchange(uint8_t byte) {
         exchange_many({&byte, 1});
@@ -85,10 +86,10 @@ namespace tos
 {
 namespace nrf52
 {
-    spi::spi(gpio::pin_type sck, gpio::pin_type miso, gpio::pin_type mosi) : tracked_driver(0) {
+    spi::spi(gpio::pin_type sck, std::optional<gpio::pin_type> miso, gpio::pin_type mosi) : tracked_driver(0) {
         nrfx_spim_config_t conf{};
         conf.sck_pin = detail::to_sdk_pin(sck);
-        conf.miso_pin = detail::to_sdk_pin(miso);
+        conf.miso_pin = miso ? detail::to_sdk_pin(*miso) : 0xFF;
         conf.mosi_pin = detail::to_sdk_pin(mosi);
         conf.irq_priority = 7;
         conf.ss_active_high = false;
