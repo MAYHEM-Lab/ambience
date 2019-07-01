@@ -67,8 +67,7 @@ public:
 
     uint16_t exchange16(uint16_t data)
     {
-        set_16_bit_mode();
-
+        Expects(in_16_bit_mode());
         m_write = {&data, 1};
         uint16_t out;
         m_read = {&out, 1};
@@ -80,8 +79,7 @@ public:
     }
 
     uint8_t exchange8(uint8_t data) {
-        set_8_bit_mode();
-
+        Expects(!in_16_bit_mode());
         uint16_t d = data;
         m_write = {&d, 1};
         uint16_t out;

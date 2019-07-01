@@ -159,7 +159,6 @@ StatusBytes RadioSpiReadFifo(uint8_t n_regs, uint8_t *buffer) {
     return *status;
 }
 
-
 StatusBytes RadioSpiCommandStrobes(uint8_t cmd_code) {
     gp->write(cs_pin, digital::low);
     delay(5us);
@@ -262,7 +261,6 @@ void SpiritVcoCalibration(void) {
     uint8_t tmp[4];
     uint8_t cal_words[2];
     uint8_t state;
-
 
     SpiritSpiReadRegisters(0x9E, 1, tmp);
     tmp[0] |= 0x80;
@@ -465,6 +463,12 @@ void radio_task(bool is_tx)
     if (is_tx) {
         SpiritRadioSetPALeveldBm(7, 5);
         SpiritRadioSetPALevelMaxIndex(7);
+        SpiritPktCommonSetMyAddress(0xAB);
+        SpiritPktCommonSetDestinationAddress(0xBA);
+    }
+    else
+    {
+        SpiritPktCommonSetMyAddress(0xBA);
     }
 
     SpiritIrqClearStatus();
@@ -521,5 +525,5 @@ void radio_task(bool is_tx)
 
 void tos_main()
 {
-    tos::launch(tos::alloc_stack, radio_task, true);
+    tos::launch(tos::alloc_stack, radio_task, false);
 }
