@@ -42,6 +42,14 @@ if (NOT ${TOS_CORE} MATCHES "esp8266|atmega")
 add_subdirectory(libs/json)
 endif()
 
+SUBDIRLIST(APP_DIRS "${CMAKE_CURRENT_LIST_DIR}/apps")
+
+message(STATUS ${APP_DIRS})
+
+foreach(app ${APP_DIRS})
+    add_subdirectory("apps/${app}")
+endforeach()
+
 if(${TOS_CORE} MATCHES "atmega")
     add_subdirectory(examples/gpio)
     add_subdirectory(examples/spi)
