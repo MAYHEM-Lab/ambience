@@ -120,7 +120,7 @@ auto ble_task = [](bool have_epd)
     tos::println(usart, "gap initd");
     gatt_init();
     tos::println(usart, "gatt initd");
-    auto serv = bakir::make_ble_service(usart);
+    auto serv = bakir::make_ble_service(sd, usart);
     tos::println(usart, "services initd");
     tos::nrf52::advertising adv;
     tos::println(usart, "adv initd");
