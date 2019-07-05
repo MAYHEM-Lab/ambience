@@ -28,7 +28,10 @@ namespace details
     };
 }
 
-class spi : public self_pointing<spi>, public tracked_driver<spi, NRFX_SPIM_ENABLED_COUNT>
+class spi :
+        public self_pointing<spi>,
+        public tracked_driver<spi, NRFX_SPIM_ENABLED_COUNT>,
+        public non_copy_movable
 {
 public:
     using gpio_type = nrf52::gpio;
@@ -86,7 +89,7 @@ namespace tos
 {
 namespace nrf52
 {
-    spi::spi(gpio::pin_type sck, std::optional<gpio::pin_type> miso, gpio::pin_type mosi) : tracked_driver(0) {
+    inline spi::spi(gpio::pin_type sck, std::optional<gpio::pin_type> miso, gpio::pin_type mosi) : tracked_driver(0) {
         nrfx_spim_config_t conf{};
         conf.sck_pin = detail::to_sdk_pin(sck);
         conf.miso_pin = miso ? detail::to_sdk_pin(*miso) : 0xFF;
