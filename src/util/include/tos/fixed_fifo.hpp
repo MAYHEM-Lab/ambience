@@ -24,6 +24,10 @@ namespace tos {
 
     size_t capacity() const { return Len; }
 
+    bool empty() const {
+        return m_rb.empty();
+    }
+
   private:
 
     using TT = std::aligned_storage_t<sizeof(T), alignof(T)>;
