@@ -20,7 +20,7 @@ enum class advertising_errors
 class advertising : public tracked_driver<advertising, 1>
 {
 public:
-    advertising();
+    advertising(std::chrono::milliseconds duration, std::chrono::milliseconds interval);
 
     advertising(const advertising&) = delete;
     advertising(advertising&&) = delete;
