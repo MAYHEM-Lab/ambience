@@ -232,7 +232,7 @@ private:
     {
         m_g.write(m_dc, tos::digital::low);
         m_g.write(m_cs, tos::digital::low);
-        m_spi->write(c);
+        m_spi->write(tos::monospan(c));
         m_g.write(m_cs, tos::digital::high);
         m_g.write(m_dc, tos::digital::high);
     }
@@ -240,7 +240,7 @@ private:
     void _writeData(uint8_t d)
     {
         m_g.write(m_cs, tos::digital::low);
-        m_spi->write(d);
+        m_spi->write(tos::monospan(d));
         m_g.write(m_cs, tos::digital::high);
     }
 
@@ -254,7 +254,7 @@ private:
     {
         m_g.write(m_dc, tos::digital::low);
         m_g.write(m_cs, tos::digital::low);
-        m_spi->write(*pCommandData++);
+        m_spi->write(tos::monospan(*pCommandData++));
         datalen--;
         m_g.write(m_dc, tos::digital::high);
         m_spi->write({pCommandData, datalen});

@@ -10,6 +10,7 @@
 
 #include <tos/intrusive_list.hpp>
 #include <algorithm>
+#include <tos/function_ref.hpp>
 
 namespace tos
 {

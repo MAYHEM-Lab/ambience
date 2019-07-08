@@ -32,6 +32,11 @@ public:
         return unexpected((advertising_errors)err_code);
     }
 
+    void on_finish(tos::function_ref<void()> fun)
+    {
+        m_on_finish = std::move(fun);
+    }
+
     ~advertising()
     {
         nrf_events.remove(m_ble_obs);
@@ -49,6 +54,7 @@ private:
                 break;
             case BLE_ADV_EVT_IDLE:
                 // advertisement finished
+                m_on_finish();
                 break;
             default:
                 break;
@@ -65,6 +71,7 @@ private:
         inst->handler(ble_adv_evt);
     }
 
+    tos::function_ref<void()> m_on_finish{[](void*){}};
     ble_observer m_ble_obs;
     soc_observer m_soc_obs;
 };
