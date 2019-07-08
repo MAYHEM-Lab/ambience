@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../../../../../../../../../usr/lib/gcc/avr/5.4.0/include/stdint.h"
+#include <cstdint>
 #include <tos/devices.hpp>
 #include <common/spi.hpp>
 #include <tos/span.hpp>
@@ -37,8 +37,7 @@ namespace tos {
 
             static void disable();
 
-            static uint8_t exchange(uint8_t byte);
-            static void exchange_many(tos::span<uint8_t> buffer);
+            static expected<void, int> exchange(tos::span<uint8_t> buffer);
 
             static void select_slave(pin_t pin);
 

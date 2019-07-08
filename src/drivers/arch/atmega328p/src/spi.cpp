@@ -81,16 +81,13 @@ namespace avr
     static tos::semaphore spi_block{0};
 
     static uint8_t *buffer_begin, *buffer_end;
-    uint8_t spi0::exchange(uint8_t byte) {
-        exchange_many(tos::span<uint8_t>(&byte, 1));
-        return byte;
-    }
 
-    void spi0::exchange_many(tos::span<uint8_t> buffer) {
+    expected<void, int> spi0::exchange(tos::span<uint8_t> buffer) {
         buffer_begin = buffer.begin();
         buffer_end = buffer.end();
         SPDR = *buffer_begin;
         spi_block.down();
+        return {};
     }
 
     void spi0::select_slave(pin_t pin) {
