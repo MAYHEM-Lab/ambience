@@ -20,7 +20,7 @@ namespace tos
         int64_t j = 0, isneg = 0;
 
         if (i == 0) {
-            return "0";
+            return tos::span<const char>("0").slice(0, 1);
         }
 
         if (i < 0) {
