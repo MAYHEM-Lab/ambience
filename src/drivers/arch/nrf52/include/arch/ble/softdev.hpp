@@ -35,11 +35,12 @@ public:
     set_device_name(std::string_view name);
 
     expected<void, softdev_errors>
-    set_tx_power();
+    set_tx_power(int8_t power);
 
     expected<uuid_handle_t, softdev_errors>
     register_vs_uuid(const tos::uuid& uuid) {
         uint8_t hndl;
+        static_assert(sizeof uuid == sizeof(ble_uuid128_t));
         // layouts of ble_uuid128_t and tos::uuid are the same, so this should work
         auto danger = reinterpret_cast<const ble_uuid128_t*>(&uuid);
         auto res = sd_ble_uuid_vs_add(danger, &hndl);
