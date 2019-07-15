@@ -8,6 +8,8 @@ set(CMAKE_CXX_COMPILER ${tools}/bin/arm-none-eabi-g++)
 set(CMAKE_SIZE ${tools}/bin/arm-none-eabi-size)
 set(CMAKE_OBJCOPY ${tools}/bin/arm-none-eabi-objcopy)
 
+set(CMAKE_OBJCOPY "${CMAKE_OBJCOPY}" CACHE STRING "OBJCOPY")
+
 #set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 #set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 #set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
