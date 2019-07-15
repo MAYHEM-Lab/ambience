@@ -38,6 +38,12 @@ namespace tos
         };
     }
 
+    /**
+     * Opens the TIMER0 peripheral on NRF52 devices
+     *
+     * @note TIMER0 is unavailable while the softdevice is active! Prefer using TIMER1
+     * @return TIMER0 peripheral driver
+     */
     inline nrf52::timer0 open_impl(devs::timer_t<0>)
     {
         return nrf52::timer0{0};
