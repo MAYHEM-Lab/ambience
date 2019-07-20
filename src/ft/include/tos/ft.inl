@@ -234,7 +234,12 @@ inline auto &launch(tos::span<char> task_span, FuncT &&func, ArgTs &&... args) {
 
 template<class FuncT, class... ArgTs>
 inline auto &launch(stack_size_t stack_sz, FuncT &&func, ArgTs &&... args) {
-    tos::span<char> task_span((char *) tos_stack_alloc(stack_sz.sz), stack_sz.sz);
+    auto ptr = tos_stack_alloc(stack_sz.sz);
+    if (!ptr)
+    {
+        tos::kern::fatal("Stack allocation failed");
+    }
+    tos::span<char> task_span((char *) ptr, stack_sz.sz);
     auto &res = launch<true>(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     return res;
 }

@@ -48,7 +48,6 @@ namespace tos {
             virtual ~tcb() = 0;
         private:
 
-            jmp_buf m_context;
             ctx *m_ctx;
         };
 
