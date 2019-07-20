@@ -107,6 +107,10 @@ namespace tos
             }
         }
 
+        std::chrono::milliseconds resolution() const {
+            return std::chrono::milliseconds(m_period);
+        }
+
     private:
 
         void start()
@@ -155,5 +159,55 @@ namespace tos
     auto open_impl(devs::alarm_t, T& tmr)
     {
         return alarm<std::remove_reference_t<T>>{tmr};
+    }
+
+    struct any_alarm
+    {
+        using alarm_handle = intrusive_list<sleeper>::iterator_t;
+
+        virtual auto sleep_for(std::chrono::milliseconds dur) -> void = 0;
+        virtual auto set_alarm(sleeper& s) -> alarm_handle = 0;
+        virtual auto cancel(alarm_handle s) -> void = 0;
+        virtual auto resolution() const -> std::chrono::milliseconds = 0;
+
+        virtual ~any_alarm() = default;
+    };
+
+    namespace detail
+    {
+        template <class T>
+        class erased_alarm : public any_alarm
+        {
+        public:
+            erased_alarm(T t) : m_base_alarm(std::move(t)) {
+            }
+
+            void sleep_for(std::chrono::milliseconds dur) override {
+                m_base_alarm->sleep_for(dur);
+            }
+
+            alarm_handle set_alarm(sleeper &s) override {
+                return m_base_alarm->set_alarm(s);
+            }
+
+            void cancel(alarm_handle s) override {
+                m_base_alarm->cancel(s);
+            }
+
+            std::chrono::milliseconds resolution() const override {
+                return m_base_alarm->resolution();
+            }
+
+        private:
+
+            T m_base_alarm;
+        };
+    }
+
+    template <class AlarmT>
+    std::unique_ptr<any_alarm>
+    erase_alarm(AlarmT&& alarm)
+    {
+        return std::make_unique<detail::erased_alarm<AlarmT>>(std::forward<AlarmT>(alarm));
     }
 } // namespace tos
