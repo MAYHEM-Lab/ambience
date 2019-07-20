@@ -31,13 +31,15 @@ struct spi_def
 constexpr std::array<spi_def, 3> spis {
     spi_def{ SPI1, RCC_SPI1, RST_SPI1, NVIC_SPI1_IRQ },
     spi_def{ SPI2, RCC_SPI2, RST_SPI2, NVIC_SPI2_IRQ },
+#ifdef SPI3_BASE
     spi_def{ SPI3, RCC_SPI3, RST_SPI3, NVIC_SPI3_IRQ },
+#endif
 };
 }
 
 class spi :
         public self_pointing<spi>,
-        public tracked_driver<spi, 3>
+        public tracked_driver<spi, detail::spis.size()>
 {
 public:
     using gpio_type = stm32::gpio;
@@ -171,7 +173,10 @@ private:
 
     friend void ::spi1_isr();
     friend void ::spi2_isr();
+
+#ifdef SPI3_BASE
     friend void ::spi3_isr();
+#endif
 
     tos::span<const uint16_t> m_write{nullptr};
     tos::span<uint16_t> m_read{nullptr};

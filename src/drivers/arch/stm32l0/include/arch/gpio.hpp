@@ -32,10 +32,13 @@ constexpr inline std::array<port_def, 8> ports = {
     }, port_def {
         GPIOD,
         RCC_GPIOD
-    }, port_def {
+    },
+#ifdef GPIO_PORT_E_BASE
+    port_def {
         GPIOE,
         RCC_GPIOE
     }
+#endif
 };
 
 class gpio : public self_pointing<gpio> {
