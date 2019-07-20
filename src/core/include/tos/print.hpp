@@ -11,16 +11,16 @@
 
 namespace tos
 {
-    inline const char* itoa(int64_t i, int base) {
+    inline tos::span<const char> itoa(int64_t i, int base = 10) {
         static char intbuf[std::numeric_limits<decltype(i)>::digits10 + 1];
         static constexpr char lookup[] = {\
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'A', 'B', 'C', 'D', 'E', 'F'
         };
-        decltype(i) j = 0, isneg = 0;
+        int64_t j = 0, isneg = 0;
 
         if (i == 0) {
-            return "0";
+            return tos::span<const char>("0").slice(0, 1);
         }
 
         if (i < 0) {
@@ -36,6 +36,7 @@ namespace tos
         if (isneg)
             intbuf[j++] = '-';
 
+        auto len = j;
         intbuf[j] = '\0';
         j--;
         i = 0;
@@ -47,7 +48,7 @@ namespace tos
             j--;
         }
 
-        return intbuf;
+        return {intbuf, size_t(len)};
     }
 }
 

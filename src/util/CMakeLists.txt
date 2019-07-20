@@ -29,9 +29,10 @@ add_library(tos_util_core
     include/tos/fixed_point.hpp
     include/nonstd/expected.hpp
     include/tos/byte.hpp
+    include/tos/uuid.hpp
 )
 
-target_compile_options(tos_util_core PUBLIC "-std=c++14")
+target_compile_features(tos_util_core PUBLIC cxx_std_14)
 target_link_libraries(tos_util_core PUBLIC tos::libcxx)
 
 target_link_libraries(tos_util PUBLIC tos_util_core tos::ft)

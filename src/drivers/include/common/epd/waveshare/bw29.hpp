@@ -53,7 +53,7 @@ static constexpr uint8_t LUTDefault_part[] =
 };
 
 template <class SpiT>
-class epd {
+class epd : public non_copy_movable {
 public:
     using gpio_type = typename std::remove_pointer_t<SpiT>::gpio_type;
     using PinT = typename gpio_type::pin_type;
@@ -61,7 +61,8 @@ public:
     static constexpr uint16_t width = 128;
     static constexpr uint16_t height = 296;
 
-    explicit epd(SpiT spi, PinT cs, PinT dc, PinT reset, PinT busy)
+    template <class DelayT>
+    explicit epd(SpiT spi, PinT cs, PinT dc, PinT reset, PinT busy, DelayT&& delay)
         : m_spi{std::move(spi)}
         , m_cs{cs}
         , m_dc{dc}
@@ -75,6 +76,8 @@ public:
         m_g.write(m_reset, tos::digital::high);
 
         m_g.set_pin_mode(m_busy, tos::pin_mode::in);
+
+        initialize(delay);
     }
 
     template <class DelayT>
@@ -229,7 +232,7 @@ private:
     {
         m_g.write(m_dc, tos::digital::low);
         m_g.write(m_cs, tos::digital::low);
-        m_spi->write(c);
+        m_spi->write(tos::monospan(c));
         m_g.write(m_cs, tos::digital::high);
         m_g.write(m_dc, tos::digital::high);
     }
@@ -237,7 +240,7 @@ private:
     void _writeData(uint8_t d)
     {
         m_g.write(m_cs, tos::digital::low);
-        m_spi->write(d);
+        m_spi->write(tos::monospan(d));
         m_g.write(m_cs, tos::digital::high);
     }
 
@@ -251,7 +254,7 @@ private:
     {
         m_g.write(m_dc, tos::digital::low);
         m_g.write(m_cs, tos::digital::low);
-        m_spi->write(*pCommandData++);
+        m_spi->write(tos::monospan(*pCommandData++));
         datalen--;
         m_g.write(m_dc, tos::digital::high);
         m_spi->write({pCommandData, datalen});

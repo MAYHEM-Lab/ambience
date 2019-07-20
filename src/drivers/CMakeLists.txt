@@ -104,6 +104,10 @@ add_library(tos_epd include/common/epd/waveshare/bw29.hpp src/stub.cpp)
 target_link_libraries(tos_epd PUBLIC tos_core tos_spi)
 tos_install(tos_epd ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(tos_ble include/common/ble/address.hpp src/stub.cpp)
+target_link_libraries(tos_ble PUBLIC tos_core)
+tos_install(tos_ble ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 add_library(tos_inet
         include/common/inet/tcp_ip.hpp
         include/common/inet/tcp_stream.hpp

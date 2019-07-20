@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <tos/devices.hpp>
 #include <common/gpio.hpp>
+#include <tos/expected.hpp>
+#include <tos/span.hpp>
 
 namespace tos
 {
@@ -22,6 +24,23 @@ namespace tos
     private:
         bool m_moved = false;
     };
+
+    namespace spi {
+    template <class SpiT>
+    auto exchange(SpiT& spi, uint8_t val)
+    {
+        using SpiRetT = decltype(spi->exchange(tos::monospan(val)));
+        using ErrT = typename SpiRetT::error_type;
+        using RetT = expected<uint8_t, ErrT>;
+        auto res = spi->exchange(tos::monospan(val));
+        if (!res)
+        {
+            return RetT(unexpected(force_error(res)));
+        }
+        return RetT(val);
+    }
+    }
+
 
     template<class T>
     struct spi_transaction

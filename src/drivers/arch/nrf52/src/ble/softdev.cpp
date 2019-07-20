@@ -7,8 +7,8 @@
 
 namespace tos {
 namespace nrf52 {
-expected<void, softdev_errors> softdev::set_tx_power() {
-    auto err = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, m_advertising.adv_handle, 8);
+expected<void, softdev_errors> softdev::set_tx_power(int8_t power) {
+    auto err = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, m_advertising.adv_handle, power);
     if (err == NRF_SUCCESS) return {};
     return unexpected(softdev_errors(err));
 }

@@ -50,6 +50,10 @@ namespace tos
             return res;
         }
 
+        bool empty() const {
+            return size() == 0;
+        }
+
     private:
         tos::semaphore m_read, m_put;
     };

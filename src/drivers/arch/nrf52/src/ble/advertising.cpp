@@ -18,7 +18,8 @@ namespace nrf52
 {
 ble_advertising_t m_advertising;
 
-advertising::advertising() : tracked_driver(0) {
+advertising::advertising(std::chrono::milliseconds duration, std::chrono::milliseconds interval)
+    : tracked_driver(0) {
     ble_advertising_init_t init{};
 
     init.advdata.name_type          = BLE_ADVDATA_FULL_NAME;
@@ -29,8 +30,8 @@ advertising::advertising() : tracked_driver(0) {
     init.srdata.uuids_complete.p_uuids  = m_adv_uuids;
 
     init.config.ble_adv_fast_enabled  = true;
-    init.config.ble_adv_fast_interval = 3 * 1600; /**< The advertising interval (in units of 0.625 ms. */
-    init.config.ble_adv_fast_timeout  = 18000; /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
+    init.config.ble_adv_fast_interval = interval.count() / 0.625; /**< The advertising interval (in units of 0.625 ms. */
+    init.config.ble_adv_fast_timeout  = duration.count() / 10; /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
     init.evt_handler = &advertising::evt_handler;
 
     auto err_code = ble_advertising_init(&m_advertising, &init);

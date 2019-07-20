@@ -10,6 +10,8 @@
 
 #include <tos/intrusive_list.hpp>
 #include <algorithm>
+#include <tos/function_ref.hpp>
+#include <tos/interrupt.hpp>
 
 namespace tos
 {
@@ -27,16 +29,28 @@ struct ble_observer : tos::list_node<ble_observer>
     // nrf sdk defines the observer_ts to be const by default -_-
     // so remove the const here
     std::remove_const_t <nrf_sdh_ble_evt_observer_t> obs;
+
+    template<class FnT>
+    explicit ble_observer(FnT& fn)
+    {
+        obs.handler = [](const ble_evt_t* ev, void* ctx) {
+            auto ptr = static_cast<FnT*>(ctx);
+            (*ptr)(*ev);
+        };
+        obs.p_context = &fn;
+    }
+
+    ble_observer() = default;
 };
 
 class nrf_events_t
 {
 public:
-    void attach(ble_observer& obs) {
+    void attach(ble_observer& obs, const tos::no_interrupts& = tos::int_guard{}) {
         ble_observers.push_back(obs);
     }
 
-    void attach(soc_observer& obs) {
+    void attach(soc_observer& obs, const tos::no_interrupts& = tos::int_guard{}) {
         soc_observers.push_back(obs);
     }
 

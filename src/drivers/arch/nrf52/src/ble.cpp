@@ -26,9 +26,13 @@ nrf_events_t nrf_events;
 }
 
 static nrf_ble_gatt_t m_gatt;
-static nrf_sdh_ble_evt_observer_t m_gatt_obs __attribute__((section(".sdh_ble_observers1")))__attribute__((used)) = {nrf_ble_gatt_on_ble_evt, &m_gatt};
-
-static uint16_t   m_conn_handle          = BLE_CONN_HANDLE_INVALID;
+// Calls the event handler of the GATT library
+static nrf_sdh_ble_evt_observer_t m_gatt_obs
+__attribute__((section(".sdh_ble_observers1")))
+__attribute__((used)) = {
+    nrf_ble_gatt_on_ble_evt,
+    &m_gatt
+};
 
 static void ble_evt_handler(ble_evt_t const * p_ble_evt, void *)
 {
@@ -36,16 +40,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void *)
 
     switch (p_ble_evt->header.evt_id)
     {
-        case BLE_GAP_EVT_CONNECTED:
-            //APP_ERROR_CHECK(err_code);
-            m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-            break;
-
-        case BLE_GAP_EVT_DISCONNECTED:
-            // LED indication will be changed when advertising starts.
-            m_conn_handle = BLE_CONN_HANDLE_INVALID;
-            break;
-
         case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
         {
             ble_gap_phys_t const phys =
@@ -59,13 +53,14 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void *)
 
         case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
             // Pairing not supported
-            err_code = sd_ble_gap_sec_params_reply(m_conn_handle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, nullptr, nullptr);
+
+            err_code = sd_ble_gap_sec_params_reply(p_ble_evt->evt.gap_evt.conn_handle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, nullptr, nullptr);
             APP_ERROR_CHECK(err_code);
             break;
 
         case BLE_GATTS_EVT_SYS_ATTR_MISSING:
             // No system attributes have been stored.
-            err_code = sd_ble_gatts_sys_attr_set(m_conn_handle, nullptr, 0, 0);
+            err_code = sd_ble_gatts_sys_attr_set(p_ble_evt->evt.gap_evt.conn_handle, nullptr, 0, 0);
             APP_ERROR_CHECK(err_code);
             break;
 
@@ -91,16 +86,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void *)
 static nrf_sdh_ble_evt_observer_t m_ble_observer __attribute__((section(".sdh_ble_observers3")))__attribute__((used)) = {
     ble_evt_handler, nullptr};
 
-/**@brief Function for handling events from the GATT library. */
-static void gatt_evt_handler(nrf_ble_gatt_t *, nrf_ble_gatt_evt_t const * p_evt)
-{
-    if ((m_conn_handle == p_evt->conn_handle) && (p_evt->evt_id == NRF_BLE_GATT_EVT_ATT_MTU_UPDATED))
-    {
-        //m_ble_nus_max_data_len = p_evt->params.att_mtu_effective - OPCODE_LENGTH - HANDLE_LENGTH;
-    }
-}
+static void gatt_evt_handler(nrf_ble_gatt_t *, nrf_ble_gatt_evt_t const *){}
 
-/**@brief Function for initializing the GATT library. */
 void gatt_init()
 {
     ret_code_t err_code;
@@ -111,6 +98,7 @@ void gatt_init()
     err_code = nrf_ble_gatt_att_mtu_periph_set(&m_gatt, NRF_SDH_BLE_GATT_MAX_MTU_SIZE);
     APP_ERROR_CHECK(err_code);
 }
+
 void gap_params_init()
 {
     ble_gap_conn_params_t gap_conn_params {};

@@ -109,6 +109,12 @@ namespace tos
         constexpr size_t size() const { return m_len; }
 
         /**
+         * Returns the total number bytes occupied by the elements in the spen
+         * @return number of bytes
+         */
+        constexpr size_t size_bytes() const { return size() * sizeof(T); }
+
+        /**
          * Returns the pointer to the beginning of the range of the span
          * @return pointer to the beginning of the range
          */
@@ -136,7 +142,7 @@ namespace tos
 
         constexpr bool empty() const { return m_len == 0; }
 
-        constexpr span<const uint8_t> as_bytes() const {
+        span<const uint8_t> as_bytes() const {
             return span<const uint8_t>{reinterpret_cast<const uint8_t*>(data()), size() * sizeof(T) };
         }
 
@@ -179,6 +185,17 @@ namespace tos
     span<T> empty_span()
     {
         return span<T>(nullptr);
+    }
+
+    /**
+     * Constructs a span of size 1 from a single object
+     * @tparam T type of the object
+     * @param t object
+     * @return a span containing t
+     */
+    template <class T>
+    span<T> monospan(T& t) {
+        return span<T>(&t, 1);
     }
 
     template <class U, class T>

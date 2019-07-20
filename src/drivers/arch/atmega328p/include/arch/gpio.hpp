@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "../../../../../../../../../usr/lib/gcc/avr/5.4.0/include/stdint.h"
-#include "../../../../../../../../../usr/lib/avr/include/avr/io.h"
+#include <cstdint>
+#include <avr/io.h>
 #include <tos/function_ref.hpp>
-#include "../../../../../../../../../usr/lib/avr/include/avr/interrupt.h"
+#include <avr/interrupt.h>
 #include <common/gpio.hpp>
 
 namespace tos

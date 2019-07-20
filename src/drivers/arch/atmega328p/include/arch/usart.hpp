@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "../../../../../../../../../usr/lib/gcc/avr/5.4.0/include/stdint.h"
-#include "../../../../../../../../../usr/lib/gcc/avr/5.4.0/include/stddef.h"
+#include <cstdint>
+#include <cstddef>
 #include <tos/devices.hpp>
 #include <tos/char_stream.hpp>
 #include <common/usart.hpp>
