@@ -78,7 +78,7 @@ void ble_task()
     tos::stm32::spi s(tos::stm32::detail::spis[2]);
     s.set_8_bit_mode();
 
-    SPBTLERFClass bl(&s, 61, 70, 8);
+    spbtle_rf bl(&s, cs_pin, exti_pin, reset);
     bl.begin();
 
     tos::println(usart, "began");
