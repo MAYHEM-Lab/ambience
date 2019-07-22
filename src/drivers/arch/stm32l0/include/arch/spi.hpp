@@ -11,8 +11,9 @@
 #include <tos/semaphore.hpp>
 #include <arch/gpio.hpp>
 #include <tos/fixed_fifo.hpp>
+#include <tos/expected.hpp>
 
-extern tos::fixed_fifo<char, 128> pr;
+extern void spi3_isr();
 
 namespace tos
 {
@@ -37,6 +38,11 @@ constexpr std::array<spi_def, 3> spis {
 };
 }
 
+enum class spi_errors
+{
+    bad_mode
+};
+
 class spi :
         public self_pointing<spi>,
         public tracked_driver<spi, detail::spis.size()>
@@ -60,51 +66,81 @@ public:
 //        SPI_CR1(m_def->spi) &= ~SPI_CR1_CPOL;
 
         SPI_CR2(m_def->spi) = 0;
+#ifdef STM32L4
         SPI_CR2(m_def->spi) |= SPI_CR2_FRXTH;
+#endif
 
         SPI_CR1(m_def->spi) |= SPI_CR1_SPE;
 
         nvic_enable_irq(m_def->irq);
     }
 
-    uint16_t exchange16(uint16_t data)
+    expected<void, spi_errors>
+    write(span<const uint8_t> buffer)
     {
-        Expects(in_16_bit_mode());
-        m_write = {&data, 1};
-        uint16_t out;
-        m_read = {&out, 1};
-        enable_rx_isr();
+        if (in_16_bit_mode())
+        {
+            return unexpected(spi_errors::bad_mode);
+        }
+
+        m_write = buffer;
+        m_read = tos::empty_span<uint8_t>();
+
         enable_tx_isr();
+
         m_done.down();
         while(SPI_SR(m_def->spi) & SPI_SR_BSY);
-        return out;
+        return {};
     }
 
-    uint8_t exchange8(uint8_t data) {
-        Expects(!in_16_bit_mode());
-        uint16_t d = data;
-        m_write = {&d, 1};
-        uint16_t out;
-        m_read = {&out, 1};
+    expected<void, spi_errors>
+    exchange(span<uint8_t> buffer)
+    {
+        if (in_16_bit_mode())
+        {
+            return unexpected(spi_errors::bad_mode);
+        }
+
+        m_write = buffer;
+        m_read = buffer;
+
         enable_rx_isr();
         enable_tx_isr();
+
         m_done.down();
         while(SPI_SR(m_def->spi) & SPI_SR_BSY);
-        return out;
+        return {};
     }
 
     void set_8_bit_mode() {
+#ifdef STM32L0
+        SPI_CR1(m_def->spi) &= ~SPI_CR1_DFF_16BIT;
+        SPI_CR1(m_def->spi) |= SPI_CR1_DFF_8BIT;
+#endif
+#ifdef STM32L4
         SPI_CR2(m_def->spi) &= ~SPI_CR2_DS_16BIT;
         SPI_CR2(m_def->spi) |= SPI_CR2_DS_8BIT;
+#endif
     }
 
     void set_16_bit_mode() {
+#ifdef STM32L0
+        SPI_CR1(m_def->spi) &= ~SPI_CR1_DFF_8BIT;
+        SPI_CR1(m_def->spi) |= SPI_CR1_DFF_16BIT;
+#endif
+#ifdef STM32L4
         SPI_CR2(m_def->spi) &= ~SPI_CR2_DS_8BIT;
         SPI_CR2(m_def->spi) |= SPI_CR2_DS_16BIT;
+#endif
     }
 
     bool in_16_bit_mode() const {
-        return SPI_CR2(m_def->spi) & SPI_CR2_DS_16BIT;
+#ifdef STM32L0
+        return (SPI_CR1(m_def->spi) & SPI_CR1_DFF_16BIT) == SPI_CR1_DFF_16BIT;
+#endif
+#ifdef STM32L4
+        return (SPI_CR2(m_def->spi) & SPI_CR2_DS_16BIT) == SPI_CR2_DS_16BIT;
+#endif
     }
 
 private:
@@ -146,7 +182,11 @@ private:
             }
             else
             {
+#ifdef STM32L4
                 SPI_DR8(m_def->spi) = m_write[0];
+#elif defined(STM32L0)
+                SPI_DR(m_def->spi) = m_write[0];
+#endif
                 m_write = m_write.slice(1);
                 return;
             }
@@ -155,7 +195,11 @@ private:
         if (rx_isr_enabled() && SPI_SR(m_def->spi) & SPI_SR_RXNE)
         {
             Expects(!m_read.empty());
+#ifdef STM32L4
             m_read[0] = SPI_DR8(m_def->spi);
+#elif defined(STM32L0)
+            m_read[0] = SPI_DR(m_def->spi);
+#endif
             //pr.push(m_read[0]);
             m_read = m_read.slice(1);
 
@@ -174,12 +218,10 @@ private:
     friend void ::spi1_isr();
     friend void ::spi2_isr();
 
-#ifdef SPI3_BASE
     friend void ::spi3_isr();
-#endif
 
-    tos::span<const uint16_t> m_write{nullptr};
-    tos::span<uint16_t> m_read{nullptr};
+    tos::span<const uint8_t> m_write{nullptr};
+    tos::span<uint8_t> m_read{nullptr};
     tos::semaphore m_done{0};
     const detail::spi_def* m_def;
 };

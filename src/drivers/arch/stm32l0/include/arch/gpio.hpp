@@ -106,7 +106,7 @@ public:
         gpio_clear(pin.port->which, pin.pin);
     }
 
-    bool read(const pin_type &pin) {
+    bool read(const pin_type &pin) const {
         return gpio_get(pin.port->which, pin.pin);
     }
 
