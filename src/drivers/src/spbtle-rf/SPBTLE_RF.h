@@ -1,42 +1,8 @@
-/*
- *******************************************************************************
- * Copyright (c) 2017, STMicroelectronics
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. Neither the name of STMicroelectronics nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *******************************************************************************
- */
-
-#ifndef __SPBTLE_RF_H
-#define __SPBTLE_RF_H
+#pragma once
 
 #include <stdint.h>
-
-#define IDB04A1 0
-#define IDB05A1 1
-
-#define BDADDR_SIZE 6
+#include <tos/mutex.hpp>
+#include <arch/drivers.hpp>
 
 typedef enum {
   SPBTLERF_OK = 0,
@@ -53,15 +19,55 @@ void attach_HCI_CB(void (*callback)(void *pckt));
 namespace tos::stm32{
     struct spi;
 }
-class SPBTLERFClass
+
+extern bool isr_enabled;
+class spbtle_rf : public tos::tracked_driver<spbtle_rf, 1>
 {
+    // needs timer + spi
   public:
-    SPBTLERFClass(tos::stm32::spi *SPIx, uint8_t csPin, uint8_t spiIRQ, uint8_t reset);
+    using SpiT = tos::stm32::spi*;
+    using GpioT = tos::stm32::gpio;
+    using PinT = GpioT::pin_type;
 
-    SPBTLERF_state_t begin(void);
-    void end(void);
+    spbtle_rf(SpiT SPIx, PinT csPin, PinT spiIRQ, PinT reset);
 
-    void update(void);
+    SPBTLERF_state_t begin();
+
+    void update();
+
+    bool data_present() const {
+        return m_gpio.read(m_irq_pin);
+    }
+
+    void reset()
+    {
+        using namespace std::chrono_literals;
+        m_gpio.write(m_reset, tos::digital::low);
+        alarm_ptr->sleep_for(5ms);
+        m_gpio.write(m_reset, tos::digital::high);
+        alarm_ptr->sleep_for(5ms);
+    }
+
+    int spi_write(tos::span<const uint8_t> d1,
+                    tos::span<const uint8_t> d2);
+
+    int spi_read(tos::span<uint8_t> buf);
+
+    void bootloader();
+
+    ~spbtle_rf() {
+        m_gpio.write(m_reset, tos::digital::low);
+        isr_enabled = false;
+    }
+
+private:
+
+    tos::any_alarm* alarm_ptr;
+    GpioT m_gpio;
+    SpiT m_spi;
+    PinT m_cs, m_irq_pin, m_reset;
+    tos::mutex m_spi_prot;
 };
 
-#endif //__SPBTLE_RF_H
+#include "spbtle_rf.inl"
+

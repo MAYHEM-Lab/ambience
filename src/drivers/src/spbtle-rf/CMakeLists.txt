@@ -49,7 +49,7 @@ add_library(spbtle-rf
         STM32_BlueNRG/SimpleBlueNRG_HCI/hci/controller/bluenrg_gatt_aci.c
         STM32_BlueNRG/SimpleBlueNRG_HCI/hci/hci.cpp
 
-        )
+        spbtle_rf.inl)
 target_include_directories(spbtle-rf PUBLIC ".")
-target_link_libraries(spbtle-rf PUBLIC tos_core tos_ft tos_alarm arch_drivers)
+target_link_libraries(spbtle-rf PUBLIC tos_core tos_ft tos_alarm arch_drivers range-v3)
 target_compile_features(spbtle-rf PUBLIC cxx_std_17)
