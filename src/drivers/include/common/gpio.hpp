@@ -39,15 +39,9 @@ namespace tos
         static constexpr low_t low{};
     } // namespace digital
 
-    template <class BasePin>
-    struct digital_out : BasePin
-    {
-
-    };
-
     namespace devs
     {
         using gpio_t = dev<struct _gpio_t, 0>;
         static constexpr gpio_t gpio{};
     } // namespace devs
-}
+} // namespace tos

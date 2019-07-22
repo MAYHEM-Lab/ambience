@@ -161,13 +161,57 @@ namespace tos
         return alarm<std::remove_reference_t<T>>{tmr};
     }
 
+    /**
+     * This type represents a type erased alarm type.
+     *
+     * Prefer using the concrete alarm objects over this.
+     */
     struct any_alarm
     {
         using alarm_handle = intrusive_list<sleeper>::iterator_t;
 
+        /**
+         * Blocks the calling thread for the given amount of time
+         *
+         * Calling this function from a non-thread context has
+         * undefined behavior
+         *
+         * @param dur time to block the calling thread
+         */
         virtual auto sleep_for(std::chrono::milliseconds dur) -> void = 0;
+
+        /**
+         * Sets an alarm for the given sleeper object.
+         *
+         * As the caller will not be blocked upon this call,
+         * it's up to the caller to ensure the sleeper object
+         * lives until the callback is called.
+         *
+         * If the sleeper goes out of scope before the alarm
+         * expires, the behavior is undefined.
+         *
+         * To avoid such cases, cancel the alarm with the
+         * handle returned from this function.
+         *
+         * @param s sleeper to set an alarm for
+         * @return handle to the alarm for the given sleeper
+         */
         virtual auto set_alarm(sleeper& s) -> alarm_handle = 0;
-        virtual auto cancel(alarm_handle s) -> void = 0;
+
+        /**
+         * Cancels the alarm pointed by the given handle.
+         * @param handle alarm to cancel
+         */
+        virtual auto cancel(alarm_handle handle) -> void = 0;
+
+        /**
+         * Returns the resolution of the alarm.
+         *
+         * This value represents the minimum duration the
+         * alarm supports for sleepers.
+         *
+         * @return resolution of the alarm
+         */
         virtual auto resolution() const -> std::chrono::milliseconds = 0;
 
         virtual ~any_alarm() = default;
