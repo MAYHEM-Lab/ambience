@@ -39,6 +39,31 @@ namespace tos
         static constexpr low_t low{};
     } // namespace digital
 
+    /**
+     * This type implements a scope based guard that resets
+     * a pin in it's constructor and sets it in it's
+     * destructor
+     */
+    template <class GpioT>
+    class pull_low_guard
+    {
+    public:
+        using pin_type = typename GpioT::pin_type;
+        pull_low_guard(GpioT& g, pin_type pin)
+            : m_g{&g}, m_pin{pin}
+        {
+            m_g->write(m_pin, tos::digital::low);
+        }
+
+        ~pull_low_guard()
+        {
+            m_g->write(m_pin, tos::digital::high);
+        }
+    private:
+        GpioT* m_g;
+        pin_type m_pin;
+    };
+
     namespace devs
     {
         using gpio_t = dev<struct _gpio_t, 0>;
