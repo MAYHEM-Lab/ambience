@@ -1,0 +1,139 @@
+#include <SPBTLE_RF.h>
+#include <libopencm3/stm32/exti.h>
+#include "hci.h"
+#include "stm32_bluenrg_ble.h"
+#include "bluenrg_interface.h"
+#include "debug.h"
+#include "gp_timer.h"
+#include "hal.h"
+#include "../../arch/stm32l0/include/arch/spi.hpp"
+#include "../../arch/stm32l0/include/arch/gpio.hpp"
+#include <tos/mutex.hpp>
+
+void (*HCI_callback)(void *);
+
+namespace digital = tos::digital;
+
+using namespace tos::stm32;
+
+tos::any_alarm *alarm_ptr;
+
+tos::semaphore isr_sem{0};
+bool isr_enabled = false;
+extern "C" void exti9_5_isr() {
+    if (isr_enabled) {
+        isr_sem.up_isr();
+    }
+
+    EXTI_PR = EXTI6;
+}
+
+void ble_isr() {
+    while (true) {
+        isr_sem.down();
+        if (!isr_enabled) continue;
+        SPI_EXTI_Callback();
+    }
+}
+
+spbtle_rf::spbtle_rf(SpiT SPIx,
+                     PinT cs, PinT spiIRQ, PinT reset) :
+                     tracked_driver(0),
+         m_spi{std::move(SPIx)},
+        m_cs{cs}, m_irq_pin{spiIRQ}, m_reset{reset} {
+    this->alarm_ptr = ::alarm_ptr;
+}
+
+static tos::stack_storage<1024> sstorage;
+
+SPBTLERF_state_t spbtle_rf::begin(void) {
+    tos::launch(sstorage, ble_isr);
+    /* Initialize the BlueNRG SPI driver */
+    // Configure SPI and CS pin
+    m_gpio.set_pin_mode(m_cs, tos::pin_mode::out);
+    m_gpio.write(m_cs, digital::high);
+
+    m_gpio->set_pin_mode(m_irq_pin, tos::pin_mode::in_pulldown);
+    exti_select_source(EXTI6, GPIOE);
+    exti_set_trigger(EXTI6, EXTI_TRIGGER_RISING);
+    exti_enable_request(EXTI6);
+    nvic_enable_irq(NVIC_EXTI9_5_IRQ);
+    // Enable SPI EXTI interrupt
+    isr_enabled = true;
+
+    // Configure Reset pin
+    m_gpio.set_pin_mode(m_reset, tos::pin_mode::out);
+    m_gpio.write(m_reset, digital::low);
+
+    /* Initialize the BlueNRG HCI */
+    HCI_Init();
+
+    /* Reset BlueNRG hardware */
+    BlueNRG_RST();
+
+    return SPBTLERF_OK;
+}
+
+void spbtle_rf::update(void) {
+    HCI_Process();
+}
+
+void Hal_Write_Serial(const void *data1, const void *data2, int32_t n_bytes1,
+                      int32_t n_bytes2) {
+    while (true) {
+        if (BlueNRG_SPI_Write((uint8_t *) data1, (uint8_t *) data2, n_bytes1, n_bytes2) == 0) {
+            break;
+        }
+        tos::this_thread::yield();
+    }
+}
+
+void BlueNRG_RST(void) {
+    spbtle_rf::get(0)->reset();
+}
+
+uint8_t BlueNRG_DataPresent(void) {
+    return spbtle_rf::get(0)->data_present();
+}
+
+void BlueNRG_HW_Bootloader(void) {
+    spbtle_rf::get(0)->bootloader();
+
+}
+
+int32_t BlueNRG_SPI_Read_All(uint8_t *buffer,
+                             uint8_t buff_size) {
+    return spbtle_rf::get(0)->spi_read({buffer, buff_size});
+}
+
+int32_t BlueNRG_SPI_Write(uint8_t *data1,
+                          uint8_t *data2, uint8_t Nb_bytes1, uint8_t Nb_bytes2) {
+    return spbtle_rf::get(0)->spi_write({data1, Nb_bytes1}, {data2, Nb_bytes2});
+}
+
+
+/**
+ * @brief  Enable SPI IRQ.
+ * @param  None
+ * @retval None
+ */
+void Enable_SPI_IRQ(void) {
+    isr_enabled = true;
+}
+
+/**
+ * @brief  Disable SPI IRQ.
+ * @param  None
+ * @retval None
+ */
+void Disable_SPI_IRQ(void) {
+    isr_enabled = false;
+}
+
+void attach_HCI_CB(void (*callback)(void *pckt)) {
+    HCI_callback = callback;
+}
+
+void HCI_Event_CB(void *pckt) {
+    HCI_callback(pckt);
+}
