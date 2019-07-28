@@ -2,7 +2,7 @@
 // Created by fatih on 7/24/19.
 //
 
-#include <arch/interrupt.hpp>
+#include <arch/exti.hpp>
 #include <libopencm3/stm32/exti.h>
 
 extern "C" {
