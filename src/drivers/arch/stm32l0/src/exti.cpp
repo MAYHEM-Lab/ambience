@@ -26,6 +26,8 @@ extern "C" {
     {
 
     }
+    
+#ifdef NVIC_EXTI9_5_IRQ
     void exti9_5_isr()
     {
         if ((EXTI_PR & EXTI6) == EXTI6)
@@ -43,4 +45,5 @@ extern "C" {
     {
 
     }
+#endif
 }

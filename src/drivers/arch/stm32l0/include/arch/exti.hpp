@@ -32,7 +32,9 @@ namespace stm32
             exti_set_trigger(exti, EXTI_TRIGGER_RISING);
             exti_enable_request(exti);
 
+#ifdef NVIC_EXTI9_5_IRQ
             nvic_enable_irq(NVIC_EXTI9_5_IRQ);
+#endif
         }
 
         void detach(pin_type pin)
@@ -45,8 +47,6 @@ namespace stm32
             m_handlers.erase(it);
         }
 
-    private:
-
         void isr(uint16_t pin)
         {
             auto it = m_handlers.find(pin);
@@ -57,7 +57,7 @@ namespace stm32
             it->second();
         }
 
-        friend void ::exti9_5_isr();
+    private:
 
         etl::flat_map<uint16_t, function_ref<void()>, 16> m_handlers;
     };
