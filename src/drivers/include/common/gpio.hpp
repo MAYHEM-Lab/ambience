@@ -39,6 +39,15 @@ namespace tos
         static constexpr low_t low{};
     } // namespace digital
 
+    namespace pin_change
+    {
+        struct falling_t {};
+        struct rising_t {};
+
+        static constexpr falling_t falling{};
+        static constexpr rising_t rising{};
+    }
+
     /**
      * This type implements a scope based guard that resets
      * a pin in it's constructor and sets it in it's
