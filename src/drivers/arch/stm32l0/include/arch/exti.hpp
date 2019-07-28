@@ -32,8 +32,12 @@ namespace stm32
             exti_set_trigger(exti, EXTI_TRIGGER_RISING);
             exti_enable_request(exti);
 
-#ifdef NVIC_EXTI9_5_IRQ
+#if defined(STM32L4)
             nvic_enable_irq(NVIC_EXTI9_5_IRQ);
+#elif defined(STM32L0)
+            nvic_enable_irq(NVIC_EXTI0_1_IRQ);
+            nvic_enable_irq(NVIC_EXTI2_3_IRQ);
+            nvic_enable_irq(NVIC_EXTI4_15_IRQ);
 #endif
         }
 
