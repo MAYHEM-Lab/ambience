@@ -2,8 +2,8 @@ add_library(stm32_rcc include/arch/rcc.hpp src/stub.cpp)
 target_link_libraries(stm32_rcc PUBLIC tos::core)
 tos_install(stm32_rcc ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(stm32_gpio include/arch/gpio.hpp src/stub.cpp)
-target_link_libraries(stm32_gpio PUBLIC tos_gpio tos::core)
+add_library(stm32_gpio include/arch/gpio.hpp include/arch/exti.hpp src/stub.cpp src/exti.cpp)
+target_link_libraries(stm32_gpio PUBLIC tos_gpio tos::core etl)
 tos_install(stm32_gpio ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(stm32_usart include/arch/usart.hpp src/stub.cpp src/usart.cpp)
@@ -36,7 +36,7 @@ target_link_libraries(stm32_drivers PUBLIC
         stm32_adc
         stm32_spi
         )
-target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> $<TARGET_FILE:stm32_spi> -Wl,--no-whole-archive")
+target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> $<TARGET_FILE:stm32_spi> $<TARGET_FILE:stm32_gpio> -Wl,--no-whole-archive")
 tos_install(stm32_drivers)
 
 set_target_properties(stm32_drivers PROPERTIES
