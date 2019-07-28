@@ -1,14 +1,15 @@
 #include <SPBTLE_RF.h>
-#include <libopencm3/stm32/exti.h>
 #include "hci.h"
 #include "stm32_bluenrg_ble.h"
 #include "bluenrg_interface.h"
 #include "debug.h"
 #include "gp_timer.h"
 #include "hal.h"
-#include "../../arch/stm32l0/include/arch/spi.hpp"
-#include "../../arch/stm32l0/include/arch/gpio.hpp"
+#include <arch/drivers.hpp>
+#include <arch/exti.hpp>
 #include <tos/mutex.hpp>
+
+tos::stm32::exti e;
 
 void (*HCI_callback)(void *);
 
@@ -20,12 +21,12 @@ tos::any_alarm *alarm_ptr;
 
 tos::semaphore isr_sem{0};
 bool isr_enabled = false;
-extern "C" void exti9_5_isr() {
+
+void exti_handler(void*)
+{
     if (isr_enabled) {
         isr_sem.up_isr();
     }
-
-    EXTI_PR = EXTI6;
 }
 
 void ble_isr() {
@@ -44,9 +45,9 @@ spbtle_rf::spbtle_rf(SpiT SPIx,
     this->alarm_ptr = ::alarm_ptr;
 }
 
-static tos::stack_storage<1024> sstorage;
+static tos::stack_storage<2048> sstorage;
 
-SPBTLERF_state_t spbtle_rf::begin(void) {
+SPBTLERF_state_t spbtle_rf::begin() {
     tos::launch(sstorage, ble_isr);
     /* Initialize the BlueNRG SPI driver */
     // Configure SPI and CS pin
@@ -54,10 +55,10 @@ SPBTLERF_state_t spbtle_rf::begin(void) {
     m_gpio.write(m_cs, digital::high);
 
     m_gpio->set_pin_mode(m_irq_pin, tos::pin_mode::in_pulldown);
-    exti_select_source(EXTI6, GPIOE);
-    exti_set_trigger(EXTI6, EXTI_TRIGGER_RISING);
-    exti_enable_request(EXTI6);
-    nvic_enable_irq(NVIC_EXTI9_5_IRQ);
+
+    e.attach(m_irq_pin, tos::pin_change::rising,
+            tos::function_ref<void()>(&exti_handler));
+
     // Enable SPI EXTI interrupt
     isr_enabled = true;
 
