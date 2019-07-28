@@ -37,6 +37,7 @@ add_subdirectory(libs/CWPack)
 add_subdirectory(libs/libemsha)
 add_subdirectory(libs/frozen)
 add_subdirectory(libs/range-v3-0.5.0)
+add_subdirectory(libs/etl)
 
 if (NOT ${TOS_CORE} MATCHES "esp8266|atmega")
 add_subdirectory(libs/json)

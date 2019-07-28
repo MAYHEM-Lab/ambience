@@ -5,7 +5,8 @@
 #pragma once
 
 #include <tos/arch.hpp>
-#include <stdint.h>
+#include <cstdint>
+#include <tos/barrier.hpp>
 
 namespace tos {
     namespace kern
@@ -16,10 +17,12 @@ namespace tos {
 
         inline void disable_interrupts()
         {
+            tos::detail::memory_barrier_enter();
             if (detail::disable_depth==0) {
                 tos_disable_interrupts();
             }
             detail::disable_depth++;
+            tos::detail::memory_barrier_exit();
         }
 
 		/**
@@ -30,10 +33,12 @@ namespace tos {
 		 */
         inline void enable_interrupts()
         {
+            tos::detail::memory_barrier_enter();
             detail::disable_depth--;
             if (detail::disable_depth==0) {
                 tos_enable_interrupts();
             }
+            tos::detail::memory_barrier_exit();
         }
 
         /**
