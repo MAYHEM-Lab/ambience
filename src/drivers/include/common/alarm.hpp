@@ -60,7 +60,7 @@ namespace tos
           auto fun = [&ev]{
             ev.fire_isr();
           };
-          sleeper s { uint16_t(dur.count()), fun };
+          sleeper s { uint16_t(dur.count()), tos::function_ref<void()>(fun) };
           set_alarm(s);
           ev.wait();
         }
