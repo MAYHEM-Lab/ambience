@@ -33,20 +33,18 @@ namespace tos
     class function_ref<RetT(ArgTs...)>
     {
     public:
-        using funptr_t = RetT(*)(ArgTs..., void*);
+        using internal_funptr_t = RetT(*)(ArgTs..., void*);
 
-        function_ref(const function_ref& rhs)
-            : m_fun(rhs.m_fun), m_data(rhs.m_data)
-        {
-        }
+        function_ref(const function_ref& rhs) = default;
 
-        function_ref(funptr_t ptr, void* data)
+        function_ref(internal_funptr_t ptr, void* data)
                 : m_fun(ptr), m_data(data) {}
 
-        explicit function_ref(funptr_t ptr) : m_fun(ptr), m_data(nullptr) {}
+        explicit function_ref(internal_funptr_t ptr) : function_ref(ptr, nullptr) {}
 
-        template <class T>
-        function_ref(T& func) : m_fun([](ArgTs... args, void* data) -> RetT {
+        template <class T, std::enable_if_t<!std::is_same_v<T, function_ref>>* = nullptr>
+        explicit function_ref(T& func) : m_fun([](ArgTs... args, void* data) -> RetT {
+            static_assert(!std::is_const_v<T>, "Function cannot be a temporary!");
             auto& foo = *static_cast<T*>(data);
             return foo(std::forward<ArgTs>(args)...);
         }), m_data(&func) {}
@@ -58,7 +56,7 @@ namespace tos
         }
 
     private:
-        funptr_t m_fun;
+        internal_funptr_t m_fun;
         void* m_data;
     };
 }
