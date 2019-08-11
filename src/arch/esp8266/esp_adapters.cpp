@@ -9,7 +9,7 @@
 
 extern "C"
 {
-int gettimeofday(struct timeval *t, void *timezone) {
+int gettimeofday(struct timeval *, void *) {
   return -1;
 }
 
@@ -28,25 +28,25 @@ void _exit()
     tos::this_thread::exit();
 }
 _PTR
-_malloc_r (struct _reent *r, size_t sz)
+_malloc_r (struct _reent *, size_t sz)
 {
     return malloc (sz);
 }
 
 void
-_free_r (struct _reent *r, void* ptr)
+_free_r (struct _reent *, void* ptr)
 {
     free(ptr);
 }
 
 _PTR
-_realloc_r(struct _reent *r, void* ptr, size_t sz)
+_realloc_r(struct _reent *, void* ptr, size_t sz)
 {
     return realloc(ptr, sz);
 }
 
 int
-_fstat_r (struct _reent *ptr, int fd, struct stat *pstat)
+_fstat_r (struct _reent *, int, struct stat *pstat)
 {
     memset(&pstat, 0, sizeof(pstat));
     return 0;

@@ -102,7 +102,7 @@ namespace tos
         }
 
         void wifi_connection::consume_all() {
-            while (events.size() > 0)
+            while (!events.empty())
             {
                 consume_event(events.pop());
             }
@@ -124,7 +124,8 @@ namespace tos
             strncpy((char*)stationConfig.ssid, ssid.data(), 32);
             strncpy((char*)stationConfig.password, passwd.data(), 64);
 
-            while (events.size() > 0)
+            // clear the event queue
+            while (!events.empty())
             {
                 events.pop();
             }
