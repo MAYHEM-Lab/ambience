@@ -5,7 +5,8 @@
 #include <arch/drivers.hpp>
 
 enum class spbtle_errors {
-    unknown
+    unknown,
+    timeout = 0xFF
 };
 
 namespace tos {

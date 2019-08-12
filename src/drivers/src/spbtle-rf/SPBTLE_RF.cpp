@@ -1,27 +1,19 @@
 #include <SPBTLE_RF.h>
 #include "hci.h"
 #include "stm32_bluenrg_ble.h"
-#include "bluenrg_interface.h"
-#include "debug.h"
-#include "gp_timer.h"
-#include "hal.h"
-#include "bluenrg_gap.h"
 #include <arch/drivers.hpp>
 #include <arch/exti.hpp>
 #include <tos/mutex.hpp>
 
 bool isr_enabled = false;
-tos::any_alarm* alarm_ptr;
+tos::any_alarm *alarm_ptr;
 
 namespace {
-    tos::function_ref<void(void*)> HCI_callback{[](void*, void*){}};
-
-    namespace digital = tos::digital;
+    tos::function_ref<void(void *)> HCI_callback{[](void *, void *) {}};
 
     tos::semaphore isr_sem{0};
 
-    void exti_handler(void*)
-    {
+    void exti_handler(void *) {
         if (isr_enabled) {
             isr_sem.up_isr();
         }
@@ -31,16 +23,18 @@ namespace {
         while (true) {
             isr_sem.down();
             if (!isr_enabled) continue;
-            SPI_EXTI_Callback();
+            HCI_Isr();
+            HCI_Process();
         }
     }
 }
+
 spbtle_rf::spbtle_rf(SpiT SPIx,
                      ExtiT exti,
-                     tos::any_alarm& alarm,
+                     tos::any_alarm &alarm,
                      PinT cs, PinT spiIRQ, PinT reset) :
-                     tracked_driver(0),
-         m_spi{std::move(SPIx)},
+        tracked_driver(0),
+        m_spi{std::move(SPIx)},
         m_cs{cs}, m_irq_pin{spiIRQ}, m_reset{reset}, alarm_ptr{&alarm}, m_exti{exti} {
     ::alarm_ptr = &alarm;
     begin();
@@ -49,16 +43,17 @@ spbtle_rf::spbtle_rf(SpiT SPIx,
 static tos::stack_storage<2048> sstorage;
 
 tos::expected<void, spbtle_errors> spbtle_rf::begin() {
+    namespace digital = tos::digital;
+
     tos::launch(sstorage, ble_isr);
-    /* Initialize the BlueNRG SPI driver */
-    // Configure SPI and CS pin
+
     m_gpio.set_pin_mode(m_cs, tos::pin_mode::out);
     m_gpio.write(m_cs, digital::high);
 
     m_gpio->set_pin_mode(m_irq_pin, tos::pin_mode::in_pulldown);
 
     m_exti->attach(m_irq_pin, tos::pin_change::rising,
-            tos::function_ref<void()>(&exti_handler));
+                   tos::function_ref<void()>(&exti_handler));
 
     // Enable SPI EXTI interrupt
     isr_enabled = true;
@@ -76,10 +71,12 @@ tos::expected<void, spbtle_errors> spbtle_rf::begin() {
     return {};
 }
 
-void Hal_Write_Serial(const void *data1, const void *data2, int32_t n_bytes1,
-                      int32_t n_bytes2) {
+extern "C"
+void Hal_Write_Serial(const void *data1, const void *data2,
+                      int32_t n_bytes1, int32_t n_bytes2) {
     while (true) {
-        if (BlueNRG_SPI_Write((uint8_t *) data1, (uint8_t *) data2, n_bytes1, n_bytes2) == 0) {
+        auto res = BlueNRG_SPI_Write((uint8_t *) data1, (uint8_t *) data2, n_bytes1, n_bytes2);
+        if (res == 0) {
             break;
         }
         tos::this_thread::yield();
