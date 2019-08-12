@@ -24,7 +24,6 @@ inline int spbtle_rf::spi_write(tos::span<const uint8_t> d1, tos::span<const uin
     unsigned char header_master[5] = {0x0a, 0x00, 0x00, 0x00, 0x00};
     unsigned char header_slave[5] = {0xaa, 0x00, 0x00, 0x00, 0x00};
 
-
     /*for (auto& [s, h] :
             ranges::zip_view(header_slave, header_master))
     {
@@ -33,7 +32,7 @@ inline int spbtle_rf::spi_write(tos::span<const uint8_t> d1, tos::span<const uin
 
     for (int i = 0; i < 5; ++i) {
         auto res = tos::spi::exchange(m_spi, header_master[i]);
-        if (!res) return -1;
+        if (!res) return -3;
         header_slave[i] = force_get(res);
     }
 
@@ -41,9 +40,9 @@ inline int spbtle_rf::spi_write(tos::span<const uint8_t> d1, tos::span<const uin
         /* SPI is ready */
         if (header_slave[1] >= (d1.size() + d2.size())) {
             auto r1 = m_spi->write(d1);
-            if (!r1) return -1;
+            if (!r1) return -4;
             r1 = m_spi->write(d2);
-            if (!r1) return -1;
+            if (!r1) return -5;
         } else {
             /* Buffer is too small */
             result = -2;
@@ -112,7 +111,7 @@ inline tos::expected<tos::spbtle::fw_id, spbtle_errors> spbtle_rf::get_fw_id() c
     auto res = aci_hal_get_fw_build_number(&build_number.build_number);
     if (res)
     {
-        return tos::unexpected(spbtle_errors::unknown);
+        return tos::unexpected(static_cast<spbtle_errors>(res));
     }
     return build_number;
 }
