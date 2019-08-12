@@ -5,46 +5,38 @@
 #pragma once
 
 #include "../../../../../../../../../opt/x-tools/tos-esp-sdk/xtensa-lx106-elf/lib/gcc/xtensa-lx106-elf/8.3.0/include/stdint.h"
-#include <tos/function_ref.hpp>
+
 #include <common/timer.hpp>
+#include <tos/function_ref.hpp>
 
-extern "C"
-{
-#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/sdk/include/osapi.h"
+extern "C" {
+#include <osapi.h>
 }
 
-namespace tos
-{
-    namespace esp82
-    {
-        class timer
-        {
-        public:
-            timer();
+namespace tos {
+namespace esp82 {
+class timer {
+public:
+    timer();
 
-            void set_frequency(uint16_t hertz);
+    void set_frequency(uint16_t hertz);
 
-            void enable();
+    void enable();
 
-            void disable();
+    void disable();
 
-            uint16_t get_ticks();
+    void set_callback(const function_ref<void()>& cb);
 
-            void set_callback(const function_ref<void()>& cb);
+    timer* operator->() { return this; }
+    timer& operator*() { return *this; }
 
-            timer* operator->(){return this;}
-            timer& operator*(){return *this;}
-        private:
+private:
+    function_ref<void()> m_cb;
+    uint16_t m_freq;
 
-            function_ref<void()> m_cb;
-            uint16_t m_freq;
+    os_timer_t m_timer;
+};
+} // namespace esp82
 
-            os_timer_t m_timer;
-        };
-    }
-
-    inline esp82::timer open_impl(devs::timer_t<0>)
-    {
-        return esp82::timer{};
-    }
-}
+inline esp82::timer open_impl(devs::timer_t<0>) { return esp82::timer{}; }
+} // namespace tos

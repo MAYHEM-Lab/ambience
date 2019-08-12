@@ -4,9 +4,6 @@
 
 #include <arch/tcp.hpp>
 #include <tos/print.hpp>
-namespace tos
-{
-    namespace esp82
-    {
-    }
-}
+namespace tos {
+namespace esp82 {}
+} // namespace tos

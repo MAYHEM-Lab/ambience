@@ -1,49 +1,22 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2016 Juho Vähä-Herttua (juhovh@iki.fi)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-#include <tos/mutex.hpp>
 #include <mem.h>
-
-#include <tos/semaphore.hpp>
 #include <tos/mutex.hpp>
+#include <tos/semaphore.hpp>
 
-struct uart_state
-{
+struct uart_state {
     const char* tx_buffer{nullptr};
     size_t buf_sz{0};
     tos::semaphore tx_done{0};
     tos::mutex tx_busy;
 };
 
-extern "C"
-{
-#include <user_interface.h>
-#include <lx106_missing.hpp>
-#include "new_uart_priv.h"
-
-#include "osapi.h"
+extern "C" {
 #include "ets_sys.h"
+#include "new_uart_priv.h"
+#include "osapi.h"
 #include "uart_register.h"
+
+#include <lx106_missing.hpp>
+#include <user_interface.h>
 
 #define WAIT_RESOLUTION_US 1000
 
@@ -56,19 +29,17 @@ extern "C"
 // Define FIFO sizes, actually 128 but playing safe
 #define UART_RXFIFO_SIZE 126
 #define UART_TXFIFO_SIZE 126
-#define UART_RXTOUT_TH   2
-#define UART_RXFIFO_TH   100
-#define UART_TXFIFO_TH   1
+#define UART_RXTOUT_TH 2
+#define UART_RXFIFO_TH 100
+#define UART_TXFIFO_TH 1
 
 // Define some helper macros to handle FIFO functions
-#define UART_TXFIFO_LEN(uart_no) \
-  ((READ_PERI_REG(UART_STATUS(uart_no)) >> UART_TXFIFO_CNT_S) & UART_RXFIFO_CNT)
-#define UART_TXFIFO_PUT(uart_no, byte) \
-  WRITE_PERI_REG(UART_FIFO(uart_no), (byte) & 0xff)
-#define UART_RXFIFO_LEN(uart_no) \
-  ((READ_PERI_REG(UART_STATUS(uart_no)) >> UART_RXFIFO_CNT_S) & UART_RXFIFO_CNT)
-#define UART_RXFIFO_GET(uart_no) \
-  READ_PERI_REG(UART_FIFO(uart_no))
+#define UART_TXFIFO_LEN(uart_no)                                                         \
+    ((READ_PERI_REG(UART_STATUS(uart_no)) >> UART_TXFIFO_CNT_S) & UART_RXFIFO_CNT)
+#define UART_TXFIFO_PUT(uart_no, byte) WRITE_PERI_REG(UART_FIFO(uart_no), (byte)&0xff)
+#define UART_RXFIFO_LEN(uart_no)                                                         \
+    ((READ_PERI_REG(UART_STATUS(uart_no)) >> UART_RXFIFO_CNT_S) & UART_RXFIFO_CNT)
+#define UART_RXFIFO_GET(uart_no) READ_PERI_REG(UART_FIFO(uart_no))
 
 
 #define RINGBUF_SIZE 512
@@ -81,25 +52,23 @@ typedef struct ringbuf_s ringbuf_t;
 
 #define RINGBUF_CLEAR(buf) ((buf)->head = (buf)->len = 0)
 #define RINGBUF_TAIL(buf) (((buf)->head + (buf)->len) % RINGBUF_SIZE)
-#define RINGBUF_PUT(buf, byte)\
-  ((buf)->len < RINGBUF_SIZE ? \
-    (buf)->data[RINGBUF_TAIL(buf)] = (byte), (sint32) ++(buf)->len : \
-    (sint32) -1)
-#define RINGBUF_GET(buf) \
-  ((buf)->len > 0 ? \
-    (buf)->len--, (sint32) (buf)->data[(buf)->head++ % RINGBUF_SIZE] : \
-    (sint32) -1)
+#define RINGBUF_PUT(buf, byte)                                                           \
+    ((buf)->len < RINGBUF_SIZE ? (buf)->data[RINGBUF_TAIL(buf)] = (byte),                \
+     (sint32)++(buf)->len                                                                \
+                               : (sint32)-1)
+#define RINGBUF_GET(buf)                                                                 \
+    ((buf)->len > 0 ? (buf)->len--,                                                      \
+     (sint32)(buf)->data[(buf)->head++ % RINGBUF_SIZE]                                   \
+                    : (sint32)-1)
 
 
 ringbuf_t uart0_rx_ringbuf;
 ringbuf_t uart0_tx_ringbuf;
 
-static uint16
-uart0_rxfifo_move(ringbuf_t *dst, uint16 nbytes)
-{
+static uint16 uart0_rxfifo_move(ringbuf_t* dst, uint16 nbytes) {
     uint16 i;
 
-    for (i=0; i<nbytes; i++) {
+    for (i = 0; i < nbytes; i++) {
         if (dst->len >= RINGBUF_SIZE) {
             break;
         }
@@ -111,9 +80,7 @@ uart0_rxfifo_move(ringbuf_t *dst, uint16 nbytes)
 
 static uart_state state;
 
-static void
-uart0_intr_handler(void *arg)
-{
+static void uart0_intr_handler(void* arg) {
     uint32 uart0_status;
 
     uart0_status = READ_PERI_REG(UART_INT_ST(UART0));
@@ -137,16 +104,13 @@ uart0_intr_handler(void *arg)
         // TX buffer empty, check if ringbuf has space or disable int
         WRITE_PERI_REG(UART_INT_CLR(UART0), UART_TXFIFO_EMPTY_INT_ST);
 
-        if (state.buf_sz == 0)
-        {
+        if (state.buf_sz == 0) {
             CLEAR_PERI_REG_MASK(UART_INT_ENA(UART0), UART_TXFIFO_EMPTY_INT_ENA);
 
             state.tx_done.up_isr();
             system_os_post(tos::esp82::main_task_prio, 0, 0);
             state.tx_buffer = nullptr;
-        }
-        else
-        {
+        } else {
             auto c = *state.tx_buffer;
             ++state.tx_buffer;
             --state.buf_sz;
@@ -155,9 +119,7 @@ uart0_intr_handler(void *arg)
     }
 }
 
-void ICACHE_FLASH_ATTR
-uart0_open(uint32 baud_rate, uint32 flags)
-{
+void ICACHE_FLASH_ATTR uart0_open(uint32 baud_rate, uint32 flags) {
     uint32 clkdiv;
 
     ETS_UART_INTR_DISABLE();
@@ -181,9 +143,7 @@ uart0_open(uint32 baud_rate, uint32 flags)
     uart0_reset();
 }
 
-void ICACHE_FLASH_ATTR
-uart0_reset()
-{
+void ICACHE_FLASH_ATTR uart0_reset() {
     // Disable interrupts while resetting UART0
     ETS_UART_INTR_DISABLE();
 
@@ -194,11 +154,12 @@ uart0_reset()
     RINGBUF_CLEAR(&uart0_tx_ringbuf);
 
     // Set RX and TX interrupt thresholds
-    WRITE_PERI_REG(UART_CONF1(UART0),
-                   UART_RX_TOUT_EN |
-                   ((UART_RXTOUT_TH & UART_RX_TOUT_THRHD) << UART_RX_TOUT_THRHD_S) |
-                   ((UART_RXFIFO_TH & UART_RXFIFO_FULL_THRHD) << UART_RXFIFO_FULL_THRHD_S) |
-                   ((UART_TXFIFO_TH & UART_TXFIFO_EMPTY_THRHD) << UART_TXFIFO_EMPTY_THRHD_S));
+    WRITE_PERI_REG(
+        UART_CONF1(UART0),
+        UART_RX_TOUT_EN |
+            ((UART_RXTOUT_TH & UART_RX_TOUT_THRHD) << UART_RX_TOUT_THRHD_S) |
+            ((UART_RXFIFO_TH & UART_RXFIFO_FULL_THRHD) << UART_RXFIFO_FULL_THRHD_S) |
+            ((UART_TXFIFO_TH & UART_TXFIFO_EMPTY_THRHD) << UART_TXFIFO_EMPTY_THRHD_S));
 
     // Disable all existing interrupts and enable ours
     WRITE_PERI_REG(UART_INT_CLR(UART0), 0xffff);
@@ -210,9 +171,7 @@ uart0_reset()
     ETS_UART_INTR_ENABLE();
 }
 
-uint16 ICACHE_FLASH_ATTR
-uart0_available()
-{
+uint16 ICACHE_FLASH_ATTR uart0_available() {
     uint16 ret;
 
     ETS_UART_INTR_DISABLE();
@@ -222,9 +181,7 @@ uart0_available()
     return ret;
 }
 
-uint16 ICACHE_FLASH_ATTR
-uart0_read_buf(void *buf, uint16 nbytes, uint16 timeout)
-{
+uint16 ICACHE_FLASH_ATTR uart0_read_buf(void* buf, uint16 nbytes, uint16 timeout) {
     auto data = static_cast<uint8_t*>(buf);
     uint16 i;
 
@@ -233,15 +190,17 @@ uart0_read_buf(void *buf, uint16 nbytes, uint16 timeout)
 
         // Wait until there is some data available
         while ((system_get_time() - stime) < ((uint32)timeout * 1000)) {
-            if (uart0_available() > 0) break;
+            if (uart0_available() > 0)
+                break;
             os_delay_us(WAIT_RESOLUTION_US);
         }
     }
 
     // Read all data available in ringbuf
     ETS_UART_INTR_DISABLE();
-    for (i=0; i<nbytes; i++) {
-        if (uart0_rx_ringbuf.len == 0) break;
+    for (i = 0; i < nbytes; i++) {
+        if (uart0_rx_ringbuf.len == 0)
+            break;
         data[i] = RINGBUF_GET(&uart0_rx_ringbuf);
     }
     ETS_UART_INTR_ENABLE();
@@ -249,13 +208,12 @@ uart0_read_buf(void *buf, uint16 nbytes, uint16 timeout)
     return i;
 }
 
-void uart0_tx_char_sync(uint8_t c)
-{
+void uart0_tx_char_sync(uint8_t c) {
     ETS_UART_INTR_DISABLE();
 
-    while (true)
-    {
-        uint32 fifo_cnt = READ_PERI_REG(UART_STATUS(UART0)) & (UART_TXFIFO_CNT<<UART_TXFIFO_CNT_S);
+    while (true) {
+        uint32 fifo_cnt =
+            READ_PERI_REG(UART_STATUS(UART0)) & (UART_TXFIFO_CNT << UART_TXFIFO_CNT_S);
         if ((fifo_cnt >> UART_TXFIFO_CNT_S & UART_TXFIFO_CNT) < 1) {
             break;
         }
@@ -264,16 +222,13 @@ void uart0_tx_char_sync(uint8_t c)
     WRITE_PERI_REG(UART_FIFO(UART0), c);
 }
 
-void uart0_tx_buffer_sync(const uint8_t* buf, uint16_t len)
-{
-    while (len --> 0)
-    {
+void uart0_tx_buffer_sync(const uint8_t* buf, uint16_t len) {
+    while (len-- > 0) {
         uart0_tx_char_sync(*buf++);
     }
 }
 
-void
-uart0_tx_buffer(const uint8 *buf, uint16 len) {
+void uart0_tx_buffer(const uint8* buf, uint16 len) {
     tos::lock_guard<tos::mutex> lk{state.tx_busy};
 
     ETS_UART_INTR_DISABLE();
@@ -287,15 +242,12 @@ uart0_tx_buffer(const uint8 *buf, uint16 len) {
     state.tx_done.down();
 }
 
-void ICACHE_FLASH_ATTR
-uart0_flush()
-{
-    while (UART_TXFIFO_LEN(UART0));
+void ICACHE_FLASH_ATTR uart0_flush() {
+    while (UART_TXFIFO_LEN(UART0))
+        ;
 }
 
-void ICACHE_FLASH_ATTR
-uart1_open(uint32 baud_rate, uint32 flags)
-{
+void ICACHE_FLASH_ATTR uart1_open(uint32 baud_rate, uint32 flags) {
     uint32 clkdiv;
 
     ETS_UART_INTR_DISABLE();
@@ -319,19 +271,16 @@ uart1_open(uint32 baud_rate, uint32 flags)
     ETS_UART_INTR_ENABLE();
 }
 
-void ICACHE_FLASH_ATTR
-uart1_reset(uint32 baud_rate, uint32 flags)
-{
+void ICACHE_FLASH_ATTR uart1_reset(uint32 baud_rate, uint32 flags) {
     // Clear all TX buffers
     SET_PERI_REG_MASK(UART_CONF0(UART1), UART_TXFIFO_RST);
     CLEAR_PERI_REG_MASK(UART_CONF0(UART1), UART_TXFIFO_RST);
 }
 
-uint8 ICACHE_FLASH_ATTR
-uart1_write_byte(uint8 byte)
-{
+uint8 ICACHE_FLASH_ATTR uart1_write_byte(uint8 byte) {
     UART_TXFIFO_PUT(UART1, byte);
-    while (UART_TXFIFO_LEN(UART1));
+    while (UART_TXFIFO_LEN(UART1))
+        ;
     return byte;
 }
 }

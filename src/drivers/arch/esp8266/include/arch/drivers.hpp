@@ -4,12 +4,12 @@
 
 #pragma once
 
+#include "adc.hpp"
 #include "gpio.hpp"
+#include "nvm.hpp"
+#include "spi.hpp"
 #include "tcp.hpp"
 #include "timer.hpp"
+#include "twim.hpp"
 #include "usart.hpp"
 #include "wifi.hpp"
-#include "twim.hpp"
-#include "spi.hpp"
-#include "adc.hpp"
-#include "nvm.hpp"
