@@ -35,7 +35,7 @@ extern tos::any_alarm* alarm_ptr;
 struct timer {
     timer(tos::any_alarm& a) : alarm{&a} {}
     tos::any_alarm* alarm;
-    std::optional<tos::sleeper> s;
+    std::optional<tos::sleeper> sleeper;
     std::optional<tos::any_alarm::alarm_handle> handle;
     ~timer()
     {

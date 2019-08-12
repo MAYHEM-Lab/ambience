@@ -55,13 +55,13 @@ void
 Timer_Set(timer *t, tClockTime interval)
 {
     using namespace std::chrono_literals;
-    t->s.emplace(std::chrono::milliseconds(interval) / t->alarm->resolution(),
-                tos::function_ref<void()>([](void* tptr){
+    t->sleeper.emplace(std::chrono::milliseconds(interval) / t->alarm->resolution(),
+                       tos::function_ref<void()>([](void* tptr){
                     auto t = static_cast<timer*>(tptr);
-                    t->s.reset();
+                    t->sleeper.reset();
                     t->handle.reset();
                 }, t));
-    t->handle = t->alarm->set_alarm(*t->s);
+    t->handle = t->alarm->set_alarm(*t->sleeper);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -79,7 +79,7 @@ Timer_Set(timer *t, tClockTime interval)
 int
 Timer_Expired(timer *t)
 {
-    return !bool(t->s);
+    return !bool(t->sleeper);
 }
 
 #ifdef __cplusplus
