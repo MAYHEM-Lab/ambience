@@ -39,3 +39,5 @@ SpaceBeforeRangeBasedForLoopColon: true
 
 AllowShortLoopsOnASingleLine: true
 #AllowShortLambdasOnASingleLine: true
+
+AlwaysBreakTemplateDeclarations: Yes
