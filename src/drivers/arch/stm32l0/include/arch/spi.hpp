@@ -58,7 +58,11 @@ public:
         rcc_periph_clock_enable(m_def->clk);
 
         SPI_CR1(m_def->spi) = 0;
-        SPI_CR1(m_def->spi) = SPI_CR1_BAUDRATE_FPCLK_DIV_8 | SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI;
+        SPI_CR1(m_def->spi) =
+                SPI_CR1_BAUDRATE_FPCLK_DIV_8 |
+                SPI_CR1_MSTR |
+                SPI_CR1_SSM |
+                SPI_CR1_SSI;
 
         // phase 0, polarity 0
         // not really needed
@@ -101,14 +105,21 @@ public:
             return unexpected(spi_errors::bad_mode);
         }
 
+        uint8_t rdbuf[16];
         m_write = buffer;
-        m_read = buffer;
+        m_read = tos::span<uint8_t>(rdbuf).slice(0, buffer.size());
 
-        enable_rx_isr();
-        enable_tx_isr();
+        // clear rx fifo
+        for (int i = 0; i < 4; ++i)
+        {
+            volatile uint8_t c = SPI_DR8(m_def->spi);
+        }
+
+        enable_rx_tx_isr();
 
         m_done.down();
         while(SPI_SR(m_def->spi) & SPI_SR_BSY);
+        std::copy(rdbuf, rdbuf + buffer.size(), buffer.begin());
         return {};
     }
 
@@ -144,6 +155,11 @@ public:
     }
 
 private:
+    void enable_rx_tx_isr()
+    {
+        SPI_CR2(m_def->spi) |= SPI_CR2_RXNEIE | SPI_CR2_TXEIE;
+    }
+
     void enable_rx_isr()
     {
         SPI_CR2(m_def->spi) |= SPI_CR2_RXNEIE;
@@ -200,7 +216,7 @@ private:
 #elif defined(STM32L0)
             m_read[0] = SPI_DR(m_def->spi);
 #endif
-            //pr.push(m_read[0]);
+
             m_read = m_read.slice(1);
 
             if (m_read.empty())
