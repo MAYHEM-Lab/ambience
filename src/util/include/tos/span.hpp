@@ -153,6 +153,9 @@ public:
         return span<const uint8_t>{reinterpret_cast<const uint8_t*>(data()), size() * sizeof(T)};
     }
 
+    T& front() { return *begin(); }
+    const T& front() const { return *begin(); }
+
     /**
      * Spans convert to a const version of them automatically
      *
