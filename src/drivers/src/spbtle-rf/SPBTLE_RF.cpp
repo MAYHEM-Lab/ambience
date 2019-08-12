@@ -108,26 +108,16 @@ int32_t BlueNRG_SPI_Write(uint8_t *data1,
     return spbtle_rf::get(0)->spi_write({data1, Nb_bytes1}, {data2, Nb_bytes2});
 }
 
-/**
- * @brief  Enable SPI IRQ.
- * @param  None
- * @retval None
- */
 void Enable_SPI_IRQ(void) {
     isr_enabled = true;
 }
 
-/**
- * @brief  Disable SPI IRQ.
- * @param  None
- * @retval None
- */
 void Disable_SPI_IRQ(void) {
     isr_enabled = false;
 }
 
-void attach_HCI_CB(void (*callback)(void *)) {
-    HCI_callback = tos::function_ref<void(void*)>(callback);
+void attach_HCI_CB(tos::function_ref<void(void *)> callback) {
+    HCI_callback = callback;
 }
 
 void HCI_Event_CB(void *pckt) {

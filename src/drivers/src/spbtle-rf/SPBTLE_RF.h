@@ -55,8 +55,6 @@ namespace tos {
     }
 }
 
-void attach_HCI_CB(void (*callback)(void *pckt));
-
 namespace tos::stm32 {
     struct spi;
 }
