@@ -7,3 +7,4 @@
 #include "adc.hpp"
 #include "spi.hpp"
 #include "exti.hpp"
+#include "i2c.hpp"

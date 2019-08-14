@@ -18,7 +18,7 @@ add_library(stm32_spi include/arch/spi.hpp src/spi.cpp)
 target_link_libraries(stm32_spi PUBLIC tos::core)
 tos_install(stm32_spi ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(stm32_i2c src/stub.cpp)
+add_library(stm32_i2c include/arch/i2c.hpp src/i2c.cpp)
 target_link_libraries(stm32_i2c PUBLIC tos::core)
 tos_install(stm32_i2c ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -36,7 +36,7 @@ target_link_libraries(stm32_drivers PUBLIC
         stm32_adc
         stm32_spi
         )
-target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> $<TARGET_FILE:stm32_spi> $<TARGET_FILE:stm32_gpio> -Wl,--no-whole-archive")
+target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> $<TARGET_FILE:stm32_spi> $<TARGET_FILE:stm32_i2c> $<TARGET_FILE:stm32_gpio> -Wl,--no-whole-archive")
 tos_install(stm32_drivers)
 
 set_target_properties(stm32_drivers PROPERTIES
