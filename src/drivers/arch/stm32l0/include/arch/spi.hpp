@@ -39,12 +39,15 @@ enum class spi_errors
     bad_mode
 };
 
-class spi : public self_pointing<spi>, public tracked_driver<spi, detail::spis.size()> {
-  public:
+class spi
+    : public self_pointing<spi>
+    , public tracked_driver<spi, detail::spis.size()> {
+public:
     using gpio_type = stm32::gpio;
 
     explicit spi(const detail::spi_def& def)
-        : tracked_driver{std::distance(&detail::spis[0], &def)}, m_def{&def} {
+        : tracked_driver{std::distance(&detail::spis[0], &def)}
+        , m_def{&def} {
         rcc_periph_reset_pulse(m_def->rst);
         rcc_periph_clock_enable(m_def->clk);
 
@@ -137,7 +140,7 @@ class spi : public self_pointing<spi>, public tracked_driver<spi, detail::spis.s
 #endif
     }
 
-  private:
+private:
     void enable_rx_tx_isr() { SPI_CR2(m_def->spi) |= SPI_CR2_RXNEIE | SPI_CR2_TXEIE; }
 
     void enable_rx_isr() { SPI_CR2(m_def->spi) |= SPI_CR2_RXNEIE; }
@@ -189,7 +192,6 @@ class spi : public self_pointing<spi>, public tracked_driver<spi, detail::spis.s
 
     friend void ::spi1_isr();
     friend void ::spi2_isr();
-
     friend void ::spi3_isr();
 
     tos::span<const uint8_t> m_write{nullptr};
