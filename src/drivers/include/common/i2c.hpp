@@ -32,7 +32,7 @@ namespace tos
 
     struct twi_addr_t
     {
-        uint8_t addr : 7;
+        uint8_t addr;
     };
 
     template <class I2C>
