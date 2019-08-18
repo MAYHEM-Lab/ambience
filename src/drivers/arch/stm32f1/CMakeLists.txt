@@ -6,7 +6,7 @@ add_library(stm32_gpio include/arch/gpio.hpp src/stub.cpp)
 target_link_libraries(stm32_gpio PUBLIC tos_gpio tos::core)
 tos_install(stm32_gpio ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(stm32_usart include/arch/usart.hpp src/stub.cpp src/usart.cpp)
+add_library(stm32_usart include/arch/usart.hpp src/usart.cpp)
 target_link_libraries(stm32_usart PUBLIC tos_usart tos::core)
 tos_install(stm32_usart ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
