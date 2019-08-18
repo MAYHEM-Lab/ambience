@@ -2,82 +2,45 @@
 // Created by fatih on 10/25/18.
 //
 
-#include <tos/ft.hpp>
-
-#include <tos/semaphore.hpp>
-
 #include <arch/drivers.hpp>
 #include <tos/fixed_fifo.hpp>
+#include <tos/ft.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
+#include <tos/semaphore.hpp>
 
-void usart_setup(tos::stm32::gpio& g)
-{
-    using namespace tos::tos_literals;
-
-#if defined(STM32L0)
-    auto tx_pin = 9_pin;
-    auto rx_pin = 10_pin;
-
-    g.set_pin_mode(rx_pin, tos::pin_mode::in);
-
-    gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO9);
-    gpio_set_af(GPIOA, GPIO_AF7, GPIO9 | GPIO10);
-#elif defined(STM32L4)
-    auto tx_pin = 22_pin;
-    auto rx_pin = 23_pin;
-
-    g.set_pin_mode(rx_pin, tos::pin_mode::in);
-
-    gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO6);
-    gpio_set_af(GPIOB, GPIO_AF7, GPIO6 | GPIO7);
-#elif defined(STM32F1)
-    auto tx_pin = 2_pin;
-    auto rx_pin = 3_pin;
-
-    g.set_pin_mode(rx_pin, tos::pin_mode::in);
-
-    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
-#endif
-}
-
-void blink_task()
-{
+void blink_task() {
     using namespace tos;
     using namespace tos_literals;
-    constexpr auto usconf = tos::usart_config()
-        .add(115200_baud_rate)
-        .add(usart_parity::disabled)
-        .add(usart_stop_bit::one);
 
-	auto g = tos::open(tos::devs::gpio);
 
-    usart_setup(g);
-    auto usart = tos::open(tos::devs::usart<0>, usconf);
+    auto led_pin = 129_pin;
+    auto usart_rx_pin = 23_pin;
+    auto usart_tx_pin = 9_pin;
 
-    auto tmr = tos::open(tos::devs::timer<2>);
-    auto alarm = tos::open(tos::devs::alarm, tmr);
+    auto g = tos::open(tos::devs::gpio);
 
-    g.set_pin_mode(5_pin, tos::pin_mode::out);
+    auto timer = open(devs::timer<2>);
+    auto alarm = open(devs::alarm, timer);
 
-	tos::println(usart, int(rcc_ahb_frequency), int(rcc_apb1_frequency));
+    auto usart = open(devs::usart<0>, tos::uart::default_9600, usart_rx_pin, usart_tx_pin);
+    tos::println(usart, "Hello From Tos!");
 
-    g.write(5_pin, tos::digital::high);
-    while (true)
-    {
+    g.set_pin_mode(led_pin, tos::pin_mode::out);
+
+    g.write(led_pin, tos::digital::high);
+    while (true) {
         using namespace std::chrono_literals;
+        g.write(led_pin, tos::digital::low);
+        tos::println(usart, "Low");
         alarm.sleep_for(1s);
-        tos::println(usart, "l");
-        g.write(5_pin, tos::digital::low);
 
+        g.write(led_pin, tos::digital::high);
+        tos::println(usart, "High");
         alarm.sleep_for(1s);
-        tos::println(usart, "h");
-        g.write(5_pin, tos::digital::high);
     }
 }
 
-void tos_main()
-{
+void tos_main() {
     tos::launch(tos::alloc_stack, blink_task);
 }
