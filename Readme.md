@@ -13,6 +13,7 @@ Supported and tested targets:
 | ARM    | STM32F103 (cortex m3) |
 | ARM    | STM32L053 (cortex m0+) |
 | ARM    | STM32L475 (cortex m4) |
+| ARM    | STM32F746 (cortex m7) |
 | ARM    | nRF528232 (cortex m4) |
 | ARM    | nRF528240 (cortex m4) |
 | Xtensa | ESP8266 |
