@@ -40,7 +40,14 @@ jobs:
           command: unzip nrf5-sdk.zip -d /opt/x-tools
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=bluefruit ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=nrf52/832 ..
+      - run:
+          working_directory: build/
+          name: Build Project
+          command: ninja
+      - run:
+          name: Generate Project
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=nrf52/840 ..
       - run:
           working_directory: build/
           name: Build Project
@@ -76,7 +83,28 @@ jobs:
           command: unzip libopencm3.zip -d /opt/x-tools
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=blue-pill ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=stm32/f1/03c8 ..
+      - run:
+          working_directory: build/
+          name: Build Project
+          command: ninja
+      - run:
+          name: Generate Project
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=stm32/f7/46 ..
+      - run:
+          working_directory: build/
+          name: Build Project
+          command: ninja
+      - run:
+          name: Generate Project
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=stm32/l0/53 ..
+      - run:
+          working_directory: build/
+          name: Build Project
+          command: ninja
+      - run:
+          name: Generate Project
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=stm32/l4/75 ..
       - run:
           working_directory: build/
           name: Build Project

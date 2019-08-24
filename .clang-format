@@ -37,8 +37,10 @@ SpaceBeforeAssignmentOperators: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeCpp11BracedList: false
 
 AllowShortLoopsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: None
 #AllowShortLambdasOnASingleLine: true
 
 AlwaysBreakTemplateDeclarations: Yes
