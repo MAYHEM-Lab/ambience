@@ -45,10 +45,7 @@ public:
     void err_isr();
 
 private:
-    void enable_isrs() {
-        I2C_CR1(m_dev->i2c) |=
-            I2C_CR1_TXIE | I2C_CR1_RXIE | I2C_CR1_NACKIE | I2C_CR1_STOPIE;
-    }
+    void enable_isrs();
 
     void disable_tx_isr() { I2C_CR1(m_dev->i2c) &= ~I2C_CR1_TXIE; }
     void disable_rx_isr() { I2C_CR1(m_dev->i2c) &= ~I2C_CR1_RXIE; }
@@ -210,5 +207,24 @@ inline twi_rx_res i2c::receive(twi_addr_t from, span<char> buffer) {
 
     return twi_rx_res::ok;
 }
+
+inline void i2c::enable_isrs() {
+    I2C_CR1(m_dev->i2c) |= I2C_CR1_TXIE | I2C_CR1_RXIE | I2C_CR1_NACKIE | I2C_CR1_STOPIE;
+}
 } // namespace stm32
+
+stm32::i2c open_impl(devs::i2c_t<0>,
+                     i2c_type::master_t,
+                     stm32::gpio::pin_type scl,
+                     stm32::gpio::pin_type sda) {
+    return stm32::i2c{stm32::detail::i2cs[0], scl, sda};
+}
+
+stm32::i2c open_impl(devs::i2c_t<1>,
+                     i2c_type::master_t,
+                     stm32::gpio::pin_type scl,
+                     stm32::gpio::pin_type sda) {
+    return stm32::i2c{stm32::detail::i2cs[1], scl, sda};
+}
+
 } // namespace tos

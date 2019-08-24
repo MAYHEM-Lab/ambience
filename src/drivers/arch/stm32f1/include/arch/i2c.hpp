@@ -27,10 +27,9 @@ class twim
     , public tracked_driver<twim, 2>
     , non_copy_movable {
 public:
-    twim(gpio::pin_type clk, gpio::pin_type data)
-        : tracked_driver(0) {
-        m_def = detail::i2cs + 0;
-
+    twim(const detail::i2c_def& def, gpio::pin_type clk, gpio::pin_type data)
+        : tracked_driver(std::distance(&detail::i2cs[0], &def))
+        , m_def{&def} {
         rcc_periph_clock_enable(m_def->rcc);
 
         i2c_reset(m_def->i2c);
@@ -166,4 +165,21 @@ twi_rx_res twim::receive(twi_addr_t from, span<char> buf) noexcept {
     return tos::twi_rx_res::ok;
 }
 } // namespace stm32
+
+
+stm32::twim open_impl(devs::i2c_t<0>,
+                      i2c_type::master_t,
+                      stm32::gpio::pin_type scl,
+                      stm32::gpio::pin_type sda) {
+    return stm32::twim{stm32::detail::i2cs[0], scl, sda};
+}
+
+stm32::twim open_impl(devs::i2c_t<1>,
+                      i2c_type::master_t,
+                      stm32::gpio::pin_type scl,
+                      stm32::gpio::pin_type sda) {
+    return stm32::twim{stm32::detail::i2cs[1], scl, sda};
+}
+
+
 } // namespace tos
