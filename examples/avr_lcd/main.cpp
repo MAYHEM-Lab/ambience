@@ -2,19 +2,18 @@
 // Created by fatih on 12/24/18.
 //
 
-#include <common/lcd.hpp>
 #include <arch/drivers.hpp>
+#include <common/lcd.hpp>
 #include <tos/print.hpp>
 #include <tos/version.hpp>
 
-void lcd_main()
-{
+void lcd_main() {
     using namespace tos::tos_literals;
-    using namespace tos; using namespace tos::avr;
+    using namespace tos;
 
-    twim t { 19_pin, 18_pin };
+    auto i2c = tos::open(tos::devs::i2c<0>, tos::i2c_type::master, 19_pin, 18_pin);
 
-    lcd<twim> lcd{ t, { 0x27 }, 20, 4 };
+    lcd<decltype(&i2c)> lcd{&i2c, {0x27}, 20, 4};
 
     auto tmr = open(devs::timer<1>);
     auto alarm = open(devs::alarm, tmr);
@@ -23,8 +22,7 @@ void lcd_main()
     lcd.backlight();
 
     int64_t x = 0;
-    while (true)
-    {
+    while (true) {
         ++x;
         using namespace std::chrono_literals;
 
@@ -40,11 +38,10 @@ void lcd_main()
         lcd.set_cursor(0, 3);
         tos::print(lcd, int32_t(x));
 
-        alarm.sleep_for(1000ms);
+        alarm.sleep_for(1s);
     }
 }
 
-void tos_main()
-{
+void tos_main() {
     tos::launch(tos::alloc_stack, lcd_main);
 }

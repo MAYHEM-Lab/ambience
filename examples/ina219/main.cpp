@@ -2,34 +2,27 @@
 // Created by fatih on 11/8/18.
 //
 
-#include <common/ina219.hpp>
 #include <arch/drivers.hpp>
-#include <tos/ft.hpp>
 #include <common/alarm.hpp>
+#include <common/ina219.hpp>
+#include <tos/ft.hpp>
 #include <tos/print.hpp>
 
-void main_task()
-{
+void main_task() {
     using namespace tos;
     using namespace tos_literals;
 
-    constexpr auto usconf = tos::usart_config()
-            .add(9600_baud_rate)
-            .add(tos::usart_parity::disabled)
-            .add(tos::usart_stop_bit::one);
-
-    auto usart = open(tos::devs::usart<0>, usconf);
+    auto usart = open(tos::devs::usart<0>, tos::uart::default_9600);
 
     tos::println(usart, "hello");
 
-    avr::twim t{19_pin, 18_pin};
-    ina219<avr::twim> ina{ {0x41}, t };
+    auto i2c = tos::open(tos::devs::i2c<0>, tos::i2c_type::master, 19_pin, 18_pin);
+    ina219<decltype(&i2c)> ina{twi_addr_t{0x41}, &i2c};
 
     auto tmr = open(devs::timer<1>);
     auto alarm = open(devs::alarm, tmr);
 
-    while (true)
-    {
+    while (true) {
         using namespace std::chrono_literals;
         alarm.sleep_for(500ms);
         int curr = ina.getCurrent_mA();
@@ -40,7 +33,6 @@ void main_task()
     }
 }
 
-void tos_main()
-{
+void tos_main() {
     tos::launch(tos::alloc_stack, main_task);
 }

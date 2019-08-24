@@ -23,7 +23,8 @@ void blink_task() {
     auto timer = open(devs::timer<2>);
     auto alarm = open(devs::alarm, timer);
 
-    auto usart = open(devs::usart<0>, tos::uart::default_9600, usart_rx_pin, usart_tx_pin);
+    auto usart =
+        open(devs::usart<0>, tos::uart::default_9600, usart_rx_pin, usart_tx_pin);
     tos::println(usart, "Hello From Tos!");
 
     g.set_pin_mode(led_pin, tos::pin_mode::out);
@@ -41,6 +42,4 @@ void blink_task() {
     }
 }
 
-void tos_main() {
-    tos::launch(tos::alloc_stack, blink_task);
-}
+void tos_main() { tos::launch(tos::alloc_stack, blink_task); }
