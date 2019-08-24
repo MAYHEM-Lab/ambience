@@ -44,53 +44,16 @@ public:
                    gpio::pin_type rx,
                    gpio::pin_type tx);
 
-    int write(tos::span<const uint8_t> buf) {
-        if (buf.size() == 0)
-            return 0;
-        tx_it = buf.begin();
-        tx_end = buf.end();
-        HAL_UART_Transmit_IT(&m_handle, const_cast<uint8_t*>(buf.data()), buf.size());
-        tx_s.down();
-        return buf.size();
-    }
+    int write(tos::span<const uint8_t> buf);
 
     int write(tos::span<const char> buf) {
         return write(tos::span<const uint8_t>{(const uint8_t*)buf.data(), buf.size()});
     }
 
-    tos::span<char> read(tos::span<char> b) {
-        size_t total = 0;
-        auto len = b.size();
-        auto buf = b.data();
-        tos::kern::busy();
-        while (total < len) {
-            rx_s.down();
-            *buf = rx_buf.pop();
-            ++buf;
-            ++total;
-        }
-        tos::kern::unbusy();
-        return b.slice(0, total);
-    }
+    tos::span<char> read(tos::span<char> b);
 
     template<class AlarmT>
-    tos::span<char> read(tos::span<char> b, AlarmT& alarm, std::chrono::milliseconds to) {
-        size_t total = 0;
-        auto len = b.size();
-        auto buf = b.data();
-        tos::kern::busy();
-        while (total < len) {
-            auto res = rx_s.down(alarm, to);
-            if (res == sem_ret::timeout) {
-                break;
-            }
-            *buf = rx_buf.pop();
-            ++buf;
-            ++total;
-        }
-        tos::kern::unbusy();
-        return b.slice(0, total);
-    }
+    tos::span<char> read(tos::span<char> b, AlarmT& alarm, std::chrono::milliseconds to);
 
     ~usart() {
         NVIC_DisableIRQ(m_def->irq);
@@ -98,9 +61,13 @@ public:
         m_def->rcc_dis();
     }
 
-    void isr() { HAL_UART_IRQHandler(&m_handle); }
+    void isr() {
+        HAL_UART_IRQHandler(&m_handle);
+    }
 
-    void tx_done_isr() { tx_s.up_isr(); }
+    void tx_done_isr() {
+        tx_s.up_isr();
+    }
 
     void rx_done_isr() {
         rx_buf.push(m_recv_byte);
@@ -109,12 +76,12 @@ public:
         HAL_UART_Receive_IT(&m_handle, &m_recv_byte, 1);
     }
 
-    auto native_handle() { return &m_handle; }
+    UART_HandleTypeDef* native_handle() {
+        return &m_handle;
+    }
 
 private:
     tos::fixed_fifo<uint8_t, 32, tos::ring_buf> rx_buf;
-    const uint8_t* tx_it;
-    const uint8_t* tx_end;
     tos::semaphore rx_s{0};
     tos::semaphore tx_s{0};
 
@@ -193,5 +160,48 @@ inline usart::usart(const detail::usart_def& x,
     HAL_NVIC_EnableIRQ(m_def->irq);
 
     HAL_UART_Receive_IT(&m_handle, &m_recv_byte, 1);
+}
+
+template<class AlarmT>
+tos::span<char>
+usart::read(tos::span<char> b, AlarmT& alarm, std::chrono::milliseconds to) {
+    size_t total = 0;
+    auto len = b.size();
+    auto buf = b.data();
+    tos::kern::busy();
+    while (total < len) {
+        auto res = rx_s.down(alarm, to);
+        if (res == sem_ret::timeout) {
+            break;
+        }
+        *buf = rx_buf.pop();
+        ++buf;
+        ++total;
+    }
+    tos::kern::unbusy();
+    return b.slice(0, total);
+}
+
+tos::span<char> usart::read(tos::span<char> b) {
+    size_t total = 0;
+    auto len = b.size();
+    auto buf = b.data();
+    tos::kern::busy();
+    while (total < len) {
+        rx_s.down();
+        *buf = rx_buf.pop();
+        ++buf;
+        ++total;
+    }
+    tos::kern::unbusy();
+    return b.slice(0, total);
+}
+
+int usart::write(tos::span<const uint8_t> buf) {
+    if (buf.empty())
+        return 0;
+    HAL_UART_Transmit_IT(&m_handle, const_cast<uint8_t*>(buf.data()), buf.size());
+    tx_s.down();
+    return buf.size();
 }
 } // namespace tos::stm32

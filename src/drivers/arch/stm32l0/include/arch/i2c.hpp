@@ -55,6 +55,7 @@ private:
     bool busy() const { return I2C_ISR(m_dev->i2c) & I2C_ISR_BUSY; }
 
     void clear_flags() {
+        // clear all interrupt flags
         I2C_ICR(m_dev->i2c) = 0xFFFF;
         I2C_CR2(m_dev->i2c) = 0;
         m_error = false;
@@ -213,14 +214,14 @@ inline void i2c::enable_isrs() {
 }
 } // namespace stm32
 
-stm32::i2c open_impl(devs::i2c_t<0>,
+stm32::i2c open_impl(devs::i2c_t<1>,
                      i2c_type::master_t,
                      stm32::gpio::pin_type scl,
                      stm32::gpio::pin_type sda) {
     return stm32::i2c{stm32::detail::i2cs[0], scl, sda};
 }
 
-stm32::i2c open_impl(devs::i2c_t<1>,
+stm32::i2c open_impl(devs::i2c_t<2>,
                      i2c_type::master_t,
                      stm32::gpio::pin_type scl,
                      stm32::gpio::pin_type sda) {
