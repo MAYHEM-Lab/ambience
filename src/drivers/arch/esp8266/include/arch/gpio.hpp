@@ -105,4 +105,9 @@ inline void gpio::write(pin_t pin, bool val) {
     return write(pin, std::true_type{});
 }
 } // namespace esp82
+namespace tos_literals {
+inline esp82::pin_t operator""_pin(unsigned long long pin) {
+    return {static_cast<uint8_t>(pin)};
+}
+} // namespace tos_literals
 } // namespace tos
