@@ -214,14 +214,14 @@ inline void i2c::enable_isrs() {
 }
 } // namespace stm32
 
-stm32::i2c open_impl(devs::i2c_t<1>,
+inline stm32::i2c open_impl(devs::i2c_t<1>,
                      i2c_type::master_t,
                      stm32::gpio::pin_type scl,
                      stm32::gpio::pin_type sda) {
     return stm32::i2c{stm32::detail::i2cs[0], scl, sda};
 }
 
-stm32::i2c open_impl(devs::i2c_t<2>,
+inline stm32::i2c open_impl(devs::i2c_t<2>,
                      i2c_type::master_t,
                      stm32::gpio::pin_type scl,
                      stm32::gpio::pin_type sda) {

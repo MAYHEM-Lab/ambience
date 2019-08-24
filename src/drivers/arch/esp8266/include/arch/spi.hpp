@@ -7,6 +7,7 @@
 #include "gpio.hpp"
 
 #include <common/driver_base.hpp>
+#include <common/spi.hpp>
 #include <tos/span.hpp>
 
 namespace tos {
@@ -21,4 +22,8 @@ public:
     void exchange_many(tos::span<uint8_t> buffer);
 };
 } // namespace esp82
+
+inline esp82::spi open_impl(devs::spi_t<0>, spi_mode::master_t, esp82::gpio& gpio) {
+    return esp82::spi{gpio};
+}
 } // namespace tos

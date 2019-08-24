@@ -21,7 +21,7 @@ public:
 };
 } // namespace avr
 
-avr::twim open_impl(devs::i2c_t<0>,
+inline avr::twim open_impl(devs::i2c_t<0>,
                     i2c_type::master_t,
                     avr::gpio::pin_type scl,
                     avr::gpio::pin_type sda) {

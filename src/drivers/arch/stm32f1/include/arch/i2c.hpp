@@ -166,15 +166,14 @@ twi_rx_res twim::receive(twi_addr_t from, span<char> buf) noexcept {
 }
 } // namespace stm32
 
-
-stm32::twim open_impl(devs::i2c_t<0>,
+inline stm32::twim open_impl(devs::i2c_t<0>,
                       i2c_type::master_t,
                       stm32::gpio::pin_type scl,
                       stm32::gpio::pin_type sda) {
     return stm32::twim{stm32::detail::i2cs[0], scl, sda};
 }
 
-stm32::twim open_impl(devs::i2c_t<1>,
+inline stm32::twim open_impl(devs::i2c_t<1>,
                       i2c_type::master_t,
                       stm32::gpio::pin_type scl,
                       stm32::gpio::pin_type sda) {

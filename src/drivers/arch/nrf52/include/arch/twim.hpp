@@ -21,7 +21,7 @@ public:
 };
 } // namespace nrf52
 
-nrf52::twim open_impl(devs::i2c_t<0>,
+inline nrf52::twim open_impl(devs::i2c_t<0>,
                       i2c_type::master_t,
                       nrf52::gpio::pin_type scl,
                       nrf52::gpio::pin_type sda) {

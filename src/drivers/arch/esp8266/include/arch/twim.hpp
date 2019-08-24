@@ -25,7 +25,7 @@ public:
 };
 } // namespace esp82
 
-esp82::twim open_impl(devs::i2c_t<0>,
+inline esp82::twim open_impl(devs::i2c_t<0>,
                       i2c_type::master_t,
                       esp82::gpio::pin_type scl,
                       esp82::gpio::pin_type sda) {
