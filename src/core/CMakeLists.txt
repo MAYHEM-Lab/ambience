@@ -3,7 +3,7 @@ include(CMakeRC)
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
-add_library(tos_mem include/tos/mem.hpp src/mem.cpp)
+add_library(tos_mem include/tos/memory.hpp src/memory.cpp)
 
 set(TOS_CORE_HEADERS
         include/tos/devices.hpp
