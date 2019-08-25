@@ -13,6 +13,8 @@ namespace tos {
 namespace bme280 {
 enum class read_errors : uint8_t
 {
+    device_not_found = 254,
+    communication_error = 252,
 };
 
 enum class components : uint8_t
