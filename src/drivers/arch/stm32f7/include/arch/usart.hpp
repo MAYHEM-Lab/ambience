@@ -8,7 +8,7 @@
 
 #include <common/driver_base.hpp>
 #include <common/usart.hpp>
-#include <stm32f7xx_hal_usart.h>
+#include <stm32_hal/usart.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/ring_buf.hpp>
 
@@ -91,21 +91,21 @@ private:
 };
 } // namespace stm32
 
-inline stm32::usart open_impl(tos::devs::usart_t<0>,
+inline stm32::usart open_impl(tos::devs::usart_t<1>,
                               stm32::usart_constraint&& constraints,
                               stm32::gpio::pin_type rx,
                               stm32::gpio::pin_type tx) {
     return stm32::usart{stm32::detail::usarts[0], std::move(constraints), rx, tx};
 }
 
-inline stm32::usart open_impl(tos::devs::usart_t<1>,
+inline stm32::usart open_impl(tos::devs::usart_t<2>,
                               stm32::usart_constraint&& constraints,
                               stm32::gpio::pin_type rx,
                               stm32::gpio::pin_type tx) {
     return stm32::usart{stm32::detail::usarts[1], std::move(constraints), rx, tx};
 }
 
-inline stm32::usart open_impl(tos::devs::usart_t<2>,
+inline stm32::usart open_impl(tos::devs::usart_t<3>,
                               stm32::usart_constraint&& constraints,
                               stm32::gpio::pin_type rx,
                               stm32::gpio::pin_type tx) {
@@ -182,7 +182,7 @@ usart::read(tos::span<char> b, AlarmT& alarm, std::chrono::milliseconds to) {
     return b.slice(0, total);
 }
 
-tos::span<char> usart::read(tos::span<char> b) {
+inline tos::span<char> usart::read(tos::span<char> b) {
     size_t total = 0;
     auto len = b.size();
     auto buf = b.data();
@@ -197,7 +197,7 @@ tos::span<char> usart::read(tos::span<char> b) {
     return b.slice(0, total);
 }
 
-int usart::write(tos::span<const uint8_t> buf) {
+inline int usart::write(tos::span<const uint8_t> buf) {
     if (buf.empty())
         return 0;
     HAL_UART_Transmit_IT(&m_handle, const_cast<uint8_t*>(buf.data()), buf.size());

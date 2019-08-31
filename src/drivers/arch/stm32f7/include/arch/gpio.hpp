@@ -4,8 +4,8 @@
 #include <common/driver_base.hpp>
 #include <common/gpio.hpp>
 #include <cstdint>
-#include <stm32f7xx_hal_gpio.h>
-#include <stm32f7xx_hal_rcc_ex.h>
+#include <stm32_hal/gpio.hpp>
+#include <stm32_hal/rcc_ex.hpp>
 
 namespace tos {
 namespace stm32 {
@@ -16,7 +16,11 @@ struct pin_t {
 };
 
 inline std::array<GPIO_TypeDef*, 9> ports = {
-    GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH, GPIOI};
+    GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH,
+#ifdef GPIOI
+    GPIOI
+#endif
+};
 
 inline void enable_rcc(const GPIO_TypeDef* gpio) {
     if (gpio == GPIOA) {
@@ -37,8 +41,10 @@ inline void enable_rcc(const GPIO_TypeDef* gpio) {
         __HAL_RCC_GPIOG_CLK_ENABLE();
     } else if (gpio == GPIOH) {
         __HAL_RCC_GPIOH_CLK_ENABLE();
+#ifdef GPIOI
     } else if (gpio == GPIOI) {
         __HAL_RCC_GPIOI_CLK_ENABLE();
+#endif
     }
 }
 

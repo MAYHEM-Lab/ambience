@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
-#include <stm32f7xx_hal_tim.h>
+#include <stm32_hal/tim.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/scheduler.hpp>
 #include <tos/track_ptr.hpp>
@@ -29,8 +29,8 @@ struct gen_tim_def {
 };
 
 inline const detail::gen_tim_def gen_timers[] = {
-    {TIM2, TIM2_IRQn, [] { __TIM2_CLK_ENABLE(); }},
-    {TIM3, TIM3_IRQn, [] { __TIM3_CLK_ENABLE(); }}};
+    {TIM2, TIM2_IRQn, [] { __HAL_RCC_TIM2_CLK_ENABLE(); }},
+    {TIM3, TIM3_IRQn, [] { __HAL_RCC_TIM3_CLK_ENABLE(); }}};
 } // namespace detail
 
 /**
@@ -96,7 +96,7 @@ inline general_timer::general_timer(const detail::gen_tim_def& def)
 }
 
 inline void general_timer::set_frequency(uint16_t hertz) {
-    constexpr auto APB1Clock = 54'000'000;
+    constexpr auto APB1Clock = 2'000'000;
     m_handle.Init.Prescaler = APB1Clock / 1'000 - 1;
     m_handle.Init.Period = (2000 / hertz) - 1;
     auto init_res = HAL_TIM_Base_Init(&m_handle);
