@@ -13,10 +13,9 @@ void blink_task() {
     using namespace tos;
     using namespace tos_literals;
 
-
-    auto led_pin = 129_pin;
+    auto led_pin = 5_pin;
     auto usart_rx_pin = 23_pin;
-    auto usart_tx_pin = 9_pin;
+    auto usart_tx_pin = 22_pin;
 
     auto g = tos::open(tos::devs::gpio);
 
@@ -24,7 +23,7 @@ void blink_task() {
     auto alarm = open(devs::alarm, timer);
 
     auto usart =
-        open(devs::usart<0>, tos::uart::default_9600, usart_rx_pin, usart_tx_pin);
+        open(devs::usart<1>, tos::uart::default_9600, usart_rx_pin, usart_tx_pin);
     tos::println(usart, "Hello From Tos!");
 
     g.set_pin_mode(led_pin, tos::pin_mode::out);
