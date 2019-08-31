@@ -3,7 +3,7 @@
 //
 
 #include <cstdlib>
-#include <stm32f7xx_hal.h>
+#include <stm32_hal/hal.hpp>
 #include <tos/compiler.hpp>
 
 extern "C" {

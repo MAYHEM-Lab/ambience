@@ -13,6 +13,7 @@ extern "C" void SysTick_Handler() {
 
 void Error_Handler() { __BKPT(0); }
 
+#if true || defined(STM32F7)
 void SystemClock_Config() {
     RCC_OscInitTypeDef RCC_OscInitStruct;
     RCC_ClkInitTypeDef RCC_ClkInitStruct;
@@ -48,11 +49,11 @@ void SystemClock_Config() {
         Error_Handler();
     }
 }
-
+#endif
 
 int main() {
     HAL_Init();
-    SystemClock_Config();
+    //SystemClock_Config();
 
     // Interrupts are already enabled:
     // tos::kern::enable_interrupts();

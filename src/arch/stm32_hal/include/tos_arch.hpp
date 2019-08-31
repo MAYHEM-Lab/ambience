@@ -4,9 +4,7 @@
 
 #pragma once
 
-#include "tos_platform.hpp"
-
-#include <stm32f7xx_hal.h>
+#include <stm32_hal/hal.hpp>
 #include <string.h>
 
 extern "C" {
