@@ -4,6 +4,8 @@
 
 #pragma once
 
-#include <arch/ble/softdev.hpp>
 #include <arch/ble/advertising.hpp>
 #include <arch/ble/events.hpp>
+#include <arch/ble/gap.hpp>
+#include <arch/ble/gatt.hpp>
+#include <arch/ble/softdev.hpp>

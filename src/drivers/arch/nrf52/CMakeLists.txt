@@ -42,7 +42,7 @@ add_library(nrf52_radio include/arch/radio.hpp src/radio.cpp)
 target_link_libraries(nrf52_radio PUBLIC tos_core)
 tos_install(nrf52_radio ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(nrf52_ble include/arch/ble.hpp src/ble.cpp include/arch/ble/softdev.hpp include/arch/ble/advertising.hpp src/ble/advertising.cpp include/arch/ble/events.hpp src/ble/softdev.cpp include/arch/ble/common.hpp)
+add_library(nrf52_ble include/arch/ble.hpp src/ble.cpp include/arch/ble/softdev.hpp include/arch/ble/advertising.hpp src/ble/advertising.cpp include/arch/ble/events.hpp src/ble/softdev.cpp include/arch/ble/common.hpp include/arch/ble/gap.hpp include/arch/ble/gatt.hpp src/ble/gap.cpp src/ble/gatt.cpp)
 target_link_libraries(nrf52_ble PUBLIC tos_core)
 tos_install(nrf52_ble ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
