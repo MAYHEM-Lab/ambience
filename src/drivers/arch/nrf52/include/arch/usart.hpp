@@ -18,14 +18,13 @@ using usart_constraint = ct_map<usart_key_policy,
                                 el_t<usart_parity, const usart_parity&>,
                                 el_t<usart_stop_bit, const usart_stop_bit&>>;
 
-class uart : public self_pointing<uart> {
+class uart
+    : public self_pointing<uart>
+    , public non_copy_movable {
 public:
     explicit uart(usart_constraint&& config,
-                  gpio::pin_type rx = 8_pin,
-                  gpio::pin_type tx = 6_pin) noexcept;
-
-    uart(const uart&) = delete;
-    uart(uart&&);
+                  gpio::pin_type rx,
+                  gpio::pin_type tx) noexcept;
 
     void write(span<const char> buf);
     span<char> read(span<char> buf);
@@ -43,7 +42,10 @@ private:
 };
 } // namespace nrf52
 
-inline nrf52::uart open_impl(devs::usart_t<0>, nrf52::usart_constraint&& c) {
-    return nrf52::uart{std::move(c)};
+inline nrf52::uart open_impl(devs::usart_t<0>,
+                             nrf52::usart_constraint&& c,
+                             nrf52::gpio::pin_type rx_pin,
+                             nrf52::gpio::pin_type tx_pin) {
+    return nrf52::uart{std::move(c), rx_pin, tx_pin};
 }
 } // namespace tos
