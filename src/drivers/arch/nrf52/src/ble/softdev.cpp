@@ -3,23 +3,15 @@
 //
 
 #include <arch/ble/softdev.hpp>
-#include <arch/ble/advertising.hpp>
 
 namespace tos {
 namespace nrf52 {
-expected<void, softdev_errors> softdev::set_tx_power(int8_t power) {
-    auto err = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, m_advertising.adv_handle, power);
-    if (err == NRF_SUCCESS) return {};
-    return unexpected(softdev_errors(err));
-}
-
 softdev::softdev() {
     ret_code_t err_code;
 
     err_code = nrf_sdh_enable_request();
-    //APP_ERROR_CHECK(err_code);
-    if (err_code != NRF_SUCCESS)
-    {
+    // APP_ERROR_CHECK(err_code);
+    if (err_code != NRF_SUCCESS) {
         tos::this_thread::block_forever();
     }
 
@@ -36,22 +28,5 @@ softdev::softdev() {
     err_code = sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
     APP_ERROR_CHECK(err_code);
 }
-
-expected<void, softdev_errors> softdev::set_device_name(std::string_view name) {
-    ble_gap_conn_sec_mode_t sec_mode;
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
-
-    auto err_code = sd_ble_gap_device_name_set(&sec_mode,
-                                               (const uint8_t *) name.data(),
-                                               name.size());
-
-    if (err_code != NRF_SUCCESS)
-    {
-        return unexpected(softdev_errors(err_code));
-    }
-
-    return {};
-}
-}
-}
+} // namespace nrf52
+} // namespace tos
