@@ -1,8 +1,6 @@
 #include <SPBTLE_RF.h>
 #include "hci.h"
 #include "stm32_bluenrg_ble.h"
-#include <arch/drivers.hpp>
-#include <arch/exti.hpp>
 #include <tos/mutex.hpp>
 
 bool isr_enabled = false;
