@@ -12,17 +12,19 @@ unsigned char twi_dcount = 18;
 static pin_t pin_sda, pin_scl;
 static uint32_t twi_clockStretchLimit;
 
-inline void SDA_LOW() { gpio::write(pin_sda, tos::digital::low); }
+gpio* g;
 
-inline void SDA_HIGH() { gpio::write(pin_sda, tos::digital::high); }
+inline void SDA_LOW() { g->write(pin_sda, tos::digital::low); }
 
-inline auto SDA_READ() { return gpio::read(pin_sda); }
+inline void SDA_HIGH() { g->write(pin_sda, tos::digital::high); }
 
-inline void SCL_LOW() { gpio::write(pin_scl, tos::digital::low); }
+inline auto SDA_READ() { return g->read(pin_sda); }
 
-inline void SCL_HIGH() { gpio::write(pin_scl, tos::digital::high); }
+inline void SCL_LOW() { g->write(pin_scl, tos::digital::low); }
 
-inline auto SCL_READ() { return gpio::read(pin_scl); }
+inline void SCL_HIGH() { g->write(pin_scl, tos::digital::high); }
+
+inline auto SCL_READ() { return g->read(pin_scl); }
 
 #ifndef FCPU80
 #define FCPU80 80000000L
@@ -158,30 +160,31 @@ void twi_setClockStretchLimit(uint32_t limit) {
     twi_clockStretchLimit = limit * TWI_CLOCK_STRETCH_MULTIPLIER;
 }
 
-void twi_init(unsigned char sda, unsigned char scl) {
+void twi_init(tos::esp82::gpio& gpio, gpio::pin_type sda, gpio::pin_type scl) {
     using namespace tos::esp82;
-    pin_sda = pin_t{sda};
-    pin_scl = pin_t{scl};
+    pin_sda = sda;
+    pin_scl = scl;
+    g = &gpio;
 
-    gpio::set_pin_mode(pin_sda, tos::pin_mode::in_pullup);
-    gpio::set_pin_mode(pin_scl, tos::pin_mode::in_pullup);
+    g->set_pin_mode(pin_sda, tos::pin_mode::in_pullup);
+    g->set_pin_mode(pin_scl, tos::pin_mode::in_pullup);
 
-    GPIO_REG_WRITE(GPIO_PIN_ADDR(GPIO_ID_PIN(sda)),
-                   GPIO_REG_READ(GPIO_PIN_ADDR(GPIO_ID_PIN(sda))) |
+    GPIO_REG_WRITE(GPIO_PIN_ADDR(GPIO_ID_PIN(sda.pin)),
+                   GPIO_REG_READ(GPIO_PIN_ADDR(GPIO_ID_PIN(sda.pin))) |
                        GPIO_PIN_PAD_DRIVER_SET(GPIO_PAD_DRIVER_ENABLE)); // open drain;
-    GPIO_REG_WRITE(GPIO_ENABLE_ADDRESS, GPIO_REG_READ(GPIO_ENABLE_ADDRESS) | (1 << sda));
-    GPIO_REG_WRITE(GPIO_PIN_ADDR(GPIO_ID_PIN(scl)),
-                   GPIO_REG_READ(GPIO_PIN_ADDR(GPIO_ID_PIN(scl))) |
+    GPIO_REG_WRITE(GPIO_ENABLE_ADDRESS, GPIO_REG_READ(GPIO_ENABLE_ADDRESS) | (1 << sda.pin));
+    GPIO_REG_WRITE(GPIO_PIN_ADDR(GPIO_ID_PIN(scl.pin)),
+                   GPIO_REG_READ(GPIO_PIN_ADDR(GPIO_ID_PIN(scl.pin))) |
                        GPIO_PIN_PAD_DRIVER_SET(GPIO_PAD_DRIVER_ENABLE)); // open drain;
-    GPIO_REG_WRITE(GPIO_ENABLE_ADDRESS, GPIO_REG_READ(GPIO_ENABLE_ADDRESS) | (1 << scl));
+    GPIO_REG_WRITE(GPIO_ENABLE_ADDRESS, GPIO_REG_READ(GPIO_ENABLE_ADDRESS) | (1 << scl.pin));
 
     twi_setClock(preferred_si2c_clock);
     twi_setClockStretchLimit(230); // default value is 230 uS
 }
 
 void twi_stop() {
-    gpio::set_pin_mode(pin_sda, tos::pin_mode::in);
-    gpio::set_pin_mode(pin_scl, tos::pin_mode::in);
+    g->set_pin_mode(pin_sda, tos::pin_mode::in);
+    g->set_pin_mode(pin_scl, tos::pin_mode::in);
 }
 
 unsigned char twi_writeTo(unsigned char address,

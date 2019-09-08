@@ -15,7 +15,7 @@ extern "C" {
 #define I2C_SDA_HELD_LOW 3
 #define I2C_SDA_HELD_LOW_AFTER_INIT 4
 
-void twi_init(unsigned char sda, unsigned char scl);
+void twi_init(tos::esp82::gpio& gpio, tos::esp82::pin_t sda, tos::esp82::pin_t scl);
 void twi_stop(void);
 void twi_setClock(unsigned int freq);
 void twi_setClockStretchLimit(uint32_t limit);
@@ -32,8 +32,8 @@ uint8_t twi_status();
 extern "C" int ets_printf(const char* format, ...) __attribute__((format(printf, 1, 2)));
 namespace tos {
 namespace esp82 {
-twim::twim(tos::esp82::pin_t clock_pin, tos::esp82::pin_t data_pin) {
-    twi_init(data_pin.pin, clock_pin.pin);
+twim::twim(gpio& gpio, tos::esp82::pin_t clock_pin, tos::esp82::pin_t data_pin) {
+    twi_init(gpio, data_pin, clock_pin);
     // twi_setClock(400000);
 }
 

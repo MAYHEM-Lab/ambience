@@ -18,7 +18,7 @@ namespace esp82 {
  */
 class twim : public self_pointing<twim> {
 public:
-    twim(pin_t clock_pin, pin_t data_pin);
+    twim(gpio& gpio, pin_t clock_pin, pin_t data_pin);
 
     twi_tx_res transmit(twi_addr_t to, span<const char> buf) noexcept;
     twi_rx_res receive(twi_addr_t from, span<char> buf) noexcept;
@@ -27,9 +27,10 @@ public:
 
 inline esp82::twim open_impl(devs::i2c_t<0>,
                       i2c_type::master_t,
+                      esp82::gpio& gpio,
                       esp82::gpio::pin_type scl,
                       esp82::gpio::pin_type sda) {
-    return esp82::twim{scl, sda};
+    return esp82::twim{gpio, scl, sda};
 }
 
 } // namespace tos
