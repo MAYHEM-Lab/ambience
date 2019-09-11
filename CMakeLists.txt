@@ -102,6 +102,7 @@ elseif(${TOS_CORE} MATCHES "esp")
     add_subdirectory(libs/sntp)
 
     add_subdirectory(examples/esp_adxl345)
+    add_subdirectory(examples/esp_ssd1306)
 elseif(${TOS_CORE} MATCHES "x86")
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/cspot_lite")
         add_subdirectory(apps/cspot_lite)
