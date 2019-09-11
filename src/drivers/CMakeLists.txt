@@ -108,6 +108,10 @@ add_library(tos_ble include/common/ble/address.hpp src/stub.cpp)
 target_link_libraries(tos_ble PUBLIC tos_core)
 tos_install(tos_ble ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(tos_ssd1306 include/common/ssd1306/constants.hpp include/common/ssd1306.hpp src/stub.cpp)
+target_link_libraries(tos_ssd1306 PUBLIC tos_core)
+tos_install(tos_ssd1306 ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 add_library(tos_inet
         include/common/inet/tcp_ip.hpp
         include/common/inet/tcp_stream.hpp

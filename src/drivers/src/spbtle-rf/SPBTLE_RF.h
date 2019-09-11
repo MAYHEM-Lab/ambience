@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <tos/mutex.hpp>
 #include <arch/drivers.hpp>
+#include <tos/expected.hpp>
 
 enum class spbtle_errors {
     unknown,

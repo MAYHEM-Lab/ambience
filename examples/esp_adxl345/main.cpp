@@ -22,7 +22,11 @@ tos::fixed_fifo<vec3i, 20> fifo;
 tos::stack_storage<1024> accel_stack;
 auto task = [] {
     using namespace tos::tos_literals;
-    auto i2c = tos::open(tos::devs::i2c<0>, tos::i2c_type::master, 5_pin, 4_pin);
+
+    auto gpio = tos::open(tos::devs::gpio);
+
+    auto i2c = tos::open(
+        tos::devs::i2c<0>, tos::i2c_type::master, gpio.port.pin5, gpio.port.pin4);
 
     tos::adxl345 sensor{i2c};
     sensor.powerOn();
