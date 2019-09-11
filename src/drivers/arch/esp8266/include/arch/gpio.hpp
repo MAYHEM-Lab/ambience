@@ -14,12 +14,17 @@ extern "C" {
 namespace tos {
 namespace esp82 {
 struct pin_t {
+    pin_t() = default;
+    template <size_t PinId>
+    pin_t(tos::gpio_pin<0, PinId>) : pin(PinId) {}
+
     uint8_t pin;
 };
-
 class gpio {
 public:
     using pin_type = pin_t;
+
+    static constexpr gpio_port<0, 17> port{};
 
     gpio();
 
@@ -105,9 +110,4 @@ inline void gpio::write(pin_t pin, bool val) {
     return write(pin, std::true_type{});
 }
 } // namespace esp82
-namespace tos_literals {
-inline esp82::pin_t operator""_pin(unsigned long long pin) {
-    return {static_cast<uint8_t>(pin)};
-}
-} // namespace tos_literals
 } // namespace tos

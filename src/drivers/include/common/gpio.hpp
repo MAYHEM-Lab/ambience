@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <common/detail/gpio_ports.hpp>
 #include <tos/devices.hpp>
 #include <stdint.h>
 
