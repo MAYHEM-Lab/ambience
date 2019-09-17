@@ -4,17 +4,17 @@
 
 #pragma once
 
-#include <tos/mutex.hpp>
-#include "hal.h"
-#include "stm32_bluenrg_ble.h"
 #include "SPBTLE_RF.h"
 #include "bluenrg_aci.h"
 #include "bluenrg_gap.h"
+#include "hal.h"
+#include "stm32_bluenrg_ble.h"
 
-#include <range/v3/view/zip.hpp>
 #include <common/spi.hpp>
+#include <tos/mutex.hpp>
 
-inline int spbtle_rf::spi_write(tos::span<const uint8_t> d1, tos::span<const uint8_t> d2) {
+inline int spbtle_rf::spi_write(tos::span<const uint8_t> d1,
+                                tos::span<const uint8_t> d2) {
     int32_t result = 0;
 
     tos::lock_guard lock(m_spi_prot);
@@ -22,6 +22,8 @@ inline int spbtle_rf::spi_write(tos::span<const uint8_t> d1, tos::span<const uin
 
     tos::pull_low_guard cs_guard{m_gpio, m_cs};
     unsigned char header_master[5] = {0x0a, 0x00, 0x00, 0x00, 0x00};
+
+    // | Ready | WBUF | 0 | RBUF | 0 |
     unsigned char header_slave[5] = {0xaa, 0x00, 0x00, 0x00, 0x00};
 
     /*for (auto& [s, h] :
@@ -30,19 +32,26 @@ inline int spbtle_rf::spi_write(tos::span<const uint8_t> d1, tos::span<const uin
         s = m_spi->exchange8(h);
     }*/
 
-    for (int i = 0; i < 5; ++i) {
-        auto res = tos::spi::exchange(m_spi, header_master[i]);
-        if (!res) return -3;
-        header_slave[i] = force_get(res);
+    auto header_res = m_spi->exchange(header_slave, header_master);
+    if (!header_res) {
+        return -3;
     }
 
     if (header_slave[0] == 0x02) {
         /* SPI is ready */
         if (header_slave[1] >= (d1.size() + d2.size())) {
-            auto r1 = m_spi->write(d1);
-            if (!r1) return -4;
-            r1 = m_spi->write(d2);
-            if (!r1) return -5;
+            if (!d1.empty()) {
+                auto r1 = m_spi->write(d1);
+                if (!r1) {
+                    result = -4;
+                }
+            }
+            if (!d2.empty()) {
+                auto r1 = m_spi->write(d2);
+                if (!r1) {
+                    result = -5;
+                }
+            }
         } else {
             /* Buffer is too small */
             result = -2;
@@ -65,10 +74,9 @@ inline int spbtle_rf::spi_read(tos::span<uint8_t> buf) {
     uint8_t header_master[5] = {0x0b, 0x00, 0x00, 0x00, 0x00};
     uint8_t header_slave[5];
 
-    for (int i = 0; i < 5; ++i) {
-        auto res = tos::spi::exchange(m_spi, header_master[i]);
-        if (!res) return -1;
-        header_slave[i] = force_get(res);
+    auto header_res = m_spi->exchange(header_slave, header_master);
+    if (!header_res) {
+        return -1;
     }
 
     uint16_t byte_count = 0;
@@ -82,7 +90,7 @@ inline int spbtle_rf::spi_read(tos::span<uint8_t> buf) {
             for (uint16_t len = 0; len < byte_count; len++) {
                 auto res = tos::spi::exchange(m_spi, 0xff);
                 if (!res) {
-
+                    return -2;
                 }
                 buf[len] = force_get(res);
             }
@@ -99,8 +107,8 @@ inline int spbtle_rf::spi_read(tos::span<uint8_t> buf) {
 inline void spbtle_rf::bootloader() {
     Disable_SPI_IRQ();
 
-    m_gpio.set_pin_mode(m_irq_pin, tos::pin_mode::out);
-    m_gpio.write(m_irq_pin, tos::digital::high);
+    m_gpio->set_pin_mode(m_irq_pin, tos::pin_mode::out);
+    m_gpio->write(m_irq_pin, tos::digital::high);
 
     BlueNRG_RST();
     Enable_SPI_IRQ();
@@ -109,8 +117,7 @@ inline void spbtle_rf::bootloader() {
 inline tos::expected<tos::spbtle::fw_id, spbtle_errors> spbtle_rf::get_fw_id() const {
     tos::spbtle::fw_id build_number{};
     auto res = aci_hal_get_fw_build_number(&build_number.build_number);
-    if (res)
-    {
+    if (res) {
         return tos::unexpected(static_cast<spbtle_errors>(res));
     }
     return build_number;
@@ -118,11 +125,7 @@ inline tos::expected<tos::spbtle::fw_id, spbtle_errors> spbtle_rf::get_fw_id() c
 
 inline void tos::spbtle::gap::set_device_name(std::string_view name) {
     auto ret = aci_gatt_update_char_value(
-            service_handle,
-            dev_name_char_handle,
-            0,
-            name.size(),
-            (uint8_t *) name.data());
+        service_handle, dev_name_char_handle, 0, name.size(), (uint8_t*)name.data());
     if (ret) {
         tos::kern::fatal("Can't set name");
     }
@@ -130,13 +133,12 @@ inline void tos::spbtle::gap::set_device_name(std::string_view name) {
 }
 
 inline tos::spbtle::gap::gap(tos::spbtle::gatt&, std::string_view name) {
-    auto ret = aci_gap_init_IDB05A1(
-            1,
-            false,
-            name.size(),
-            &service_handle,
-            &dev_name_char_handle,
-            &appearance_char_handle);
+    auto ret = aci_gap_init_IDB05A1(GAP_PERIPHERAL_ROLE_IDB05A1,
+                                    false,
+                                    name.size(),
+                                    &service_handle,
+                                    &dev_name_char_handle,
+                                    &appearance_char_handle);
     if (ret) {
         tos::kern::fatal("Can't init gap");
     }
@@ -146,40 +148,35 @@ inline tos::spbtle::gap::gap(tos::spbtle::gatt&, std::string_view name) {
 inline tos::spbtle::gap::~gap() {
 }
 
-inline tos::spbtle::gap spbtle_rf::initialize_gap(tos::spbtle::gatt& g, std::string_view name) {
+inline tos::spbtle::gap spbtle_rf::initialize_gap(tos::spbtle::gatt& g,
+                                                  std::string_view name) {
     return tos::spbtle::gap(g, name);
 }
 
-inline tos::expected<tos::spbtle::gatt, spbtle_errors>
-spbtle_rf::initialize_gatt() {
+inline tos::expected<tos::spbtle::gatt, spbtle_errors> spbtle_rf::initialize_gatt() {
     auto res = aci_gatt_init();
-    if (res)
-    {
+    if (res) {
         return tos::unexpected(spbtle_errors::unknown);
     }
     return tos::spbtle::gatt{};
 }
 
 
-inline tos::spbtle::advertising::advertising(
-        std::chrono::milliseconds interval, std::string_view local_name) {
-    constexpr auto CONN_INTERVAL_MIN_MS = 40;
-    constexpr auto CONN_INTERVAL_MAX_MS = 150;
-    uint8_t serviceUUIDList[] = {AD_TYPE_16_BIT_SERV_UUID, 0x34, 0x12};
+inline tos::spbtle::advertising::advertising(std::chrono::milliseconds interval,
+                                             std::string_view local_name) {
+    auto name = char(AD_TYPE_COMPLETE_LOCAL_NAME) + std::string(local_name);
     auto ret = aci_gap_set_discoverable(ADV_IND,
                                         (interval.count() * 1000) / 625,
                                         (interval.count() * 1000) / 625,
                                         STATIC_RANDOM_ADDR,
                                         NO_WHITE_LIST_USE,
-                                        local_name.size(),
-                                        local_name.data(),
-                                        3,
-                                        serviceUUIDList,
-                                        (CONN_INTERVAL_MIN_MS * 1000) / 1250,
-                                        (CONN_INTERVAL_MAX_MS * 1000) / 1250);
-    if (ret != BLE_STATUS_SUCCESS)
-    {
+                                        name.size(),
+                                        name.data(),
+                                        0,
+                                        nullptr,
+                                        0,
+                                        0);
+    if (ret != BLE_STATUS_SUCCESS) {
         tos::kern::fatal("Can't set discoverable");
     }
 }
-

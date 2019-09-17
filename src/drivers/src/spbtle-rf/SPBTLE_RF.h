@@ -64,7 +64,6 @@ namespace tos::stm32 {
 extern bool isr_enabled;
 
 class spbtle_rf : public tos::tracked_driver<spbtle_rf, 1> {
-    // needs timer + spi
 public:
     using SpiT = tos::stm32::spi *;
     using GpioT = tos::stm32::gpio;
@@ -86,7 +85,7 @@ public:
     initialize_gap(tos::spbtle::gatt &, std::string_view name);
 
     bool data_present() const {
-        return m_gpio.read(m_irq_pin);
+        return m_gpio->read(m_irq_pin);
     }
 
     tos::expected<tos::spbtle::fw_id, spbtle_errors>
@@ -94,10 +93,10 @@ public:
 
     void reset() {
         using namespace std::chrono_literals;
-        m_gpio.write(m_reset, tos::digital::low);
-        alarm_ptr->sleep_for(5ms);
-        m_gpio.write(m_reset, tos::digital::high);
-        alarm_ptr->sleep_for(5ms);
+        m_gpio->write(m_reset, tos::digital::low);
+        m_alarm_ptr->sleep_for(5ms);
+        m_gpio->write(m_reset, tos::digital::high);
+        m_alarm_ptr->sleep_for(5ms);
     }
 
     int spi_write(tos::span<const uint8_t> d1,
@@ -109,7 +108,7 @@ public:
 
     ~spbtle_rf() {
         m_exti->detach(m_irq_pin);
-        m_gpio.write(m_reset, tos::digital::low);
+        m_gpio->write(m_reset, tos::digital::low);
         isr_enabled = false;
     }
 
@@ -117,7 +116,7 @@ private:
 
     tos::expected<void, spbtle_errors> begin();
 
-    tos::any_alarm *alarm_ptr;
+    tos::any_alarm *m_alarm_ptr;
     GpioT m_gpio;
     SpiT m_spi;
     ExtiT m_exti;
