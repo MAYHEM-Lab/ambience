@@ -2,7 +2,8 @@
 #include <tos/ft.hpp>
 #include <tos/scheduler.hpp>
 
-extern "C" void _init() {}
+extern "C" void _init() {
+}
 
 extern void tos_main();
 
@@ -11,9 +12,11 @@ extern "C" void SysTick_Handler() {
     HAL_SYSTICK_IRQHandler();
 }
 
-void Error_Handler() { __BKPT(0); }
+void Error_Handler() {
+    __BKPT(0);
+}
 
-#if true || defined(STM32F7)
+#if defined(STM32F7)
 void SystemClock_Config() {
     RCC_OscInitTypeDef RCC_OscInitStruct;
     RCC_ClkInitTypeDef RCC_ClkInitStruct;
@@ -49,14 +52,69 @@ void SystemClock_Config() {
         Error_Handler();
     }
 }
+#elif defined(STM32L0)
+void SystemClock_Config()
+{
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+
+    /** Configure the main internal regulator output voltage
+    */
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+    /** Initializes the CPU, AHB and APB busses clocks
+    */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /** Initializes the CPU, AHB and APB busses clocks
+    */
+    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                                  |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1;
+    PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
+#else
+void SystemClock_Config() {}
 #endif
+
+static bool tried_bkpt = false;
+extern "C" void HardFault_Handler() {
+    if (!tried_bkpt) {
+        tried_bkpt = true;
+        __BKPT(0);
+    } else {
+        tos_force_reset();
+        while (true) {
+        }
+    }
+}
 
 int main() {
     HAL_Init();
-    //SystemClock_Config();
+    SystemClock_Config();
 
     // Interrupts are already enabled:
-    // tos::kern::enable_interrupts();
+    tos::kern::enable_interrupts();
+    //tos::kern::detail::disable_depth--;
 
     tos_main();
 

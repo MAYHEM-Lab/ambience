@@ -20,12 +20,15 @@ add_library(stm32_hal_core
         external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_uart_ex.c
         external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_usart.c
         external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_dma.c
-        core.cpp include/stm32_hal/hal.hpp include/stm32_hal/gpio.hpp include/stm32_hal/rcc.hpp include/stm32_hal/rcc_ex.hpp include/stm32_hal/usart.hpp include/stm32_hal/tim.hpp)
+        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_spi.c
+        #external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_spi_ex.c
+        external/${HAL_NAME}/drivers/src/${HAL_NAME}_ll_exti.c
+        core.cpp include/stm32_hal/hal.hpp include/stm32_hal/gpio.hpp include/stm32_hal/rcc.hpp include/stm32_hal/rcc_ex.hpp include/stm32_hal/usart.hpp include/stm32_hal/tim.hpp include/stm32_hal/spi.hpp include/stm32_hal/ll_exti.hpp)
 
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/CMSIS/Include")
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/${HAL_NAME}/soc")
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/${HAL_NAME}/drivers/include")
-target_compile_definitions(stm32_hal_core PUBLIC ${CPU_NAME} STM32_HAL_NAME=${HAL_NAME})
+target_compile_definitions(stm32_hal_core PUBLIC ${CPU_NAME} STM32_HAL_NAME=${HAL_NAME} USE_FULL_LL_DRIVER)
 
 target_link_libraries(stm32_hal_core PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}/ld")
 target_link_libraries(stm32_hal_core PUBLIC "-T${TOS_LD_FILE}")
