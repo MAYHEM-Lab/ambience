@@ -123,9 +123,7 @@ int main() {
         if (res == tos::exit_reason::restart) {
             tos_force_reset();
         }
-        if (res == tos::exit_reason::power_down)
-            __WFI();
-        if (res == tos::exit_reason::idle)
-            __WFI();
+        if (res == tos::exit_reason::power_down);
+        if (res == tos::exit_reason::idle);
     }
 }
