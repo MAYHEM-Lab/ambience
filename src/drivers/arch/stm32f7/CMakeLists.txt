@@ -10,6 +10,10 @@ add_library(stm32_usart include/arch/usart.hpp src/usart.cpp)
 target_link_libraries(stm32_usart PUBLIC tos_usart tos::core)
 tos_install(stm32_usart ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(stm32_spi include/arch/spi.hpp src/spi.cpp)
+target_link_libraries(stm32_spi PUBLIC tos::core)
+tos_install(stm32_spi ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 add_library(stm32_exti include/arch/exti.hpp src/exti.cpp)
 target_link_libraries(stm32_exti PUBLIC tos::core etl)
 tos_install(stm32_exti ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -19,9 +23,10 @@ target_link_libraries(stm32_drivers PUBLIC
         stm32_gpio
         stm32_timer
         stm32_usart
+        stm32_spi
         stm32_exti
         )
-target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> -Wl,--no-whole-archive")
+target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> $<TARGET_FILE:stm32_spi> $<TARGET_FILE:stm32_exti> -Wl,--no-whole-archive")
 tos_install(stm32_drivers)
 
 set_target_properties(stm32_drivers PROPERTIES
