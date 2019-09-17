@@ -8,3 +8,5 @@ apps/*
 workspace/
 .vs/
 CMakeSettings.json
+.clangd
+compile_commands.json

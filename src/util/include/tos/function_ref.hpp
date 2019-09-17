@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <tos/debug.hpp>
 #include <tos/utility.hpp>
 
 namespace tos
@@ -38,7 +39,12 @@ namespace tos
         function_ref(const function_ref& rhs) = default;
 
         function_ref(internal_funptr_t ptr, void* data)
-                : m_fun(ptr), m_data(data) {}
+                : m_fun(ptr), m_data(data) {
+            if (m_fun == nullptr)
+            {
+                debug::panic("Function cannot be null!");
+            }
+        }
 
         explicit function_ref(internal_funptr_t ptr) : function_ref(ptr, nullptr) {}
 

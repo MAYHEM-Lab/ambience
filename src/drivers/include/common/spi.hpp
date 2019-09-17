@@ -29,15 +29,16 @@ namespace tos
     template <class SpiT>
     auto exchange(SpiT& spi, uint8_t val)
     {
-        using SpiRetT = decltype(spi->exchange(tos::monospan(val)));
+        uint8_t rx{0xFF};
+        using SpiRetT = decltype(spi->exchange(tos::monospan(rx), tos::monospan(val)));
         using ErrT = typename SpiRetT::error_type;
         using RetT = expected<uint8_t, ErrT>;
-        auto res = spi->exchange(tos::monospan(val));
+        auto res = spi->exchange(tos::monospan(rx), tos::monospan(val));
         if (!res)
         {
             return RetT(unexpected(force_error(res)));
         }
-        return RetT(val);
+        return RetT(rx);
     }
     }
 
