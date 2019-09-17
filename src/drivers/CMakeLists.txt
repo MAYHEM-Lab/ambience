@@ -15,7 +15,7 @@ add_library(tos_usart include/common/usart.hpp src/stub.cpp)
 target_link_libraries(tos_usart PUBLIC tos::core)
 tos_install(tos_usart ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(tos_gpio include/common/gpio.hpp src/stub.cpp)
+add_library(tos_gpio include/common/gpio.hpp src/stub.cpp include/common/detail/gpio_ports.hpp)
 tos_install(tos_gpio ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(tos_dht22 include/common/dht22.hpp src/dht22.cpp)
