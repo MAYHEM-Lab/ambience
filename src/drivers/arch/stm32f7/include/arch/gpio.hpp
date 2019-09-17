@@ -15,10 +15,24 @@ struct pin_t {
     uint16_t pin;
 };
 
-inline std::array<GPIO_TypeDef*, 9> ports = {
-    GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH,
+inline std::array<GPIO_TypeDef*, 9> ports = {GPIOA,
+                                             GPIOB,
+                                             GPIOC,
+                                             GPIOD,
+#ifdef GPIOE
+                                             GPIOE,
+#endif
+#ifdef GPIOF
+                                             GPIOF,
+#endif
+#ifdef GPIOG
+                                             GPIOG,
+#endif
+#ifdef GPIOH
+                                             GPIOH,
+#endif
 #ifdef GPIOI
-    GPIOI
+                                             GPIOI
 #endif
 };
 
@@ -33,14 +47,22 @@ inline void enable_rcc(const GPIO_TypeDef* gpio) {
         __HAL_RCC_GPIOD_CLK_ENABLE();
     } else if (gpio == GPIOD) {
         __HAL_RCC_GPIOD_CLK_ENABLE();
+#ifdef GPIOE
     } else if (gpio == GPIOE) {
         __HAL_RCC_GPIOE_CLK_ENABLE();
+#endif
+#ifdef GPIOF
     } else if (gpio == GPIOF) {
         __HAL_RCC_GPIOF_CLK_ENABLE();
+#endif
+#ifdef GPIOG
     } else if (gpio == GPIOG) {
         __HAL_RCC_GPIOG_CLK_ENABLE();
+#endif
+#ifdef GPIOH
     } else if (gpio == GPIOH) {
         __HAL_RCC_GPIOH_CLK_ENABLE();
+#endif
 #ifdef GPIOI
     } else if (gpio == GPIOI) {
         __HAL_RCC_GPIOI_CLK_ENABLE();
@@ -128,7 +150,9 @@ public:
         HAL_GPIO_WritePin(pin.port, pin.pin, GPIO_PIN_RESET);
     }
 
-    bool read(const pin_type& pin) { return HAL_GPIO_ReadPin(pin.port, pin.pin); }
+    bool read(const pin_type& pin) const {
+        return HAL_GPIO_ReadPin(pin.port, pin.pin);
+    }
 
 private:
 };
@@ -143,5 +167,7 @@ inline stm32::pin_t operator""_pin(unsigned long long pin) {
 }
 } // namespace tos_literals
 
-inline stm32::gpio open_impl(tos::devs::gpio_t) { return {}; }
+inline stm32::gpio open_impl(tos::devs::gpio_t) {
+    return {};
+}
 } // namespace tos

@@ -28,9 +28,13 @@ struct gen_tim_def {
     void (*rcc_en)();
 };
 
-inline const detail::gen_tim_def gen_timers[] = {
+inline const gen_tim_def gen_timers[] = {
     {TIM2, TIM2_IRQn, [] { __HAL_RCC_TIM2_CLK_ENABLE(); }},
-    {TIM3, TIM3_IRQn, [] { __HAL_RCC_TIM3_CLK_ENABLE(); }}};
+#ifdef TIM3
+    {TIM3, TIM3_IRQn, [] { __HAL_RCC_TIM3_CLK_ENABLE(); }}
+#endif
+};
+
 } // namespace detail
 
 /**
@@ -42,7 +46,7 @@ inline const detail::gen_tim_def gen_timers[] = {
  */
 class general_timer
     : public self_pointing<general_timer>
-    , public tracked_driver<general_timer, 3> {
+    , public tracked_driver<general_timer, std::size(detail::gen_timers)> {
 public:
     explicit general_timer(const detail::gen_tim_def& def);
 
@@ -90,7 +94,12 @@ inline general_timer::general_timer(const detail::gen_tim_def& def)
     m_handle.Init.CounterMode = TIM_COUNTERMODE_UP;
     m_handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     m_handle.Init.Period = 0xFFFF; // 65535
+#if defined(STM32L4)
     m_handle.Init.RepetitionCounter = 0;
+#endif
+#if defined(STM32L0)
+    m_handle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+#endif
 
     HAL_NVIC_SetPriority(m_def->irq, 0, 0);
 }

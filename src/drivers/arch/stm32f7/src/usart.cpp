@@ -30,9 +30,11 @@ extern "C" void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
     case USART2_BASE:
         ins = usart::get(1);
         break;
+#ifdef USART3
     case USART3_BASE:
         ins = usart::get(2);
         break;
+#endif
     }
     ins->tx_done_isr();
 }
@@ -46,9 +48,11 @@ extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
     case USART2_BASE:
         ins = usart::get(1);
         break;
+#ifdef USART3
     case USART3_BASE:
         ins = usart::get(2);
         break;
+#endif
     }
     ins->rx_done_isr();
 }

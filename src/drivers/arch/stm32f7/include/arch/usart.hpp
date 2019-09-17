@@ -25,7 +25,9 @@ struct usart_def {
 inline const usart_def usarts[] = {
     {USART1, USART1_IRQn, [] { __USART1_CLK_ENABLE(); }, [] { __USART1_CLK_DISABLE(); }},
     {USART2, USART2_IRQn, [] { __USART2_CLK_ENABLE(); }, [] { __USART2_CLK_DISABLE(); }},
+#if defined(USART3)
     {USART3, USART3_IRQn, [] { __USART3_CLK_ENABLE(); }, [] { __USART3_CLK_DISABLE(); }},
+#endif
 };
 } // namespace detail
 
@@ -130,7 +132,7 @@ inline usart::usart(const detail::usart_def& x,
         init.Mode = GPIO_MODE_AF_OD;
         init.Pull = GPIO_NOPULL;
         init.Speed = GPIO_SPEED_HIGH;
-        init.Alternate = GPIO_AF7_USART1;
+        init.Alternate = GPIO_AF4_USART1;
         HAL_GPIO_Init(rx_pin.port, &init);
     }
 
@@ -141,7 +143,7 @@ inline usart::usart(const detail::usart_def& x,
         init.Mode = GPIO_MODE_AF_PP;
         init.Pull = GPIO_NOPULL;
         init.Speed = GPIO_SPEED_HIGH;
-        init.Alternate = GPIO_AF7_USART1;
+        init.Alternate = GPIO_AF4_USART1;
         HAL_GPIO_Init(tx_pin.port, &init);
     }
 
@@ -200,7 +202,11 @@ inline tos::span<char> usart::read(tos::span<char> b) {
 inline int usart::write(tos::span<const uint8_t> buf) {
     if (buf.empty())
         return 0;
-    HAL_UART_Transmit_IT(&m_handle, const_cast<uint8_t*>(buf.data()), buf.size());
+    auto res = HAL_UART_Transmit_IT(&m_handle, const_cast<uint8_t*>(buf.data()), buf.size());
+    if (res != HAL_OK)
+    {
+        return -1;
+    }
     tx_s.down();
     return buf.size();
 }

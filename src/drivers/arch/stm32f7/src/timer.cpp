@@ -12,7 +12,7 @@ extern "C" void TIM2_IRQHandler()
     HAL_TIM_IRQHandler(timer->native_handle());
 }
 
-extern "C" void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+extern "C" void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *) {
     auto timer = general_timer::get(0);
     timer->run_callback();
 }
