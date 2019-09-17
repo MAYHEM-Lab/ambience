@@ -25,6 +25,7 @@ extern "C"
 {
 void NORETURN tos_force_reset()
 {
+    asm("bkpt");
     NVIC_SystemReset();
 }
 
