@@ -3,7 +3,7 @@
 #include <tos/scheduler.hpp>
 
 extern "C" {
-    int __dso_handle;
+int __dso_handle;
 }
 extern "C" void _init() {
 }
@@ -125,7 +125,7 @@ int main() {
 
     // Interrupts are already enabled:
     tos::kern::enable_interrupts();
-    //tos::kern::detail::disable_depth--;
+    // tos::kern::detail::disable_depth--;
 
     tos_main();
 
@@ -134,9 +134,11 @@ int main() {
         if (res == tos::exit_reason::restart) {
             tos_force_reset();
         }
-        if (res == tos::exit_reason::power_down)
+        if (res == tos::exit_reason::power_down) {
             __WFI();
-        if (res == tos::exit_reason::idle)
+        }
+        if (res == tos::exit_reason::idle) {
             __WFI();
+        }
     }
 }
