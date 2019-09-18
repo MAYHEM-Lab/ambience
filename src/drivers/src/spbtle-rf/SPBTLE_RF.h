@@ -124,4 +124,6 @@ private:
     tos::mutex m_spi_prot;
 };
 
+extern void attach_HCI_CB(tos::function_ref<void(void*)> callback);
+
 #include "spbtle_rf.inl"
