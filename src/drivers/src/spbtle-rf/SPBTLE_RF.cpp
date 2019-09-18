@@ -43,7 +43,7 @@ spbtle_rf::spbtle_rf(
     begin();
 }
 
-static tos::stack_storage<2048> sstorage;
+static tos::stack_storage<512> sstorage;
 
 tos::expected<void, spbtle_errors> spbtle_rf::begin() {
     namespace digital = tos::digital;
