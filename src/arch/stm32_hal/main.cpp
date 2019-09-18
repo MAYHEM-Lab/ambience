@@ -2,6 +2,9 @@
 #include <tos/ft.hpp>
 #include <tos/scheduler.hpp>
 
+extern "C" {
+    int __dso_handle;
+}
 extern "C" void _init() {
 }
 
