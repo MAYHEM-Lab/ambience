@@ -65,9 +65,13 @@ template<class DriverT, int DriverNum = 1>
 struct tracked_driver {
 public:
     explicit tracked_driver(int num) {
+        if (num >= DriverNum)
+        {
+            tos::debug::panic("Non-existent driver!");
+        }
         m_which = &instances[num];
         if (*m_which) {
-            tos::kern::fatal("driver already exists!");
+            tos::debug::panic("Driver already exists!");
         }
         assign();
     }
