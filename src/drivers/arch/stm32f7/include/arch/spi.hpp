@@ -13,10 +13,7 @@
 #include <tos/expected.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/span.hpp>
-#include <common/usart.hpp>
-#include <tos/print.hpp>
 
-extern tos::any_usart* global_log;
 namespace tos {
 namespace stm32 {
 namespace detail {
@@ -42,12 +39,17 @@ enum class spi_errors
 
 class spi
     : public tracked_driver<spi, std::size(detail::spis)>
-    , public self_pointing<spi> {
+    , public self_pointing<spi>
+    , public non_copy_movable {
 public:
+    using gpio_type = gpio;
+
     spi(detail::spi_def& spi,
         gpio::pin_type sck,
         std::optional<gpio::pin_type> miso,
         std::optional<gpio::pin_type> mosi);
+
+    ~spi();
 
     expected<void, spi_errors> write(tos::span<const char> data);
     expected<void, spi_errors> write(tos::span<const uint8_t> data);
@@ -135,6 +137,10 @@ inline spi::spi(detail::spi_def& spi,
     HAL_NVIC_EnableIRQ(spi.irq);
 }
 
+inline spi::~spi() {
+    HAL_SPI_DeInit(&m_handle);
+}
+
 inline expected<void, spi_errors> spi::write(tos::span<const char> data) {
     auto hal_ptr = reinterpret_cast<uint8_t*>(const_cast<char*>(data.data()));
     auto res = HAL_SPI_Transmit_IT(&m_handle, hal_ptr, data.size());
@@ -142,14 +148,8 @@ inline expected<void, spi_errors> spi::write(tos::span<const char> data) {
         return unexpected(spi_errors{});
     }
     m_busy_sem.down();
-    while ((m_handle.Instance->SR & SPI_FLAG_BSY) == SPI_FLAG_BSY);
-
-    /*tos::println(global_log, "sent");
-    for (auto c : data)
-    {
-        tos::print(global_log, int(c), ',');
-    }
-    tos::println(global_log);*/
+    while ((m_handle.Instance->SR & SPI_FLAG_BSY) == SPI_FLAG_BSY)
+        ;
     return {};
 }
 
@@ -161,26 +161,15 @@ inline expected<void, spi_errors> spi::exchange(tos::span<char> rx,
                                                 tos::span<const char> tx) {
     auto rx_hal_ptr = reinterpret_cast<uint8_t*>(rx.data());
     auto tx_hal_ptr = reinterpret_cast<uint8_t*>(const_cast<char*>(tx.data()));
-    //HAL_SPIEx_FlushRxFifo(&m_handle);
+    // HAL_SPIEx_FlushRxFifo(&m_handle);
 
     auto res = HAL_SPI_TransmitReceive_IT(&m_handle, tx_hal_ptr, rx_hal_ptr, rx.size());
     if (res != HAL_OK) {
         return unexpected(spi_errors{});
     }
     m_busy_sem.down();
-    while ((m_handle.Instance->SR & SPI_FLAG_BSY) == SPI_FLAG_BSY);
-    /*tos::println(global_log, "sent");
-    for (auto c : tx)
-    {
-        tos::print(global_log, int(c), ',');
-    }
-    tos::println(global_log);
-    tos::println(global_log, "received");
-    for (auto c : rx)
-    {
-        tos::print(global_log, int(c), ',');
-    }
-    tos::println(global_log);*/
+    while ((m_handle.Instance->SR & SPI_FLAG_BSY) == SPI_FLAG_BSY)
+        ;
     return {};
 }
 
