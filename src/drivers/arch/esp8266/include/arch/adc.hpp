@@ -12,7 +12,9 @@ namespace tos {
 namespace esp82 {
 class adc {
 public:
-    uint16_t ICACHE_FLASH_ATTR read() const { return system_adc_read(); }
+    uint16_t ICACHE_FLASH_ATTR read() const {
+        return system_adc_read();
+    }
 };
 } // namespace esp82
 } // namespace tos

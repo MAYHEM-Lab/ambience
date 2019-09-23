@@ -4,9 +4,12 @@
 
 #pragma once
 
+#include "dimensions.hpp"
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <tos/span.hpp>
 
 namespace tos::gfx {
@@ -35,6 +38,9 @@ private:
 
 class dynamic_canvas_storage {
 public:
+    dynamic_canvas_storage(const dimensions& dims)
+        : dynamic_canvas_storage(dims.width, dims.height) {
+    }
     dynamic_canvas_storage(uint16_t width, uint16_t height)
         : m_w{width}
         , m_h{height}
@@ -92,8 +98,8 @@ public:
 
     constexpr void fill(bool val) {
         uint8_t v = val ? 0xFF : 0;
-        for (auto& x : buffer()) {
-            x = v;
+        for (auto& word : buffer()) {
+            word = v;
         }
     }
 
@@ -103,6 +109,10 @@ public:
 
     using StorageT::height;
     using StorageT::width;
+
+    constexpr dimensions dims() {
+        return {width(), height()};
+    }
 
     constexpr bool get_pixel(size_t x, size_t y) const {
         auto word_off = (width() * y + x) % 8;
@@ -121,49 +131,4 @@ template<size_t W, size_t H>
 using fixed_canvas = basic_canvas<static_canvas_storage<W, H>>;
 
 using dynamic_canvas = basic_canvas<dynamic_canvas_storage>;
-
-template<class InCanvasT, class OutCanvasT>
-constexpr void copy(const InCanvasT& src, OutCanvasT& out, size_t x, size_t y) {
-    for (size_t i = 0; i < src.height(); ++i) {
-        for (size_t j = 0; j < src.width(); ++j) {
-            out.set_pixel(x + j, y + i, src.get_pixel(j, i));
-        }
-    }
-}
-
-template<class InCanvasT, class OutCanvasT>
-constexpr auto copy(const InCanvasT& src, OutCanvasT& out) {
-    const auto x_scale = float(src.width()) / out.width();
-    const auto y_scale = float(src.height()) / out.height();
-
-    for (int i = 0; i < out.height(); ++i) {
-        for (int j = 0; j < out.width(); ++j) {
-            out.set_pixel(j, i, src.get_pixel(j * x_scale, i * y_scale));
-        }
-    }
-}
-
-template<size_t ToW, size_t ToH, class FromCanvas>
-constexpr auto upscale(const FromCanvas& src) -> fixed_canvas<ToW, ToH> {
-    fixed_canvas<ToW, ToH> res{};
-    copy(src, res);
-    return res;
-}
-
-template<class CanvasT, class FontT>
-constexpr void
-draw_text(CanvasT& framebuf, const FontT& font, tos::span<const char> str, int x, int y) {
-    for (char c : str) {
-        if (c == 0)
-            return;
-        auto ch = font.get(c);
-        if (!ch) {
-            ch = font.get('?');
-        }
-        auto scaled = *ch;
-        using tos::gfx::copy;
-        copy(scaled, framebuf, x, y);
-        y += scaled.height();
-    }
-}
 } // namespace tos::gfx
