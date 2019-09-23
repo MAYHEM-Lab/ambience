@@ -81,6 +81,16 @@ void SystemClock_Config() {
     if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
         Error_Handler();
     }
+
+    RCC_OscInitTypeDef RCC_OscInitLSI;
+
+    RCC_OscInitLSI.OscillatorType = RCC_OSCILLATORTYPE_LSI;
+    RCC_OscInitLSI.LSIState = RCC_LSI_ON;
+
+    if(HAL_RCC_OscConfig(&RCC_OscInitLSI) != HAL_OK){
+        Error_Handler();
+    }
+
     /** Initializes the CPU, AHB and APB busses clocks
      */
     RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK |
@@ -93,8 +103,9 @@ void SystemClock_Config() {
     if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK) {
         Error_Handler();
     }
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1;
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1 | RCC_PERIPHCLK_RTC;
     PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
+    PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
         Error_Handler();
     }
