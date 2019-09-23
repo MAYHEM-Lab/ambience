@@ -2,6 +2,8 @@
 // Created by fatih on 5/21/19.
 //
 
+#pragma once
+
 #include <tos/print.hpp>
 
 namespace tos
