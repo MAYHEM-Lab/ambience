@@ -4,6 +4,7 @@
 #include <tos/mutex.hpp>
 #include <arch/drivers.hpp>
 #include <tos/expected.hpp>
+#include <common/ble/address.hpp>
 
 enum class spbtle_errors {
     unknown,
