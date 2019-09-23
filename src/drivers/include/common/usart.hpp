@@ -81,4 +81,46 @@ using usart_t = dev<struct _usart_t, N>;
 template<int N>
 static constexpr usart_t<N> usart{};
 } // namespace devs
+
+struct any_usart : public self_pointing<any_usart> {
+    virtual int write(tos::span<const char>) = 0;
+    virtual tos::span<char> read(tos::span<char>) = 0;
+    virtual ~any_usart() = default;
+};
+
+namespace detail {
+template<class BaseUsartT>
+class erased_usart : public any_usart {
+public:
+    erased_usart(const BaseUsartT& usart)
+        : m_impl{usart} {
+    }
+
+    erased_usart(BaseUsartT&& usart)
+        : m_impl{std::move(usart)} {
+    }
+
+    int write(tos::span<const char> span) override {
+        return m_impl->write(span);
+    }
+
+    span<char> read(tos::span<char> span) override {
+        return m_impl->read(span);
+    }
+
+private:
+    BaseUsartT m_impl;
+};
+
+class null_usart : public any_usart {
+public:
+    int write(tos::span<const char>) override { return 0; }
+    span<char> read(tos::span<char>) override { return tos::span<char>(nullptr); }
+};
+} // namespace detail
+
+template<class UsartT>
+auto erase_usart(UsartT&& usart) -> detail::erased_usart<UsartT> {
+    return {std::forward<UsartT>(usart)};
+}
 } // namespace tos

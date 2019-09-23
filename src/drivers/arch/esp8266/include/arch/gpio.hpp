@@ -28,24 +28,24 @@ public:
 
     gpio();
 
-    static void set_pin_mode(pin_t, pin_mode::input_t);
-    static void set_pin_mode(pin_t, pin_mode::output_t);
-    static void set_pin_mode(pin_t, pin_mode::in_pullup_t);
-    static void set_pin_mode(pin_t, pin_mode::in_pulldown_t) = delete;
+    void set_pin_mode(pin_t, pin_mode::input_t);
+    void set_pin_mode(pin_t, pin_mode::output_t);
+    void set_pin_mode(pin_t, pin_mode::in_pullup_t);
+    void set_pin_mode(pin_t, pin_mode::in_pulldown_t) = delete;
 
-    static bool read(const pin_t& pin);
+    bool read(const pin_t& pin);
 
     /**
      * Sets the given output pin to digital high
      */
-    static void write(pin_t pin, digital::high_t);
+    void write(pin_t pin, digital::high_t);
 
     /**
      * Sets the given output pin to digital low
      */
-    static void write(pin_t pin, digital::low_t);
+    void write(pin_t pin, digital::low_t);
 
-    static void write(pin_t pin, bool val);
+    void write(pin_t pin, bool val);
 };
 } // namespace esp82
 

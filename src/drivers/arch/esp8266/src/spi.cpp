@@ -16,7 +16,7 @@ spi::spi(spi::gpio_type&) { spi_init(HSPI); }
 
 void spi::exchange_many(tos::span<uint8_t> buffer) {
     for (auto& c : buffer) {
-        c = spi_tx8(HSPI, c);
+        c = ::spi_tx8(HSPI, c);
     }
     // spi_transaction(HSPI, 0, 0, 0, 0, bits, (uint32_t) buffer.data(), 0, 0);
 }

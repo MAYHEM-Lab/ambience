@@ -45,9 +45,31 @@ class spi
 public:
     using gpio_type = stm32::gpio;
 
-    explicit spi(const detail::spi_def& def)
+    explicit spi(const detail::spi_def& def,
+                 gpio::pin_type sck,
+                 std::optional<gpio::pin_type> miso,
+                 std::optional<gpio::pin_type> mosi)
         : tracked_driver{std::distance(&detail::spis[0], &def)}
         , m_def{&def} {
+
+        rcc_periph_clock_enable(sck.port->rcc);
+        gpio_mode_setup(sck.port->which, GPIO_MODE_AF, GPIO_PUPD_NONE, sck.pin);
+        gpio_set_af(sck.port->which, GPIO_AF6, sck.pin);
+
+        if (miso)
+        {
+            rcc_periph_clock_enable(miso->port->rcc);
+            gpio_mode_setup(miso->port->which, GPIO_MODE_AF, GPIO_PUPD_NONE, miso->pin);
+            gpio_set_af(miso->port->which, GPIO_AF6, miso->pin);
+        }
+
+        if (mosi)
+        {
+            rcc_periph_clock_enable(mosi->port->rcc);
+            gpio_mode_setup(mosi->port->which, GPIO_MODE_AF, GPIO_PUPD_NONE, mosi->pin);
+            gpio_set_af(mosi->port->which, GPIO_AF6, mosi->pin);
+        }
+
         rcc_periph_reset_pulse(m_def->rst);
         rcc_periph_clock_enable(m_def->clk);
 
@@ -86,14 +108,13 @@ public:
         return {};
     }
 
-    expected<void, spi_errors> exchange(span<uint8_t> buffer) {
+    expected<void, spi_errors> exchange(span<uint8_t> rx, span<const uint8_t> tx) {
         if (in_16_bit_mode()) {
             return unexpected(spi_errors::bad_mode);
         }
 
-        uint8_t rdbuf[16];
-        m_write = buffer;
-        m_read = tos::span<uint8_t>(rdbuf).slice(0, buffer.size());
+        m_write = tx;
+        m_read = rx;
 
         // clear rx fifo
         for (int i = 0; i < 4; ++i) {
@@ -105,7 +126,7 @@ public:
         m_done.down();
         while (SPI_SR(m_def->spi) & SPI_SR_BSY)
             ;
-        std::copy(rdbuf, rdbuf + buffer.size(), buffer.begin());
+
         return {};
     }
 
@@ -141,19 +162,33 @@ public:
     }
 
 private:
-    void enable_rx_tx_isr() { SPI_CR2(m_def->spi) |= SPI_CR2_RXNEIE | SPI_CR2_TXEIE; }
+    void enable_rx_tx_isr() {
+        SPI_CR2(m_def->spi) |= SPI_CR2_RXNEIE | SPI_CR2_TXEIE;
+    }
 
-    void enable_rx_isr() { SPI_CR2(m_def->spi) |= SPI_CR2_RXNEIE; }
+    void enable_rx_isr() {
+        SPI_CR2(m_def->spi) |= SPI_CR2_RXNEIE;
+    }
 
-    void disable_rx_isr() { SPI_CR2(m_def->spi) &= ~SPI_CR2_RXNEIE; }
+    void disable_rx_isr() {
+        SPI_CR2(m_def->spi) &= ~SPI_CR2_RXNEIE;
+    }
 
-    bool rx_isr_enabled() const { return SPI_CR2(m_def->spi) & SPI_CR2_RXNEIE; }
+    bool rx_isr_enabled() const {
+        return SPI_CR2(m_def->spi) & SPI_CR2_RXNEIE;
+    }
 
-    void enable_tx_isr() { SPI_CR2(m_def->spi) |= SPI_CR2_TXEIE; }
+    void enable_tx_isr() {
+        SPI_CR2(m_def->spi) |= SPI_CR2_TXEIE;
+    }
 
-    void disable_tx_isr() { SPI_CR2(m_def->spi) &= ~SPI_CR2_TXEIE; }
+    void disable_tx_isr() {
+        SPI_CR2(m_def->spi) &= ~SPI_CR2_TXEIE;
+    }
 
-    bool tx_isr_enabled() const { return SPI_CR2(m_def->spi) & SPI_CR2_TXEIE; }
+    bool tx_isr_enabled() const {
+        return SPI_CR2(m_def->spi) & SPI_CR2_TXEIE;
+    }
 
     void isr() {
         if (tx_isr_enabled() && SPI_SR(m_def->spi) & SPI_SR_TXE) {

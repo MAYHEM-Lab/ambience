@@ -25,7 +25,7 @@ static constexpr i2c_def i2cs[] = {{I2C1, RCC_I2C1}, {I2C2, RCC_I2C2}};
 class twim
     : public self_pointing<twim>
     , public tracked_driver<twim, 2>
-    , non_copy_movable {
+    , public non_copy_movable {
 public:
     twim(const detail::i2c_def& def, gpio::pin_type clk, gpio::pin_type data)
         : tracked_driver(std::distance(&detail::i2cs[0], &def))
