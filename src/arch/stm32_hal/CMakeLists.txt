@@ -23,7 +23,19 @@ add_library(stm32_hal_core
         external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_spi.c
         #external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_spi_ex.c
         external/${HAL_NAME}/drivers/src/${HAL_NAME}_ll_exti.c
-        core.cpp include/stm32_hal/hal.hpp include/stm32_hal/gpio.hpp include/stm32_hal/rcc.hpp include/stm32_hal/rcc_ex.hpp include/stm32_hal/usart.hpp include/stm32_hal/tim.hpp include/stm32_hal/spi.hpp include/stm32_hal/ll_exti.hpp)
+        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_rtc.c
+        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_rtc_ex.c
+        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_flash.c
+        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_flash_ex.c
+        core.cpp
+        include/stm32_hal/hal.hpp
+        include/stm32_hal/gpio.hpp
+        include/stm32_hal/rcc.hpp
+        include/stm32_hal/rcc_ex.hpp
+        include/stm32_hal/usart.hpp
+        include/stm32_hal/tim.hpp
+        include/stm32_hal/spi.hpp
+        include/stm32_hal/ll_exti.hpp)
 
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/CMSIS/Include")
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/${HAL_NAME}/soc")

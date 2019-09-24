@@ -14,8 +14,18 @@ inline void tos_set_stack_ptr(char* ptr) {
 }
 
 inline void tos_enable_interrupts() __attribute__((always_inline));
-inline void tos_enable_interrupts() { __enable_irq(); }
+inline void tos_enable_interrupts() {
+    __enable_irq();
+}
 
 inline void tos_disable_interrupts() __attribute__((always_inline));
-inline void tos_disable_interrupts() { __disable_irq(); }
+inline void tos_disable_interrupts() {
+    __disable_irq();
 }
+}
+
+namespace tos {
+namespace stm32 {
+extern uint32_t apb1_clock;
+} // namespace stm32
+} // namespace tos

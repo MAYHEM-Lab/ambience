@@ -105,8 +105,7 @@ inline general_timer::general_timer(const detail::gen_tim_def& def)
 }
 
 inline void general_timer::set_frequency(uint16_t hertz) {
-    constexpr auto APB1Clock = 2'000'000;
-    m_handle.Init.Prescaler = APB1Clock / 1'000 - 1;
+    m_handle.Init.Prescaler = apb1_clock / 1'000 - 1;
     m_handle.Init.Period = (2000 / hertz) - 1;
     auto init_res = HAL_TIM_Base_Init(&m_handle);
     if (init_res != HAL_OK) {

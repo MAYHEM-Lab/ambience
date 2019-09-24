@@ -2,6 +2,9 @@
 #include <tos/ft.hpp>
 #include <tos/scheduler.hpp>
 
+extern "C" {
+int __dso_handle;
+}
 extern "C" void _init() {
 }
 
@@ -15,6 +18,12 @@ extern "C" void SysTick_Handler() {
 void Error_Handler() {
     __BKPT(0);
 }
+
+namespace tos {
+namespace stm32 {
+uint32_t apb1_clock = -1;
+} // namespace stm32
+} // namespace tos
 
 #if defined(STM32F7)
 void SystemClock_Config() {
@@ -51,49 +60,62 @@ void SystemClock_Config() {
     if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK) {
         Error_Handler();
     }
+
+    tos::stm32::apb1_clock = 54'000'000;
 }
 #elif defined(STM32L0)
-void SystemClock_Config()
-{
+void SystemClock_Config() {
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
     RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
     /** Configure the main internal regulator output voltage
-    */
+     */
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
     /** Initializes the CPU, AHB and APB busses clocks
-    */
+     */
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
     RCC_OscInitStruct.HSIState = RCC_HSI_ON;
     RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-    {
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
         Error_Handler();
     }
+
+    RCC_OscInitTypeDef RCC_OscInitLSI;
+
+    RCC_OscInitLSI.OscillatorType = RCC_OSCILLATORTYPE_LSI;
+    RCC_OscInitLSI.LSIState = RCC_LSI_ON;
+
+    if(HAL_RCC_OscConfig(&RCC_OscInitLSI) != HAL_OK){
+        Error_Handler();
+    }
+
     /** Initializes the CPU, AHB and APB busses clocks
-    */
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                                  |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+     */
+    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK |
+                                  RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
     RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
     RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
     RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-    {
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK) {
         Error_Handler();
     }
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1;
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1 | RCC_PERIPHCLK_RTC;
     PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-    {
+    PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
         Error_Handler();
     }
+
+    tos::stm32::apb1_clock = 16'000'000;
 }
-#else
-void SystemClock_Config() {}
+#elif defined(STM32L4)
+void SystemClock_Config() {
+    tos::stm32::apb1_clock = 2'000'000;
+}
 #endif
 
 static bool tried_bkpt = false;
@@ -114,7 +136,7 @@ int main() {
 
     // Interrupts are already enabled:
     tos::kern::enable_interrupts();
-    //tos::kern::detail::disable_depth--;
+    // tos::kern::detail::disable_depth--;
 
     tos_main();
 
@@ -123,7 +145,14 @@ int main() {
         if (res == tos::exit_reason::restart) {
             tos_force_reset();
         }
-        if (res == tos::exit_reason::power_down);
-        if (res == tos::exit_reason::idle);
+        if (res == tos::exit_reason::power_down) {
+            __WFI();
+        }
+        if (res == tos::exit_reason::idle) {
+            __WFI();
+        }
+        if (res == tos::exit_reason::yield) {
+            // Do nothing
+        }
     }
 }

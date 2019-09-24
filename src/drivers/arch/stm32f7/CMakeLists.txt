@@ -18,6 +18,10 @@ add_library(stm32_exti include/arch/exti.hpp src/exti.cpp)
 target_link_libraries(stm32_exti PUBLIC tos::core etl)
 tos_install(stm32_exti ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(stm32_flash include/arch/flash.hpp src/flash.cpp)
+target_link_libraries(stm32_flash PUBLIC tos::core etl)
+tos_install(stm32_flash ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 add_library(stm32_drivers include/arch/drivers.hpp src/stub.cpp)
 target_link_libraries(stm32_drivers PUBLIC
         stm32_gpio
@@ -25,6 +29,7 @@ target_link_libraries(stm32_drivers PUBLIC
         stm32_usart
         stm32_spi
         stm32_exti
+        stm32_flash
         )
 target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> $<TARGET_FILE:stm32_spi> $<TARGET_FILE:stm32_exti> -Wl,--no-whole-archive")
 tos_install(stm32_drivers)
