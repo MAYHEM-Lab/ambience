@@ -150,6 +150,8 @@ int main() {
         }
         if (res == tos::exit_reason::idle) {
             __WFI();
+        if (res == tos::exit_reason::yield) {
+            // Do nothing
         }
     }
 }
