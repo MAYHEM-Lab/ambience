@@ -17,6 +17,7 @@ struct pin_t {
     pin_t() = default;
     template <size_t PinId>
     pin_t(tos::gpio_pin<0, PinId>) : pin(PinId) {}
+    explicit pin_t(size_t pin_id) : pin(pin_id) {}
 
     uint8_t pin;
 };
@@ -110,4 +111,9 @@ inline void gpio::write(pin_t pin, bool val) {
     return write(pin, std::true_type{});
 }
 } // namespace esp82
+namespace tos_literals {
+    inline esp82::pin_t operator""_pin(unsigned long long pin) {
+        return esp82::pin_t{static_cast<uint8_t>(pin)};
+    }
+} // namespace tos_literals
 } // namespace tos
