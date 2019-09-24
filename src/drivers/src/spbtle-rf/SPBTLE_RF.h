@@ -4,6 +4,7 @@
 #include <tos/mutex.hpp>
 #include <arch/drivers.hpp>
 #include <tos/expected.hpp>
+#include <common/ble/address.hpp>
 
 enum class spbtle_errors {
     unknown,
@@ -123,5 +124,7 @@ private:
     PinT m_cs, m_irq_pin, m_reset;
     tos::mutex m_spi_prot;
 };
+
+extern void attach_HCI_CB(tos::function_ref<void(void*)> callback);
 
 #include "spbtle_rf.inl"

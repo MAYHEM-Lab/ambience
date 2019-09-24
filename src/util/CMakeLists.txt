@@ -30,6 +30,7 @@ add_library(tos_util_core
     include/nonstd/expected.hpp
     include/tos/byte.hpp
     include/tos/uuid.hpp
+    include/tos/moved_flag.hpp
 )
 
 target_compile_features(tos_util_core PUBLIC cxx_std_14)

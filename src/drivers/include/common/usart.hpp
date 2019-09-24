@@ -82,7 +82,7 @@ template<int N>
 static constexpr usart_t<N> usart{};
 } // namespace devs
 
-struct any_usart {
+struct any_usart : public self_pointing<any_usart> {
     virtual int write(tos::span<const char>) = 0;
     virtual tos::span<char> read(tos::span<char>) = 0;
     virtual ~any_usart() = default;
@@ -114,8 +114,8 @@ private:
 
 class null_usart : public any_usart {
 public:
-    int write(tos::span<const char> span) override { return 0; }
-    span<char> read(tos::span<char> span) override { return tos::span<char>(nullptr); }
+    int write(tos::span<const char>) override { return 0; }
+    span<char> read(tos::span<char>) override { return tos::span<char>(nullptr); }
 };
 } // namespace detail
 

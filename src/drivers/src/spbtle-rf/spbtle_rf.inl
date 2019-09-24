@@ -127,7 +127,7 @@ inline void tos::spbtle::gap::set_device_name(std::string_view name) {
     auto ret = aci_gatt_update_char_value(
         service_handle, dev_name_char_handle, 0, name.size(), (uint8_t*)name.data());
     if (ret) {
-        tos::kern::fatal("Can't set name");
+        tos::debug::panic("Can't set name");
     }
     m_name_len = name.size();
 }
@@ -140,7 +140,7 @@ inline tos::spbtle::gap::gap(tos::spbtle::gatt&, std::string_view name) {
                                     &dev_name_char_handle,
                                     &appearance_char_handle);
     if (ret) {
-        tos::kern::fatal("Can't init gap");
+        tos::debug::panic("Can't init gap");
     }
     set_device_name(name);
 }
@@ -168,7 +168,7 @@ inline tos::spbtle::advertising::advertising(std::chrono::milliseconds interval,
     auto ret = aci_gap_set_discoverable(ADV_IND,
                                         (interval.count() * 1000) / 625,
                                         (interval.count() * 1000) / 625,
-                                        STATIC_RANDOM_ADDR,
+                                        PUBLIC_ADDR,
                                         NO_WHITE_LIST_USE,
                                         name.size(),
                                         name.data(),
@@ -177,6 +177,20 @@ inline tos::spbtle::advertising::advertising(std::chrono::milliseconds interval,
                                         0,
                                         0);
     if (ret != BLE_STATUS_SUCCESS) {
-        tos::kern::fatal("Can't set discoverable");
+        tos::debug::panic("Can't set discoverable");
     }
 }
+
+inline tos::expected<void, spbtle_errors>
+set_public_address(tos::ble::address_t address) {
+    auto ret = aci_hal_write_config_data(CONFIG_DATA_PUBADDR_OFFSET,
+                                         CONFIG_DATA_PUBADDR_LEN,
+                                         address.addr);
+    if (ret != BLE_STATUS_SUCCESS)
+    {
+        return tos::unexpected(spbtle_errors::unknown);
+    }
+
+    return {};
+}
+
