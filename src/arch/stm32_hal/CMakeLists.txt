@@ -25,6 +25,8 @@ add_library(stm32_hal_core
         external/${HAL_NAME}/drivers/src/${HAL_NAME}_ll_exti.c
         external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_rtc.c
         external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_rtc_ex.c
+        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_flash.c
+        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_flash_ex.c
         core.cpp
         include/stm32_hal/hal.hpp
         include/stm32_hal/gpio.hpp
