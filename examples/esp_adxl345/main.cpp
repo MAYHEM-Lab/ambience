@@ -26,7 +26,7 @@ auto task = [] {
     auto gpio = tos::open(tos::devs::gpio);
 
     auto i2c = tos::open(
-        tos::devs::i2c<0>, tos::i2c_type::master, gpio.port.pin5, gpio.port.pin4);
+        tos::devs::i2c<0>, tos::i2c_type::master, gpio, gpio.port.pin5, gpio.port.pin4);
 
     tos::adxl345 sensor{i2c};
     sensor.powerOn();
