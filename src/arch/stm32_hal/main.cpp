@@ -22,6 +22,7 @@ void Error_Handler() {
 namespace tos {
 namespace stm32 {
 uint32_t apb1_clock = -1;
+uint32_t ahb_clock = -1;
 } // namespace stm32
 } // namespace tos
 
@@ -62,6 +63,7 @@ void SystemClock_Config() {
     }
 
     tos::stm32::apb1_clock = 54'000'000;
+    tos::stm32::ahb_clock = 108'000'000;
 }
 #elif defined(STM32L0)
 void SystemClock_Config() {
@@ -111,10 +113,12 @@ void SystemClock_Config() {
     }
 
     tos::stm32::apb1_clock = 16'000'000;
+    tos::stm32::ahb_clock = 32'000'000;
 }
 #elif defined(STM32L4)
 void SystemClock_Config() {
     tos::stm32::apb1_clock = 2'000'000;
+    tos::stm32::ahb_clock = 4'000'000;
 }
 #endif
 

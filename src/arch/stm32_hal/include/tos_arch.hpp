@@ -27,5 +27,6 @@ inline void tos_disable_interrupts() {
 namespace tos {
 namespace stm32 {
 extern uint32_t apb1_clock;
+extern uint32_t ahb_clock;
 } // namespace stm32
 } // namespace tos
