@@ -19,7 +19,7 @@ target_link_libraries(stm32_exti PUBLIC tos::core etl)
 tos_install(stm32_exti ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(stm32_flash include/arch/flash.hpp src/flash.cpp)
-target_link_libraries(stm32_flash PUBLIC tos::core etl)
+target_link_libraries(stm32_flash PUBLIC tos::core)
 tos_install(stm32_flash ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(stm32_drivers include/arch/drivers.hpp src/stub.cpp)
