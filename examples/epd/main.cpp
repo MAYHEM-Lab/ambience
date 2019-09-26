@@ -5,11 +5,11 @@
 #include <arch/drivers.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/ft.hpp>
+#include <tos/gfx/canvas.hpp>
+#include <tos/gfx/text.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
 #include <tos/semaphore.hpp>
-#include <tos/gfx/canvas.hpp>
-#include <tos/gfx/text.hpp>
 
 auto delay = [](std::chrono::microseconds us) { HAL_Delay(us.count() / 1000); };
 
@@ -167,22 +167,21 @@ public:
                 }
                 // i = 0xFF;
                 tos::pull_low_guard pull_low(m_gpio, m_cs);
-                m_spi->write(tos::span<const uint8_t>{&i,1});
+                m_spi->write(tos::span<const uint8_t>{&i, 1});
             }
         }
         refreshDisplay();
     }
 
-    void SetDisplayWindow(uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Height)
-    {
+    void SetDisplayWindow(uint16_t Xpos, uint16_t Ypos, uint16_t Height, uint16_t Width) {
         /* Set Y position and the height */
         select_register(EPD_REG_68);
         write_data(Ypos);
-        write_data(Height);
+        write_data(Height / 4 - 1);
         /* Set X position and the width */
         select_register(EPD_REG_69);
         write_data(Xpos);
-        write_data(Width);
+        write_data(Width - 1);
         /* Set the height counter */
         select_register(EPD_REG_78);
         write_data(Ypos);
@@ -191,151 +190,37 @@ public:
         write_data(Xpos);
     }
 
-    void gde021a1_DrawImage(uint16_t Xpos, uint16_t Ypos, uint16_t Xsize, uint16_t Ysize, const uint8_t *pdata)
-    {
-        uint32_t i, j = 0;
-        uint8_t pixels_4 = 0;
-        uint8_t pixels_4_grey[4] = {0};
-        uint8_t nb_4_pixels, data_res = 0;
+    void gde021a1_DrawImage(const uint16_t Xsize,
+                            const uint16_t Ysize,
+                            const uint8_t* pdata) {
 
         /* Prepare the register to write data on the RAM */
         select_register(EPD_REG_36);
 
-        /* X size is a multiple of 8 */
-        if ((Xsize % 8) == 0)
-        {
-            for (i= 0; i< ((((Ysize) * (Xsize/4)))/2) ; i++)
-            {
-                /* Get the current data */
-                pixels_4 = pdata[i];
-                if (pixels_4 !=0)
-                {
-                    /* One byte read codes 8 pixels in 1-bit bitmap */
-                    for (nb_4_pixels = 0; nb_4_pixels < 2; nb_4_pixels++)
-                    {
-                        /* Processing 8 pixels */
-                        /* Preparing the 4 pixels coded with 4 grey level per pixel
-                           from a monochrome xbm file */
-                        for (j= 0; j<4; j++)
-                        {
-                            if (((pixels_4) & 0x01) == 1)
-                            {
-                                /* Two LSB is coding black in 4 grey level */
-                                pixels_4_grey[j] &= 0xFC;
-                            }
-                            else
-                            {
-                                /* Two LSB is coded white in 4 grey level */
-                                pixels_4_grey[j] |= 0x03;
-                            }
-                            pixels_4 = pixels_4 >> 1;
-                        }
-
-                        /* Processing 4 pixels */
-                        /* Format the data to have the Lower pixel number sent on the MSB for the SPI to fit with the RAM
-                           EPD topology */
-                        data_res = pixels_4_grey[0] << 6 | pixels_4_grey[1] << 4 | pixels_4_grey[2] << 2 | pixels_4_grey[3] << 0;
-
-                        /* Send the data to the EPD's RAM through SPI */
-                        write_data(data_res);
-                    }
-                }
-                else
-                {
-                    /* 1 byte read from xbm files is equivalent to 8 pixels in the
-                       other words 2 bytes to be transferred */
-                    write_data(0xFF);
-                    write_data(0xFF);
-                }
+        for (int i = 0; i < Ysize * Xsize / 8; i++) {
+            uint8_t pixels_4 = pdata[i];
+            if (pixels_4 == 0) {
+                write_data(0x00);
+                write_data(0x00);
+                continue;
             }
-        }
 
-            /* X size is a multiple of 4 */
-        else
-        {
-            for (i= 0; i< ((((Ysize) * ((Xsize/4)+1))/2)) ; i++)
-            {
-                /* Get the current data */
-                pixels_4 = pdata[i];
-                if (((i+1) % (((Xsize/4)+1)/2)) != 0)
-                {
-                    if (pixels_4 !=0)
-                    {
-                        /* One byte read codes 8 pixels in 1-bit bitmap */
-                        for (nb_4_pixels = 0; nb_4_pixels < 2; nb_4_pixels++)
-                        {
-                            /* Processing 8 pixels */
-                            /* Preparing the 4 pixels coded with 4 grey level per pixel
-                               from a monochrome xbm file */
-                            for (j= 0; j<4; j++)
-                            {
-                                if (((pixels_4) & 0x01) == 1)
-                                {
-                                    /* Two LSB is coding black in 4 grey level */
-                                    pixels_4_grey[j] &= 0xFC;
-                                }
-                                else
-                                {
-                                    /* Two LSB is coded white in 4 grey level */
-                                    pixels_4_grey[j] |= 0x03;
-                                }
-                                pixels_4 = pixels_4 >> 1;
-                            }
+            for (int iter = 0; iter < 2; iter++) {
+                uint8_t data = 0;
 
-                            /* Processing 4 pixels */
-                            /* Format the data to have the Lower pixel number sent on the MSB for the SPI to fit with the RAM
-                               EPD topology */
-                            data_res = pixels_4_grey[0] << 6 | pixels_4_grey[1] << 4 | pixels_4_grey[2] << 2 | pixels_4_grey[3] << 0;
-
-                            /* Send the data to the EPD's RAM through SPI */
-                            write_data(data_res);
-                        }
+                for (int j = 0; j < 3; ++j) {
+                    if (pixels_4 & 0x80U) {
+                        data |= 0b11U;
                     }
-                    else if (pixels_4 == 0)
-                    {
-                        /* One byte read from xbm files is equivalent to 8 pixels in the
-                           other words Two bytes to be transferred */
-                        write_data(0xFF);
-                        write_data(0xFF);
-                    }
+                    data <<= 2U;
+                    pixels_4 <<= 1U;
                 }
-
-                else if (((i+1) % (((Xsize/4)+1)/2)) == 0)
-                {
-                    if (pixels_4 !=0xf0)
-                    {
-                        /* Processing 8 pixels */
-                        /* Preparing the 4 pixels coded with 4 grey level per pixel
-                           from a monochrome xbm file */
-                        for (j= 0; j<4; j++)
-                        {
-                            if (((pixels_4) & 0x01) == 1)
-                            {
-                                /* 2 LSB is coding black in 4 grey level */
-                                pixels_4_grey[j] &= 0xFC;
-                            }
-                            else
-                            {
-                                /* 2 LSB is coded white in 4 grey level */
-                                pixels_4_grey[j] |= 0x03;
-                            }
-                            pixels_4 = pixels_4 >> 1;
-                        }
-
-                        /* Processing 4 pixels */
-                        /* Format the data to have the Lower pixel number sent on the MSB for the SPI to fit with the RAM
-                           EPD topology */
-                        data_res = pixels_4_grey[0] << 6 | pixels_4_grey[1] << 4 | pixels_4_grey[2] << 2 | pixels_4_grey[3] << 0;
-
-                        /* Send the data to the EPD's RAM through SPI */
-                        write_data(data_res);
-                    }
-                    else if (pixels_4 == 0xf0)
-                    {
-                        /* One byte to be transferred */
-                        write_data(0xFF);
-                    }
+                if (pixels_4 & 0x80U) {
+                    data |= 0b11U;
                 }
+                pixels_4 <<= 1U;
+
+                write_data(data);
             }
         }
     }
@@ -391,24 +276,25 @@ void blink_task() {
     g.write(5_pin, tos::digital::low);
     display.gde021a1Init();
 
-    //display.gde021a1Test();
-
-    static tos::gfx::fixed_canvas<72,172> frame_buffer;
-    frame_buffer.fill(false);
-    display.SetDisplayWindow(0,0,171, 17);
-    display.gde021a1_DrawImage(0,0,72, 172, frame_buffer.data().data());
-
+    static tos::gfx::fixed_canvas<72, 172> frame_buffer;
+    frame_buffer.fill(true);
 
     static constexpr auto font = tos::gfx::basic_font()
-            .inverted()          // black on white
-            .mirror_horizontal() // left to right
-            .rotate_90_cw();     // screen is rotated
+                                     .mirror_horizontal()
+                                     .rotate_90_cw()
+                                     .inverted();
 
-    draw_text(frame_buffer, font, "tos", 0, 0);
+    draw_text_line(frame_buffer,
+                   font,
+                   "tos",
+                   tos::gfx::point{0, 0},
+                   tos::gfx::text_direction::vertical);
+
+    display.SetDisplayWindow(0, 0, 72, 172);
+    display.gde021a1_DrawImage(72, 172, frame_buffer.data().data());
     display.refreshDisplay();
 
     tos::this_thread::block_forever();
-
 }
 
 void tos_main() {
