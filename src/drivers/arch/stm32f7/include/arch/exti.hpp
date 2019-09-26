@@ -40,6 +40,22 @@ public:
         gpio.Mode = GPIO_MODE_IT_RISING;
         gpio.Pull = GPIO_PULLDOWN;
         gpio.Speed = GPIO_SPEED_LOW;
+        
+        HAL_GPIO_Init(pin.port, &gpio);
+    }
+
+    void attach(pin_type pin, pin_change::falling_t, function_ref<void()> fun) {
+        tos::int_guard ig;
+        m_handlers.emplace(pin.pin, fun);
+
+        GPIO_InitTypeDef gpio{};
+
+        enable_rcc(pin.port);
+        gpio.Pin = pin.pin;
+        gpio.Mode = GPIO_MODE_IT_FALLING;
+        gpio.Pull = GPIO_PULLDOWN;
+        gpio.Speed = GPIO_SPEED_LOW;
+
         HAL_GPIO_Init(pin.port, &gpio);
     }
 
