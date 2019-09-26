@@ -54,14 +54,14 @@ function(tos_install _target)
 
     if (${ARGC} GREATER 1)
         set(HEADER_PATH ${ARGV1})
-        install(DIRECTORY ${HEADER_PATH}/ DESTINATION "${INCLUDE_DEST}")
+        #install(DIRECTORY ${HEADER_PATH}/ DESTINATION "${INCLUDE_DEST}")
     endif()
 
     target_include_directories(${_target} PUBLIC
             $<BUILD_INTERFACE:${HEADER_PATH}>
             $<INSTALL_INTERFACE:${INCLUDE_DEST}>)
 
-    install(TARGETS ${_target} DESTINATION "${LIB_DEST}")
+    #[[install(TARGETS ${_target} DESTINATION "${LIB_DEST}")
 
     configure_file("${THIS_DIR}/cmake-config.cmake.in" ${CMAKE_CURRENT_BINARY_DIR}/${_target}-config.cmake @ONLY)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${_target}-config.cmake DESTINATION ${LIB_DEST})
@@ -73,7 +73,7 @@ function(tos_install _target)
         message(STATUS "Have a share dir, install it")
         set(SHARE_PATH ${ARGV2})
         install(DIRECTORY ${SHARE_PATH} DESTINATION "${SHARE_DEST}")
-    endif()
+    endif()]]
 endfunction()
 
 install(FILES ${THIS_DIR}/tos-config.cmake DESTINATION "lib/tos")
