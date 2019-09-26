@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <common/driver_base.hpp>
 #include <common/gpio.hpp>
 #include <cstdint>
 #include <tos/devices.hpp>

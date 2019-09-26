@@ -53,6 +53,10 @@ extern "C" int ets_printf(const char* format, ...) __attribute__((format(printf,
 #define tos_debug_print(...)
 #endif
 
+#if defined(TOS_ARCH_stm32_hal)
+#define tos_debug_print(...)
+#endif
+
 #if defined(TOS_ARCH_x86)
 #include <stdio.h>
 #define tos_debug_print printf
