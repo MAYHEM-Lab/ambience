@@ -211,4 +211,14 @@ span<T> raw_cast(span<U> sp) {
     static_assert(sizeof(T) == 1, "");
     return {reinterpret_cast<T*>(sp.data()), sp.size() * sizeof(U)};
 }
+
+template <class T>
+constexpr bool operator==(tos::span<const T> left, span<const T> right)
+{
+    if (left.size() != right.size()) {
+        return false;
+    }
+
+    return std::equal(left.begin(), left.end(), right.begin());
+}
 } // namespace tos
