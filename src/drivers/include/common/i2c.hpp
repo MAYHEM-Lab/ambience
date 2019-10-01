@@ -36,6 +36,11 @@ namespace tos
         uint8_t addr;
     };
 
+    constexpr bool operator==(twi_addr_t left, twi_addr_t right)
+    {
+        return left.addr == right.addr;
+    }
+
     /**
      * Scans the I2C bus for a device with the given address.
      * This is implemented by transmitting an empty message to the given address
