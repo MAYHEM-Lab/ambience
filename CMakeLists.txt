@@ -26,25 +26,7 @@ message(STATUS "${CMAKE_CXX_FLAGS}")
 enable_testing()
 
 add_subdirectory(src)
-
-add_subdirectory(libs/preprocessor)
-add_subdirectory(libs/pfr)
-add_subdirectory(libs/kthreads)
-add_subdirectory(libs/posix)
-add_subdirectory(libs/caps)
-add_subdirectory(libs/toscxx)
-add_subdirectory(libs/sml)
-add_subdirectory(libs/CWPack)
-add_subdirectory(libs/libemsha)
-add_subdirectory(libs/frozen)
-add_subdirectory(libs/range-v3-0.5.0)
-add_subdirectory(libs/etl)
-add_subdirectory(libs/gfx)
-add_subdirectory(libs/flatbuffers)
-
-if (NOT ${TOS_CORE} MATCHES "esp8266|atmega")
-add_subdirectory(libs/json)
-endif()
+add_subdirectory(libs)
 
 SUBDIRLIST(APP_DIRS "${CMAKE_CURRENT_LIST_DIR}/apps")
 
