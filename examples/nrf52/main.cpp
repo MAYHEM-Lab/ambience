@@ -24,7 +24,7 @@ auto blink_task = []
     auto g = open(tos::devs::gpio);
     g->set_pin_mode(13_pin, pin_mode::out);
 
-    auto usart = open(tos::devs::usart<0>, usconf);
+    auto usart = open(tos::devs::usart<0>, usconf, 6_pin, 8_pin);
 
     tos::println(usart, "hello");
 

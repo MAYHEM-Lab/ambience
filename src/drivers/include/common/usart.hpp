@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <common/driver_base.hpp>
+#include <cstdint>
 #include <tos/ct_map.hpp>
 #include <tos/devices.hpp>
 
