@@ -30,7 +30,7 @@ inline int to_sdk_pin(const pin_t& pin) {
 }
 } // namespace detail
 
-class gpio : self_pointing<gpio> {
+class gpio : public self_pointing<gpio> {
 public:
     using pin_type = pin_t;
 
