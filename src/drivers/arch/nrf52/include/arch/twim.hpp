@@ -10,14 +10,22 @@
 #include <common/i2c.hpp>
 #include <tos/span.hpp>
 
+#include <tos/semaphore.hpp>
+#include <nrfx_twim.h>
+
 namespace tos {
 namespace nrf52 {
-class twim : public self_pointing<twim> {
+class twim : public self_pointing<twim>, public non_copy_movable {
 public:
     twim(gpio::pin_type clock_pin, gpio::pin_type data_pin);
 
     twi_tx_res transmit(twi_addr_t to, span<const char> buf) noexcept;
     twi_rx_res receive(twi_addr_t from, span<char> buf) noexcept;
+
+private:
+
+    nrfx_twim_evt_type_t m_event;
+    tos::semaphore m_event_sem{0};
 };
 } // namespace nrf52
 
