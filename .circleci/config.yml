@@ -47,9 +47,9 @@ jobs:
           command: ninja
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=nrf52/840 ..
+          command: mkdir build_840 && cd build_840 && cmake -G Ninja -DTOS_CPU=nrf52/840 ..
       - run:
-          working_directory: build/
+          working_directory: build_840/
           name: Build Project
           command: ninja
   stm32_build:
