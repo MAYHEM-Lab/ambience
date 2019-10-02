@@ -3,6 +3,8 @@
 //
 
 #pragma once
+
+#include <common/driver_base.hpp>
 #include <common/gpio.hpp>
 #include <nrf.h>
 #include <nrf_gpio.h>
@@ -28,41 +30,44 @@ inline int to_sdk_pin(const pin_t& pin) {
 }
 } // namespace detail
 
-class gpio {
+class gpio : self_pointing<gpio> {
 public:
     using pin_type = pin_t;
 
+    gpio() {
+        init();
+    }
+
     bool read(pin_type pin);
 
-    static void init();
+    void init();
 
     /**
      * Sets the given pin to be an input
      */
-    static void set_pin_mode(pin_type pin, pin_mode::input_t);
+    void set_pin_mode(pin_type pin, pin_mode::input_t);
 
     /**
      * Sets the given pin to be an output
      */
-    static void set_pin_mode(pin_type pin, pin_mode::output_t);
+    void set_pin_mode(pin_type pin, pin_mode::output_t);
 
     /**
      * Sets the given output pin to digital high
      */
-    static void write(pin_type pin, digital::high_t);
+    void write(pin_type pin, digital::high_t);
 
     /**
      * Sets the given output pin to digital low
      */
-    static void write(pin_type pin, digital::low_t);
+    void write(pin_type pin, digital::low_t);
 
-    static void write(pin_type pin, bool val);
+    void write(pin_type pin, bool val);
 };
 } // namespace nrf52
 
-inline nrf52::gpio* open_impl(devs::gpio_t) {
-    nrf52::gpio::init();
-    return nullptr;
+inline nrf52::gpio open_impl(devs::gpio_t) {
+    return {};
 }
 
 namespace tos_literals {
