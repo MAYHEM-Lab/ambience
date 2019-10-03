@@ -51,7 +51,7 @@ tos::expected<void, flash_errors> flash::erase(sector_id_t sector_id) {
 #if defined(STM32L4)
     erase_info.Banks = FLASH_BANK_1;
     erase_info.Page = sector_id;
-#elif defined(STM32L0)
+#elif defined(STM32L0) || defined(STM32F1)
     erase_info.PageAddress = addr;
 #endif
     erase_info.NbPages = 1;
