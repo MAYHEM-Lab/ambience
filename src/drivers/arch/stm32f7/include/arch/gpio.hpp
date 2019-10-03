@@ -70,7 +70,6 @@ inline void enable_rcc(const GPIO_TypeDef* gpio) {
     }
 }
 
-
 class gpio : public self_pointing<gpio> {
 public:
     using pin_type = pin_t;
@@ -85,7 +84,11 @@ public:
         init.Pin = pin.pin;
         init.Mode = GPIO_MODE_OUTPUT_PP;
         init.Pull = GPIO_NOPULL;
+#ifdef STM32F1
+        init.Speed = GPIO_SPEED_FREQ_MEDIUM;
+#elif
         init.Speed = GPIO_SPEED_MEDIUM;
+#endif
 
         HAL_GPIO_Init(pin.port, &init);
     }
@@ -101,7 +104,11 @@ public:
         init.Pin = pin.pin;
         init.Mode = GPIO_MODE_OUTPUT_PP;
         init.Pull = GPIO_NOPULL;
+#ifdef STM32F1
+        init.Speed = GPIO_SPEED_FREQ_HIGH;
+#elif
         init.Speed = GPIO_SPEED_FAST;
+#endif
 
         HAL_GPIO_Init(pin.port, &init);
     }
@@ -113,7 +120,11 @@ public:
         init.Pin = pin.pin;
         init.Mode = GPIO_MODE_INPUT;
         init.Pull = GPIO_NOPULL;
+#ifdef STM32F1
+        init.Speed = GPIO_SPEED_FREQ_MEDIUM;
+#elif
         init.Speed = GPIO_SPEED_MEDIUM;
+#endif
 
         HAL_GPIO_Init(pin.port, &init);
     }
@@ -125,7 +136,11 @@ public:
         init.Pin = pin.pin;
         init.Mode = GPIO_MODE_INPUT;
         init.Pull = GPIO_PULLUP;
+#ifdef STM32F1
+        init.Speed = GPIO_SPEED_FREQ_MEDIUM;
+#elif
         init.Speed = GPIO_SPEED_MEDIUM;
+#endif
 
         HAL_GPIO_Init(pin.port, &init);
     }
@@ -137,7 +152,11 @@ public:
         init.Pin = pin.pin;
         init.Mode = GPIO_MODE_INPUT;
         init.Pull = GPIO_PULLDOWN;
+#ifdef STM32F1
+        init.Speed = GPIO_SPEED_FREQ_MEDIUM;
+#elif
         init.Speed = GPIO_SPEED_MEDIUM;
+#endif
 
         HAL_GPIO_Init(pin.port, &init);
     }
