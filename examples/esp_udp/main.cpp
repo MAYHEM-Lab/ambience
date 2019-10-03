@@ -30,44 +30,35 @@ auto wifi_connect()
     auto& wconn = force_get(res);
 
     wconn.wait_for_dhcp();
-    lwip_init();
 
     return std::make_pair(w, std::move(wconn));
 }
 
-auto zap_task = []{
+auto udp_task = []{
     auto [w, wconn] = wifi_connect();
 
-    alignas(std::max_align_t) uint8_t buf[128];
-    //alignas(std::max_align_t) uint8_t sbuf[] = {'h', 'e', 'l', 'l', 'o'};
+    tos::udp_endpoint_t ep{
+        .addr = tos::parse_ip("169.231.9.60"),
+        .port = { 9993 }
+    };
 
-    tos::udp_endpoint_t ep;
-    ep.addr = tos::parse_ip("169.231.9.60");
-    ep.port = {9993};
     auto timer = tos::open(tos::devs::timer<0>);
     auto alarm = tos::open(tos::devs::alarm, timer);
 
-    tos_debug_print("\nhi\n");
     int i = 0;
     for (;;)
     {
         tos::esp82::async_udp_socket udp;
 
         auto r = udp.bind(tos::port_num_t{9993});
-        if (!r)
+        if (r)
         {
-            goto end;
-        }
-
-        {
+            alignas(std::max_align_t) uint8_t buf[128];
             tos::omemory_stream str(buf);
             tos::println(str, "hello", i++);
-            udp.send_to({(const uint8_t*)str.get().data(), str.get().size()}, ep);
-            //udp.send_to(sbuf, ep);
+            udp.send_to(tos::raw_cast<const uint8_t>(str.get()), ep);
         }
-        //tos_debug_print("\nafter send\n");
 
-        end:
         using namespace std::chrono_literals;
         alarm.sleep_for(10ms);
     }
@@ -75,5 +66,5 @@ auto zap_task = []{
 
 void tos_main()
 {
-    tos::launch(tos::alloc_stack, zap_task);
+    tos::launch(tos::alloc_stack, udp_task);
 }

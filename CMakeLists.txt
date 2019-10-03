@@ -66,7 +66,7 @@ elseif(${TOS_CORE} MATCHES "esp")
     #add_subdirectory(examples/aws_push)
 
     add_subdirectory(examples/dht11_sample)
-    add_subdirectory(examples/esp_zap)
+    add_subdirectory(examples/esp_udp)
 
     add_subdirectory(examples/capabilities)
     add_subdirectory(libs/zmtp)
