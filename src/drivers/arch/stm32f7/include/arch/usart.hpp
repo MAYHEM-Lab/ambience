@@ -23,10 +23,10 @@ struct usart_def {
 };
 
 inline const usart_def usarts[] = {
-    {USART1, USART1_IRQn, [] { __USART1_CLK_ENABLE(); }, [] { __USART1_CLK_DISABLE(); }},
-    {USART2, USART2_IRQn, [] { __USART2_CLK_ENABLE(); }, [] { __USART2_CLK_DISABLE(); }},
+    {USART1, USART1_IRQn, [] { __HAL_RCC_USART1_CLK_ENABLE(); }, [] { __HAL_RCC_USART1_CLK_DISABLE(); }},
+    {USART2, USART2_IRQn, [] { __HAL_RCC_USART2_CLK_ENABLE(); }, [] { __HAL_RCC_USART2_CLK_DISABLE(); }},
 #if defined(USART3)
-    {USART3, USART3_IRQn, [] { __USART3_CLK_ENABLE(); }, [] { __USART3_CLK_DISABLE(); }},
+    {USART3, USART3_IRQn, [] { __HAL_RCC_USART3_CLK_ENABLE(); }, [] { __HAL_RCC_USART3_CLK_DISABLE(); }},
 #endif
 };
 } // namespace detail
@@ -131,8 +131,14 @@ inline usart::usart(const detail::usart_def& x,
         init.Pin = rx_pin.pin;
         init.Mode = GPIO_MODE_AF_OD;
         init.Pull = GPIO_NOPULL;
-        init.Speed = GPIO_SPEED_HIGH;
+#if defined(STM32F1)
+        init.Speed = GPIO_SPEED_FREQ_HIGH;
+#else
+        init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+#endif
+#if !defined(STM32F1)
         init.Alternate = GPIO_AF4_USART1;
+#endif
         HAL_GPIO_Init(rx_pin.port, &init);
     }
 
@@ -142,8 +148,14 @@ inline usart::usart(const detail::usart_def& x,
         init.Pin = tx_pin.pin;
         init.Mode = GPIO_MODE_AF_PP;
         init.Pull = GPIO_NOPULL;
-        init.Speed = GPIO_SPEED_HIGH;
+#if defined(STM32F1)
+        init.Speed = GPIO_SPEED_FREQ_HIGH;
+#else
+        init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+#endif
+#if !defined(STM32F1)
         init.Alternate = GPIO_AF4_USART1;
+#endif
         HAL_GPIO_Init(tx_pin.port, &init);
     }
 
