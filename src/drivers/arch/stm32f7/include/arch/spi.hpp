@@ -100,8 +100,14 @@ inline spi::spi(detail::spi_def& spi,
         init.Pin = sck.pin;
         init.Mode = GPIO_MODE_AF_PP;
         init.Pull = GPIO_NOPULL;
+#if defined(STM32F1)
+        init.Speed = GPIO_SPEED_FREQ_HIGH;
+#else
         init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+#endif
+#if !defined(STM32F1)
         init.Alternate = GPIO_AF0_SPI1;
+#endif
         HAL_GPIO_Init(sck.port, &init);
     }
 
@@ -111,8 +117,14 @@ inline spi::spi(detail::spi_def& spi,
         init.Pin = miso->pin;
         init.Mode = GPIO_MODE_AF_PP;
         init.Pull = GPIO_NOPULL;
+#if defined(STM32F1)
+        init.Speed = GPIO_SPEED_FREQ_HIGH;
+#else
         init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+#endif
+#if !defined(STM32F1)
         init.Alternate = GPIO_AF0_SPI1;
+#endif
         HAL_GPIO_Init(miso->port, &init);
     }
 
@@ -122,8 +134,14 @@ inline spi::spi(detail::spi_def& spi,
         init.Pin = mosi->pin;
         init.Mode = GPIO_MODE_AF_PP;
         init.Pull = GPIO_NOPULL;
+#if defined(STM32F1)
+        init.Speed = GPIO_SPEED_FREQ_HIGH;
+#else
         init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+#endif
+#if !defined(STM32F1)
         init.Alternate = GPIO_AF0_SPI1;
+#endif
         HAL_GPIO_Init(mosi->port, &init);
     }
 
