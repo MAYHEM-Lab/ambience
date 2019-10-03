@@ -39,8 +39,12 @@ public:
         gpio.Pin = pin.pin;
         gpio.Mode = GPIO_MODE_IT_RISING;
         gpio.Pull = GPIO_PULLDOWN;
+#ifdef STM32F1
+        gpio.Speed = GPIO_SPEED_FREQ_LOW;
+#elif
         gpio.Speed = GPIO_SPEED_LOW;
-        
+#endif
+
         HAL_GPIO_Init(pin.port, &gpio);
     }
 
@@ -54,7 +58,11 @@ public:
         gpio.Pin = pin.pin;
         gpio.Mode = GPIO_MODE_IT_FALLING;
         gpio.Pull = GPIO_PULLDOWN;
+#ifdef STM32F1
+        gpio.Speed = GPIO_SPEED_FREQ_LOW;
+#elif
         gpio.Speed = GPIO_SPEED_LOW;
+#endif
 
         HAL_GPIO_Init(pin.port, &gpio);
     }
