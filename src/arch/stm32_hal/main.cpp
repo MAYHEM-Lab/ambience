@@ -1,6 +1,9 @@
 #include <tos/compiler.hpp>
 #include <tos/ft.hpp>
 #include <tos/scheduler.hpp>
+#include <core_cmInstr.h>
+#include <stm32_hal/flash.hpp>
+#include <stm32_hal/rcc.hpp>
 
 extern "C" {
 int __dso_handle;
@@ -119,6 +122,37 @@ void SystemClock_Config() {
 void SystemClock_Config() {
     tos::stm32::apb1_clock = 2'000'000;
     tos::stm32::ahb_clock = 4'000'000;
+}
+#elif defined(STM32F1)
+void SystemClock_Config() {
+    RCC_ClkInitTypeDef rccClkInit;
+    RCC_OscInitTypeDef rccOscInit;
+
+    /*## STEP 1: Configure HSE and PLL #######################################*/
+    rccOscInit.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    rccOscInit.HSEState       = RCC_HSE_ON;
+    rccOscInit.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+    rccOscInit.PLL.PLLState   = RCC_PLL_ON;
+    rccOscInit.PLL.PLLSource  = RCC_PLLSOURCE_HSE;
+    rccOscInit.PLL.PLLMUL     = RCC_PLL_MUL9;
+    if (HAL_RCC_OscConfig(&rccOscInit) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    /*## STEP 2: Configure SYSCLK, HCLK, PCLK1, and PCLK2 ####################*/
+    rccClkInit.ClockType      = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK |
+                                 RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+    rccClkInit.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
+    rccClkInit.AHBCLKDivider  = RCC_SYSCLK_DIV1;
+    rccClkInit.APB2CLKDivider = RCC_HCLK_DIV1;
+    rccClkInit.APB1CLKDivider = RCC_HCLK_DIV2;
+    if (HAL_RCC_ClockConfig(&rccClkInit, FLASH_LATENCY_2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    tos::stm32::apb1_clock = 36'000'000;
+    tos::stm32::ahb_clock = 72'000'000;
 }
 #endif
 
