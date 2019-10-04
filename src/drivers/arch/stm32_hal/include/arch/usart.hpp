@@ -49,7 +49,7 @@ public:
     int write(tos::span<const uint8_t> buf);
 
     int write(tos::span<const char> buf) {
-        return write(tos::span<const uint8_t>{(const uint8_t*)buf.data(), buf.size()});
+        return write(tos::raw_cast<const uint8_t>(buf));
     }
 
     tos::span<char> read(tos::span<char> b);
