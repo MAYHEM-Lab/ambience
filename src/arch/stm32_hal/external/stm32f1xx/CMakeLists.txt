@@ -5,11 +5,9 @@ add_library(stm32_hal_drivers
     drivers/src/${HAL_NAME}_hal_tim_ex.c
     drivers/src/${HAL_NAME}_hal_cortex.c
     drivers/src/${HAL_NAME}_hal_pwr.c
-    #drivers/src/${HAL_NAME}_hal_pwr_ex.c
     drivers/src/${HAL_NAME}_hal_rcc.c
     drivers/src/${HAL_NAME}_hal_rcc_ex.c
     drivers/src/${HAL_NAME}_hal_uart.c
-    #drivers/src/${HAL_NAME}_hal_uart_ex.c
     drivers/src/${HAL_NAME}_hal_usart.c
     drivers/src/${HAL_NAME}_hal_dma.c
     drivers/src/${HAL_NAME}_hal_spi.c
@@ -19,6 +17,7 @@ add_library(stm32_hal_drivers
     drivers/src/${HAL_NAME}_hal_rtc_ex.c
     drivers/src/${HAL_NAME}_hal_flash.c
     drivers/src/${HAL_NAME}_hal_flash_ex.c
+    drivers/src/${HAL_NAME}_hal_i2c.c
 )
 target_include_directories(stm32_hal_drivers PUBLIC drivers/include)
 target_include_directories(stm32_hal_drivers PUBLIC soc)
