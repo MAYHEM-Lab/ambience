@@ -2,6 +2,8 @@ if (TOS_PROVIDE_LIBCXX)
 add_library(tos_libcxx
     src/vector.cpp
     src/string.cpp
+    src/memory.cpp
+    src/include/atomic_support.h
 
     include/algorithm
     include/array
@@ -76,6 +78,8 @@ target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDOUT)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIN)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_ATOMIC_HEADER)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_ABI_VERSION=2)
 
 if(${TOS_CORE} MATCHES "atmega")
     target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_FLOATING_POINT)
