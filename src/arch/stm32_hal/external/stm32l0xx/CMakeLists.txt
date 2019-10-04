@@ -19,6 +19,8 @@ add_library(stm32_hal_drivers
         drivers/src/${HAL_NAME}_hal_rtc_ex.c
         drivers/src/${HAL_NAME}_hal_flash.c
         drivers/src/${HAL_NAME}_hal_flash_ex.c
+        drivers/src/${HAL_NAME}_hal_i2c.c
+        drivers/src/${HAL_NAME}_hal_i2c_ex.c
         )
 target_include_directories(stm32_hal_drivers PUBLIC drivers/include)
 target_include_directories(stm32_hal_drivers PUBLIC soc)
