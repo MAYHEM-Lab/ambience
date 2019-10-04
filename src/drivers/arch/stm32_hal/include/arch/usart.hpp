@@ -131,11 +131,7 @@ inline usart::usart(const detail::usart_def& x,
         init.Pin = rx_pin.pin;
         init.Mode = GPIO_MODE_AF_OD;
         init.Pull = GPIO_NOPULL;
-#if defined(STM32F1)
-        init.Speed = GPIO_SPEED_FREQ_HIGH;
-#else
-        init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-#endif
+        init.Speed = detail::gpio_speed::highest();
 #if !defined(STM32F1)
         init.Alternate = GPIO_AF4_USART1;
 #endif
@@ -148,11 +144,7 @@ inline usart::usart(const detail::usart_def& x,
         init.Pin = tx_pin.pin;
         init.Mode = GPIO_MODE_AF_PP;
         init.Pull = GPIO_NOPULL;
-#if defined(STM32F1)
-        init.Speed = GPIO_SPEED_FREQ_HIGH;
-#else
-        init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-#endif
+        init.Speed = detail::gpio_speed::highest();
 #if !defined(STM32F1)
         init.Alternate = GPIO_AF4_USART1;
 #endif
