@@ -36,6 +36,7 @@ foreach(app ${APP_DIRS})
     add_subdirectory("apps/${app}")
 endforeach()
 
+add_subdirectory(examples/backtrace)
 if(${TOS_CORE} MATCHES "atmega")
     add_subdirectory(examples/gpio)
     add_subdirectory(examples/spi)
