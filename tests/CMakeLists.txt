@@ -44,3 +44,5 @@ add_test(alarm_tests alarm_tests)
 add_test(rn2903_test rn2903_test)
 add_test(function_ref_tests function_ref_tests)
 add_test(print_tests print_tests)
+
+add_subdirectory(remote)

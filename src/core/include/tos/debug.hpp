@@ -43,7 +43,7 @@ void panic(ErrorTagType&& error_tag) {
 template<class LogT>
 void NO_INLINE dump_stack(LogT& log) {
     auto stack_top = tos::this_thread::get_id().id;
-    auto cur_stack = reinterpret_cast<uintptr_t>(read_sp());
+    auto cur_stack = reinterpret_cast<uintptr_t>(tos_get_stack_ptr());
     auto cur_ptr = reinterpret_cast<char*>(cur_stack);
     auto size = stack_top - cur_stack;
     auto stack_span = tos::span<const char>(cur_ptr, size);
