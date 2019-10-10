@@ -10,6 +10,7 @@ extern "C" {
 void NORETURN tos_force_reset() {
     __BKPT(0);
     NVIC_SystemReset();
+    TOS_UNREACHABLE();
 }
 
 void* tos_stack_alloc(size_t sz) { return malloc(sz); }
