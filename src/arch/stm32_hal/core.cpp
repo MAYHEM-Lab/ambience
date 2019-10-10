@@ -7,7 +7,7 @@
 #include <tos/compiler.hpp>
 
 extern "C" {
-void NORETURN tos_force_reset() {
+[[noreturn]] void tos_force_reset() {
     __BKPT(0);
     NVIC_SystemReset();
     TOS_UNREACHABLE();
