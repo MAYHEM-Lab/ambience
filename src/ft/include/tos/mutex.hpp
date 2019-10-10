@@ -5,6 +5,7 @@
 #pragma once
 
 #include "semaphore.hpp"
+#include <optional>
 
 namespace tos
 {
@@ -82,8 +83,8 @@ namespace tos
             }
         }
 
-        tos::thread_id_t current_holder() const {
-            return m_current_holder;
+        std::optional<tos::thread_id_t> current_holder() const {
+            return m_current_holder == tos::thread_id_t{0} ? std::nullopt : std::optional(m_current_holder);
         }
 
     private:
