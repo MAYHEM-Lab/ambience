@@ -4,6 +4,7 @@ add_library(tos_libcxx
     src/string.cpp
     src/memory.cpp
     src/include/atomic_support.h
+    src/any.cpp
 
     include/algorithm
     include/array
@@ -64,6 +65,7 @@ add_library(tos_libcxx
     include/wchar.h
     include/wctype.h
     include/cmath
+    include/any
 )
 
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_THREADS)
