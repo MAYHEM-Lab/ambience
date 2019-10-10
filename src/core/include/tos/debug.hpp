@@ -53,6 +53,21 @@ void NO_INLINE dump_stack(LogT& log) {
     log->write(tos::raw_cast<const char>(tos::monospan(size)));
     log->write(stack_span);
 }
+
+
+template <class Tp>
+ALWAYS_INLINE void do_not_optimize(Tp const& value) {
+    asm volatile("" : : "r,m"(value) : "memory");
+}
+
+template <class Tp>
+ALWAYS_INLINE void do_not_optimize(Tp& value) {
+#if defined(__clang__)
+    asm volatile("" : "+r,m"(value) : : "memory");
+#else
+    asm volatile("" : "+m,r"(value) : : "memory");
+#endif
+}
 } // namespace debug
 } // namespace tos
 
