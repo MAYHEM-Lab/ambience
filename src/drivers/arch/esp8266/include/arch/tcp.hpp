@@ -193,7 +193,7 @@ struct ep_handlers {
     static err_t
     recv_handler(void* user, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) {
 #ifdef ESP_TCP_VERBOSE
-        tos_debug_print("recv stack: %p\n", read_sp());
+        tos_debug_print("recv stack: %p\n", tos_get_stack_ptr());
 #endif
 
         auto self = static_cast<tcp_endpoint*>(user);
@@ -223,7 +223,7 @@ struct ep_handlers {
     template<class CallbackT>
     static err_t sent_handler(void* user, struct tcp_pcb*, u16_t len) {
 #ifdef ESP_TCP_VERBOSE
-        tos_debug_print("sent stack: %p\n", read_sp());
+        tos_debug_print("sent stack: %p\n", tos_get_stack_ptr());
 #endif
 
         auto self = static_cast<tcp_endpoint*>(user);
@@ -238,7 +238,7 @@ struct ep_handlers {
     template<class EventHandlerT>
     static void err_handler(void* user, err_t err) {
 #ifdef ESP_TCP_VERBOSE
-        tos_debug_print("err stack: %p\n", read_sp());
+        tos_debug_print("err stack: %p\n", tos_get_stack_ptr());
 #endif
         auto self = static_cast<tcp_endpoint*>(user);
 
