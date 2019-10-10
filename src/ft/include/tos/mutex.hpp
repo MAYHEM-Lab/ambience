@@ -52,6 +52,46 @@ namespace tos
         tos::semaphore_base<int8_t> m_sem;
     };
 
+    /**
+     * This class implements a recursive mutex abstraction over a regular mutex.
+     *
+     * The difference from a normal mutex is that the same thread can lock the same mutex
+     * multiple times without running into a deadlock.
+     *
+     * Obviously, this is heavier compared to a raw mutex and should only be used when absolutely
+     * necessary.
+     */
+    class recursive_mutex
+    {
+    public:
+        void lock() noexcept {
+            if (m_current_holder == tos::this_thread::get_id()) {
+                ++m_depth;
+                return;
+            }
+            m_base_mutex.lock();
+            m_depth = 1;
+            m_current_holder = tos::this_thread::get_id();
+        }
+
+        void unlock() noexcept {
+            if (--m_depth == 0)
+            {
+                m_current_holder = { 0 };
+                m_base_mutex.unlock();
+            }
+        }
+
+        tos::thread_id_t current_holder() const {
+            return m_current_holder;
+        }
+
+    private:
+        tos::thread_id_t m_current_holder { 0 };
+        int8_t m_depth {0};
+        tos::mutex m_base_mutex;
+    };
+
     template <class MutexT>
     class lock_guard
     {
