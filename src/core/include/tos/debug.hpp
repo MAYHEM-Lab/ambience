@@ -4,8 +4,10 @@
 
 #pragma once
 
+#include <array>
 #include <tos/arch.hpp>
 #include <tos/span.hpp>
+#include <tos/thread.hpp>
 
 namespace tos {
 namespace kern {
@@ -37,12 +39,26 @@ template<class ErrorTagType>
 void panic(ErrorTagType&& error_tag) {
     kern::fatal(error_tag);
 }
+
+template<class LogT>
+void NO_INLINE dump_stack(LogT& log) {
+    auto stack_top = tos::this_thread::get_id().id;
+    auto cur_stack = reinterpret_cast<uintptr_t>(read_sp());
+    auto cur_ptr = reinterpret_cast<char*>(cur_stack);
+    auto size = stack_top - cur_stack;
+    auto stack_span = tos::span<const char>(cur_ptr, size);
+    static constexpr std::array<char, 8> separator{
+        '$', 't', 'o', 's', 's', '$', '#', '\n'};
+    log->write(separator);
+    log->write(tos::raw_cast<const char>(tos::monospan(size)));
+    log->write(stack_span);
+}
 } // namespace debug
 } // namespace tos
 
 #if defined(TOS_ARCH_esp8266)
 extern "C" int ets_printf(const char* format, ...) __attribute__((format(printf, 1, 2)));
-#define tos_debug_print ets_printf
+#define tos_debug_print
 #endif
 
 #if defined(TOS_ARCH_nrf52)
@@ -50,6 +66,10 @@ extern "C" int ets_printf(const char* format, ...) __attribute__((format(printf,
 #endif
 
 #if defined(TOS_ARCH_stm32)
+#define tos_debug_print(...)
+#endif
+
+#if defined(TOS_ARCH_stm32_hal)
 #define tos_debug_print(...)
 #endif
 

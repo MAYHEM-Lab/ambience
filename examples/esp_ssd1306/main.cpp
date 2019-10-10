@@ -47,14 +47,14 @@ auto task = [] {
 
     tos::ssd1306<decltype(&i2c)> oled(&i2c, {0x3C}, 128, 64);
     oled.dim(false);
-    draw_text(oled, font, "Hello from tos", 0, 0);
+    draw_text(oled, font, "Hello from tos", tos::gfx::point{0, 0});
 
     oled.display();
 
     auto wifi = wifi_connect();
 
-    draw_text(oled, font, "Wifi Connected", 12, 0);
-    draw_text(oled, font, "IP Address", 24, 0);
+    draw_text(oled, font, "Wifi Connected", tos::gfx::point{12, 0});
+    draw_text(oled, font, "IP Address", tos::gfx::point{24, 0});
 
     std::array<char, 20> buf;
     tos::omemory_stream str(buf);
@@ -67,7 +67,7 @@ auto task = [] {
                int(ip.addr[3]),
                tos::separator('.'));
 
-    draw_text(oled, font, str.get(), 36, 0);
+    draw_text(oled, font, str.get(), tos::gfx::point{36, 0});
 
     oled.display();
 

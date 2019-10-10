@@ -1,9 +1,12 @@
 project(tos)
 
+add_library(doctest INTERFACE)
+target_include_directories(doctest INTERFACE include)
+
 add_library(catch_main tests_main.cpp)
 target_compile_features(catch_main PUBLIC cxx_std_14)
 target_compile_options(catch_main PUBLIC -fexceptions)
-target_link_libraries(catch_main PUBLIC tos::ft tos::core)
+target_link_libraries(catch_main PUBLIC tos::ft tos::core doctest)
 
 add_executable(util_tests util_test.cpp)
 target_link_libraries(util_tests catch_main tos_util)
@@ -14,7 +17,7 @@ target_link_libraries(intrusive_tests catch_main tos_util)
 add_executable(xbee_tests xbee_parse_test.cpp)
 target_link_libraries(xbee_tests catch_main tos_xbee)
 
-add_executable(ft_tests ft_tests.cpp future_tests.cpp)
+add_executable(ft_tests ft_tests.cpp future_tests.cpp recursive_mutex_test.cpp)
 target_link_libraries(ft_tests catch_main)
 
 add_executable(expected_tests expected_test.cpp)

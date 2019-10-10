@@ -297,6 +297,7 @@ NMI_Handler:
     .weak   HardFault_Handler
     .type   HardFault_Handler, %function
 HardFault_Handler:
+    BKPT 0
     b       .
     .size   HardFault_Handler, . - HardFault_Handler
 

@@ -119,4 +119,6 @@ add_library(tos_inet
         include/common/inet/lwip.hpp)
 tos_install(tos_inet ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+if (${TOS_CORE} MATCHES "stm32")
 add_subdirectory(src/spbtle-rf)
+endif()

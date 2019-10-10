@@ -1,6 +1,9 @@
 #include <tos/compiler.hpp>
 #include <tos/ft.hpp>
 #include <tos/scheduler.hpp>
+#include <core_cmInstr.h>
+#include <stm32_hal/flash.hpp>
+#include <stm32_hal/rcc.hpp>
 
 extern "C" {
 int __dso_handle;
@@ -12,7 +15,6 @@ extern void tos_main();
 
 extern "C" void SysTick_Handler() {
     HAL_IncTick();
-    HAL_SYSTICK_IRQHandler();
 }
 
 void Error_Handler() {
@@ -22,6 +24,7 @@ void Error_Handler() {
 namespace tos {
 namespace stm32 {
 uint32_t apb1_clock = -1;
+uint32_t ahb_clock = -1;
 } // namespace stm32
 } // namespace tos
 
@@ -62,6 +65,7 @@ void SystemClock_Config() {
     }
 
     tos::stm32::apb1_clock = 54'000'000;
+    tos::stm32::ahb_clock = 108'000'000;
 }
 #elif defined(STM32L0)
 void SystemClock_Config() {
@@ -87,7 +91,7 @@ void SystemClock_Config() {
     RCC_OscInitLSI.OscillatorType = RCC_OSCILLATORTYPE_LSI;
     RCC_OscInitLSI.LSIState = RCC_LSI_ON;
 
-    if(HAL_RCC_OscConfig(&RCC_OscInitLSI) != HAL_OK){
+    if (HAL_RCC_OscConfig(&RCC_OscInitLSI) != HAL_OK) {
         Error_Handler();
     }
 
@@ -111,22 +115,56 @@ void SystemClock_Config() {
     }
 
     tos::stm32::apb1_clock = 16'000'000;
+    tos::stm32::ahb_clock = 32'000'000;
 }
 #elif defined(STM32L4)
 void SystemClock_Config() {
     tos::stm32::apb1_clock = 2'000'000;
+    tos::stm32::ahb_clock = 4'000'000;
+}
+#elif defined(STM32F1)
+void SystemClock_Config() {
+    RCC_ClkInitTypeDef rccClkInit;
+    RCC_OscInitTypeDef rccOscInit;
+
+    /*## STEP 1: Configure HSE and PLL #######################################*/
+    rccOscInit.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    rccOscInit.HSEState       = RCC_HSE_ON;
+    rccOscInit.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+    rccOscInit.PLL.PLLState   = RCC_PLL_ON;
+    rccOscInit.PLL.PLLSource  = RCC_PLLSOURCE_HSE;
+    rccOscInit.PLL.PLLMUL     = RCC_PLL_MUL9;
+    if (HAL_RCC_OscConfig(&rccOscInit) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    /*## STEP 2: Configure SYSCLK, HCLK, PCLK1, and PCLK2 ####################*/
+    rccClkInit.ClockType      = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK |
+                                 RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+    rccClkInit.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
+    rccClkInit.AHBCLKDivider  = RCC_SYSCLK_DIV1;
+    rccClkInit.APB2CLKDivider = RCC_HCLK_DIV1;
+    rccClkInit.APB1CLKDivider = RCC_HCLK_DIV2;
+    if (HAL_RCC_ClockConfig(&rccClkInit, FLASH_LATENCY_2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    tos::stm32::apb1_clock = 36'000'000;
+    tos::stm32::ahb_clock = 72'000'000;
 }
 #endif
 
-static bool tried_bkpt = false;
+namespace {
+bool tried_bkpt = false;
+}
 extern "C" void HardFault_Handler() {
     if (!tried_bkpt) {
         tried_bkpt = true;
         __BKPT(0);
     } else {
         tos_force_reset();
-        while (true) {
-        }
+        TOS_UNREACHABLE();
     }
 }
 

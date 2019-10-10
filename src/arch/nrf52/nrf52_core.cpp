@@ -8,7 +8,7 @@
 
 extern "C"
 {
-    void NORETURN tos_force_reset()
+    [[noreturn]] void tos_force_reset()
     {
         NVIC_SystemReset();
         TOS_UNREACHABLE();

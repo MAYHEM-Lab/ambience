@@ -19,7 +19,6 @@ void wifi_handler(System_Event_t* ev) {
     if (events.size() == events.capacity()) {
         events.pop();
     }
-    ets_printf("ev: %d\n", int(ev->event));
     events.push(*ev);
     system_os_post(tos::esp82::main_task_prio, 0, 0);
 }
@@ -85,7 +84,6 @@ void wifi_connection::consume_event(System_Event_t ev) {
         m_state = states::waiting_dhcp;
         break;
     default:
-        ets_printf("unexpected ev: %d\n", int(ev.event));
         break;
     }
 }

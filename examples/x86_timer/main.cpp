@@ -10,8 +10,8 @@
 void tos_main()
 {
     tos::launch(tos::alloc_stack, []{
-         tos::x86::timer tmr;
-         auto alarm = tos::open(tos::devs::alarm, tmr);
+         auto timer = tos::open(tos::devs::timer<0>);
+         auto alarm = tos::open(tos::devs::alarm, timer);
 
          while (true)
          {

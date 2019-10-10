@@ -11,6 +11,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <tos/function_ref.hpp>
 #include <common/driver_base.hpp>
+#include <common/timer.hpp>
 
 namespace tos
 {
@@ -55,4 +56,9 @@ namespace x86
         std::chrono::milliseconds m_interval;
     };
 } // namespace x86
+
+x86::timer open_impl(devs::timer_t<0>) {
+    return {};
+}
+
 } // namespace tos

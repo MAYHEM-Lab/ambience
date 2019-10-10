@@ -2,104 +2,93 @@
 // Created by fatih on 6/10/19.
 //
 
+#include "common/spi.hpp"
 #include "tos/stack_storage.hpp"
+#include "tos_arch.hpp"
+
+#include <MCU_Interface.h>
+#include <SPIRIT_Config.h>
 #include <arch/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
-#include <MCU_Interface.h>
-#include <SPIRIT_Config.h>
-#include <libopencm3/stm32/exti.h>
 
 using namespace tos;
 using namespace tos::stm32;
 using namespace tos::tos_literals;
 using namespace std::chrono_literals;
 
-void usart_setup(tos::stm32::gpio& g)
-{
-    using namespace tos::tos_literals;
+#define COMMAND_TX ((uint8_t)(0x60)) /*!< Start to transmit; valid only from READY */
+#define COMMAND_RX ((uint8_t)(0x61)) /*!< Start to receive; valid only from READY */
+#define COMMAND_READY                                                                    \
+    ((uint8_t)(0x62)) /*!< Go to READY; valid only from STANDBY or SLEEP or LOCK */
+#define COMMAND_STANDBY ((uint8_t)(0x63)) /*!< Go to STANDBY; valid only from READY */
+#define COMMAND_SLEEP ((uint8_t)(0x64))   /*!< Go to SLEEP; valid only from READY */
+#define COMMAND_LOCKRX                                                                   \
+    ((uint8_t)(0x65)) /*!< Go to LOCK state by using the RX configuration of the synth;  \
+                         valid only from READY */
+#define COMMAND_LOCKTX                                                                   \
+    ((uint8_t)(0x66)) /*!< Go to LOCK state by using the TX configuration of the synth;  \
+                         valid only from READY */
+#define COMMAND_SABORT                                                                   \
+    ((uint8_t)(0x67)) /*!< Force exit form TX or RX states and go to READY state; valid  \
+                         only from TX or RX */
+#define COMMAND_SRES                                                                     \
+    ((uint8_t)(0x70)) /*!< Reset of all digital part, except SPI registers */
+#define COMMAND_FLUSHRXFIFO                                                              \
+    ((uint8_t)(0x71)) /*!< Clean the RX FIFO; valid from all states */
+#define COMMAND_FLUSHTXFIFO                                                              \
+    ((uint8_t)(0x72)) /*!< Clean the TX FIFO; valid from all states */
 
-#if defined(STM32L0)
-    auto tx_pin = 9_pin;
-    auto rx_pin = 10_pin;
+#define HEADER_WRITE_MASK 0x00   /*!< Write mask for header byte*/
+#define HEADER_READ_MASK 0x01    /*!< Read mask for header byte*/
+#define HEADER_ADDRESS_MASK 0x00 /*!< Address mask for header byte*/
+#define HEADER_COMMAND_MASK 0x80 /*!< Command mask for header byte*/
 
-    g.set_pin_mode(rx_pin, tos::pin_mode::in);
+#define LINEAR_FIFO_ADDRESS 0xFF /*!< Linear FIFO address*/
 
-    gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO9);
-    gpio_set_af(GPIOA, GPIO_AF7, GPIO9 | GPIO10);
-#elif defined(STM32L4)
-    //auto tx_pin = 22_pin;
-    auto rx_pin = 23_pin;
-
-    g.set_pin_mode(rx_pin, tos::pin_mode::in);
-
-    gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO6);
-    gpio_set_af(GPIOB, GPIO_AF7, GPIO6 | GPIO7);
-#elif defined(STM32F1)
-    auto tx_pin = 2_pin;
-    auto rx_pin = 3_pin;
-
-    g.set_pin_mode(rx_pin, tos::pin_mode::in);
-
-    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
-#endif
-}
-
-#define    COMMAND_TX          ((uint8_t)(0x60)) /*!< Start to transmit; valid only from READY */
-#define    COMMAND_RX          ((uint8_t)(0x61)) /*!< Start to receive; valid only from READY */
-#define    COMMAND_READY       ((uint8_t)(0x62)) /*!< Go to READY; valid only from STANDBY or SLEEP or LOCK */
-#define    COMMAND_STANDBY     ((uint8_t)(0x63)) /*!< Go to STANDBY; valid only from READY */
-#define    COMMAND_SLEEP       ((uint8_t)(0x64)) /*!< Go to SLEEP; valid only from READY */
-#define    COMMAND_LOCKRX      ((uint8_t)(0x65)) /*!< Go to LOCK state by using the RX configuration of the synth; valid only from READY */
-#define    COMMAND_LOCKTX      ((uint8_t)(0x66)) /*!< Go to LOCK state by using the TX configuration of the synth; valid only from READY */
-#define    COMMAND_SABORT      ((uint8_t)(0x67)) /*!< Force exit form TX or RX states and go to READY state; valid only from TX or RX */
-#define    COMMAND_SRES        ((uint8_t)(0x70)) /*!< Reset of all digital part, except SPI registers */
-#define    COMMAND_FLUSHRXFIFO ((uint8_t)(0x71)) /*!< Clean the RX FIFO; valid from all states */
-#define COMMAND_FLUSHTXFIFO ((uint8_t)(0x72)) /*!< Clean the TX FIFO; valid from all states */
-
-#define HEADER_WRITE_MASK     0x00 /*!< Write mask for header byte*/
-#define HEADER_READ_MASK      0x01 /*!< Read mask for header byte*/
-#define HEADER_ADDRESS_MASK   0x00 /*!< Address mask for header byte*/
-#define HEADER_COMMAND_MASK   0x80 /*!< Command mask for header byte*/
-
-#define LINEAR_FIFO_ADDRESS 0xFF  /*!< Linear FIFO address*/
-
-#define BUILT_HEADER(add_comm, w_r) (add_comm | w_r)  /*!< macro to build the header byte*/
-#define WRITE_HEADER    BUILT_HEADER(HEADER_ADDRESS_MASK, HEADER_WRITE_MASK) /*!< macro to build the write header byte*/
-#define READ_HEADER     BUILT_HEADER(HEADER_ADDRESS_MASK, HEADER_READ_MASK)  /*!< macro to build the read header byte*/
-#define COMMAND_HEADER BUILT_HEADER(HEADER_COMMAND_MASK, HEADER_WRITE_MASK) /*!< macro to build the command header byte*/
+#define BUILT_HEADER(add_comm, w_r)                                                      \
+    (add_comm | w_r) /*!< macro to build the header                                      \
+                        byte*/
+#define WRITE_HEADER                                                                     \
+    BUILT_HEADER(HEADER_ADDRESS_MASK,                                                    \
+                 HEADER_WRITE_MASK) /*!< macro to build the write header byte*/
+#define READ_HEADER                                                                      \
+    BUILT_HEADER(HEADER_ADDRESS_MASK,                                                    \
+                 HEADER_READ_MASK) /*!< macro to build the read header byte*/
+#define COMMAND_HEADER                                                                   \
+    BUILT_HEADER(HEADER_COMMAND_MASK,                                                    \
+                 HEADER_WRITE_MASK) /*!< macro to build the command header byte*/
 
 static gpio* gp;
-static spi* radio_spi;
+static tos::stm32::spi* radio_spi;
 auto cs_pin = 21_pin;
 tos::fixed_fifo<char, 128> pr;
 
 auto delay = [](std::chrono::microseconds us) {
-    uint32_t end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 13.3;
+    uint32_t end = (us.count() * (tos::stm32::ahb_clock / 1'000'000)) / 13.3;
     for (volatile uint32_t i = 0; i < end; ++i) {
-        __asm__ __volatile__ ("nop");
+        __asm__ __volatile__("nop");
     }
 };
 
-StatusBytes to_stat(uint16_t stat)
-{
+StatusBytes to_stat(uint16_t stat) {
     StatusBytes s;
     memcpy(&s, &stat, sizeof s);
     return s;
 }
 
 extern "C" {
-StatusBytes RadioSpiWriteRegisters(uint8_t address, uint8_t n_regs, uint8_t *buffer) {
+StatusBytes RadioSpiWriteRegisters(uint8_t address, uint8_t n_regs, uint8_t* buffer) {
     gp->write(cs_pin, digital::low);
     delay(5us);
 
-    uint16_t msb = radio_spi->exchange8(WRITE_HEADER);
-    uint16_t lsb = radio_spi->exchange8(address);
+    uint16_t msb = force_get(tos::spi::exchange(radio_spi, WRITE_HEADER));
+    uint16_t lsb = force_get(tos::spi::exchange(radio_spi, address));
+
 
     auto tmpstatus = msb << 8 | lsb;
     for (int i = 0; i < n_regs; i++) {
-        radio_spi->exchange8(buffer[i]);
+        force_get(tos::spi::exchange(radio_spi, buffer[i]));
     }
 
     gp->write(cs_pin, digital::high);
@@ -107,34 +96,36 @@ StatusBytes RadioSpiWriteRegisters(uint8_t address, uint8_t n_regs, uint8_t *buf
     return to_stat(tmpstatus);
 }
 
-StatusBytes RadioSpiReadRegisters(uint8_t address, uint8_t n_regs, uint8_t *buffer) {
+StatusBytes RadioSpiReadRegisters(uint8_t address, uint8_t n_regs, uint8_t* buffer) {
     gp->write(cs_pin, digital::low);
     delay(5us);
 
-    uint16_t msb = radio_spi->exchange8(READ_HEADER);
-    uint16_t lsb = radio_spi->exchange8(address);
+    uint16_t msb = force_get(tos::spi::exchange(radio_spi, READ_HEADER));
+    uint16_t lsb = force_get(tos::spi::exchange(radio_spi, address));
 
     auto tmpstatus = msb << 8 | lsb;
 
-    for (int i = 0; i < n_regs; i++) buffer[i] = (uint8_t) radio_spi->exchange8(0);
+    for (int i = 0; i < n_regs; i++)
+        buffer[i] = force_get(tos::spi::exchange(radio_spi, 0));
 
     gp->write(cs_pin, digital::high);
 
     return to_stat(tmpstatus);
 }
 
-StatusBytes RadioSpiWriteFifo(uint8_t n_regs, uint8_t *buffer) {
+StatusBytes RadioSpiWriteFifo(uint8_t n_regs, uint8_t* buffer) {
     static uint16_t tmpstatus;
 
-    StatusBytes *status = (StatusBytes *) &tmpstatus;
+    StatusBytes* status = (StatusBytes*)&tmpstatus;
 
     gp->write(cs_pin, digital::low);
     delay(5us);
 
-    tmpstatus = (uint16_t) (radio_spi->exchange8(WRITE_HEADER) << 8 | radio_spi->exchange8(LINEAR_FIFO_ADDRESS));
+    tmpstatus = (uint16_t)(force_get(tos::spi::exchange(radio_spi, WRITE_HEADER)) << 8 |
+                           force_get(tos::spi::exchange(radio_spi, LINEAR_FIFO_ADDRESS)));
 
     for (int i = 0; i < n_regs; i++) {
-        radio_spi->exchange8(buffer[i]);
+        force_get(tos::spi::exchange(radio_spi, buffer[i]));
     }
 
     gp->write(cs_pin, digital::high);
@@ -142,17 +133,19 @@ StatusBytes RadioSpiWriteFifo(uint8_t n_regs, uint8_t *buffer) {
     return *status;
 }
 
-StatusBytes RadioSpiReadFifo(uint8_t n_regs, uint8_t *buffer) {
+StatusBytes RadioSpiReadFifo(uint8_t n_regs, uint8_t* buffer) {
     static uint16_t tmpstatus;
 
-    StatusBytes *status = (StatusBytes *) &tmpstatus;
+    StatusBytes* status = (StatusBytes*)&tmpstatus;
 
     gp->write(cs_pin, digital::low);
     delay(5us);
 
-    tmpstatus = (uint16_t) (radio_spi->exchange8(READ_HEADER) << 8 | radio_spi->exchange8(LINEAR_FIFO_ADDRESS));
+    tmpstatus = (uint16_t)(force_get(tos::spi::exchange(radio_spi, READ_HEADER)) << 8 |
+                           force_get(tos::spi::exchange(radio_spi, LINEAR_FIFO_ADDRESS)));
 
-    for (int i = 0; i < n_regs; i++) buffer[i] = (uint8_t) radio_spi->exchange8(0);
+    for (int i = 0; i < n_regs; i++)
+        buffer[i] = force_get(tos::spi::exchange(radio_spi, 0));
 
     gp->write(cs_pin, digital::high);
 
@@ -163,8 +156,8 @@ StatusBytes RadioSpiCommandStrobes(uint8_t cmd_code) {
     gp->write(cs_pin, digital::low);
     delay(5us);
 
-    uint16_t msb = radio_spi->exchange8(COMMAND_HEADER);
-    uint16_t lsb = radio_spi->exchange8(cmd_code);
+    uint16_t msb = force_get(tos::spi::exchange(radio_spi, COMMAND_HEADER));
+    uint16_t lsb = force_get(tos::spi::exchange(radio_spi, cmd_code));
 
     auto tmpstatus = msb << 8 | lsb;
 
@@ -182,9 +175,9 @@ void SpiritBaseConfiguration(void) {
     SpiritSpiCommandStrobes(COMMAND_SRES);
 
     /* Extra current in after power on fix.
-       In some samples, when a supply voltage below 2.6 V is applied to SPIRIT1 from a no power condition,
-       an extra current is added to the typical current consumption.
-       With this sequence, the extra current is erased.
+       In some samples, when a supply voltage below 2.6 V is applied to SPIRIT1 from a no
+       power condition, an extra current is added to the typical current consumption. With
+       this sequence, the extra current is erased.
     */
     tmp[0] = 0xCA;
     SpiritSpiWriteRegisters(0xB2, 1, tmp);
@@ -252,7 +245,6 @@ void SpiritBaseConfiguration(void) {
     */
     tmp[0] = 0x22;
     SpiritSpiWriteRegisters(0xBC, 1, tmp);
-
 }
 
 /* This is a VCO calibration routine used to recalibrate the VCO of SPIRIT1 in a safe way.
@@ -266,7 +258,8 @@ void SpiritVcoCalibration(void) {
     tmp[0] |= 0x80;
     SpiritSpiWriteRegisters(0x9E, 1, tmp); /* REFDIV bit set (to be restored) */
 
-    /* As a consequence we need to double the SYNT word to generate the target frequency */
+    /* As a consequence we need to double the SYNT word to generate the target frequency
+     */
     tmp[0] = 0x0D;
     tmp[1] = 0x04;
     tmp[2] = 0xA8;
@@ -323,51 +316,46 @@ void SpiritVcoCalibration(void) {
 }
 }
 
-auto print_task = [](auto&& usart)
-{
-    while (true)
-    {
+auto print_task = [](auto&& usart) {
+    while (true) {
         auto c = pr.pop();
         tos::println(usart, int(c));
     }
 };
 
+tos::stm32::exti external_interrupts;
 tos::semaphore interrupt{0};
 
-extern "C" void exti9_5_isr() {
-    interrupt.up_isr();
-    EXTI_PR = EXTI5;
-}
-
-auto tx = [](){
+auto tx = []() {
     SpiritIrq(TX_DATA_SENT, S_ENABLE);
 
     SpiritIrqClearStatus();
 
     SpiritCmdStrobeFlushTxFifo();
-    SpiritSpiWriteLinearFifo(5, (uint8_t *)"HELLO");
+    SpiritSpiWriteLinearFifo(5, (uint8_t*)"HELLO");
 
     /* send the TX command */
     SpiritManagementWaCmdStrobeTx();
     SpiritCmdStrobeTx();
 
-    //while(g->read(exti_pin));
+    // while(g->read(exti_pin));
 
     SpiritIrqs xIrqStatus;
     do {
         interrupt.down();
         SpiritIrqGetStatus(&xIrqStatus);
         SpiritIrqClearStatus();
-        if (!xIrqStatus.IRQ_TX_DATA_SENT) continue;
+        if (!xIrqStatus.IRQ_TX_DATA_SENT)
+            continue;
         break;
-    } while(true);
+    } while (true);
 
     return xIrqStatus;
 };
 
 auto rx = []() {
     SpiritIrq(RX_DATA_DISC, S_ENABLE);
-    SpiritIrq(RX_DATA_READY,S_ENABLE);
+    SpiritIrq(RX_DATA_READY, S_ENABLE);
 
     /* enable SQI check */
     SpiritQiSetSqiThreshold(SQI_TH_0);
@@ -388,15 +376,17 @@ auto rx = []() {
     return xIrqStatus;
 };
 
-void radio_task(bool is_tx)
-{
-    rcc_periph_clock_enable(RCC_GPIOC);
-    gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO10 | GPIO11 | GPIO12);
-    gpio_set_af(GPIOC, GPIO_AF6, GPIO10 | GPIO11 | GPIO12);
-
+void radio_task(bool is_tx) {
     auto sdn_pin = 31_pin;
     auto cs_pin = 21_pin;
     auto exti_pin = 69_pin;
+
+    auto sck_pin = 42_pin;
+    auto miso_pin = 43_pin;
+    auto mosi_pin = 44_pin;
+
+    auto usart_rx_pin = 23_pin;
+    auto usart_tx_pin = 22_pin;
 
     auto g = tos::open(tos::devs::gpio);
 
@@ -411,17 +401,11 @@ void radio_task(bool is_tx)
     auto timer = open(tos::devs::timer<2>);
     auto alarm = open(tos::devs::alarm, timer);
 
-    constexpr auto usconf = tos::usart_config()
-        .add(115200_baud_rate)
-        .add(usart_parity::disabled)
-        .add(usart_stop_bit::one);
-
-    usart_setup(g);
-    auto usart = tos::open(tos::devs::usart<0>, usconf);
+    auto usart = tos::open(
+        tos::devs::usart<1>, tos::uart::default_9600, usart_rx_pin, usart_tx_pin);
     tos::println(usart, "hello");
 
-    spi s(stm32::detail::spis[2]);
-    s.set_8_bit_mode();
+    tos::stm32::spi s(tos::stm32::detail::spis[2], sck_pin, miso_pin, mosi_pin);
 
     using namespace std::chrono_literals;
     g->write(sdn_pin, tos::digital::high); // wake up
@@ -465,9 +449,7 @@ void radio_task(bool is_tx)
         SpiritRadioSetPALevelMaxIndex(7);
         SpiritPktCommonSetMyAddress(0xAB);
         SpiritPktCommonSetDestinationAddress(0xBA);
-    }
-    else
-    {
+    } else {
         SpiritPktCommonSetMyAddress(0xBA);
     }
 
@@ -475,10 +457,9 @@ void radio_task(bool is_tx)
     SpiritIrqDeInit(nullptr);
     alarm->sleep_for(1s);
 
-    exti_select_source(EXTI5, GPIOE);
-    exti_set_trigger(EXTI5, EXTI_TRIGGER_FALLING);
-    exti_enable_request(EXTI5);
-    nvic_enable_irq(NVIC_EXTI9_5_IRQ);
+    auto ext_handler = [] { interrupt.up_isr(); };
+    external_interrupts.attach(
+        5_pin, pin_change::falling, tos::function_ref<void()>(ext_handler));
 
     reset(interrupt, 0);
 
@@ -496,16 +477,17 @@ void radio_task(bool is_tx)
             tos::println(usart, "tx:", bool(xIrqStatus.IRQ_TX_DATA_SENT));
             alarm->sleep_for(1000ms);
             tos::println(usart, "woke");
-        }
-        else {
+        } else {
             auto xIrqStatus = rx();
-            tos::println(usart, "rx:", bool(xIrqStatus.IRQ_RX_DATA_READY), bool(xIrqStatus.IRQ_RX_DATA_DISC));
+            tos::println(usart,
+                         "rx:",
+                         bool(xIrqStatus.IRQ_RX_DATA_READY),
+                         bool(xIrqStatus.IRQ_RX_DATA_DISC));
 
             if (xIrqStatus.IRQ_RX_DATA_DISC) {
                 SpiritCmdStrobeFlushRxFifo();
             }
-            if (!xIrqStatus.IRQ_RX_DATA_READY)
-            {
+            if (!xIrqStatus.IRQ_RX_DATA_READY) {
                 continue;
             }
 
@@ -514,7 +496,7 @@ void radio_task(bool is_tx)
 
             /* Read the RX FIFO */
             std::vector<char> buff(cRxData);
-            SpiritSpiReadLinearFifo(cRxData, (uint8_t *)buff.data());
+            SpiritSpiReadLinearFifo(cRxData, (uint8_t*)buff.data());
             tos::println(usart, "rx:", buff);
 
             /* Flush the RX FIFO */
@@ -523,7 +505,6 @@ void radio_task(bool is_tx)
     }
 }
 
-void tos_main()
-{
+void tos_main() {
     tos::launch(tos::alloc_stack, radio_task, false);
 }

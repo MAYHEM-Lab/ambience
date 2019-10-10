@@ -2,31 +2,14 @@ project(tos_core CXX C ASM)
 
 string(TOLOWER ${CPU_NAME} LOWER_CPU_NAME)
 
+add_subdirectory(external)
+add_subdirectory(external/${HAL_NAME})
+
 add_library(stm32_hal_core
         include/tos_arch.hpp
         external/${HAL_NAME}/soc/system_${HAL_NAME}.c
         external/${HAL_NAME}/startup/${LOWER_CPU_NAME}.s
 
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_gpio.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_tim.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_tim_ex.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_cortex.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_pwr.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_pwr_ex.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_rcc.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_rcc_ex.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_uart.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_uart_ex.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_usart.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_dma.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_spi.c
-        #external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_spi_ex.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_ll_exti.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_rtc.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_rtc_ex.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_flash.c
-        external/${HAL_NAME}/drivers/src/${HAL_NAME}_hal_flash_ex.c
         core.cpp
         include/stm32_hal/hal.hpp
         include/stm32_hal/gpio.hpp
@@ -37,13 +20,13 @@ add_library(stm32_hal_core
         include/stm32_hal/spi.hpp
         include/stm32_hal/ll_exti.hpp)
 
-target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/CMSIS/Include")
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/${HAL_NAME}/soc")
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/${HAL_NAME}/drivers/include")
-target_compile_definitions(stm32_hal_core PUBLIC ${CPU_NAME} STM32_HAL_NAME=${HAL_NAME} USE_FULL_LL_DRIVER)
+target_compile_definitions(stm32_hal_core PUBLIC STM32_HAL_NAME=${HAL_NAME})
 
 target_link_libraries(stm32_hal_core PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}/ld")
 target_link_libraries(stm32_hal_core PUBLIC "-T${TOS_LD_FILE}")
+target_link_libraries(stm32_hal_core PUBLIC stm32_hal_drivers cmsis)
 
 target_link_libraries(stm32_hal_core PUBLIC "-specs=nano.specs -specs=nosys.specs -Wl,--start-group -lgcc -lm -lc -lg -lstdc++ -lsupc++ -Wl,--end-group -Wl,--undefined=main")
 target_compile_features(stm32_hal_core PUBLIC cxx_std_17)
