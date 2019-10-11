@@ -17,7 +17,7 @@ target_link_libraries(intrusive_tests catch_main tos_util)
 add_executable(xbee_tests xbee_parse_test.cpp)
 target_link_libraries(xbee_tests catch_main tos_xbee)
 
-add_executable(ft_tests ft_tests.cpp future_tests.cpp)
+add_executable(ft_tests ft_tests.cpp future_tests.cpp recursive_mutex_test.cpp)
 target_link_libraries(ft_tests catch_main)
 
 add_executable(expected_tests expected_test.cpp)
@@ -44,3 +44,5 @@ add_test(alarm_tests alarm_tests)
 add_test(rn2903_test rn2903_test)
 add_test(function_ref_tests function_ref_tests)
 add_test(print_tests print_tests)
+
+add_subdirectory(remote)

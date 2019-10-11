@@ -15,7 +15,6 @@ extern void tos_main();
 
 extern "C" void SysTick_Handler() {
     HAL_IncTick();
-    HAL_SYSTICK_IRQHandler();
 }
 
 void Error_Handler() {
@@ -92,7 +91,7 @@ void SystemClock_Config() {
     RCC_OscInitLSI.OscillatorType = RCC_OSCILLATORTYPE_LSI;
     RCC_OscInitLSI.LSIState = RCC_LSI_ON;
 
-    if(HAL_RCC_OscConfig(&RCC_OscInitLSI) != HAL_OK){
+    if (HAL_RCC_OscConfig(&RCC_OscInitLSI) != HAL_OK) {
         Error_Handler();
     }
 
@@ -156,15 +155,16 @@ void SystemClock_Config() {
 }
 #endif
 
-static bool tried_bkpt = false;
+namespace {
+bool tried_bkpt = false;
+}
 extern "C" void HardFault_Handler() {
     if (!tried_bkpt) {
         tried_bkpt = true;
         __BKPT(0);
     } else {
         tos_force_reset();
-        while (true) {
-        }
+        TOS_UNREACHABLE();
     }
 }
 

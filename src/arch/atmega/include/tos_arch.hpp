@@ -12,7 +12,7 @@
 
 extern "C"
 {
-    void ALWAYS_INLINE tos_set_stack_ptr(char* ptr)
+    inline void __attribute__((always_inline)) tos_set_stack_ptr(char* ptr)
     {
         // return address is in the stack
         // if we just change the stack pointer
@@ -22,6 +22,11 @@ extern "C"
         // to return
         //  memcpy(ptr - 2, (void*)SP, 2);
         SP = reinterpret_cast<uint16_t>(ptr);
+    }
+
+    inline void* __attribute__((always_inline)) tos_get_stack_ptr()
+    {
+        return SP;
     }
 
     inline void tos_enable_interrupts() __attribute__((always_inline));

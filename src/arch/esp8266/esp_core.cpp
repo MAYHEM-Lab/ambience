@@ -32,9 +32,8 @@ void ICACHE_FLASH_ATTR tos_enable_interrupts() { ets_intr_unlock(); }
 
 void ICACHE_FLASH_ATTR tos_disable_interrupts() { ets_intr_lock(); }
 
-void NORETURN tos_force_reset() {
+[[noreturn ]]void tos_force_reset() {
     // esp sdk should reset
-    while (true)
-        ;
+    while (true) {}
 }
 }

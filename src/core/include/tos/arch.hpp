@@ -10,7 +10,7 @@
 
 extern "C"
 {
-void tos_force_reset() NORETURN;
+[[noreturn]] void tos_force_reset();
 void* tos_stack_alloc(size_t size);
 void tos_stack_free(void*);
 
