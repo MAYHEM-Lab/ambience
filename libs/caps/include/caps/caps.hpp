@@ -41,7 +41,7 @@ bool validate(const caps::token<CapabilityT, CryptoModelT>& haystack,
 template<class CapabilityT, class CryptoModelT>
 inline void attach(caps::token<CapabilityT, CryptoModelT>& c,
                    list_ptr<CapabilityT> child,
-                   typename CryptoModelT::hasher_type& hasher);
+                   const typename CryptoModelT::hasher_type& hasher);
 } // namespace caps
 
 namespace caps {
@@ -69,7 +69,7 @@ auto sign(const caps::token<CapabilityT, CryptoModelT>& c,
 }
 
 template<class CapabilityT, class HasherT>
-auto hash(const caps::cap_list<CapabilityT>& c, HasherT& h) -> typename HasherT::hash_t {
+auto hash(const caps::cap_list<CapabilityT>& c, const HasherT& h) -> typename HasherT::hash_t {
     const auto beg = (const uint8_t*)c.all;
     const auto sz = sizeof(CapabilityT) * c.num_caps;
     return h.hash({beg, sz});
@@ -87,19 +87,19 @@ cap_list<CapabilityT>* get_leaf_cap(caps::cap_list<CapabilityT>& c) {
 template<class CapabilityT, class CryptoModelT>
 void attach(caps::token<CapabilityT, CryptoModelT>& c,
             list_ptr<CapabilityT> child,
-            typename CryptoModelT::hasher_type& hasher) {
+            const typename CryptoModelT::hasher_type& hasher) {
     // TODO: do verification here
     auto child_hash = hash(*child, hasher);
     merge_into(c.signature, child_hash);
     get_leaf_cap(c.c)->child = std::move(child);
 }
 
-template<class CapabilityT, class SignerT>
-auto get_signature(const caps::token<CapabilityT, SignerT>& c, SignerT& s) {
+template<class CapabilityT, class CryptoModelT>
+auto get_signature(const caps::token<CapabilityT, CryptoModelT>& c, typename CryptoModelT::signer_type& s) {
     auto signature = sign(c, s);
 
     for (auto child = c.c.child.get(); child; child = child->child.get()) {
-        auto child_hash = hash(*child, s);
+        auto child_hash = hash(*child, typename CryptoModelT::hasher_type{});
         merge_into(signature, child_hash);
     }
 
@@ -129,14 +129,14 @@ auto get_req_sign(const caps::token<CapabilityT, CryptoModelT>& c,
     return sign;
 }
 
-template<class CapabilityT, class SignerT>
-inline bool verify(const caps::token<CapabilityT, SignerT>& c,
-                   SignerT& s,
+template<class CapabilityT, class CryptoModelT>
+inline bool verify(const caps::token<CapabilityT, CryptoModelT>& c,
+                   typename CryptoModelT::signer_type& s,
                    const uint64_t& seq,
-                   const typename SignerT::hash_t& req_hash) {
+                   const typename CryptoModelT::hash_type& req_hash) {
     auto sign = get_signature(c, s);
 
-    auto h = s.hash(seq);
+    auto h = typename CryptoModelT::hasher_type().hash(seq);
 
     merge_into(sign, h);
 
