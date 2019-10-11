@@ -25,7 +25,7 @@ void backtrace_main() {
     auto usart = open(tos::devs::usart<0>, tos::uart::default_9600, 8_pin, 6_pin);
 
     char buf[] = "hello world";
-    tos::debug::do_not_optimize(buf);
+    tos::debug::do_not_optimize(&buf);
 
     middle(usart);
 
