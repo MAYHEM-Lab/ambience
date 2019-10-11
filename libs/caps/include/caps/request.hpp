@@ -62,7 +62,7 @@ auto req_deserializer(typename CryptoModelT::signer_type& signer,
         auto req_str = tos::span<const uint8_t>((uint8_t*)uc.item.as.bin.start,
                                                 uc.item.as.bin.length);
         auto req_obj = parse(req_str);
-        auto req_hash = signer.hash(req_str);
+        auto req_hash = typename CryptoModelT::hasher_type{}.hash(req_str);
 
         cw_unpack_next(&uc);
         if (uc.item.type != CWP_ITEM_POSITIVE_INTEGER) {
