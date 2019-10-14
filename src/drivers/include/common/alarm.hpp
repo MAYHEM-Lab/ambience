@@ -55,16 +55,9 @@ public:
      *
      * @param dur duration to block for
      */
+    [[deprecated("Use tos::this_thread::sleep_for")]]
     void sleep_for(std::chrono::milliseconds dur) {
-        event ev;
-        volatile bool b = false;
-        auto fun = [&ev, &b] { ev.fire_isr(); b = true; };
-        sleeper s{uint16_t(dur.count()), tos::function_ref<void()>(fun)};
-        set_alarm(s);
-        if (!b)
-        {
-            ev.wait();
-        }
+        tos::this_thread::sleep_for(*this, dur);
     }
 
     auto set_alarm(sleeper& s) -> alarm_handle {
@@ -235,3 +228,22 @@ std::unique_ptr<any_alarm> erase_alarm(AlarmT&& alarm) {
     return std::make_unique<detail::erased_alarm<AlarmT>>(std::forward<AlarmT>(alarm));
 }
 } // namespace tos
+
+namespace tos
+{
+namespace this_thread
+{
+template<class AlarmT, class Rep, class Period>
+void sleep_for(AlarmT &alarm, const std::chrono::duration<Rep, Period> &duration) {
+    event ev;
+    volatile bool b = false;
+    auto fun = [&ev, &b] { ev.fire_isr(); b = true; };
+    typename AlarmT::sleeper_type s{uint16_t(duration.count()), tos::function_ref<void()>(fun)};
+    alarm->set_alarm(s);
+    if (!b)
+    {
+        ev.wait();
+    }
+}
+}
+}

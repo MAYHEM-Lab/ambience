@@ -32,6 +32,18 @@ thread_id_t get_id();
 void yield();
 
 /**
+ * Puts the calling thread to sleep for at least the given duration using the alarm
+ * provided.
+ *
+ * This function is _not_ going to busy wait even for the shortest duration of time.
+ * For **very** short durations, prefer busy waiting on a clock.
+ *
+ * This function is a yield point.
+ */
+template <class AlarmT, class Rep, class Period>
+void sleep_for(AlarmT& alarm, const std::chrono::duration<Rep, Period>& duration);
+
+/**
  * This function yields the control back to the kernel, however,
  * the thread will not be placed back into the runnable queue,
  * which blocks this thread forever in a non-resumable way.
