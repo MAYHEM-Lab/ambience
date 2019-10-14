@@ -11,7 +11,7 @@
 #include <tos_arch.hpp>
 #include <cstddef>
 
-void NORETURN reset_cpu()
+[[noreturn]] void reset_cpu()
 {
     tos_disable_interrupts();
     wdt_enable(WDTO_15MS);
@@ -35,7 +35,7 @@ void __attribute__((naked, used, section(".init3"))) wdt_init(void)
     wdt_disable();
 }
 
-void NORETURN tos_force_reset()
+[[noreturn]] void tos_force_reset()
 {
     reset_cpu();
 }
