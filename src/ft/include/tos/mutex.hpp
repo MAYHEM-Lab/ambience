@@ -84,7 +84,7 @@ namespace tos
         }
 
         std::optional<tos::thread_id_t> current_holder() const {
-            return m_current_holder == tos::thread_id_t{0} ? std::nullopt : std::optional(m_current_holder);
+            return m_current_holder == tos::thread_id_t{0} ? std::nullopt : std::make_optional(m_current_holder);
         }
 
     private:
