@@ -3,7 +3,7 @@
 //
 
 #include <arch/twim.hpp>
-#include <tos/debug.hpp>
+#include <tos/debug/debug.hpp>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/twi.h>

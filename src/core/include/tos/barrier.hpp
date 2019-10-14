@@ -4,18 +4,10 @@
 
 #pragma once
 
-namespace tos
-{
-namespace detail
-{
-    inline void memory_barrier_enter()
-    {
-        asm volatile ("" ::: "memory");
-    }
-
-    inline void memory_barrier_exit()
-    {
-        asm volatile ("" ::: "memory");
-    }
+namespace tos {
+namespace detail {
+inline void memory_barrier() {
+    asm volatile("" ::: "memory");
 }
-}
+} // namespace detail
+} // namespace tos

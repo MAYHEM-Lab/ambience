@@ -8,7 +8,7 @@
 #include <common/adxl345/constants.hpp>
 #include <stdint.h>
 #include <tos/span.hpp>
-#include <tos/debug.hpp>
+#include <tos/debug/debug.hpp>
 
 namespace tos
 {

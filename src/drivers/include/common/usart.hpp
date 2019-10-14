@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <tos/ct_map.hpp>
 #include <tos/devices.hpp>
+#include <tos/span.hpp>
 
 namespace tos {
 enum class usart_parity : uint8_t
@@ -115,8 +116,12 @@ private:
 
 class null_usart : public any_usart {
 public:
-    int write(tos::span<const char>) override { return 0; }
-    span<char> read(tos::span<char>) override { return tos::span<char>(nullptr); }
+    int write(tos::span<const char>) override {
+        return 0;
+    }
+    span<char> read(tos::span<char>) override {
+        return tos::span<char>(nullptr);
+    }
 };
 } // namespace detail
 

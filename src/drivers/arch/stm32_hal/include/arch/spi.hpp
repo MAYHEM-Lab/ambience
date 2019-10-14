@@ -9,7 +9,7 @@
 #include <optional>
 #include <stm32_hal/rcc.hpp>
 #include <stm32_hal/spi.hpp>
-#include <tos/debug.hpp>
+#include <tos/debug/debug.hpp>
 #include <tos/expected.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/span.hpp>

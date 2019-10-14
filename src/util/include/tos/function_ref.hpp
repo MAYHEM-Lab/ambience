@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <tos/debug.hpp>
+#include <tos/debug/panic.hpp>
 #include <tos/utility.hpp>
 
 namespace tos

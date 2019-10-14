@@ -12,7 +12,7 @@
 #include <common/inet/lwip.hpp>
 #include <common/inet/tcp_ip.hpp>
 #include <tos/arch.hpp>
-#include <tos/debug.hpp>
+#include <tos/debug/debug.hpp>
 #include <tos/expected.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/intrusive_list.hpp>

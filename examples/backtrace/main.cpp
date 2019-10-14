@@ -6,7 +6,7 @@
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/compiler.hpp>
-#include <tos/debug.hpp>
+#include <tos/debug/stack_dump.hpp>
 
 template <class LogT>
 void NO_INLINE leaf(LogT& log)
