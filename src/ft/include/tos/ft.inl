@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tos/compiler.hpp>
-#include <tos/debug.hpp>
+#include <tos/debug/panic.hpp>
 #include <tos/interrupt.hpp>
 #include <tos/scheduler.hpp>
 #include <tos/span.hpp>
@@ -52,9 +52,6 @@ namespace kern {
 }
 
 inline void suspend_self(const int_guard&) {
-    // interrupts are assumed to be disabled for this function to be called
-    // tos_debug_print("suspend %p\n", impl::cur_thread);
-
     kern::ctx ctx;
     if (save_context(*impl::cur_thread, ctx) == return_codes::saved) {
         switch_context(sched.main_context, return_codes::suspend);
@@ -238,7 +235,7 @@ template<class FuncT, class... ArgTs>
 inline auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
     auto ptr = tos_stack_alloc(stack_sz.sz);
     if (!ptr) {
-        tos::kern::fatal("Stack allocation failed");
+        tos::debug::panic("Stack allocation failed");
     }
     tos::span<char> task_span((char*)ptr, stack_sz.sz);
     auto& res =

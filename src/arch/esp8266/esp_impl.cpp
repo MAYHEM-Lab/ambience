@@ -17,7 +17,7 @@ extern "C"
 #include <tos/interrupt.hpp>
 #include <lwip/timers.h>
 #include <tos/compiler.hpp>
-#include <tos/debug.hpp>
+#include <tos/debug/debug.hpp>
 
 #if ((SPI_FLASH_SIZE_MAP == 0) || (SPI_FLASH_SIZE_MAP == 1))
 #error "The flash map is not supported"

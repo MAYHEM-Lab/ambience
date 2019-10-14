@@ -15,7 +15,7 @@ set(TOS_CORE_HEADERS
         include/tos/driver_traits.hpp
         include/tos/delay.hpp
         include/tos/barrier.hpp
-        include/tos/debug/stack_dump.hpp 
+        include/tos/debug/stack_dump.hpp
         include/tos/debug/panic.hpp)
 
 add_library(tos_print include/tos/print.hpp src/print.cpp)

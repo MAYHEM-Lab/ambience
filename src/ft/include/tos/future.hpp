@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <tos/debug.hpp>
+#include <tos/debug/debug.hpp>
 #include <tos/expected.hpp>
 #include <tos/mutex.hpp>
 #include <type_traits>

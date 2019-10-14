@@ -56,7 +56,7 @@ namespace stm32
             auto it = m_handlers.find(pin);
             if (it == m_handlers.end())
             {
-                tos::kern::fatal("EXTI Handler not found!");
+                tos::debug::panic("EXTI Handler not found!");
             }
             it->second();
         }

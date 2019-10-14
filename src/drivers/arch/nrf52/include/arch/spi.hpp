@@ -123,7 +123,7 @@ namespace nrf52
 
         if (res != NRFX_SUCCESS)
         {
-            tos::kern::fatal("driver not initialized!");
+            tos::debug::panic("driver not initialized!");
         }
     }
 } // namespace nrf52

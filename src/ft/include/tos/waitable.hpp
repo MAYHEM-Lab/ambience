@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tos/debug.hpp>
+#include <tos/debug/debug.hpp>
 #include <tos/ft.hpp>
 #include <tos/interrupt.hpp>
 #include <tos/scheduler.hpp>
@@ -72,7 +72,7 @@ private:
 namespace tos {
 inline void waitable::wait(const int_guard& ni) {
     if (self() == nullptr) {
-        kern::fatal("wait called from non thread ctx!");
+        debug::panic("wait called from non thread ctx!");
     }
     add(*self());
     kern::suspend_self(ni);

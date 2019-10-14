@@ -14,7 +14,7 @@ void do_exti_isr()
         auto it = tos::stm32::exti::get(0);
         if (!it)
         {
-            tos::kern::fatal("No EXTI driver instance!");
+            tos::debug::panic("No EXTI driver instance!");
         }
         it->isr(ExtiNum);
     }
