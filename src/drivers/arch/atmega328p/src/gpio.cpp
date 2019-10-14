@@ -5,26 +5,16 @@
 #include <avr/interrupt.h>
 #include <arch/gpio.hpp>
 #include <avr/sleep.h>
-
-namespace tos
-{
-    namespace avr
-    {
-        tos::function_ref<void()> exint_handlers[2] = {
-            { +[](void*){}, nullptr },
-            { +[](void*){}, nullptr }
-        };
-    }
-}
+#include <arch/exti.hpp>
 
 ISR(INT0_vect)
 {
-    sleep_disable();
-
-    tos::avr::exint_handlers[0]();
+    auto exti = tos::avr::exti::get(0);
+    exti->isr(0);
 }
 
 ISR(INT1_vect)
 {
-    tos::avr::exint_handlers[1]();
+    auto exti = tos::avr::exti::get(0);
+    exti->isr(1);
 }

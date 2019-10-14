@@ -1,4 +1,4 @@
-add_library(avr_gpio include/arch/gpio.hpp src/gpio.cpp)
+add_library(avr_gpio include/arch/gpio.hpp src/gpio.cpp include/arch/exti.hpp)
 target_link_libraries(avr_gpio PUBLIC tos_util tos_gpio tos_core)
 tos_install(avr_gpio ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

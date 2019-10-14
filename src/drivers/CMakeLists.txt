@@ -112,6 +112,10 @@ add_library(tos_ssd1306 include/common/ssd1306/constants.hpp include/common/ssd1
 target_link_libraries(tos_ssd1306 PUBLIC tos_core)
 tos_install(tos_ssd1306 ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(tos_clock include/common/clock.hpp src/stub.cpp)
+target_link_libraries(tos_clock PUBLIC tos_core)
+tos_install(tos_clock ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 add_library(tos_inet
         include/common/inet/tcp_ip.hpp
         include/common/inet/tcp_stream.hpp

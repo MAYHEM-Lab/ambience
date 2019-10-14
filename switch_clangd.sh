@@ -1,7 +1,7 @@
 #/bin/bash
 
-rm compile_commands.json
-rm .clangd
+rm -f compile_commands.json
+rm -f .clangd
 
 touch $1/compile_commands.json
 mkdir -p $1/.clangd

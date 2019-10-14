@@ -4,11 +4,12 @@
 
 #pragma once
 
+#include "adc.hpp"
 #include "eeprom.hpp"
+#include "exti.hpp"
 #include "gpio.hpp"
 #include "spi.hpp"
 #include "timer.hpp"
-#include "usart.hpp"
 #include "twim.hpp"
-#include "adc.hpp"
+#include "usart.hpp"
 #include "wdt.hpp"

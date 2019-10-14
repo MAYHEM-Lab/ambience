@@ -50,9 +50,30 @@ class general_timer
 public:
     explicit general_timer(const detail::gen_tim_def& def);
 
+    /**
+     * Sets the frequency of the tick callback.
+     */
     void set_frequency(uint16_t hertz);
 
+    /**
+     * Sets the function to be called on every tick of the timer.
+     * @param fun function to be called on every tick.
+     */
     void set_callback(tos::function_ref<void()> fun) { m_fun = fun; }
+
+    /**
+     * Gets the current value of the counter of the timer.
+     * Together with get_period, these functions can be used to implement a clock.
+     * @return the current value of the counter.
+     */
+    uint32_t get_counter() const;
+
+    /**
+     * Gets the period of the timer, i.e. the value of the counter at which the
+     * tick callback is executed.
+     * @return the period of the timer.
+     */
+    uint32_t get_period() const;
 
     void enable();
     void disable();
@@ -65,8 +86,6 @@ private:
     TIM_HandleTypeDef m_handle;
     const detail::gen_tim_def* m_def;
     tos::function_ref<void()> m_fun;
-    uint16_t m_period;
-    friend uint16_t get_period(general_timer& tmr) { return tmr.m_period; }
 };
 } // namespace tos::stm32
 
@@ -123,5 +142,13 @@ inline void general_timer::disable() {
     HAL_NVIC_DisableIRQ(m_def->irq);
     tos::kern::unbusy();
     HAL_TIM_Base_Stop_IT(&m_handle);
+}
+
+inline uint32_t general_timer::get_counter() const {
+    return m_handle.Instance->CNT;
+}
+
+inline uint32_t general_timer::get_period() const {
+    return m_handle.Init.Period;
 }
 } // namespace tos::stm32
