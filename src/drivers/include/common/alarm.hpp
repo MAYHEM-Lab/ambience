@@ -42,6 +42,7 @@ private:
 template<class T>
 class alarm : public self_pointing<alarm<T>> {
 public:
+    using sleeper_type = sleeper;
     using alarm_handle = intrusive_list<sleeper>::iterator_t;
 
     explicit alarm(T& t)
