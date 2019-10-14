@@ -116,10 +116,10 @@ private:
     }
 
     friend void up_many(semaphore_base& s, CountT n) {
-        detail::memory_barrier_enter();
+        detail::memory_barrier();
         tos::int_guard ig;
         up_many_isr(s, n);
-        detail::memory_barrier_exit();
+        detail::memory_barrier();
     }
 
     friend bool try_down_isr(semaphore_base& s) {
@@ -137,28 +137,28 @@ using semaphore = semaphore_base<int16_t>;
 namespace tos {
 template<class CountT>
 inline void semaphore_base<CountT>::up() noexcept {
-    detail::memory_barrier_enter();
+    detail::memory_barrier();
     tos::int_guard ig;
     up_isr();
-    detail::memory_barrier_exit();
+    detail::memory_barrier();
 }
 
 template<class CountT>
     inline void semaphore_base<CountT>::down() & noexcept {
-    detail::memory_barrier_enter();
+    detail::memory_barrier();
     tos::int_guard ig;
     --m_count;
     if (m_count < 0) {
         m_wait.wait(ig);
     }
-    detail::memory_barrier_exit();
+    detail::memory_barrier();
 }
 
 template<class CountT>
 template<class AlarmT>
 sem_ret semaphore_base<CountT>::down(AlarmT& alarm,
                                      std::chrono::milliseconds ms) noexcept {
-    detail::memory_barrier_enter();
+    detail::memory_barrier();
     tos::int_guard ig;
 
     auto ret_val = sem_ret::normal;
@@ -186,7 +186,7 @@ sem_ret semaphore_base<CountT>::down(AlarmT& alarm,
         alarm.cancel(handle);
     }
 
-    detail::memory_barrier_exit();
+    detail::memory_barrier();
     return ret_val;
 }
 

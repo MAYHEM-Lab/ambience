@@ -48,22 +48,22 @@ private:
 
 namespace tos {
 inline void event::fire() noexcept {
-    detail::memory_barrier_enter();
+    detail::memory_barrier();
     tos::int_guard ig;
     fire_isr();
-    detail::memory_barrier_exit();
+    detail::memory_barrier();
 }
 
 inline void event::wait() noexcept {
-    detail::memory_barrier_enter();
+    detail::memory_barrier();
     tos::int_guard ig;
     m_wait.wait(ig);
-    detail::memory_barrier_exit();
+    detail::memory_barrier();
 }
 
 inline void event::fire_isr() noexcept {
-    detail::memory_barrier_enter();
+    detail::memory_barrier();
     m_wait.signal_all();
-    detail::memory_barrier_exit();
+    detail::memory_barrier();
 }
 } // namespace tos

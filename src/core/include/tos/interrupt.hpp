@@ -17,12 +17,12 @@ namespace tos {
 
         inline void disable_interrupts()
         {
-            tos::detail::memory_barrier_enter();
+            tos::detail::memory_barrier();
             if (detail::disable_depth==0) {
                 tos_disable_interrupts();
             }
             detail::disable_depth++;
-            tos::detail::memory_barrier_exit();
+            tos::detail::memory_barrier();
         }
 
 		/**
@@ -33,12 +33,12 @@ namespace tos {
 		 */
         inline void enable_interrupts()
         {
-            tos::detail::memory_barrier_enter();
+            tos::detail::memory_barrier();
             detail::disable_depth--;
             if (detail::disable_depth==0) {
                 tos_enable_interrupts();
             }
-            tos::detail::memory_barrier_exit();
+            tos::detail::memory_barrier();
         }
 
         /**
