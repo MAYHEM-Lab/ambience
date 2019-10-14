@@ -10,11 +10,13 @@ set(TOS_CORE_HEADERS
         include/tos/char_stream.hpp
         include/tos/arch.hpp
         include/tos/version.hpp
-        include/tos/debug.hpp
+        include/tos/debug/debug.hpp
         include/tos/device_id.hpp
         include/tos/driver_traits.hpp
         include/tos/delay.hpp
-        include/tos/barrier.hpp)
+        include/tos/barrier.hpp
+        include/tos/debug/stack_dump.hpp 
+        include/tos/debug/panic.hpp)
 
 add_library(tos_print include/tos/print.hpp src/print.cpp)
 target_link_libraries(tos_print PUBLIC tos_util tos::libcxx)
