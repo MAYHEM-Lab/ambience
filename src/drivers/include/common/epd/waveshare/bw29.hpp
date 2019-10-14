@@ -11,6 +11,7 @@
 #include <utility>
 
 namespace tos {
+namespace waveshare_29bw_constants {
 constexpr auto DRIVER_OUTPUT_CONTROL = 0x01;
 constexpr auto BOOSTER_SOFT_START_CONTROL = 0x0C;
 constexpr auto GATE_SCAN_START_POSITION = 0x0F;
@@ -96,9 +97,10 @@ static constexpr uint8_t LUTDefault_part[] = {WRITE_LUT_REGISTER, // command
                                               0x00,
                                               0x00,
                                               0x00};
+} // namespace waveshare_29bw_constants
 
 template<class SpiT>
-class epd : public non_copy_movable {
+class waveshare_29bw : public non_copy_movable {
 public:
     using gpio_type = typename std::remove_pointer_t<SpiT>::gpio_type;
     using PinT = typename gpio_type::pin_type;
@@ -107,7 +109,8 @@ public:
     static constexpr uint16_t height = 296;
 
     template<class DelayT>
-    explicit epd(SpiT spi, PinT cs, PinT dc, PinT reset, PinT busy, DelayT&& delay)
+    explicit waveshare_29bw(
+        SpiT spi, PinT cs, PinT dc, PinT reset, PinT busy, DelayT&& delay)
         : m_spi{std::move(spi)}
         , m_cs{cs}
         , m_dc{dc}
@@ -135,6 +138,7 @@ public:
 
     template<class DelayT>
     void initialize(DelayT&& delay) {
+        using namespace waveshare_29bw_constants;
         hard_reset(delay);
         _writeCommand(DRIVER_OUTPUT_CONTROL); // Panel configuration, Gate selection
         _writeData((height - 1) % 256);
@@ -159,6 +163,7 @@ public:
     }
 
     void SetMemoryArea(int x_start, int y_start, int x_end, int y_end) {
+        using namespace waveshare_29bw_constants;
         SendCommand(SET_RAM_X_ADDRESS_START_END_POSITION);
         /* x point must be the multiple of 8 or the last 3 bits will be ignored */
         SendData((x_start >> 3) & 0xFF);
@@ -171,6 +176,7 @@ public:
     }
 
     void SetMemoryPointer(int x, int y) {
+        using namespace waveshare_29bw_constants;
         SendCommand(SET_RAM_X_ADDRESS_COUNTER);
         /* x point must be the multiple of 8 or the last 3 bits will be ignored */
         SendData((x >> 3) & 0xFF);
@@ -181,6 +187,7 @@ public:
     }
 
     void ClearFrameMemory(unsigned char color) {
+        using namespace waveshare_29bw_constants;
         SetMemoryArea(0, 0, this->width - 1, this->height - 1);
         SetMemoryPointer(0, 0);
         SendCommand(WRITE_RAM);
@@ -190,7 +197,8 @@ public:
         }
     }
 
-    void DisplayFrame() {
+    void refresh_display() {
+        using namespace waveshare_29bw_constants;
         SendCommand(DISPLAY_UPDATE_CONTROL_2);
         SendData(0xC4);
         SendCommand(MASTER_ACTIVATION);
@@ -199,16 +207,18 @@ public:
     }
 
     void Sleep() {
+        using namespace waveshare_29bw_constants;
         SendCommand(DEEP_SLEEP_MODE);
         WaitUntilIdle();
     }
 
-    ~epd() {
+    ~waveshare_29bw() {
         Sleep();
     }
 
     void SetFrameMemory(
         span<const uint8_t> buffer, int x, int y, int image_width, int image_height) {
+        using namespace waveshare_29bw_constants;
         if (buffer.empty() || x < 0 || image_width < 0 || y < 0 || image_height < 0) {
             return;
         }
