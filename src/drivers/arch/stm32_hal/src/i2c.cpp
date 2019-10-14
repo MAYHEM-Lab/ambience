@@ -81,7 +81,7 @@ void open_sda(gpio::pin_type pin) {
     open_scl(pin); // it's the same thing
 }
 
-#if defined(STM32L0)
+#if defined(STM32L0) || defined(STM32L4)
 uint32_t make_timing_register_100khz() {
     // The values are taken from the reference manual, I2C Timing settings section (Table
     // 104).
@@ -127,10 +127,10 @@ i2c::i2c(const detail::i2c_def& def, gpio::pin_type scl, gpio::pin_type sda)
     init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
     init.OwnAddress1 = 0;
     init.OwnAddress2 = 0;
-#if !defined(STM32L0)
+#if defined(STM32F1)
     init.ClockSpeed = 100'000;
     init.DutyCycle = I2C_DUTYCYCLE_2;
-#else
+#elif defined(STM32L0) || defined(STM32L4)
     init.Timing = make_timing_register_100khz();
 #endif
 
