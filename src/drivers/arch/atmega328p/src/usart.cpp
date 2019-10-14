@@ -167,24 +167,9 @@ static void write_usart(tos::span<const char> buf)
     tos::kern::unbusy();
 }
 
-class uart_ev_handler
-{
-public:
-    void operator()(tos::uart::events::sent_t) {
-        state->write_done.up_isr();
-    }
-
-    void operator()(tos::uart::events::recv_t, char c) {
-        state->read_buf.push_back(c);
-        state->have_data.up_isr();
-    }
-};
-
-static uart_ev_handler handler;
-
 ISR (USART_TX_vect)
 {
-    handler(tos::uart::events::sent);
+    state->write_done.up_isr();
 }
 
 ISR (USART_UDRE_vect) {
@@ -201,5 +186,7 @@ ISR (USART_UDRE_vect) {
 
 ISR (USART_RX_vect) {
     auto byte = UDR0;
-    handler(tos::uart::events::recv, byte);
+
+    state->read_buf.push_back(byte);
+    state->have_data.up_isr();
 }

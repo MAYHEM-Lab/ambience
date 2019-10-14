@@ -20,8 +20,8 @@ namespace tos {
 template<class I2cT>
 class lcd : public self_pointing<lcd<I2cT>> {
 public:
-    lcd(I2cT& i2c, twi_addr_t lcd_addr, uint8_t cols, uint8_t rows)
-        : m_i2c{i2c}
+    lcd(I2cT i2c, twi_addr_t lcd_addr, uint8_t cols, uint8_t rows)
+        : m_i2c{std::move(i2c)}
         , m_addr{lcd_addr}
         , m_rows{rows}
         , m_cols{cols} {
@@ -85,7 +85,7 @@ private:
     void expanderWrite(uint8_t);
     void pulseEnable(uint8_t);
 
-    I2cT& m_i2c;
+    I2cT m_i2c;
     twi_addr_t m_addr;
     uint8_t m_rows, m_cols;
     uint8_t m_backlight;
@@ -166,7 +166,7 @@ void lcd<I2cT>::write4bits(uint8_t value) {
 template<class I2cT>
 void lcd<I2cT>::expanderWrite(uint8_t _data) {
     char data[] = {uint8_t(_data | m_backlight)};
-    auto res = m_i2c.transmit(m_addr, data);
+    auto res = m_i2c->transmit(m_addr, data);
     if (res != twi_tx_res::ok) {
         // TODO: err
     }
