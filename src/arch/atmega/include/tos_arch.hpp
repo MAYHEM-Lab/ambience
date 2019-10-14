@@ -26,7 +26,7 @@ extern "C"
 
     inline void* __attribute__((always_inline)) tos_get_stack_ptr()
     {
-        return SP;
+        return reinterpret_cast<void*>(SP);
     }
 
     inline void tos_enable_interrupts() __attribute__((always_inline));
