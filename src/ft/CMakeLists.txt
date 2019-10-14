@@ -11,7 +11,6 @@ add_library(tos_ft
         include/tos/event.hpp
         src/ft.cpp
         src/semaphore.cpp
-        include/tos/unwind.hpp
         include/tos/ft.inl
         include/tos/thread.hpp
         include/tos/types.hpp)
