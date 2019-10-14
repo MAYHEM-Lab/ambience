@@ -5,7 +5,7 @@
 #pragma once
 
 #include <array>
-#include <tos/debug.hpp>
+#include <tos/debug/panic.hpp>
 
 namespace tos {
 /**

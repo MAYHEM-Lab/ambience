@@ -3,10 +3,10 @@
 //
 
 #include <tos/compiler.hpp>
-#include <tos/debug.hpp>
+#include <tos/debug/panic.hpp>
 
 [[noreturn]] void tos_force_get_failed(void*)
 {
     //TODO: die
-    tos::kern::fatal("force_get failed!");
+    tos::debug::panic("force_get failed!");
 }
