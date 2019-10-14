@@ -37,11 +37,11 @@ auto blink_task = []
 
         g->write(13_pin, digital::low);
         tos::println(usart, "On");
-        alarm.sleep_for(1s);
+        tos::this_thread::sleep_for(alarm, 1s);
 
         g->write(13_pin, digital::high);
         tos::println(usart, "Off");
-        alarm.sleep_for(1s);
+        tos::this_thread::sleep_for(alarm, 1s);
     }
 
     tos::this_thread::block_forever();
