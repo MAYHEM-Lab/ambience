@@ -4,6 +4,7 @@
 
 #include <arch/twim.hpp>
 #include <tos/interrupt.hpp>
+#include <tos/thread.hpp>
 
 extern "C" {
 #include <user_interface.h>
@@ -16,7 +17,7 @@ extern "C" {
 #define I2C_SDA_HELD_LOW_AFTER_INIT 4
 
 void twi_init(tos::esp82::gpio& gpio, tos::esp82::pin_t sda, tos::esp82::pin_t scl);
-void twi_stop(void);
+void twi_stop();
 void twi_setClock(unsigned int freq);
 void twi_setClockStretchLimit(uint32_t limit);
 uint8_t twi_writeTo(unsigned char address,
@@ -39,6 +40,7 @@ twim::twim(gpio& gpio, tos::esp82::pin_t clock_pin, tos::esp82::pin_t data_pin) 
 
 twi_tx_res twim::transmit(twi_addr_t to, span<const char> buf) noexcept {
     auto res = twi_writeTo(to.addr, (unsigned char*)buf.data(), buf.size(), true);
+    tos::this_thread::yield();
     switch (res) {
     case I2C_OK:
         return twi_tx_res::ok;
@@ -49,6 +51,7 @@ twi_tx_res twim::transmit(twi_addr_t to, span<const char> buf) noexcept {
 
 twi_rx_res twim::receive(twi_addr_t from, span<char> buf) noexcept {
     auto res = twi_readFrom(from.addr, (unsigned char*)buf.data(), buf.size(), true);
+    tos::this_thread::yield();
     switch (res) {
     case I2C_OK:
         return twi_rx_res::ok;
