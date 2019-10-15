@@ -16,10 +16,11 @@ namespace esp82 {
 struct pin_t {
     pin_t() = default;
     template <size_t PinId>
-    pin_t(tos::gpio_pin<0, PinId>) : pin(PinId) {}
-    explicit pin_t(size_t pin_id) : pin(pin_id) {}
+    pin_t(tos::gpio_pin<0, PinId>) : pin(PinId), mask(1 << pin) {}
+    explicit pin_t(size_t pin_id) : pin(pin_id), mask(1 << pin) {}
 
     uint8_t pin;
+    uint32_t mask;
 };
 class gpio {
 public:
@@ -80,7 +81,7 @@ inline uintptr_t convert(pin_t pin) {
 
 inline void gpio::set_pin_mode(pin_t pin, tos::pin_mode::input_t) {
     PIN_FUNC_SELECT(convert(pin), 0);
-    gpio_output_set(0, 0, 0, 1 << pin.pin);
+    gpio_output_set(0, 0, 0, pin.mask);
 }
 
 inline void gpio::set_pin_mode(pin_t pin, tos::pin_mode::in_pullup_t) {
@@ -89,19 +90,19 @@ inline void gpio::set_pin_mode(pin_t pin, tos::pin_mode::in_pullup_t) {
 }
 
 inline void gpio::set_pin_mode(pin_t pin, tos::pin_mode::output_t) {
-    gpio_output_set(0, 0, 1 << pin.pin, 0);
+    gpio_output_set(0, 0, pin.mask, 0);
 }
 
 bool ALWAYS_INLINE gpio::read(const pin_t& pin) {
-    return (gpio_input_get() >> pin.pin) & 1;
+    return (GPIO_REG_READ(GPIO_IN_ADDRESS) >> pin.pin) & 1;
 }
 
 void ALWAYS_INLINE gpio::write(pin_t pin, digital::high_t) {
-    gpio_output_set(1 << pin.pin, 0, 1 << pin.pin, 0);
+    GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pin.mask);
 }
 
 void ALWAYS_INLINE gpio::write(pin_t pin, digital::low_t) {
-    gpio_output_set(0, 1 << pin.pin, 1 << pin.pin, 0);
+    GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pin.mask);
 }
 
 inline void gpio::write(pin_t pin, bool val) {
