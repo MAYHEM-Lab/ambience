@@ -2,10 +2,10 @@
 /* Linker Script for ld -N */
 MEMORY
 {
-  dport0_0_seg : org = 0x3FF00000, len = 0x10
-  dram0_0_seg  : org = 0x3FFE8000, len = 0x14000
-  iram1_0_seg  : org = 0x40100000, len = 0x8000
-  irom0_0_seg  : org = 0x40210000, len = 0x5C000
+  dport0_0_seg : org = 0x3FF00000, len = 16
+  dram0_0_seg  : org = 0x3FFE8000, len = 80K
+  iram1_0_seg  : org = 0x40100000, len = 32K
+  irom0_0_seg  : org = 0x40210000, len = 368K
 }
 
 PHDRS
