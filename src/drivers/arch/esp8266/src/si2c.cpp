@@ -7,29 +7,41 @@ extern "C" {
 namespace {
 using namespace tos::esp82;
 
-unsigned int preferred_si2c_clock = 100000;
+unsigned int preferred_si2c_clock = 800'000;
 unsigned char twi_dcount = 18;
-static pin_t pin_sda, pin_scl;
-static uint32_t twi_clockStretchLimit;
+pin_t pin_sda, pin_scl;
+uint32_t twi_clockStretchLimit;
 
 gpio* g;
 
-inline void SDA_LOW() { g->write(pin_sda, tos::digital::low); }
+inline void SDA_LOW() {
+    g->write(pin_sda, tos::digital::low);
+}
 
-inline void SDA_HIGH() { g->write(pin_sda, tos::digital::high); }
+inline void SDA_HIGH() {
+    g->write(pin_sda, tos::digital::high);
+}
 
-inline auto SDA_READ() { return g->read(pin_sda); }
+inline auto SDA_READ() {
+    return g->read(pin_sda);
+}
 
-inline void SCL_LOW() { g->write(pin_scl, tos::digital::low); }
+inline void SCL_LOW() {
+    g->write(pin_scl, tos::digital::low);
+}
 
-inline void SCL_HIGH() { g->write(pin_scl, tos::digital::high); }
+inline void SCL_HIGH() {
+    g->write(pin_scl, tos::digital::high);
+}
 
-inline auto SCL_READ() { return g->read(pin_scl); }
+inline auto SCL_READ() {
+    return g->read(pin_scl);
+}
 
+#define F_CPU 80'000'000L
 #ifndef FCPU80
-#define FCPU80 80000000L
+#define FCPU80 80'000'000L
 #endif
-#define F_CPU FCPU80
 
 #if F_CPU == FCPU80
 #define TWI_CLOCK_STRETCH_MULTIPLIER 3
@@ -37,19 +49,16 @@ inline auto SCL_READ() { return g->read(pin_scl); }
 #define TWI_CLOCK_STRETCH_MULTIPLIER 6
 #endif
 
-#define ESP8266_REG(addr) *((volatile uint32_t*)(0x60000000 + (addr)))
-#define GPI ESP8266_REG(0x318) // GPIO_IN RO (Read Input Level)
 static void twi_delay(unsigned char v) {
     unsigned int i;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
     unsigned char reg;
-    for (i = 0; i < v; i++) reg = GPI;
+    for (i = 0; i < v; i++) reg = GPIO_REG_READ(GPIO_IN_ADDRESS);
 #pragma GCC diagnostic pop
 }
-#undef GPI
 
-static bool twi_write_start(void) {
+bool twi_write_start() {
     SCL_HIGH();
     SDA_HIGH();
     if (SDA_READ() == 0)
@@ -60,7 +69,7 @@ static bool twi_write_start(void) {
     return true;
 }
 
-static bool twi_write_stop(void) {
+bool twi_write_stop() {
     uint32_t i = 0;
     SCL_LOW();
     SDA_LOW();
@@ -75,7 +84,7 @@ static bool twi_write_stop(void) {
     return true;
 }
 
-static bool twi_write_bit(bool bit) {
+bool twi_write_bit(bool bit) {
     uint32_t i = 0;
     SCL_LOW();
     if (bit)
@@ -90,7 +99,7 @@ static bool twi_write_bit(bool bit) {
     return true;
 }
 
-static bool twi_read_bit(void) {
+bool twi_read_bit() {
     uint32_t i = 0;
     SCL_LOW();
     SDA_HIGH();
@@ -103,7 +112,7 @@ static bool twi_read_bit(void) {
     return bit;
 }
 
-static bool twi_write_byte(unsigned char byte) {
+bool twi_write_byte(unsigned char byte) {
     unsigned char bit;
     for (bit = 0; bit < 8; bit++) {
         twi_write_bit(byte & 0x80);
@@ -112,7 +121,7 @@ static bool twi_write_byte(unsigned char byte) {
     return !twi_read_bit(); // NACK/ACK
 }
 
-static unsigned char twi_read_byte(bool nack) {
+unsigned char twi_read_byte(bool nack) {
     unsigned char byte = 0;
     unsigned char bit;
     for (bit = 0; bit < 8; bit++) byte = (byte << 1) | twi_read_bit();
@@ -164,6 +173,7 @@ void twi_init(tos::esp82::gpio& gpio, gpio::pin_type sda, gpio::pin_type scl) {
     using namespace tos::esp82;
     pin_sda = sda;
     pin_scl = scl;
+
     g = &gpio;
 
     g->set_pin_mode(pin_sda, tos::pin_mode::in_pullup);
@@ -172,11 +182,13 @@ void twi_init(tos::esp82::gpio& gpio, gpio::pin_type sda, gpio::pin_type scl) {
     GPIO_REG_WRITE(GPIO_PIN_ADDR(GPIO_ID_PIN(sda.pin)),
                    GPIO_REG_READ(GPIO_PIN_ADDR(GPIO_ID_PIN(sda.pin))) |
                        GPIO_PIN_PAD_DRIVER_SET(GPIO_PAD_DRIVER_ENABLE)); // open drain;
-    GPIO_REG_WRITE(GPIO_ENABLE_ADDRESS, GPIO_REG_READ(GPIO_ENABLE_ADDRESS) | (1 << sda.pin));
+    GPIO_REG_WRITE(GPIO_ENABLE_ADDRESS,
+                   GPIO_REG_READ(GPIO_ENABLE_ADDRESS) | (1 << sda.pin));
     GPIO_REG_WRITE(GPIO_PIN_ADDR(GPIO_ID_PIN(scl.pin)),
                    GPIO_REG_READ(GPIO_PIN_ADDR(GPIO_ID_PIN(scl.pin))) |
                        GPIO_PIN_PAD_DRIVER_SET(GPIO_PAD_DRIVER_ENABLE)); // open drain;
-    GPIO_REG_WRITE(GPIO_ENABLE_ADDRESS, GPIO_REG_READ(GPIO_ENABLE_ADDRESS) | (1 << scl.pin));
+    GPIO_REG_WRITE(GPIO_ENABLE_ADDRESS,
+                   GPIO_REG_READ(GPIO_ENABLE_ADDRESS) | (1 << scl.pin));
 
     twi_setClock(preferred_si2c_clock);
     twi_setClockStretchLimit(230); // default value is 230 uS
@@ -215,8 +227,6 @@ unsigned char twi_writeTo(unsigned char address,
         SCL_HIGH();
         twi_delay(twi_dcount);
     }
-
-    tos::this_thread::yield();
     return 0;
 }
 
@@ -245,8 +255,6 @@ unsigned char twi_readFrom(unsigned char address,
         SCL_HIGH();
         twi_delay(twi_dcount);
     }
-
-    tos::this_thread::yield();
     return 0;
 }
 #define I2C_OK 0
