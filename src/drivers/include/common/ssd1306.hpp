@@ -66,6 +66,9 @@ void ssd1306<I2CT>::dim(bool dim) {
 
 template<class I2CT>
 void ssd1306<I2CT>::set_pixel(int row, int col, bool color) {
+    if (row < 0 || col < 0 || row >= m_h || col >= m_w) {
+        debug::panic("Out of bounds in ssd1306 framebuffer!");
+    }
     if (color) {
         m_fb.m_buf[col + (row / 8) * m_w] |= (1 << (row % 8));
     } else {
@@ -150,8 +153,8 @@ void ssd1306<I2CT>::single_command(uint8_t c) {
 
 template<class I2CT>
 void ssd1306<I2CT>::command_list(const uint8_t* c, int n, uint8_t first) {
-    std::array<char, 16> buf;
-    buf[0] = first;
+    std::array<char, 64> buf;
+    buf[0] = first; // first character is always 0x40
 
     while (n > 0) {
         auto len = std::min<int>(std::size(buf) - 1, n);
@@ -160,8 +163,6 @@ void ssd1306<I2CT>::command_list(const uint8_t* c, int n, uint8_t first) {
         n -= len;
 
         m_i2c->transmit(m_addr, tos::span<char>(buf).slice(0, len + 1));
-
-        tos::this_thread::yield();
     }
 }
 } // namespace tos
