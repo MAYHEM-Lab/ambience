@@ -13,21 +13,22 @@
 #include <tos/expected.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/span.hpp>
+#include <arch/detail/afio.hpp>
 
 namespace tos {
 namespace stm32 {
 namespace detail {
 struct spi_def {
-    SPI_TypeDef* spi;
+    uint32_t spi;
     IRQn_Type irq;
     void (*rcc)();
 };
 
 inline spi_def spis[] = {
-    {SPI1, SPI1_IRQn, [] { __HAL_RCC_SPI1_CLK_ENABLE(); }},
-    {SPI2, SPI2_IRQn, [] { __HAL_RCC_SPI2_CLK_ENABLE(); }},
+    {SPI1_BASE, SPI1_IRQn, [] { __HAL_RCC_SPI1_CLK_ENABLE(); }},
+    {SPI2_BASE, SPI2_IRQn, [] { __HAL_RCC_SPI2_CLK_ENABLE(); }},
 #if defined(SPI3)
-    {SPI3, SPI3_IRQn, [] { __HAL_RCC_SPI3_CLK_ENABLE(); }},
+    {SPI3_BASE, SPI3_IRQn, [] { __HAL_RCC_SPI3_CLK_ENABLE(); }},
 #endif
 };
 } // namespace detail
@@ -79,7 +80,7 @@ inline spi::spi(detail::spi_def& spi,
                 std::optional<gpio::pin_type> mosi)
     : tracked_driver(std::distance(&detail::spis[0], &spi))
     , m_handle{} {
-    m_handle.Instance = spi.spi;
+    m_handle.Instance = reinterpret_cast<decltype(m_handle.Instance)>(spi.spi);
 
     SPI_InitTypeDef& spi_init = m_handle.Init;
     spi_init.Mode = SPI_MODE_MASTER;
@@ -94,6 +95,9 @@ inline spi::spi(detail::spi_def& spi,
     spi_init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
     spi_init.CRCPolynomial = 7;
 
+#if !defined(STM32F1)
+    auto [sck_afio, miso_afio, mosi_afio] = detail::afio::get_spi_afio(spi.spi, sck, miso, mosi);
+#endif
     {
         enable_rcc(sck.port);
         GPIO_InitTypeDef init{};
@@ -102,7 +106,7 @@ inline spi::spi(detail::spi_def& spi,
         init.Pull = GPIO_NOPULL;
         init.Speed = detail::gpio_speed::highest();
 #if !defined(STM32F1)
-        init.Alternate = GPIO_AF0_SPI1;
+        init.Alternate = sck_afio;
 #endif
         HAL_GPIO_Init(sck.port, &init);
     }
@@ -115,7 +119,7 @@ inline spi::spi(detail::spi_def& spi,
         init.Pull = GPIO_NOPULL;
         init.Speed = detail::gpio_speed::highest();
 #if !defined(STM32F1)
-        init.Alternate = GPIO_AF0_SPI1;
+        init.Alternate = miso_afio;
 #endif
         HAL_GPIO_Init(miso->port, &init);
     }
@@ -128,7 +132,7 @@ inline spi::spi(detail::spi_def& spi,
         init.Pull = GPIO_NOPULL;
         init.Speed = detail::gpio_speed::highest();
 #if !defined(STM32F1)
-        init.Alternate = GPIO_AF0_SPI1;
+        init.Alternate = mosi_afio;
 #endif
         HAL_GPIO_Init(mosi->port, &init);
     }
