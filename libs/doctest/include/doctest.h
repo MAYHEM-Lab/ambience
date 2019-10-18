@@ -4744,6 +4744,7 @@ namespace {
 
     // clang-format on
 
+#if !defined(DOCTEST_NO_XML_REPORTER)
     struct XmlReporter : public IReporter
     {
         XmlWriter  xml;
@@ -4967,6 +4968,7 @@ namespace {
     };
 
     DOCTEST_REGISTER_REPORTER("xml", 0, XmlReporter);
+#endif
 
     struct Whitespace
     {
@@ -4981,6 +4983,7 @@ namespace {
         return out;
     }
 
+#if !defined(DOCTEST_NO_CONSOLE_REPORTER)
     struct ConsoleReporter : public IReporter
     {
         std::ostream&                 s;
@@ -5426,7 +5429,7 @@ namespace {
     };
 
     DOCTEST_REGISTER_REPORTER("console", 0, ConsoleReporter);
-
+#endif
 #ifdef DOCTEST_PLATFORM_WINDOWS
     struct DebugOutputWindowReporter : public ConsoleReporter
     {
