@@ -231,7 +231,7 @@ namespace etl
     //*********************************************************************
     void resize(size_t new_size, T value)
     {
-      ETL_ASSERT(new_size <= CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT(new_size <= m_capacity, ETL_ERROR(vector_full));
 
       const size_t current_size = size();
       size_t delta = (current_size < new_size) ? new_size - current_size : current_size - new_size;
@@ -369,7 +369,7 @@ namespace etl
 
 #if defined(ETL_DEBUG)
       difference_type d = std::distance(first, last);
-      ETL_ASSERT(static_cast<size_t>(d) <= CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT(static_cast<size_t>(d) <= m_capacity, ETL_ERROR(vector_full));
 #endif
 
       initialise();
@@ -386,7 +386,7 @@ namespace etl
     //*********************************************************************
     void assign(size_t n, parameter_t value)
     {
-      ETL_ASSERT(n <= CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT(n <= m_capacity, ETL_ERROR(vector_full));
 
       initialise();
 
@@ -410,7 +410,7 @@ namespace etl
     void push_back(const_reference value)
     {
 #if defined(ETL_CHECK_PUSH_POP)
-      ETL_ASSERT(size() != CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT(size() != m_capacity, ETL_ERROR(vector_full));
 #endif
       create_back(value);
     }
@@ -424,7 +424,7 @@ namespace etl
     void push_back(rvalue_reference value)
     {
 #if defined(ETL_CHECK_PUSH_POP)
-      ETL_ASSERT(size() != CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT(size() != m_capacity, ETL_ERROR(vector_full));
 #endif
       create_back(std::move(value));
     }
@@ -440,7 +440,7 @@ namespace etl
     void emplace_back(Args && ... args)
     {
 #if defined(ETL_CHECK_PUSH_POP)
-      ETL_ASSERT(size() != CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT(size() != m_capacity, ETL_ERROR(vector_full));
 #endif
       ::new (p_end) T(std::forward<Args>(args)...);
       ++p_end;
@@ -456,7 +456,7 @@ namespace etl
     void emplace_back(const T1& value1)
     {
 #if defined(ETL_CHECK_PUSH_POP)
-      ETL_ASSERT(size() != CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT(size() != m_capacity, ETL_ERROR(vector_full));
 #endif
       ::new (p_end) T(value1);
       ++p_end;
@@ -472,7 +472,7 @@ namespace etl
     void emplace_back(const T1& value1, const T2& value2)
     {
 #if defined(ETL_CHECK_PUSH_POP)
-      ETL_ASSERT(size() != CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT(size() != m_capacity, ETL_ERROR(vector_full));
 #endif
       ::new (p_end) T(value1, value2);
       ++p_end;
@@ -488,7 +488,7 @@ namespace etl
     void emplace_back(const T1& value1, const T2& value2, const T3& value3)
     {
 #if defined(ETL_CHECK_PUSH_POP)
-      ETL_ASSERT(size() != CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT(size() != m_capacity, ETL_ERROR(vector_full));
 #endif
       ::new (p_end) T(value1, value2, value3);
       ++p_end;
@@ -504,7 +504,7 @@ namespace etl
     void emplace_back(const T1& value1, const T2& value2, const T3& value3, const T4& value4)
     {
 #if defined(ETL_CHECK_PUSH_POP)
-      ETL_ASSERT(size() != CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT(size() != m_capacity, ETL_ERROR(vector_full));
 #endif
       ::new (p_end) T(value1, value2, value3, value4);
       ++p_end;
@@ -532,7 +532,7 @@ namespace etl
     //*********************************************************************
     iterator insert(iterator position, const_reference value)
     {
-      ETL_ASSERT(size() + 1 <= CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT(size() + 1 <= m_capacity, ETL_ERROR(vector_full));
 
       if (position == end())
       {
@@ -557,7 +557,7 @@ namespace etl
     //*********************************************************************
     iterator insert(iterator position, rvalue_reference value)
     {
-      ETL_ASSERT(size() + 1 <= CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT(size() + 1 <= m_capacity, ETL_ERROR(vector_full));
 
       if (position == end())
       {
@@ -713,7 +713,7 @@ namespace etl
     //*********************************************************************
     void insert(iterator position, size_t n, parameter_t value)
     {
-      ETL_ASSERT((size() + n) <= CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT((size() + n) <= m_capacity, ETL_ERROR(vector_full));
 
       size_t insert_n = n;
       size_t insert_begin = std::distance(begin(), position);
@@ -770,7 +770,7 @@ namespace etl
     {
       size_t count = std::distance(first, last);
 
-      ETL_ASSERT((size() + count) <= CAPACITY, ETL_ERROR(vector_full));
+      ETL_ASSERT((size() + count) <= m_capacity, ETL_ERROR(vector_full));
 
       size_t insert_n = count;
       size_t insert_begin = std::distance(begin(), position);
@@ -915,7 +915,7 @@ namespace etl
     //*************************************************************************
     bool full() const
     {
-      return size() == CAPACITY;
+      return size() == m_capacity;
     }
 
     //*************************************************************************
