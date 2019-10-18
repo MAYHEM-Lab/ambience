@@ -146,7 +146,7 @@ namespace etl
     //*************************************************************************
     size_type max_size() const
     {
-      return CAPACITY;
+      return m_capacity;
     }
 
     //*************************************************************************
@@ -162,7 +162,7 @@ namespace etl
     //*************************************************************************
     bool full() const
     {
-      return current_size == CAPACITY;
+      return current_size == m_capacity;
     }
 
     //*************************************************************************
@@ -171,7 +171,7 @@ namespace etl
     //*************************************************************************
     size_type capacity() const
     {
-      return CAPACITY;
+      return m_capacity;
     }
 
     //*************************************************************************
@@ -232,7 +232,7 @@ namespace etl
     //*************************************************************************
     map_base(size_type max_size_)
       : current_size(0)
-      , CAPACITY(max_size_)
+      , m_capacity(max_size_)
       , root_node(nullptr)
 
     {
@@ -452,7 +452,7 @@ namespace etl
     }
 
     size_type current_size;   ///< The number of the used nodes.
-    const size_type CAPACITY; ///< The maximum size of the map.
+    const size_type m_capacity; ///< The maximum size of the map.
     Node* root_node;          ///< The node that acts as the map root.
     ETL_DECLARE_DEBUG_COUNT
   };
