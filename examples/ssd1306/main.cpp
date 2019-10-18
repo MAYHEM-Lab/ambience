@@ -9,6 +9,9 @@
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
 #include <tos/version.hpp>
+#include <common/clock.hpp>
+#include <tos/gfx/text.hpp>
+#include <tos/gfx/dimensions.hpp>
 
 namespace tos {
 void delay_ms(std::chrono::milliseconds ms) {
@@ -22,6 +25,8 @@ void delay_us(std::chrono::microseconds us) {
     }
 }
 } // namespace tos
+
+constexpr auto font = tos::gfx::basic_font().rotate_90_cw().rotate_90_cw().rotate_90_cw();
 
 void lcd_main() {
     using namespace tos::tos_literals;
@@ -40,33 +45,48 @@ void lcd_main() {
     i2c t{ stm32::detail::i2cs[0], 24_pin, 25_pin };
     tos::println(usart, "i2c init'd");
 
-    ssd1306 l{&t, {0x3C}, 128, 64};
-    l.dim(false);
+    ssd1306 oled{&t, {0x3C}, 128, 64};
+    oled.dim(false);
 
     auto tmr = open(devs::timer<2>);
     auto alarm = open(devs::alarm, tmr);
+
+    auto tmr3 = open(devs::timer<3>);
+    tos::clock clk(&tmr3);
+
+    std::array<char, 20> buf;
+    auto last = clk.now();
+    while (true)
+    {
+        tos::omemory_stream str(buf);
+        auto now = clk.now();
+        tos::print(str, int((now - last).count()));
+
+        draw_text(oled,
+                  font,
+                  str.get(),
+                  tos::gfx::point{36, 0},
+                  tos::gfx::text_direction::vertical);
+
+        last = clk.now();
+        oled.display();
+    }
 
     bool go = true;
     uint32_t x = 0;
     while (true) {
         using namespace std::chrono_literals;
 
-        // tos::println(usart, "tick", x);
-
         for (int i = 0; i < 128; ++i) {
-            l.set_pixel(x % 64, i, go);
+            oled.set_pixel(x % 64, i, go);
         }
-        l.display();
+        oled.display();
         if (x % 64 == 63) {
             go ^= true;
-            alarm->sleep_for(5s);
         }
 
         tos::println(usart, "tick", int(x));
         ++x;
-
-        std::array<char, 1> b;
-        usart->read(b, alarm, 10ms);
     }
 }
 
