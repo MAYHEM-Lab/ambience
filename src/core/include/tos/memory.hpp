@@ -5,7 +5,7 @@
 #pragma once
 
 #include <cstddef>
-#include <tos/utility.hpp>
+#include <cstdint>
 
 namespace tos {
 /**
