@@ -12,6 +12,7 @@ add_subdirectory(range-v3-0.5.0)
 add_subdirectory(etl)
 add_subdirectory(gfx)
 add_subdirectory(flatbuffers)
+add_subdirectory(doctest)
 
 if (NOT ${TOS_CORE} MATCHES "esp8266|atmega")
     add_subdirectory(json)

@@ -1,8 +1,5 @@
 project(tos)
 
-add_library(doctest INTERFACE)
-target_include_directories(doctest INTERFACE include)
-
 add_library(catch_main tests_main.cpp)
 target_compile_features(catch_main PUBLIC cxx_std_14)
 target_compile_options(catch_main PUBLIC -fexceptions)
