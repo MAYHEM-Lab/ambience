@@ -47,14 +47,20 @@ tos::expected<void, flash_errors> flash::erase(sector_id_t sector_id) {
     }
 
     FLASH_EraseInitTypeDef erase_info{};
-    erase_info.TypeErase = FLASH_TYPEERASE_PAGES;
 #if defined(STM32L4)
+    erase_info.TypeErase = FLASH_TYPEERASE_PAGES;
     erase_info.Banks = FLASH_BANK_1;
     erase_info.Page = sector_id;
-#elif defined(STM32L0) || defined(STM32F1)
-    erase_info.PageAddress = addr;
-#endif
     erase_info.NbPages = 1;
+#elif defined(STM32L0) || defined(STM32F1)
+    erase_info.TypeErase = FLASH_TYPEERASE_PAGES;
+    erase_info.PageAddress = addr;
+    erase_info.NbPages = 1;
+#elif defined(STM32F7)
+    erase_info.TypeErase = FLASH_TYPEERASE_SECTORS;
+    erase_info.Sector = sector_id;
+    erase_info.NbSectors = 1;
+#endif
     
     auto erase_status = HAL_FLASHEx_Erase_IT(&erase_info);
     if (erase_status != HAL_OK) {
