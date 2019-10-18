@@ -46,7 +46,7 @@ struct promise_info : public promise_info_base {
 
     ~promise_info() {
         m_ready.down();
-        get_ptr()->~T();
+        std::destroy_at(get_ptr());
     }
 
 private:

@@ -4,29 +4,41 @@
 
 #pragma once
 
+#include "detail/afio.hpp"
 #include "gpio.hpp"
 
 #include <common/driver_base.hpp>
 #include <common/usart.hpp>
+#include <optional>
 #include <stm32_hal/usart.hpp>
 #include <tos/fixed_fifo.hpp>
+#include <tos/future.hpp>
 #include <tos/ring_buf.hpp>
 
 namespace tos {
 namespace stm32 {
 namespace detail {
 struct usart_def {
-    USART_TypeDef* usart;
+    uint32_t usart;
     IRQn_Type irq;
     void (*rcc_en)();
     void (*rcc_dis)();
 };
 
 inline const usart_def usarts[] = {
-    {USART1, USART1_IRQn, [] { __HAL_RCC_USART1_CLK_ENABLE(); }, [] { __HAL_RCC_USART1_CLK_DISABLE(); }},
-    {USART2, USART2_IRQn, [] { __HAL_RCC_USART2_CLK_ENABLE(); }, [] { __HAL_RCC_USART2_CLK_DISABLE(); }},
+    {USART1_BASE,
+     USART1_IRQn,
+     [] { __HAL_RCC_USART1_CLK_ENABLE(); },
+     [] { __HAL_RCC_USART1_CLK_DISABLE(); }},
+    {USART2_BASE,
+     USART2_IRQn,
+     [] { __HAL_RCC_USART2_CLK_ENABLE(); },
+     [] { __HAL_RCC_USART2_CLK_DISABLE(); }},
 #if defined(USART3)
-    {USART3, USART3_IRQn, [] { __HAL_RCC_USART3_CLK_ENABLE(); }, [] { __HAL_RCC_USART3_CLK_DISABLE(); }},
+    {USART3_BASE,
+     USART3_IRQn,
+     [] { __HAL_RCC_USART3_CLK_ENABLE(); },
+     [] { __HAL_RCC_USART3_CLK_DISABLE(); }},
 #endif
 };
 } // namespace detail
@@ -45,6 +57,8 @@ public:
                    usart_constraint&&,
                    gpio::pin_type rx,
                    gpio::pin_type tx);
+
+    future<int> write_async(tos::span<const uint8_t> buf);
 
     int write(tos::span<const uint8_t> buf);
 
@@ -68,6 +82,10 @@ public:
     }
 
     void tx_done_isr() {
+        if (m_async) {
+            m_async->tx_promise.set(0);
+            return;
+        }
         tx_s.up_isr();
     }
 
@@ -86,6 +104,12 @@ private:
     tos::fixed_fifo<uint8_t, 32, tos::ring_buf> rx_buf;
     tos::semaphore rx_s{0};
     tos::semaphore tx_s{0};
+
+    struct async_state {
+        tos::promise<int> tx_promise;
+    };
+
+    std::optional<async_state> m_async;
 
     uint8_t m_recv_byte;
     UART_HandleTypeDef m_handle;
@@ -133,7 +157,7 @@ inline usart::usart(const detail::usart_def& x,
         init.Pull = GPIO_NOPULL;
         init.Speed = detail::gpio_speed::highest();
 #if !defined(STM32F1)
-        init.Alternate = GPIO_AF4_USART1;
+        init.Alternate = detail::afio::get_usart_afio(m_def->usart, rx_pin, tx_pin).first;
 #endif
         HAL_GPIO_Init(rx_pin.port, &init);
     }
@@ -146,13 +170,13 @@ inline usart::usart(const detail::usart_def& x,
         init.Pull = GPIO_NOPULL;
         init.Speed = detail::gpio_speed::highest();
 #if !defined(STM32F1)
-        init.Alternate = GPIO_AF4_USART1;
+        init.Alternate = detail::afio::get_usart_afio(m_def->usart, rx_pin, tx_pin).second;
 #endif
         HAL_GPIO_Init(tx_pin.port, &init);
     }
 
     m_handle = {};
-    m_handle.Instance = m_def->usart;
+    m_handle.Instance = reinterpret_cast<decltype(m_handle.Instance)>(m_def->usart);
     m_handle.Init.BaudRate = tos::get<usart_baud_rate>(params).rate;
     m_handle.Init.WordLength = UART_WORDLENGTH_8B;
     m_handle.Init.StopBits = UART_STOPBITS_1;
@@ -206,12 +230,24 @@ inline tos::span<char> usart::read(tos::span<char> b) {
 inline int usart::write(tos::span<const uint8_t> buf) {
     if (buf.empty())
         return 0;
-    auto res = HAL_UART_Transmit_IT(&m_handle, const_cast<uint8_t*>(buf.data()), buf.size());
-    if (res != HAL_OK)
-    {
+    auto res =
+        HAL_UART_Transmit_IT(&m_handle, const_cast<uint8_t*>(buf.data()), buf.size());
+    if (res != HAL_OK) {
         return -1;
     }
     tx_s.down();
     return buf.size();
+}
+
+inline future<int> usart::write_async(tos::span<const uint8_t> buf) {
+    m_async.emplace();
+    if (buf.empty())
+        return {};
+    auto res =
+        HAL_UART_Transmit_IT(&m_handle, const_cast<uint8_t*>(buf.data()), buf.size());
+    if (res != HAL_OK) {
+        return {};
+    }
+    return m_async->tx_promise.get_future();
 }
 } // namespace tos::stm32
