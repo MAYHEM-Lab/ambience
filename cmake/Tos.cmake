@@ -19,7 +19,7 @@ endfunction()
 
 set(TOS_FLAGS "-Wall -Wextra -Wpedantic \
      -ffunction-sections -fdata-sections -ffreestanding -g -pedantic -freorder-functions \
-        -Wno-unknown-pragmas")
+        -Wno-unknown-pragmas -fdump-ipa-cgraph")
 
 set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions -fno-exceptions -fno-rtti -fno-unwind-tables")
 
