@@ -143,7 +143,7 @@ inline thread_id_t __attribute__((optimize("-Os"))) scheduler::start(TaskT& t) {
         return {reinterpret_cast<uintptr_t>(static_cast<tcb*>(&t))};
     }
 
-    // If a non maskable interrupt fires here, we're probably toast
+    // TODO(#35): If a non maskable interrupt fires here, we're toast.
 
     /**
      * this is the actual entry point of the thread.
@@ -202,7 +202,7 @@ inline exit_reason scheduler::schedule() {
             switch_context(self()->get_ctx(), return_codes::scheduled);
         }
         case return_codes::do_exit: {
-            // TODO: keeps calling destructors after freeing memory -_-
+            // TODO(#34): Potentially a use-after-free. See the issue.
             std::destroy_at(self());
             num_threads--;
             break;
