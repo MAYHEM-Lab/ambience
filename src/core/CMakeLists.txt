@@ -36,7 +36,7 @@ target_link_libraries(tos_arch PUBLIC ${TOS_ARCH_NAME}_impl)
 message(STATUS ${TOS_ARCH_NAME}_impl)
 
 add_library(tos_interrupt include/tos/interrupt.hpp src/interrupt.cpp)
-target_link_libraries(tos_interrupt PUBLIC tos_arch_core)
+target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core)
 
 target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_arch)
 target_compile_definitions(tos_core PUBLIC TOS_ARCH_${TOS_ARCH_NAME})
