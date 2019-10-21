@@ -15,6 +15,7 @@ For instance, there are other forks of openocd for ESP32 and RISC V.
 
 Install the dependencies:
 
+[source,sh]
 ----
 $ sudo apt-get install make
 $ sudo apt-get install libtool
