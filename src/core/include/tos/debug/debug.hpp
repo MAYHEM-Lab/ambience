@@ -8,11 +8,17 @@
 
 namespace tos {
 namespace debug {
+/**
+ * This function template prevents the compiler from optimizing out the given argument.
+ */
 template <class Tp>
 ALWAYS_INLINE void do_not_optimize(Tp const& value) {
     asm volatile("" : : "r,m"(value) : "memory");
 }
 
+/**
+ * This function template prevents the compiler from optimizing out the given argument.
+ */
 template <class Tp>
 ALWAYS_INLINE void do_not_optimize(Tp& value) {
 #if defined(__clang__)
