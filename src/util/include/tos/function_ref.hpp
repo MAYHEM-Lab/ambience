@@ -51,8 +51,8 @@ namespace tos
         template <class T, std::enable_if_t<!std::is_same_v<T, function_ref>>* = nullptr>
         explicit function_ref(T& func) : m_fun([](ArgTs... args, void* data) -> RetT {
             static_assert(!std::is_const_v<T>, "Function cannot be a temporary!");
-            auto& foo = *static_cast<T*>(data);
-            return foo(std::forward<ArgTs>(args)...);
+            auto& actual_fun = *static_cast<T*>(data);
+            return actual_fun(std::forward<ArgTs>(args)...);
         }), m_data(&func) {}
 
         template <class... CallArgTs>
