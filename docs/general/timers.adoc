@@ -91,4 +91,4 @@ By far, the most common use case of an alarm is to put a thread to sleep for som
 tos::this_thread::sleep_for(alarm, 5s);
 ----
 
-`sleep_for` basically constructs an <<synchronization#events,event>>, and 
+`sleep_for` basically constructs an <<synchronization#events,event>>, and creates a `sleeper` with a function that simply notifies the said `event`. After setting the alarm, it then waits for the event to fire, thus putting the current thread to sleep for the given duration.
