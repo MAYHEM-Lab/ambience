@@ -81,7 +81,7 @@ public:
     }
 
 private:
-    tos::fixed_fifo<uint8_t, 32, tos::ring_buf> rx_buf;
+    tos::basic_fixed_fifo<uint8_t, 32, tos::ring_buf> rx_buf;
     tos::semaphore rx_s{0};
     tos::semaphore tx_s{0};
 

@@ -9,12 +9,10 @@
 #include <memory>
 #include <new>
 #include <tos/interrupt.hpp>
-#include <tos/utility.hpp>
-#include <tos/sync_ring_buf.hpp>
 
 namespace tos {
-  template<class T, size_t Len, class RingBufT = sync_ring_buf>
-  class fixed_fifo {
+  template<class T, size_t Len, class RingBufT>
+  class basic_fixed_fifo {
   public:
     void push(T t);
 
@@ -45,7 +43,7 @@ namespace tos {
 
 namespace tos {
   template<class T, size_t Len, class RingBufT>
-  void fixed_fifo<T, Len, RingBufT>::push(T t) {
+  void basic_fixed_fifo<T, Len, RingBufT>::push(T t) {
     auto i = m_rb.push();
     // push can block, so we disable interrupts after we get the index
     int_guard ig;
@@ -54,7 +52,7 @@ namespace tos {
   }
 
   template<class T, size_t Len, class RingBufT>
-  T fixed_fifo<T, Len, RingBufT>::pop() {
+  T basic_fixed_fifo<T, Len, RingBufT>::pop() {
     auto i = m_rb.pop();
     // pop can block, so we disable interrupts after we get the index
     int_guard ig;

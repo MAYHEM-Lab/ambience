@@ -73,7 +73,7 @@ void usart_setup(tos::stm32::gpio& g)
 static gpio* gp;
 static spi* radio_spi;
 auto cs_pin = 21_pin;
-tos::fixed_fifo<char, 128> pr;
+tos::sync_fixed_fifo<char, 128> pr;
 
 auto delay = [](std::chrono::microseconds us) {
     uint32_t end = (us.count() * (rcc_ahb_frequency / 1'000'000)) / 13.3;
