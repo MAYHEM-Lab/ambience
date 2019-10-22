@@ -1,9 +1,9 @@
-#pragma once 
-#include <vector>
-#include <tos/crc32.hpp>
-#include <tos/fixed_fifo.hpp>
+#pragma once
 #include <algorithm>
 #include <optional>
+#include <tos/crc32.hpp>
+#include <tos/fixed_fifo.hpp>
+#include <vector>
 
 namespace tos {
 
@@ -12,10 +12,9 @@ class multiplexed_stream {
 public:
     using streamid_t = typename MultiplexerT::streamid_t;
 
-
     multiplexed_stream(MultiplexerT& multiplexer, streamid_t streamid)
-        : m_multiplexer(&multiplexer), m_streamid(streamid) 
-    {
+        : m_multiplexer(&multiplexer)
+        , m_streamid(streamid) {
     }
 
     int write(tos::span<const char> span) {
@@ -28,7 +27,7 @@ public:
 
 private:
     streamid_t m_streamid;
-    MultiplexerT *m_multiplexer;
+    MultiplexerT* m_multiplexer;
 };
 
 template<class UsartT, size_t BufferSize>
@@ -37,7 +36,8 @@ public:
     using usart_type = UsartT;
     using streamid_t = uint16_t;
 
-    serial_multiplexer(UsartT usart) : m_usart(std::move(usart)) {
+    explicit serial_multiplexer(UsartT usart)
+        : m_usart(std::move(usart)) {
     }
 
     multiplexed_stream<serial_multiplexer> create_stream(streamid_t streamid) {
@@ -47,7 +47,8 @@ public:
         return multiplexed_stream(*this, streamid);
     }
 
-    std::optional<multiplexed_stream<serial_multiplexer>> get_stream(streamid_t streamid) {
+    std::optional<multiplexed_stream<serial_multiplexer>>
+    get_stream(streamid_t streamid) {
         if (auto stream = find_stream(streamid); !stream) {
             return std::nullopt;
         }
@@ -57,12 +58,12 @@ public:
     int write(streamid_t streamid, tos::span<const char> span) {
         this->m_usart->write(magic_numbers);
         this->m_usart->write(raw_cast<const char>(tos::monospan(streamid)));
-        uint16_t size = (uint64_t) span.size();
+        uint16_t size = (uint64_t)span.size();
         this->m_usart->write(raw_cast<const char>(tos::monospan(size)));
         this->m_usart->write(span);
         uint32_t crc32 = tos::crc32(span);
         this->m_usart->write(raw_cast<const char>(tos::monospan(crc32)));
-        
+
         return span.size();
     }
 
@@ -73,41 +74,39 @@ public:
             return tos::empty_span<char>();
 
         auto readinto = span;
-        
+
         while (true) {
-            auto curslice = readinto.slice(0, std::min(readinto.size(), stream->data->size()));
+            auto curslice =
+                readinto.slice(0, std::min(readinto.size(), stream->data->size()));
             stream->read(curslice);
             readinto = readinto.slice(curslice.size());
 
             if (readinto.size() != 0) {
-                streamid_t packet_from_id;
-                while ((packet_from_id = next_packet()) != streamid) {
+                while (next_packet() != streamid) {
                 }
-            } else 
-                break ;
+            } else
+                break;
         }
         return span;
     }
 
     constexpr static std::array<char, 8> magic_numbers = {
-        0x78, 0x9c, 0xc5, 0x45, 0xe3, 0xc8, 0x0e, 0x37
-    };
+        0x78, 0x9c, 0xc5, 0x45, 0xe3, 0xc8, 0x0e, 0x37};
 
 private:
     struct stream_data {
         streamid_t streamid;
         std::unique_ptr<tos::fixed_fifo<char, BufferSize>> data;
 
-        stream_data(streamid_t streamid) 
-            : streamid(streamid), data(std::make_unique<tos::fixed_fifo<char, BufferSize>>()) 
-        {
-
+        explicit stream_data(streamid_t streamid)
+            : streamid(streamid)
+            , data(std::make_unique<tos::fixed_fifo<char, BufferSize>>()) {
         }
 
         void append(tos::span<const char> span) {
             for (auto chr : span) {
                 if (data->size() == data->capacity())
-                    return ;
+                    return;
                 data->push(chr);
             }
         }
@@ -120,16 +119,18 @@ private:
         }
     };
 
-    stream_data *find_stream(streamid_t streamid) {
-        auto it = std::find_if(this->m_streams.begin(), this->m_streams.end(), [streamid](auto &stream) {
-            return stream.streamid == streamid;
-        });
-        if (it == this->m_streams.end()) return nullptr;
+    stream_data* find_stream(streamid_t streamid) {
+        auto it = std::find_if(
+            this->m_streams.begin(), this->m_streams.end(), [streamid](auto& stream) {
+                return stream.streamid == streamid;
+            });
+        if (it == this->m_streams.end())
+            return nullptr;
         return &(*it);
     }
 
     streamid_t next_packet() {
-        begin_magicnumber:
+    begin_magicnumber:
         for (auto chr : magic_numbers) {
             char tmp;
             m_usart->read(tos::monospan(tmp));
@@ -143,7 +144,7 @@ private:
 
         m_usart->read(raw_cast<char>(tos::monospan(streamid)));
         m_usart->read(raw_cast<char>(tos::monospan(size)));
-        
+
         auto stream = find_stream(streamid);
         if (!stream) {
             for (uint16_t i = 0; i < size; ++i) {
@@ -152,14 +153,12 @@ private:
             }
             return streamid;
         }
-        
+
         for (uint16_t i = 0; i < size; ++i) {
             char tmp;
             m_usart->read(tos::monospan(tmp));
             stream->append(tos::monospan(tmp));
         }
-
-
 
         return streamid;
     }
@@ -168,4 +167,4 @@ private:
     std::vector<stream_data> m_streams;
 };
 
-}
+} // namespace tos
