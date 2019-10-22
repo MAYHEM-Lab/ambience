@@ -17,7 +17,7 @@ struct vec3i {
     int32_t x, y, z;
 };
 
-tos::fixed_fifo<vec3i, 20> fifo;
+tos::sync_fixed_fifo<vec3i, 20> fifo;
 
 tos::stack_storage<1024> accel_stack;
 auto task = [] {

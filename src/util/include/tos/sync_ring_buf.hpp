@@ -6,6 +6,7 @@
 
 #include <tos/ring_buf.hpp>
 #include <tos/semaphore.hpp>
+#include <tos/fixed_fifo.hpp>
 
 namespace tos
 {
@@ -57,4 +58,7 @@ namespace tos
     private:
         tos::semaphore m_read, m_put;
     };
+
+    template <class ElemT, size_t Size>
+    using sync_fixed_fifo = basic_fixed_fifo<ElemT, Size, sync_ring_buf>;
 }

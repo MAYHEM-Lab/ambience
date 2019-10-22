@@ -13,7 +13,7 @@ extern "C" {
 }
 namespace {
 tos::track_ptr<tos::esp82::wifi_connection> conn;
-tos::fixed_fifo<System_Event_t, 8> events;
+tos::sync_fixed_fifo<System_Event_t, 8> events;
 
 void wifi_handler(System_Event_t* ev) {
     if (events.size() == events.capacity()) {

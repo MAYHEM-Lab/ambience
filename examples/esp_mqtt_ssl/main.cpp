@@ -24,7 +24,7 @@
 #include <inttypes.h>
 #include <string>
 
-static tos::fixed_fifo<sntp_res_t, 127> vecs;
+static tos::sync_fixed_fifo<sntp_res_t, 127> vecs;
 
 template <class T>
 int handle_samples(MQTT::Client<T, timer_facade, 512> &client) {

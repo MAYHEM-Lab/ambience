@@ -35,7 +35,7 @@ TEST_CASE("base ring buffer")
 
 TEST_CASE("fifo test")
 {
-    tos::fixed_fifo<char, 4, tos::ring_buf> ff;
+    tos::basic_fixed_fifo<char, 4, tos::ring_buf> ff;
     ff.push('a');
     REQUIRE(ff.pop() == 'a');
     ff.push('b');
