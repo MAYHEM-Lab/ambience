@@ -3,12 +3,13 @@
 #include <optional>
 #include <tos/crc32.hpp>
 #include <tos/fixed_fifo.hpp>
+#include <tos/self_pointing.hpp>
 #include <vector>
 
 namespace tos {
 
 template<class MultiplexerT>
-class multiplexed_stream {
+class multiplexed_stream : public self_pointing<multiplexed_stream<MultiplexerT>> {
 public:
     using streamid_t = typename MultiplexerT::streamid_t;
 
@@ -35,6 +36,7 @@ class serial_multiplexer {
 public:
     using usart_type = UsartT;
     using streamid_t = uint16_t;
+    using checksum_type = uint32_t;
 
     explicit serial_multiplexer(UsartT usart)
         : m_usart(std::move(usart)) {
@@ -77,7 +79,7 @@ public:
 
         while (true) {
             auto curslice =
-                readinto.slice(0, std::min(readinto.size(), stream->data->size()));
+                readinto.slice(0, std::min(readinto.size(), stream->data.size()));
             stream->read(curslice);
             readinto = readinto.slice(curslice.size());
 
@@ -96,26 +98,29 @@ public:
 private:
     struct stream_data {
         streamid_t streamid;
-        std::unique_ptr<tos::fixed_fifo<char, BufferSize>> data;
+        tos::basic_fixed_fifo<char, BufferSize, ring_buf> data;
 
         explicit stream_data(streamid_t streamid)
-            : streamid(streamid)
-            , data(std::make_unique<tos::fixed_fifo<char, BufferSize>>()) {
+            : streamid(streamid) {
         }
 
         void append(tos::span<const char> span) {
             for (auto chr : span) {
-                if (data->size() == data->capacity())
+                if (data.size() == data.capacity())
                     return;
-                data->push(chr);
+                data.push(chr);
             }
         }
 
         tos::span<char> read(tos::span<char> span) {
             for (auto& chr : span) {
-                chr = data->pop();
+                chr = data.pop();
             }
             return span;
+        }
+
+        void clear() {
+            data = decltype(data){};
         }
     };
 
@@ -130,7 +135,7 @@ private:
     }
 
     streamid_t next_packet() {
-    begin_magicnumber:
+        begin_magicnumber:
         for (auto chr : magic_numbers) {
             char tmp;
             m_usart->read(tos::monospan(tmp));
@@ -147,17 +152,30 @@ private:
 
         auto stream = find_stream(streamid);
         if (!stream) {
-            for (uint16_t i = 0; i < size; ++i) {
+            // Received a packet for a non-existent stream, but we still have to read the
+            // content + checksum
+            for (uint16_t i = 0; i < size + sizeof(checksum_type); ++i) {
                 char tmp;
                 m_usart->read(tos::monospan(tmp));
             }
             return streamid;
         }
 
+        uint32_t crc = 0;
         for (uint16_t i = 0; i < size; ++i) {
             char tmp;
             m_usart->read(tos::monospan(tmp));
             stream->append(tos::monospan(tmp));
+            crc = crc32(tos::monospan(tmp), crc);
+        }
+
+        uint32_t wire_crc;
+        m_usart->read(tos::raw_cast<char>(tos::monospan(wire_crc)));
+
+        if (wire_crc != crc) {
+            // CRC Mismatch, drop packet
+            stream->clear();
+            return -1;
         }
 
         return streamid;
@@ -166,5 +184,4 @@ private:
     UsartT m_usart;
     std::vector<stream_data> m_streams;
 };
-
 } // namespace tos
