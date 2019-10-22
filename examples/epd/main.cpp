@@ -42,21 +42,21 @@ void blink_task() {
 
     tos::gde021a1 display(&spi, chip_select, data_command, 18_pin, 8_pin, delay);
 
-    static tos::gfx::fixed_canvas<72, 172> frame_buffer;
+    using namespace tos::gfx;
+    static fixed_canvas<72, 172> frame_buffer;
     frame_buffer.fill(true);
 
     static constexpr auto font =
-        tos::gfx::basic_font().mirror_horizontal().rotate_90_cw().inverted();
+        basic_font().mirror_horizontal().rotate_90_cw().inverted();
 
     draw_text_line(frame_buffer,
                    font,
                    "tos",
-                   tos::gfx::point{0, 0},
-                   tos::gfx::text_direction::vertical);
+                   point{0, 0},
+                   text_direction::vertical);
 
-    using namespace tos;
-    display.set_display_window(gfx::point{0, 0}, gfx::dimensions{172, 72});
-    display.draw_framebuffer(gfx::dimensions{172, 72}, frame_buffer.data());
+    display.set_display_window(point{0, 0}, dimensions{172, 72});
+    display.draw_framebuffer(dimensions{172, 72}, frame_buffer.data());
     display.refresh_display();
 
     tos::this_thread::block_forever();
