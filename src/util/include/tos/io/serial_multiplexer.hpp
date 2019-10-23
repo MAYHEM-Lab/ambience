@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <optional>
 #include <tos/crc32.hpp>
+#include <tos/expected.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/self_pointing.hpp>
 #include <vector>
@@ -29,6 +30,12 @@ public:
 private:
     streamid_t m_streamid;
     MultiplexerT* m_multiplexer;
+};
+
+enum class serial_multiplexer_errors
+{
+    stream_closed,
+    bad_crc
 };
 
 template<class UsartT, size_t BufferSize>
@@ -84,7 +91,22 @@ public:
             readinto = readinto.slice(curslice.size());
 
             if (readinto.size() != 0) {
-                while (next_packet() != streamid) {
+                while (true) {
+                    auto next_packet_res = next_packet();
+                    if (!next_packet_res) {
+                        switch (force_error(next_packet_res)) {
+                            case serial_multiplexer_errors::stream_closed:
+                                // Stream is dead
+                                return tos::empty_span<char>();
+                            default:
+                                continue;
+                        }
+                    }
+
+                    // We got a packet
+                    if (force_get(next_packet_res) == streamid) {
+                        break;
+                    }
                 }
             } else
                 break;
@@ -134,11 +156,14 @@ private:
         return &(*it);
     }
 
-    streamid_t next_packet() {
+    tos::expected<streamid_t, serial_multiplexer_errors> next_packet() {
         begin_magicnumber:
         for (auto chr : magic_numbers) {
             char tmp;
-            m_usart->read(tos::monospan(tmp));
+            auto read_res = m_usart->read(tos::monospan(tmp));
+            if (read_res.empty()) {
+                return tos::unexpected(serial_multiplexer_errors::stream_closed);
+            }
             if (tmp != chr) {
                 goto begin_magicnumber;
             }
@@ -147,8 +172,15 @@ private:
         streamid_t streamid;
         uint16_t size;
 
-        m_usart->read(raw_cast<char>(tos::monospan(streamid)));
-        m_usart->read(raw_cast<char>(tos::monospan(size)));
+        auto read_res = m_usart->read(raw_cast<char>(tos::monospan(streamid)));
+        if (read_res.empty()) {
+            return tos::unexpected(serial_multiplexer_errors::stream_closed);
+        }
+
+        read_res = m_usart->read(raw_cast<char>(tos::monospan(size)));
+        if (read_res.empty()) {
+            return tos::unexpected(serial_multiplexer_errors::stream_closed);
+        }
 
         auto stream = find_stream(streamid);
         if (!stream) {
@@ -156,7 +188,10 @@ private:
             // content + checksum
             for (uint16_t i = 0; i < size + sizeof(checksum_type); ++i) {
                 char tmp;
-                m_usart->read(tos::monospan(tmp));
+                read_res = m_usart->read(tos::monospan(tmp));
+                if (read_res.empty()) {
+                    return tos::unexpected(serial_multiplexer_errors::stream_closed);
+                }
             }
             return streamid;
         }
@@ -164,18 +199,28 @@ private:
         uint32_t crc = 0;
         for (uint16_t i = 0; i < size; ++i) {
             char tmp;
-            m_usart->read(tos::monospan(tmp));
+            read_res = m_usart->read(tos::monospan(tmp));
+            if (read_res.empty()) {
+                // Did not get to read the whole packet, drop it
+                stream->clear();
+                return tos::unexpected(serial_multiplexer_errors::stream_closed);
+            }
             stream->append(tos::monospan(tmp));
             crc = crc32(tos::monospan(tmp), crc);
         }
 
         uint32_t wire_crc;
-        m_usart->read(tos::raw_cast<char>(tos::monospan(wire_crc)));
+        read_res = m_usart->read(tos::raw_cast<char>(tos::monospan(wire_crc)));
+        if (read_res.empty()) {
+            // Did not get to read the whole CRC, drop packet
+            stream->clear();
+            return tos::unexpected(serial_multiplexer_errors::stream_closed);
+        }
 
         if (wire_crc != crc) {
             // CRC Mismatch, drop packet
             stream->clear();
-            return -1;
+            return tos::unexpected(serial_multiplexer_errors::bad_crc);
         }
 
         return streamid;
