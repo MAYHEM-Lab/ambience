@@ -7,6 +7,7 @@
 #include <string.h>
 #include <tos/fixed_fifo.hpp>
 #include <tos/semaphore.hpp>
+#include <tos/sync_ring_buf.hpp>
 
 extern "C" {
 #include <user_interface.h>
