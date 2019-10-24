@@ -27,11 +27,6 @@ namespace tos {
             spi_master = 0b11
         };
 
-        constexpr uint8_t usart_control(usart_modes mode, usart_parity parity, usart_stop_bit stop) {
-            // only support 8 bit chars atm
-            return ((uint8_t) mode << 6) | ((uint8_t) parity << 4) | ((uint8_t) stop << 3) | (0b11 << 1);
-        }
-
         using usart_constraint =
         ct_map<usart_key_policy,
                 el_t<usart_baud_rate, const usart_baud_rate&>,
