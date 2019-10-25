@@ -70,7 +70,7 @@ public:
         uint16_t size = (uint64_t)span.size();
         this->m_usart->write(raw_cast<const char>(tos::monospan(size)));
         this->m_usart->write(span);
-        uint32_t crc32 = tos::crc32(span);
+        uint32_t crc32 = tos::crc32(tos::raw_cast<const uint8_t>(span));
         this->m_usart->write(raw_cast<const char>(tos::monospan(crc32)));
 
         return span.size();
@@ -206,7 +206,7 @@ private:
                 return tos::unexpected(serial_multiplexer_errors::stream_closed);
             }
             stream->append(tos::monospan(tmp));
-            crc = crc32(tos::monospan(tmp), crc);
+            crc = crc32(tos::raw_cast<const uint8_t>(tos::monospan(tmp)), crc);
         }
 
         uint32_t wire_crc;
