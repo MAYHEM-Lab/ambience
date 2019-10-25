@@ -6,7 +6,7 @@
 namespace tos {
     constexpr static auto crc32_poly = 0x82f63b78;
     
-    inline uint32_t crc32(tos::span<const char> buffer, uint32_t crc = 0, uint32_t poly=crc32_poly)
+    inline uint32_t crc32(tos::span<const uint8_t> buffer, uint32_t crc = 0, uint32_t poly=crc32_poly)
     {
         crc = ~crc;
         for (auto chr : buffer) {
