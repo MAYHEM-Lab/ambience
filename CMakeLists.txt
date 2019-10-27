@@ -5,22 +5,23 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(config/HandleConfig.cmake)
 
+if (TOS_TOOLCHAIN)
+    set(CMAKE_TOOLCHAIN_FILE cmake/${TOS_TOOLCHAIN}.cmake)
+endif()
+
+unset(WIN32)
+project(tos VERSION 0.1.0)
+
 include(Tos)
 
 if (NOT ${CMAKE_BUILD_TYPE} MATCHES "MinSizeRel")
     message(WARNING "Build is not optimized for minimum size\nThis is not an error, but binaries will be large.")
 endif()
 
-if (TOS_TOOLCHAIN)
-    set(CMAKE_TOOLCHAIN_FILE cmake/${TOS_TOOLCHAIN}.cmake)
-endif()
-
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "CFLAGS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "CXXFLAGS")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING "LINKERFLAGS")
 
-unset(WIN32)
-project(tos VERSION 0.1.0)
 message(STATUS "${CMAKE_CXX_FLAGS}")
 
 enable_testing()
@@ -72,7 +73,7 @@ elseif(${TOS_CORE} MATCHES "esp")
 
     add_subdirectory(examples/esp_adxl345)
     add_subdirectory(examples/esp_ssd1306)
-elseif(${TOS_CORE} MATCHES "x86")
+elseif(${TOS_CORE} MATCHES "x86_hosted")
     #add_subdirectory(examples/bearssl)
     add_subdirectory(examples/simple_portable)
     add_subdirectory(examples/x86_timer)
