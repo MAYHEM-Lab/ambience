@@ -38,7 +38,31 @@ enum class serial_multiplexer_errors
     bad_crc
 };
 
-template<class UsartT, size_t BufferSize>
+template <size_t BufferSize>
+struct stream_buffer {
+    tos::basic_fixed_fifo<char, BufferSize, ring_buf> data;
+
+    void append(tos::span<const char> span) {
+        for (auto chr : span) {
+            if (data.size() == data.capacity())
+                return;
+            data.push(chr);
+        }
+    }
+
+    tos::span<char> read(tos::span<char> span) {
+        for (auto& chr : span) {
+            chr = data.pop();
+        }
+        return span;
+    }
+
+    void clear() {
+        data = decltype(data){};
+    }
+};
+
+template<class UsartT, class StreamDataT = stream_buffer<32>>
 class serial_multiplexer {
 public:
     using usart_type = UsartT;
@@ -51,7 +75,7 @@ public:
 
     multiplexed_stream<serial_multiplexer> create_stream(streamid_t streamid) {
         if (auto stream = find_stream(streamid); !stream) {
-            this->m_streams.emplace_back(streamid);
+            m_streams.emplace_back(streamid, StreamDataT{});
         }
         return multiplexed_stream(*this, streamid);
     }
@@ -118,42 +142,14 @@ public:
         0x78, 0x9c, 0xc5, 0x45, 0xe3, 0xc8, 0x0e, 0x37};
 
 private:
-    struct stream_data {
-        streamid_t streamid;
-        tos::basic_fixed_fifo<char, BufferSize, ring_buf> data;
-
-        explicit stream_data(streamid_t streamid)
-            : streamid(streamid) {
-        }
-
-        void append(tos::span<const char> span) {
-            for (auto chr : span) {
-                if (data.size() == data.capacity())
-                    return;
-                data.push(chr);
-            }
-        }
-
-        tos::span<char> read(tos::span<char> span) {
-            for (auto& chr : span) {
-                chr = data.pop();
-            }
-            return span;
-        }
-
-        void clear() {
-            data = decltype(data){};
-        }
-    };
-
-    stream_data* find_stream(streamid_t streamid) {
+    StreamDataT* find_stream(streamid_t streamid) {
         auto it = std::find_if(
             this->m_streams.begin(), this->m_streams.end(), [streamid](auto& stream) {
-                return stream.streamid == streamid;
+                return stream.first == streamid;
             });
         if (it == this->m_streams.end())
             return nullptr;
-        return &(*it);
+        return &it->second;
     }
 
     tos::expected<streamid_t, serial_multiplexer_errors> next_packet() {
@@ -227,6 +223,6 @@ private:
     }
 
     UsartT m_usart;
-    std::vector<stream_data> m_streams;
+    std::vector<std::pair<streamid_t, StreamDataT>> m_streams;
 };
 } // namespace tos
