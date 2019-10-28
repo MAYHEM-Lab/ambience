@@ -1,0 +1,13 @@
+include "capability.fbs";
+
+namespace caps.sha2;
+
+struct Signature
+{
+  signature: [uint8 : 32];
+}
+
+table ShaToken {
+  sign: Signature (required);
+  caps: List (required);
+}

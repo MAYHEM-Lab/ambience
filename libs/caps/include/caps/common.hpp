@@ -7,6 +7,8 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <tos/utility.hpp>
+#include <tos/span.hpp>
 
 namespace caps {
 struct raw_deleter {
@@ -32,6 +34,14 @@ struct cap_list : tos::non_copy_movable {
     int16_t num_caps;
     int16_t __padding;
     CapabilityT all[0];
+
+    tos::span<const CapabilityT> span() const {
+        return tos::span<const CapabilityT>(all, num_caps);
+    }
+
+    tos::span<CapabilityT> span() {
+        return tos::span<CapabilityT>(all, num_caps);
+    }
 };
 
 template<class CapabilityT>
