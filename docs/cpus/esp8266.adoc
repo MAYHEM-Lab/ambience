@@ -1,0 +1,60 @@
+= ESP8266
+
+== `esptool.py`
+
+Programming the esp8266s are performed over a program supplied
+by the vendor called `esptool`. Install it using pip:
+
+----
+[sudo] pip install esptool
+----
+
+== Programming
+
+If you built a program called `program`, first convert it to the
+format esptool understands:
+
+----
+esptool.py elf2image program
+----
+
+This will spit out 2 files: `program-0x00000.bin`
+and `program-0x10000.bin`.
+
+We'll program them in addresses `0x00000` and `0x10000` respectively
+(shocking, I know):
+
+----
+esptool.py \
+    --baud 921600 \
+    write_flash \
+    --flash_mode dio \
+    0x00000 program-0x00000.bin \
+    0x10000 program-0x10000.bin
+----
+
+What that `dio` means is explained
+https://github.com/espressif/esptool/wiki/SPI-Flash-Modes[here].
+
+== Troubleshooting
+
+=== I'm seeing weird characters on UART upon booting
+
+Those are the logs printed by the bootloader at a baud rate of 74880.
+
+=== The bootloader log says `system_partition_table_regist`:
+
+The boot code assumes a 4MB flash size at the moment. If you get this
+error, there are two things you have to do:
+
+. Tell `esptool` to treat the flash as if it's 4MBs by passing
+`--flash-size=4MB` while programming.
+. Program the phy calibration data:
+
+----
+esptool.py \
+    --baud 921600 \
+    write_flash \
+    --flash_mode dio \
+    0x3fc000 /opt/x-tools/tos-esp-sdk/sdk/bin/esp_init_data_default_v05.bin
+----
