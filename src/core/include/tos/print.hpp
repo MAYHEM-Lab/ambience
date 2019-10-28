@@ -177,7 +177,6 @@ void print(CharOstreamT& ostr, T1&& t1, T2&& t2, Ts&&... ts) {
     print(ostr, std::forward<T1>(t1));
     detail::print2(ostr, sep.sep, std::forward<T2>(t2));
 
-    //((print(ostr, sep), print(ostr, forward<Ts>(ts))), ...);
     int _[] = {0, (detail::print2(ostr, sep.sep, std::forward<Ts>(ts)), 0)...};
     (void)_;
 }
