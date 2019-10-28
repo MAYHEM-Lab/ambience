@@ -75,7 +75,11 @@ public:
     ~tcp_socket();
 
     template<class ConnHandlerT>
+    [[deprecated("Use async_accept")]]
     void accept(ConnHandlerT& handler);
+
+    template<class ConnHandlerT>
+    void async_accept(ConnHandlerT& handler);
 
     bool is_valid() const { return m_conn; }
 
@@ -136,6 +140,11 @@ err_t accept_handler(void* user, tcp_pcb* new_conn, err_t err) {
 
 template<class ConnHandlerT>
 void tcp_socket::accept(ConnHandlerT& handler) {
+    async_accept(handler);
+}
+
+template<class ConnHandlerT>
+void tcp_socket::async_accept(ConnHandlerT& handler) {
 
     m_accept_handler = &handler;
 
