@@ -57,7 +57,7 @@ std::array<char, sizeof(NumType)> num_to_chars(NumType num) {
 
 TEST_CASE("serial multiplexer can write to a stream correctly") {
     mock_uart_writeonly uart;
-    tos::serial_multiplexer<decltype(&uart), 512> mp_write(&uart);
+    tos::serial_multiplexer<decltype(&uart)> mp_write(&uart);
 
     constexpr const char message[] = "hello world!";
 
@@ -72,7 +72,7 @@ TEST_CASE("serial multiplexer can write to a stream correctly") {
     REQUIRE(std::equal(uart.data.begin() + 12, uart.data.begin() + 12 + sizeof(message), std::begin(message)));
     REQUIRE(
         std::equal(uart.data.begin() + 12 + sizeof(message), uart.data.begin() + 12 + sizeof(message) + 4,
-        num_to_chars<uint32_t>(tos::crc32(message)).begin())
+        num_to_chars<uint32_t>(tos::crc32(tos::raw_cast<const uint8_t>(tos::span(message)))).begin())
     );
 
     // size_t idx = 0;
@@ -87,7 +87,7 @@ TEST_CASE("serial multiplexer can write to a stream correctly") {
 TEST_CASE("serial multiplexer can read from a stream correctly") {
     // setup the write end 
     mock_uart_writeonly uart;
-    tos::serial_multiplexer<decltype(&uart), 512> mp_write(&uart);
+    tos::serial_multiplexer<decltype(&uart)> mp_write(&uart);
 
     constexpr const char message[] = "hello world!";
     auto stream_write = mp_write.create_stream(0);
@@ -97,7 +97,7 @@ TEST_CASE("serial multiplexer can read from a stream correctly") {
     mock_uart_readonly uart_r;
     uart_r.data.insert(uart_r.data.begin(), uart.data.begin(), uart.data.end());
 
-    tos::serial_multiplexer<decltype(&uart_r), 512> mp_read(&uart_r);
+    tos::serial_multiplexer<decltype(&uart_r)> mp_read(&uart_r);
     auto stream_read = mp_read.create_stream(0);
 
     std::array<char, sizeof(message)> message_back;
@@ -107,8 +107,8 @@ TEST_CASE("serial multiplexer can read from a stream correctly") {
 TEST_CASE("serial multiplexer can read and write to a single stream") {
     mock_uart uart;
 
-    tos::serial_multiplexer<decltype(&uart), 512> mp_write(&uart);
-    tos::serial_multiplexer<decltype(&uart), 512> mp_read(&uart);
+    tos::serial_multiplexer<decltype(&uart)> mp_write(&uart);
+    tos::serial_multiplexer<decltype(&uart)> mp_read(&uart);
 
     auto stream_write = mp_write.create_stream(0);
     stream_write.write("hello world!");
@@ -123,8 +123,8 @@ TEST_CASE("serial multiplexer can read and write to a single stream") {
 TEST_CASE("serial multiplexer can read and write to two streams") {
     mock_uart uart;
 
-    tos::serial_multiplexer<decltype(&uart), 512> mp_write(&uart);
-    tos::serial_multiplexer<decltype(&uart), 512> mp_read(&uart);
+    tos::serial_multiplexer<decltype(&uart)> mp_write(&uart);
+    tos::serial_multiplexer<decltype(&uart)> mp_read(&uart);
 
     auto stream_write0 = mp_write.create_stream(0);
     stream_write0.write("hello world0!");
@@ -142,6 +142,4 @@ TEST_CASE("serial multiplexer can read and write to two streams") {
     stream_read1.read(result1);
     REQUIRE_EQ(0, strcmp(&result1[0], "hello world1!"));
 }
-
-
 }
