@@ -7,37 +7,30 @@
 #include <cstring>
 #include <emsha/hmac.hh>
 #include <tos/span.hpp>
+#include <caps/sha2_generated.h>
+#include <tos/utility.hpp>
 
 namespace caps {
+namespace sha2 {
+inline bool operator==(const Signature& a, const Signature& b) {
+    return std::equal(a.signature()->begin(), a.signature()->end(), b.signature()->begin());
+}
+}
+
 namespace emsha {
 struct hash_t {
     uint8_t buf[32];
 };
 
+using sign_t = caps::sha2::Signature;
+
 inline bool operator==(const hash_t& h, const hash_t& b) {
     return memcmp(h.buf, b.buf, 32) == 0;
 }
 
-struct sign_t {
-    uint8_t buf[32];
-};
-
-inline bool operator==(const sign_t& a, const sign_t& b) {
-    return std::equal(a.buf, a.buf + 32, b.buf);
-}
-
-inline void merge_into(sign_t& s, const hash_t& h) {
-    auto i = s.buf;
-    auto i_end = s.buf + 32;
-    auto j = h.buf;
-    for (; i != i_end; ++i, ++j) {
-        *i ^= *j;
-    }
-    ::emsha::sha256_digest(s.buf, 32, s.buf);
-}
+void merge_into(sign_t& s, const hash_t& h);
 
 struct hasher {
-    using hash_t = emsha::hash_t;
     hash_t hash(tos::span<const uint8_t> msg) const {
         hash_t h;
         ::emsha::sha256_digest(msg.data(), msg.size(), h.buf);
@@ -55,21 +48,19 @@ struct hasher {
 
 class signer : public tos::non_copy_movable {
 public:
-    using sign_t = emsha::sign_t;
-
     explicit signer(tos::span<const char> key)
         : m_hmac{(const uint8_t*)key.data(), uint32_t(key.size())} {
     }
 
-    void sign(tos::span<const uint8_t> msg, tos::span<uint8_t> out) noexcept {
+    void sign(tos::span<const uint8_t> msg, sign_t& sign) noexcept {
         m_hmac.update(msg.data(), msg.size());
-        m_hmac.finalize(out.data());
+        m_hmac.finalize(sign.signature()->GetMutablePointer(0));
         m_hmac.reset();
     }
 
     sign_t sign(tos::span<const uint8_t> msg) noexcept {
         sign_t signature;
-        sign(msg, signature.buf);
+        sign(msg, signature);
         return signature;
     }
 
@@ -81,8 +72,8 @@ struct model {
     using signer_type = signer;
     using hasher_type = hasher;
 
-    using sign_type = signer_type::sign_t;
-    using hash_type = hasher_type::hash_t;
+    using sign_type = sign_t;
+    using hash_type = hash_t;
 };
 } // namespace emsha
 } // namespace caps

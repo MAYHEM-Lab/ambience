@@ -80,14 +80,16 @@ list_ptr<CapabilityT> deserialize_list(StreamT& from) {
 
 template<class StreamT, class SignerT, class CapabilityT>
 void serialize(StreamT& to, const token<CapabilityT, SignerT>& caps) {
-    for (auto child = &caps.c; child; child = child->child.get()) {
-        detail::serialize(to, *child);
+    // Serialize all the links in the capability chain.
+    for (auto node = &caps.c; node; node = node->child.get()) {
+        detail::serialize(to, *node);
     }
+
     decltype(caps.c.num_caps) c[] = {0};
     to->write({(const char*)&c, sizeof c});
 
     /*
-     * The signature goes last into the wire
+     * The signature goes last into the wire.
      *
      * If it went first, since the receiver couldn't know the size of the
      * overall object, it'd have to store the signature in a temporary location

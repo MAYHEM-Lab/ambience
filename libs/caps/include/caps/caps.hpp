@@ -59,20 +59,14 @@ bool validate(const caps::cap_list<CapabilityT>& haystack,
 }
 
 template<class CapabilityT, class CryptoModelT>
-auto sign(const caps::token<CapabilityT, CryptoModelT>& c,
+auto sign(const caps::token<CapabilityT, CryptoModelT>& root,
           typename CryptoModelT::signer_type& s) -> typename CryptoModelT::sign_type {
-    typename CryptoModelT::sign_type res{};
-    auto beg = (const uint8_t*)c.c.all;
-    size_t sz = sizeof(CapabilityT) * c.c.num_caps;
-    s.sign({beg, sz}, res.buf);
-    return res;
+    return s.sign(tos::raw_cast<const uint8_t>(root.c.span()));
 }
 
 template<class CapabilityT, class HasherT>
-auto hash(const caps::cap_list<CapabilityT>& c, const HasherT& h) -> typename HasherT::hash_t {
-    const auto beg = (const uint8_t*)c.all;
-    const auto sz = sizeof(CapabilityT) * c.num_caps;
-    return h.hash({beg, sz});
+auto hash(const caps::cap_list<CapabilityT>& c, const HasherT& h) {
+    return h.hash(tos::raw_cast<const uint8_t>(c.span()));
 }
 
 template<class CapabilityT>
