@@ -28,13 +28,14 @@ void* ICACHE_FLASH_ATTR tos_stack_alloc(size_t size) {
 
 void ICACHE_FLASH_ATTR tos_stack_free(void* data) { os_free(data); }
 
-void ICACHE_FLASH_ATTR tos_enable_interrupts() { ets_intr_unlock(); }
+#define xt_rsil(level) (__extension__({uint32_t state; __asm__ __volatile__("rsil %0," #level ";\nesync;" : "=a" (state) :: "memory"); state;}))
 
-void ICACHE_FLASH_ATTR tos_disable_interrupts() { ets_intr_lock(); }
+void ICACHE_FLASH_ATTR tos_enable_interrupts() { xt_rsil(0); }
 
-void NORETURN tos_force_reset() {
+void ICACHE_FLASH_ATTR tos_disable_interrupts() { xt_rsil(15); }
+
+[[noreturn ]] void tos_force_reset() {
     // esp sdk should reset
-    while (true)
-        ;
+    while (true) {}
 }
 }
