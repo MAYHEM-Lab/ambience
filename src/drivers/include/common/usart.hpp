@@ -113,6 +113,7 @@ public:
 private:
     BaseUsartT m_impl;
 };
+} // namespace detail
 
 class null_usart : public any_usart {
 public:
@@ -123,7 +124,6 @@ public:
         return tos::span<char>(nullptr);
     }
 };
-} // namespace detail
 
 template<class UsartT>
 auto erase_usart(UsartT&& usart) -> detail::erased_usart<UsartT> {
