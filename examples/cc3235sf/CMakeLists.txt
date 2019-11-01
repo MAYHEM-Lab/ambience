@@ -1,0 +1,2 @@
+add_executable(cc3235_demo main.cpp)
+target_link_libraries(cc3235_demo PUBLIC tos_core)
