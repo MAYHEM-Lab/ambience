@@ -7,6 +7,7 @@ add_library(tos_util
 
     include/tos/fixed_fifo.hpp
     include/tos/sync_ring_buf.hpp
+    include/tos/io/serial_multiplexer.hpp
 )
 
 add_library(tos_util_core
@@ -28,7 +29,6 @@ add_library(tos_util_core
     include/tos/streams.hpp
     include/tos/fixed_point.hpp
     include/nonstd/expected.hpp
-    include/tos/byte.hpp
     include/tos/uuid.hpp
     include/tos/moved_flag.hpp
 )

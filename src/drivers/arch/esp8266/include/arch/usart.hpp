@@ -81,14 +81,10 @@ namespace tos {
 namespace esp82 {
 inline uart0::uart0(usart_constraint params) {
     ::uart0_open(get<usart_baud_rate>(params).rate, UART_FLAGS_8N1);
-    //::uart_init(UartBautRate::BIT_RATE_19200, UartBautRate::BIT_RATE_19200);
-    //::UART_init((UartBautRate)rate.rate, UartBautRate::BIT_RATE_300, 0);
-    // lx106::uart0::set_baud_rate(rate);
 }
 
 inline int ICACHE_FLASH_ATTR uart0::write(tos::span<const char> buf) {
     ::uart0_tx_buffer((uint8*)buf.data(), buf.size());
-    //::uart0_tx_buffer_sync((const uint8_t*)buf.data(), buf.size());
     return buf.size();
 }
 
