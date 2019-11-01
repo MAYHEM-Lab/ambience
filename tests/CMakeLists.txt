@@ -1,5 +1,7 @@
 project(tos)
 
+enable_testing()
+
 add_executable(util_tests util_test.cpp)
 target_link_libraries(util_tests tests_main tos_util)
 

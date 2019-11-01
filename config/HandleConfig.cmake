@@ -16,3 +16,7 @@ if (TOS_CPU)
 elseif()
     message(ERROR "can't determine CPU!")
 endif()
+
+if (TOS_TOOLCHAIN)
+    set(CMAKE_TOOLCHAIN_FILE cmake/${TOS_TOOLCHAIN}.cmake)
+endif()

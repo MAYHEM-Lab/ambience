@@ -3,7 +3,6 @@ avrbuild
 cmake-build-*
 .idea
 *build*/
-apps/*
 .vscode/
 workspace/
 .vs/
