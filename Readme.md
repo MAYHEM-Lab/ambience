@@ -16,6 +16,7 @@ Supported and tested targets:
 | ARM    | STM32F746 (cortex m7) |
 | ARM    | nRF528232 (cortex m4) |
 | ARM    | nRF528240 (cortex m4) |
+| ARM    | CC3235SF (cortex m4) |
 | Xtensa | ESP8266 |
 | x86    | any (runs in userspace) |
 
