@@ -25,4 +25,4 @@ add_library(stm32_hal_drivers
 target_include_directories(stm32_hal_drivers PUBLIC drivers/include)
 target_include_directories(stm32_hal_drivers PUBLIC soc)
 target_compile_definitions(stm32_hal_drivers PUBLIC ${CPU_NAME} USE_FULL_LL_DRIVER)
-target_link_libraries(stm32_hal_drivers PUBLIC cmsis)
+target_link_libraries(stm32_hal_drivers PUBLIC cmsis::core)
