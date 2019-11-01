@@ -15,6 +15,7 @@ include(Tos)
 add_subdirectory(src)
 add_subdirectory(libs)
 add_subdirectory(apps)
+add_subdirectory(third_party)
 
 if (BUILD_EXAMPLES)
 add_subdirectory(examples)
