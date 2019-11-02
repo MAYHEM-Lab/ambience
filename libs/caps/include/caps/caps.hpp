@@ -143,14 +143,11 @@ template<class CapabilityT>
 list_ptr<CapabilityT> mkcaps(std::initializer_list<CapabilityT> capabs) {
     auto mem = new char[sizeof(caps::cap_list<CapabilityT>) +
                         sizeof(CapabilityT) * capabs.size()];
-    auto cps = new (mem) caps::cap_list<CapabilityT>;
-    int i = 0;
-    for (auto& c : capabs) {
-        new (cps->all + i++) CapabilityT(c);
-    }
-    cps->num_caps = i;
-    cps->child = nullptr;
-    return list_ptr<CapabilityT>(cps);
+    auto cap_list = new (mem) caps::cap_list<CapabilityT>;
+    std::uninitialized_copy(capabs.begin(), capabs.end(), cap_list->span().begin());
+    cap_list->num_caps = capabs.size();
+    cap_list->child = nullptr;
+    return list_ptr<CapabilityT>(cap_list);
 }
 
 template<class CryptoModelT, class CapabilityT>
