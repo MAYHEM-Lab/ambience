@@ -14,3 +14,9 @@ add_library(caps
         include/caps/request.hpp)
 target_include_directories(caps PUBLIC include)
 target_link_libraries(caps PUBLIC tos_util emsha cwpack caps_flat_headers)
+
+if (BUILD_TESTS)
+    add_executable(caps_test src/caps_test.cpp)
+    target_link_libraries(caps_test PUBLIC doctest tests_main caps)
+    add_test(caps_test caps_test)
+endif()
