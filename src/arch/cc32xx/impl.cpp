@@ -5,12 +5,26 @@
 
 #include <tos/ft.hpp>
 
+enum IRQn_Type {};
+#define __NVIC_PRIO_BITS 0
+#include <core_cm4.h>
+#include <ti/drivers/dpl/HwiP.h>
+
 extern "C" {
 #include <NoRTOS.h>
 #include <ti/drivers/Power.h>
 }
 
 extern void tos_main();
+
+extern "C" {
+__attribute__ ((section(".dbghdr"), used))
+unsigned long ulDebugHeader[] = {
+        0x5AA5A55A,
+        0x000FF800,
+        0xEFA3247D
+};
+}
 
 int main() {
     NoRTOS_Config cfg;
@@ -28,7 +42,11 @@ int main() {
     // Start NoRTOS
     NoRTOS_start();
 
+    CoreDebug->DHCSR |= CoreDebug_DHCSR_C_DEBUGEN_Msk;
+    //HwiP_enable();
+
     tos_main();
+
 
     while (true) {
         auto res = tos::kern::schedule();
