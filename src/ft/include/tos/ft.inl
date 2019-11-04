@@ -246,12 +246,6 @@ inline auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
         task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
 }
 
-template<class FuncT, class... ArgTs>
-inline auto& launch(alloc_stack_t, FuncT&& func, ArgTs&&... args) {
-    constexpr stack_size_t stack_size{TOS_DEFAULT_STACK_SIZE};
-    return launch(stack_size, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
-}
-
 inline void this_thread::exit(void*) {
     kern::thread_exit();
 }
