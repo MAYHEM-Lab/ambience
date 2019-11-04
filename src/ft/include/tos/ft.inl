@@ -58,12 +58,8 @@ inline void suspend_self(const int_guard&) {
     }
 }
 
-inline exit_reason schedule() {
-    return sched.schedule();
-}
-
 template<bool FreeStack, class FunT, class... Args>
-struct super_tcb : tcb {
+struct super_tcb final : tcb {
     template<class FunU, class... ArgUs>
     super_tcb(uint16_t stk_sz, FunU&& fun, ArgUs&&... args)
         : m_tcb_off(stk_sz - sizeof(super_tcb))
@@ -131,7 +127,7 @@ inline thread_id_t __attribute__((optimize("-Os"))) scheduler::start(TaskT& t) {
     static_assert(std::is_base_of<tcb, TaskT>{}, "Tasks must inherit from tcb class!");
 
     // New threads are runnable by default.
-    run_queue.push_back(t);
+    make_runnable(t);
     num_threads++;
 
     // prepare the initial ctx for the new task
@@ -180,24 +176,24 @@ inline exit_reason scheduler::schedule() {
          * power down even though there's something to run.
          */
         tos::int_guard ig;
-        if (run_queue.empty()) {
+        if (m_run_queue.empty()) {
             /**
              * there's no thread to run right now
              */
 
-            if (sched.busy > 0) {
+            if (busy > 0) {
                 return exit_reason::idle;
             }
 
             return exit_reason::power_down;
         }
 
-        auto why = save_ctx(sched.main_context);
+        auto why = save_ctx(main_context);
 
         switch (why) {
         case return_codes::saved: {
-            impl::cur_thread = &run_queue.front();
-            run_queue.pop_front();
+            impl::cur_thread = &m_run_queue.front();
+            m_run_queue.pop_front();
 
             switch_context(self()->get_ctx(), return_codes::scheduled);
         }
@@ -219,7 +215,7 @@ inline exit_reason scheduler::schedule() {
 }
 
 inline void make_runnable(tcb& t) {
-    sched.run_queue.push_back(t);
+    sched.make_runnable(t);
 }
 } // namespace kern
 

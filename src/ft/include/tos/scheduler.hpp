@@ -42,26 +42,6 @@ enum class exit_reason
 
 namespace kern {
 /**
- * This function starts the thread execution subsystem. It
- * will not return as long as there exists a runnable thread
- * in the system.
- *
- * When all threads block, it will return a reason explaining
- * why the return happened.
- *
- * Depending on the reason, implementations should enter a
- * power saving state accordingly.
- *
- * Behaviour is undefined if this function is called from a
- * thread context.
- *
- * @return exit reason
- */
-exit_reason schedule();
-} // namespace kern
-
-namespace kern {
-/**
  * Places the given thread back into the runnable list
  * @param t thread to make runnable
  */
@@ -99,17 +79,38 @@ void unbusy();
 
 namespace tos {
 namespace kern {
-struct scheduler {
-    ctx main_context{};
-    int8_t num_threads = 0;
-    uint8_t busy = 0;
-
-    intrusive_list<tcb> run_queue;
-
+class scheduler {
+public:
     template<class TaskT>
     thread_id_t start(TaskT&);
 
+    /**
+     * This function schedules _one_ thread execution and returns.
+     * 
+     * When all threads block, it will return a reason explaining
+     * why the return happened.
+     *
+     * Depending on the reason, implementations should enter a
+     * power saving state accordingly.
+     *
+     * Behaviour is undefined if this function is called from a
+     * thread context.
+     *
+     * @return exit reason
+     */
     exit_reason schedule();
+
+    template <class TaskT>
+    void make_runnable(TaskT& task) {
+        m_run_queue.push_back(task);
+    }
+
+    ctx main_context{};
+    uint8_t busy = 0;
+private:
+    int8_t num_threads = 0;
+
+    intrusive_list<tcb> m_run_queue;
 };
 } // namespace kern
 } // namespace tos
