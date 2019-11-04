@@ -107,7 +107,7 @@ using lambda_task = super_tcb<FreeStack,
 
 template<bool FreeStack, class FuncT, class... ArgTs>
 lambda_task<FreeStack, FuncT, ArgTs...>&
-prep_lambda_layout(tos::span<char> task_data, FuncT&& func, ArgTs&&... args) {
+prep_lambda_layout(tos::span<uint8_t> task_data, FuncT&& func, ArgTs&&... args) {
     // the tcb lives at the top of the stack
     const auto stack_top = task_data.end();
 
@@ -220,7 +220,7 @@ inline void make_runnable(tcb& t) {
 } // namespace kern
 
 template<bool FreeStack, class FuncT, class... ArgTs>
-inline auto& launch(tos::span<char> task_span, FuncT&& func, ArgTs&&... args) {
+inline auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
     auto& t = kern::prep_lambda_layout<FreeStack>(
         task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     sched.start(t);
@@ -233,7 +233,7 @@ inline auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
     if (!ptr) {
         tos::debug::panic("Stack allocation failed");
     }
-    tos::span<char> task_span((char*)ptr, stack_sz.sz);
+    tos::span<uint8_t> task_span(reinterpret_cast<uint8_t*>(ptr), stack_sz.sz);
     auto& res =
         launch<true>(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     return res;
@@ -241,9 +241,8 @@ inline auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
 
 template<class FuncT, class... ArgTs, size_t StSz>
 inline auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
-    tos::span<char> task_span((char*)&stack, StSz);
     return launch<false>(
-        task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
+        stack, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
 }
 
 inline void this_thread::exit(void*) {
