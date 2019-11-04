@@ -86,7 +86,7 @@ public:
 
     /**
      * This function schedules _one_ thread execution and returns.
-     * 
+     *
      * When all threads block, it will return a reason explaining
      * why the return happened.
      *
@@ -100,13 +100,14 @@ public:
      */
     exit_reason schedule();
 
-    template <class TaskT>
+    template<class TaskT>
     void make_runnable(TaskT& task) {
         m_run_queue.push_back(task);
     }
 
     ctx main_context{};
     uint8_t busy = 0;
+
 private:
     int8_t num_threads = 0;
 
