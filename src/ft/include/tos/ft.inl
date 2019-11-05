@@ -152,7 +152,7 @@ inline thread_id_t __attribute__((optimize("-Os"))) scheduler::start(TaskT& t) {
 
     static_cast<TaskT*>(impl::cur_thread)->start();
 
-    __builtin_unreachable();
+    TOS_UNREACHABLE();
 }
 
 inline void busy() {
@@ -220,7 +220,7 @@ inline void make_runnable(tcb& t) {
 } // namespace kern
 
 template<bool FreeStack, class FuncT, class... ArgTs>
-inline auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
+auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
     auto& t = kern::prep_lambda_layout<FreeStack>(
         task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     sched.start(t);
@@ -228,7 +228,7 @@ inline auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args)
 }
 
 template<class FuncT, class... ArgTs>
-inline auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
+auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
     auto ptr = tos_stack_alloc(stack_sz.sz);
     if (!ptr) {
         tos::debug::panic("Stack allocation failed");
@@ -240,7 +240,7 @@ inline auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
 }
 
 template<class FuncT, class... ArgTs, size_t StSz>
-inline auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
+auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
     return launch<false>(
         stack, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
 }
