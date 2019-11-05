@@ -57,6 +57,7 @@ elseif(${TOS_CORE} MATCHES "stm32")
     add_subdirectory(spirit1)
     add_subdirectory(spbtle-rf)
     add_subdirectory(epd)
+    add_subdirectory(clock)
 elseif(${TOS_CORE} MATCHES "cc")
 endif()
 

@@ -125,7 +125,7 @@ uint32 ICACHE_FLASH_ATTR user_rf_cal_sector_set(void) {
 
 static void ICACHE_FLASH_ATTR main_task(ETSEvent*) {
     // sys_check_timeouts();
-    auto res = tos::kern::schedule();
+    auto res = tos::sched.schedule();
 
     if (res == tos::exit_reason::yield) {
         system_os_post(tos::esp82::main_task_prio, 0, 0);

@@ -49,7 +49,7 @@ extern void tos_main();
 
     while (true)
     {
-        auto res = tos::kern::schedule();
+        auto res = tos::sched.schedule();
         if (res == tos::exit_reason::restart) {
             tos_force_reset();
         }
