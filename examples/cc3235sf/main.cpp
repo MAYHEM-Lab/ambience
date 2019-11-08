@@ -34,6 +34,8 @@ void task() {
     auto pin = 4_pin;
     tos::cc32xx::gpio g;
 
+    g.set_pin_mode(5_pin, tos::pin_mode::out);
+    g.set_pin_mode(6_pin, tos::pin_mode::out);
     g.set_pin_mode(pin, tos::pin_mode::out);
     g.write(pin, tos::digital::high);
 
