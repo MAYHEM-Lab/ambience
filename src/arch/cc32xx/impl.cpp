@@ -8,6 +8,7 @@
 enum IRQn_Type {};
 #define __NVIC_PRIO_BITS 0
 #include <core_cm4.h>
+#include <ti/drivers/Board.h>
 #include <ti/drivers/dpl/HwiP.h>
 
 extern "C" {
@@ -40,6 +41,8 @@ int main() {
 
     NoRTOS_setConfig(&cfg);
     // Start NoRTOS
+
+    Board_init();
     NoRTOS_start();
 
     CoreDebug->DHCSR |= CoreDebug_DHCSR_C_DEBUGEN_Msk;
@@ -47,9 +50,8 @@ int main() {
 
     tos_main();
 
-
     while (true) {
-        auto res = tos::kern::schedule();
+        auto res = tos::sched.schedule();
         if (res == tos::exit_reason::restart) {
             tos_force_reset();
         }
