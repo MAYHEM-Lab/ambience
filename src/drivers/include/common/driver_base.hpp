@@ -70,6 +70,12 @@ public:
         *m_which = nullptr;
     }
 
+protected:
+
+    int get_number() const {
+        return std::distance(instances.data(), m_which);
+    }
+
 private:
     void assign() {
         *m_which = static_cast<DriverT*>(this);
