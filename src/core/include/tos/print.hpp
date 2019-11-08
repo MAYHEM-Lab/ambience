@@ -52,12 +52,12 @@ inline tos::span<const char> itoa(int64_t i, int base = 10) {
 namespace tos {
 template<class CharOstreamT>
 void print(CharOstreamT& ostr, char c) {
-    ostr->write({&c, 1});
+    print(ostr, uint8_t(c));
 }
 
 template<class CharOstreamT>
 void print(CharOstreamT& ostr, uint8_t b) {
-    print(ostr, char(b));
+    ostr->write(tos::span<const uint8_t>{&b, 1});
 }
 
 /**
@@ -70,12 +70,12 @@ void print(CharOstreamT& ostr, const char* str) {
     auto len = strlen(str);
     if (len == 0)
         return;
-    ostr->write({str, len});
+    ostr->write(tos::span<const uint8_t>{reinterpret_cast<const uint8_t*>(str), len});
 }
 
 template<class CharOstreamT>
 void print(CharOstreamT& ostr, span<const char> buf) {
-    ostr->write(buf);
+    ostr->write(tos::raw_cast<const uint8_t>(buf));
 }
 
 template<class CharOstreamT,
@@ -189,6 +189,6 @@ void println(CharOstreamT& ostr) {
 template<class CharOstreamT, class... T>
 void println(CharOstreamT& ostr, T&&... t) {
     print(ostr, std::forward<T>(t)...);
-    print(ostr, "\r\n");
+    println(ostr);
 }
 } // namespace tos
