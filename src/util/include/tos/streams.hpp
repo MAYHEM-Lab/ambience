@@ -6,23 +6,35 @@
 
 #include <tos/span.hpp>
 
-namespace tos
-{
-    template <class StreamT>
-    span<char> read_to_end(StreamT& str, span<char> buf)
-    {
-        auto b = buf;
-        while (b.size() != 0)
-        {
-            auto rd = str->read(b);
-            if (!rd)
-            {
-                break;
-            }
-
-            auto& r = force_get(rd);
-            b = b.slice(r.size(), b.size() - r.size());
+namespace tos {
+/**
+ * Reads from the given stream until the given bytes are matched at the end of the buffer.
+ *
+ * The `until` bytes will be at the end of the buffer.
+ */
+template<class CharT, class StreamT>
+span<CharT> read_until(StreamT& str, span<const CharT> until, span<CharT> buffer) {
+    for (size_t i = 0; i < buffer.size(); ++i) {
+        str->read(tos::raw_cast<uint8_t>(buffer.slice(i, 1)));
+        if (buffer.slice(i - until.size() + 1, until.size()) == until) {
+            return buffer.slice(0, i + 1);
         }
-        return buf.slice(0, buf.size() - b.size());
     }
+    return buffer;
+}
+
+template<class StreamT>
+span<char> read_to_end(StreamT& str, span<char> buf) {
+    auto b = buf;
+    while (b.size() != 0) {
+        auto rd = str->read(b);
+        if (!rd) {
+            break;
+        }
+
+        auto& r = force_get(rd);
+        b = b.slice(r.size(), b.size() - r.size());
+    }
+    return buf.slice(0, buf.size() - b.size());
+}
 } // namespace tos
