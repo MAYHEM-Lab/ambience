@@ -64,13 +64,13 @@ namespace tos
             }
         }
 
-        void uart::write(span<const char> buf) {
+        void uart::write(span<const uint8_t> buf) {
             tos::lock_guard<tos::mutex> lk { m_write_busy };
 
             nrfx_err_t err;
             if (nrfx_is_in_ram(buf.data()))
             {
-                err = nrfx_uarte_tx(&uart0, (const uint8_t*)buf.data(), buf.size());
+                err = nrfx_uarte_tx(&uart0, buf.data(), buf.size());
                 if (err != NRFX_SUCCESS)
                 {
                     // TODO: report error
@@ -92,14 +92,14 @@ namespace tos
             }
         }
 
-        span<char> uart::read(span<char> buf) {
+        span<uint8_t> uart::read(span<uint8_t> buf) {
             tos::lock_guard<tos::mutex> lk { m_read_busy };
 
             auto err = nrfx_uarte_rx(&uart0, (uint8_t*)buf.data(), buf.size());
 
             if (err != NRFX_SUCCESS)
             {
-                return tos::empty_span<char>();
+                return tos::empty_span<uint8_t>();
             }
 
             m_read_sync.down();
