@@ -1,3 +1,4 @@
+project(ti_core CXX C ASM)
 set(TI_SDK_ROOT /opt/ti/simplelink_cc32xx_sdk_3_30_01_02/)
 
 add_library(ti_sdk "")
@@ -14,7 +15,7 @@ target_sources(ti_sdk PRIVATE
         ${TI_SDK_ROOT}/kernel/nortos/dpl/SemaphoreP_nortos.c
         ${TI_SDK_ROOT}/kernel/nortos/dpl/SwiP_nortos.c
         ${TI_SDK_ROOT}/kernel/nortos/dpl/SystemP_nortos.c
-        ${TI_SDK_ROOT}/source/ti/drivers/power/PowerCC32XX.c
+        ${TI_SDK_ROOT}/kernel/nortos/dpl/PowerCC32XX_nortos.c
         )
 target_include_directories(ti_sdk SYSTEM PUBLIC ${TI_SDK_ROOT}/source)
 target_include_directories(ti_sdk SYSTEM PUBLIC ${TI_SDK_ROOT}/kernel/nortos)
@@ -44,22 +45,43 @@ target_sources(ti_driverlib PRIVATE
         ${TI_SDK_ROOT}/source/ti/devices/cc32xx/driverlib/udma.c
         ${TI_SDK_ROOT}/source/ti/devices/cc32xx/driverlib/utils.c
         ${TI_SDK_ROOT}/source/ti/devices/cc32xx/driverlib/wdt.c
+        ${TI_SDK_ROOT}/source/ti/devices/cc32xx/driverlib/shamd5.c
     )
 target_link_libraries(ti_driverlib PUBLIC ti_sdk ${TI_SDK_ROOT}/source/ti/devices/cc32xx/driverlib/gcc/Release/driverlib.a)
 target_include_directories(ti_driverlib PUBLIC ${TI_SDK_ROOT}/source/ti/devices/cc32xx)
 
+add_library(ti_drivers "")
+target_sources(ti_drivers PRIVATE
+        ${TI_SDK_ROOT}/source/ti/drivers/UART.c
+        ${TI_SDK_ROOT}/source/ti/drivers/Timer.c
+        ${TI_SDK_ROOT}/source/ti/drivers/SPI.c
+        ${TI_SDK_ROOT}/source/ti/drivers/power/PowerCC32XX.c
+        ${TI_SDK_ROOT}/source/ti/boards/CC3235SF_LAUNCHXL/CC3235SF_LAUNCHXL.c)
+target_include_directories(ti_drivers PUBLIC ${TI_SDK_ROOT}/source/)
+target_link_libraries(ti_drivers PUBLIC ${TI_SDK_ROOT}/source/ti/drivers/lib/drivers_cc32xx.am4g)
+target_link_libraries(ti_drivers PUBLIC ${TI_SDK_ROOT}/kernel/nortos/lib/nortos_cc32xx.am4g)
+target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=PowerCC32XX_initPolicy")
+target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=PowerCC32XX_enterLPDS")
+target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=UARTBusy")
+target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=TimerIntEnable")
+target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=SHAMD5DataLengthSet")
+target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=SPI_Params_init")
+
 add_library(cc32xx_core "")
 target_sources(cc32xx_core PRIVATE core.cpp)
-target_link_libraries(cc32xx_core PUBLIC ti_sdk tos_util_core cmsis::core)
+target_link_libraries(cc32xx_core PUBLIC ti_sdk tos_util_core cmsis::core ti_driverlib ti_drivers)
 target_include_directories(cc32xx_core PUBLIC include)
 target_link_libraries(cc32xx_core PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(cc32xx_core PUBLIC "-Tcc3235sf.ld")
-target_link_libraries(cc32xx_core PUBLIC "-specs=nano.specs -specs=nosys.specs -Wl,--start-group -lgcc -lm -lc -lg -lstdc++ -lsupc++ -Wl,--end-group -Wl,--undefined=main")
+target_link_libraries(cc32xx_core PUBLIC "-specs=nano.specs -specs=nosys.specs")
+target_link_libraries(cc32xx_core PUBLIC "-Wl,--start-group -lgcc -lm -lc -lg -lstdc++ -lsupc++ -Wl,--end-group")
+target_link_libraries(cc32xx_core PUBLIC "-Wl,--undefined=main")
+
 target_compile_features(cc32xx_core PUBLIC cxx_std_17)
 
 add_library(cc32xx_impl "")
 target_sources(cc32xx_impl PRIVATE impl.cpp)
-target_link_libraries(cc32xx_impl PUBLIC tos_ft ti_driverlib ti_sdk cc32xx_core)
+target_link_libraries(cc32xx_impl PUBLIC tos_ft cc32xx_core)
 target_include_directories(cc32xx_impl PUBLIC include)
 
 set_target_properties(cc32xx_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cc3235sf.ld)
