@@ -4,13 +4,15 @@
 
 #pragma once
 
+#include "detail/echoing_uart.hpp"
+
+#include "dynamic_command_storage.hpp"
 #include <algorithm>
 #include <tos/print.hpp>
 #include <tos/self_pointing.hpp>
 #include <tos/span.hpp>
 #include <tos/streams.hpp>
 #include <utility>
-#include "detail/echoing_uart.hpp"
 
 namespace tos::shell {
 template<size_t Size>
@@ -36,6 +38,10 @@ public:
         }
     }
 
+    auto& get_command_store() {
+        return m_storage;
+    }
+
 private:
     void handle_one() {
         tos::print(m_stream, "$ ");
@@ -44,7 +50,8 @@ private:
 
         auto& line_buffer = LineBufferStorage::get_line_storage();
         char sep[] = {'\r', '\n'};
-        auto cmd = tos::read_until<char>(echo, sep, tos::span(line_buffer));
+        auto cmd = tos::read_until<char>(
+            echo, tos::span(sep), tos::raw_cast<char>(tos::span(line_buffer)));
         if (cmd.size() == line_buffer.size() &&
             !(cmd.slice(cmd.size() - 2, 2) == tos::span(sep))) {
             // command didn't fit!
@@ -52,20 +59,32 @@ private:
             return;
         }
 
+        cmd = cmd.slice(0, cmd.size() - std::size(sep));
+        std::vector<std::string_view> args;
         for (auto beg = cmd.begin(); beg != cmd.end();) {
             auto first_space = std::find(beg, cmd.end(), ' ');
             auto elem = tos::span<const char>(beg, first_space);
             if (!elem.empty() && !(elem == tos::span(sep))) {
-                tos::println(m_stream, elem);
+                args.emplace_back(elem.begin(), elem.size());
             }
             if (first_space == cmd.end()) {
                 break;
             }
             beg = first_space + 1;
         }
+
+        auto handler = m_storage.get_command(args[0]);
+        if (!handler) {
+            auto span = tos::span<const char>(args[0].begin(), args[0].end());
+            tos::println(m_stream, "Unknown command", span);
+            return;
+        }
+
+        (*handler)(args);
     }
 
     bool m_exit = false;
     StreamT m_stream;
+    dynamic_command_storage m_storage;
 };
-} // namespace tos
+} // namespace tos::shell
