@@ -6,30 +6,23 @@ function(print_size target)
     )
 endfunction()
 
-function(get_implicit_flags FLAGS)
-execute_process(
-	COMMAND cmd.exe /c "${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} -xc++ -E -v -"
-	TIMEOUT 1
-	ERROR_VARIABLE FOO
-	RESULT_VARIABLE RES
-)
-string(REGEX MATCH "cc1plus\.exe (.*)\\n" _ ${FOO})
-set(${FLAGS} ${CMAKE_MATCH_1} PARENT_SCOPE)
-endfunction()
-
 set(TOS_FLAGS "-Wall -Wextra -Wpedantic \
-     -ffunction-sections -fdata-sections -ffreestanding -g -pedantic -freorder-functions \
-        -Wno-unknown-pragmas -fdump-ipa-cgraph")
+     -ffunction-sections -fdata-sections -ffreestanding -g -pedantic \
+        -Wno-unknown-pragmas")
 
-set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions -fno-exceptions -fno-rtti -fno-unwind-tables")
-
-set(TOS_FLAGS "${TOS_FLAGS} -fstack-usage")
-set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,--gc-sections -Xlinker -Map=output.map")
-
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+message(STATUS "${CMAKE_CXX_COMPILER_ID}")
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     message(STATUS "Using gcc")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,-dead_strip")
+
+    set(TOS_GCC_FLAGS "-fdump-ipa-cgraph -fstack-usage -freorder-functions")
+
+    set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions -fno-exceptions -fno-rtti -fno-unwind-tables")
+
+    set(TOS_FLAGS "${TOS_FLAGS} ${TOS_GCC_FLAGS}")
+    set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,--gc-sections -Xlinker -Map=output.map")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    message(STATUS "Using Clang")
+    set(TOS_FLAGS "${TOS_FLAGS} -D__ELF__")
 endif()
 
 set(TOS_C_FLAGS "${TOS_FLAGS} -U__STRICT_ANSI__")
@@ -88,3 +81,7 @@ MACRO(SUBDIRLIST result curdir)
     ENDFOREACH()
     SET(${result} ${dirlist})
 ENDMACRO()
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "CFLAGS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "CXXFLAGS")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING "LINKERFLAGS")

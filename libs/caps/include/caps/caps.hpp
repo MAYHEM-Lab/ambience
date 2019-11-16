@@ -35,7 +35,7 @@ template<class CapabilityT, class CryptoModelT, class SatisfyCheckerT>
 bool validate(const caps::token<CapabilityT, CryptoModelT>& haystack,
               const CapabilityT& needle,
               SatisfyCheckerT&& satisfies) {
-    return validate(haystack.c, needle, std::forward<SatisfyCheckerT>(satisfies));
+    return validate(haystack.root, needle, std::forward<SatisfyCheckerT>(satisfies));
 }
 
 template<class CapabilityT, class CryptoModelT>
@@ -59,20 +59,14 @@ bool validate(const caps::cap_list<CapabilityT>& haystack,
 }
 
 template<class CapabilityT, class CryptoModelT>
-auto sign(const caps::token<CapabilityT, CryptoModelT>& c,
+auto sign(const caps::token<CapabilityT, CryptoModelT>& root,
           typename CryptoModelT::signer_type& s) -> typename CryptoModelT::sign_type {
-    typename CryptoModelT::sign_type res{};
-    auto beg = (const uint8_t*)c.c.all;
-    size_t sz = sizeof(CapabilityT) * c.c.num_caps;
-    s.sign({beg, sz}, res.buf);
-    return res;
+    return s.sign(tos::raw_cast<const uint8_t>(root.root.span()));
 }
 
 template<class CapabilityT, class HasherT>
-auto hash(const caps::cap_list<CapabilityT>& c, const HasherT& h) -> typename HasherT::hash_t {
-    const auto beg = (const uint8_t*)c.all;
-    const auto sz = sizeof(CapabilityT) * c.num_caps;
-    return h.hash({beg, sz});
+auto hash(const caps::cap_list<CapabilityT>& c, const HasherT& h) {
+    return h.hash(tos::raw_cast<const uint8_t>(c.span()));
 }
 
 template<class CapabilityT>
@@ -91,14 +85,14 @@ void attach(caps::token<CapabilityT, CryptoModelT>& c,
     // TODO: do verification here
     auto child_hash = hash(*child, hasher);
     merge_into(c.signature, child_hash);
-    get_leaf_cap(c.c)->child = std::move(child);
+    get_leaf_cap(c.root)->child = std::move(child);
 }
 
 template<class CapabilityT, class CryptoModelT>
 auto get_signature(const caps::token<CapabilityT, CryptoModelT>& c, typename CryptoModelT::signer_type& s) {
     auto signature = sign(c, s);
 
-    for (auto child = c.c.child.get(); child; child = child->child.get()) {
+    for (auto child = c.root.child.get(); child; child = child->child.get()) {
         auto child_hash = hash(*child, typename CryptoModelT::hasher_type{});
         merge_into(signature, child_hash);
     }
@@ -149,14 +143,11 @@ template<class CapabilityT>
 list_ptr<CapabilityT> mkcaps(std::initializer_list<CapabilityT> capabs) {
     auto mem = new char[sizeof(caps::cap_list<CapabilityT>) +
                         sizeof(CapabilityT) * capabs.size()];
-    auto cps = new (mem) caps::cap_list<CapabilityT>;
-    int i = 0;
-    for (auto& c : capabs) {
-        new (cps->all + i++) CapabilityT(c);
-    }
-    cps->num_caps = i;
-    cps->child = nullptr;
-    return list_ptr<CapabilityT>(cps);
+    auto cap_list = new (mem) caps::cap_list<CapabilityT>;
+    std::uninitialized_copy(capabs.begin(), capabs.end(), cap_list->span().begin());
+    cap_list->num_caps = capabs.size();
+    cap_list->child = nullptr;
+    return list_ptr<CapabilityT>(cap_list);
 }
 
 template<class CryptoModelT, class CapabilityT>
@@ -164,14 +155,11 @@ token_ptr<CapabilityT, CryptoModelT> mkcaps(std::initializer_list<CapabilityT> c
                                             typename CryptoModelT::signer_type& s) {
     auto mem = new char[sizeof(token<CapabilityT, CryptoModelT>) +
                         sizeof(CapabilityT) * capabs.size()];
-    auto cps = new (mem) token<CapabilityT, CryptoModelT>;
-    int i = 0;
-    for (auto& c : capabs) {
-        new (cps->c.all + i++) CapabilityT(c);
-    }
-    cps->c.num_caps = i;
-    cps->c.child = nullptr;
-    cps->signature = sign(*cps, s);
-    return token_ptr<CapabilityT, CryptoModelT>{cps};
+    auto new_token = new (mem) token<CapabilityT, CryptoModelT>;
+    std::uninitialized_copy(capabs.begin(), capabs.end(), new_token->root.span().begin());
+    new_token->root.num_caps = capabs.size();
+    new_token->root.child = nullptr;
+    new_token->signature = sign(*new_token, s);
+    return token_ptr<CapabilityT, CryptoModelT>{new_token};
 }
 } // namespace caps

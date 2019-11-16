@@ -24,7 +24,7 @@ struct pair {
     uint32_t count;
 };
 
-static tos::fixed_fifo<pair, 127> vecs;
+static tos::sync_fixed_fifo<pair, 127> vecs;
 
 int handle_samples(MQTT::Client<net_facade, timer_facade, 512>& client) {
     while (vecs.size() < 20) {

@@ -1,7 +1,7 @@
 #include <tos/compiler.hpp>
 #include <tos/ft.hpp>
 #include <tos/scheduler.hpp>
-#include <core_cmInstr.h>
+#include <cmsis_gcc.h>
 #include <stm32_hal/flash.hpp>
 #include <stm32_hal/rcc.hpp>
 
@@ -179,7 +179,7 @@ int main() {
     tos_main();
 
     while (true) {
-        auto res = tos::kern::schedule();
+        auto res = tos::sched.schedule();
         if (res == tos::exit_reason::restart) {
             tos_force_reset();
         }

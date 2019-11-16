@@ -26,7 +26,7 @@ class spi_flash {
 public:
     using sector_id_t = uint16_t;
 
-    size_t sector_size() const { return SPI_FLASH_SEC_SIZE; }
+    size_t sector_size_bytes() const { return SPI_FLASH_SEC_SIZE; }
 
     expected<void, flash_errors> erase(sector_id_t sector) {
         tos::int_guard ig;
@@ -50,7 +50,7 @@ public:
         }
 
         auto res = spi_flash_write(
-            (uint32_t)sector * sector_size() + offset, (uint32*)data.data(), data.size());
+            (uint32_t)sector * sector_size_bytes() + offset, (uint32*)data.data(), data.size());
         if (res == SPI_FLASH_RESULT_OK) {
             return {};
         } else {
@@ -58,7 +58,7 @@ public:
         }
     }
 
-    expected<span<uint8_t>, flash_errors>
+    expected<void, flash_errors>
     read(sector_id_t sector, tos::span<uint8_t> buf, size_t offset = 0) {
         tos::int_guard ig;
 
@@ -70,9 +70,9 @@ public:
         }
 
         auto res = spi_flash_read(
-            (uint32_t)sector * sector_size() + offset, (uint32*)buf.data(), buf.size());
+            (uint32_t)sector * sector_size_bytes() + offset, (uint32*)buf.data(), buf.size());
         if (res == SPI_FLASH_RESULT_OK) {
-            return buf;
+            return {};
         } else {
             return unexpected(flash_errors(res));
         }

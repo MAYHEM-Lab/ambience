@@ -1,0 +1,10 @@
+namespace caps;
+
+table Capability {
+  body : [uint8] (required);
+}
+
+table List {
+  capabilities: [Capability] (required);
+  derivation: List;
+}

@@ -127,7 +127,7 @@ jobs:
           environment:
             CXX: g++-7
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=hosted/x86 ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=hosted/x86 -DBUILD_TESTS=ON ..
       - run:
           working_directory: build/
           name: Build Project

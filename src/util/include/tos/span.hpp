@@ -185,6 +185,12 @@ private:
     ptrdiff_t m_len;
 };
 
+template <class T>
+constexpr bool operator==(span<T> l, span<T> r)
+{
+    return l.size() == r.size() && std::equal(l.begin(), l.end(), r.begin(), r.end());
+}
+
 template<class T>
 span<T> empty_span() {
     return span<T>(nullptr);

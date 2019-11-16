@@ -43,7 +43,7 @@ extern "C" int ets_printf(const char* format, ...) __attribute__((format(printf,
 #define tos_debug_print(...)
 #endif
 
-#if defined(TOS_ARCH_x86)
+#if defined(TOS_ARCH_x86_hosted)
 #include <stdio.h>
 #define tos_debug_print printf
 #endif
@@ -52,8 +52,9 @@ extern "C" int ets_printf(const char* format, ...) __attribute__((format(printf,
 #define tos_debug_print(...)
 #endif
 
-#if !defined(tos_debug_print)
+#if defined(TOS_ARCH_cc32xx)
+#define tos_debug_print(...)
 #endif
 
-#define Expects(x)
-#define Ensures(x)
+#if !defined(tos_debug_print)
+#endif

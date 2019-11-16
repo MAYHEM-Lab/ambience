@@ -61,7 +61,7 @@ token_ptr<CapabilityT, CryptoModelT> deserialize_root(StreamT& from) {
     auto mem =
         new char[sizeof(token<CapabilityT, CryptoModelT>) + sizeof(CapabilityT) * len];
     auto cps = new (mem) token<CapabilityT, CryptoModelT>;
-    read_list(from, cps->c, len);
+    read_list(from, cps->root, len);
     return token_ptr<CapabilityT, CryptoModelT>{cps};
 }
 
@@ -80,14 +80,16 @@ list_ptr<CapabilityT> deserialize_list(StreamT& from) {
 
 template<class StreamT, class SignerT, class CapabilityT>
 void serialize(StreamT& to, const token<CapabilityT, SignerT>& caps) {
-    for (auto child = &caps.c; child; child = child->child.get()) {
-        detail::serialize(to, *child);
+    // Serialize all the links in the capability chain.
+    for (auto node = &caps.root; node; node = node->child.get()) {
+        detail::serialize(to, *node);
     }
-    decltype(caps.c.num_caps) c[] = {0};
+
+    decltype(caps.root.num_caps) c[] = {0};
     to->write({(const char*)&c, sizeof c});
 
     /*
-     * The signature goes last into the wire
+     * The signature goes last into the wire.
      *
      * If it went first, since the receiver couldn't know the size of the
      * overall object, it'd have to store the signature in a temporary location
@@ -105,7 +107,7 @@ void serialize(StreamT& to, const token<CapabilityT, SignerT>& caps) {
 template<class CapabilityT, class CryptoModelT, class StreamT>
 auto deserialize(StreamT& from) {
     auto root = detail::deserialize_root<CapabilityT, CryptoModelT>(from);
-    auto tail = &root->c;
+    auto tail = &root->root;
     for (auto l = detail::deserialize_list<CapabilityT>(from); l;
          l = detail::deserialize_list<CapabilityT>(from)) {
         tail->child = std::move(l);

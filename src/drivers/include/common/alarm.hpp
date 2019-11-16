@@ -55,8 +55,8 @@ public:
      *
      * @param dur duration to block for
      */
-    [[deprecated("Use tos::this_thread::sleep_for")]]
-    void sleep_for(std::chrono::milliseconds dur) {
+    [[deprecated("Use tos::this_thread::sleep_for")]] void
+    sleep_for(std::chrono::milliseconds dur) {
         tos::this_thread::sleep_for(*this, dur);
     }
 
@@ -96,6 +96,10 @@ public:
 
     std::chrono::milliseconds resolution() const {
         return std::chrono::milliseconds(m_period);
+    }
+
+    uint16_t time_to_ticks(std::chrono::milliseconds time) const {
+        return time.count();
     }
 
 private:
@@ -191,6 +195,11 @@ struct any_alarm {
      */
     virtual auto resolution() const -> std::chrono::milliseconds = 0;
 
+    /**
+     * Converts the given chrono duration to the number of ticks of the alarm.
+     */
+    virtual uint16_t time_to_ticks(std::chrono::milliseconds time) const = 0;
+
     virtual ~any_alarm() = default;
 };
 
@@ -218,6 +227,10 @@ public:
         return m_base_alarm->resolution();
     }
 
+    uint16_t time_to_ticks(std::chrono::milliseconds time) const override {
+        return m_base_alarm->time_to_ticks(time);
+    }
+
 private:
     T m_base_alarm;
 };
@@ -229,21 +242,22 @@ std::unique_ptr<any_alarm> erase_alarm(AlarmT&& alarm) {
 }
 } // namespace tos
 
-namespace tos
-{
-namespace this_thread
-{
+namespace tos {
+namespace this_thread {
 template<class AlarmT, class Rep, class Period>
-void sleep_for(AlarmT &alarm, const std::chrono::duration<Rep, Period> &duration) {
+void sleep_for(AlarmT& alarm, const std::chrono::duration<Rep, Period>& duration) {
     event ev;
     volatile bool b = false;
-    auto fun = [&ev, &b] { ev.fire_isr(); b = true; };
-    typename AlarmT::sleeper_type s{uint16_t(duration.count()), tos::function_ref<void()>(fun)};
+    auto fun = [&ev, &b] {
+        ev.fire_isr();
+        b = true;
+    };
+    typename AlarmT::sleeper_type s{alarm->time_to_ticks(duration),
+                                    tos::function_ref<void()>(fun)};
     alarm->set_alarm(s);
-    if (!b)
-    {
+    if (!b) {
         ev.wait();
     }
 }
-}
-}
+} // namespace this_thread
+} // namespace tos

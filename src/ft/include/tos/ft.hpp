@@ -30,28 +30,28 @@ inline kern::tcb* self() {
 }
 
 /**
- * This type represents a tag to let tos know that it should allocate a
- * stack with the default size for the platform.
- */
-struct alloc_stack_t {};
-
-/**
  * If this object is passed to a tos::launch call, tos will allocate a
  * default sized stack for the thread
  */
-constexpr alloc_stack_t alloc_stack{};
+constexpr stack_size_t alloc_stack{TOS_DEFAULT_STACK_SIZE};
 
 /**
- * Launches a new thread with a default sized stack
+ * Launches a new thread with the given stack size.
+ * 
+ * The stack is allocated dynamically, and will be deallocated
+ * upon thread exit.
+ * 
+ * Pass tos::alloc_stack to allocate a default sized stack.
  *
  * @tparam FuncT type of the callable object
  * @tparam ArgTs type of the arguments to the callable object
+ * @param stack_size size of the stack to be allocated for the thread.
  * @param func callable object to run in the new thread
  * @param args arguments to be passed to the function
  * @return reference to the control block of the new thread
  */
 template<class FuncT, class... ArgTs>
-auto& launch(alloc_stack_t, FuncT&& func, ArgTs&&... args);
+auto& launch(stack_size_t stack_size, FuncT&& func, ArgTs&&... args);
 
 /**
  * Launches a new thread in the given stack storage object

@@ -52,7 +52,7 @@ int main()
 
     while (true)
     {
-        auto res = tos::kern::schedule();
+        auto res = tos::sched.schedule();
         if (res == tos::exit_reason::restart) NVIC_SystemReset();// reboot();
         if (res == tos::exit_reason::power_down || res == tos::exit_reason::idle) {
             if (nrf_sdh_is_enabled())

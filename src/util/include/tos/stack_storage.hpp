@@ -7,6 +7,7 @@
 #include <type_traits>
 #include <cstdint>
 #include <cstddef>
+#include <tos/span.hpp>
 
 namespace tos
 {
@@ -20,5 +21,8 @@ namespace tos
     {
         using StorageT = std::aligned_storage_t<Len, alignof(std::max_align_t)>;
         StorageT m_storage;
+        operator span<uint8_t>() {
+            return tos::raw_cast<uint8_t>(tos::monospan(m_storage));
+        }
     };
 } // namespace tos

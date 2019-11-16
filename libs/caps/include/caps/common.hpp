@@ -7,6 +7,8 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <tos/span.hpp>
+#include <tos/utility.hpp>
 
 namespace caps {
 struct raw_deleter {
@@ -28,32 +30,29 @@ using list_ptr = std::unique_ptr<cap_list<CapT>, raw_deleter>;
  */
 template<class CapabilityT>
 struct cap_list : tos::non_copy_movable {
+    static_assert(std::is_trivially_copyable_v<CapabilityT>);
+
     list_ptr<CapabilityT> child;
     int16_t num_caps;
     int16_t __padding;
     CapabilityT all[0];
+
+    tos::span<const CapabilityT> span() const {
+        return tos::span<const CapabilityT>(all, num_caps);
+    }
+
+    tos::span<CapabilityT> span() {
+        return tos::span<CapabilityT>(all, num_caps);
+    }
 };
 
-template<class CapabilityT>
-const CapabilityT* begin(const cap_list<CapabilityT>& cl) {
-    return cl.all;
-}
-
-template<class CapabilityT>
-const CapabilityT* end(const cap_list<CapabilityT>& cl) {
-    return cl.all + cl.num_caps;
-}
-
 template<class T>
-list_ptr<T> clone(const cap_list<T>& l) {
-    auto mem = new char[sizeof(cap_list<T>) + l.num_caps * sizeof(T)];
+list_ptr<T> clone(const cap_list<T>& from) {
+    auto mem = new char[sizeof(cap_list<T>) + from.num_caps * sizeof(T)];
     auto res = new (mem) cap_list<T>;
-    int i = 0;
-    for (auto& c : l) {
-        new (res->all + i++) T(c);
-    }
-    res->num_caps = l.num_caps;
-    res->child = l.child ? clone(*l.child) : nullptr;
+    std::uninitialized_copy(from.span().begin(), from.span().end(), res->span().begin());
+    res->num_caps = from.num_caps;
+    res->child = from.child ? clone(*from.child) : nullptr;
     return list_ptr<T>(res);
 }
 
@@ -68,24 +67,22 @@ struct token {
     using sign_t = typename CryptoModelT::sign_type;
 
     sign_t signature{};
-    cap_list<CapabilityT> c;
+    cap_list<CapabilityT> root;
 };
 
 template<class CapT, class CryptoModelT>
 using token_ptr = std::unique_ptr<token<CapT, CryptoModelT>, raw_deleter>;
 
 template<class CT, class ST>
-token_ptr<CT, ST> clone(const token<CT, ST>& t) {
-    auto mem = new char[sizeof(token<CT, ST>) + sizeof(CT) * t.c.num_caps];
-    auto cps = new (mem) token<CT, ST>;
-    int i = 0;
-    for (auto& c : t.c) {
-        new (cps->c.all + i++) CT(c);
-    }
-    cps->c.num_caps = t.c.num_caps;
-    cps->signature = t.signature;
-    cps->c.child = cps->c.child ? clone(*cps->c.child) : nullptr;
-    return token_ptr<CT, ST>(cps);
+token_ptr<CT, ST> clone(const token<CT, ST>& from) {
+    auto mem = new char[sizeof(token<CT, ST>) + sizeof(CT) * from.root.num_caps];
+    auto result = new (mem) token<CT, ST>;
+    std::uninitialized_copy(
+        from.root.span().begin(), from.root.span().end(), result->root.span().begin());
+    result->root.num_caps = from.root.num_caps;
+    result->signature = from.signature;
+    result->root.child = result->root.child ? clone(*result->root.child) : nullptr;
+    return token_ptr<CT, ST>(result);
 }
 
 /**
@@ -94,6 +91,6 @@ token_ptr<CT, ST> clone(const token<CT, ST>& t) {
  */
 template<class CapabilityT, class CryptoModelT>
 constexpr size_t size_of(const token<CapabilityT, CryptoModelT>& cr) {
-    return sizeof cr + cr.c.num_caps * sizeof(CapabilityT);
+    return sizeof cr + cr.root.num_caps * sizeof(CapabilityT);
 }
 } // namespace caps
