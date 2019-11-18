@@ -46,6 +46,7 @@ target_sources(ti_driverlib PRIVATE
         ${TI_SDK_ROOT}/source/ti/devices/cc32xx/driverlib/utils.c
         ${TI_SDK_ROOT}/source/ti/devices/cc32xx/driverlib/wdt.c
         ${TI_SDK_ROOT}/source/ti/devices/cc32xx/driverlib/shamd5.c
+        ${TI_SDK_ROOT}/source/ti/devices/cc32xx/driverlib/udma.c
     )
 target_link_libraries(ti_driverlib PUBLIC ti_sdk ${TI_SDK_ROOT}/source/ti/devices/cc32xx/driverlib/gcc/Release/driverlib.a)
 target_include_directories(ti_driverlib PUBLIC ${TI_SDK_ROOT}/source/ti/devices/cc32xx)
@@ -66,6 +67,7 @@ target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=UARTBusy")
 target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=TimerIntEnable")
 target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=SHAMD5DataLengthSet")
 target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=SPI_Params_init")
+target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=uDMAErrorStatusGet")
 
 add_library(cc32xx_core "")
 target_sources(cc32xx_core PRIVATE core.cpp)
