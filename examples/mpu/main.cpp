@@ -12,9 +12,35 @@
 #include <tos/ft.hpp>
 #include <tos/memory.hpp>
 
+#include "bitfield.hpp"
+
 namespace cmsis {
 enum class mpu_errors
 {};
+
+union RASR_reg_t {
+    uint32_t raw;
+    BitField<0, 1> enable;
+    BitField<1, 5> size;
+    //BitField<6, 2> reserved;
+    BitField<8, 8> subregion_disable;
+    BitField<8, 8> srd;
+    BitField<16, 1> bufferable;
+    BitField<16, 1> b;
+    BitField<17, 1> cacheable;
+    BitField<17, 1> c;
+    BitField<18, 1> shareable;
+    BitField<18, 1> s;
+    BitField<19, 3> type_extension;
+    BitField<19, 3> tex;
+    //BitField<22, 2> reserved;
+    BitField<24, 3> access_permissions;
+    BitField<24, 3> ap;
+    //BitField<27, 1> reserved;
+    BitField<28, 1> execute_never;
+    BitField<28, 1> xn;
+    //BitField<29, 3> reserved;
+};
 
 class mpu
     : public tos::self_pointing<mpu>
@@ -85,6 +111,7 @@ tos::expected<void, mpu_errors> mpu::set_region(int region_id,
     tos::detail::memory_barrier();
     constexpr uint32_t mask = 64 - 1;
 
+    // the base address is aligned to 64 bytes!
     const uint32_t tmp_rbar =
         ((region.base + mask) & ~mask) | MPU_RBAR_VALID_Msk | region_id;
 
@@ -99,16 +126,22 @@ tos::expected<void, mpu_errors> mpu::set_region(int region_id,
     // Actual size is computed as 2^(size field + 1)
     const auto size_field = nearest_power_of_two(region.size) - 1;
 
-    const uint32_t tmp_rasr =
-        1 << MPU_RASR_XN_Pos | 1 << MPU_RASR_C_Pos | 0 << MPU_RASR_B_Pos |
-        1 << MPU_RASR_S_Pos | 0b000 << MPU_RASR_TEX_Pos | 0b000 << MPU_RASR_AP_Pos |
-        0 << MPU_RASR_SRD_Pos | size_field << MPU_RASR_SIZE_Pos | MPU_RASR_ENABLE_Msk;
-
+    RASR_reg_t rasr{};
+    rasr.execute_never = 1;
+    rasr.cacheable = 1;
+    rasr.bufferable = 0;
+    rasr.shareable = 1;
+    rasr.type_extension = 0;
+    rasr.access_permissions = 0;
+    rasr.subregion_disable = 0;
+    rasr.size = size_field;
+    rasr.enable = true;
+    
     MPU->RBAR = tmp_rbar;
 
     tos::detail::memory_barrier();
 
-    MPU->RASR = tmp_rasr;
+    MPU->RASR = rasr.raw;
 
     return {};
 }
@@ -127,6 +160,25 @@ void require_impl(bool expr, const char* /* str */) {
 }
 
 #define REQUIRE(expr) require_impl(bool(expr), #expr)
+
+struct memory_map {
+    static constexpr inline tos::memory_region all{ .base = 0, .size = 64 };
+};
+
+struct named_memory_region : tos::memory_region {
+    const char* name;
+};
+
+constexpr auto get_memory_map() {
+    std::array<named_memory_region, 5> map{};
+    map[0] = { {.base = 0x00000000, .size = 0x1FFFFFFF}, "Code" };
+    map[1] = { {.base = 0x40000000, .size = 0x1FFFFFFF}, "Peripheral" };
+    return map;
+}
+
+struct address_space {
+
+};
 
 void mpu_task() {
     cmsis::mpu mpu;
