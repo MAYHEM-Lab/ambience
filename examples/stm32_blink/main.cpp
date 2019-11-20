@@ -33,11 +33,11 @@ void blink_task() {
         using namespace std::chrono_literals;
         g.write(led_pin, tos::digital::low);
         tos::println(usart, "Low");
-        alarm.sleep_for(1s);
+        tos::this_thread::sleep_for(alarm, 1s);
 
         g.write(led_pin, tos::digital::high);
         tos::println(usart, "High");
-        alarm.sleep_for(1s);
+        tos::this_thread::sleep_for(alarm, 1s);
     }
 }
 
