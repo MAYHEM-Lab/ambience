@@ -60,5 +60,3 @@ elseif(${TOS_CORE} MATCHES "stm32")
     add_subdirectory(clock)
 elseif(${TOS_CORE} MATCHES "cc")
 endif()
-
-add_subdirectory(cc3235sf)
