@@ -26,7 +26,7 @@ public:
                   gpio::pin_type rx,
                   gpio::pin_type tx) noexcept;
 
-    void write(span<const uint8_t> buf);
+    int write(span<const uint8_t> buf);
     span<uint8_t> read(span<uint8_t> buf);
 
     ~uart();

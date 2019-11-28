@@ -69,6 +69,10 @@ static constexpr auto default_9600 = usart_config()
                                          .add(tos::usart_baud_rate{9600})
                                          .add(tos::usart_parity::disabled)
                                          .add(tos::usart_stop_bit::one);
+static constexpr auto default_115200 = usart_config()
+    .add(tos::usart_baud_rate{115200})
+    .add(tos::usart_parity::disabled)
+    .add(tos::usart_stop_bit::one);
 } // namespace uart
 
 namespace tos_literals {
@@ -85,8 +89,8 @@ static constexpr usart_t<N> usart{};
 } // namespace devs
 
 struct any_usart : public self_pointing<any_usart> {
-    virtual int write(tos::span<const char>) = 0;
-    virtual tos::span<char> read(tos::span<char>) = 0;
+    virtual int write(tos::span<const uint8_t>) = 0;
+    virtual tos::span<uint8_t> read(tos::span<uint8_t>) = 0;
     virtual ~any_usart() = default;
 };
 
@@ -102,11 +106,11 @@ public:
         : m_impl{std::move(usart)} {
     }
 
-    int write(tos::span<const char> span) override {
+    int write(tos::span<const uint8_t> span) override {
         return m_impl->write(span);
     }
 
-    span<char> read(tos::span<char> span) override {
+    span<uint8_t> read(tos::span<uint8_t> span) override {
         return m_impl->read(span);
     }
 
@@ -117,11 +121,11 @@ private:
 
 class null_usart : public any_usart {
 public:
-    int write(tos::span<const char>) override {
+    int write(tos::span<const uint8_t>) override {
         return 0;
     }
-    span<char> read(tos::span<char>) override {
-        return tos::span<char>(nullptr);
+    span<uint8_t> read(tos::span<uint8_t>) override {
+        return tos::span<uint8_t>(nullptr);
     }
 };
 

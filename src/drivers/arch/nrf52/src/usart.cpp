@@ -64,7 +64,7 @@ namespace tos
             }
         }
 
-        void uart::write(span<const uint8_t> buf) {
+        int uart::write(span<const uint8_t> buf) {
             tos::lock_guard<tos::mutex> lk { m_write_busy };
 
             nrfx_err_t err;
@@ -73,6 +73,7 @@ namespace tos
                 err = nrfx_uarte_tx(&uart0, buf.data(), buf.size());
                 if (err != NRFX_SUCCESS)
                 {
+                    return -1;
                     // TODO: report error
                 }
 
@@ -90,6 +91,7 @@ namespace tos
                     m_write_sync.down();
                 }
             }
+            return buf.size();
         }
 
         span<uint8_t> uart::read(span<uint8_t> buf) {

@@ -55,7 +55,8 @@ void timer0::disable() {
 }
 
 uint32_t timer0::get_counter() const {
-    return nrfx_timer_capture(&tmrs[m_idx], NRF_TIMER_CC_CHANNEL0);
+    auto ticks = std::min(m_ticks, nrfx_timer_capture(&tmrs[m_idx], NRF_TIMER_CC_CHANNEL1));
+    return ticks;
 }
 
 uint32_t timer0::get_period() const {

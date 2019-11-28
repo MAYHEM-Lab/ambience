@@ -7,6 +7,9 @@
 #include <array>
 #include <cstddef>
 #include <stddef.h>
+#if defined(__cpp_lib_string_view)
+#include <string_view>
+#endif
 #include <vector>
 
 namespace tos {
@@ -120,6 +123,17 @@ public:
         , m_len(arr.size()) {
     }
 
+#if defined(__cpp_lib_string_view)
+    template<class U = T,
+             typename = std::enable_if_t<
+                 std::is_same_v<std::remove_const_t<U>, std::string_view::value_type> &&
+                 std::is_const_v<U>>>
+    constexpr span(const std::string_view& str)
+        : m_base(str.data())
+        , m_len(str.size()) {
+    }
+#endif
+
     /**
      * Returns the number of elements in the span
      * @return tne number of elements
@@ -228,6 +242,10 @@ private:
     T* m_base;
     ptrdiff_t m_len;
 };
+
+#if defined(__cpp_deduction_guides) && defined(__cpp_lib_string_view)
+span(std::string_view)->span<const char>;
+#endif
 
 template<class T>
 span<T> empty_span() {
