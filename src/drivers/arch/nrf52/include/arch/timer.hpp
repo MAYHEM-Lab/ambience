@@ -11,7 +11,9 @@
 
 namespace tos {
 namespace nrf52 {
-class timer0 : public self_pointing<timer0> {
+class timer0
+    : public self_pointing<timer0>
+    , public non_copy_movable {
 public:
     explicit timer0(int idx);
 
