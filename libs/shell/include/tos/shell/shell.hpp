@@ -60,6 +60,9 @@ private:
         }
 
         cmd = cmd.slice(0, cmd.size() - std::size(sep));
+        if (cmd.empty()) {
+            return;
+        }
         std::vector<std::string_view> args;
         for (auto beg = cmd.begin(); beg != cmd.end();) {
             auto first_space = std::find(beg, cmd.end(), ' ');
