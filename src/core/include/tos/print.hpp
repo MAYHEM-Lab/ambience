@@ -110,6 +110,21 @@ void print(CharOstreamT& ostr, void* p) {
 }
 
 template<class CharOstreamT>
+void print(CharOstreamT& ostr, uint32_t p) {
+    print(ostr, itoa(p, 10));
+}
+
+template<class CharOstreamT>
+void print(CharOstreamT& ostr, uint64_t p) {
+    print(ostr, itoa(p, 10));
+}
+
+template<class CharOstreamT>
+void print(CharOstreamT& ostr, int64_t p) {
+    print(ostr, itoa(p, 10));
+}
+
+template<class CharOstreamT>
 void print(CharOstreamT& ostr, bool b) {
     print(ostr, b ? "true" : "false");
 }
@@ -153,7 +168,6 @@ void print2(OstreamT& ostr, T1&& t1, T2&& t2)
     print(ostr, std::forward<T2>(t2));
 }
 }
-
 
 /**
  * Prints the given arguments with the given separator in between
