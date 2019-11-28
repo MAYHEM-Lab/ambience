@@ -69,6 +69,10 @@ static constexpr auto default_9600 = usart_config()
                                          .add(tos::usart_baud_rate{9600})
                                          .add(tos::usart_parity::disabled)
                                          .add(tos::usart_stop_bit::one);
+static constexpr auto default_115200 = usart_config()
+    .add(tos::usart_baud_rate{115200})
+    .add(tos::usart_parity::disabled)
+    .add(tos::usart_stop_bit::one);
 } // namespace uart
 
 namespace tos_literals {
