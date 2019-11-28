@@ -243,11 +243,8 @@ private:
     ptrdiff_t m_len;
 };
 
-#ifdef __cpp_deduction_guides
+#if defined(__cpp_deduction_guides) && defined(__cpp_lib_string_view)
 span(std::string_view)->span<const char>;
-span(std::string)->span<const char>;
-span(std::string&)->span<char>;
-span(const std::string&)->span<const char>;
 #endif
 
 template<class T>
