@@ -18,6 +18,7 @@ struct echoing_uart : tos::self_pointing<echoing_uart<StreamT>> {
     explicit echoing_uart(StreamT& str)
         : m_str{str} {
     }
+
     auto read(tos::span<uint8_t> buf) {
         auto ret = m_str->read(buf);
         m_str->write(ret);
