@@ -132,7 +132,7 @@ __isr_vector:
     .long   0                           /*Reserved */
     .long   0                           /*Reserved */
     .long   0                           /*Reserved */
-    .long   0                           /*Reserved */
+    .long   CryptoCell_Handler                           /*Reserved */
     .long   0                           /*Reserved */
     .long   0                           /*Reserved */
     .long   0                           /*Reserved */
@@ -350,7 +350,6 @@ SysTick_Handler:
     b       .
     .size   SysTick_Handler, . - SysTick_Handler
 
-
 /* IRQ Handlers */
 
     .globl  Default_Handler
@@ -363,6 +362,12 @@ Default_Handler:
     .weak   \handler
     .set    \handler, Default_Handler
     .endm
+
+    .weak   CryptoCell_Handler
+    .type   CryptoCell_Handler, %function
+CryptoCell_Handler:
+    b       .
+    .size   CryptoCell_Handler, . - CryptoCell_Handler
 
     IRQ  POWER_CLOCK_IRQHandler
     IRQ  RADIO_IRQHandler
