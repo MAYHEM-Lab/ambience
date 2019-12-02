@@ -11,7 +11,7 @@ function(executable_postbuild target)
             COMMENT "Convert to Intel HEX image"
     )
 
-if (${CMAKE_SIZE})
+if (CMAKE_SIZE)
     add_custom_command(
             TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${target}>
