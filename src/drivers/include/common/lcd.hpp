@@ -73,7 +73,7 @@ public:
      * @param buf buffer to write to the screen
      * @return number of bytes written
      */
-    int write(span<const char> buf);
+    int write(span<const uint8_t> buf);
 
     void write(char c);
 
@@ -220,7 +220,7 @@ void lcd<I2cT>::write(char c) {
 }
 
 template<class I2cT>
-int lcd<I2cT>::write(span<const char> buf) {
+int lcd<I2cT>::write(span<const uint8_t> buf) {
     for (auto c : buf) {
         if (c == 0)
             break;
