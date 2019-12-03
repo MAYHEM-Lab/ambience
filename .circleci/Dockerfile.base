@@ -1,15 +1,13 @@
 from ubuntu:18.04
 
-RUN apt-get update && apt-get install -y --no-install-recommends git cmake g++-8 ninja-build wget ca-certificates
+RUN apt-get update && apt-get install -y --no-install-recommends git cmake g++-8 ninja-build wget ca-certificates libboost-all-dev
 
 WORKDIR /src
 
-RUN wget https://github.com/google/flatbuffers/archive/v1.11.0.tar.gz
-RUN tar xf v1.11.0.tar.gz
-RUN mkdir -p /src/flatbuffers-1.11.0/build
+RUN wget https://github.com/google/flatbuffers/archive/521e255ad9656a213971b30ba1beeec395b2e27e.tar.gz
+RUN tar xf 521e255ad9656a213971b30ba1beeec395b2e27e.tar.gz
+RUN mkdir -p /src/flatbuffers-521e255ad9656a213971b30ba1beeec395b2e27e/build
 
-WORKDIR /src/flatbuffers-1.11.0/build
+WORKDIR /src/flatbuffers-521e255ad9656a213971b30ba1beeec395b2e27e/build
 RUN CC=gcc-8 CXX=g++-8 cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
 RUN ninja && ninja install 
-
-RUN apt-get update && apt-get install -y --no-install-recommends libboost-all-dev
