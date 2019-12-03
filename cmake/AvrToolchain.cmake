@@ -4,6 +4,9 @@ set(CMAKE_SYSTEM_PROCESSOR avr)
 set(CMAKE_C_COMPILER /opt/x-tools/avr-gcc/bin/avr-gcc)
 set(CMAKE_CXX_COMPILER /opt/x-tools/avr-gcc/bin/avr-g++)
 set(CMAKE_SIZE /opt/x-tools/avr-gcc/bin/avr-size)
+set(CMAKE_OBJCOPY /opt/x-tools/avr-gcc/bin/avr-objcopy)
+
+set(CMAKE_OBJCOPY "${CMAKE_OBJCOPY}" CACHE STRING "OBJCOPY")
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
