@@ -23,14 +23,14 @@ struct uart_driver : self_pointing<uart_driver> {
             return buf.size();
         }
 
-        REQUIRE(m_buf.substr(0, index + 2) == "sys get nvm 300\r\n");
+        REQUIRE_EQ("sys get nvm 299\r\n", m_buf.substr(0, index + 2));
         return buf.size();
     }
 
     template<class AlarmT>
     span<uint8_t>
     read(span<uint8_t> data, AlarmT& alarm, std::chrono::milliseconds timeout) {
-        REQUIRE(data.size() >= 20);
+        REQUIRE_LE(20, data.size());
         auto r =
             std::strncpy(reinterpret_cast<char*>(data.begin()), "FF\r\n", data.size());
         return data.slice(0, std::distance(reinterpret_cast<char*>(data.begin()), r));

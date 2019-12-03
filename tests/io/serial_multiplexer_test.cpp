@@ -133,7 +133,7 @@ TEST_CASE("serial multiplexer can read and write to a single stream") {
     std::array<uint8_t, sizeof(message)> result;
     stream_read.read(result);
 
-    REQUIRE_EQ(0, equal(result, message));
+    REQUIRE(equal(result, message));
 }
 
 TEST_CASE("serial multiplexer can read and write to two streams") {
@@ -155,10 +155,10 @@ TEST_CASE("serial multiplexer can read and write to two streams") {
 
     std::array<uint8_t, sizeof(message0)> result0;
     stream_read0.read(result0);
-    REQUIRE_EQ(0, equal(result0, message0));
+    REQUIRE(equal(result0, message0));
 
     std::array<uint8_t, sizeof(message1)> result1;
     stream_read1.read(result1);
-    REQUIRE_EQ(0, equal(result1, message1));
+    REQUIRE(equal(result1, message1));
 }
 } // namespace
