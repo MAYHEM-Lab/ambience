@@ -4,17 +4,22 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT
 #include "doctest.h"
+
 #include <tos/ft.hpp>
 
-void tos_main()
-{
-    tos::launch(tos::alloc_stack, []{
+void tos_main() {
+    tos::launch(tos::alloc_stack, [] {
         doctest::Context context;
         int res = context.run(); // run
 
-        if(context.shouldExit()) // important - query flags (and --exit) rely on the user doing this
-            return res;          // propagate the result of the tests
+        if (context.shouldExit()) {
+            // important - query flags (and --exit) rely on the
+            // user doing this
+            // propagate the result of the tests
+            exit(res);
+            return res;
+        }
 
-        return 0;
+        exit(res);
     });
 }
