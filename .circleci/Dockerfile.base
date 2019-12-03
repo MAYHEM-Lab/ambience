@@ -1,6 +1,6 @@
 from ubuntu:18.04
 
-RUN apt-get update && apt-get install -y --no-install-recommends git cmake g++-8 ninja-build wget ca-certificates libboost-all-dev
+RUN apt-get update && apt-get install -y --no-install-recommends git cmake g++-8 ninja-build wget ca-certificates libboost-all-dev unzip
 
 WORKDIR /src
 
