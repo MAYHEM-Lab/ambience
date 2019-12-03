@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/sdk/third_party/include/lwip/init.h"
-#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/sdk/third_party/include/lwip/tcp.h"
-#include "../../../../../../libs/toscxx/include/algorithm"
 #include "wifi.hpp"
 
+#include <algorithm>
 #include <common/inet/lwip.hpp>
 #include <common/inet/tcp_ip.hpp>
+#include <lwip/init.h>
+#include <lwip/tcp.h>
 #include <tos/arch.hpp>
 #include <tos/debug/debug.hpp>
 #include <tos/expected.hpp>
@@ -38,7 +38,7 @@ public:
     template<class EventHandlerT>
     void attach(EventHandlerT& cb);
 
-    uint16_t send(span<const char>);
+    uint16_t send(span<const uint8_t>);
 
     ~tcp_endpoint();
 
@@ -75,13 +75,14 @@ public:
     ~tcp_socket();
 
     template<class ConnHandlerT>
-    [[deprecated("Use async_accept")]]
-    void accept(ConnHandlerT& handler);
+    [[deprecated("Use async_accept")]] void accept(ConnHandlerT& handler);
 
     template<class ConnHandlerT>
     void async_accept(ConnHandlerT& handler);
 
-    bool is_valid() const { return m_conn; }
+    bool is_valid() const {
+        return m_conn;
+    }
 
 private:
     tcp_pcb* m_conn = nullptr;
@@ -152,7 +153,9 @@ void tcp_socket::async_accept(ConnHandlerT& handler) {
     tcp_accept(m_conn, &accept_handler<ConnHandlerT>);
 }
 
-inline tcp_socket::~tcp_socket() { tcp_close(m_conn); }
+inline tcp_socket::~tcp_socket() {
+    tcp_close(m_conn);
+}
 
 inline tcp_endpoint::tcp_endpoint(tcp_pcb* conn)
     : m_conn{conn} {
@@ -187,7 +190,7 @@ inline tcp_endpoint::~tcp_endpoint() {
     tcp_abort(m_conn);
 }
 
-inline uint16_t tcp_endpoint::send(tos::span<const char> buf) {
+inline uint16_t tcp_endpoint::send(tos::span<const uint8_t> buf) {
     if (!m_conn) {
         tos_debug_print("erroneous call to send");
         return 0;

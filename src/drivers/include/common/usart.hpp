@@ -134,7 +134,7 @@ private:
  * This class implements a USART driver that discards every piece of
  * data that's passed to it.
  */
-class null_usart {
+class null_usart : self_pointing<null_usart> {
 public:
     int write(tos::span<const uint8_t>) {
         return 0;

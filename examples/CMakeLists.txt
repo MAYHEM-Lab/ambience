@@ -29,8 +29,6 @@ elseif(${TOS_CORE} MATCHES "esp")
     add_subdirectory(dht11_sample)
     add_subdirectory(esp_udp)
 
-    add_subdirectory(capabilities)
-
     add_subdirectory(esp_adxl345)
     add_subdirectory(esp_ssd1306)
 elseif(${TOS_CORE} MATCHES "x86_hosted")
