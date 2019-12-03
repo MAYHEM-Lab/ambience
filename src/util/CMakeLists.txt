@@ -42,3 +42,12 @@ add_library(tos::util ALIAS tos_util)
 
 tos_install(tos_util ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_util_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+if (BUILD_TESTS)
+    add_executable(uuid_test src/uuid_test.cpp)
+    target_link_libraries(uuid_test PUBLIC tests_main tos_util_core)
+    add_test(uuid_test uuid_test)
+    add_executable(hex_test src/hex_test.cpp)
+    target_link_libraries(hex_test PUBLIC tests_main tos_util_core)
+    add_test(hex_test hex_test)
+endif()
