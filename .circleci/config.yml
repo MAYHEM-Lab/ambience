@@ -11,15 +11,9 @@ workflows:
 jobs:
   nrf52_build:
     docker:
-      - image: ubuntu:bionic
+      - image: bakir/tos-builder-base
     steps:
       - checkout
-      - run:
-          name: Update apt
-          command: apt-get update
-      - run:
-          name: Install unzip wget
-          command: apt-get install -y unzip wget ninja-build cmake git
       - run:
           name: Get submodules
           command: git submodule update --init --recursive
@@ -54,7 +48,7 @@ jobs:
           command: ninja
   stm32_build:
     docker:
-      - image: ubuntu:bionic
+      - image: bakir/tos-builder-base
     steps:
       - checkout
       - run:
@@ -111,15 +105,9 @@ jobs:
           command: ninja
   x86_build:
     docker:
-      - image: ubuntu:bionic
+      - image: bakir/tos-builder-base
     steps:
       - checkout
-      - run:
-          name: Update apt
-          command: apt-get update
-      - run:
-          name: Install Toolchain
-          command: apt-get install -y g++-7 cmake ninja-build git libboost-all-dev
       - run:
           name: Get submodules
           command: git submodule update --init --recursive
@@ -138,7 +126,7 @@ jobs:
           command: ninja test
   avr_build:
     docker:
-      - image: ubuntu:bionic
+      - image: bakir/tos-builder-base
     steps:
       - checkout
       - run:
@@ -162,7 +150,7 @@ jobs:
           command: ninja
   esp_build:
     docker:
-    - image: ubuntu:bionic
+    - image: bakir/tos-builder-base
     steps:
     - checkout
     - run:
