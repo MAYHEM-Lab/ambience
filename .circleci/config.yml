@@ -133,18 +133,7 @@ jobs:
       - run:
           name: Get submodules
           command: git submodule update --init --recursive
-    - run:
-        name: Download toolchain
-        command: wget http://cs.ucsb.edu/~bakir/avr-gcc.tar.bz2
-    - run:
-        name: Create toolchain dir
-        command: mkdir -p /opt/x-tools/avr-gcc
-    - run:
-        name: Extract toolchain
-        command: tar xf avr-gcc.tar.bz2 -C /opt/x-tools/avr-gcc
-    - run:
       - run:
-<<<<<<< HEAD
           name: Download toolchain
           command: wget http://cs.ucsb.edu/~bakir/avr-gcc.tar.bz2
       - run:
@@ -154,8 +143,6 @@ jobs:
           name: Extract toolchain
           command: tar xf avr-gcc.tar.bz2 -C /opt/x-tools/avr-gcc
       - run:
-=======
->>>>>>> origin/master
           name: Generate Project
           command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=arduino/pro-mini-8 .. && cmake ..
       - run:
