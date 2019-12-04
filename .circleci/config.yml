@@ -34,14 +34,14 @@ jobs:
           command: unzip nrf5-sdk.zip -d /opt/x-tools
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=nrf52/832 ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=nrf52/832 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
           working_directory: build/
           name: Build Project
           command: ninja
       - run:
           name: Generate Project
-          command: mkdir build_840 && cd build_840 && cmake -G Ninja -DTOS_CPU=nrf52/840 ..
+          command: mkdir build_840 && cd build_840 && cmake -G Ninja -DTOS_CPU=nrf52/840 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
           working_directory: build_840/
           name: Build Project
@@ -77,28 +77,28 @@ jobs:
           command: unzip libopencm3.zip -d /opt/x-tools
       - run:
           name: Generate Project
-          command: mkdir build-f103 && cd build-f103 && cmake -G Ninja -DTOS_CPU=stm32/f1/03c8 ..
+          command: mkdir build-f103 && cd build-f103 && cmake -G Ninja -DTOS_CPU=stm32/f1/03c8 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
           working_directory: build-f103/
           name: Build Project
           command: ninja
       - run:
           name: Generate Project
-          command: mkdir build-f746 && cd build-f746 && cmake -G Ninja -DTOS_CPU=stm32/f7/46 ..
+          command: mkdir build-f746 && cd build-f746 && cmake -G Ninja -DTOS_CPU=stm32/f7/46 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
           working_directory: build-f746/
           name: Build Project
           command: ninja
       - run:
           name: Generate Project
-          command: mkdir build-l053 && cd build-l053 && cmake -G Ninja -DTOS_CPU=stm32/l0/53 ..
+          command: mkdir build-l053 && cd build-l053 && cmake -G Ninja -DTOS_CPU=stm32/l0/53 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
           working_directory: build-l053/
           name: Build Project
           command: ninja
       - run:
           name: Generate Project
-          command: mkdir build-l475 && cd build-l475 && cmake -G Ninja -DTOS_CPU=stm32/l4/75 ..
+          command: mkdir build-l475 && cd build-l475 && cmake -G Ninja -DTOS_CPU=stm32/l4/75 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
           working_directory: build-l475/
           name: Build Project
@@ -144,7 +144,7 @@ jobs:
           command: tar xf avr-gcc.tar.bz2 -C /opt/x-tools/avr-gcc
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=arduino/pro-mini-8 .. && cmake ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=arduino/pro-mini-8 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
           working_directory: build/
           name: Build Project
