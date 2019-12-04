@@ -10,7 +10,6 @@
 void slave_task() {
     using namespace tos::tos_literals;
     auto spi = open(tos::devs::spi<0>, tos::spi_mode::slave);
-    spi.enable();
 
     constexpr auto usconf = tos::usart_config()
                                 .add(9600_baud_rate)
@@ -22,8 +21,9 @@ void slave_task() {
     tos::println(usart, "Hi from slave!");
 
     while (true) {
-        char c = spi.exchange(42);
-        tos::println(usart, c);
+        uint8_t send_recv = 42;
+        spi.exchange(tos::monospan(send_recv));
+        tos::println(usart, int(send_recv));
     }
 }
 

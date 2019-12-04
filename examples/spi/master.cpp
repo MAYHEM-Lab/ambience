@@ -10,7 +10,6 @@
 void master_task() {
     using namespace tos::tos_literals;
     auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);
-    spi.enable();
 
     constexpr auto usconf = tos::usart_config()
                                 .add(19200_baud_rate)
@@ -22,8 +21,9 @@ void master_task() {
     tos::println(usart, "Hi from master!");
 
     while (true) {
-        uint16_t c[1];
-        spi.exchange(usart.read(c)[0]);
+        uint8_t c;
+        auto read = usart.read(tos::monospan(c));
+        spi.exchange(read);
     }
 }
 
