@@ -2,11 +2,15 @@
 // Created by fatih on 4/15/18.
 //
 
+#include "common/i2c.hpp"
+#include "tos/debug/debug.hpp"
+
 #include <arch/gpio.hpp>
 #include <arch/spi.hpp>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <common/gpio.hpp>
+#include <cstdint>
 #include <tos/event.hpp>
 #include <tos/semaphore.hpp>
 
@@ -72,41 +76,59 @@ void spi0::init_slave() {
     control_reg().init_slave();
 }
 
-static tos::semaphore spi_block{0};
-
-static uint8_t *buffer_begin, *buffer_end;
-
-expected<void, int> spi0::exchange(tos::span<uint8_t> buffer) {
-    buffer_begin = buffer.begin();
-    buffer_end = buffer.end();
-    SPDR = *buffer_begin;
+expected<void, int> spi0::exchange(tos::span<uint8_t> rx, tos::span<const uint8_t> tx) {
+    tx_buf = tx;
+    rx_buf = rx;
+    SPDR = tx_buf.front();
     spi_block.down();
     return {};
 }
 
-void spi0::select_slave(pin_t pin) {
-    gp.write(pin, false);
+expected<void, int> spi0::write(tos::span<const uint8_t> tx) {
+    tx_buf = tx;
+    SPDR = tx_buf.front();
+    spi_block.down();
+    return {};
 }
 
-void spi0::deselect_slave(pin_t pin) {
-    gp.write(pin, true);
+void spi0::isr() {
+    tx_buf = tx_buf.slice(1);
+
+    uint8_t read = SPDR;
+    if (!rx_buf.empty()) {
+        rx_buf.front() = SPDR;
+        rx_buf = rx_buf.slice(1);
+    } else {
+        tos::debug::do_not_optimize(&read);
+    }
+
+    if (tx_buf.empty()) {
+        spi_block.up_isr();
+        return;
+    }
+
+    SPDR = tx_buf.front();
 }
 
-void spi0::enable() {
+spi0::spi0(spi_mode::slave_t)
+    : tracked_driver(0) {
     control_reg().enable();
+    init_slave();
 }
 
-void spi0::disable() {
+spi0::spi0(spi_mode::master_t)
+    : tracked_driver(0) {
+    control_reg().enable();
+    init_master();
+}
+
+spi0::~spi0() {
     control_reg().disable();
 }
 } // namespace avr
 } // namespace tos
 
 ISR(SPI_STC_vect) {
-    *tos::avr::buffer_begin++ = SPDR;
-    if (tos::avr::buffer_begin == tos::avr::buffer_end) {
-        tos::avr::spi_block.up();
-        return;
-    }
-    SPDR = *tos::avr::buffer_begin;
+    auto& instance = *tos::avr::spi0::get(0);
+    instance.isr();
 }
