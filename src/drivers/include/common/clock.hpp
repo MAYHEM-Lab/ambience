@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <tos/function_ref.hpp>
 #include <utility>
+#include <tos/interrupt.hpp>
 
 namespace tos {
 /**
@@ -54,6 +55,41 @@ private:
     TimerT m_timer;
     mutable uint64_t m_last_now = 0;
 };
+
+struct any_steady_clock : self_pointing<any_steady_clock> {
+    using rep = uint64_t;
+    using period = std::micro;
+    using duration = std::chrono::duration<rep, period>;
+    using time_point = std::chrono::time_point<any_steady_clock>;
+
+    static const bool is_steady = true;
+
+    virtual time_point now() const = 0;
+
+    virtual ~any_steady_clock() = default;
+};
+
+using any_clock = any_steady_clock;
+
+namespace detail {
+template <class ClockT>
+class erased_clock : public any_steady_clock {
+public:
+    explicit erased_clock(ClockT clk) : m_impl {std::move(clk)} {}
+
+    time_point now() const override {
+        return any_steady_clock::time_point{m_impl->now().time_since_epoch()};
+    }
+
+private:
+    ClockT m_impl;
+};
+}
+
+template <class ClockT>
+auto erase_clock(ClockT clock) -> detail::erased_clock<ClockT> {
+    return detail::erased_clock<ClockT>{std::forward<ClockT>(clock)};
+}
 } // namespace tos
 
 namespace tos {
