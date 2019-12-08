@@ -99,8 +99,7 @@ void adxl345<TwimT>::readAccel(int* x, int* y, int* z) {
 
 template<class TwimT>
 bool adxl345<TwimT>::readFromI2C(uint8_t address, int num, uint8_t* buff) {
-    char buf[] = {address};
-    auto wres = m_twim->transmit({ADXL345_DEVICE}, buf);
+    auto wres = m_twim->transmit({ADXL345_DEVICE}, tos::monospan(address));
     if (wres != tos::twi_tx_res::ok) {
         // TODO: ERR
         return false;
@@ -117,7 +116,7 @@ bool adxl345<TwimT>::readFromI2C(uint8_t address, int num, uint8_t* buff) {
 
 template<class TwimT>
 bool adxl345<TwimT>::writeToI2C(uint8_t address, uint8_t val) {
-    char buf[] = {address, val};
+    uint8_t buf[] = {address, val};
     auto res = m_twim->transmit({ADXL345_DEVICE}, buf);
     if (res != tos::twi_tx_res::ok) {
         tos_debug_print("write error! %d", int(res));
