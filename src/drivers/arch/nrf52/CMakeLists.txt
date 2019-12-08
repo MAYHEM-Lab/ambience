@@ -21,6 +21,7 @@ target_compile_definitions(nrf52_timer PRIVATE
         NRFX_TIMER_ENABLED=1
         NRFX_TIMER0_ENABLED=1
         NRFX_TIMER1_ENABLED=1
+        NRFX_TIMER2_ENABLED=1
         TIMER_LEGACY_SUPPORT=0)
 
 add_library(nrf52_twim
