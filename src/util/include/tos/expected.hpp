@@ -99,6 +99,10 @@ public:
         return !bool(m_internal);
     }
 
+    constexpr PURE bool has_value() const {
+        return m_internal.has_value();
+    }
+
     template<class ResT, typename = std::enable_if_t<!std::is_same_v<T, ResT>>>
     constexpr operator expected<ResT, ErrT>() const {
         if (*this) {
