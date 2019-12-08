@@ -98,7 +98,8 @@ void print(CharOstreamT& ostr, int x) {
 }
 
 template<class CharOstreamT,
-         class = std::enable_if_t<!std::is_same_v<uintptr_t, uint64_t>>>
+		 class U = uintptr_t,
+         class = std::enable_if_t<!std::is_same_v<U, uint64_t>>>
 void print(CharOstreamT& ostr, uintptr_t ptr) {
     // print(ostr, '0');
     // print(ostr, 'x');
