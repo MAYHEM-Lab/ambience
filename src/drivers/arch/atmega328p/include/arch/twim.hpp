@@ -16,8 +16,8 @@ class twim : public self_pointing<twim> {
 public:
     twim(gpio::pin_type clock_pin, gpio::pin_type data_pin);
 
-    twi_tx_res transmit(twi_addr_t to, span<const char> buf) noexcept;
-    twi_rx_res receive(twi_addr_t from, span<char> buf) noexcept;
+    twi_tx_res transmit(twi_addr_t to, span<const uint8_t> buf) noexcept;
+    twi_rx_res receive(twi_addr_t from, span<uint8_t> buf) noexcept;
 };
 } // namespace avr
 

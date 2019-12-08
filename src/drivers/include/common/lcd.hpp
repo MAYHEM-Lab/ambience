@@ -165,7 +165,7 @@ void lcd<I2cT>::write4bits(uint8_t value) {
 
 template<class I2cT>
 void lcd<I2cT>::expanderWrite(uint8_t _data) {
-    char data[] = {uint8_t(_data | m_backlight)};
+    uint8_t data[] = {uint8_t(_data | m_backlight)};
     auto res = m_i2c->transmit(m_addr, data);
     if (res != twi_tx_res::ok) {
         // TODO: err

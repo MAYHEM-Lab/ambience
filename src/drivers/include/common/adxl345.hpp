@@ -104,7 +104,7 @@ bool adxl345<TwimT>::readFromI2C(uint8_t address, int num, uint8_t* buff) {
         // TODO: ERR
         return false;
     }
-    auto res = m_twim->receive({ADXL345_DEVICE}, tos::span<char>((char*)buff, num));
+    auto res = m_twim->receive({ADXL345_DEVICE}, tos::span<uint8_t>(buff, num));
     if (res != tos::twi_rx_res::ok) {
         tos_debug_print("read error! %d", int(res));
 

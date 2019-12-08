@@ -110,7 +110,7 @@ namespace avr
         twi_init();
     }
 
-    twi_tx_res twim::transmit(tos::twi_addr_t to, tos::span<const char> buf) noexcept {
+    twi_tx_res twim::transmit(tos::twi_addr_t to, tos::span<const uint8_t> buf) noexcept {
         twi_write(to.addr, (const uint8_t*)buf.data(), buf.size());
         kern::busy();
         transmission.sem.down();
@@ -118,7 +118,7 @@ namespace avr
         return transmission.index == transmission.length ? twi_tx_res::ok : twi_tx_res::other;
     }
 
-    twi_rx_res twim::receive(tos::twi_addr_t from, tos::span<char> buf) noexcept {
+    twi_rx_res twim::receive(tos::twi_addr_t from, tos::span<uint8_t> buf) noexcept {
         twi_read(from.addr, buf.size());
         kern::busy();
         transmission.sem.down();
