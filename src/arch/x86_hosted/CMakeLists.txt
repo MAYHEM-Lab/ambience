@@ -9,6 +9,8 @@ target_compile_options(x86_hosted_core PUBLIC "-U_FORTIFY_SOURCE")
 target_compile_features(x86_hosted_core PUBLIC cxx_std_14)
 target_link_libraries(x86_hosted_core PUBLIC tos_ft)
 
+target_link_libraries(x86_hosted_core PUBLIC Boost::boost Boost::system )
+
 # we use boost.asio for asynchronous operations
 find_package(Boost REQUIRED system)
 target_link_libraries(x86_hosted_impl PUBLIC Boost::boost Boost::system pthread tos_interrupt)
