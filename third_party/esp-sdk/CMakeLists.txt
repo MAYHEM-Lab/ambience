@@ -1,0 +1,5 @@
+add_library(esp_sdk INTERFACE)
+target_include_directories(esp_sdk INTERFACE "include")
+target_include_directories(esp_sdk INTERFACE "third_party/include")
+target_link_directories(esp_sdk INTERFACE "lib")
+target_link_directories(esp_sdk INTERFACE "ld")
