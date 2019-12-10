@@ -1,34 +1,10 @@
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR xtensa)
 
-set(TOOLS_BASE /opt/x-tools/tos-esp-sdk)
 set(SDK_ROOT ${TOOLS_BASE})
 
-find_program(CMAKE_C_COMPILER 
-    xtensa-lx106-elf-gcc
-    HINTS /opt/x-tools/xtensa-lx106-elf C:/x-tools/xtensa-lx106-elf/bin /opt/x-tools/tos-esp-sdk/xtensa-lx106-elf/bin
-    DOC "ESP GCC")
-
-find_program(CMAKE_CXX_COMPILER 
-    xtensa-lx106-elf-g++
-    HINTS /opt/x-tools/xtensa-lx106-elf C:/x-tools/xtensa-lx106-elf/bin /opt/x-tools/tos-esp-sdk/xtensa-lx106-elf/bin
-    DOC "ESP GCC")
-
-find_program(CMAKE_SIZE
-    xtensa-lx106-elf-size
-    HINTS /opt/x-tools/xtensa-lx106-elf C:/x-tools/xtensa-lx106-elf/bin /opt/x-tools/tos-esp-sdk/xtensa-lx106-elf/bin
-    DOC "ESP Size")
-
-find_program(CMAKE_OBJCOPY 
-    xtensa-lx106-elf-objcopy
-    HINTS /opt/x-tools/xtensa-lx106-elf C:/x-tools/xtensa-lx106-elf/bin /opt/x-tools/tos-esp-sdk/xtensa-lx106-elf/bin
-    DOC "ESP Objcopy")
-
-if (CMAKE_C_COMPILER-NOTFOUND)
-    message(STATUS "Can't find the toolchain!")
-endif()
-
-set(CMAKE_OBJCOPY "${CMAKE_OBJCOPY}" CACHE STRING "OBJCOPY")
+include(FindToolchain)
+find_gnu_toolchain(TRIPLE xtensa-lx106-elf SET)
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
