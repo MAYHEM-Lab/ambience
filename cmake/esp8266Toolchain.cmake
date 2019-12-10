@@ -4,10 +4,29 @@ set(CMAKE_SYSTEM_PROCESSOR xtensa)
 set(TOOLS_BASE /opt/x-tools/tos-esp-sdk)
 set(SDK_ROOT ${TOOLS_BASE})
 
-set(CMAKE_C_COMPILER ${TOOLS_BASE}/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc)
-set(CMAKE_CXX_COMPILER ${TOOLS_BASE}/xtensa-lx106-elf/bin/xtensa-lx106-elf-g++)
-set(CMAKE_SIZE ${TOOLS_BASE}/xtensa-lx106-elf/bin/xtensa-lx106-elf-size)
-set(CMAKE_OBJCOPY ${TOOLS_BASE}/xtensa-lx106-elf/bin/xtensa-lx106-elf-objcopy)
+find_program(CMAKE_C_COMPILER 
+    xtensa-lx106-elf-gcc
+    HINTS /opt/x-tools/xtensa-lx106-elf C:/x-tools/xtensa-lx106-elf/bin /opt/x-tools/tos-esp-sdk/xtensa-lx106-elf/bin
+    DOC "ESP GCC")
+
+find_program(CMAKE_CXX_COMPILER 
+    xtensa-lx106-elf-g++
+    HINTS /opt/x-tools/xtensa-lx106-elf C:/x-tools/xtensa-lx106-elf/bin /opt/x-tools/tos-esp-sdk/xtensa-lx106-elf/bin
+    DOC "ESP GCC")
+
+find_program(CMAKE_SIZE
+    xtensa-lx106-elf-size
+    HINTS /opt/x-tools/xtensa-lx106-elf C:/x-tools/xtensa-lx106-elf/bin /opt/x-tools/tos-esp-sdk/xtensa-lx106-elf/bin
+    DOC "ESP Size")
+
+find_program(CMAKE_OBJCOPY 
+    xtensa-lx106-elf-objcopy
+    HINTS /opt/x-tools/xtensa-lx106-elf C:/x-tools/xtensa-lx106-elf/bin /opt/x-tools/tos-esp-sdk/xtensa-lx106-elf/bin
+    DOC "ESP Objcopy")
+
+if (CMAKE_C_COMPILER-NOTFOUND)
+    message(STATUS "Can't find the toolchain!")
+endif()
 
 set(CMAKE_OBJCOPY "${CMAKE_OBJCOPY}" CACHE STRING "OBJCOPY")
 
