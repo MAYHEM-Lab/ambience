@@ -1,15 +1,10 @@
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR xtensa)
 
-set(TOOLS_BASE /opt/x-tools/tos-esp-sdk)
 set(SDK_ROOT ${TOOLS_BASE})
 
-set(CMAKE_C_COMPILER ${TOOLS_BASE}/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc)
-set(CMAKE_CXX_COMPILER ${TOOLS_BASE}/xtensa-lx106-elf/bin/xtensa-lx106-elf-g++)
-set(CMAKE_SIZE ${TOOLS_BASE}/xtensa-lx106-elf/bin/xtensa-lx106-elf-size)
-set(CMAKE_OBJCOPY ${TOOLS_BASE}/xtensa-lx106-elf/bin/xtensa-lx106-elf-objcopy)
-
-set(CMAKE_OBJCOPY "${CMAKE_OBJCOPY}" CACHE STRING "OBJCOPY")
+include(FindToolchain)
+find_gnu_toolchain(TRIPLE xtensa-lx106-elf SET)
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
