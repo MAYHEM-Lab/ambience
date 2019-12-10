@@ -12,12 +12,13 @@
 namespace tos {
 class omemory_stream : public self_pointing<omemory_stream> {
 public:
-    explicit constexpr omemory_stream(tos::span<char> buf)
+    explicit constexpr omemory_stream(tos::span<uint8_t> buf)
         : m_buffer{buf}
         , m_wr_it{m_buffer.begin()} {
     }
-    explicit constexpr omemory_stream(tos::span<uint8_t> buf)
-        : omemory_stream({(char*)buf.data(), buf.size()}) {
+
+    explicit omemory_stream(tos::span<char> buf)
+        : omemory_stream({reinterpret_cast<uint8_t*>(buf.data()), buf.size()}) {
     }
 
     constexpr size_t write(tos::span<const uint8_t> buf) {
@@ -28,23 +29,24 @@ public:
         return buf_it - buf.begin();
     }
 
-    constexpr tos::span<const char> get() {
+    constexpr tos::span<const uint8_t> get() {
         return m_buffer.slice(0, m_wr_it - m_buffer.begin());
     }
 
 private:
-    tos::span<char> m_buffer;
-    tos::span<char>::iterator m_wr_it;
+    tos::span<uint8_t> m_buffer;
+    tos::span<uint8_t>::iterator m_wr_it;
 };
 
 class imemory_stream : public self_pointing<imemory_stream> {
 public:
-    explicit constexpr imemory_stream(tos::span<const char> buf)
+    explicit constexpr imemory_stream(tos::span<const uint8_t> buf)
         : m_buffer{buf}
         , m_it{m_buffer.begin()} {
     }
-    explicit constexpr imemory_stream(tos::span<const uint8_t> buf)
-        : imemory_stream({(const char*)buf.data(), buf.size()}) {
+
+    explicit imemory_stream(tos::span<const char> buf)
+        : imemory_stream({reinterpret_cast<const uint8_t*>(buf.data()), buf.size()}) {
     }
 
     tos::expected<tos::span<uint8_t>, int> read(tos::span<uint8_t> buf) {
@@ -59,7 +61,7 @@ public:
     }
 
 private:
-    tos::span<const char> m_buffer;
-    tos::span<const char>::iterator m_it;
+    tos::span<const uint8_t> m_buffer;
+    tos::span<const uint8_t>::iterator m_it;
 };
 } // namespace tos
