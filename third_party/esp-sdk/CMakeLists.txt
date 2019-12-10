@@ -1,5 +1,9 @@
+if (NOT ${TOS_CORE} MATCHES "esp82")
+    return()
+endif()
+
 add_library(esp_sdk INTERFACE)
 target_include_directories(esp_sdk INTERFACE "include")
 target_include_directories(esp_sdk INTERFACE "third_party/include")
-target_link_directories(esp_sdk INTERFACE "lib")
-target_link_directories(esp_sdk INTERFACE "ld")
+target_link_libraries(esp_sdk INTERFACE "-L${CMAKE_CURRENT_SOURCE_DIR}/lib")
+target_link_libraries(esp_sdk INTERFACE "-L${CMAKE_CURRENT_SOURCE_DIR}/ld")

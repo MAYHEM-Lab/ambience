@@ -1,8 +1,6 @@
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR xtensa)
 
-set(SDK_ROOT ${TOOLS_BASE})
-
 include(FindToolchain)
 find_gnu_toolchain(TRIPLE xtensa-lx106-elf SET)
 
