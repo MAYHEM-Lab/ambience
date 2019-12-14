@@ -78,7 +78,8 @@ add_library(nrf5-sdk
     components/libraries/atomic_flags/nrf_atflags.c
     components/libraries/atomic/nrf_atomic.c
     components/libraries/sha256/sha256.c
-)
+    components/libraries/pwr_mgmt/nrf_pwr_mgmt.c
+        include/pwr.h)
 
 target_include_directories(nrf5-sdk PUBLIC include)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC integration/nrfx)
@@ -98,6 +99,7 @@ target_include_directories(nrf5-sdk SYSTEM PUBLIC components/libraries/strerror)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC components/libraries/log/src)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC components/libraries/experimental_section_vars)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC components/libraries/util)
+target_include_directories(nrf5-sdk SYSTEM PUBLIC components/libraries/pwr_mgmt)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC components/ble)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC components/ble/common)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC components/ble/ble_link_ctx_manager)

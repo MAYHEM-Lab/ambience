@@ -42,7 +42,6 @@
 
 #include "nrf_pwr_mgmt.h"
 #include "nrf.h"
-#include "nrf_mtx.h"
 #include "nrf_power.h"
 #include "app_error.h"
 #include "nrf_assert.h"
@@ -81,7 +80,6 @@ NRF_SECTION_SET_DEF(pwr_mgmt_data,
 
 static nrf_pwr_mgmt_evt_t   m_pwr_mgmt_evt;     /**< Event type which will be passed to the shutdown
                                                      handlers.*/
-static nrf_mtx_t            m_sysoff_mtx;       /**< Module API lock.*/
 static bool                 m_shutdown_started; /**< True if application started the shutdown preparation. */
 static nrf_section_iter_t   m_handlers_iter;    /**< Shutdown handlers iterator. */
 
@@ -326,7 +324,6 @@ ret_code_t nrf_pwr_mgmt_init(void)
     NRF_LOG_INFO("Init");
 
     m_shutdown_started = false;
-    nrf_mtx_init(&m_sysoff_mtx);
     nrf_section_iter_init(&m_handlers_iter, &pwr_mgmt_data);
 
     PWR_MGMT_SLEEP_INIT();
@@ -446,17 +443,10 @@ static void scheduler_shutdown_handler(void * p_event_data, uint16_t event_size)
 
 void nrf_pwr_mgmt_shutdown(nrf_pwr_mgmt_shutdown_t shutdown_type)
 {
-    // Check if shutdown procedure is not started.
-    if (!nrf_mtx_trylock(&m_sysoff_mtx))
-    {
-        return;
-    }
-
     if (shutdown_type != NRF_PWR_MGMT_SHUTDOWN_CONTINUE)
     {
         if (m_shutdown_started)
         {
-            nrf_mtx_unlock(&m_sysoff_mtx);
             return;
         }
         else
@@ -475,8 +465,6 @@ void nrf_pwr_mgmt_shutdown(nrf_pwr_mgmt_shutdown_t shutdown_type)
 #else
     shutdown_process();
 #endif // NRF_PWR_MGMT_CONFIG_USE_SCHEDULER
-
-    nrf_mtx_unlock(&m_sysoff_mtx);
 }
 
 #endif // NRF_MODULE_ENABLED(NRF_PWR_MGMT)

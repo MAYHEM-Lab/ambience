@@ -3,16 +3,16 @@
 //
 
 #include <arch/ble/softdev.hpp>
+#include <tos/debug/debug.hpp>
 
 namespace tos {
 namespace nrf52 {
 softdev::softdev() {
-    ret_code_t err_code;
-
-    err_code = nrf_sdh_enable_request();
+    auto err_code = nrf_sdh_enable_request();
+    tos::debug::do_not_optimize(&err_code);
     // APP_ERROR_CHECK(err_code);
     if (err_code != NRF_SUCCESS) {
-        tos::this_thread::block_forever();
+        tos::debug::panic("SDH Enable failed!");
     }
 
     // Configure the BLE stack using the default settings.
