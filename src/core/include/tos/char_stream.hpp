@@ -13,12 +13,12 @@
 
 namespace tos {
 struct char_istream : self_pointing<char_istream> {
-    virtual span<char> read(span<char>) = 0;
+    virtual span<uint8_t> read(span<uint8_t>) = 0;
     virtual ~char_istream() = default;
 };
 
 struct char_ostream : self_pointing<char_ostream> {
-    virtual int write(span<const char>) = 0;
+    virtual int write(span<const uint8_t>) = 0;
     virtual ~char_ostream() = default;
 };
 
@@ -35,7 +35,7 @@ struct istream_facade
         : m_t{std::forward<U>(t)} {
     }
 
-    span<char> read(span<char> buf) override {
+    span<uint8_t> read(span<uint8_t> buf) override {
         return m_t.read(buf);
     }
 
@@ -52,7 +52,7 @@ struct ostream_facade
         : m_t{std::forward<U>(t)} {
     }
 
-    int write(span<const char> buf) override {
+    int write(span<const uint8_t> buf) override {
         return m_t->write(buf);
     }
 
@@ -69,11 +69,11 @@ struct iostream_facade
         : m_t{std::forward<U>(t)} {
     }
 
-    span<char> read(span<char> buf) override {
+    span<uint8_t> read(span<uint8_t> buf) override {
         return m_t.read(buf);
     }
 
-    int write(span<const char> buf) override {
+    int write(span<const uint8_t> buf) override {
         return m_t.write(buf);
     }
 

@@ -14,7 +14,7 @@
 #include <tos/utility.hpp>
 #include <tos/version.hpp>
 
-char buf[512];
+uint8_t buf[512];
 void task() {
     using namespace tos::tos_literals;
     using namespace std::chrono_literals;
@@ -82,10 +82,11 @@ conn_:
 
         state = 5;
 
-        stream.write("GET / HTTP/1.1\r\n"
-                     "Host: bakir.io\r\n"
-                     "Connection: close\r\n"
-                     "\r\n");
+        tos::print(stream,
+                   "GET / HTTP/1.1\r\n"
+                   "Host: bakir.io\r\n"
+                   "Connection: close\r\n"
+                   "\r\n");
 
         state = 6;
 
