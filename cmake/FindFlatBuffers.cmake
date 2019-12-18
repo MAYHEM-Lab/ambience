@@ -1,4 +1,7 @@
-find_program(FLATBUFFERS_FLATC_EXECUTABLE NAMES flatc)
+find_program(FLATBUFFERS_FLATC_EXECUTABLE 
+    NAMES flatc
+    HINTS C:/x-tools/flatbuffers/bin /opt/x-tools/flatbuffers/bin)
+    
 message(STATUS "Flatc: ${FLATBUFFERS_FLATC_EXECUTABLE}")
 
 if(NOT ${FLATBUFFERS_FLATC_EXECUTABLE} MATCHES "NOTFOUND")
