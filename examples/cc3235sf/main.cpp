@@ -18,11 +18,11 @@ void hash(tos::span<const uint8_t> buffer) {
     }
 
     CryptoCC32XX_sign(cryptoHandle,
-                                    CryptoCC32XX_HMAC_SHA256,
-                                    const_cast<uint8_t*>(buffer.data()),
-                                    buffer.size(),
-                                    hashv.data(),
-                                    &params);
+                      CryptoCC32XX_HMAC_SHA256,
+                      const_cast<uint8_t*>(buffer.data()),
+                      buffer.size(),
+                      hashv.data(),
+                      &params);
     CryptoCC32XX_close(cryptoHandle);
 }
 
