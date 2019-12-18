@@ -23,16 +23,6 @@ namespace tos {
     template<class S1, class S2>
     using concat_t = invoke_t<concat<S1, S2>>;
 
-    template <class AlarmT, class FunT>
-    void forever(AlarmT& alarm, std::chrono::milliseconds ms, FunT&& fun)
-    {
-        while (true)
-        {
-            std::forward<FunT>(fun)();
-            alarm.sleep_for(ms);
-        }
-    }
-
     struct non_copyable
     {
         non_copyable() = default;
