@@ -23,8 +23,8 @@ span<CharT> read_until(StreamT& str, span<const CharT> until, span<CharT> buffer
     return buffer;
 }
 
-template<class StreamT>
-span<char> read_to_end(StreamT& str, span<char> buf) {
+template<class CharT, class StreamT>
+span<CharT> read_to_end(StreamT& str, span<CharT> buf) {
     auto b = buf;
     while (b.size() != 0) {
         auto rd = str->read(b);

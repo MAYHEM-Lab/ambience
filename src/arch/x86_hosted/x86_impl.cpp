@@ -27,6 +27,7 @@ asio::io_service& get_io()
     return *g_io;
 }
 
+extern "C"
 int main()
 {
     asio::io_service io;

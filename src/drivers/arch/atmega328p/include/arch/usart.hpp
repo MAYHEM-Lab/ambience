@@ -45,10 +45,10 @@ namespace tos {
 
             void clear();
 
-            static span<char> read(span<char> buf);
-            static span<char> read(span<char> buf, tos::alarm<tos::avr::timer1>&, const std::chrono::milliseconds&);
+            static span<uint8_t> read(span<uint8_t> buf);
+            static span<uint8_t> read(span<uint8_t> buf, tos::alarm<tos::avr::timer1>&, const std::chrono::milliseconds&);
 
-            static int write(span<const char> buf);
+            static int write(span<const uint8_t> buf);
 
             ~usart0() { if(m_disable) disable(); }
             usart0(usart0&& rhs)

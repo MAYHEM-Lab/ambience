@@ -51,7 +51,7 @@ namespace kern {
     switch_context(sched.main_context, return_codes::do_exit);
 }
 
-inline void suspend_self(const int_guard&) {
+inline void suspend_self(const no_interrupts&) {
     kern::ctx ctx;
     if (save_context(*impl::cur_thread, ctx) == return_codes::saved) {
         switch_context(sched.main_context, return_codes::suspend);

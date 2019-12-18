@@ -160,17 +160,17 @@ namespace tos
     template<class TwimT>
     void ina219<TwimT>::wireWriteRegister(uint8_t reg, uint16_t value) {
         std::array<uint8_t, 3> buf {reg, uint8_t ((value >> 8) & 0xFF), uint8_t (value & 0xFF)};
-        _twim->transmit(_addr, raw_cast<const char>(spanify<uint8_t>(buf)));
+        _twim->transmit(_addr, tos::span<uint8_t>(buf));
     }
 
     template<class TwimT>
     void ina219<TwimT>::wireReadRegister(uint8_t reg, uint16_t *value) {
-        _twim->transmit(_addr, raw_cast<const char>(span<uint8_t>{&reg, 1}));
+        _twim->transmit(_addr, span<uint8_t>{&reg, 1});
 
         // should there be a delay here?
 
         std::array<uint8_t, 2> buf{};
-        _twim->receive(_addr, raw_cast<char>(spanify<uint8_t>(buf)));
+        _twim->receive(_addr, tos::span<uint8_t>(buf));
         *value = (buf[0] << 8 | buf[1]);
     }
 } // namespace tos

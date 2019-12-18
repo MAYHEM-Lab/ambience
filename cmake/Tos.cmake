@@ -1,9 +1,31 @@
-function(print_size target)
+function(executable_postbuild target)
     add_custom_command(
             TARGET ${target} POST_BUILD
-            COMMAND ${CMAKE_SIZE} -A $<TARGET_FILE:${target}>
-            COMMENT "Print size"
+            COMMAND ${CMAKE_OBJCOPY} $<TARGET_FILE:${target}> -O binary $<TARGET_FILE:${target}>.bin
+            COMMENT "Convert to BIN image"
     )
+
+    add_custom_command(
+            TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_OBJCOPY} $<TARGET_FILE:${target}> -O ihex $<TARGET_FILE:${target}>.hex
+            COMMENT "Convert to Intel HEX image"
+    )
+
+if (CMAKE_SIZE)
+    add_custom_command(
+            TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${target}>
+            COMMENT "Calculate size"
+    )
+endif()
+endfunction()
+
+function(add_executable target)
+    _add_executable(${target} ${ARGN})
+    get_target_property(IS_IMPORTED ${target} IMPORTED)
+    if (NOT ${IS_IMPORTED})
+        executable_postbuild(${target})
+    endif()
 endfunction()
 
 set(TOS_FLAGS "-Wall -Wextra -Wpedantic \
@@ -71,16 +93,7 @@ endfunction()
 
 install(FILES ${THIS_DIR}/tos-config.cmake DESTINATION "lib/tos")
 
-MACRO(SUBDIRLIST result curdir)
-    FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)
-    SET(dirlist "")
-    FOREACH(child ${children})
-        IF(IS_DIRECTORY ${curdir}/${child})
-            LIST(APPEND dirlist ${child})
-        ENDIF()
-    ENDFOREACH()
-    SET(${result} ${dirlist})
-ENDMACRO()
+include(TosFunctions)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "CFLAGS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "CXXFLAGS")

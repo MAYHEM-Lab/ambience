@@ -51,10 +51,3 @@ target_compile_definitions(etl
   INTERFACE
   ${ETL_PROFILE} 
   )
-
-
-
-if (BUILD_TESTS)
-  enable_testing()
-  add_subdirectory(test) 
-endif()

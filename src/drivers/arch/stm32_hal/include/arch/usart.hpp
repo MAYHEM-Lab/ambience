@@ -62,14 +62,10 @@ public:
 
     int write(tos::span<const uint8_t> buf);
 
-    int write(tos::span<const char> buf) {
-        return write(tos::raw_cast<const uint8_t>(buf));
-    }
-
-    tos::span<char> read(tos::span<char> b);
+    tos::span<uint8_t> read(tos::span<uint8_t> b);
 
     template<class AlarmT>
-    tos::span<char> read(tos::span<char> b, AlarmT& alarm, std::chrono::milliseconds to);
+    tos::span<uint8_t> read(tos::span<uint8_t> b, AlarmT& alarm, std::chrono::milliseconds to);
 
     ~usart() {
         NVIC_DisableIRQ(m_def->irq);
@@ -193,8 +189,8 @@ inline usart::usart(const detail::usart_def& x,
 }
 
 template<class AlarmT>
-tos::span<char>
-usart::read(tos::span<char> b, AlarmT& alarm, std::chrono::milliseconds to) {
+tos::span<uint8_t>
+usart::read(tos::span<uint8_t> b, AlarmT& alarm, std::chrono::milliseconds to) {
     size_t total = 0;
     auto len = b.size();
     auto buf = b.data();
@@ -212,7 +208,7 @@ usart::read(tos::span<char> b, AlarmT& alarm, std::chrono::milliseconds to) {
     return b.slice(0, total);
 }
 
-inline tos::span<char> usart::read(tos::span<char> b) {
+inline tos::span<uint8_t> usart::read(tos::span<uint8_t> b) {
     size_t total = 0;
     auto len = b.size();
     auto buf = b.data();

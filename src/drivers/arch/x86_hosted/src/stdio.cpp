@@ -5,20 +5,16 @@
 #include <arch/stdio.hpp>
 #include <iostream>
 
-namespace tos
-{
-    namespace x86
-    {
-        int stdio::write(span<const char> buf)
-        {
-            ::std::cout.write(buf.data(), buf.size());
-            return buf.size();
-        }
+namespace tos {
+namespace x86 {
+int stdio::write(span<const uint8_t> buf) {
+    ::std::cout.write(reinterpret_cast<const char*>(buf.data()), buf.size());
+    return buf.size();
+}
 
-        span<char> stdio::read(span<char> buf)
-        {
-            ::std::cin.read(buf.data(), buf.size());
-            return buf;
-        }
-    } // namespace x86
+span<uint8_t> stdio::read(span<uint8_t> buf) {
+    ::std::cin.read(reinterpret_cast<char*>(buf.data()), buf.size());
+    return buf;
+}
+} // namespace x86
 } // namespace tos

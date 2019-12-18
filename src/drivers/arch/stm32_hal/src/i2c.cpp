@@ -147,7 +147,7 @@ i2c::i2c(const detail::i2c_def& def, gpio::pin_type scl, gpio::pin_type sda)
 #endif
 }
 
-twi_tx_res i2c::transmit(twi_addr_t to, span<const char> buf) noexcept {
+twi_tx_res i2c::transmit(twi_addr_t to, span<const uint8_t> buf) noexcept {
     auto uint8_span = raw_cast<const uint8_t>(buf);
     auto transmit_res =
         HAL_I2C_Master_Transmit_IT(native_handle(),
@@ -171,7 +171,7 @@ twi_tx_res i2c::transmit(twi_addr_t to, span<const char> buf) noexcept {
     }
 }
 
-twi_rx_res i2c::receive(twi_addr_t from, span<char> buf) noexcept {
+twi_rx_res i2c::receive(twi_addr_t from, span<uint8_t> buf) noexcept {
     auto uint8_span = raw_cast<uint8_t>(buf);
     auto transmit_res =
         HAL_I2C_Master_Receive_IT(native_handle(),

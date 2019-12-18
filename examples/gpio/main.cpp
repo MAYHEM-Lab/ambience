@@ -21,9 +21,9 @@ void hello_task() {
     using namespace tos::tos_literals;
     gp->set_pin_mode(13_pin, tos::pin_mode::out);
     gp->write(13_pin, false);
-    char buf;
+    uint8_t buf;
     while (true) {
-        usart->read({&buf, 1});
+        usart->read(tos::monospan(buf));
         if (buf == '1') {
             gp->write(13_pin, true);
             tos::println(*usart, "On");

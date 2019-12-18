@@ -12,6 +12,8 @@ class exti
     : public self_pointing<exti>
     , public tracked_driver<exti, 1> {
 public:
+    exti()
+        : tracked_driver(0){};
     void attach(const pin_t& pin, pin_change::rising_t, function_ref<void()> handler);
     void attach(const pin_t& pin, pin_change::falling_t, function_ref<void()> handler);
 

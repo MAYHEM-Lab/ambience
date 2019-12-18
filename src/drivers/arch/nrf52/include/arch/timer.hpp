@@ -11,7 +11,9 @@
 
 namespace tos {
 namespace nrf52 {
-class timer0 : public self_pointing<timer0> {
+class timer0
+    : public self_pointing<timer0>
+    , public non_copy_movable {
 public:
     explicit timer0(int idx);
 
@@ -67,5 +69,9 @@ inline nrf52::timer0 open_impl(devs::timer_t<0>) {
 
 inline nrf52::timer0 open_impl(devs::timer_t<1>) {
     return nrf52::timer0{1};
+}
+
+inline nrf52::timer0 open_impl(devs::timer_t<2>) {
+    return nrf52::timer0{2};
 }
 } // namespace tos

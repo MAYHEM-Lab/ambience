@@ -58,8 +58,8 @@ public:
         return &m_handle;
     }
 
-    twi_tx_res transmit(twi_addr_t to, span<const char> buf) noexcept;
-    twi_rx_res receive(twi_addr_t from, span<char> buf) noexcept;
+    twi_tx_res transmit(twi_addr_t to, span<const uint8_t> buf) noexcept;
+    twi_rx_res receive(twi_addr_t from, span<uint8_t> buf) noexcept;
 
     void tx_fin();
     void rx_fin();

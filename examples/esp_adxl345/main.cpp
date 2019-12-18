@@ -12,6 +12,7 @@
 #include <cwpack.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
+#include <tos/sync_ring_buf.hpp>
 
 struct vec3i {
     int32_t x, y, z;
@@ -115,11 +116,13 @@ void pack(PackerT& p, const T& value) {
 
 template<class StreamT, class ElemT>
 void push(StreamT& stream, const char* schema, const ElemT& elem) {
-    std::array<char, 32> buf;
+    std::array<uint8_t, 32> buf;
     tos::msgpack::packer p{buf};
     pack(p, elem);
     auto sp = p.get();
-    std::strncpy(buf.begin() + sp.size(), schema, buf.size() - sp.size());
+    std::copy_n(schema,
+                std::min(buf.size() - sp.size(), strlen(schema)),
+                buf.begin() + sp.size());
     buf[sp.size() + strlen(schema)] = strlen(schema);
     stream->write(tos::span(buf).slice(0, sp.size() + strlen(schema) + 1));
     tos::this_thread::yield();

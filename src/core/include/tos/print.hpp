@@ -97,7 +97,9 @@ void print(CharOstreamT& ostr, int x) {
     print(ostr, itoa(x, 10));
 }
 
-template<class CharOstreamT>
+template<class CharOstreamT,
+		 class U = uintptr_t,
+         class = std::enable_if_t<!std::is_same_v<U, uint64_t>>>
 void print(CharOstreamT& ostr, uintptr_t ptr) {
     // print(ostr, '0');
     // print(ostr, 'x');
@@ -107,6 +109,21 @@ void print(CharOstreamT& ostr, uintptr_t ptr) {
 template<class CharOstreamT>
 void print(CharOstreamT& ostr, void* p) {
     print(ostr, reinterpret_cast<uintptr_t>(p));
+}
+
+template<class CharOstreamT>
+void print(CharOstreamT& ostr, uint32_t p) {
+    print(ostr, itoa(p, 10));
+}
+
+template<class CharOstreamT>
+void print(CharOstreamT& ostr, uint64_t p) {
+    print(ostr, itoa(p, 10));
+}
+
+template<class CharOstreamT>
+void print(CharOstreamT& ostr, int64_t p) {
+    print(ostr, itoa(p, 10));
 }
 
 template<class CharOstreamT>
@@ -122,17 +139,14 @@ struct separator_t {
 
 constexpr void get_separator_or() = delete;
 
-template <class FirstT, class... Ts>
-constexpr const auto&
-get_separator_or(const FirstT&, const Ts&... ts)
-{
+template<class FirstT, class... Ts>
+constexpr const auto& get_separator_or(const FirstT&, const Ts&... ts) {
     return get_separator_or(ts...);
 }
 
-template <class FirstT, class... Ts>
-constexpr const separator_t<FirstT>&
-get_separator_or(const separator_t<FirstT>& first, const Ts&...)
-{
+template<class FirstT, class... Ts>
+constexpr const separator_t<FirstT>& get_separator_or(const separator_t<FirstT>& first,
+                                                      const Ts&...) {
     return first;
 }
 } // namespace detail
@@ -141,19 +155,17 @@ constexpr detail::separator_t<T> separator(T&& sep) {
     return {std::forward<T>(sep)};
 }
 
-namespace detail
-{
-template <class OstreamT, class T1, class T2>
-void print2(OstreamT&, T1&&, separator_t<T2>&&) {}
+namespace detail {
+template<class OstreamT, class T1, class T2>
+void print2(OstreamT&, T1&&, separator_t<T2>&&) {
+}
 
-template <class OstreamT, class T1, class T2>
-void print2(OstreamT& ostr, T1&& t1, T2&& t2)
-{
+template<class OstreamT, class T1, class T2>
+void print2(OstreamT& ostr, T1&& t1, T2&& t2) {
     print(ostr, std::forward<T1>(t1));
     print(ostr, std::forward<T2>(t2));
 }
-}
-
+} // namespace detail
 
 /**
  * Prints the given arguments with the given separator in between
