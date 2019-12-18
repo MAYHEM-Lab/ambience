@@ -1,5 +1,5 @@
 project(ti_core CXX C ASM)
-set(TI_SDK_ROOT /opt/ti/simplelink_cc32xx_sdk_3_30_01_02/)
+set(TI_SDK_ROOT C:/x-tools/ti/simplelink_cc32xx_sdk_3_30_01_02/)
 
 add_library(ti_sdk "")
 target_sources(ti_sdk PRIVATE
@@ -56,7 +56,7 @@ target_sources(ti_drivers PRIVATE
         ${TI_SDK_ROOT}/source/ti/drivers/Timer.c
         ${TI_SDK_ROOT}/source/ti/drivers/SPI.c
         ${TI_SDK_ROOT}/source/ti/drivers/power/PowerCC32XX.c
-        ${TI_SDK_ROOT}/source/ti/boards/CC3235SF_LAUNCHXL/CC3235SF_LAUNCHXL.c)
+        ${TI_SDK_ROOT}/source/ti/boards/CC3220SF_LAUNCHXL/CC3220SF_LAUNCHXL.c)
 target_include_directories(ti_drivers PUBLIC ${TI_SDK_ROOT}/source/)
 target_link_libraries(ti_drivers PUBLIC ${TI_SDK_ROOT}/source/ti/drivers/lib/drivers_cc32xx.am4g)
 target_link_libraries(ti_drivers PUBLIC ${TI_SDK_ROOT}/kernel/nortos/lib/nortos_cc32xx.am4g)
@@ -84,4 +84,4 @@ target_sources(cc32xx_impl PRIVATE impl.cpp)
 target_link_libraries(cc32xx_impl PUBLIC tos_ft cc32xx_core)
 target_include_directories(cc32xx_impl PUBLIC include)
 
-set_target_properties(cc32xx_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cc3235sf.ld)
+set_target_properties(cc32xx_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cc3220sf.ld)
