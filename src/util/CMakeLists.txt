@@ -47,7 +47,12 @@ if (BUILD_TESTS)
     add_executable(uuid_test src/uuid_test.cpp)
     target_link_libraries(uuid_test PUBLIC tests_main tos_util_core)
     add_test(uuid_test uuid_test)
+
     add_executable(hex_test src/hex_test.cpp)
     target_link_libraries(hex_test PUBLIC tests_main tos_util_core)
     add_test(hex_test hex_test)
+
+	add_executable(mem_stream_test src/mem_stream_test.cpp)
+	target_link_libraries(mem_stream_test PUBLIC tests_main tos_util_core)
+	add_test(mem_stream_test mem_stream_test)
 endif()
