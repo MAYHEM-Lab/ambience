@@ -31,11 +31,8 @@ public:
     }
 
 private:
-    using TT = std::aligned_storage_t<sizeof(T), alignof(T)>;
     union elem {
-        struct {
-        } empty;
-        TT t;
+        T t;
     };
     elem m_buf[Len];
     RingBufT m_rb{Len};
@@ -50,7 +47,6 @@ void basic_fixed_fifo<T, Len, RingBufT>::push(T t) {
     auto i = m_rb.push();
     // push can block, so we disable interrupts after we get the index
     int_guard ig;
-    std::destroy_at(&(m_buf[i].empty));
     new (&m_buf[i].t) T(std::move(t));
 }
 
@@ -59,10 +55,9 @@ T basic_fixed_fifo<T, Len, RingBufT>::pop() {
     auto i = m_rb.pop();
     // pop can block, so we disable interrupts after we get the index
     int_guard ig;
-    auto ptr = reinterpret_cast<T*>(&(m_buf[i].t));
+    auto ptr = &(m_buf[i].t);
     auto res = std::move(*ptr);
     std::destroy_at(ptr);
-    new (&m_buf[i].empty) decltype(m_buf[0].empty)();
     return res;
 }
 } // namespace tos
