@@ -215,7 +215,7 @@ void tx_task() {
                 gpio.write(7_pin, tos::digital::low);
             }
 
-            tos::println(usart, trace.get());
+            tos::println(usart, tos::raw_cast<const char>(trace.get()));
         }
 
         tos::println(usart, "hibernating");

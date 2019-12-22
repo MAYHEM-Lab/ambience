@@ -5,6 +5,7 @@ tos_install(stm32_gpio ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_library(stm32_timer include/arch/timer.hpp src/stub.cpp src/timer.cpp)
 target_link_libraries(stm32_timer PUBLIC tos::core)
 tos_install(stm32_timer ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_options(stm32_timer PUBLIC "-Wl,-uHAL_TIM_IRQHandler")
 
 add_library(stm32_usart include/arch/usart.hpp src/usart.cpp)
 target_link_libraries(stm32_usart PUBLIC tos_usart tos::core)
@@ -12,6 +13,7 @@ tos_install(stm32_usart ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(stm32_spi include/arch/spi.hpp src/spi.cpp)
 target_link_libraries(stm32_spi PUBLIC tos::core)
+target_link_options(stm32_spi PUBLIC "-Wl,-uHAL_SPI_IRQHandler")
 tos_install(stm32_spi ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(stm32_i2c include/arch/i2c.hpp src/i2c.cpp)

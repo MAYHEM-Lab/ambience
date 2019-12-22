@@ -64,7 +64,7 @@ void lcd_main() {
 
         draw_text(oled,
                   font,
-                  str.get(),
+                  tos::raw_cast<const char>(str.get()),
                   tos::gfx::point{36, 0},
                   tos::gfx::text_direction::vertical);
 
