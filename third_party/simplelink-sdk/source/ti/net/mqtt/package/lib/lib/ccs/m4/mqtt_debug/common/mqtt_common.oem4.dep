@@ -1,0 +1,27 @@
+package/lib/lib/ccs/m4/mqtt_debug/common/mqtt_common.oem4: common/mqtt_common.c common/mqtt_common.h ../../../ti/net/slnetsock.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdlib.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/string.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdbool.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdint.h /vagrant/Q3_ENG_SDK_250919/sdk_root/source/ti/posix/ccs/sys/time.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/_ti_config.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/cdefs.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_types.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/xlocale/_stdlib.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/xlocale/_string.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/_stdint40.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/stdint.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stddef.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/time.h /vagrant/Q3_ENG_SDK_250919/sdk_root/source/ti/posix/ccs/sys/types.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_timeval.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/linkage.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/machine/_types.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/machine/_stdint.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_stdint.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/abi_prefix.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/xlocale/_time.h /vagrant/Q3_ENG_SDK_250919/sdk_root/source/ti/posix/ccs/sys/_internal.h 
+common/mqtt_common.c:
+common/mqtt_common.h:
+../../../ti/net/slnetsock.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdlib.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/string.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdbool.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdint.h:
+/vagrant/Q3_ENG_SDK_250919/sdk_root/source/ti/posix/ccs/sys/time.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/_ti_config.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/cdefs.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_types.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/xlocale/_stdlib.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/xlocale/_string.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/_stdint40.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/stdint.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stddef.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/time.h:
+/vagrant/Q3_ENG_SDK_250919/sdk_root/source/ti/posix/ccs/sys/types.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_timeval.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/linkage.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/machine/_types.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/machine/_stdint.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_stdint.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/abi_prefix.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/xlocale/_time.h:
+/vagrant/Q3_ENG_SDK_250919/sdk_root/source/ti/posix/ccs/sys/_internal.h:

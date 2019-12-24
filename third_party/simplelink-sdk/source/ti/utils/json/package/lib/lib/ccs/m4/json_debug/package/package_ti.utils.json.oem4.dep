@@ -1,0 +1,20 @@
+package/lib/lib/ccs/m4/json_debug/package/package_ti.utils.json.oem4: package/package_ti.utils.json.c /opt/ti/xdctools_3_60_00_24_core/packages/xdc/std.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdarg.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stddef.h /vagrant/Q3_ENG_SDK_250919/sdk_root/kernel/tirtos/packages/ti/targets/arm/elf/std.h /vagrant/Q3_ENG_SDK_250919/sdk_root/kernel/tirtos/packages/ti/targets/select.h /vagrant/Q3_ENG_SDK_250919/sdk_root/kernel/tirtos/packages/iar/targets/select.h /vagrant/Q3_ENG_SDK_250919/sdk_root/kernel/tirtos/packages/gnu/targets/select.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_types.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/_ti_config.h /vagrant/Q3_ENG_SDK_250919/sdk_root/kernel/tirtos/packages/ti/targets/std.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/cdefs.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/machine/_types.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/linkage.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdint.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/_stdint40.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/stdint.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/machine/_stdint.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_stdint.h 
+package/package_ti.utils.json.c:
+/opt/ti/xdctools_3_60_00_24_core/packages/xdc/std.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdarg.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stddef.h:
+/vagrant/Q3_ENG_SDK_250919/sdk_root/kernel/tirtos/packages/ti/targets/arm/elf/std.h:
+/vagrant/Q3_ENG_SDK_250919/sdk_root/kernel/tirtos/packages/ti/targets/select.h:
+/vagrant/Q3_ENG_SDK_250919/sdk_root/kernel/tirtos/packages/iar/targets/select.h:
+/vagrant/Q3_ENG_SDK_250919/sdk_root/kernel/tirtos/packages/gnu/targets/select.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_types.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/_ti_config.h:
+/vagrant/Q3_ENG_SDK_250919/sdk_root/kernel/tirtos/packages/ti/targets/std.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/cdefs.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/machine/_types.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/linkage.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdint.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/_stdint40.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/stdint.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/machine/_stdint.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_stdint.h:
