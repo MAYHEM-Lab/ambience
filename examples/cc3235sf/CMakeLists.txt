@@ -1,2 +1,3 @@
 add_executable(cc3235_demo main.cpp)
-target_link_libraries(cc3235_demo PUBLIC tos_core arch_drivers)
+target_link_libraries(cc3235_demo PUBLIC tos_core arch_drivers ti_simplelink_src)
+set_target_properties(cc3235_demo PROPERTIES CXX_EXTENSIONS OFF)
