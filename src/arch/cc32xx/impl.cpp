@@ -48,6 +48,9 @@ int main() {
     CoreDebug->DHCSR |= CoreDebug_DHCSR_C_DEBUGEN_Msk;
     //HwiP_enable();
 
+    Power_init();
+    Power_enablePolicy();
+
     tos::kern::detail::disable_depth = 0;
     tos_main();
 
@@ -57,10 +60,10 @@ int main() {
             tos_force_reset();
         }
         if (res == tos::exit_reason::power_down) {
-            asm volatile("WFI");
+            Power_idleFunc();
         }
         if (res == tos::exit_reason::idle) {
-            asm volatile("WFI");
+            Power_idleFunc();
         }
         if (res == tos::exit_reason::yield) {
             // Do nothing
