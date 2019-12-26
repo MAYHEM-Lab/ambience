@@ -32,6 +32,10 @@ public:
 
 private:
     union elem {
+        elem() {
+        }
+        ~elem() {
+        }
         T t;
     };
     elem m_buf[Len];
