@@ -48,6 +48,10 @@ public:
         Timer_close(native_handle());
     }
 
+    void isr() {
+        m_fun();
+    }
+
 private:
     Timer_Handle m_handle;
     uint32_t m_freq;
