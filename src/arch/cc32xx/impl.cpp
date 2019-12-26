@@ -48,6 +48,7 @@ int main() {
     CoreDebug->DHCSR |= CoreDebug_DHCSR_C_DEBUGEN_Msk;
     //HwiP_enable();
 
+    tos::kern::detail::disable_depth = 0;
     tos_main();
 
     while (true) {
