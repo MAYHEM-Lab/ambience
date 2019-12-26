@@ -3,9 +3,13 @@
 //
 
 
+#include "tos/interrupt.hpp"
+
 #include <tos/ft.hpp>
 
-enum IRQn_Type {};
+enum IRQn_Type
+{
+};
 #define __NVIC_PRIO_BITS 0
 #include <core_cm4.h>
 #include <ti/drivers/Board.h>
@@ -19,12 +23,8 @@ extern "C" {
 extern void tos_main();
 
 extern "C" {
-__attribute__ ((section(".dbghdr"), used))
-unsigned long ulDebugHeader[] = {
-        0x5AA5A55A,
-        0x000FF800,
-        0xEFA3247D
-};
+__attribute__((section(".dbghdr"), used)) unsigned long ulDebugHeader[] = {
+    0x5AA5A55A, 0x000FF800, 0xEFA3247D};
 }
 
 int main() {
@@ -46,7 +46,7 @@ int main() {
     NoRTOS_start();
 
     CoreDebug->DHCSR |= CoreDebug_DHCSR_C_DEBUGEN_Msk;
-    //HwiP_enable();
+    // HwiP_enable();
 
     Power_init();
     Power_enablePolicy();
