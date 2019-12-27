@@ -5,7 +5,11 @@
 #include "tos/stack_storage.hpp"
 #include "tos/thread.hpp"
 
+#include <arch/detail/sock_rt.hpp>
 #include <arch/drivers.hpp>
+#include <arch/tcp.hpp>
+#include <arch/udp.hpp>
+#include <arch/wlan.hpp>
 #include <common/inet/tcp_ip.hpp>
 #include <common/usart.hpp>
 #include <cstring>
@@ -34,23 +38,6 @@ void hash(tos::span<const uint8_t> buffer) {
                       &params);
     CryptoCC32XX_close(cryptoHandle);
 }
-
-namespace tos::cc32xx {
-struct wifi_connected {
-    SlWlanEventConnect_t ev;
-    span<const char> ssid() const {
-        return span<const char>{reinterpret_cast<const char*>(&ev.SsidName[0]),
-                                size_t(ev.SsidLen)};
-    }
-};
-struct wifi_disconnected {};
-struct ip_acquired {
-    ipv4_addr_t address;
-    ipv4_addr_t gateway;
-};
-
-using events = mpark::variant<wifi_connected, wifi_disconnected, ip_acquired>;
-} // namespace tos::cc32xx
 
 typedef enum
 {
@@ -83,19 +70,9 @@ void SignalEvent(events ev) {
 tos::any_usart* uart;
 #define UART_PRINT(...) tos::print(uart, __VA_ARGS__)
 
-tos::semaphore recv_sem{0};
 tos::semaphore loop_sem{0};
 
 extern "C" {
-void SimpleLinkSocketTriggerEventHandler(SlSockTriggerEvent_t* pSlTriggerEvent) {
-    switch (pSlTriggerEvent->Event) {
-    case SL_SOCKET_TRIGGER_EVENT_SELECT:
-        UART_PRINT("hello");
-        recv_sem.up_isr();
-        break;
-    }
-    /* Unused in this application */
-}
 void SimpleLinkGeneralEventHandler(SlDeviceEvent_t* pDevEvent) {
     if (NULL == pDevEvent) {
         return;
@@ -127,6 +104,7 @@ void SimpleLinkWlanEventHandler(SlWlanEvent_t* pWlanEvent) {
 
     switch (pWlanEvent->Id) {
     case SL_WLAN_EVENT_CONNECT: {
+        UART_PRINT("Got connection ev\r\n");
         evq.push(tos::cc32xx::wifi_connected{pWlanEvent->Data.Connect});
     } break;
 
@@ -381,57 +359,32 @@ void cc32xx_notify_loop() {
 }
 
 void udp_socket() {
-    auto sock = sl_Socket(SL_AF_INET, SL_SOCK_DGRAM, SL_IPPROTO_UDP);
+    tos::cc32xx::udp_socket sock;
+    sock.bind({5001});
 
-    /*SlSockNonblocking_t enableOption;
-    enableOption.NonBlockingEnabled = 1;
-    sl_SetSockOpt(
-        sock, SL_SOL_SOCKET, SL_SO_NONBLOCKING, (_u8*)&enableOption, sizeof
-    enableOption);*/
+    sock.send_to(tos::raw_cast<const uint8_t>(tos::span<const char>("hello")),
+                 {.addr = {{192, 168, 43, 120}}, .port = 5001});
 
-    SlSockAddrIn_t Addr;
-    _i16 AddrSize = sizeof(SlSockAddrIn_t);
-
-    Addr.sin_family = SL_AF_INET;
-    Addr.sin_port = sl_Htons(5001);
-    Addr.sin_addr.s_addr = 0;
-
-    auto res = sl_Bind(sock, (SlSockAddr_t*)&Addr, AddrSize);
-    if (res != SL_RET_CODE_OK) {
-        tos::debug::panic("bind failed");
+    while (true) {
+        std::array<uint8_t, 32> buffer;
+        tos::udp_endpoint_t from;
+        auto res = sock.receive_from(buffer, from);
+        tos::println(uart, "Received:", tos::raw_cast<const char>(force_get(res)));
     }
+}
 
-    Addr.sin_addr.s_addr = sl_Htonl(SL_IPV4_VAL(192, 168, 43, 120));
-
-    sl_SendTo(sock, "hello", 5, 0, (SlSockAddr_t*)&Addr, AddrSize);
-
-    SlFdSet_t rxSet;
-    SL_SOCKET_FD_ZERO(&rxSet);
-    SL_SOCKET_FD_SET(sock, &rxSet);
-    SlTimeval_t timeVal;
-    timeVal.tv_sec = 0;
-    timeVal.tv_usec = 0;
-    auto status = sl_Select(sock + 1, &rxSet, nullptr, nullptr, &timeVal);
-
-    recv_sem.down();
-
-    int retry = 0;
-
-    std::array<uint8_t, 32> buffer;
-    uint16_t addr_len = sizeof Addr;
-
-    auto ret = sl_RecvFrom(
-        sock, buffer.data(), buffer.size(), 0, (SlSockAddr_t*)&Addr, &addr_len);
-    while (ret == SL_ERROR_BSD_EAGAIN) {
-        ++retry;
-        ret = sl_RecvFrom(
-            sock, buffer.data(), buffer.size(), 0, (SlSockAddr_t*)&Addr, &addr_len);
+void tcp_socket() {
+    tos::cc32xx::tcp_listener listener({8080});
+    listener.listen();
+    auto sock = listener.accept();
+    tos::println(uart, "accept returned", bool(sock));
+    if (sock) {
+        tos::println(uart, "socket:", force_get(sock)->native_handle());
     }
-    auto msg = tos::span(buffer).slice(0, ret);
-    tos::println(uart, "Received:", tos::raw_cast<const char>(msg), retry);
 }
 
 void wifi(tos::any_usart& log) {
+    using namespace tos::cc32xx;
     auto start_res = sl_Start(nullptr, nullptr, nullptr);
     tos::println(log, start_res);
 
@@ -459,6 +412,14 @@ void wifi(tos::any_usart& log) {
                  int(firmwareVersion.PhyVersion[3]),
                  tos::separator('.'));
 
+    auto set_res = set_mac_address({0xDA, 0x53, 0x83, 0x81, 0x41, 0x6B});
+    if (!set_res) {
+        tos::println(log, "Can't set mac address!");
+    }
+
+    auto mac = get_mac_address();
+    tos::println(log, "Mac Address:", mac);
+
     const char* password = "mykonos1993";
     SlWlanSecParams_t SecParams;
     SecParams.Type = SL_WLAN_SEC_TYPE_WPA_WPA2;
@@ -476,6 +437,12 @@ void wifi(tos::any_usart& log) {
 
     using namespace tos::cc32xx;
 
+    tos::launch(tos::alloc_stack, [] {
+      while (true) {
+          socket_runtime::instance().run();
+      }
+    });
+
     while (true) {
         sl_Task(nullptr);
 
@@ -488,7 +455,7 @@ void wifi(tos::any_usart& log) {
                              [&](const ip_acquired& ev) {
                                  tos::println(log, "Acquired IP:", ev.address);
                                  tos::println(log, "Gateway IP:", ev.gateway);
-                                 tos::launch(tos::alloc_stack, udp_socket);
+                                 tos::launch(tos::alloc_stack, ::tcp_socket);
                              },
                              [&](const auto&) { tos::println(log, "Unhandled event"); }),
                          ev);
@@ -498,6 +465,7 @@ void wifi(tos::any_usart& log) {
     }
 }
 
+tos::any_usart* log;
 tos::stack_storage<4096> wifistack;
 void task() {
     uint8_t buff[] = {'a', 'b', 'c'};
@@ -515,6 +483,7 @@ void task() {
     tos::cc32xx::uart uart(0);
     auto erased = tos::erase_usart(&uart);
     ::uart = &erased;
+    ::log = &erased;
 
     uart.write(hashv);
     tos::println(uart);
