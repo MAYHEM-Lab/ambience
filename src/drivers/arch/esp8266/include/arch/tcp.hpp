@@ -71,7 +71,7 @@ public:
      * Constructs a tcp socket with the given port on the given interface
      * @param port port to bind to
      */
-    explicit tcp_socket(tos::esp82::wifi_connection&, port_num_t port);
+    explicit tcp_socket(wifi_connection&, port_num_t port);
     ~tcp_socket();
 
     template<class ConnHandlerT>
