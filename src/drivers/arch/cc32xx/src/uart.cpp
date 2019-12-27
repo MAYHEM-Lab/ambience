@@ -25,7 +25,7 @@ uart::uart(int id)
     UART_Params params;
     UART_Params_init(&params);
 
-    params.baudRate = 9600;
+    params.baudRate = 115200;
     params.readEcho = UART_ECHO_OFF;
 
     params.writeDataMode = UART_DATA_BINARY;

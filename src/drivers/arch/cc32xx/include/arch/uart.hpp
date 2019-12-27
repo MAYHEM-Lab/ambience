@@ -5,6 +5,7 @@
 #pragma once
 
 #include <ti/drivers/UART.h>
+#include <tos/mutex.hpp>
 #include <tos/semaphore.hpp>
 
 namespace tos::cc32xx {
@@ -16,18 +17,24 @@ public:
     explicit uart(int id);
 
     int write(tos::span<const uint8_t> data) {
+        lock_guard lg{m_guard};
         while (UART_write(native_handle(), data.data(), data.size()) != 0) {
             tos::this_thread::yield();
         }
+        tos::kern::busy();
         m_wait.down();
+        tos::kern::unbusy();
         return data.size();
     }
 
     tos::span<uint8_t> read(span<uint8_t> data) {
+        lock_guard lg{m_guard};
         while (UART_read(native_handle(), data.data(), data.size()) != 0) {
             tos::this_thread::yield();
         }
+        tos::kern::busy();
         m_wait.down();
+        tos::kern::unbusy();
         return data;
     }
 
@@ -44,6 +51,7 @@ public:
     }
 
 private:
+    mutex m_guard;
     semaphore m_wait{0};
     UART_Handle m_handle;
 };
