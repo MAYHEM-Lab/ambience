@@ -1,15 +1,16 @@
 from ubuntu:18.04
 
-RUN apt-get update && apt-get install -y --no-install-recommends git g++-8 ninja-build wget ca-certificates libboost-all-dev unzip clang++-8
+RUN apt-get update && apt-get install -y --no-install-recommends git g++-8 ninja-build wget ca-certificates libboost-all-dev unzip clang++-8 libssl-dev
 
 WORKDIR /src
-
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.16.1/cmake-3.16.1.tar.gz
 RUN tar xf cmake-3.16.1.tar.gz
+
 WORKDIR /src/cmake-3.16.1
 RUN CC=gcc-8 CXX=g++-8 ./configure
 RUN CC=gcc-8 CXX=g++-8 make -j12 && make install
 
+WORKDIR /src
 RUN wget https://github.com/google/flatbuffers/archive/521e255ad9656a213971b30ba1beeec395b2e27e.tar.gz
 RUN tar xf 521e255ad9656a213971b30ba1beeec395b2e27e.tar.gz
 RUN mkdir -p /src/flatbuffers-521e255ad9656a213971b30ba1beeec395b2e27e/build
