@@ -63,7 +63,7 @@ int main() {
             Power_idleFunc();
         }
         if (res == tos::exit_reason::idle) {
-            Power_idleFunc();
+            __WFI();
         }
         if (res == tos::exit_reason::yield) {
             // Do nothing
