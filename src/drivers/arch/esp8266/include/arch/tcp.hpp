@@ -316,7 +316,7 @@ connect(wifi_connection& c, ipv4_addr_t host, port_num_t port) {
     }
     auto pcb = tcp_new();
     ip_addr_t a;
-    memcpy(&a.addr, host.addr, 4);
+    std::memcpy(&a.addr, host.addr.data(), 4);
     conn_state state;
     tcp_arg(pcb, &state);
     tcp_connect(pcb, &a, port.port, connected_handler); // this signals ERR_OK
