@@ -69,6 +69,7 @@ void socket_runtime::run() {
     if (m_request_interruption) {
         tos::println(log, "select got interrupted");
         m_request_interruption = false;
+        return;
     }
 
     status = sl_Select(max + 1, &receive_set, &write_set, nullptr, &timeVal);
