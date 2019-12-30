@@ -24,6 +24,9 @@ public:
     expected<span<uint8_t>, network_errors>
     read(span<uint8_t> buffer);
 
+    expected<size_t, network_errors>
+    write(span<const uint8_t> buffer);
+
 private:
     semaphore_base<int16_t> m_len{0};
     basic_fixed_fifo<uint8_t, 512, ring_buf> m_recv_buffer;

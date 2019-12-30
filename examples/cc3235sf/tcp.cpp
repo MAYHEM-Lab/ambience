@@ -79,4 +79,12 @@ expected<span<uint8_t>, network_errors> tcp_socket::read(span<uint8_t> buffer) {
     }
     return buffer;
 }
+
+expected<size_t, network_errors> tcp_socket::write(span<const uint8_t> buffer) {
+    auto res = sl_Send(native_handle(), buffer.data(), buffer.size(), 0);
+    while (res == SL_ERROR_BSD_EAGAIN) {
+        res = sl_Send(native_handle(), buffer.data(), buffer.size(), 0);
+    }
+    return buffer.size();
+}
 } // namespace tos::cc32xx

@@ -392,16 +392,17 @@ void tcp_socket() {
     std::array<char, 32> buffer;
     auto line = tos::read_until<char>(socket_ptr, "\n", buffer);
     tos::println(uart, "Socket received:", line);
+    socket_ptr->write(tos::raw_cast<const uint8_t>(line));
 }
 
 void wifi(tos::any_usart& log) {
     using namespace tos::cc32xx;
     auto start_res = sl_Start(nullptr, nullptr, nullptr);
     tos::println(log, start_res);
-    auto set_mode =  sl_WlanSetMode(ROLE_STA);
+    auto set_mode = sl_WlanSetMode(ROLE_STA);
     tos::println(log, set_mode);
     auto stop = sl_Stop(0);
-    tos::println(log, set_mode);
+    tos::println(log, stop);
     start_res = sl_Start(nullptr, nullptr, nullptr);
     tos::println(log, start_res);
 
@@ -455,9 +456,9 @@ void wifi(tos::any_usart& log) {
     using namespace tos::cc32xx;
 
     tos::launch(tos::alloc_stack, [] {
-      while (true) {
-          socket_runtime::instance().run();
-      }
+        while (true) {
+            socket_runtime::instance().run();
+        }
     });
 
     while (true) {
