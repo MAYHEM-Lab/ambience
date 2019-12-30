@@ -48,9 +48,19 @@ expected<void, network_errors> socket_base<SocketT>::set_nonblocking(bool non_bl
 }
 
 template<class SocketT>
-socket_base<SocketT>::~socket_base() {
+expected<void, network_errors> socket_base<SocketT>::close() {
+    if (m_handle == -1) {
+        return {};
+    }
     socket_runtime::instance().remove_socket(self());
     sl_Close(native_handle());
+    m_handle = -1;
+    return {};
+}
+
+template<class SocketT>
+socket_base<SocketT>::~socket_base() {
+    close();
 }
 
 template struct socket_base<udp_socket>;

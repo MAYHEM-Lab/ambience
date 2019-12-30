@@ -25,6 +25,8 @@ public:
 
     expected<void, network_errors> set_nonblocking(bool non_blocking);
 
+    expected<void, network_errors> close();
+
     ~socket_base();
 
 private:
