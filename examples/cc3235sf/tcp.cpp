@@ -52,9 +52,31 @@ void tcp_socket::signal_select_rx() {
         if (res < 0) {
             return;
         }
+        if (res == 0) {
+            tos::println(log, "received 0 bytes, end of stream!");
+            close();
+            return;
+        }
         auto s = span<const uint8_t>(buf).slice(0, res);
-        tos::println(log, "received:", raw_cast<const char>(s));
-
+        tos::println(log, "received:", raw_cast<const char>(s), int(res));
+        for (auto byte : buf) {
+            if (m_recv_buffer.size() == m_recv_buffer.capacity()) {
+                // Out of buffer space
+                return;
+            }
+            m_recv_buffer.push(byte);
+            m_len.up();
+        }
     }
+}
+
+expected<span<uint8_t>, network_errors> tcp_socket::read(span<uint8_t> buffer) {
+    auto tmp_buffer = buffer;
+    while (!tmp_buffer.empty()) {
+        m_len.down();
+        tmp_buffer.front() = m_recv_buffer.pop();
+        tmp_buffer = tmp_buffer.slice(1);
+    }
+    return buffer;
 }
 } // namespace tos::cc32xx

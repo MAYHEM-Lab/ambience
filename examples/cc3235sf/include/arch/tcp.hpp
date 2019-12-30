@@ -21,10 +21,12 @@ public:
     void signal_select_tx() {
     }
 
-    expected<span<uint8_t>, network_errors> receive(span<uint8_t> buffer);
+    expected<span<uint8_t>, network_errors>
+    read(span<uint8_t> buffer);
 
 private:
-    sync_fixed_fifo<uint8_t, 64> buffer;
+    semaphore_base<int16_t> m_len{0};
+    basic_fixed_fifo<uint8_t, 512, ring_buf> m_recv_buffer;
 };
 
 class tcp_listener : public socket_base<tcp_listener> {
