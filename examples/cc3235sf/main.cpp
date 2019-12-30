@@ -19,6 +19,7 @@
 #include <tos/fixed_fifo.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
+#include <tos/streams.hpp>
 
 std::array<uint8_t, 32> hashv;
 void hash(tos::span<const uint8_t> buffer) {
@@ -373,19 +374,35 @@ void udp_socket() {
     }
 }
 
-void tcp_socket() {
+tos::cc32xx::tcp_socket* get_connection() {
     tos::cc32xx::tcp_listener listener({8080});
     listener.listen();
     auto sock = listener.accept();
     tos::println(uart, "accept returned", bool(sock));
-    if (sock) {
-        tos::println(uart, "socket:", force_get(sock)->native_handle());
+    if (!sock) {
+        tos::println(uart, "accept error!");
+        return nullptr;
     }
+    return force_get(sock);
+}
+
+void tcp_socket() {
+    auto socket_ptr = get_connection();
+    tos::println(uart, "socket:", socket_ptr->native_handle());
+    std::array<char, 32> buffer;
+    auto line = tos::read_until<char>(socket_ptr, "\n", buffer);
+    tos::println(uart, "Socket received:", line);
 }
 
 void wifi(tos::any_usart& log) {
     using namespace tos::cc32xx;
     auto start_res = sl_Start(nullptr, nullptr, nullptr);
+    tos::println(log, start_res);
+    auto set_mode =  sl_WlanSetMode(ROLE_STA);
+    tos::println(log, set_mode);
+    auto stop = sl_Stop(0);
+    tos::println(log, set_mode);
+    start_res = sl_Start(nullptr, nullptr, nullptr);
     tos::println(log, start_res);
 
     SlDeviceVersion_t firmwareVersion{};
