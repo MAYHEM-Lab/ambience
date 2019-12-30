@@ -27,6 +27,7 @@ enum class sem_ret
  */
 template<class CountT>
 class semaphore_base : public non_copy_movable {
+    static_assert(std::is_signed_v<CountT>, "Underlying semaphore types must be signed!");
 public:
     /**
      * Increments the shared counter and wakes up
