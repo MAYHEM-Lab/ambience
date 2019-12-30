@@ -75,6 +75,9 @@ void print(CharOstreamT& ostr, const char* str) {
 
 template<class CharOstreamT>
 void print(CharOstreamT& ostr, span<const char> buf) {
+    if (buf.empty()) {
+        return;
+    }
     ostr->write(tos::raw_cast<const uint8_t>(buf));
 }
 
