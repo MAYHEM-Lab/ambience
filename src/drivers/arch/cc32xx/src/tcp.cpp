@@ -23,7 +23,7 @@ expected<void, network_errors> tcp_listener::listen() {
 }
 
 void tcp_listener::signal_select() {
-    m_accept_sem.up_isr();
+    m_accept_sem.up();
 }
 
 expected<tcp_socket*, network_errors> tcp_listener::accept() {
@@ -36,8 +36,12 @@ expected<tcp_socket*, network_errors> tcp_listener::accept() {
         tos::println(log, "bad accept");
         return unexpected(network_errors(accept_res));
     }
+    auto sock = new (std::nothrow) tcp_socket(accept_res);
+    if (!sock) {
+        return unexpected(network_errors(SL_ERROR_UTILS_MEM_ALLOC));
+    }
     tos::println(log, "Got socket:", int(accept_res));
-    return new tcp_socket(accept_res);
+    return sock;
 }
 
 tcp_socket::tcp_socket(int16_t handle)
@@ -47,6 +51,8 @@ tcp_socket::tcp_socket(int16_t handle)
 
 void tcp_socket::signal_select_rx() {
     while (true) {
+        // Read in 16 byte chunks.
+        // TODO(fatih): use the receive buffer directly for better performance.
         std::array<uint8_t, 16> buf;
         auto res = sl_Recv(native_handle(), buf.data(), buf.size(), 0);
         if (res < 0) {
@@ -57,8 +63,8 @@ void tcp_socket::signal_select_rx() {
             close();
             return;
         }
-        auto s = span<const uint8_t>(buf).slice(0, res);
-        tos::println(log, "received:", raw_cast<const char>(s), int(res));
+        auto s = span(buf).slice(0, res);
+        //tos::println(log, "received:", raw_cast<const char>(s), int(res));
         for (auto byte : buf) {
             if (m_recv_buffer.size() == m_recv_buffer.capacity()) {
                 // Out of buffer space
@@ -83,6 +89,7 @@ expected<span<uint8_t>, network_errors> tcp_socket::read(span<uint8_t> buffer) {
 expected<size_t, network_errors> tcp_socket::write(span<const uint8_t> buffer) {
     auto res = sl_Send(native_handle(), buffer.data(), buffer.size(), 0);
     while (res == SL_ERROR_BSD_EAGAIN) {
+        tos::this_thread::yield();
         res = sl_Send(native_handle(), buffer.data(), buffer.size(), 0);
     }
     return buffer.size();

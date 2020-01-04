@@ -8,6 +8,7 @@
 #include "socket_base.hpp"
 
 #include <common/usart.hpp>
+#include <tos/mutex.hpp>
 #include <tos/semaphore.hpp>
 
 extern tos::any_usart* log;
@@ -34,11 +35,14 @@ public:
     void run();
 
 private:
-
+    struct select_sets;
     void handle_select(const SlFdSet_t& rx, const SlFdSet_t& write);
+    [[nodiscard]] select_sets make_select_set() const;
 
     bool m_request_interruption = false;
     semaphore m_select_sem{0};
+
+    semaphore m_count_sem{0};
 
     intrusive_list<tcp_listener> m_tcp_listeners;
     intrusive_list<udp_socket> m_udp_sockets;
