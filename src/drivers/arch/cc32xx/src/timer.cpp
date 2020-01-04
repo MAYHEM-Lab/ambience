@@ -26,11 +26,13 @@ timer::timer(uint8_t timer_num)
         return 0;
     }();
     Timer_Params params;
-    params.period = 1;
+    Timer_Params_init(&params);
+    params.period = 1000;
     params.periodUnits = Timer_PERIOD_HZ;
     params.timerMode = Timer_CONTINUOUS_CALLBACK;
     params.timerCallback = timer_isr;
     m_handle = Timer_open(timer_num, &params);
+
     if (!m_handle) {
         tos::debug::panic("can't open timer!");
     }
