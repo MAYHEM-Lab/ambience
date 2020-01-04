@@ -17,23 +17,23 @@ public:
     explicit uart(int id);
 
     int write(tos::span<const uint8_t> data) {
-        lock_guard lg{m_guard};
+        lock_guard lg{m_tx_guard};
         while (UART_write(native_handle(), data.data(), data.size()) != 0) {
             tos::this_thread::yield();
         }
         tos::kern::busy();
-        m_wait.down();
+        m_tx_wait.down();
         tos::kern::unbusy();
         return data.size();
     }
 
     tos::span<uint8_t> read(span<uint8_t> data) {
-        lock_guard lg{m_guard};
+        lock_guard lg{m_rx_guard};
         while (UART_read(native_handle(), data.data(), data.size()) != 0) {
             tos::this_thread::yield();
         }
         tos::kern::busy();
-        m_wait.down();
+        m_rx_wait.down();
         tos::kern::unbusy();
         return data;
     }
@@ -46,13 +46,19 @@ public:
         UART_close(native_handle());
     }
 
-    void isr() {
-        m_wait.up_isr();
+    void rx_isr() {
+        m_rx_wait.up_isr();
+    }
+
+    void tx_isr() {
+        m_tx_wait.up_isr();
     }
 
 private:
-    mutex m_guard;
-    semaphore m_wait{0};
+    mutex m_tx_guard;
+    mutex m_rx_guard;
+    semaphore m_tx_wait{0};
+    semaphore m_rx_wait{0};
     UART_Handle m_handle;
 };
 } // namespace tos::cc32xx
