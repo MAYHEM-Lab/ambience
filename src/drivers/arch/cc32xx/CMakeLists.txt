@@ -13,6 +13,11 @@ target_link_libraries(cc32xx_gpio PUBLIC tos_core ti_drivers)
 target_compile_features(cc32xx_gpio PUBLIC cxx_std_17)
 target_include_directories(cc32xx_gpio PUBLIC include)
 
+add_library(cc32xx_i2c include/arch/i2c.hpp src/stub.cpp)
+target_link_libraries(cc32xx_i2c PUBLIC tos_core ti_drivers)
+target_compile_features(cc32xx_i2c PUBLIC cxx_std_17)
+target_include_directories(cc32xx_i2c PUBLIC include)
+
 add_library(cc32xx_wlan
         include/arch/wlan.hpp
         include/arch/detail/sock_rt.hpp
@@ -44,6 +49,7 @@ target_link_libraries(cc32xx_drivers
         cc32xx_timer
         cc32xx_uart
         cc32xx_gpio
+        cc32xx_i2c
         cc32xx_wlan
         cc32xx_crypto
 )
