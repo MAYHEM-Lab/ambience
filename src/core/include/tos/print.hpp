@@ -140,6 +140,19 @@ struct separator_t {
     T sep;
 };
 
+template <>
+struct separator_t<nullptr_t> {};
+
+template <class StreamT>
+void print(StreamT&, const separator_t<nullptr_t>&) {
+}
+
+template <class StreamT, class T>
+void print(StreamT& str, const separator_t<T>& sep) {
+    using tos::print;
+    print(str, sep.sep);
+}
+
 constexpr void get_separator_or() = delete;
 
 template<class FirstT, class... Ts>
@@ -153,6 +166,10 @@ constexpr const separator_t<FirstT>& get_separator_or(const separator_t<FirstT>&
     return first;
 }
 } // namespace detail
+constexpr detail::separator_t<nullptr_t> no_separator() {
+    return {};
+}
+
 template<class T>
 constexpr detail::separator_t<T> separator(T&& sep) {
     return {std::forward<T>(sep)};
@@ -190,9 +207,9 @@ void print(CharOstreamT& ostr, T1&& t1, T2&& t2, Ts&&... ts) {
     constexpr auto default_sep = separator(' ');
     auto sep = detail::get_separator_or(ts..., default_sep);
     print(ostr, std::forward<T1>(t1));
-    detail::print2(ostr, sep.sep, std::forward<T2>(t2));
+    detail::print2(ostr, sep, std::forward<T2>(t2));
 
-    int _[] = {0, (detail::print2(ostr, sep.sep, std::forward<Ts>(ts)), 0)...};
+    int _[] = {0, (detail::print2(ostr, sep, std::forward<Ts>(ts)), 0)...};
     (void)_;
 }
 
