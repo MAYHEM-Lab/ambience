@@ -4,12 +4,14 @@
 
 #pragma once
 
+#include <cstdint>
+
 #if !__has_include("tos/debug/default_logger.hpp")
 #define TOS_NODEFLOG
 #endif
 
 namespace tos::debug {
-enum class log_level
+enum class log_level : uint8_t
 {
     error,
     warning,
@@ -21,17 +23,13 @@ enum class log_level
 
 class null_logger {
 public:
-    [[nodiscard]] log_level level() const {
-        return log_level::info;
-    }
-
     [[nodiscard]] bool enabled() const {
         return false;
     }
 
     template<class... Ts>
-    bool operator()(Ts&&...) {
-        return false;
+    void log(Ts&&...) {
+
     }
 };
 

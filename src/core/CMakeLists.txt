@@ -16,7 +16,12 @@ set(TOS_CORE_HEADERS
         include/tos/delay.hpp
         include/tos/barrier.hpp
         include/tos/debug/stack_dump.hpp
-        include/tos/debug/panic.hpp include/tos/debug/log.hpp)
+        include/tos/debug/panic.hpp
+        include/tos/debug/log.hpp
+        include/tos/debug/loggers/null_logger.hpp
+        include/tos/debug/loggers/in_memory_logger.hpp
+        include/tos/debug/detail/logger_base.hpp
+)
 
 add_library(tos_print include/tos/print.hpp src/print.cpp)
 target_link_libraries(tos_print PUBLIC tos_util tos::libcxx)
