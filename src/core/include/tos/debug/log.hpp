@@ -5,14 +5,14 @@
 #pragma once
 
 #include <cstdint>
+#include "detail/logger_base.hpp"
 
 #if !__has_include("tos/debug/default_logger.hpp")
 #define TOS_NODEFLOG
 #endif
 
 namespace tos::debug {
-enum class log_level : uint8_t
-{
+enum class log_level : uint8_t {
     error,
     warning,
     debug,
@@ -21,7 +21,7 @@ enum class log_level : uint8_t
     all = info
 };
 
-class null_logger {
+class null_logger : public detail::logger_base<null_logger> {
 public:
     [[nodiscard]] bool enabled() const {
         return false;
