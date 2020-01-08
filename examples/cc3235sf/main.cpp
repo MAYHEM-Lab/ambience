@@ -31,7 +31,7 @@ void udp_socket() {
     }
 }
 
-tos::cc32xx::tcp_socket* get_connection() {
+std::unique_ptr<tos::cc32xx::tcp_socket> get_connection() {
     tos::cc32xx::tcp_listener listener({8080});
     listener.listen();
     auto sock = listener.accept();
@@ -40,7 +40,7 @@ tos::cc32xx::tcp_socket* get_connection() {
         tos::println(uart, "accept error!");
         return nullptr;
     }
-    return force_get(sock);
+    return std::move(force_get(sock));
 }
 
 void tcp_socket() {

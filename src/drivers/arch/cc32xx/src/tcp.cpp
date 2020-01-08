@@ -26,7 +26,7 @@ void tcp_listener::signal_select() {
     m_accept_sem.up();
 }
 
-expected<tcp_socket*, network_errors> tcp_listener::accept() {
+expected<std::unique_ptr<tcp_socket>, network_errors> tcp_listener::accept() {
     m_accept_sem.down();
     SlSockAddrIn_t Addr;
     uint16_t addr_len = sizeof Addr;
@@ -36,7 +36,7 @@ expected<tcp_socket*, network_errors> tcp_listener::accept() {
         tos::println(log, "bad accept");
         return unexpected(network_errors(accept_res));
     }
-    auto sock = new (std::nothrow) tcp_socket(accept_res);
+    auto sock = std::make_unique<tcp_socket>(accept_res);
     if (!sock) {
         return unexpected(network_errors(SL_ERROR_UTILS_MEM_ALLOC));
     }
@@ -64,10 +64,11 @@ void tcp_socket::signal_select_rx() {
             return;
         }
         auto s = span(buf).slice(0, res);
-        //tos::println(log, "received:", raw_cast<const char>(s), int(res));
-        for (auto byte : buf) {
+        //tos::println(log, "received:", int(res));
+        for (auto byte : s) {
             if (m_recv_buffer.size() == m_recv_buffer.capacity()) {
                 // Out of buffer space
+                // tos::println(log, "overrun");
                 return;
             }
             m_recv_buffer.push(byte);
