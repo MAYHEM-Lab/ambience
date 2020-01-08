@@ -41,6 +41,7 @@ simplelink_wifi::simplelink_wifi(tos::any_usart& log) {
 simplelink_wifi::~simplelink_wifi() {
 }
 
+static tos::stack_storage<4096> srt_stack;
 void simplelink_wifi::thread(tos::any_usart& log) {
     using namespace tos::cc32xx;
     auto start_res = sl_Start(nullptr, nullptr, nullptr);
@@ -101,7 +102,7 @@ void simplelink_wifi::thread(tos::any_usart& log) {
 
     using namespace tos::cc32xx;
 
-    tos::launch(tos::alloc_stack, [] {
+    tos::launch(srt_stack, [] {
         while (true) {
             socket_runtime::instance().run();
         }
