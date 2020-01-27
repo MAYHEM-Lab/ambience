@@ -61,7 +61,6 @@
 //*****************************************************************************
 void resetISR(void);
 static void nmiISR(void);
-static void faultISR(void);
 static void defaultHandler(void);
 static void busFaultHandler(void);
 
@@ -88,6 +87,9 @@ extern int main(void);
 //*****************************************************************************
 extern unsigned long _stack_end;
 
+extern void HardFaultHandler();
+extern void MPUHandler();
+
 //*****************************************************************************
 //
 // The vector table.  Note that the proper constructs must be placed on this to
@@ -101,8 +103,8 @@ static void (* const resetVectors[16])(void) =
                                          // The initial stack pointer
     resetISR,                            // The reset handler
     nmiISR,                              // The NMI handler
-    faultISR,                            // The hard fault handler
-    defaultHandler,                      // The MPU fault handler
+    HardFaultHandler,                            // The hard fault handler
+    MPUHandler,                      // The MPU fault handler
     busFaultHandler,                     // The bus fault handler
     defaultHandler,                      // The usage fault handler
     0,                                   // Reserved
@@ -242,22 +244,6 @@ void __attribute__((naked)) resetISR(void)
 //*****************************************************************************
 static void
 nmiISR(void)
-{
-    /* Enter an infinite loop. */
-    while(1)
-    {
-    }
-}
-
-//*****************************************************************************
-//
-// This is the code that gets called when the processor receives a fault
-// interrupt.  This simply enters an infinite loop, preserving the system state
-// for examination by a debugger.
-//
-//*****************************************************************************
-static void
-faultISR(void)
 {
     /* Enter an infinite loop. */
     while(1)

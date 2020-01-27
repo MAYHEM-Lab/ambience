@@ -25,6 +25,16 @@ extern void tos_main();
 extern "C" {
 __attribute__((section(".dbghdr"), used)) unsigned long ulDebugHeader[] = {
     0x5AA5A55A, 0x000FF800, 0xEFA3247D};
+void HardFaultHandler() {
+    while (true) {
+        __BKPT(0);
+    }
+}
+void MPUHandler() {
+    while (true) {
+        __BKPT(0);
+    }
+}
 }
 
 int main() {
