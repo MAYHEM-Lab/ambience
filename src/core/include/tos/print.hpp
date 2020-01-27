@@ -8,6 +8,7 @@
 #include <string.h>
 #include <tos/span.hpp>
 #include <tos/utility.hpp>
+#include <cstddef>
 
 namespace tos {
 inline tos::span<const char> itoa(int64_t i, int base = 10) {
@@ -141,10 +142,10 @@ struct separator_t {
 };
 
 template <>
-struct separator_t<nullptr_t> {};
+struct separator_t<std::nullptr_t> {};
 
 template <class StreamT>
-void print(StreamT&, const separator_t<nullptr_t>&) {
+void print(StreamT&, const separator_t<std::nullptr_t>&) {
 }
 
 template <class StreamT, class T>
@@ -166,7 +167,7 @@ constexpr const separator_t<FirstT>& get_separator_or(const separator_t<FirstT>&
     return first;
 }
 } // namespace detail
-constexpr detail::separator_t<nullptr_t> no_separator() {
+constexpr detail::separator_t<std::nullptr_t> no_separator() {
     return {};
 }
 
