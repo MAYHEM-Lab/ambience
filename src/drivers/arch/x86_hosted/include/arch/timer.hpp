@@ -17,7 +17,7 @@ namespace tos
 {
 namespace x86
 {
-    class timer : public self_pointing<timer>
+    class timer : public self_pointing<timer>, public non_copy_movable
     {
     public:
         timer() : m_tmr{get_io()}, m_interval{0}, m_cb{[](void*){}} {}
@@ -33,24 +33,32 @@ namespace x86
 
         void enable()
         {
+            m_disabled = false;
             m_tmr.expires_from_now(m_interval);
             m_tmr.async_wait([this](auto& ec) { handle(ec); });
         }
 
         void disable()
         {
+            m_disabled = true;
             m_tmr.cancel();
         }
 
     private:
 
         void handle(const boost::system::error_code& ec){
-            if (ec) return;
+            if (ec) {
+                return;
+            }
+
             m_cb();
-            m_tmr.expires_from_now(m_interval);
-            m_tmr.async_wait([this](auto& ec) { handle(ec); });
+            if (!m_disabled) {
+                m_tmr.expires_from_now(m_interval);
+                m_tmr.async_wait([this](auto& ec) { handle(ec); });
+            }
         }
 
+        bool m_disabled = true;
         boost::asio::high_resolution_timer m_tmr;
         tos::function_ref<void()> m_cb;
         std::chrono::milliseconds m_interval;

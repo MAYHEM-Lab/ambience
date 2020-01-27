@@ -283,7 +283,7 @@ span<T> empty_span() {
  * @return a span containing t
  */
 template<class T>
-span<T> monospan(T& t) {
+constexpr span<T> monospan(T& t) {
     return span<T>(&t, 1);
 }
 

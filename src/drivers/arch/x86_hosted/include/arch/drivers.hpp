@@ -5,4 +5,5 @@
 #pragma once
 
 #include "stdio.hpp"
+#include "tcp.hpp"
 #include "timer.hpp"
