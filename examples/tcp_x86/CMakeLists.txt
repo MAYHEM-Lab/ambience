@@ -1,0 +1,2 @@
+add_executable(tcp_x86_example main.cpp)
+target_link_libraries(tcp_x86_example PUBLIC tos_core arch_drivers)
