@@ -24,6 +24,10 @@ $ sudo apt-get install automake
 $ sudo apt-get install texinfo
 $ sudo apt-get install libusb-1.0
 ----
+or on macos 
+----
+$ brew install libtool autoconf automake texinfo libusb 
+----
 
 Then configure:
 

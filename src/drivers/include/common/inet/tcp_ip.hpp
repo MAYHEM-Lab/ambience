@@ -5,8 +5,9 @@
 #pragma once
 
 #include <algorithm>
-#include <stdint.h>
-#include <string.h>
+#include <array>
+#include <cstdint>
+#include <cstring>
 #include <tos/print.hpp>
 #include <tos/span.hpp>
 
@@ -19,11 +20,11 @@ struct port_num_t {
 };
 
 struct alignas(std::uint32_t) ipv4_addr_t {
-    uint8_t addr[4];
+    std::array<uint8_t, 4> addr;
 };
 
 struct mac_addr_t {
-    uint8_t addr[6];
+    std::array<uint8_t, 6> addr;
 };
 
 inline bool operator==(const port_num_t& a, const port_num_t& b) {
@@ -35,19 +36,36 @@ inline bool operator!=(const port_num_t& a, const port_num_t& b) {
 }
 
 inline bool operator==(const ipv4_addr_t& a, const ipv4_addr_t& b) {
-    return memcmp(a.addr, b.addr, 4) == 0;
+    return std::memcmp(a.addr.data(), b.addr.data(), 4) == 0;
 }
 
 inline bool operator!=(const ipv4_addr_t& a, const ipv4_addr_t& b) {
-    return memcmp(a.addr, b.addr, 4) != 0;
+    return std::memcmp(a.addr.data(), b.addr.data(), 4) != 0;
 }
 
-inline ipv4_addr_t parse_ip(tos::span<const char> addr);
+/**
+ * Given an IPv4 address string in the form of (XXX.YYY.ZZZ.TTT), returns an
+ * ipv4_addr_t object corresponding to the given address.
+ * @param addr the address string
+ */
+inline ipv4_addr_t parse_ipv4_address(tos::span<const char> addr);
 
 struct udp_endpoint_t {
     ipv4_addr_t addr;
     port_num_t port;
 };
+
+template<class StreamT>
+void print(StreamT& stream, const mac_addr_t& addr) {
+    tos::print(stream,
+               uintptr_t(addr.addr[0]),
+               uintptr_t(addr.addr[1]),
+               uintptr_t(addr.addr[2]),
+               uintptr_t(addr.addr[3]),
+               uintptr_t(addr.addr[4]),
+               uintptr_t(addr.addr[5]),
+               tos::separator(':'));
+}
 
 template<class StreamT>
 void print(StreamT& stream, const ipv4_addr_t& addr) {
@@ -69,7 +87,7 @@ inline int atoi(tos::span<const char> chars) {
     return res;
 }
 
-inline ipv4_addr_t parse_ip(tos::span<const char> addr) {
+inline ipv4_addr_t parse_ipv4_address(tos::span<const char> addr) {
     ipv4_addr_t res;
 
     auto it = addr.begin();

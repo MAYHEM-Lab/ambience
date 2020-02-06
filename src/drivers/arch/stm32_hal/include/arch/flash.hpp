@@ -47,10 +47,10 @@ public:
     expected<void, flash_errors> erase(sector_id_t sector_id);
 
     expected<void, flash_errors>
-    write(sector_id_t sector_id, span<const char> data, size_t offset);
+    write(sector_id_t sector_id, span<const uint8_t> data, size_t offset);
 
     expected<void, flash_errors>
-    read(sector_id_t sector_id, span<char> data, size_t offset);
+    read(sector_id_t sector_id, span<uint8_t> data, size_t offset);
 
     void isr(uint32_t page);
     void isr_fail(uint32_t page);
