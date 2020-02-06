@@ -158,7 +158,9 @@ twi_tx_res i2c::transmit(twi_addr_t to, span<const uint8_t> buf) noexcept {
         return twi_tx_res::other;
     }
 
+    tos::kern::busy();
     m_wait.down();
+    tos::kern::unbusy();
 
     switch (native_handle()->ErrorCode)
     {
@@ -182,7 +184,9 @@ twi_rx_res i2c::receive(twi_addr_t from, span<uint8_t> buf) noexcept {
         return twi_rx_res::other;
     }
 
+    tos::kern::busy();
     m_wait.down();
+    tos::kern::unbusy();
 
     switch (native_handle()->ErrorCode)
     {
