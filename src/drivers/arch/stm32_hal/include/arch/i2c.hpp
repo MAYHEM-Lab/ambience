@@ -70,3 +70,18 @@ private:
     semaphore m_wait{0};
 };
 } // namespace tos::stm32
+namespace tos {
+inline stm32::i2c open_impl(devs::i2c_t<1>,
+                           i2c_type::master_t,
+                            stm32::gpio::pin_type scl,
+                            stm32::gpio::pin_type sda) {
+    return stm32::i2c{stm32::detail::i2cs[0], scl, sda};
+}
+
+inline stm32::i2c open_impl(devs::i2c_t<2>,
+                            i2c_type::master_t,
+                            stm32::gpio::pin_type scl,
+                            stm32::gpio::pin_type sda) {
+    return stm32::i2c{stm32::detail::i2cs[1], scl, sda};
+}
+}
