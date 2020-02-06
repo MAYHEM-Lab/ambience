@@ -30,14 +30,13 @@ public:
     expected<span<uint8_t>, boost::system::error_code> read(span<uint8_t> buf) {
         int size = 0;
         boost::system::error_code ec;
-        m_sock->async_read_some(boost::asio::buffer(buf.data(), buf.size()),
+        boost::asio::async_read(*m_sock,
+                                boost::asio::buffer(buf.data(), buf.size()),
                                 [&](boost::system::error_code e, std::size_t len) {
-                                  size = len;
-                                  ec = e;
-                                  m_read.up();
+                                    size = len;
+                                    ec = e;
+                                    m_read.up();
                                 });
-        /*boost::asio::async_read(*m_sock,
-                                );*/
         m_read.down();
         if (ec) {
             return unexpected(ec);
@@ -102,8 +101,8 @@ private:
     semaphore m_accept_sem{0};
 };
 
-expected<std::unique_ptr<tcp_socket>, boost::system::error_code> connect(ipv4_addr_t addr,
-                                                              port_num_t port) {
+expected<std::unique_ptr<tcp_socket>, boost::system::error_code>
+connect(ipv4_addr_t addr, port_num_t port) {
     auto sock = std::make_unique<boost::asio::ip::tcp::socket>(get_io());
     using endpoint_type = boost::asio::ip::tcp::acceptor::endpoint_type;
     boost::asio::ip::address_v4 address(
