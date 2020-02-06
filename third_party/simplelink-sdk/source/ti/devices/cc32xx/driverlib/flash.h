@@ -100,7 +100,7 @@ extern void FlashIntRegister(void (*pfnHandler)(void));
 extern void FlashIntUnregister(void);
 extern void FlashIntEnable(unsigned long ulIntFlags);
 extern void FlashIntDisable(unsigned long ulIntFlags);
-extern unsigned long FlashIntStatus(tBoolean bMasked);
+extern unsigned long FlashIntStatus(unsigned char bMasked);
 extern void FlashIntClear(unsigned long ulIntFlags);
 extern tFlashProtection FlashProtectGet(unsigned long ulAddress);
 
