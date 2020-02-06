@@ -292,7 +292,7 @@ span<U> spanify(T&& t) {
     return span<U>(std::forward<T>(t));
 }
 
-template<class T, class U>
+template<class T = const uint8_t, class U>
 span<T> raw_cast(span<U> sp) {
     static_assert(sizeof(T) == 1, "");
     return {reinterpret_cast<T*>(sp.data()), sp.size() * sizeof(U)};
