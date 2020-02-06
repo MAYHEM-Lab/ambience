@@ -9,6 +9,7 @@
 #include <tos/span.hpp>
 #include <tos/utility.hpp>
 #include <cstddef>
+#include <chrono>
 
 namespace tos {
 inline tos::span<const char> itoa(int64_t i, int base = 10) {
@@ -230,5 +231,15 @@ template<class CharOstreamT, class... T>
 void println(CharOstreamT& ostr, T&&... t) {
     print(ostr, std::forward<T>(t)...);
     println(ostr);
+}
+
+template <class StrT>
+void print(StrT& ostr, std::chrono::milliseconds ms) {
+    print(ostr, int(ms.count()), "ms", tos::no_separator());
+}
+
+template <class StrT>
+void print(StrT& ostr, std::chrono::microseconds us) {
+    print(ostr, int(us.count()), "us", tos::no_separator());
 }
 } // namespace tos
