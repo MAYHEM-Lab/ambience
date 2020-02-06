@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <common/usart.hpp>
 #include <ti/drivers/UART.h>
 #include <tos/mutex.hpp>
 #include <tos/semaphore.hpp>
@@ -62,3 +63,10 @@ private:
     UART_Handle m_handle;
 };
 } // namespace tos::cc32xx
+
+namespace tos {
+template <class T>
+cc32xx::uart open_impl(tos::devs::usart_t<0>, T) {
+    return cc32xx::uart{0};
+}
+}
