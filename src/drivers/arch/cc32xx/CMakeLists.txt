@@ -42,6 +42,7 @@ add_library(cc32xx_crypto
         include/arch/crypto/sha2.hpp
         src/stub.cpp include/arch/crypto/crypto.hpp)
 target_link_libraries(cc32xx_crypto PUBLIC ti_drivers caps)
+target_include_directories(cc32xx_crypto PUBLIC include)
 
 add_library(cc32xx_drivers INTERFACE)
 target_link_libraries(cc32xx_drivers
