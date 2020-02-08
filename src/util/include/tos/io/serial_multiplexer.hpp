@@ -91,10 +91,10 @@ public:
     int write(streamid_t streamid, tos::span<const uint8_t> span) {
         this->m_usart->write(magic_numbers);
         this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(streamid)));
-        uint16_t size = (uint64_t)span.size();
+        uint16_t size = span.size();
         this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(size)));
         this->m_usart->write(span);
-        uint32_t crc32 = tos::crc32(tos::raw_cast<const uint8_t>(span));
+        uint32_t crc32 = tos::crc32(span);
         this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(crc32)));
 
         return span.size();
@@ -103,8 +103,9 @@ public:
     tos::span<uint8_t> read(streamid_t streamid, tos::span<uint8_t> span) {
         auto stream = this->find_stream(streamid);
 
-        if (!stream)
+        if (!stream) {
             return tos::empty_span<uint8_t>();
+        }
 
         auto readinto = span;
 
@@ -132,8 +133,9 @@ public:
                         break;
                     }
                 }
-            } else
+            } else {
                 break;
+            }
         }
         return span;
     }
@@ -166,13 +168,12 @@ private:
         }
 
         streamid_t streamid;
-        uint16_t size;
-
         auto read_res = m_usart->read(raw_cast<uint8_t>(tos::monospan(streamid)));
         if (read_res.empty()) {
             return tos::unexpected(serial_multiplexer_errors::stream_closed);
         }
 
+        uint16_t size;
         read_res = m_usart->read(raw_cast<uint8_t>(tos::monospan(size)));
         if (read_res.empty()) {
             return tos::unexpected(serial_multiplexer_errors::stream_closed);

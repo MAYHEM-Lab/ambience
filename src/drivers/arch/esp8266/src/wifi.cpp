@@ -3,8 +3,8 @@
 //
 
 #include <arch/wifi.hpp>
+#include <cstring>
 #include <lwip/init.h>
-#include <string.h>
 #include <tos/fixed_fifo.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/sync_ring_buf.hpp>
@@ -45,12 +45,14 @@ expected<ipv4_addr_t, bool> wifi_connection::get_addr() {
     wifi_get_ip_info(STATION_IF, &info);
 
     ipv4_addr_t res;
-    memcpy(res.addr, &info.ip, 4);
+    std::memcpy(res.addr.data(), &info.ip, 4);
 
     return res;
 }
 
-wifi_connection::wifi_connection() { conn = get_ptr(*this); }
+wifi_connection::wifi_connection() {
+    conn = get_ptr(*this);
+}
 
 wifi_connection::~wifi_connection() {
     if (discon) {
@@ -95,11 +97,13 @@ void wifi_connection::consume_all() {
     }
 }
 
-void wifi_connection::consume_event() { consume_event(events.pop()); }
+void wifi_connection::consume_event() {
+    consume_event(events.pop());
+}
 
 mac_addr_t wifi::get_ether_address() const {
     mac_addr_t res;
-    wifi_get_macaddr(STATION_IF, res.addr);
+    wifi_get_macaddr(STATION_IF, res.addr.data());
     return res;
 }
 
@@ -130,6 +134,8 @@ wifi::connect(tos::span<const char> ssid, tos::span<const char> passwd) noexcept
     return std::move(conn);
 }
 
-void wifi::scan() { wifi_station_scan(nullptr, scan_handler); }
+void wifi::scan() {
+    wifi_station_scan(nullptr, scan_handler);
+}
 } // namespace esp82
 } // namespace tos

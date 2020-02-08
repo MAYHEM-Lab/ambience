@@ -90,7 +90,7 @@ void udp_receiver(void* arg, udp_pcb* pcb, pbuf* pbuf, ip_addr_t* addr, u16 port
 
     udp_endpoint_t ep;
     ep.port.port = port;
-    std::memcpy(ep.addr.addr, addr, 4);
+    std::memcpy(ep.addr.addr.data(), addr, 4);
 
     handler(lwip::events::recvfrom, self, ep, lwip::buffer{pbuf});
 }

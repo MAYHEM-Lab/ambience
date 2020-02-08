@@ -71,6 +71,7 @@ public:
         NVIC_DisableIRQ(m_def->irq);
         HAL_UART_DeInit(&m_handle);
         m_def->rcc_dis();
+        tos::kern::unbusy();
     }
 
     void isr() {
@@ -185,7 +186,7 @@ inline usart::usart(const detail::usart_def& x,
     HAL_NVIC_SetPriority(m_def->irq, 0, 0);
     HAL_NVIC_EnableIRQ(m_def->irq);
 
-    HAL_UART_Receive_IT(&m_handle, &m_recv_byte, 1);
+    tos::kern::busy();
 }
 
 template<class AlarmT>
@@ -231,7 +232,9 @@ inline int usart::write(tos::span<const uint8_t> buf) {
     if (res != HAL_OK) {
         return -1;
     }
+    tos::kern::busy();
     tx_s.down();
+    tos::kern::unbusy();
     return buf.size();
 }
 

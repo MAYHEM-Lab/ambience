@@ -90,6 +90,4 @@ public:
 private:
     size_t m_sz;
 };
-
-class sync_ring_buf;
 }
