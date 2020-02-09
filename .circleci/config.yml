@@ -186,7 +186,7 @@ jobs:
         command: mkdir -p /opt/x-tools
     - run:
         name: Extract toolchain
-        command: tar xf x86_64-w64-mingw32.xtensa-lx106-elf-a5c9861.1575819473.zip -C /opt/x-tools/
+        command: unzip x86_64-w64-mingw32.xtensa-lx106-elf-a5c9861.1575819473.zip -d /opt/x-tools
     - run:
         name: Generate Project
         command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=esp/8266 -DCMAKE_BUILD_TYPE=MinSizeRel ..
