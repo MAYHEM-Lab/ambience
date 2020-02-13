@@ -157,7 +157,9 @@ inline expected<void, spi_errors> spi::write(tos::span<const char> data) {
     if (res != HAL_OK) {
         return unexpected(spi_errors{});
     }
+    tos::kern::busy();
     m_busy_sem.down();
+    tos::kern::unbusy();
     while ((m_handle.Instance->SR & SPI_FLAG_BSY) == SPI_FLAG_BSY)
         ;
     return {};
@@ -177,7 +179,9 @@ inline expected<void, spi_errors> spi::exchange(tos::span<char> rx,
     if (res != HAL_OK) {
         return unexpected(spi_errors{});
     }
+    tos::kern::busy();
     m_busy_sem.down();
+    tos::kern::unbusy();
     while ((m_handle.Instance->SR & SPI_FLAG_BSY) == SPI_FLAG_BSY)
         ;
     return {};
