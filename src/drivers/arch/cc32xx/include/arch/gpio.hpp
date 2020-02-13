@@ -15,7 +15,7 @@ class gpio {
 public:
     using pin_type = pin_t;
     gpio() {
-        static auto _ = [] {
+        [[maybe_unused]] static auto _ = [] {
             GPIO_init();
             return 0;
         }();
