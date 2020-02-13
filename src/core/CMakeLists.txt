@@ -13,6 +13,10 @@ if (BUILD_TESTS)
     add_executable(tos_memory_buddy_test src/memory/buddy_test.cpp)
     target_link_libraries(tos_memory_buddy_test PUBLIC tests_main tos_memory)
     add_test(tos_memory_buddy_test tos_memory_buddy_test)
+
+    add_executable(tos_memory_bump_test src/memory/bump_test.cpp)
+    target_link_libraries(tos_memory_bump_test PUBLIC tests_main tos_memory)
+    add_test(tos_memory_bump_test tos_memory_bump_test)
 endif()
 set(TOS_CORE_HEADERS
         include/tos/devices.hpp
