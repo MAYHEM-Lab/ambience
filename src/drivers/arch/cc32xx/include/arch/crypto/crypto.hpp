@@ -9,7 +9,7 @@ namespace tos::cc32xx {
 class crypto {
 public:
     crypto() {
-        static auto _ = []{return CryptoCC32XX_init(), 0;};
+        [[maybe_unused]] static auto _ = []{return CryptoCC32XX_init(), 0;};
     }
 private:
 };
