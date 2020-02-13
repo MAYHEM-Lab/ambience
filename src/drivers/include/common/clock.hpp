@@ -10,6 +10,7 @@
 #include <tos/function_ref.hpp>
 #include <utility>
 #include <tos/interrupt.hpp>
+#include <tos/thread.hpp>
 
 namespace tos {
 /**
