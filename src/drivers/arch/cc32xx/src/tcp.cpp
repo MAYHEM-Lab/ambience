@@ -65,11 +65,10 @@ void tcp_socket::signal_select_rx() {
             m_len.up();
             return;
         }
-        auto s = span(buf).slice(0, res);
-        //tos::println(log, "received:", raw_cast<const char>(s), int(res));
-        for (auto byte : buf) {
+        for (auto byte : span(buf).slice(0, res)) {
             if (m_recv_buffer.size() == m_recv_buffer.capacity()) {
                 // Out of buffer space
+                tos::println(log, "overrun");
                 return;
             }
             m_recv_buffer.push(byte);
