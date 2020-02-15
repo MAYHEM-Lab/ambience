@@ -18,6 +18,11 @@ target_link_libraries(cc32xx_i2c PUBLIC tos_core ti_drivers)
 target_compile_features(cc32xx_i2c PUBLIC cxx_std_17)
 target_include_directories(cc32xx_i2c PUBLIC include)
 
+add_library(cc32xx_flash include/arch/flash.hpp src/flash.cpp)
+target_link_libraries(cc32xx_flash PUBLIC tos_core ti_drivers)
+target_compile_features(cc32xx_flash PUBLIC cxx_std_17)
+target_include_directories(cc32xx_flash PUBLIC include)
+
 add_library(cc32xx_wlan
         include/arch/wlan.hpp
         include/arch/detail/sock_rt.hpp
@@ -53,6 +58,7 @@ target_link_libraries(cc32xx_drivers
         cc32xx_i2c
         cc32xx_wlan
         cc32xx_crypto
+        cc32xx_flash
 )
 
 add_library(arch_drivers ALIAS cc32xx_drivers)
