@@ -44,8 +44,7 @@ constexpr void vm_executor<FetchT, VmT, IsaT>::exec_one()
 template <class FetchT, class VmT, class IsaT>
 constexpr void vm_executor<FetchT, VmT, IsaT>::exec()
 {
-    while (m_state.registers[14] != 0xDEAD)
-    {
+    while (m_state.alive()) {
         exec_one();
     }
 }

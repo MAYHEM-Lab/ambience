@@ -6,6 +6,7 @@
 #include <istream>
 #include <array>
 #include <algorithm>
+#include <iostream>
 
 namespace tvm::as
 {
@@ -57,7 +58,8 @@ namespace tvm::as
 
     void scanner::error(const char* err, int pos)
     {
-        throw std::runtime_error("err at " + std::to_string(pos) + " : " + err);
+        std::cerr << "err at " + std::to_string(pos) + " : " + err << '\n';
+        //throw std::runtime_error("err at " + std::to_string(pos) + " : " + err);
     }
 
     token scanner::tokenize_string()
