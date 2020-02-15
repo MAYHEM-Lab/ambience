@@ -5,11 +5,17 @@ fatih
 
 The openocd in ubuntu repos is quite old, so we have to build one ourselves.
 
-There are many forks of openocd. The official mirror works well for all our ARM targets:
+There are many forks of openocd. 
+
+This mirror works well for all our STM32 and NRF52 targets:
 
 https://github.com/ntfreak/openocd
 
-For instance, there are other forks of openocd for ESP32 and RISC V.
+For TI targets, use this:
+
+https://git.ti.com/git/sdo-emu/openocd.git
+
+There are other forks of openocd for ESP32 and RISC V, which we don't use now.
 
 === Building
 
@@ -32,8 +38,10 @@ $ brew install libtool autoconf automake texinfo libusb
 Then configure:
 
 ----
-$ ./configure
+$ CFLAGS="-Wno-error" ./configure
 ----
+
+The `-Wno-error` is needed with new compilers as the openocd source contains a bunch of warnings.
 
 Then compile:
 
