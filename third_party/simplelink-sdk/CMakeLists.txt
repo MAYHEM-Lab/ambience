@@ -84,7 +84,7 @@ target_sources(ti_drivers PRIVATE
         source/ti/boards/CC3220SF_LAUNCHXL/CC3220SF_LAUNCHXL.c)
 target_include_directories(ti_drivers PUBLIC source/)
 target_link_libraries(ti_drivers PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/source/ti/drivers/lib/drivers_cc32xx.am4g)
-target_link_libraries(ti_drivers PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/kernel/nortos/lib/nortos_cc32xx.am4g)
+#target_link_libraries(ti_drivers PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/kernel/nortos/lib/nortos_cc32xx.am4g)
 target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=PowerCC32XX_initPolicy")
 target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=PowerCC32XX_enterLPDS")
 target_link_libraries(ti_drivers PUBLIC "-Wl,--undefined=UARTBusy")

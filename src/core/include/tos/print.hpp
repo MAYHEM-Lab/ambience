@@ -8,6 +8,8 @@
 #include <string.h>
 #include <tos/span.hpp>
 #include <tos/utility.hpp>
+#include <cstddef>
+#include <chrono>
 
 namespace tos {
 inline tos::span<const char> itoa(int64_t i, int base = 10) {
@@ -134,11 +136,31 @@ void print(CharOstreamT& ostr, bool b) {
     print(ostr, b ? "true" : "false");
 }
 
+template <class StrT>
+void print(StrT& ostr, span<const uint8_t> buf) {
+    for (auto byte : buf) {
+        print(ostr, itoa(byte, 16));
+    }
+}
+
 namespace detail {
 template<class T>
 struct separator_t {
     T sep;
 };
+
+template <>
+struct separator_t<std::nullptr_t> {};
+
+template <class StreamT>
+void print(StreamT&, const separator_t<std::nullptr_t>&) {
+}
+
+template <class StreamT, class T>
+void print(StreamT& str, const separator_t<T>& sep) {
+    using tos::print;
+    print(str, sep.sep);
+}
 
 constexpr void get_separator_or() = delete;
 
@@ -153,6 +175,10 @@ constexpr const separator_t<FirstT>& get_separator_or(const separator_t<FirstT>&
     return first;
 }
 } // namespace detail
+constexpr detail::separator_t<std::nullptr_t> no_separator() {
+    return {};
+}
+
 template<class T>
 constexpr detail::separator_t<T> separator(T&& sep) {
     return {std::forward<T>(sep)};
@@ -190,9 +216,9 @@ void print(CharOstreamT& ostr, T1&& t1, T2&& t2, Ts&&... ts) {
     constexpr auto default_sep = separator(' ');
     auto sep = detail::get_separator_or(ts..., default_sep);
     print(ostr, std::forward<T1>(t1));
-    detail::print2(ostr, sep.sep, std::forward<T2>(t2));
+    detail::print2(ostr, sep, std::forward<T2>(t2));
 
-    int _[] = {0, (detail::print2(ostr, sep.sep, std::forward<Ts>(ts)), 0)...};
+    int _[] = {0, (detail::print2(ostr, sep, std::forward<Ts>(ts)), 0)...};
     (void)_;
 }
 
@@ -205,5 +231,15 @@ template<class CharOstreamT, class... T>
 void println(CharOstreamT& ostr, T&&... t) {
     print(ostr, std::forward<T>(t)...);
     println(ostr);
+}
+
+template <class StrT>
+void print(StrT& ostr, std::chrono::milliseconds ms) {
+    print(ostr, int(ms.count()), "ms", tos::no_separator());
+}
+
+template <class StrT>
+void print(StrT& ostr, std::chrono::microseconds us) {
+    print(ostr, int(us.count()), "us", tos::no_separator());
 }
 } // namespace tos

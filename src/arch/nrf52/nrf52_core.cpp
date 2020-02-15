@@ -10,6 +10,7 @@ extern "C"
 {
     [[noreturn]] void tos_force_reset()
     {
+        __BKPT(0);
         NVIC_SystemReset();
         TOS_UNREACHABLE();
     }

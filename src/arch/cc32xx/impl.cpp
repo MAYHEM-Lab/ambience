@@ -13,6 +13,7 @@ enum IRQn_Type
 #define __NVIC_PRIO_BITS 0
 #include <core_cm4.h>
 #include <ti/drivers/Board.h>
+#include <ti/drivers/GPIO.h>
 #include <ti/drivers/dpl/HwiP.h>
 
 extern "C" {
@@ -25,6 +26,23 @@ extern void tos_main();
 extern "C" {
 __attribute__((section(".dbghdr"), used)) unsigned long ulDebugHeader[] = {
     0x5AA5A55A, 0x000FF800, 0xEFA3247D};
+void HardFaultHandler() {
+    while (true) {
+        __BKPT(0);
+    }
+}
+void MPUHandler() {
+    while (true) {
+        __BKPT(0);
+    }
+}
+}
+
+extern "C" {
+void enter_lp() {
+}
+void exit_lp() {
+}
 }
 
 int main() {
@@ -54,16 +72,16 @@ int main() {
     tos::kern::detail::disable_depth = 0;
     tos_main();
 
+    GPIO_init();
     while (true) {
+        GPIO_write(4, 1);
         auto res = tos::sched.schedule();
         if (res == tos::exit_reason::restart) {
             tos_force_reset();
         }
-        if (res == tos::exit_reason::power_down) {
+        if (res == tos::exit_reason::power_down || res == tos::exit_reason::idle) {
+            GPIO_write(4, 0);
             Power_idleFunc();
-        }
-        if (res == tos::exit_reason::idle) {
-            __WFI();
         }
         if (res == tos::exit_reason::yield) {
             // Do nothing

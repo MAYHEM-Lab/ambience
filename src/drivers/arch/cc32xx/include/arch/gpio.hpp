@@ -6,16 +6,17 @@
 
 #include <common/gpio.hpp>
 #include <ti/drivers/GPIO.h>
+#include <tos/self_pointing.hpp>
 
 namespace tos::cc32xx {
 struct pin_t {
     uint_fast8_t gpio_num;
 };
-class gpio {
+class gpio : public self_pointing<gpio> {
 public:
     using pin_type = pin_t;
     gpio() {
-        static auto _ = [] {
+        [[maybe_unused]] static auto _ = [] {
             GPIO_init();
             return 0;
         }();
@@ -27,6 +28,11 @@ public:
      * Sets the given pin to be an input
      */
     void set_pin_mode(pin_type pin, pin_mode::input_t);
+
+    /**
+     * Sets the given pin to be an input
+     */
+    void set_pin_mode(pin_type pin, pin_mode::in_pulldown_t);
 
     /**
      * Sets the given pin to be an output
@@ -68,6 +74,10 @@ inline void gpio::set_pin_mode(pin_type pin, tos::pin_mode::output_t) {
 
 inline void gpio::set_pin_mode(pin_type pin, pin_mode::input_t) {
     GPIO_setConfig(pin.gpio_num, GPIO_CFG_IN_NOPULL);
+}
+
+inline void gpio::set_pin_mode(pin_type pin, pin_mode::in_pulldown_t) {
+    GPIO_setConfig(pin.gpio_num, GPIO_CFG_IN_PD);
 }
 
 inline void gpio::write(pin_type pin, digital::high_t) {

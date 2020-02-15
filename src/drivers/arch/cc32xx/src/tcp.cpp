@@ -61,14 +61,14 @@ void tcp_socket::signal_select_rx() {
         if (res == 0) {
             tos::println(log, "received 0 bytes, end of stream!");
             close();
+            m_closed = true;
+            m_len.up();
             return;
         }
-        auto s = span(buf).slice(0, res);
-        //tos::println(log, "received:", int(res));
-        for (auto byte : s) {
+        for (auto byte : span(buf).slice(0, res)) {
             if (m_recv_buffer.size() == m_recv_buffer.capacity()) {
                 // Out of buffer space
-                // tos::println(log, "overrun");
+                tos::println(log, "overrun");
                 return;
             }
             m_recv_buffer.push(byte);
@@ -81,6 +81,9 @@ expected<span<uint8_t>, network_errors> tcp_socket::read(span<uint8_t> buffer) {
     auto tmp_buffer = buffer;
     while (!tmp_buffer.empty()) {
         m_len.down();
+        if (m_closed) {
+            return buffer.slice(0, buffer.size() - tmp_buffer.size());
+        }
         tmp_buffer.front() = m_recv_buffer.pop();
         tmp_buffer = tmp_buffer.slice(1);
     }

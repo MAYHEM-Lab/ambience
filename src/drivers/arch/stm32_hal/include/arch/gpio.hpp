@@ -15,7 +15,7 @@ struct pin_t {
     uint16_t pin;
 };
 
-class gpio : public self_pointing<gpio> {
+class gpio : public self_pointing<gpio>, public non_copy_movable {
 public:
     using pin_type = pin_t;
 

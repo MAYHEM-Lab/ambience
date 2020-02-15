@@ -28,6 +28,7 @@ public:
     write(span<const uint8_t> buffer);
 
 private:
+    bool m_closed = false;
     semaphore_base<int16_t> m_len{0};
     basic_fixed_fifo<uint8_t, 512, ring_buf> m_recv_buffer;
 };

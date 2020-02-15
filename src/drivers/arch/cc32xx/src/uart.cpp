@@ -11,19 +11,23 @@ extern const UART_Config UART_config[];
 }
 
 namespace tos::cc32xx {
-void uart_driver_rx_callback(UART_Handle handle, void* buf, size_t count) {
+void uart_driver_rx_callback(UART_Handle handle,
+                             [[maybe_unused]] void* buf,
+                             [[maybe_unused]] size_t count) {
     tos::int_guard ig;
     auto id = std::distance(&UART_config[0], static_cast<const UART_Config*>(handle));
     uart::get(id)->rx_isr();
 }
-void uart_driver_tx_callback(UART_Handle handle, void* buf, size_t count) {
+void uart_driver_tx_callback(UART_Handle handle,
+                             [[maybe_unused]] void* buf,
+                             [[maybe_unused]] size_t count) {
     tos::int_guard ig;
     auto id = std::distance(&UART_config[0], static_cast<const UART_Config*>(handle));
     uart::get(id)->tx_isr();
 }
 uart::uart(int id)
     : tracked_driver(id) {
-    static auto _ = [] {
+    [[maybe_unused]] static auto _ = [] {
         UART_init();
         return 0;
     }();

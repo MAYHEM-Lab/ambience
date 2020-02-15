@@ -454,6 +454,9 @@ PowerCC32XX_ParkInfo parkInfo[] = {
     {PowerCC32XX_PIN64, PowerCC32XX_WEAK_PULL_DOWN_STD}, /* GPIO9               */
 };
 
+
+extern void enter_lp(void);
+extern void exit_lp(void);
 /*
  *  This structure defines the configuration for the Power Manager.
  *
@@ -465,8 +468,8 @@ PowerCC32XX_ParkInfo parkInfo[] = {
 const PowerCC32XX_ConfigV1 PowerCC32XX_config = {
     .policyInitFxn = &PowerCC32XX_initPolicy,
     .policyFxn = &PowerCC32XX_sleepPolicy,
-    .enterLPDSHookFxn = NULL,
-    .resumeLPDSHookFxn = NULL,
+    .enterLPDSHookFxn = enter_lp,
+    .resumeLPDSHookFxn = exit_lp,
     .enablePolicy = false,
     .enableGPIOWakeupLPDS = true,
     .enableGPIOWakeupShutdown = true,
