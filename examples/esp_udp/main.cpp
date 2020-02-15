@@ -38,7 +38,7 @@ auto udp_task = []{
     auto [w, wconn] = wifi_connect();
 
     tos::udp_endpoint_t ep{
-        .addr = tos::parse_ip("169.231.9.60"),
+        .addr = tos::parse_ipv4_address("169.231.9.60"),
         .port = { 9993 }
     };
 
