@@ -255,7 +255,7 @@ public:
      * @return a new span
      */
     constexpr span slice(size_t begin) {
-        return {m_base + begin, size() - begin};
+        return slice(begin, size() - begin);
     }
 
 private:
