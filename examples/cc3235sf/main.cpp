@@ -100,6 +100,26 @@ void task() {
     }
 }
 
+void flash_task() {
+    tos::cc32xx::uart uart(0);
+    tos::println(uart, "hello");
+    tos::cc32xx::flash flash;
+    auto res = flash.erase(255);
+    tos::println(uart, "done", bool(res));
+    uintptr_t addr = 0x01000000 + 255 * flash.sector_size_bytes();
+    auto x = reinterpret_cast<uint32_t*>(addr);
+    tos::println(uart, *x);
+    uint32_t data = 42;
+    res = flash.write(255, tos::raw_cast(tos::monospan(data)), 0);
+    tos::println(uart, "done", bool(res));
+    tos::println(uart, *x);
+
+    while (true) {
+        asm volatile("nop");
+    }
+}
+
 void tos_main() {
-    tos::launch(tos::alloc_stack, task);
+    tos::launch(tos::alloc_stack, flash_task);
+    // tos::launch(tos::alloc_stack, task);
 }
