@@ -1,5 +1,6 @@
 #include <arch/flash.hpp>
 #include <nrfx_nvmc.h>
+#include <tos/thread.hpp>
 
 namespace tos::nrf52 {
 flash::flash() {
@@ -28,7 +29,17 @@ expected<void, flash_errors>
 flash::write(sector_id_t sector_id, span<const uint8_t> data, uint16_t offset) {
     nrfx_nvmc_bytes_write(
         translate_address(sector_id, offset), data.data(), data.size_bytes());
+    while (!nrfx_nvmc_write_done_check()) {
+        tos::this_thread::yield();
+    }
     return {};
+}
+
+expected<span<uint8_t>, flash_errors>
+flash::read(flash::sector_id_t sector_id, span<uint8_t> data, uint16_t offset) {
+    auto ptr = reinterpret_cast<const uint8_t*>(translate_address(sector_id, offset));
+    std::copy_n(ptr, data.size(), data.data());
+    return data;
 }
 
 uintptr_t flash::translate_address(sector_id_t sector, uint16_t offset) const {
