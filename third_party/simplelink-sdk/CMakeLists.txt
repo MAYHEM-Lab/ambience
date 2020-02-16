@@ -1,3 +1,6 @@
+if (NOT ${TOS_CORE} MATCHES "cc32xx")
+    return()
+endif()
 add_library(ti_sdk "")
 target_sources(ti_sdk PRIVATE
         kernel/nortos/startup/startup_cc32xx_gcc.c
