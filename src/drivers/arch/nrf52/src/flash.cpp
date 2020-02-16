@@ -23,4 +23,15 @@ expected<void, flash_errors> flash::erase(sector_id_t sector_id) {
     }
     return unexpected(flash_errors::unknown);
 }
+
+expected<void, flash_errors>
+flash::write(sector_id_t sector_id, span<const uint8_t> data, uint16_t offset) {
+    nrfx_nvmc_bytes_write(
+        translate_address(sector_id, offset), data.data(), data.size_bytes());
+    return {};
+}
+
+uintptr_t flash::translate_address(sector_id_t sector, uint16_t offset) const {
+    return sector * sector_size_bytes() + offset;
+}
 } // namespace tos::nrf52
