@@ -18,7 +18,7 @@ endif()
 
 add_subdirectory(src)
 add_subdirectory(libs)
-add_subdirectory(apps)
+add_subdirectory(apps EXCLUDE_FROM_ALL)
 add_subdirectory(third_party)
 
 if (BUILD_EXAMPLES)
