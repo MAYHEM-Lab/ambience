@@ -13,7 +13,7 @@ target_link_libraries(nrf5-sdk-prs PUBLIC nrf5-sdk)
 add_library(nrf5-sdk-usart
     modules/nrfx/drivers/src/nrfx_uarte.c
     modules/nrfx/drivers/src/nrfx_uart.c)
-target_link_libraries(nrf5-sdk-usart PUBLIC nrf5-sdk)
+target_link_libraries(nrf5-sdk-usart PUBLIC nrf5-sdk-prs)
 target_compile_definitions(nrf5-sdk-usart PUBLIC 
     NRFX_UARTE_ENABLED=1 
     NRFX_UARTE0_ENABLED=1 
@@ -22,7 +22,7 @@ target_compile_definitions(nrf5-sdk-usart PUBLIC
 
 add_library(nrf5-sdk-timer
     modules/nrfx/drivers/src/nrfx_timer.c)
-target_link_libraries(nrf5-sdk-timer PUBLIC nrf5-sdk)
+target_link_libraries(nrf5-sdk-timer PUBLIC nrf5-sdk-prs)
 target_compile_definitions(nrf5-sdk-timer PUBLIC
     NRFX_TIMER_ENABLED=1
     NRFX_TIMER0_ENABLED=1
@@ -47,6 +47,12 @@ target_compile_definitions(nrf5-sdk-spim PUBLIC
         NRFX_SPIM0_ENABLED=1
         SPIM_LEGACY_SUPPORT=0)
 
+add_library(nrf5-sdk-nvmc
+    modules/nrfx/drivers/src/nrfx_nvmc.c)
+target_link_libraries(nrf5-sdk-nvmc PUBLIC nrf5-sdk-prs)
+target_compile_definitions(nrf5-sdk-nvmc PUBLIC
+        NRFX_NVMC_ENABLED=1)
+
 add_library(nrf5-sdk-drivers INTERFACE)
 target_link_libraries(nrf5-sdk-drivers INTERFACE 
     nrf5-sdk-prs
@@ -54,6 +60,7 @@ target_link_libraries(nrf5-sdk-drivers INTERFACE
     nrf5-sdk-timer
     nrf5-sdk-twim
     nrf5-sdk-spim
+    nrf5-sdk-nvmc
 )
 
 add_library(nrf5-sdk 
