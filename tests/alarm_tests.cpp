@@ -21,8 +21,8 @@ TEST_CASE("alarm"){
             tos::this_thread::sleep_for(alarm, 100ms);
             auto diff = std::chrono::system_clock::now() - tm;
 
-            REQUIRE_LE(100ms, diff);
-            REQUIRE_GE(130ms, diff);
+            CHECK_LE(100ms, diff);
+            CHECK_GE(130ms, diff);
         }
 
         s.up();
