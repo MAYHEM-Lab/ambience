@@ -27,12 +27,6 @@ jobs:
           name: Move the toolchain
           command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-8-2018-q4-major /opt/x-tools
       - run:
-          name: Download nRF52 SDK
-          command: wget http://cs.ucsb.edu/~bakir/nRF5_SDK_15.3.0_59ac345.zip -O nrf5-sdk.zip
-      - run:
-          name: Extract SDK
-          command: unzip nrf5-sdk.zip -d /opt/x-tools
-      - run:
           name: Generate Project
           command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=nrf52/832 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
