@@ -15,6 +15,12 @@ size_t flash::sector_size_bytes() const {
 
 expected<void, flash_errors> flash::erase(sector_id_t sector_id) {
     auto res = nrfx_nvmc_page_erase(translate_address(sector_id, 0));
-    return {};
+    if (res == NRFX_SUCCESS) {
+        return {};
+    }
+    if (res == NRFX_ERROR_INVALID_ADDR) {
+        return unexpected(flash_errors::bad_address);
+    }
+    return unexpected(flash_errors::unknown);
 }
 } // namespace tos::nrf52
