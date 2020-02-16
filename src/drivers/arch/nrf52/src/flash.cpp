@@ -1,6 +1,6 @@
 #include <arch/flash.hpp>
 #include <nrfx_nvmc.h>
-#include <tos/thread.hpp>
+#include <tos/ft.hpp>
 
 namespace tos::nrf52 {
 flash::flash() {
