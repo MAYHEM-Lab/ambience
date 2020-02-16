@@ -6,6 +6,7 @@
 
 #include <common/gpio.hpp>
 #include <tos/compiler.hpp>
+#include <tos/self_pointing.hpp>
 
 extern "C" {
 #include <user_interface.h>
@@ -22,7 +23,7 @@ struct pin_t {
     uint8_t pin;
     uint32_t mask;
 };
-class gpio {
+class gpio : public self_pointing<gpio> {
 public:
     using pin_type = pin_t;
 
