@@ -18,12 +18,11 @@ TEST_CASE("alarm"){
         {
             auto tm = std::chrono::system_clock::now();
             using namespace std::chrono_literals;
-            alarm.sleep_for(100ms);
-
+            tos::this_thread::sleep_for(alarm, 100ms);
             auto diff = std::chrono::system_clock::now() - tm;
 
-            REQUIRE(diff >= 100ms);
-            REQUIRE(diff <= 130ms);
+            REQUIRE_LE(100ms, diff);
+            REQUIRE_GE(130ms, diff);
         }
 
         s.up();
