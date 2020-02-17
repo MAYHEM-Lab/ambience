@@ -28,7 +28,7 @@ public:
     using sector_id_t = uint16_t;
 
     size_t sector_count() const {
-        return (1 << ((spi_flash_get_id() >> 16) & 0xFF));
+        return (1 << ((spi_flash_get_id() >> 16) & 0xFF)) / sector_size_bytes();
     }
 
     size_t sector_size_bytes() const {
@@ -58,7 +58,7 @@ public:
 
         auto res = spi_flash_write(
             static_cast<uint32_t>(sector * sector_size_bytes() + offset),
-            const_cast<uint32_t*>(reinterpret_cast<const uint32_t*>(data.data())),
+            const_cast<uint32*>(reinterpret_cast<const uint32*>(data.data())),
             data.size());
         if (res == SPI_FLASH_RESULT_OK) {
             return {};
@@ -80,7 +80,7 @@ public:
 
         auto res =
             spi_flash_read(static_cast<uint32_t>(sector * sector_size_bytes() + offset),
-                           reinterpret_cast<uint32_t*>(buf.data()),
+                           reinterpret_cast<uint32*>(buf.data()),
                            buf.size());
         if (res == SPI_FLASH_RESULT_OK) {
             return {};
