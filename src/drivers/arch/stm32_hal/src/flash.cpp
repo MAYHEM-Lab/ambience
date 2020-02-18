@@ -67,7 +67,9 @@ tos::expected<void, flash_errors> flash::erase(sector_id_t sector_id) {
         return unexpected(flash_errors::erase_failed);
     }
 
+    tos::kern::busy();
     m_done.down();
+    tos::kern::unbusy();
 
     if (m_last_op_fail) {
         return unexpected(flash_errors::operation_failed);
@@ -105,7 +107,9 @@ flash::write(sector_id_t sector_id, span<const uint8_t> data, size_t offset) {
             return unexpected(flash_errors::operation_failed);
         }
 
+        tos::kern::busy();
         m_done.down();
+        tos::kern::unbusy();
 
         if (m_last_op_fail) {
             return unexpected(flash_errors::operation_failed);

@@ -24,6 +24,8 @@ namespace debug {
  * @tparam ErrorTagType type for an explanation for the crash
  */
 template<class ErrorTagType>
+[[gnu::optimize("-O0")]]
+[[clang::optnone]]
 [[noreturn]] void panic(ErrorTagType&&) {
     tos_force_reset();
 }

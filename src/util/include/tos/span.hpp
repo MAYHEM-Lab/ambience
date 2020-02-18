@@ -255,7 +255,7 @@ public:
      * @return a new span
      */
     constexpr span slice(size_t begin) {
-        return {m_base + begin, size() - begin};
+        return slice(begin, size() - begin);
     }
 
 private:
@@ -292,10 +292,16 @@ span<U> spanify(T&& t) {
     return span<U>(std::forward<T>(t));
 }
 
+/**
+ * Given a span of type U, creates a view on that span where the type is the given
+ * raw type.
+ *
+ * Size of the given type must be 1.
+ */
 template<class T = const uint8_t, class U>
 span<T> raw_cast(span<U> sp) {
     static_assert(sizeof(T) == 1, "");
-    return {reinterpret_cast<T*>(sp.data()), sp.size() * sizeof(U)};
+    return {reinterpret_cast<T*>(sp.data()), sp.size_bytes()};
 }
 
 template<class T>

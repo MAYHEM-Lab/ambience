@@ -41,7 +41,7 @@ target_include_directories(esp82_adc PRIVATE src)
 tos_install(esp82_adc ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_adc PUBLIC tos_core)
 
-add_library(esp82_nvm include/arch/nvm.hpp)
+add_library(esp82_nvm include/arch/nvm.hpp src/nvm.cpp)
 tos_install(esp82_nvm ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_nvm PUBLIC tos_core)
 
