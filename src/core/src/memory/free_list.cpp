@@ -75,7 +75,7 @@ void free_list::add_block(free_header& header) {
     std::cerr << "adding block " << &header << " : " << header.size << '\n';
     // keep it sorted by address
     auto it = std::find_if(m_list.begin(), m_list.end(), [&header](free_header& extant) {
-        return &extant < &header;
+        return &extant > &header;
     });
     auto inserted = m_list.insert(it, header);
     auto next = inserted;
