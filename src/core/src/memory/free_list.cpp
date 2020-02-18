@@ -57,7 +57,6 @@ void free_list::free(void* ptr) {
     auto header = static_cast<allocation_header*>(ptr) - 1;
     auto size = header->size;
     auto new_header = new (header) free_header(size);
-    std::cerr << "free " << new_header << '\n';
     add_block(*new_header);
     m_used -= size;
 }
@@ -66,13 +65,10 @@ bool is_contiguous(const free_header& first, const free_header& next) {
     auto next_addr = reinterpret_cast<const char*>(&next);
     auto first_addr = reinterpret_cast<const char*>(&first);
     auto first_end = first_addr + first.size;
-    std::cerr << "is contiguous:" << &first << " + " << first.size << " = "
-              << (void*)first_end << " == " << &next << '\n';
     return first_end == next_addr;
 }
 
 void free_list::add_block(free_header& header) {
-    std::cerr << "adding block " << &header << " : " << header.size << '\n';
     // keep it sorted by address
     auto it = std::find_if(m_list.begin(), m_list.end(), [&header](free_header& extant) {
         return &extant > &header;
@@ -81,10 +77,21 @@ void free_list::add_block(free_header& header) {
     auto next = inserted;
     ++next;
     if (next == m_list.end()) {
-        std::cerr << "empty\n";
         return;
     }
+
     if (is_contiguous(*inserted, *next)) {
+        inserted->size += next->size;
+        m_list.erase(next);
+    }
+
+    if (inserted != m_list.begin()) {
+        auto prev = inserted;
+        --prev;
+        if (is_contiguous(*prev, *inserted)) {
+            prev->size += inserted->size;
+            m_list.erase(inserted);
+        }
     }
 }
 } // namespace tos::memory
