@@ -40,6 +40,11 @@ target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core)
 
 target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_arch)
 target_compile_definitions(tos_core PUBLIC TOS_ARCH_${TOS_ARCH_NAME})
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    target_compile_options(tos_core PUBLIC -fdiagnostics-color=always)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    target_compile_options(tos_core PUBLIC -fdiagnostics-color)
+endif ()
 
 tos_install(tos_arch ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_arch_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
