@@ -4,8 +4,15 @@
 
 extern void tos_main();
 
+extern "C" {
+extern void (*start_ctors[])(void);
+extern void (*end_ctors[])(void);
+}
+
 extern "C"
-void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
+void kernel_main([[maybe_unused]]uint32_t r0, [[maybe_unused]]uint32_t r1, [[maybe_unused]]uint32_t atags) {
+    std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
+
     tos_main();
 
     while (true) {

@@ -17,6 +17,9 @@ SECTIONS
     __rodata_start = .;
     .rodata :
     {
+        start_ctors = .;
+        KEEP(*(.init_array))
+        end_ctors = .;
         *(.rodata)
     }
     . = ALIGN(4096); /* align to page size */
