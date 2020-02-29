@@ -5,8 +5,8 @@ we manage time in tos.
 
 There are mainly 2 activities users want to perform related to time:
 
-1. Figure out what time is it, relative to some _epoch_
-2. Be notified when a certain amount of time passes
+1. Figure out what time it is, relative to some _epoch_.
+2. Get notified when a certain amount of time passes.
 
 In tos, the first activity is performed using what's called a _clock_, and the second using an _alarm_.
 
@@ -48,13 +48,17 @@ This is pretty barebones on purpose to make writing platform dependent timer dri
 
 A _clock_ is an object that tells you the current time when you call it's `now` member. That's it!
 
-The way it's implemented is straightforward: it counts how many _ticks_ happened so far, and how long until the next tick. Since we know the frequency of ticks, computing how much time has passed since construction is just $ticks / frequency$. A clock starts keeping track of the time at it's construction, and stops at it's destruction, there's no start/stop function!
+The way it's implemented is straightforward: it counts how many _ticks_ happened so far, and how long until the next tick. Since we know the frequency of ticks, computing how much time has passed since construction is just $ticks / frequency$. A clock starts keeping track of the time at it's construction, and stops at it's destruction, there is no start/stop functionality.
+
+The clocks provide high resolution timer readings as they do not only count how many times the underlying timer ticked, but also take the time into the current tick that passed. For instance, if the timer ticks every 100ms and we've seen 3 ticks and we are 53ms into the current tick, the `now()` function of the timer will correctly return `353ms` rather than `300ms`. It accomplishes this by using the `get_counter` and `get_period` functions of the timer.
 
 ## Alarms
 
 An _alarm_ is an object that does something you want after a certain amount of time.
 
 Similar to clocks, an alarm also counts ticks to do it's job, but it doesn't care about timekeeping. This means that an alarm only enables a timer when there's something to run and disables it when everything's been run. This allows tos to run in completely tickless mode, and is the preferred way of doing time-related things.
+
+Unlike clocks, alarms only work in exact multiples of the period of the timer it uses. Therefore, if the underlying timer ticks every 10ms, you cannot set an alarm for 15ms exactly. If you do, the alarm will go of at 20ms.
 
 The main interface to an alarm is the `set_alarm` member:
 
