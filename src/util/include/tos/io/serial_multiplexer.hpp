@@ -19,11 +19,11 @@ public:
         , m_streamid(streamid) {
     }
 
-    int write(tos::span<const char> span) {
+    int write(tos::span<const uint8_t> span) {
         return m_multiplexer->write(this->m_streamid, span);
     }
 
-    tos::span<char> read(tos::span<char> span) {
+    tos::span<uint8_t> read(tos::span<uint8_t> span) {
         return m_multiplexer->read(this->m_streamid, span);
     }
 
@@ -38,11 +38,11 @@ enum class serial_multiplexer_errors
     bad_crc
 };
 
-template <size_t BufferSize>
+template<size_t BufferSize>
 struct stream_buffer {
-    tos::basic_fixed_fifo<char, BufferSize, ring_buf> data;
+    tos::basic_fixed_fifo<uint8_t, BufferSize, ring_buf> data;
 
-    void append(tos::span<const char> span) {
+    void append(tos::span<const uint8_t> span) {
         for (auto chr : span) {
             if (data.size() == data.capacity())
                 return;
@@ -50,7 +50,7 @@ struct stream_buffer {
         }
     }
 
-    tos::span<char> read(tos::span<char> span) {
+    tos::span<uint8_t> read(tos::span<uint8_t> span) {
         for (auto& chr : span) {
             chr = data.pop();
         }
@@ -88,23 +88,24 @@ public:
         return multiplexed_stream(*this, streamid);
     }
 
-    int write(streamid_t streamid, tos::span<const char> span) {
+    int write(streamid_t streamid, tos::span<const uint8_t> span) {
         this->m_usart->write(magic_numbers);
-        this->m_usart->write(raw_cast<const char>(tos::monospan(streamid)));
-        uint16_t size = (uint64_t)span.size();
-        this->m_usart->write(raw_cast<const char>(tos::monospan(size)));
+        this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(streamid)));
+        uint16_t size = span.size();
+        this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(size)));
         this->m_usart->write(span);
-        uint32_t crc32 = tos::crc32(tos::raw_cast<const uint8_t>(span));
-        this->m_usart->write(raw_cast<const char>(tos::monospan(crc32)));
+        uint32_t crc32 = tos::crc32(span);
+        this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(crc32)));
 
         return span.size();
     }
 
-    tos::span<char> read(streamid_t streamid, tos::span<char> span) {
+    tos::span<uint8_t> read(streamid_t streamid, tos::span<uint8_t> span) {
         auto stream = this->find_stream(streamid);
 
-        if (!stream)
-            return tos::empty_span<char>();
+        if (!stream) {
+            return tos::empty_span<uint8_t>();
+        }
 
         auto readinto = span;
 
@@ -119,11 +120,11 @@ public:
                     auto next_packet_res = next_packet();
                     if (!next_packet_res) {
                         switch (force_error(next_packet_res)) {
-                            case serial_multiplexer_errors::stream_closed:
-                                // Stream is dead
-                                return tos::empty_span<char>();
-                            default:
-                                continue;
+                        case serial_multiplexer_errors::stream_closed:
+                            // Stream is dead
+                            return tos::empty_span<uint8_t>();
+                        default:
+                            continue;
                         }
                     }
 
@@ -132,30 +133,31 @@ public:
                         break;
                     }
                 }
-            } else
+            } else {
                 break;
+            }
         }
         return span;
     }
 
-    constexpr static std::array<char, 8> magic_numbers = {
+    constexpr static std::array<uint8_t, 8> magic_numbers = {
         0x78, 0x9c, 0xc5, 0x45, 0xe3, 0xc8, 0x0e, 0x37};
 
 private:
     StreamDataT* find_stream(streamid_t streamid) {
-        auto it = std::find_if(
-            this->m_streams.begin(), this->m_streams.end(), [streamid](auto& stream) {
-                return stream.first == streamid;
-            });
+        auto it =
+            std::find_if(this->m_streams.begin(),
+                         this->m_streams.end(),
+                         [streamid](auto& stream) { return stream.first == streamid; });
         if (it == this->m_streams.end())
             return nullptr;
         return &it->second;
     }
 
     tos::expected<streamid_t, serial_multiplexer_errors> next_packet() {
-        begin_magicnumber:
+    begin_magicnumber:
         for (auto chr : magic_numbers) {
-            char tmp;
+            uint8_t tmp;
             auto read_res = m_usart->read(tos::monospan(tmp));
             if (read_res.empty()) {
                 return tos::unexpected(serial_multiplexer_errors::stream_closed);
@@ -166,14 +168,13 @@ private:
         }
 
         streamid_t streamid;
-        uint16_t size;
-
-        auto read_res = m_usart->read(raw_cast<char>(tos::monospan(streamid)));
+        auto read_res = m_usart->read(raw_cast<uint8_t>(tos::monospan(streamid)));
         if (read_res.empty()) {
             return tos::unexpected(serial_multiplexer_errors::stream_closed);
         }
 
-        read_res = m_usart->read(raw_cast<char>(tos::monospan(size)));
+        uint16_t size;
+        read_res = m_usart->read(raw_cast<uint8_t>(tos::monospan(size)));
         if (read_res.empty()) {
             return tos::unexpected(serial_multiplexer_errors::stream_closed);
         }
@@ -183,7 +184,7 @@ private:
             // Received a packet for a non-existent stream, but we still have to read the
             // content + checksum
             for (uint16_t i = 0; i < size + sizeof(checksum_type); ++i) {
-                char tmp;
+                uint8_t tmp;
                 read_res = m_usart->read(tos::monospan(tmp));
                 if (read_res.empty()) {
                     return tos::unexpected(serial_multiplexer_errors::stream_closed);
@@ -194,7 +195,7 @@ private:
 
         uint32_t crc = 0;
         for (uint16_t i = 0; i < size; ++i) {
-            char tmp;
+            uint8_t tmp;
             read_res = m_usart->read(tos::monospan(tmp));
             if (read_res.empty()) {
                 // Did not get to read the whole packet, drop it
@@ -206,7 +207,7 @@ private:
         }
 
         uint32_t wire_crc;
-        read_res = m_usart->read(tos::raw_cast<char>(tos::monospan(wire_crc)));
+        read_res = m_usart->read(tos::raw_cast<uint8_t>(tos::monospan(wire_crc)));
         if (read_res.empty()) {
             // Did not get to read the whole CRC, drop packet
             stream->clear();

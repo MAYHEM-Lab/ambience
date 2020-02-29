@@ -22,17 +22,17 @@ namespace detail {
 template<class SignT, class StreamT>
 void serialize(StreamT& to, const SignT& signature) {
     static_assert(std::is_trivially_copyable<SignT>{}, "signature must be a pod");
-    to->write({(const char*)&signature, sizeof signature});
+    to->write({reinterpret_cast<const uint8_t*>(&signature), sizeof signature});
 }
 
 template<class StreamT, class CapabilityT>
 void serialize(StreamT& to, const cap_list<CapabilityT>& list) {
-    to->write({(const char*)&list.num_caps, sizeof list.num_caps});
-    for (auto& cap : list) {
+    to->write({reinterpret_cast<const uint8_t*>(&list.num_caps), sizeof list.num_caps});
+    for (auto& cap : list.span()) {
         static_assert(
             std::is_trivially_copyable<std::remove_reference_t<decltype(cap)>>{},
             "capabilities must be pods");
-        to->write({(const char*)&cap, sizeof cap});
+        to->write({reinterpret_cast<const uint8_t*>(&cap), sizeof cap});
     }
 }
 
@@ -41,14 +41,14 @@ SignT deserialize_sign(StreamT& from) {
     static_assert(std::is_trivially_copyable<SignT>{}, "signature must be a pod");
 
     SignT signature;
-    tos::read_to_end(from, {(char*)&signature, sizeof signature});
+    tos::read_to_end(from, {(uint8_t*)&signature, sizeof signature});
     return signature;
 }
 
 template<class CapabilityT, class StreamT>
 void read_list(StreamT& from, cap_list<CapabilityT>& to, int16_t len) {
     for (int i = 0; i < len; ++i) {
-        tos::read_to_end(from, {(char*)&to.all[i], sizeof to.all[i]});
+        tos::read_to_end(from, {(uint8_t*)&to.all[i], sizeof to.all[i]});
     }
     to.num_caps = len;
 }
@@ -56,22 +56,23 @@ void read_list(StreamT& from, cap_list<CapabilityT>& to, int16_t len) {
 template<class CapabilityT, class CryptoModelT, class StreamT>
 token_ptr<CapabilityT, CryptoModelT> deserialize_root(StreamT& from) {
     decltype(cap_list<CapabilityT>::num_caps) len;
-    tos::read_to_end(from, {(char*)&len, sizeof len});
+    tos::read_to_end(from, {(uint8_t*)&len, sizeof len});
     tos_debug_print("len: %d\n", int(len));
     auto mem =
-        new char[sizeof(token<CapabilityT, CryptoModelT>) + sizeof(CapabilityT) * len];
+        new uint8_t[sizeof(token<CapabilityT, CryptoModelT>) + sizeof(CapabilityT) * len];
     auto cps = new (mem) token<CapabilityT, CryptoModelT>;
-    read_list(from, cps->c, len);
+    read_list(from, cps->root, len);
     return token_ptr<CapabilityT, CryptoModelT>{cps};
 }
 
 template<class CapabilityT, class StreamT>
 list_ptr<CapabilityT> deserialize_list(StreamT& from) {
     decltype(cap_list<CapabilityT>::num_caps) len;
-    tos::read_to_end(from, {(char*)&len, sizeof len});
+    tos::read_to_end(from, {(uint8_t*)&len, sizeof len});
     if (len == 0)
         return nullptr;
-    auto mem = new char[sizeof(caps::cap_list<CapabilityT>) + sizeof(CapabilityT) * len];
+    auto mem =
+        new uint8_t[sizeof(caps::cap_list<CapabilityT>) + sizeof(CapabilityT) * len];
     auto cps = new (mem) caps::cap_list<CapabilityT>;
     read_list(from, *cps, len);
     return list_ptr<CapabilityT>{cps};
@@ -81,12 +82,12 @@ list_ptr<CapabilityT> deserialize_list(StreamT& from) {
 template<class StreamT, class SignerT, class CapabilityT>
 void serialize(StreamT& to, const token<CapabilityT, SignerT>& caps) {
     // Serialize all the links in the capability chain.
-    for (auto node = &caps.c; node; node = node->child.get()) {
+    for (auto node = &caps.root; node; node = node->child.get()) {
         detail::serialize(to, *node);
     }
 
-    decltype(caps.c.num_caps) c[] = {0};
-    to->write({(const char*)&c, sizeof c});
+    decltype(caps.root.num_caps) c[] = {0};
+    to->write({reinterpret_cast<const uint8_t*>(&c), sizeof c});
 
     /*
      * The signature goes last into the wire.
@@ -107,7 +108,7 @@ void serialize(StreamT& to, const token<CapabilityT, SignerT>& caps) {
 template<class CapabilityT, class CryptoModelT, class StreamT>
 auto deserialize(StreamT& from) {
     auto root = detail::deserialize_root<CapabilityT, CryptoModelT>(from);
-    auto tail = &root->c;
+    auto tail = &root->root;
     for (auto l = detail::deserialize_list<CapabilityT>(from); l;
          l = detail::deserialize_list<CapabilityT>(from)) {
         tail->child = std::move(l);

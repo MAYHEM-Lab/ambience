@@ -52,12 +52,11 @@ public:
                         uint16_t len,
                         void* user) -> int8_t {
             auto self = static_cast<bme280*>(user);
-            const char wb[] = {reg_addr};
-            auto t = self->m_i2c->transmit({dev_id}, wb);
+            auto t = self->m_i2c->transmit({dev_id}, tos::monospan(reg_addr));
             if (t != twi_tx_res::ok)
                 return 1;
             auto r = self->m_i2c->receive(
-                {dev_id}, tos::span<char>(reinterpret_cast<char*>(reg_data), len));
+                {dev_id}, tos::span<uint8_t>(reg_data, len));
             return r != twi_rx_res::ok;
         };
 
@@ -67,7 +66,7 @@ public:
                          uint16_t len,
                          void* user) -> int8_t {
             auto self = static_cast<bme280*>(user);
-            char wb[32] = {reg_addr};
+            uint8_t wb[32] = {reg_addr};
             if (len > std::size(wb) - 1)
                 return 1;
 

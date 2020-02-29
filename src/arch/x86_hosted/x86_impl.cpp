@@ -27,6 +27,7 @@ asio::io_service& get_io()
     return *g_io;
 }
 
+extern "C"
 int main()
 {
     asio::io_service io;
@@ -35,18 +36,23 @@ int main()
     tos::kern::enable_interrupts();
 
     tos_main();
-    tos::kern::schedule();
+    tos::sched.schedule();
     io.run_one();
 
     while (true)
     {
-        auto res = tos::kern::schedule();
+        auto res = tos::sched.schedule();
         if (io.stopped())
+        {
             io.reset();
-        io.run_one();
+        }
+        io.poll();
         if (res == tos::exit_reason::restart)
         {
-            return 0;
+            break;
         }
     }
+
+    io.run();
+    return 0;
 }

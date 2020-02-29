@@ -30,9 +30,9 @@ basic_rgb<RedT, GreenT, BlueT> lerp(const basic_rgb<RedT, GreenT, BlueT>& from,
                                     const basic_rgb<RedT, GreenT, BlueT>& to,
                                     const RatioT& parameter) {
     return {
-        from.red + (to.red - from.red) * parameter,
-        from.green + (to.green - from.green) * parameter,
-        from.blue + (to.blue - from.blue) * parameter,
+        static_cast<RedT>(from.red + (to.red - from.red) * parameter),
+        static_cast<GreenT>(from.green + (to.green - from.green) * parameter),
+        static_cast<BlueT>(from.blue + (to.blue - from.blue) * parameter),
     };
 }
 

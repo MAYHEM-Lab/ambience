@@ -26,7 +26,7 @@ target_compile_definitions(stm32_hal_core PUBLIC STM32_HAL_NAME=${HAL_NAME})
 
 target_link_libraries(stm32_hal_core PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}/ld")
 target_link_libraries(stm32_hal_core PUBLIC "-T${TOS_LD_FILE}")
-target_link_libraries(stm32_hal_core PUBLIC stm32_hal_drivers cmsis)
+target_link_libraries(stm32_hal_core PUBLIC stm32_hal_drivers cmsis::core)
 
 target_link_libraries(stm32_hal_core PUBLIC "-specs=nano.specs -specs=nosys.specs -Wl,--start-group -lgcc -lm -lc -lg -lstdc++ -lsupc++ -Wl,--end-group -Wl,--undefined=main")
 target_compile_features(stm32_hal_core PUBLIC cxx_std_17)

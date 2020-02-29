@@ -11,15 +11,9 @@ workflows:
 jobs:
   nrf52_build:
     docker:
-      - image: ubuntu:bionic
+      - image: bakir/tos-builder-base
     steps:
       - checkout
-      - run:
-          name: Update apt
-          command: apt-get update
-      - run:
-          name: Install unzip wget
-          command: apt-get install -y unzip wget ninja-build cmake git
       - run:
           name: Get submodules
           command: git submodule update --init --recursive
@@ -40,21 +34,21 @@ jobs:
           command: unzip nrf5-sdk.zip -d /opt/x-tools
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=nrf52/832 ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=nrf52/832 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
           working_directory: build/
           name: Build Project
           command: ninja
       - run:
           name: Generate Project
-          command: mkdir build_840 && cd build_840 && cmake -G Ninja -DTOS_CPU=nrf52/840 ..
+          command: mkdir build_840 && cd build_840 && cmake -G Ninja -DTOS_CPU=nrf52/840 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
           working_directory: build_840/
           name: Build Project
           command: ninja
   stm32_build:
     docker:
-      - image: ubuntu:bionic
+      - image: bakir/tos-builder-base
     steps:
       - checkout
       - run:
@@ -83,49 +77,44 @@ jobs:
           command: unzip libopencm3.zip -d /opt/x-tools
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=stm32/f1/03c8 ..
+          command: mkdir build-f103 && cd build-f103 && cmake -G Ninja -DTOS_CPU=stm32/f1/03c8 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
-          working_directory: build/
+          working_directory: build-f103/
           name: Build Project
           command: ninja
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=stm32/f7/46 ..
+          command: mkdir build-f746 && cd build-f746 && cmake -G Ninja -DTOS_CPU=stm32/f7/46 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
-          working_directory: build/
+          working_directory: build-f746/
           name: Build Project
           command: ninja
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=stm32/l0/53 ..
+          command: mkdir build-l053 && cd build-l053 && cmake -G Ninja -DTOS_CPU=stm32/l0/53 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
-          working_directory: build/
+          working_directory: build-l053/
           name: Build Project
           command: ninja
       - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=stm32/l4/75 ..
+          command: mkdir build-l475 && cd build-l475 && cmake -G Ninja -DTOS_CPU=stm32/l4/75 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
-          working_directory: build/
+          working_directory: build-l475/
           name: Build Project
           command: ninja
   x86_build:
     docker:
-      - image: ubuntu:bionic
+      - image: bakir/tos-builder-base
     steps:
       - checkout
-      - run:
-          name: Update apt
-          command: apt-get update
-      - run:
-          name: Install Toolchain
-          command: apt-get install -y g++-7 cmake ninja-build git libboost-all-dev
       - run:
           name: Get submodules
           command: git submodule update --init --recursive
       - run:
           environment:
-            CXX: g++-7
+            CC: gcc-8
+            CXX: g++-8
           name: Generate Project
           command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=hosted/x86 -DBUILD_TESTS=ON ..
       - run:
@@ -136,33 +125,48 @@ jobs:
           working_directory: build/
           name: Run Tests
           command: ninja test
+      - run:
+          environment:
+            CC: clang-8
+            CXX: clang++-8
+          name: Generate Project
+          command: mkdir clang-build && cd clang-build && cmake -G Ninja -DTOS_BOARD=hosted/x86 -DBUILD_TESTS=ON ..
+      - run:
+          working_directory: clang-build/
+          name: Build Project
+          command: ninja
+      - run:
+          working_directory: clang-build/
+          name: Run Tests
+          command: ninja test
+
   avr_build:
     docker:
-      - image: ubuntu:bionic
+      - image: bakir/tos-builder-base
     steps:
       - checkout
-      - run:
-          name: Update apt
-          command: apt-get update
-      - run:
-          name: Install Toolchain
-          command: apt-get install -y gcc-avr cmake ninja-build avr-libc git
       - run:
           name: Get submodules
           command: git submodule update --init --recursive
       - run:
-          environment:
-            CXX: avr-g++
-            CC: avr-gcc
+          name: Download toolchain
+          command: wget http://cs.ucsb.edu/~bakir/avr-gcc.tar.bz2
+      - run:
+          name: Create toolchain dir
+          command: mkdir -p /opt/x-tools/avr-gcc
+      - run:
+          name: Extract toolchain
+          command: tar xf avr-gcc.tar.bz2 -C /opt/x-tools/avr-gcc
+      - run:
           name: Generate Project
-          command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=arduino/pro-mini-8 .. && cmake ..
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=arduino/pro-mini-8 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
           working_directory: build/
           name: Build Project
           command: ninja
   esp_build:
     docker:
-    - image: ubuntu:bionic
+    - image: bakir/tos-builder-base
     steps:
     - checkout
     - run:

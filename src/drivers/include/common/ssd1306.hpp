@@ -147,13 +147,13 @@ void ssd1306<I2CT>::initialize() {
 
 template<class I2CT>
 void ssd1306<I2CT>::single_command(uint8_t c) {
-    std::array<char, 2> buf = {0x00, static_cast<char>(c)};
+    std::array<uint8_t, 2> buf = {0x00, c};
     m_i2c->transmit(m_addr, buf);
 }
 
 template<class I2CT>
 void ssd1306<I2CT>::command_list(const uint8_t* c, int n, uint8_t first) {
-    std::array<char, 64> buf;
+    std::array<uint8_t, 64> buf;
     buf[0] = first; // first character is always 0x40
 
     while (n > 0) {
@@ -162,7 +162,7 @@ void ssd1306<I2CT>::command_list(const uint8_t* c, int n, uint8_t first) {
         c += len;
         n -= len;
 
-        m_i2c->transmit(m_addr, tos::span<char>(buf).slice(0, len + 1));
+        m_i2c->transmit(m_addr, tos::span<uint8_t>(buf).slice(0, len + 1));
     }
 }
 } // namespace tos

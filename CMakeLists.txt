@@ -12,14 +12,19 @@ option(BUILD_EXAMPLES "Build examples" ON)
 
 include(Tos)
 
+if (BUILD_TESTS)
+    include(CTest)
+endif()
+
 add_subdirectory(src)
 add_subdirectory(libs)
 add_subdirectory(apps)
 add_subdirectory(third_party)
 
 if (BUILD_EXAMPLES)
-add_subdirectory(examples)
+    add_subdirectory(examples)
 endif()
 if (BUILD_TESTS)
-add_subdirectory(tests)
+    enable_testing()
+    add_subdirectory(tests)
 endif()

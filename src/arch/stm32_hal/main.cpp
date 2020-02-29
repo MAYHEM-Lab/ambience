@@ -1,7 +1,7 @@
 #include <tos/compiler.hpp>
 #include <tos/ft.hpp>
 #include <tos/scheduler.hpp>
-#include <core_cmInstr.h>
+#include <cmsis_gcc.h>
 #include <stm32_hal/flash.hpp>
 #include <stm32_hal/rcc.hpp>
 
@@ -19,6 +19,7 @@ extern "C" void SysTick_Handler() {
 
 void Error_Handler() {
     __BKPT(0);
+    tos_force_reset();
 }
 
 namespace tos {
@@ -134,7 +135,8 @@ void SystemClock_Config() {
     rccOscInit.PLL.PLLState   = RCC_PLL_ON;
     rccOscInit.PLL.PLLSource  = RCC_PLLSOURCE_HSE;
     rccOscInit.PLL.PLLMUL     = RCC_PLL_MUL9;
-    if (HAL_RCC_OscConfig(&rccOscInit) != HAL_OK)
+    auto osc_res = HAL_RCC_OscConfig(&rccOscInit);
+    if (osc_res != HAL_OK)
     {
         Error_Handler();
     }
@@ -150,6 +152,7 @@ void SystemClock_Config() {
     {
         Error_Handler();
     }
+
     tos::stm32::apb1_clock = 36'000'000;
     tos::stm32::ahb_clock = 72'000'000;
 }
@@ -171,6 +174,7 @@ extern "C" void HardFault_Handler() {
 int main() {
     HAL_Init();
     SystemClock_Config();
+    //NVIC_DisableIRQ(SysTick_IRQn);
 
     // Interrupts are already enabled:
     tos::kern::enable_interrupts();
@@ -179,12 +183,19 @@ int main() {
     tos_main();
 
     while (true) {
-        auto res = tos::kern::schedule();
+        auto res = tos::sched.schedule();
         if (res == tos::exit_reason::restart) {
             tos_force_reset();
         }
         if (res == tos::exit_reason::power_down) {
-            __WFI();
+            HAL_SuspendTick();
+            HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+            HAL_ResumeTick();
+
+            NVIC_EnableIRQ(SysTick_IRQn);
+            SystemClock_Config();
+            NVIC_DisableIRQ(SysTick_IRQn);
+            //__WFI();
         }
         if (res == tos::exit_reason::idle) {
             __WFI();

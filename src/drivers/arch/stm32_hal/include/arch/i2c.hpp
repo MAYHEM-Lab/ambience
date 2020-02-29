@@ -58,8 +58,8 @@ public:
         return &m_handle;
     }
 
-    twi_tx_res transmit(twi_addr_t to, span<const char> buf) noexcept;
-    twi_rx_res receive(twi_addr_t from, span<char> buf) noexcept;
+    twi_tx_res transmit(twi_addr_t to, span<const uint8_t> buf) noexcept;
+    twi_rx_res receive(twi_addr_t from, span<uint8_t> buf) noexcept;
 
     void tx_fin();
     void rx_fin();
@@ -70,3 +70,18 @@ private:
     semaphore m_wait{0};
 };
 } // namespace tos::stm32
+namespace tos {
+inline stm32::i2c open_impl(devs::i2c_t<1>,
+                           i2c_type::master_t,
+                            stm32::gpio::pin_type scl,
+                            stm32::gpio::pin_type sda) {
+    return stm32::i2c{stm32::detail::i2cs[0], scl, sda};
+}
+
+inline stm32::i2c open_impl(devs::i2c_t<2>,
+                            i2c_type::master_t,
+                            stm32::gpio::pin_type scl,
+                            stm32::gpio::pin_type sda) {
+    return stm32::i2c{stm32::detail::i2cs[1], scl, sda};
+}
+}

@@ -51,19 +51,15 @@ namespace kern {
     switch_context(sched.main_context, return_codes::do_exit);
 }
 
-inline void suspend_self(const int_guard&) {
+inline void suspend_self(const no_interrupts&) {
     kern::ctx ctx;
     if (save_context(*impl::cur_thread, ctx) == return_codes::saved) {
         switch_context(sched.main_context, return_codes::suspend);
     }
 }
 
-inline exit_reason schedule() {
-    return sched.schedule();
-}
-
 template<bool FreeStack, class FunT, class... Args>
-struct super_tcb : tcb {
+struct super_tcb final : tcb {
     template<class FunU, class... ArgUs>
     super_tcb(uint16_t stk_sz, FunU&& fun, ArgUs&&... args)
         : m_tcb_off(stk_sz - sizeof(super_tcb))
@@ -111,7 +107,7 @@ using lambda_task = super_tcb<FreeStack,
 
 template<bool FreeStack, class FuncT, class... ArgTs>
 lambda_task<FreeStack, FuncT, ArgTs...>&
-prep_lambda_layout(tos::span<char> task_data, FuncT&& func, ArgTs&&... args) {
+prep_lambda_layout(tos::span<uint8_t> task_data, FuncT&& func, ArgTs&&... args) {
     // the tcb lives at the top of the stack
     const auto stack_top = task_data.end();
 
@@ -131,7 +127,7 @@ inline thread_id_t __attribute__((optimize("-Os"))) scheduler::start(TaskT& t) {
     static_assert(std::is_base_of<tcb, TaskT>{}, "Tasks must inherit from tcb class!");
 
     // New threads are runnable by default.
-    run_queue.push_back(t);
+    make_runnable(t);
     num_threads++;
 
     // prepare the initial ctx for the new task
@@ -156,7 +152,7 @@ inline thread_id_t __attribute__((optimize("-Os"))) scheduler::start(TaskT& t) {
 
     static_cast<TaskT*>(impl::cur_thread)->start();
 
-    __builtin_unreachable();
+    TOS_UNREACHABLE();
 }
 
 inline void busy() {
@@ -180,24 +176,24 @@ inline exit_reason scheduler::schedule() {
          * power down even though there's something to run.
          */
         tos::int_guard ig;
-        if (run_queue.empty()) {
+        if (m_run_queue.empty()) {
             /**
              * there's no thread to run right now
              */
 
-            if (sched.busy > 0) {
+            if (busy > 0) {
                 return exit_reason::idle;
             }
 
             return exit_reason::power_down;
         }
 
-        auto why = save_ctx(sched.main_context);
+        auto why = save_ctx(main_context);
 
         switch (why) {
         case return_codes::saved: {
-            impl::cur_thread = &run_queue.front();
-            run_queue.pop_front();
+            impl::cur_thread = &m_run_queue.front();
+            m_run_queue.pop_front();
 
             switch_context(self()->get_ctx(), return_codes::scheduled);
         }
@@ -219,12 +215,12 @@ inline exit_reason scheduler::schedule() {
 }
 
 inline void make_runnable(tcb& t) {
-    sched.run_queue.push_back(t);
+    sched.make_runnable(t);
 }
 } // namespace kern
 
 template<bool FreeStack, class FuncT, class... ArgTs>
-inline auto& launch(tos::span<char> task_span, FuncT&& func, ArgTs&&... args) {
+auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
     auto& t = kern::prep_lambda_layout<FreeStack>(
         task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     sched.start(t);
@@ -232,28 +228,21 @@ inline auto& launch(tos::span<char> task_span, FuncT&& func, ArgTs&&... args) {
 }
 
 template<class FuncT, class... ArgTs>
-inline auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
+auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
     auto ptr = tos_stack_alloc(stack_sz.sz);
     if (!ptr) {
         tos::debug::panic("Stack allocation failed");
     }
-    tos::span<char> task_span((char*)ptr, stack_sz.sz);
+    tos::span<uint8_t> task_span(reinterpret_cast<uint8_t*>(ptr), stack_sz.sz);
     auto& res =
         launch<true>(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     return res;
 }
 
 template<class FuncT, class... ArgTs, size_t StSz>
-inline auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
-    tos::span<char> task_span((char*)&stack, StSz);
+auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
     return launch<false>(
-        task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
-}
-
-template<class FuncT, class... ArgTs>
-inline auto& launch(alloc_stack_t, FuncT&& func, ArgTs&&... args) {
-    constexpr stack_size_t stack_size{TOS_DEFAULT_STACK_SIZE};
-    return launch(stack_size, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
+        stack, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
 }
 
 inline void this_thread::exit(void*) {

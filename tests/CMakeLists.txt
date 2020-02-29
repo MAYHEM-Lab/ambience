@@ -1,7 +1,5 @@
 project(tos)
 
-enable_testing()
-
 add_executable(util_tests util_test.cpp)
 target_link_libraries(util_tests tests_main tos_util)
 
@@ -29,6 +27,9 @@ target_link_libraries(function_ref_tests tests_main)
 add_executable(print_tests print_tests.cpp)
 target_link_libraries(print_tests tests_main tos_print)
 
+add_executable(streams_test streams_test.cpp)
+target_link_libraries(streams_test tests_main tos_print tos_util)
+
 add_test(xbee_tests xbee_tests)
 add_test(intrusive_list_tests intrusive_tests)
 add_test(utilities_tests util_tests)
@@ -38,5 +39,6 @@ add_test(alarm_tests alarm_tests)
 add_test(rn2903_test rn2903_test)
 add_test(function_ref_tests function_ref_tests)
 add_test(print_tests print_tests)
+add_test(streams_test streams_test)
 
 add_subdirectory(io)
