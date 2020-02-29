@@ -9,6 +9,7 @@ SECTIONS
     .text :
     {
         KEEP(*(.text.boot))
+        *(.text.*)
         *(.text)
     }
     . = ALIGN(4096); /* align to page size */
@@ -17,9 +18,10 @@ SECTIONS
     __rodata_start = .;
     .rodata :
     {
-        start_ctors = .;
+        PROVIDE(start_ctors = .);
         KEEP(*(.init_array))
-        end_ctors = .;
+        PROVIDE(end_ctors = .);
+        *(.rodata.*)
         *(.rodata)
     }
     . = ALIGN(4096); /* align to page size */
@@ -28,19 +30,21 @@ SECTIONS
     __data_start = .;
     .data :
     {
+        *(.data.*)
         *(.data)
     }
     . = ALIGN(4096); /* align to page size */
     __data_end = .;
  
-    __bss_start = .;
+    PROVIDE(__bss_start = .);
     .bss :
     {
         bss = .;
+        *(.bss.*)
         *(.bss)
     }
     . = ALIGN(4096); /* align to page size */
-    __bss_end = .;
-    __bss_size = __bss_end - __bss_start;
+    PROVIDE(__bss_end = .);
+    PROVIDE(__bss_size = __bss_end - __bss_start);
     __end = .;
 }
