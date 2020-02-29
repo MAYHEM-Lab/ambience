@@ -6,17 +6,15 @@
 extern void tos_main();
 
 extern "C" {
-extern void (*start_ctors[])(void);
-extern void (*end_ctors[])(void);
-extern uint32_t* __bss_start;
-extern uint32_t __bss_size;
+extern void (*start_ctors[])();
+extern void (*end_ctors[])();
+extern uint8_t __bss_start;
+extern uint8_t __bss_end;
 }
 
-extern "C" void kernel_main([[maybe_unused]] uint32_t r0,
-                            [[maybe_unused]] uint32_t r1,
-                            [[maybe_unused]] uint32_t atags) {
-    std::fill_n(__bss_start, __bss_size, 0);
-    std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
+extern "C" void kernel_main() {
+    // std::fill_n(&__bss_start, &__bss_end, 0);
+    // std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
 
     tos_main();
 
