@@ -37,18 +37,33 @@ struct uart0_control_block {
     uint32_t TDR;
 };
 
-constexpr auto UART0_OFFSET = 0x201000;
-constexpr auto UART0_ADDRESS = IO_BASE + UART0_OFFSET;
-
 struct gpio_control_block {
     uint8_t __pad__[148];
     uint32_t GPPUD;
     uint32_t GPPUDCLK0;
 };
 
+struct messagebox_control_block {
+    uint32_t read;
+    uint8_t __pad__[12];
+    uint32_t poll;
+    uint32_t sender;
+    uint32_t status;
+    uint32_t config;
+    uint32_t write;
+};
+
+constexpr auto UART0_OFFSET = 0x201000;
+constexpr auto UART0_ADDRESS = IO_BASE + UART0_OFFSET;
+
 constexpr auto GPIO_OFFSET = 0x200000;
 constexpr auto GPIO_ADDRESS = IO_BASE + GPIO_OFFSET;
 
+constexpr auto VIDEOCORE_MBOX_OFFSET = 0xB880;
+constexpr auto VIDEOCORE_MBOX_ADDRESS = IO_BASE + VIDEOCORE_MBOX_OFFSET;
+
 inline auto UART0 = reinterpret_cast<volatile uart0_control_block*>(UART0_ADDRESS);
 inline auto GPIO = reinterpret_cast<volatile gpio_control_block*>(GPIO_ADDRESS);
-}
+inline auto VIDEOCORE_MBOX =
+    reinterpret_cast<volatile messagebox_control_block*>(VIDEOCORE_MBOX_ADDRESS);
+} // namespace bcm2837

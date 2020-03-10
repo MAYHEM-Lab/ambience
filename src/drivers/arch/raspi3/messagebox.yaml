@@ -1,0 +1,12 @@
+messagebox_channels:
+  type: enumeration
+  members:
+    - power
+    - framebuffer
+    - vuart
+    - vchiq
+    - leds
+    - buttons
+    - touch
+    - count
+    - prop
