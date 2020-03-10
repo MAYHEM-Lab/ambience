@@ -16,8 +16,8 @@ if (BUILD_TESTS)
     include(CTest)
 endif()
 
-add_subdirectory(src)
 add_subdirectory(libs)
+add_subdirectory(src)
 add_subdirectory(apps EXCLUDE_FROM_ALL)
 add_subdirectory(third_party)
 
