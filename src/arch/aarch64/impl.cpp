@@ -12,9 +12,13 @@ extern uint8_t __bss_start;
 extern uint8_t __bss_end;
 }
 
+extern "C" {
+void* __dso_handle;
+}
+
 extern "C" void kernel_main() {
     // std::fill_n(&__bss_start, &__bss_end, 0);
-    // std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
+    std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
 
     tos_main();
 

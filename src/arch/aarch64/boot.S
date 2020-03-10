@@ -76,6 +76,13 @@ _start:
     msr     spsr_el2, x2
     adr     x2, 5f
     msr     elr_el2, x2
+
+    mov	x0, #0x33ff
+    msr	cptr_el2, x0	// Disable coprocessor traps to EL2
+    msr	hstr_el2, xzr	// Disable coprocessor traps to EL2
+    mov	x0, #3 << 20
+    msr cpacr_el1, x0 // Enable FP/SIMD at EL1
+
     eret
 
 5:  mov     sp, x1

@@ -10,7 +10,7 @@ SECTIONS
     {
         KEEP(*(.text.boot))
         *(.text.*)
-        *(.text)
+        *(.text*)
     }
     . = ALIGN(4096); /* align to page size */
     __text_end = .;
