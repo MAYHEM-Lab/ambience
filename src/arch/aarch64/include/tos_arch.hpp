@@ -19,12 +19,12 @@ inline void* __attribute__((always_inline)) tos_get_stack_ptr() {
 inline void tos_enable_interrupts() __attribute__((always_inline));
 inline void tos_enable_interrupts()
 {
-    __asm__ __volatile__("msr daifset, #2" ::: "memory");
+    __asm__ __volatile__("msr daifclr, #2" ::: "memory");
 }
 
 inline void tos_disable_interrupts() __attribute__((always_inline));
 inline void tos_disable_interrupts()
 {
-    __asm__ __volatile__("msr daifclr, #2" ::: "memory");
+    __asm__ __volatile__("msr daifset, #2" ::: "memory");
 }
 }

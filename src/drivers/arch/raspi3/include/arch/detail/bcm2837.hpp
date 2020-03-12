@@ -53,16 +53,47 @@ struct messagebox_control_block {
     uint32_t config;
     uint32_t write;
 
-    [[nodiscard]]
-    bool status_empty() const volatile {
+    [[nodiscard]] bool status_empty() const volatile {
         return status & (1U << 30U);
     }
 
-    [[nodiscard]]
-    bool status_full() const volatile {
+    [[nodiscard]] bool status_full() const volatile {
         return status & (1U << 31U);
     }
 };
+
+struct interrupt_controller_control_block {
+    uint8_t __pad__[0x200];
+    uint32_t irq_basic_pending;
+    uint32_t irq_pending_1;
+    uint32_t irq_pending_2;
+
+    uint32_t fiq_control;
+
+    uint32_t enable_irq_1;
+    uint32_t enable_irq_2;
+    uint32_t enable_basic_irq;
+
+    uint32_t disable_irq_1;
+    uint32_t disable_irq_2;
+    uint32_t disable_basic_irq;
+};
+
+struct system_timer_control_block {
+    uint32_t control_status;
+    uint32_t counter_lo;
+    uint32_t counter_hi;
+    uint32_t compare0;
+    uint32_t compare1;
+    uint32_t compare2;
+    uint32_t compare3;
+};
+
+constexpr auto INTERRUPT_CONTROLLER_OFFSET = 0xB000;
+constexpr auto INTERRUPT_CONTROLLER_ADDRESS = IO_BASE + INTERRUPT_CONTROLLER_OFFSET;
+
+constexpr auto SYSTEM_TIMER_OFFSET = 0x3000;
+constexpr auto SYSTEM_TIMER_ADDRESS = IO_BASE + SYSTEM_TIMER_OFFSET;
 
 constexpr auto UART0_OFFSET = 0x201000;
 constexpr auto UART0_ADDRESS = IO_BASE + UART0_OFFSET;
@@ -73,6 +104,11 @@ constexpr auto GPIO_ADDRESS = IO_BASE + GPIO_OFFSET;
 constexpr auto VIDEOCORE_MBOX_OFFSET = 0xB880;
 constexpr auto VIDEOCORE_MBOX_ADDRESS = IO_BASE + VIDEOCORE_MBOX_OFFSET;
 
+inline auto INTERRUPT_CONTROLLER =
+    reinterpret_cast<volatile interrupt_controller_control_block*>(
+        INTERRUPT_CONTROLLER_ADDRESS);
+inline auto SYSTEM_TIMER =
+    reinterpret_cast<volatile system_timer_control_block*>(SYSTEM_TIMER_ADDRESS);
 inline auto UART0 = reinterpret_cast<volatile uart0_control_block*>(UART0_ADDRESS);
 inline auto GPIO = reinterpret_cast<volatile gpio_control_block*>(GPIO_ADDRESS);
 inline auto VIDEOCORE_MBOX =

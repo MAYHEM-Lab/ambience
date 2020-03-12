@@ -20,6 +20,8 @@ extern "C" void kernel_main() {
     // std::fill_n(&__bss_start, &__bss_end, 0);
     std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
 
+    tos::kern::enable_interrupts();
+
     tos_main();
 
     while (true) {
