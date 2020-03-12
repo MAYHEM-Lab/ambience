@@ -12,11 +12,16 @@ add_library(raspi3_messagebox include/arch/messagebox.hpp src/messagebox.cpp)
 target_link_libraries(raspi3_messagebox PUBLIC tos::core messagebox_proto)
 target_include_directories(raspi3_messagebox PUBLIC include)
 
+add_library(raspi3_framebuffer include/arch/framebuffer.hpp src/framebuffer.cpp)
+target_link_libraries(raspi3_framebuffer PUBLIC tos::core raspi3_messagebox tos_gfx)
+target_include_directories(raspi3_framebuffer PUBLIC include)
+
 add_library(raspi3_drivers include/arch/drivers.hpp src/stub.cpp)
 target_link_libraries(raspi3_drivers PUBLIC
     raspi3_usart
     raspi3_interrupts
     raspi3_messagebox
+    raspi3_framebuffer
 )
 
 set_target_properties(raspi3_drivers PROPERTIES

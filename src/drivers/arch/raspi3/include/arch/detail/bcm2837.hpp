@@ -44,6 +44,7 @@ struct gpio_control_block {
 };
 
 struct messagebox_control_block {
+
     uint32_t read;
     uint8_t __pad__[12];
     uint32_t poll;
@@ -51,6 +52,16 @@ struct messagebox_control_block {
     uint32_t status;
     uint32_t config;
     uint32_t write;
+
+    [[nodiscard]]
+    bool status_empty() const volatile {
+        return status & (1U << 30U);
+    }
+
+    [[nodiscard]]
+    bool status_full() const volatile {
+        return status & (1U << 31U);
+    }
 };
 
 constexpr auto UART0_OFFSET = 0x201000;
