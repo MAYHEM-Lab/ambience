@@ -163,6 +163,7 @@ _vectors:
     mrs     x4, far_el1
     bl      exc_handler
     kernel_exit
+    eret
 
     // IRQ
     .align  7
@@ -174,6 +175,7 @@ _vectors:
     mrs     x4, far_el1
     bl      exc_handler
     kernel_exit
+    eret
 
     // FIQ
     .align  7
@@ -185,6 +187,7 @@ _vectors:
     mrs     x4, far_el1
     bl      exc_handler
     kernel_exit
+    eret
 
     // SError
     .align  7
@@ -196,3 +199,4 @@ _vectors:
     mrs     x4, far_el1
     bl      exc_handler
     kernel_exit
+    eret
