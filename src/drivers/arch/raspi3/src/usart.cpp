@@ -1,3 +1,4 @@
+#include <arch/messagebox.hpp>
 #include <arch/usart.hpp>
 
 using namespace bcm2837;
@@ -5,14 +6,24 @@ namespace tos::raspi3 {
 namespace {
 void delay(int32_t count) {
     asm volatile("__delay_%=: subs %[count], %[count], #1; bne __delay_%=\n"
-    : "=r"(count)
-    : [ count ] "0"(count)
-    : "cc");
+                 : "=r"(count)
+                 : [ count ] "0"(count)
+                 : "cc");
 }
-}
+} // namespace
 uart0::uart0() {
+    property_channel_tags_builder builder;
+    auto buf = builder.add(0x38002, {2, 4000000, 0}).end();
+    property_channel property;
+    property.transaction(buf);
+
     // Disable UART0.
     UART0->CR = 0;
+
+    auto r = GPIO->GPFSEL1;
+    r &= ~((7 << 12) | (7 << 15)); // gpio14, gpio15
+    r |= (4 << 12) | (4 << 15);    // alt0
+    GPIO->GPFSEL1 = r;
 
     // Setup the GPIO pin 14 && 15.
     // Disable pull up/down for all GPIO pins & delay for 150 cycles.
@@ -29,25 +40,10 @@ uart0::uart0() {
     // Clear pending interrupts.
     UART0->ICR = 0x7FF;
 
-    // Set integer & fractional part of baud rate.
-    // Divider = UART_CLOCK/(16 * Baud)
-    // Fraction part register = (Fractional part * 64) + 0.5
-    // UART_CLOCK = 3000000; Baud = 115200.
-
-    // Divider = 3000000 / (16 * 115200) = 1.627 = ~1.
-    UART0->IBRD = 1;
-    // Fractional part register = (.627 * 64) + 0.5 = 40.6 = ~40.
-    UART0->FBRD = 40;
-
-    // Enable FIFO & 8 bit data transmission (1 stop bit, no parity).
-    UART0->LCRH = (1 << 4) | (1 << 5) | (1 << 6);
-
-    // Mask all interrupts.
-    UART0->IMSC = (1 << 1) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7) | (1 << 8) |
-                  (1 << 9) | (1 << 10);
-
-    // Enable UART0, receive & transfer part of UART.
-    UART0->CR = (1 << 0) | (1 << 8) | (1 << 9);
+    UART0->IBRD = 2;
+    UART0->FBRD = 0xB;
+    UART0->LCRH = 0b11<<5;
+    UART0->CR = 0x301;
 }
 
 int uart0::write(tos::span<const uint8_t> buf) {
@@ -66,4 +62,4 @@ span<uint8_t> uart0::read(tos::span<uint8_t> buf) {
     }
     return buf;
 }
-}
+} // namespace tos::raspi3

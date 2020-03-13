@@ -38,13 +38,14 @@ struct uart0_control_block {
 };
 
 struct gpio_control_block {
-    uint8_t __pad__[148];
+    uint8_t __pad__[140];
+    uint32_t GPFSEL0;
+    uint32_t GPFSEL1;
     uint32_t GPPUD;
     uint32_t GPPUDCLK0;
 };
 
 struct messagebox_control_block {
-
     uint32_t read;
     uint8_t __pad__[12];
     uint32_t poll;
