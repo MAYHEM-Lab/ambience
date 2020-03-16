@@ -10,6 +10,7 @@ target_link_options(stm32_timer PUBLIC "-Wl,-uHAL_TIM_IRQHandler")
 add_library(stm32_usart include/arch/usart.hpp src/usart.cpp)
 target_link_libraries(stm32_usart PUBLIC tos_usart tos::core)
 tos_install(stm32_usart ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_options(stm32_timer PUBLIC "-Wl,-uHAL_UART_IRQHandler")
 
 add_library(stm32_spi include/arch/spi.hpp src/spi.cpp)
 target_link_libraries(stm32_spi PUBLIC tos::core)
