@@ -8,6 +8,7 @@ add_library(tos_util
     include/tos/fixed_fifo.hpp
     include/tos/sync_ring_buf.hpp
     include/tos/io/serial_multiplexer.hpp
+    src/io/serial_multiplexer.cpp
 )
 
 add_library(tos_util_core
