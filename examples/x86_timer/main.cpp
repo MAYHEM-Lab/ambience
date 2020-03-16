@@ -10,7 +10,7 @@
 void tos_main() {
     tos::launch(tos::alloc_stack, [] {
         auto timer = tos::open(tos::devs::timer<0>);
-        auto alarm = tos::open(tos::devs::alarm, timer);
+        tos::alarm alarm(&timer);
 
         while (true) {
             std::cout << "hi" << '\n';

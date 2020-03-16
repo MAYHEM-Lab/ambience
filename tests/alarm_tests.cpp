@@ -13,7 +13,7 @@ TEST_CASE("alarm") {
     tos::semaphore s{0};
     tos::launch(tos::alloc_stack, [&] {
         tos::x86::timer tmr;
-        auto alarm = tos::open(tos::devs::alarm, tmr);
+        tos::alarm alarm(&tmr);
 
         for (int i = 0; i < 50; ++i) {
             auto tm = std::chrono::system_clock::now();

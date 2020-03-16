@@ -45,8 +45,8 @@ public:
     using sleeper_type = sleeper;
     using alarm_handle = intrusive_list<sleeper>::iterator_t;
 
-    explicit alarm(T& t)
-        : m_timer(&t) {
+    explicit alarm(T t)
+        : m_timer(std::move(t)) {
     }
 
     /**
@@ -130,7 +130,7 @@ private:
 
     int m_period = 1; // in milliseconds
     intrusive_list<sleeper> m_sleepers;
-    T* m_timer;
+    T m_timer;
 };
 
 namespace devs {
