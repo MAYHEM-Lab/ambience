@@ -83,7 +83,7 @@ std::array<uint8_t, sizeof(NumType)> num_to_chars(NumType num) {
 
 TEST_CASE("serial multiplexer can write to a stream correctly") {
     mock_uart_writeonly uart;
-    tos::serial_multiplexer mp_write(&uart);
+    tos::serial_multiplexer mp_write(&uart, true);
 
     constexpr const uint8_t message[] = "hello world!";
 
@@ -113,7 +113,7 @@ TEST_CASE("serial multiplexer can write to a stream correctly") {
 TEST_CASE("serial multiplexer can read from a stream correctly") {
     // setup the write end
     mock_uart_writeonly uart;
-    tos::serial_multiplexer<decltype(&uart)> mp_write(&uart);
+    tos::serial_multiplexer mp_write(&uart, true);
 
     constexpr const uint8_t message[] = "hello world!";
     auto stream_write = mp_write.create_stream(0);
@@ -123,7 +123,7 @@ TEST_CASE("serial multiplexer can read from a stream correctly") {
     mock_uart_readonly uart_r;
     uart_r.data.insert(uart_r.data.begin(), uart.data.begin(), uart.data.end());
 
-    tos::serial_multiplexer<decltype(&uart_r)> mp_read(&uart_r, {0});
+    tos::serial_multiplexer mp_read(&uart_r, {0});
     auto stream_read = *mp_read.get_stream(0);
 
     std::array<uint8_t, sizeof(message)> message_back;
