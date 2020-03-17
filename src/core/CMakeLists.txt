@@ -5,6 +5,24 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
 add_library(tos_mem include/tos/memory.hpp src/memory.cpp)
 
+add_library(tos_memory include/tos/memory/buddy.hpp src/memory/buddy.cpp include/tos/memory/bump.hpp src/memory/free_list.cpp)
+target_link_libraries(tos_memory PUBLIC tos_util_core)
+target_include_directories(tos_memory PUBLIC include)
+
+if (BUILD_TESTS)
+    enable_testing()
+    add_executable(tos_memory_buddy_test src/memory/buddy_test.cpp)
+    target_link_libraries(tos_memory_buddy_test PUBLIC tests_main tos_memory)
+    add_test(tos_memory_buddy_test tos_memory_buddy_test)
+
+    add_executable(tos_memory_bump_test src/memory/bump_test.cpp)
+    target_link_libraries(tos_memory_bump_test PUBLIC tests_main tos_memory)
+    add_test(tos_memory_bump_test tos_memory_bump_test)
+
+    add_executable(tos_memory_free_list_test src/memory/free_list_test.cpp)
+    target_link_libraries(tos_memory_free_list_test PUBLIC tests_main tos_memory)
+    add_test(tos_memory_free_list_test tos_memory_free_list_test)
+endif()
 set(TOS_CORE_HEADERS
         include/tos/devices.hpp
         include/tos/char_stream.hpp
