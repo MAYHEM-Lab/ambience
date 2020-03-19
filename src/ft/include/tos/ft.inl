@@ -77,9 +77,10 @@ struct super_tcb final : tcb {
     }
 
     ~super_tcb() final {
-        // no if constexpr in C++14
-        if /*constexpr*/ (FreeStack)
-            tos_stack_free(get_task_base());
+        if constexpr (FreeStack)
+        {
+            delete[] get_task_base();
+        }
     }
 
 private:
@@ -227,7 +228,7 @@ auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
 
 template<class FuncT, class... ArgTs>
 auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
-    auto ptr = tos_stack_alloc(stack_sz.sz);
+    auto ptr = new char[stack_sz.sz];
     if (!ptr) {
         tos::debug::panic("Stack allocation failed");
     }
