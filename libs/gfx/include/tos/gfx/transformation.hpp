@@ -55,7 +55,7 @@ template<class InCanvasT, class OutCanvasT>
 constexpr void copy(const InCanvasT& src, OutCanvasT& out, point p) {
     for (size_t i = 0; i < src.height(); ++i) {
         for (size_t j = 0; j < src.width(); ++j) {
-            out.set_pixel(p.x + j, p.y + i, src.get_pixel(j, i));
+            out->set_pixel(p.x + j, p.y + i, src.get_pixel(j, i));
         }
     }
 }
