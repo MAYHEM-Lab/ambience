@@ -32,7 +32,7 @@ SECTIONS
     .data :
     {
         *(.data.*)
-        *(.data)
+        *(.data*)
     }
     . = ALIGN(4096); /* align to page size */
     __data_end = .;
@@ -40,9 +40,8 @@ SECTIONS
     PROVIDE(__bss_start = .);
     .bss :
     {
-        bss = .;
         *(.bss.*)
-        *(.bss)
+        *(.bss*)
     }
     . = ALIGN(4096); /* align to page size */
     PROVIDE(__bss_end = .);

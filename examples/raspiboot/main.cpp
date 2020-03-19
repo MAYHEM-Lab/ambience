@@ -1,172 +1,160 @@
 #include <arch/drivers.hpp>
-#include <asm.hpp>
+#include <deque>
 #include <tos/debug/log.hpp>
 #include <tos/ft.hpp>
+#include <tos/gfx/text.hpp>
+#include <tos/memory/bump.hpp>
 #include <tos/print.hpp>
 
+auto font = tos::gfx::basic_font().mirror_horizontal().resize<16, 16>();
 
-extern "C" {
-void tos_force_reset() {
-    tos::aarch64::intrin::bkpt();
-}
-}
+namespace tos {
+template<class FramebufferT>
+class terminal : public self_pointing<terminal<FramebufferT>> {
+public:
+    explicit terminal(FramebufferT fb)
+        : m_fb{std::move(fb)} {
+        m_lines.emplace_back();
+    }
 
-tos::raspi3::system_timer timer;
-
-extern "C" {
-[[gnu::used]] void
-exc_handler(uint32_t type, uint32_t esr, uint32_t elr, uint32_t spsr, uint32_t far) {
-    // print out interruption type
-    switch (type) {
-    case 0:
-        LOG("Synchronous");
-        break;
-    case 1:
-        LOG("IRQ");
-        break;
-    case 2:
-        LOG("FIQ");
-        break;
-    case 3:
-        LOG("SError");
-        break;
-    }
-    if (type == 1) {
-        timer.irq();
-        return;
-    }
-    LOG(": ");
-    // decode exception type (some, not all. See ARM DDI0487B_b chapter D10.2.28)
-    switch (esr >> 26) {
-    case 0b000000:
-        LOG("Unknown");
-        break;
-    case 0b000001:
-        LOG("Trapped WFI/WFE");
-        break;
-    case 0b001110:
-        LOG("Illegal execution");
-        break;
-    case 0b010101:
-        LOG("System call");
-        break;
-    case 0b100000:
-        LOG("Instruction abort, lower EL");
-        break;
-    case 0b100001:
-        LOG("Instruction abort, same EL");
-        break;
-    case 0b100010:
-        LOG("Instruction alignment fault");
-        break;
-    case 0b100100:
-        LOG("Data abort, lower EL");
-        break;
-    case 0b100101:
-        LOG("Data abort, same EL");
-        break;
-    case 0b100110:
-        LOG("Stack alignment fault");
-        break;
-    case 0b101100:
-        LOG("Floating point");
-        break;
-    default:
-        LOG("Unknown");
-        break;
-    }
-    // decode data abort cause
-    if (esr >> 26 == 0b100100 || esr >> 26 == 0b100101) {
-        LOG(", ");
-        switch ((esr >> 2) & 0x3) {
-        case 0:
-            LOG("Address size fault");
-            break;
-        case 1:
-            LOG("Translation fault");
-            break;
-        case 2:
-            LOG("Access flag fault");
-            break;
-        case 3:
-            LOG("Permission fault");
-            break;
+    int write(span<const uint8_t> buf) {
+        for (auto c : buf) {
+            switch (c) {
+            case '\r':
+                caret_return();
+                break;
+            case '\n':
+                new_line();
+                break;
+            case 0x7F:
+            case 0x08:
+                // backspace
+                if (m_cur_col == 0) {
+                    break;
+                }
+                m_cur_col--;
+                process_char(' ');
+                m_cur_col--;
+                break;
+            default:
+                process_char(c);
+                break;
+            }
         }
-        switch (esr & 0x3) {
-        case 0:
-            LOG(" at level 0");
-            break;
-        case 1:
-            LOG(" at level 1");
-            break;
-        case 2:
-            LOG(" at level 2");
-            break;
-        case 3:
-            LOG(" at level 3");
-            break;
+        render();
+        return buf.size();
+    }
+
+private:
+    tos::gfx::point line_pos(int line) {
+        return {0, static_cast<uint16_t>(line * 20)};
+    }
+
+    void render_line(std::string_view line, int line_number) {
+        tos::gfx::draw_text_line(m_fb, font, line, line_pos(line_number));
+    }
+
+    void render() {
+        if (m_screen_dirty) {
+            // redraw everything
+            for (int i = 0; i < m_lines.size(); ++i) {
+                render_line(m_lines[i], i);
+            }
+            m_screen_dirty = false;
+            m_line_dirty = false;
+        } else if (m_line_dirty) {
+            // redraw line
+            render_line(m_lines[m_cur_row], m_cur_row);
+            m_line_dirty = false;
         }
     }
-    // dump registers
-    LOG(":\n  ESR_EL1 ");
-    LOG(esr >> 32);
-    LOG(esr);
-    LOG(" ELR_EL1 ");
-    LOG(elr >> 32);
-    LOG(elr);
-    LOG("\n SPSR_EL1 ");
-    LOG(spsr >> 32);
-    LOG(spsr);
-    LOG(" FAR_EL1 ");
-    LOG(far >> 32);
-    LOG(far);
-    LOG("\n");
-}
-}
+
+    void caret_return() {
+        m_cur_col = 0;
+    }
+
+    void new_line() {
+        m_lines.emplace_back(m_max_col, ' ');
+        m_line_dirty = true;
+        if (m_lines.size() > m_max_rows) {
+            m_lines.pop_front();
+            m_screen_dirty = true;
+            return;
+        }
+        ++m_cur_row;
+    }
+
+    void process_char(uint8_t c) {
+        if (m_cur_col == m_lines[m_cur_row].size()) {
+            m_lines[m_cur_row].push_back(c);
+        } else {
+            m_lines[m_cur_row][m_cur_col] = c;
+        }
+        ++m_cur_col;
+        m_line_dirty = true;
+    }
+
+    bool m_line_dirty = false;
+    bool m_screen_dirty = false;
+
+    std::deque<std::string> m_lines;
+
+    int m_cur_col = 0;
+    int m_max_col = 80;
+
+    int m_cur_row = 0;
+    int m_max_rows = 40;
+
+    FramebufferT m_fb;
+};
+} // namespace tos
 
 tos::stack_storage<TOS_DEFAULT_STACK_SIZE> stack;
 void tos_main() {
     tos::launch(stack, [] {
         tos::raspi3::uart0 uart;
         tos::println(uart, "Hello from tos!");
+        auto serial = tos::raspi3::get_board_serial();
+        tos::println(uart, "Serial no:", serial);
 
         uint32_t el;
         asm volatile("mrs %0, CurrentEL" : "=r"(el));
         tos::println(uart, "Execution Level:", int((el >> 2) & 3));
 
-        tos::raspi3::framebuffer fb({1024, 768});
+        tos::raspi3::framebuffer fb({1920, 1080});
         tos::println(uart, fb.dims().width, fb.dims().height);
-        tos::println(uart, fb.get_buffer().data(), fb.get_buffer().size_bytes());
-
         tos::println(uart,
-                     tos::itoa(reinterpret_cast<uint64_t>(
-                                   &bcm2837::INTERRUPT_CONTROLLER->enable_irq_1),
-                               16));
+                     fb.get_buffer().data(),
+                     fb.get_buffer().size_bytes(),
+                     fb.get_pitch(),
+                     fb.is_rgb(),
+                     fb.bit_depth());
 
-        auto fn = [] {
+        tos::terminal term(&fb);
+        tos::println(term, "Hello from tos");
+        tos::println(term, "Raspberry pi serial no:", serial);
 
-        };
+        tos::raspi3::interrupt_controller ic;
+        tos::raspi3::system_timer timer(ic);
+        tos::alarm alarm(timer);
 
-        timer.set_callback(tos::function_ref<void()>(fn));
-        timer.enable();
+        tos::launch(tos::alloc_stack, [&] {
+            while (true) {
+                using namespace std::chrono_literals;
 
-        int dir = 1;
-        while (true) {
-            for (auto& c : fb.get_buffer()) {
-                c += dir;
+                tos::this_thread::sleep_for(alarm, 1s);
+                tos::println(term, "Tick", timer.get_counter());
+                tos::println(uart, timer.get_counter());
             }
-            if (fb.get_buffer()[0] == 255 || fb.get_buffer()[0] == 0) {
-                dir *= -1;
-            }
-            tos::println(
-                uart, bcm2837::SYSTEM_TIMER->counter_lo, bcm2837::SYSTEM_TIMER->compare1);
-        }
-
-        tos::println(uart, "Filled");
+        });
 
         while (true) {
             uint8_t c;
-            uart->write(uart->read(tos::monospan(c)));
+            auto buf = uart->read(tos::monospan(c));
+            uart->write(buf);
+            term->write(buf);
         }
+
+        tos::this_thread::block_forever();
     });
 }
