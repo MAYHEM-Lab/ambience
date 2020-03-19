@@ -1,6 +1,4 @@
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>
 #include <tos/ft.hpp>
 
 extern void tos_main();
@@ -16,9 +14,14 @@ extern "C" {
 void* __dso_handle;
 }
 
+void mmu_init();
+
 extern "C" void kernel_main() {
-    // std::fill_n(&__bss_start, &__bss_end, 0);
-    std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
+    mmu_init();
+
+    std::for_each(start_ctors, end_ctors, [](auto ctor) {
+        ctor();
+    });
 
     tos::kern::enable_interrupts();
 
