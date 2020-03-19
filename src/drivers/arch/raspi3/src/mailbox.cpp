@@ -2,12 +2,12 @@
 // Created by fatih on 3/10/20.
 //
 
-#include <arch/messagebox.hpp>
+#include <arch/mailbox.hpp>
 #include <tos/ft.hpp>
 
 using bcm2837::VIDEOCORE_MBOX;
 namespace tos::raspi3 {
-void messagebox_channel::write(uint32_t word) {
+void mailbox_channel::write(uint32_t word) {
     tos::lock_guard g{m_prot};
     while (VIDEOCORE_MBOX->status_full()) {
         tos::this_thread::yield();
@@ -18,7 +18,7 @@ void messagebox_channel::write(uint32_t word) {
     VIDEOCORE_MBOX->write = to_write;
 }
 
-uint32_t messagebox_channel::read() {
+uint32_t mailbox_channel::read() {
     tos::lock_guard g{m_prot};
     while (VIDEOCORE_MBOX->status_empty()) {
         tos::this_thread::yield();
@@ -41,6 +41,6 @@ bool property_channel::transaction(span<uint32_t> buffer) {
     }
     write(addr_to_write >> 4U);
     read(); // response is written to buffer
-    return true;
+    return buffer[1] == 0x80000000;
 }
 } // namespace tos::raspi3

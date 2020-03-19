@@ -1,17 +1,26 @@
 #pragma once
 
 #include <tos/function_ref.hpp>
+#include <arch/interrupts.hpp>
+#include <tos/self_pointing.hpp>
 
 namespace tos::raspi3 {
-class system_timer {
+class system_timer : public self_pointing<system_timer> {
 public:
-    system_timer() = default;
+    system_timer(interrupt_controller& interrupts) : m_handler(function_ref<bool()>([](void* ptr) -> bool {
+        auto self = static_cast<system_timer*>(ptr);
+        return self->irq();
+    }, this)) {
+        interrupts.register_handler(1, m_handler);
+    }
 
     /**
      * Sets the function to be called on every tick of the timer.
      * @param fun function to be called on every tick.
      */
-    void set_frequency(uint16_t hertz);
+    void set_frequency(uint16_t hertz) {
+        m_freq = hertz;
+    }
 
     /**
      * Sets the function to be called on every tick of the timer.
@@ -38,9 +47,11 @@ public:
      */
     uint32_t get_period() const;
 
-    void irq();
+    bool irq();
 
 private:
+    uint16_t m_freq;
+    irq_handler m_handler;
     function_ref<void()> m_cb{[](void*){}};
 };
 }

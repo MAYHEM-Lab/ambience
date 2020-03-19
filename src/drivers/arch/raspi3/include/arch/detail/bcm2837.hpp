@@ -38,9 +38,9 @@ struct uart0_control_block {
 };
 
 struct gpio_control_block {
-    uint8_t __pad__[140];
     uint32_t GPFSEL0;
     uint32_t GPFSEL1;
+    uint8_t pad[144];
     uint32_t GPPUD;
     uint32_t GPPUDCLK0;
 };

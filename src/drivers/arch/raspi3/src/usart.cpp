@@ -1,4 +1,4 @@
-#include <arch/messagebox.hpp>
+#include <arch/mailbox.hpp>
 #include <arch/usart.hpp>
 
 using namespace bcm2837;
@@ -11,14 +11,17 @@ void delay(int32_t count) {
                  : "cc");
 }
 } // namespace
-uart0::uart0() {
-    property_channel_tags_builder builder;
-    auto buf = builder.add(0x38002, {2, 4000000, 0}).end();
-    property_channel property;
-    property.transaction(buf);
 
+uart0::uart0() {
     // Disable UART0.
     UART0->CR = 0;
+
+    property_channel_tags_builder builder;
+    auto buf = builder.add(0x38002, {2, 4'000'000, 0}).end();
+    property_channel property;
+    if (!property.transaction(buf)) {
+        tos::debug::panic("can't set clock speed");
+    }
 
     auto r = GPIO->GPFSEL1;
     r &= ~((7 << 12) | (7 << 15)); // gpio14, gpio15
@@ -49,14 +52,17 @@ uart0::uart0() {
 int uart0::write(tos::span<const uint8_t> buf) {
     for (auto c : buf) {
         while (UART0->FR & (1 << 5)) {
+            tos::this_thread::yield();
         }
         UART0->DR = c;
     }
     return buf.size();
 }
+
 span<uint8_t> uart0::read(tos::span<uint8_t> buf) {
     for (auto& c : buf) {
         while (UART0->FR & (1 << 4)) {
+            tos::this_thread::yield();
         }
         c = UART0->DR;
     }

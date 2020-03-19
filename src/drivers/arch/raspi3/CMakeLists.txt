@@ -1,4 +1,4 @@
-add_lidlc(messagebox_proto messagebox.yaml)
+add_lidlc(mailbox_proto mailbox.yaml)
 
 add_library(raspi3_usart include/arch/usart.hpp src/usart.cpp)
 target_link_libraries(raspi3_usart PUBLIC tos_usart tos::core raspi3_messagebox)
@@ -7,9 +7,10 @@ target_include_directories(raspi3_usart PUBLIC include)
 add_library(raspi3_interrupts include/arch/interrupts.hpp src/interrupts.cpp)
 target_link_libraries(raspi3_interrupts PUBLIC tos::core)
 target_include_directories(raspi3_interrupts PUBLIC include)
+target_link_options(raspi3_interrupts PUBLIC "-Wl,--undefined=exc_handler")
 
-add_library(raspi3_messagebox include/arch/messagebox.hpp src/messagebox.cpp)
-target_link_libraries(raspi3_messagebox PUBLIC tos::core messagebox_proto)
+add_library(raspi3_messagebox include/arch/mailbox.hpp src/mailbox.cpp)
+target_link_libraries(raspi3_messagebox PUBLIC tos::core mailbox_proto)
 target_include_directories(raspi3_messagebox PUBLIC include)
 
 add_library(raspi3_framebuffer include/arch/framebuffer.hpp src/framebuffer.cpp)

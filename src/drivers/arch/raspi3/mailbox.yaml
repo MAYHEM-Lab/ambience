@@ -1,4 +1,4 @@
-messagebox_channels:
+mailbox_channels:
   type: enumeration
   members:
     - power
