@@ -60,29 +60,11 @@ _start:
 5:
     cmp     x0, #4
     beq     5f
-    msr     sp_el1, x1
     // enable CNTP for EL1
     mrs     x0, cnthctl_el2
     orr     x0, x0, #3
     msr     cnthctl_el2, x0
     msr     cntvoff_el2, xzr
-    // enable AArch64 in EL1
-    mov     x0, #(1 << 31)      // AArch64
-    orr     x0, x0, #(1 << 1)   // SWIO hardwired on Pi3
-    msr     hcr_el2, x0
-    mrs     x0, hcr_el2
-    // Setup SCTLR access
-    mov     x2, #0x0800
-    movk    x2, #0x30d0, lsl #16
-    msr     sctlr_el1, x2
-    // set up exception handlers
-    ldr     x2, =_vectors
-    msr     vbar_el1, x2
-    // change execution level to EL1
-    mov     x2, #0x3c4
-    msr     spsr_el2, x2
-    adr     x2, 5f
-    msr     elr_el2, x2
 
     mov	x0, #0x33ff
     msr	cptr_el2, x0	// Disable coprocessor traps to EL2
@@ -90,9 +72,35 @@ _start:
     mov	x0, #3 << 20
     msr cpacr_el1, x0 // Enable FP/SIMD at EL1
 
+    // enable AArch64 in EL1
+	mov	x0, #(1 << 31)						// 64bit EL1
+	msr	hcr_el2, x0
+
+	mov	x0, #0x0800
+	movk	x0, #0x30d0, lsl #16
+	orr    x0, x0, #(0x1 << 2)            // The C bit on (data cache).
+	orr    x0, x0, #(0x1 << 12)           // The I bit on (instruction cache)
+	msr	sctlr_el1, x0
+
+    // change execution level to EL1
+    mov     x2, #0x3c4
+    msr     spsr_el2, x2
+    adr     x2, 5f
+    msr     elr_el2, x2
+
+    // set up exception handlers
+    ldr     x2, =_vectors
+    msr     vbar_el2, x2
+    ldr     x2, =_vectors
+    msr     vbar_el1, x2
+
+    mov     x2, #0x40000
+    msr     sp_el1, x2
+
     eret
 
-5:  mov     sp, x1
+5:  ldr     x1, =_start
+    mov     sp, x1
 
     // clear bss
     ldr     x1, =__bss_start
@@ -101,6 +109,15 @@ _start:
     str     xzr, [x1], #8
     sub     w2, w2, #1
     cbnz    w2, 3b
+
+    mrs		x1, sctlr_el1
+    mov     x2, #(1 << 1 | 1 << 3 | 1 << 4)
+	bic     x1, x1, x2  // clear SA0, SA and A bits
+	msr     sctlr_el1, x1
+	isb
+
+	msr     spsel, #1
+	isb
 
     // jump to C code, should not return
 4:  bl      kernel_main
@@ -147,13 +164,14 @@ _start:
 	ldp	x28, x29, [sp, #16 * 14]
 	ldr	x30, [sp, #16 * 15]
 	add	sp, sp, #S_FRAME_SIZE
-	eret
 	.endm
+
 
 .extern exc_handler
 .section ".text.vectors"
-_vectors:
-    // synchronous
+_handlers:
+// synchronous
+_sync_vec:
     .align  7
     kernel_entry
     mov     x0, #0
@@ -165,6 +183,7 @@ _vectors:
     kernel_exit
     eret
 
+_irq_vec:
     // IRQ
     .align  7
     kernel_entry
@@ -177,6 +196,7 @@ _vectors:
     kernel_exit
     eret
 
+_fiq_vec:
     // FIQ
     .align  7
     kernel_entry
@@ -189,6 +209,7 @@ _vectors:
     kernel_exit
     eret
 
+_serror_vec:
     // SError
     .align  7
     kernel_entry
@@ -200,3 +221,38 @@ _vectors:
     bl      exc_handler
     kernel_exit
     eret
+
+
+.align 11
+_vectors:
+    // synchronous
+    .align  7
+    b _sync_vec
+
+    // IRQ
+    .align  7
+    b _irq_vec
+
+    // FIQ
+    .align  7
+    b _fiq_vec
+
+    // SError
+    .align  7
+    b _serror_vec
+
+    // synchronous
+    .align  7
+    b _sync_vec
+
+    // IRQ
+    .align  7
+    b _irq_vec
+
+    // FIQ
+    .align  7
+    b _fiq_vec
+
+    // SError
+    .align  7
+    b _serror_vec
