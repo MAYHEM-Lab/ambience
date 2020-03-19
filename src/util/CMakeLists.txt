@@ -1,15 +1,5 @@
 project(tos)
 
-add_library(tos_util
-    src/stub.cpp
-    src/expected.cpp
-    include/tos/expected.hpp
-
-    include/tos/fixed_fifo.hpp
-    include/tos/sync_ring_buf.hpp
-    include/tos/io/serial_multiplexer.hpp
-)
-
 add_library(tos_util_core
     src/stub.cpp
 
@@ -36,11 +26,23 @@ add_library(tos_util_core
 target_compile_features(tos_util_core PUBLIC cxx_std_14)
 target_link_libraries(tos_util_core PUBLIC tos::libcxx)
 
+add_library(tos_util
+        src/stub.cpp
+        src/expected.cpp
+        include/tos/expected.hpp
+
+        include/tos/fixed_fifo.hpp
+        include/tos/sync_ring_buf.hpp
+        include/tos/io/serial_multiplexer.hpp
+        )
+
 target_link_libraries(tos_util PUBLIC tos_util_core tos::ft)
 
 add_library(tos::util ALIAS tos_util)
 
 tos_install(tos_util ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(tos_util PUBLIC "-Wl,--whole-archive $<TARGET_FILE:tos_util_core> -Wl,--no-whole-archive")
+target_link_libraries(tos_util PUBLIC tos_memory)
 tos_install(tos_util_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if (BUILD_TESTS)
