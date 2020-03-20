@@ -7,7 +7,7 @@ find_gnu_toolchain(TRIPLE aarch64-none-elf SET)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 set(TOS_STM32_FLAGS "")
-set(TOS_STM32_FLAGS "-march=armv8-a -mtune=cortex-a53")
+set(TOS_STM32_FLAGS "-march=armv8-a -mtune=cortex-a53 -ftree-vectorize")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TOS_STM32_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOS_STM32_FLAGS}")
