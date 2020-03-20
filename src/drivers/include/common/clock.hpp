@@ -94,7 +94,7 @@ auto erase_clock(ClockT clock) -> detail::erased_clock<ClockT> {
 
 template <class ClockT>
 void delay(const ClockT& clock, std::chrono::microseconds dur, bool yield) {
-    delay_until(clock.now() + dur, yield);
+    delay_until(clock, clock.now() + dur, yield);
 }
 
 template <class ClockT>
