@@ -11,6 +11,10 @@ uint32_t system_timer::get_counter() const {
     return SYSTEM_TIMER->counter_lo;
 }
 
+uint32_t system_timer::get_period() const {
+    return 1'000'000 / m_freq;
+}
+
 bool system_timer::irq() {
     // Clear interrupt pending for channel 0.
     m_cb();
