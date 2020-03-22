@@ -100,8 +100,7 @@ public:
      */
     exit_reason schedule();
 
-    template<class TaskT>
-    void make_runnable(TaskT& task) {
+    void make_runnable(tcb& task) {
         m_run_queue.push_back(task);
     }
 
