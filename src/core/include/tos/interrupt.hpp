@@ -11,7 +11,7 @@
 namespace tos {
 namespace kern {
 namespace detail {
-extern int8_t disable_depth;
+inline int8_t disable_depth;
 }
 
 inline void disable_interrupts() {

@@ -15,7 +15,7 @@
 
 namespace tos {
 namespace impl {
-extern kern::tcb* cur_thread;
+inline kern::tcb* cur_thread;
 } // namespace impl
 
 /**

@@ -24,7 +24,7 @@ inline thread_id_t get_id() {
 } // namespace tos
 
 namespace tos {
-extern kern::scheduler sched;
+inline kern::scheduler sched;
 
 namespace this_thread {
 inline void yield() {
