@@ -123,7 +123,9 @@ prep_lambda_layout(tos::span<uint8_t> task_data, FuncT&& func, ArgTs&&... args) 
 }
 
 template<class TaskT>
-inline thread_id_t __attribute__((optimize("-Os"))) scheduler::start(TaskT& t) {
+[[clang::minsize]]
+[[gnu::optimize("Os")]]
+inline thread_id_t scheduler::start(TaskT& t) {
     static_assert(std::is_base_of<tcb, TaskT>{}, "Tasks must inherit from tcb class!");
 
     // New threads are runnable by default.
