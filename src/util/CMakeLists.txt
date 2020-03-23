@@ -7,8 +7,6 @@ add_library(tos_util
 
     include/tos/fixed_fifo.hpp
     include/tos/sync_ring_buf.hpp
-    include/tos/io/serial_multiplexer.hpp
-    src/io/serial_multiplexer.cpp
 )
 
 add_library(tos_util_core
@@ -43,6 +41,12 @@ add_library(tos::util ALIAS tos_util)
 
 tos_install(tos_util ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_util_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_library(serial_mux
+        include/tos/io/serial_multiplexer.hpp
+        src/io/serial_multiplexer.cpp
+        )
+target_link_libraries(serial_mux PUBLIC tos_util_core tos::ft)
 
 if (BUILD_TESTS)
     add_executable(uuid_test src/uuid_test.cpp)
