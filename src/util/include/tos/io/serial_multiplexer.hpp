@@ -33,8 +33,8 @@ public:
     }
 
 private:
-    streamid_t m_streamid;
     MultiplexerT* m_multiplexer;
+    streamid_t m_streamid;
 };
 
 enum class serial_multiplexer_errors
@@ -43,7 +43,7 @@ enum class serial_multiplexer_errors
     bad_crc,
     bad_magic
 };
-
+ 
 template<size_t BufferSize>
 struct stream_buffer {
     tos::basic_fixed_fifo<uint8_t, BufferSize, ring_buf> data;

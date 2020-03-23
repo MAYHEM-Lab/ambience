@@ -57,7 +57,7 @@ struct mock_uart_writeonly {
 struct mock_uart_readonly {
     std::deque<uint8_t> data;
 
-    int write(tos::span<const uint8_t> span) {
+    int write(tos::span<const uint8_t>) {
         return 0;
     }
 
