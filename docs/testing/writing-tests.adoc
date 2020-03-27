@@ -23,7 +23,7 @@ Tests for the general stuff live in the `tests` folder in the root directory, so
 ----
 cd tests
 make -j4
-make test
+ctest
 ----
 
 This should give you something like this:
@@ -69,7 +69,7 @@ Then, edit the `CMakeLists.txt` file by adding the following lines to build your
 if (BUILD_TESTS)
     add_executable(<Test name>_test <Test name>_test.cpp)
     target_link_libraries(<Test name>_test PUBLIC tests_main [your stuff here])
-    add_test(<Test name>_test <Test name>_test)
+    add_test(NAME <Test name>_test COMMAND <Test name>_test)
 endif()
 ----
 
