@@ -78,6 +78,13 @@ struct super_tcb final : tcb {
         this_thread::exit(nullptr);
     }
 
+    ~super_tcb() final {
+        // no if constexpr in C++14
+        if /*constexpr*/ (FreeStack)
+            tos_stack_free(get_task_base());
+    }
+
+private:
     /**
      * This function computes the beginning of the memory block
      * of the task this tcb belongs to.
@@ -88,13 +95,6 @@ struct super_tcb final : tcb {
         return reinterpret_cast<char*>(this) - m_tcb_off;
     }
 
-    ~super_tcb() final {
-        // no if constexpr in C++14
-        if /*constexpr*/ (FreeStack)
-            tos_stack_free(get_task_base());
-    }
-
-private:
     uint16_t m_tcb_off; // we store the offset of this object from the task base
     FunT m_fun;
     std::tuple<Args...> m_args;
@@ -123,7 +123,9 @@ prep_lambda_layout(tos::span<uint8_t> task_data, FuncT&& func, ArgTs&&... args) 
 }
 
 template<class TaskT>
-inline thread_id_t __attribute__((optimize("-Os"))) scheduler::start(TaskT& t) {
+[[clang::minsize]]
+[[gnu::optimize("Os")]]
+inline thread_id_t scheduler::start(TaskT& t) {
     static_assert(std::is_base_of<tcb, TaskT>{}, "Tasks must inherit from tcb class!");
 
     // New threads are runnable by default.

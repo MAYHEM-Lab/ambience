@@ -10,6 +10,7 @@
 #include <tos/function_ref.hpp>
 #include <utility>
 #include <tos/interrupt.hpp>
+#include <tos/thread.hpp>
 
 namespace tos {
 /**
@@ -89,6 +90,20 @@ private:
 template <class ClockT>
 auto erase_clock(ClockT clock) -> detail::erased_clock<ClockT> {
     return detail::erased_clock<ClockT>{std::forward<ClockT>(clock)};
+}
+
+template <class ClockT>
+void delay(const ClockT& clock, std::chrono::microseconds dur, bool yield) {
+    delay_until(clock.now() + dur, yield);
+}
+
+template <class ClockT>
+void delay_until(const ClockT& clock, typename ClockT::time_point end, bool yield) {
+    while (clock.now() < end) {
+        if (yield) {
+            tos::this_thread::yield();
+        }
+    }
 }
 } // namespace tos
 
