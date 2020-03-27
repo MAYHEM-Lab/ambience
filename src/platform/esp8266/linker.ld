@@ -191,6 +191,12 @@ SECTIONS
     _irom0_text_end = ABSOLUTE(.);
   } >irom0_0_seg :irom0_0_phdr
 
+  .gnu_build_id :
+  {
+    PROVIDE(build_id = .);
+    *(.note.gnu.build-id)
+  } > irom0_0_seg
+
   .text : ALIGN(4)
   {
     _stext = .;
