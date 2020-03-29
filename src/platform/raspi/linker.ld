@@ -27,7 +27,13 @@ SECTIONS
     }
     . = ALIGN(4096); /* align to page size */
     __rodata_end = .;
- 
+
+    .gnu_build_id :
+    {
+    PROVIDE(build_id = .);
+    *(.note.gnu.build-id)
+    }
+
     __data_start = .;
     .data :
     {
