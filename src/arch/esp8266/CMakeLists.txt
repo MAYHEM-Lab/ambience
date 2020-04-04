@@ -23,4 +23,4 @@ target_link_libraries(esp_adapters PUBLIC "-Wl,--undefined=malloc -Wl,--undefine
 tos_install(esp_adapters)
 
 set_target_properties(esp8266_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)
-target_link_libraries(esp8266_impl PUBLIC "-Wl,--start-group -lmain -lnet80211 -lwpa -lpp -lphy -lssl -lcrypto -Wl,--end-group -lgcc")
+target_link_libraries(esp8266_impl PUBLIC "-Wl,--start-group -lc -lstdc++ -lmain -lnet80211 -lwpa -lpp -lphy -lssl -lcrypto -Wl,--end-group -lgcc")
