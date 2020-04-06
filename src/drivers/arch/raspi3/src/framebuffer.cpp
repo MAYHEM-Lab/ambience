@@ -50,6 +50,7 @@ raspi3::framebuffer::framebuffer(gfx::dimensions dims) {
         tos::debug::panic("error");
     }
 
+
     m_physical.width = buf[5];
     m_physical.height = buf[6];
     m_virtual.width = buf[10];
@@ -58,6 +59,14 @@ raspi3::framebuffer::framebuffer(gfx::dimensions dims) {
     m_rgb = buf[24];
     m_pitch = buf[33];
     m_buffer = span<uint8_t>(reinterpret_cast<uint8_t*>(buf[28] & 0x3FFFFFFF), buf[29]);
+
+    LOG_TRACE("Framebuffer initialization successful");
+    LOG_TRACE("Physical size:", m_physical.width, m_physical.height);
+    LOG_TRACE("Virtual size:", m_virtual.width, m_virtual.height);
+    LOG_TRACE(m_bit_depth, "bits per pixel");
+    LOG_TRACE("Color order:", m_rgb ? "RGB": "BGR");
+    LOG_TRACE(m_pitch, "bytes per row");
+    LOG_TRACE("Buffer:", m_buffer.data(), m_buffer.size(), "bytes");
 }
 
 void framebuffer::swap_buffers() {

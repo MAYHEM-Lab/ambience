@@ -4,6 +4,7 @@
 #include <tos/gfx/dimensions.hpp>
 #include <tos/span.hpp>
 #include <tos/self_pointing.hpp>
+#include <tos/debug/log.hpp>
 
 namespace tos::raspi3 {
 class framebuffer : public self_pointing<framebuffer> {

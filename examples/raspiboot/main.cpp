@@ -2,6 +2,7 @@
 #include <common/clock.hpp>
 #include <deque>
 #include <tos/debug/log.hpp>
+#include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/ft.hpp>
 #include <tos/gfx/text.hpp>
 #include <tos/memory/bump.hpp>
@@ -12,6 +13,14 @@ auto font = tos::gfx::basic_font().mirror_horizontal().resize<16, 16>();
 void clear(tos::span<uint8_t> buf) {
     std::memset(buf.data(), 0, buf.size());
 }
+
+tos::debug::detail::any_logger* log;
+
+namespace tos::debug {
+detail::any_logger& default_log() {
+    return *::log;
+}
+} // namespace tos::debug
 
 namespace tos {
 template<class FramebufferT>
@@ -65,7 +74,7 @@ private:
         if (m_screen_dirty || m_line_dirty) {
             clear(m_fb->get_buffer());
             // redraw everything
-            for (int i = 0; i < m_lines.size(); ++i) {
+            for (uint32_t i = 0; i < m_lines.size(); ++i) {
                 render_line(m_lines[i], i);
             }
             m_screen_dirty = false;
@@ -110,11 +119,11 @@ private:
 
     std::deque<std::string> m_lines;
 
-    int m_cur_col = 0;
-    int m_max_col = 80;
+    int32_t m_cur_col = 0;
+    int32_t m_max_col = 80;
 
-    int m_cur_row = 0;
-    int m_max_rows = 40;
+    int32_t m_cur_row = 0;
+    int32_t m_max_rows = 40;
 };
 } // namespace tos
 
@@ -230,6 +239,7 @@ private:
 };
 } // namespace tos::raspi3
 
+namespace debug = tos::debug;
 tos::stack_storage<TOS_DEFAULT_STACK_SIZE> stack;
 void tos_main() {
     tos::launch(stack, [] {
@@ -237,31 +247,27 @@ void tos_main() {
         tos::println(uart, "Hello from tos!");
         auto serial = tos::raspi3::get_board_serial();
         tos::println(uart, "Serial no:", serial);
+        tos::debug::serial_sink uart_sink(&uart);
+        tos::debug::detail::any_logger uart_log{&uart_sink};
+        ::log = &uart_log;
+        log->set_enabled(true);
+        log->set_log_level(tos::debug::log_level::debug);
+
+        debug::log("Log init complete");
 
         uint32_t el;
         asm volatile("mrs %0, CurrentEL" : "=r"(el));
-        tos::println(uart, "Execution Level:", int((el >> 2) & 3));
+        debug::log("Execution Level:", int((el >> 2) & 3));
 
         tos::raspi3::clock_manager clock_man;
-        tos::println(
-            uart, "CPU Freq:", clock_man.get_frequency(tos::raspi3::clocks::arm));
-        tos::println(
-            uart, "Max CPU Freq:", clock_man.get_max_frequency(tos::raspi3::clocks::arm));
+        debug::log("CPU Freq:", clock_man.get_frequency(tos::raspi3::clocks::arm));
+        debug::log("Max CPU Freq:",
+                   clock_man.get_max_frequency(tos::raspi3::clocks::arm));
         clock_man.set_frequency(tos::raspi3::clocks::arm,
                                 clock_man.get_max_frequency(tos::raspi3::clocks::arm));
-        tos::println(
-            uart, "CPU Freq:", clock_man.get_frequency(tos::raspi3::clocks::arm));
-
+        debug::log("CPU Freq:", clock_man.get_frequency(tos::raspi3::clocks::arm));
 
         tos::raspi3::framebuffer fb({1920, 1080});
-        tos::println(uart, fb.virtual_dims().width, fb.virtual_dims().height);
-        tos::println(uart, fb.dims().width, fb.dims().height);
-        tos::println(uart,
-                     fb.get_buffer().data(),
-                     fb.get_buffer().size_bytes(),
-                     fb.get_pitch(),
-                     fb.is_rgb(),
-                     fb.bit_depth());
 
         tos::raspi3::interrupt_controller ic;
         tos::raspi3::system_timer timer(ic);
@@ -270,7 +276,7 @@ void tos_main() {
         auto now = clock.now();
         clear(fb.get_buffer());
         auto diff = clock.now() - now;
-        tos::println(uart, "Cleared screen in", diff);
+        tos::debug::info("Cleared screen in", diff);
 
         // tos::alarm alarm(timer);
         tos::terminal term(&fb);
