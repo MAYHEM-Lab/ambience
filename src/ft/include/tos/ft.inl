@@ -69,7 +69,7 @@ struct super_tcb final : tcb {
 
     // This must not be inlined so that we don't mess up with the compiler's
     // stack allocation assumptions.
-    [[noreturn]] void NO_INLINE start() {
+    [[noreturn]] NO_INLINE void start() {
         // interrupts should be enabled before entering _user space_
         kern::enable_interrupts();
 

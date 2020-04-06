@@ -5,4 +5,4 @@
 #include <tos/compiler.hpp>
 #include <tos/device_id.hpp>
 
-tos::did::unique_id_t WEAK tos::did::unique_id = tos::did::undefined_id;
+WEAK tos::did::unique_id_t tos::did::unique_id = tos::did::undefined_id;

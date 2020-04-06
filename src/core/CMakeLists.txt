@@ -23,6 +23,23 @@ if (BUILD_TESTS)
     target_link_libraries(tos_memory_free_list_test PUBLIC tests_main tos_memory)
     add_test(tos_memory_free_list_test tos_memory_free_list_test)
 endif()
+add_library(tos_debug_log
+        src/log.cpp
+        include/tos/debug/log.hpp
+        include/tos/debug/detail/logger_base.hpp
+        include/tos/debug/detail/log_message.hpp
+        include/tos/debug/sinks/serial_sink.hpp
+        include/tos/debug/sinks/null_sink.hpp
+        include/tos/debug/sinks/sink.hpp)
+target_include_directories(tos_debug_log PUBLIC include)
+target_link_libraries(tos_debug_log PUBLIC tos_util_core tos_print)
+
+if (BUILD_TESTS)
+    add_executable(log_tests log_tests.cpp)
+    target_link_libraries(log_tests PUBLIC tests_main tos_core tos_debug_log)
+    add_test(NAME log_tests COMMAND log_tests)
+endif()
+
 set(TOS_CORE_HEADERS
         include/tos/devices.hpp
         include/tos/char_stream.hpp
@@ -34,12 +51,7 @@ set(TOS_CORE_HEADERS
         include/tos/delay.hpp
         include/tos/barrier.hpp
         include/tos/debug/stack_dump.hpp
-        include/tos/debug/panic.hpp
-        include/tos/debug/log.hpp
-        include/tos/debug/loggers/null_logger.hpp
-        include/tos/debug/loggers/in_memory_logger.hpp
-        include/tos/debug/detail/logger_base.hpp
-)
+        include/tos/debug/panic.hpp)
 
 add_library(tos_print include/tos/print.hpp src/print.cpp)
 target_link_libraries(tos_print PUBLIC tos_util tos::libcxx)
