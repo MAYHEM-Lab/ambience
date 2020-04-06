@@ -1,10 +1,10 @@
 #pragma once
 
+#include <csetjmp>
+#include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <new>
-#include <setjmp.h>
-#include <stdlib.h>
-#include <string.h>
 #include <tos/compiler.hpp>
 #include <tos/debug/panic.hpp>
 #include <tos/interrupt.hpp>
@@ -13,15 +13,13 @@
 #include <tos/stack_storage.hpp>
 #include <tos/tcb.hpp>
 
-namespace tos {
-namespace this_thread {
+namespace tos::this_thread {
 inline thread_id_t get_id() {
     if (!impl::cur_thread)
         return {static_cast<uintptr_t>(-1)};
     return {reinterpret_cast<uintptr_t>(impl::cur_thread)};
 }
-} // namespace this_thread
-} // namespace tos
+} // namespace tos::this_thread
 
 namespace tos {
 inline kern::scheduler sched;
@@ -123,9 +121,7 @@ prep_lambda_layout(tos::span<uint8_t> task_data, FuncT&& func, ArgTs&&... args) 
 }
 
 template<class TaskT>
-[[clang::minsize]]
-[[gnu::optimize("Os")]]
-inline thread_id_t scheduler::start(TaskT& t) {
+TOS_SIZE_OPTIMIZE inline thread_id_t scheduler::start(TaskT& t) {
     static_assert(std::is_base_of<tcb, TaskT>{}, "Tasks must inherit from tcb class!");
 
     // New threads are runnable by default.
@@ -243,8 +239,7 @@ auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
 
 template<class FuncT, class... ArgTs, size_t StSz>
 auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
-    return launch<false>(
-        stack, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
+    return launch<false>(stack, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
 }
 
 inline void this_thread::exit(void*) {
