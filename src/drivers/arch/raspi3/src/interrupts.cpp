@@ -1,5 +1,5 @@
-#include <arch/interrupts.hpp>
 #include <arch/detail/bcm2837.hpp>
+#include <arch/interrupts.hpp>
 
 extern "C" {
 [[gnu::used]] void
@@ -12,12 +12,15 @@ exc_handler(uint64_t type, uint64_t esr, uint64_t elr, uint64_t spsr, uint64_t f
 }
 
 namespace tos::raspi3 {
-void interrupt_controller::irq(uint64_t esr, uint64_t elr, uint64_t spsr, uint64_t far) {
-    for (int i = 0; i < 32; ++i) {
+void interrupt_controller::irq([[maybe_unused]] uint64_t esr,
+                               [[maybe_unused]] uint64_t elr,
+                               [[maybe_unused]] uint64_t spsr,
+                               [[maybe_unused]] uint64_t far) {
+    for (uint_fast32_t i = 0; i < 32; ++i) {
         if (bcm2837::INTERRUPT_CONTROLLER->irq_pending_1 == 0) {
             break;
         }
-        if ((bcm2837::INTERRUPT_CONTROLLER->irq_pending_1 & (1 << i)) == (1 << i)) {
+        if ((bcm2837::INTERRUPT_CONTROLLER->irq_pending_1 & (1UL << i)) == (1UL << i)) {
             bool handled = false;
             for (auto& handler : m_irq_lists.find(i)->second) {
                 if (handler.function()) {
