@@ -20,4 +20,10 @@
 
 #define TOS_UNREACHABLE() __builtin_unreachable()
 
-#define TOS_NO_OPTIMIZE [[gnu::optimize("-O0")]] [[clang::optnone]]
+#if defined(__GNUC__) && !defined(__clang__)
+#define TOS_NO_OPTIMIZE [[gnu::optimize("-O0")]]
+#define TOS_SIZE_OPTIMIZE [[gnu::optimize("Os")]]
+#elif defined(__clang__)
+#define TOS_NO_OPTIMIZE [[clang::optnone]]
+#define TOS_SIZE_OPTIMIZE [[clang::minsize]]
+#endif
