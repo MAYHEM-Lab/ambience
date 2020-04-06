@@ -4,23 +4,14 @@
 
 #pragma once
 
+#include "log_level.hpp"
 #include "log_message.hpp"
 
+#include <tos/compiler.hpp>
 #include <tos/debug/sinks/sink.hpp>
 #include <utility>
 
-namespace tos::debug {
-enum class log_level : uint8_t
-{
-    error,
-    warning,
-    debug,
-    log,
-    info,
-    all = info
-};
-
-namespace detail {
+namespace tos::debug::detail {
 struct dynamic_enable {
 protected:
     explicit dynamic_enable(bool enabled = true)
@@ -56,15 +47,57 @@ public:
     }
 
     template<class... Ts>
-    bool info(const Ts&... args) {
-        log(m_sink, args...);
+    ALWAYS_INLINE bool info(const Ts&... args) {
+        if (!would_log(log_level::info)) {
+            return false;
+        }
+        log_to_sink(m_sink, log_level::info, args...);
         return true;
     }
 
     template<class... Ts>
-    bool warn(const Ts&... args) {
-        log(m_sink, args...);
+    ALWAYS_INLINE bool warn(const Ts&... args) {
+        if (!would_log(log_level::warning)) {
+            return false;
+        }
+        log_to_sink(m_sink, log_level::warning, args...);
         return true;
+    }
+
+    template<class... Ts>
+    ALWAYS_INLINE bool trace(const Ts&... args) {
+        if (!would_log(log_level::trace)) {
+            return false;
+        }
+        log_to_sink(m_sink, log_level::trace, args...);
+        return true;
+    }
+
+    template<class... Ts>
+    ALWAYS_INLINE bool log(const Ts&... args) {
+        if (!would_log(log_level::log)) {
+            return false;
+        }
+        log_to_sink(m_sink, log_level::log, args...);
+        return true;
+    }
+
+    template<class... Ts>
+    ALWAYS_INLINE bool fatal(const Ts&... args) {
+        if (!would_log(log_level::fatal)) {
+            return false;
+        }
+        log_to_sink(m_sink, log_level::fatal, args...);
+        return true;
+    }
+
+    [[nodiscard]] ALWAYS_INLINE bool would_log(log_level level) const {
+        return m_level >= level;
+    }
+
+    ALWAYS_INLINE
+    void set_log_level(log_level level) {
+        m_level = level;
     }
 
 private:
@@ -76,5 +109,4 @@ class any_logger : public logger_base<any_sink*, dynamic_enable> {
 public:
     using logger_base::logger_base;
 };
-} // namespace detail
-} // namespace tos::debug
+} // namespace tos::debug::detail
