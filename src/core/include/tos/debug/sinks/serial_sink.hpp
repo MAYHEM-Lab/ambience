@@ -15,8 +15,8 @@ public:
         : m_serial(std::move(ser)) {
     }
 
-    bool begin() override {
-        tos::print(m_serial, "[serial_sink] ");
+    bool begin(log_level level) override {
+        tos::print(m_serial, "[serial_sink] [", level, "] ", tos::no_separator());
         return true;
     }
 
@@ -26,6 +26,19 @@ public:
 
     void add(std::string_view str) override {
         tos::print(m_serial, str, "");
+    }
+
+    void add(bool b) override {
+        tos::print(m_serial, b, "");
+    }
+
+    void add(void* ptr) override {
+        tos::print(m_serial, ptr, "");
+    }
+
+    void add(log_level level) override {
+        tos::print(m_serial, "[", level, "]", tos::no_separator());
+        tos::print(m_serial, " ");
     }
 
     void end() override {
