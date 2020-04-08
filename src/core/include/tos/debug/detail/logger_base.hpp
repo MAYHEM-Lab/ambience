@@ -83,6 +83,15 @@ public:
     }
 
     template<class... Ts>
+    ALWAYS_INLINE bool error(const Ts&... args) {
+        if (!would_log(log_level::error)) {
+            return false;
+        }
+        log_to_sink(m_sink, log_level::error, args...);
+        return true;
+    }
+
+    template<class... Ts>
     ALWAYS_INLINE bool fatal(const Ts&... args) {
         if (!would_log(log_level::fatal)) {
             return false;

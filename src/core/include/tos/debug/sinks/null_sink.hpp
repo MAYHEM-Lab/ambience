@@ -18,6 +18,8 @@ public:
     }
     void add(log_level) override {
     }
+    void add(span<const uint8_t>) override {
+    }
     void end() override {
     }
 };

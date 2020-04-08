@@ -37,6 +37,22 @@ bool trace(const Ts&... args) {
 
 template <class... Ts>
 ALWAYS_INLINE
+bool warn(const Ts&... args) {
+#if !defined(TOS_NO_LOG)
+    return default_log().warn(args...);
+#endif
+}
+
+template <class... Ts>
+ALWAYS_INLINE
+bool error(const Ts&... args) {
+#if !defined(TOS_NO_LOG)
+    return default_log().error(args...);
+#endif
+}
+
+template <class... Ts>
+ALWAYS_INLINE
 bool fatal(const Ts&... args) {
 #if !defined(TOS_NO_LOG)
     return default_log().fatal(args...);
@@ -44,4 +60,11 @@ bool fatal(const Ts&... args) {
 }
 } // namespace tos::debug
 
-#define LOG_TRACE(...) (::tos::debug::default_log().would_log(::tos::debug::log_level::trace) && ::tos::debug::trace(__VA_ARGS__))
+#define S(x) #x
+#define S_(x) S(x)
+#define S__LINE__ S_(__LINE__)
+
+#define LOG(...) (::tos::debug::default_log().would_log(::tos::debug::log_level::log) && ::tos::debug::log("[" __FILE__ ":" S__LINE__ "]", __VA_ARGS__))
+#define LOG_TRACE(...) (::tos::debug::default_log().would_log(::tos::debug::log_level::trace) && ::tos::debug::trace("[" __FILE__ ":" S__LINE__ "]", __VA_ARGS__))
+#define LOG_WARN(...) (::tos::debug::default_log().would_log(::tos::debug::log_level::warning) && ::tos::debug::warn("[" __FILE__ ":" S__LINE__ "]", __VA_ARGS__))
+#define LOG_ERROR(...) (::tos::debug::default_log().would_log(::tos::debug::log_level::error) && ::tos::debug::error("[" __FILE__ ":" S__LINE__ "]", __VA_ARGS__))

@@ -10,6 +10,7 @@ struct any_sink {
     virtual bool begin(log_level) = 0;
     virtual void add(int64_t i) = 0;
     virtual void add(std::string_view str) = 0;
+    virtual void add(span<const uint8_t> buf) = 0;
     virtual void add(bool b) = 0;
     virtual void add(void* ptr) = 0;
     virtual void add(log_level) = 0;

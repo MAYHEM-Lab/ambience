@@ -16,6 +16,7 @@ public:
     }
 
     bool begin(log_level level) override {
+        m_prot.lock();
         tos::print(m_serial, "[serial_sink] [", level, "] ", tos::no_separator());
         return true;
     }
@@ -41,11 +42,17 @@ public:
         tos::print(m_serial, " ");
     }
 
+    void add(span<const uint8_t> buf) override {
+        tos::print(m_serial, buf, "");
+    }
+
     void end() override {
         tos::println(m_serial);
+        m_prot.unlock();
     }
 
 public:
+    tos::mutex m_prot;
     SerialT m_serial;
 };
 } // namespace tos::debug
