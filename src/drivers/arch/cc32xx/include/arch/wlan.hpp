@@ -22,7 +22,7 @@ struct iwifi_event_handler {
 
 class simplelink_wifi {
 public:
-    explicit simplelink_wifi(tos::any_usart& log);
+    simplelink_wifi();
     ~simplelink_wifi();
 
     void set_event_handler(iwifi_event_handler& handler) {
@@ -31,7 +31,7 @@ public:
 
 private:
     iwifi_event_handler* m_ev_handler;
-    void thread(tos::any_usart& log);
+    void thread();
 };
 
 tos::mac_addr_t get_mac_address();

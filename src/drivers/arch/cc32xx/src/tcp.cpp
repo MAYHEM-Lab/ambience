@@ -3,10 +3,10 @@
 //
 
 #include <arch/tcp.hpp>
+#include <arch/wlan.hpp>
 #include <common/usart.hpp>
 #include <ti/drivers/net/wifi/simplelink.h>
 
-extern tos::any_usart* log;
 namespace tos::cc32xx {
 tcp_listener::tcp_listener(port_num_t port)
     : socket_base(sl_Socket(SL_AF_INET, SL_SOCK_STREAM, SL_IPPROTO_TCP)) {
@@ -33,14 +33,14 @@ expected<std::unique_ptr<tcp_socket>, network_errors> tcp_listener::accept() {
     auto accept_res = sl_Accept(native_handle(), (SlSockAddr_t*)&Addr, &addr_len);
     if (accept_res < 0) {
         // wtf
-        tos::println(log, "bad accept");
+        tos::debug::warn("bad accept");
         return unexpected(network_errors(accept_res));
     }
     auto sock = std::make_unique<tcp_socket>(accept_res);
     if (!sock) {
         return unexpected(network_errors(SL_ERROR_UTILS_MEM_ALLOC));
     }
-    tos::println(log, "Got socket:", int(accept_res));
+    tos::debug::info("Got socket:", int(accept_res));
     return sock;
 }
 
@@ -54,26 +54,29 @@ void tcp_socket::signal_select_rx() {
         // Read in 16 byte chunks.
         // TODO(fatih): use the receive buffer directly for better performance.
         std::array<uint8_t, 16> buf;
-        auto res = sl_Recv(native_handle(), buf.data(), buf.size(), 0);
+        LOG_TRACE("reading", std::min<int>(buf.size(), space), "bytes");
+        auto res = sl_Recv(native_handle(), buf.data(), std::min(buf.size(), space), 0);
         if (res < 0) {
             return;
         }
         if (res == 0) {
-            tos::println(log, "received 0 bytes, end of stream!");
+            tos::debug::trace("received 0 bytes, end of stream!");
             close();
             m_closed = true;
             m_len.up();
             return;
         }
+        //tos::debug::trace("receiving", res, "bytes");
         for (auto byte : span(buf).slice(0, res)) {
             if (m_recv_buffer.size() == m_recv_buffer.capacity()) {
                 // Out of buffer space
-                tos::println(log, "overrun");
+                tos::debug::warn("overrun");
                 return;
             }
             m_recv_buffer.push(byte);
             m_len.up();
         }
+        tos::this_thread::yield();
     }
 }
 

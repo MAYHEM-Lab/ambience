@@ -7,12 +7,15 @@
 #include <common/inet/tcp_ip.hpp>
 #include <nonstd/variant.hpp>
 #include <ti/drivers/net/wifi/wlan.h>
+#include <string_view>
 
 namespace tos::cc32xx {
 struct wifi_connected {
     SlWlanEventConnect_t ev;
-    span<const char> ssid() const {
-        return span<const char>{reinterpret_cast<const char*>(&ev.SsidName[0]),
+
+    [[nodiscard]]
+    std::string_view ssid() const {
+        return std::string_view{reinterpret_cast<const char*>(&ev.SsidName[0]),
                                 size_t(ev.SsidLen)};
     }
 };

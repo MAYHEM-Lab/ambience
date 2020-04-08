@@ -54,10 +54,10 @@ auto socket_runtime::make_select_set() const -> select_sets {
 
 void socket_runtime::run() {
     while (m_udp_sockets.empty() && m_tcp_listeners.empty() && m_tcp_sockets.empty()) {
-        tos::println(log, "no sockets, waiting...");
+        LOG_TRACE("no sockets, waiting...");
         m_count_sem.down();
         if (!m_request_interruption) {
-            tos::println(log, "[ERROR]", "wasn't woken up due to interruption");
+            LOG_WARN("wasn't woken up due to interruption");
         }
     }
 
@@ -65,17 +65,17 @@ void socket_runtime::run() {
 
     auto sets = make_select_set();
 
-    tos::println(log, "calling select", sets.max_fd + 1);
+    LOG_TRACE("calling select", sets.max_fd + 1);
     auto status =
         sl_Select(sets.max_fd + 1, &sets.receive, &sets.write, nullptr, &timeVal);
     while (status >= 0) {
         handle_select(sets.receive, sets.write);
         status =
             sl_Select(sets.max_fd + 1, &sets.receive, &sets.write, nullptr, &timeVal);
-        tos::println(log, "select returned", int(status));
+        LOG_TRACE("select returned", int(status));
     }
 
-    tos::println(log, "select returned", int(status));
+    LOG_TRACE("select returned", int(status));
     m_select_sem.down();
 
     /*if (m_request_interruption) {
@@ -85,7 +85,7 @@ void socket_runtime::run() {
     }*/
 
     status = sl_Select(sets.max_fd + 1, &sets.receive, &sets.write, nullptr, &timeVal);
-    tos::println(log, "after-select returned", int(status));
+    LOG_TRACE("after-select returned", int(status));
     if (status > 0) {
         handle_select(sets.receive, sets.write);
     }
@@ -94,25 +94,25 @@ void socket_runtime::run() {
 void socket_runtime::handle_select(const SlFdSet_t& rx, const SlFdSet_t& write) {
     for (auto& sock : m_udp_sockets) {
         if (SL_SOCKET_FD_ISSET(sock.native_handle(), const_cast<SlFdSet_t*>(&rx))) {
-            tos::println(log, "signalling udp receive on", int(sock.native_handle()));
+            LOG_TRACE("signalling udp receive on", int(sock.native_handle()));
             sock.signal_select();
         }
     }
 
     for (auto& sock : m_tcp_sockets) {
         if (SL_SOCKET_FD_ISSET(sock.native_handle(), const_cast<SlFdSet_t*>(&rx))) {
-            tos::println(log, "signalling tcp receive on", int(sock.native_handle()));
+            LOG_TRACE("signalling tcp receive on", int(sock.native_handle()));
             sock.signal_select_rx();
         }
         if (SL_SOCKET_FD_ISSET(sock.native_handle(), const_cast<SlFdSet_t*>(&write))) {
-            tos::println(log, "signalling tcp transmit on", int(sock.native_handle()));
+            LOG_TRACE("signalling tcp transmit on", int(sock.native_handle()));
             sock.signal_select_tx();
         }
     }
 
     for (auto& sock : m_tcp_listeners) {
         if (SL_SOCKET_FD_ISSET(sock.native_handle(), const_cast<SlFdSet_t*>(&rx))) {
-            tos::println(log, "signalling tcp accept on", int(sock.native_handle()));
+            LOG_TRACE("signalling tcp accept on", int(sock.native_handle()));
             sock.signal_select();
         }
     }

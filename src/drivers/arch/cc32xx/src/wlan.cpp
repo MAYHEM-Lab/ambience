@@ -10,6 +10,7 @@
 #include <common/usart.hpp>
 #include <ti/drivers/SPI.h>
 #include <ti/drivers/net/wifi/simplelink.h>
+#include <tos/debug/log.hpp>
 #include <tos/expected.hpp>
 #include <tos/semaphore.hpp>
 
@@ -31,10 +32,10 @@ tos::expected<void, network_errors> set_mac_address(tos::mac_addr_t address) {
     return tos::unexpected(network_errors(res));
 }
 
-simplelink_wifi::simplelink_wifi(tos::any_usart& log) {
-    launch(stack_size_t{4096}, [this, &log] {
+simplelink_wifi::simplelink_wifi() {
+    launch(stack_size_t{4096}, [this] {
         SPI_init();
-        thread(log);
+        thread();
     });
 }
 
@@ -42,16 +43,17 @@ simplelink_wifi::~simplelink_wifi() {
 }
 
 static tos::stack_storage<4096> srt_stack;
-void simplelink_wifi::thread(tos::any_usart& log) {
+void simplelink_wifi::thread() {
     using namespace tos::cc32xx;
+    LOG_TRACE("Calling sl_Start");
     auto start_res = sl_Start(nullptr, nullptr, nullptr);
-    tos::println(log, start_res);
+    LOG_TRACE(start_res);
     auto set_mode = sl_WlanSetMode(ROLE_STA);
-    tos::println(log, set_mode);
+    LOG_TRACE(set_mode);
     auto stop = sl_Stop(0);
-    tos::println(log, stop);
+    LOG_TRACE(stop);
     start_res = sl_Start(nullptr, nullptr, nullptr);
-    tos::println(log, start_res);
+    LOG_TRACE(start_res);
 
     SlDeviceVersion_t firmwareVersion{};
 
@@ -60,45 +62,44 @@ void simplelink_wifi::thread(tos::any_usart& log) {
     auto retVal = sl_DeviceGet(
         SL_DEVICE_GENERAL, &ucConfigOpt, &ucConfigLen, (uint8_t*)(&firmwareVersion));
 
-    tos::println(log, "Host Driver Version:", SL_DRIVER_VERSION);
-    tos::println(log,
-                 "Build Version",
-                 int(firmwareVersion.NwpVersion[0]),
-                 int(firmwareVersion.NwpVersion[1]),
-                 int(firmwareVersion.NwpVersion[2]),
-                 int(firmwareVersion.NwpVersion[3]),
-                 int(firmwareVersion.FwVersion[0]),
-                 int(firmwareVersion.FwVersion[1]),
-                 int(firmwareVersion.FwVersion[2]),
-                 int(firmwareVersion.FwVersion[3]),
-                 int(firmwareVersion.PhyVersion[0]),
-                 int(firmwareVersion.PhyVersion[1]),
-                 int(firmwareVersion.PhyVersion[2]),
-                 int(firmwareVersion.PhyVersion[3]),
-                 tos::separator('.'));
+    LOG_TRACE("Host driver version:", SL_DRIVER_VERSION);
+
+    LOG_TRACE("Build Version",
+                      int(firmwareVersion.NwpVersion[0]),
+                      int(firmwareVersion.NwpVersion[1]),
+                      int(firmwareVersion.NwpVersion[2]),
+                      int(firmwareVersion.NwpVersion[3]),
+                      int(firmwareVersion.FwVersion[0]),
+                      int(firmwareVersion.FwVersion[1]),
+                      int(firmwareVersion.FwVersion[2]),
+                      int(firmwareVersion.FwVersion[3]),
+                      int(firmwareVersion.PhyVersion[0]),
+                      int(firmwareVersion.PhyVersion[1]),
+                      int(firmwareVersion.PhyVersion[2]),
+                      int(firmwareVersion.PhyVersion[3]));
 
     auto set_res = set_mac_address({0xDA, 0x53, 0x83, 0x81, 0x41, 0x6B});
     if (!set_res) {
-        tos::println(log, "Can't set mac address!");
+        LOG_ERROR("Can't set mac address!");
     }
 
     auto mac = get_mac_address();
-    tos::println(log, "Mac Address:", mac);
+    // tos::debug::info("Mac Address:", mac);
 
-    const char* password = "serdar1988";
+    const char* password = "@bakir123";
     SlWlanSecParams_t SecParams;
     SecParams.Type = SL_WLAN_SEC_TYPE_WPA_WPA2;
     SecParams.Key = reinterpret_cast<int8_t*>(const_cast<char*>(password));
     SecParams.KeyLen = strlen(password);
 
-    const char* name = "Nakedsense.2";
+    const char* name = "bkr";
     auto res = sl_WlanConnect(reinterpret_cast<const int8_t*>(name),
                               std::strlen(name),
                               nullptr,
                               &SecParams,
                               nullptr);
 
-    tos::println(log, "connect:", int(res));
+    LOG("Connect:", int(res));
 
     using namespace tos::cc32xx;
 
@@ -115,16 +116,16 @@ void simplelink_wifi::thread(tos::any_usart& log) {
             auto ev = evq.pop();
             mpark::visit(tos::make_overload(
                              [&](const wifi_connected& ev) {
-                                 tos::println(log, "Connected:", ev.ssid());
+                                 LOG("Connected:", ev.ssid());
                                  m_ev_handler->handle(ev);
                              },
                              [&](const ip_acquired& ev) {
-                                 tos::println(log, "Acquired IP:", ev.address);
-                                 tos::println(log, "Gateway IP:", ev.gateway);
+                                 // tos::debug::log("Acquired IP:", ev.address);
+                                 // tos::debug::log("Gateway IP:", ev.gateway);
                                  m_ev_handler->handle(ev);
                              },
                              [&](const auto& ev) {
-                                 tos::println(log, "Unhandled event");
+                                 LOG_WARN("Unhandled event");
                                  m_ev_handler->handle(ev);
                              }),
                          ev);

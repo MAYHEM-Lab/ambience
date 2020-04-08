@@ -11,7 +11,6 @@
 #include <tos/mutex.hpp>
 #include <tos/semaphore.hpp>
 
-extern tos::any_usart* log;
 struct SlFdSet_t;
 
 namespace tos::cc32xx {

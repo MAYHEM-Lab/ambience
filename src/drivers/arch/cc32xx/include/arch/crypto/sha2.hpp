@@ -80,7 +80,7 @@ private:
     }
 
     void proc_one_internal(tos::span<const uint8_t> buffer, bool more) const {
-        DEBUG("Hashing", buffer);
+        LOG_TRACE("Hashing", buffer);
 
         if (buffer.empty()) return;
         m_params.moreData = more;
@@ -102,7 +102,7 @@ class hmac_sha2_signer {
 public:
     hmac_sha2_signer(const crypto& c, tos::span<const uint8_t> secret) {
         m_handle = hmac_crypto::instance(c).native_handle();
-        WARN_IF(secret.size() > 64)("HMAC SHA2 Secret too long!");
+        //WARN_IF(secret.size() > 64)("HMAC SHA2 Secret too long!");
         std::copy_n(
             secret.begin(),
             std::min(secret.size(), m_key.size()),
@@ -146,7 +146,7 @@ private:
     }
 
     void proc_one_internal(tos::span<const uint8_t> buffer, bool more) const {
-        DEBUG("Signing", buffer);
+        LOG_TRACE("Signing", buffer);
         m_params.moreData = more;
         auto res = CryptoCC32XX_sign(m_handle,
                           CryptoCC32XX_HMAC_SHA256,
@@ -154,7 +154,7 @@ private:
                           buffer.size(),
                           m_digest.data(),
                           &m_params);
-        ERROR_IF(res != CryptoCC32XX_STATUS_SUCCESS)("Sign did not return succcess");
+        //ERROR_IF(res != CryptoCC32XX_STATUS_SUCCESS)("Sign did not return succcess");
     }
 
     mutable std::array<uint8_t, 32> m_digest;
