@@ -88,8 +88,11 @@ void tcp_socket::signal_select_rx() {
 expected<span<uint8_t>, network_errors> tcp_socket::read(span<uint8_t> buffer) {
     auto tmp_buffer = buffer;
     while (!tmp_buffer.empty()) {
+        if (m_closed && get_count(m_len) == 0) {
+            return buffer.slice(0, buffer.size() - tmp_buffer.size());
+        }
         m_len.down();
-        if (m_closed) {
+        if (m_closed && get_count(m_len) == 0) {
             return buffer.slice(0, buffer.size() - tmp_buffer.size());
         }
         tmp_buffer.front() = m_recv_buffer.pop();
