@@ -6,9 +6,9 @@
 
 #include "detail/socket_base.hpp"
 
+#include <tos/fixed_fifo.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/semaphore.hpp>
-#include <tos/fixed_fifo.hpp>
 #include <tos/sync_ring_buf.hpp>
 
 namespace tos::cc32xx {
@@ -21,11 +21,13 @@ public:
     void signal_select_tx() {
     }
 
-    expected<span<uint8_t>, network_errors>
-    read(span<uint8_t> buffer);
+    expected<span<uint8_t>, network_errors> read(span<uint8_t> buffer);
 
-    expected<size_t, network_errors>
-    write(span<const uint8_t> buffer);
+    expected<size_t, network_errors> write(span<const uint8_t> buffer);
+
+    bool disconnected() const {
+        return m_closed;
+    }
 
 private:
     bool m_closed = false;
@@ -48,4 +50,13 @@ public:
 private:
     semaphore m_accept_sem{0};
 };
-}
+
+enum class connect_errors
+{
+    socket_error,
+    connect_error
+};
+
+expected<std::unique_ptr<tcp_socket>, connect_errors>
+connect(class simplelink_wifi& wifi, ipv4_addr_t addr, port_num_t port);
+} // namespace tos::cc32xx

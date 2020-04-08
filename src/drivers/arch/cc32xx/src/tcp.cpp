@@ -106,4 +106,26 @@ expected<size_t, network_errors> tcp_socket::write(span<const uint8_t> buffer) {
     }
     return buffer.size();
 }
+
+expected<std::unique_ptr<tcp_socket>, connect_errors>
+connect(simplelink_wifi&, ipv4_addr_t address, port_num_t port) {
+    auto socket = sl_Socket(SL_AF_INET, SL_SOCK_STREAM, 0);
+    if (socket < 0) {
+        LOG_WARN("Socket failed:", socket);
+        return unexpected(connect_errors::socket_error);
+    }
+    LOG_TRACE("Got socket:", socket);
+
+    SlSockAddrIn_t addr{};
+    addr.sin_family = SL_AF_INET;
+    addr.sin_port = sl_Htons(port.port);
+    addr.sin_addr.s_addr = sl_Htonl(
+        SL_IPV4_VAL(address.addr[0], address.addr[1], address.addr[2], address.addr[3]));
+    auto res = sl_Connect(socket, reinterpret_cast<SlSockAddr_t*>(&addr), sizeof addr);
+    if (res < 0) {
+        LOG_WARN("Connect failed:", res);
+        return unexpected(connect_errors::connect_error);
+    }
+    return std::make_unique<tcp_socket>(socket);
+}
 } // namespace tos::cc32xx
