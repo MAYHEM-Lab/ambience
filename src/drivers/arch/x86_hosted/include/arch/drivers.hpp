@@ -7,5 +7,6 @@
 #include "stdio.hpp"
 #include "tcp.hpp"
 #include "timer.hpp"
+#include "udp.hpp"
 #include "unix_socket.hpp"
 #include "usart.hpp"

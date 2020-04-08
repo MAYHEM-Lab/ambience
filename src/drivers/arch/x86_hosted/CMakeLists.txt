@@ -10,6 +10,10 @@ add_library(x86_tcp include/arch/tcp.hpp src/tcp.cpp)
 target_link_libraries(x86_tcp PUBLIC tos::core x86_hosted_impl)
 tos_install(x86_tcp ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(x86_udp include/arch/udp.hpp src/udp.cpp)
+target_link_libraries(x86_udp PUBLIC tos::core x86_hosted_impl)
+tos_install(x86_udp ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 add_library(x86_unix_sockets include/arch/unix_socket.hpp src/unix_socket.cpp)
 target_link_libraries(x86_unix_sockets PUBLIC tos::core x86_hosted_impl)
 tos_install(x86_unix_sockets ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -24,7 +28,8 @@ target_link_libraries(x86_drivers PUBLIC
         x86_timer
         x86_unix_sockets
         x86_usart
-        x86_tcp)
+        x86_tcp
+        x86_udp)
 tos_install(x86_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(arch_drivers ALIAS x86_drivers)
