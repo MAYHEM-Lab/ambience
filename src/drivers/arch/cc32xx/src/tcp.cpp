@@ -53,6 +53,11 @@ void tcp_socket::signal_select_rx() {
     while (true) {
         // Read in 16 byte chunks.
         // TODO(fatih): use the receive buffer directly for better performance.
+        auto space = m_recv_buffer.capacity() - m_recv_buffer.size();
+        if (space == 0) {
+            tos::this_thread::yield();
+            return;
+        }
         std::array<uint8_t, 16> buf;
         LOG_TRACE("reading", std::min<int>(buf.size(), space), "bytes");
         auto res = sl_Recv(native_handle(), buf.data(), std::min(buf.size(), space), 0);
