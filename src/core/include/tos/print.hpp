@@ -139,7 +139,11 @@ void print(CharOstreamT& ostr, bool b) {
 template <class StrT>
 void print(StrT& ostr, span<const uint8_t> buf) {
     for (auto byte : buf) {
-        print(ostr, itoa(byte, 16));
+        auto itoa_res = itoa(byte, 16);
+        if (itoa_res.size() != 2) {
+            print(ostr, '0');
+        }
+        print(ostr, itoa_res);
     }
 }
 
