@@ -1,2 +1,0 @@
-add_executable(sntp_demo sntp_demo.cpp)
-target_link_libraries(sntp_demo PUBLIC tos_core arch_drivers tos_sntp tos_print tos_debug_log)
