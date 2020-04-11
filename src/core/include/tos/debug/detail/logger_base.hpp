@@ -41,9 +41,9 @@ struct static_enable {
 template<class SinkT, class Enabler = dynamic_enable>
 class logger_base : public Enabler {
 public:
-    explicit logger_base(SinkT sink)
+    explicit logger_base(SinkT sink, log_level level = log_level::all)
         : m_sink(std::move(sink))
-        , m_level{log_level::all} {
+        , m_level{level} {
     }
 
     template<class... Ts>
@@ -118,4 +118,6 @@ class any_logger : public logger_base<any_sink*, dynamic_enable> {
 public:
     using logger_base::logger_base;
 };
+
+detail::any_logger& null_log_instance();
 } // namespace tos::debug::detail

@@ -6,6 +6,7 @@
 namespace tos::debug {
 enum class log_level : uint8_t
 {
+    none,
     fatal,
     error,
     warning,

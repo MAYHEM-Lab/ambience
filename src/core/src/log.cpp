@@ -7,10 +7,16 @@
 #include <tos/compiler.hpp>
 
 namespace tos::debug {
+namespace detail {
+detail::any_logger& null_log_instance() {
+    static null_sink null_sink;
+    static detail::any_logger null(&null_sink, log_level::none);
+    return null;
+}
+}
+
 WEAK
 detail::any_logger& default_log() {
-    static null_sink null_sink;
-    static detail::any_logger null(&null_sink);
-    return null;
+    return detail::null_log_instance();
 }
 }
