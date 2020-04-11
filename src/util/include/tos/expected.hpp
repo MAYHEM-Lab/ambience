@@ -91,7 +91,8 @@ public:
         : m_internal{tl::make_unexpected(std::move(u.m_err))} {
     }
 
-    constexpr explicit PURE operator bool() const {
+    PURE
+    constexpr explicit operator bool() const {
         return bool(m_internal);
     }
 
@@ -99,7 +100,8 @@ public:
         return !bool(m_internal);
     }
 
-    constexpr PURE bool has_value() const {
+    PURE
+    constexpr bool has_value() const {
         return m_internal.has_value();
     }
 
@@ -138,7 +140,8 @@ private:
 };
 
 template<class ExpectedT, class HandlerT, class ErrHandlerT>
-auto ALWAYS_INLINE with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT&& err_handler)
+ALWAYS_INLINE
+auto with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT&& err_handler)
     -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal))) {
     if (e) {
         return have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal));
@@ -148,7 +151,8 @@ auto ALWAYS_INLINE with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT&& er
 }
 
 template<class ExpectedT>
-decltype(auto) ALWAYS_INLINE force_error(ExpectedT&& e) {
+ALWAYS_INLINE
+decltype(auto)  force_error(ExpectedT&& e) {
     if (!e) {
         return e.m_internal.error();
     }
@@ -157,7 +161,8 @@ decltype(auto) ALWAYS_INLINE force_error(ExpectedT&& e) {
 }
 
 template<class ExpectedT>
-decltype(auto) ALWAYS_INLINE force_get(ExpectedT&& e) {
+ALWAYS_INLINE
+decltype(auto)  force_get(ExpectedT&& e) {
     if (e) {
         return std::forward<decltype(*e.m_internal)>(*e.m_internal);
     }
