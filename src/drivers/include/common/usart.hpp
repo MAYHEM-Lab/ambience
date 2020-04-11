@@ -200,7 +200,7 @@ public:
         if (m_buf_cur == 0) {
             return;
         }
-        m_impl->write(tos::span(m_buffer).slice(0, m_buf_cur));
+        m_impl->write(tos::span<const uint8_t>(m_buffer).slice(0, m_buf_cur));
         m_buf_cur = 0;
     }
 
