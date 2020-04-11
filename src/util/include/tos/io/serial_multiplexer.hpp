@@ -32,6 +32,10 @@ public:
         return m_multiplexer->read(this->m_streamid, span);
     }
 
+    [[nodiscard]] streamid_t get_stream_id() const {
+        return m_streamid;
+    }
+
 private:
     MultiplexerT* m_multiplexer;
     streamid_t m_streamid;
