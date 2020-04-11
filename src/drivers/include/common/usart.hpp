@@ -4,12 +4,12 @@
 
 #pragma once
 
+#include <algorithm>
 #include <common/driver_base.hpp>
 #include <cstdint>
 #include <tos/ct_map.hpp>
 #include <tos/devices.hpp>
 #include <tos/span.hpp>
-#include <algorithm>
 
 namespace tos {
 enum class usart_parity : uint8_t
@@ -42,7 +42,7 @@ struct rx_tx_pins {
 };
 
 template<class PinT>
-rx_tx_pins(const PinT&, const PinT&)->rx_tx_pins<PinT>;
+rx_tx_pins(const PinT&, const PinT&) -> rx_tx_pins<PinT>;
 } // namespace uart
 
 template<class...>
@@ -171,17 +171,18 @@ auto erase_usart(UsartT&& usart) -> detail::erased_usart<UsartT> {
     return {std::forward<UsartT>(usart)};
 }
 
-template<size_t BufferSize, class T>
-class buffered_usart : public self_pointing<buffered_usart<BufferSize, T>> {
+template<class T, size_t BufferSize = 512>
+class buffered_usart : public self_pointing<buffered_usart<T, BufferSize>> {
 public:
-    explicit buffered_usart(T t) : m_impl(std::move(t)) {}
+    explicit buffered_usart(T t)
+        : m_impl(std::move(t)) {
+    }
 
     int write(tos::span<const uint8_t> span) {
         if (m_disabled || (span.size() + m_buf_cur > m_buffer.size())) {
             flush();
             m_impl->write(span);
-        }
-        else {
+        } else {
             std::copy_n(span.begin(), span.size(), m_buffer.begin() + m_buf_cur);
             m_buf_cur += span.size();
         }
@@ -212,6 +213,7 @@ public:
     void enable_buffer() {
         m_disabled = false;
     }
+
 private:
     bool m_disabled = false;
     T m_impl;
