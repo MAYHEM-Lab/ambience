@@ -22,6 +22,10 @@ add_library(x86_usart include/arch/usart.hpp src/usart.cpp)
 target_link_libraries(x86_usart PUBLIC tos::core x86_hosted_impl)
 tos_install(x86_usart ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(x86_clocks include/arch/cpp_clocks.hpp src/cpp_clocks.cpp)
+target_link_libraries(x86_clocks PUBLIC tos::core x86_hosted_impl)
+tos_install(x86_clocks ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 add_library(x86_drivers include/arch/drivers.hpp src/stub.cpp)
 target_link_libraries(x86_drivers PUBLIC
         x86_stdio
@@ -29,7 +33,8 @@ target_link_libraries(x86_drivers PUBLIC
         x86_unix_sockets
         x86_usart
         x86_tcp
-        x86_udp)
+        x86_udp
+        x86_clocks)
 tos_install(x86_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(arch_drivers ALIAS x86_drivers)
