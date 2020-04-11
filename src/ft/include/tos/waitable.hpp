@@ -89,7 +89,7 @@ inline kern::tcb& waitable::remove(waitable::waiter_handle handle) {
     return ret;
 }
 
-kern::tcb& waitable::remove(kern::tcb& t) {
+inline kern::tcb& waitable::remove(kern::tcb& t) {
     return remove(std::find_if(
         m_waiters.begin(), m_waiters.end(), [&t](auto& tcb) { return &t == &tcb; }));
 }
