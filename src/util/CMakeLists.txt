@@ -32,7 +32,7 @@ add_library(tos_util_core
     include/tos/moved_flag.hpp
 )
 
-target_compile_features(tos_util_core PUBLIC cxx_std_14)
+target_compile_features(tos_util_core PUBLIC cxx_std_17)
 target_link_libraries(tos_util_core PUBLIC tos::libcxx)
 
 target_link_libraries(tos_util PUBLIC tos_util_core tos::ft)
