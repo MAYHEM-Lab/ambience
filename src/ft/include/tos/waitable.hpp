@@ -50,6 +50,7 @@ struct waitable {
     waiter_handle add(kern::tcb& t);
 
     kern::tcb& remove(waiter_handle handle);
+    kern::tcb& remove(kern::tcb& t);
 
     /**
      * Number of tasks in this waitable
@@ -86,6 +87,11 @@ inline kern::tcb& waitable::remove(waitable::waiter_handle handle) {
     auto& ret = *handle;
     m_waiters.erase(handle);
     return ret;
+}
+
+kern::tcb& waitable::remove(kern::tcb& t) {
+    return remove(std::find_if(
+        m_waiters.begin(), m_waiters.end(), [&t](auto& tcb) { return &t == &tcb; }));
 }
 
 inline void waitable::signal_all() {
