@@ -60,4 +60,8 @@ if (BUILD_TESTS)
 	add_executable(mem_stream_test src/mem_stream_test.cpp)
 	target_link_libraries(mem_stream_test PUBLIC tests_main tos_util_core)
     add_test(NAME mem_stream_test COMMAND mem_stream_test)
+
+    add_executable(intrusive_ptr_test src/intrusive_ptr_test.cpp)
+    target_link_libraries(intrusive_ptr_test PUBLIC tests_main tos_util_core)
+    add_test(NAME intrusive_ptr_test COMMAND intrusive_ptr_test)
 endif()
