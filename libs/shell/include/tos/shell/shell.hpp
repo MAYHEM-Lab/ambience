@@ -5,8 +5,8 @@
 #pragma once
 
 #include "detail/echoing_uart.hpp"
-
 #include "dynamic_command_storage.hpp"
+
 #include <algorithm>
 #include <tos/print.hpp>
 #include <tos/self_pointing.hpp>
@@ -23,7 +23,9 @@ struct static_line_buffer_storage {
     }
 };
 
-template<class StreamT, class LineBufferStorage = static_line_buffer_storage<64>>
+template<class StreamT,
+         bool Echo = true,
+         class LineBufferStorage = static_line_buffer_storage<64>>
 class shell : private LineBufferStorage {
 public:
     template<class... StorageArgs>
@@ -46,14 +48,12 @@ private:
     void handle_one() {
         tos::print(m_stream, "$ ");
 
-        detail::echoing_uart echo{m_stream};
-
         auto& line_buffer = LineBufferStorage::get_line_storage();
-        char sep[] = {'\r', '\n'};
+        char sep[] = {'\n'};
         auto cmd = tos::read_until<char>(
-            echo, tos::span(sep), tos::raw_cast<char>(tos::span(line_buffer)));
+            m_stream, tos::span(sep), tos::raw_cast<char>(tos::span(line_buffer)));
         if (cmd.size() == line_buffer.size() &&
-            !(cmd.slice(cmd.size() - 2, 2) == tos::span(sep))) {
+            !(cmd.slice(cmd.size() - 1, 1) == tos::span(sep))) {
             // command didn't fit!
             tos::println(m_stream, "Command line too big!");
             return;
@@ -87,7 +87,9 @@ private:
     }
 
     bool m_exit = false;
-    StreamT m_stream;
+
+    std::conditional_t<Echo, detail::echoing_uart<StreamT>, StreamT> m_stream;
+
     dynamic_command_storage m_storage;
 };
 } // namespace tos::shell

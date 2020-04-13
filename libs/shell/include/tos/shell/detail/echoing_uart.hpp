@@ -14,9 +14,9 @@ namespace detail {
 
 template<class StreamT>
 struct echoing_uart : tos::self_pointing<echoing_uart<StreamT>> {
-    StreamT& m_str;
-    explicit echoing_uart(StreamT& str)
-        : m_str{str} {
+    StreamT m_str;
+    explicit echoing_uart(StreamT str)
+        : m_str{std::move(str)} {
     }
 
     auto read(tos::span<uint8_t> buf) {
