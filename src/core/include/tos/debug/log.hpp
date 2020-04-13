@@ -55,22 +55,22 @@ ALWAYS_INLINE bool fatal(const Ts&... args) {
 }
 } // namespace tos::debug
 
-#define S(x) #x
-#define S_(x) S(x)
-#define S__LINE__ S_(__LINE__)
+#define __S(x) #x
+#define __S_(x) __S(x)
+#define __S__LINE__ __S_(__LINE__)
 
 #define LOG(...)                                                                         \
     (::tos::debug::default_log().would_log(::tos::debug::log_level::log) &&              \
-     ::tos::debug::log("[" __FILE__ ":" S__LINE__ "]", __VA_ARGS__))
+     ::tos::debug::log("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
 #define LOG_TRACE(...)                                                                   \
     (::tos::debug::default_log().would_log(::tos::debug::log_level::trace) &&            \
-     ::tos::debug::trace("[" __FILE__ ":" S__LINE__ "]", __VA_ARGS__))
+     ::tos::debug::trace("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
 #define LOG_INFO(...)                                                                    \
     (::tos::debug::default_log().would_log(::tos::debug::log_level::info) &&             \
-     ::tos::debug::info("[" __FILE__ ":" S__LINE__ "]", __VA_ARGS__))
+     ::tos::debug::info("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
 #define LOG_WARN(...)                                                                    \
     (::tos::debug::default_log().would_log(::tos::debug::log_level::warning) &&          \
-     ::tos::debug::warn("[" __FILE__ ":" S__LINE__ "]", __VA_ARGS__))
+     ::tos::debug::warn("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
 #define LOG_ERROR(...)                                                                   \
     (::tos::debug::default_log().would_log(::tos::debug::log_level::error) &&            \
-     ::tos::debug::error("[" __FILE__ ":" S__LINE__ "]", __VA_ARGS__))
+     ::tos::debug::error("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
