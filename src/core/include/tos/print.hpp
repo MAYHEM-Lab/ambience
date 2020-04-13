@@ -151,21 +151,20 @@ namespace detail {
 template<class T>
 struct separator_t {
     T sep;
+
+    template <class StreamT>
+    friend void print(StreamT& str, const separator_t<T>& sep) {
+        using tos::print;
+        print(str, sep.sep);
+    }
 };
 
 template <>
-struct separator_t<std::nullptr_t> {};
-
-template <class StreamT>
-void print(StreamT&, const separator_t<std::nullptr_t>&) {
-}
-
-template <class StreamT, class T>
-void print(StreamT& str, const separator_t<T>& sep) {
-    using tos::print;
-    print(str, sep.sep);
-}
-
+struct separator_t<std::nullptr_t> {
+    template <class StreamT>
+    friend void print(StreamT&, const separator_t<std::nullptr_t>&) {
+    }
+};
 constexpr void get_separator_or() = delete;
 
 template<class FirstT, class... Ts>
