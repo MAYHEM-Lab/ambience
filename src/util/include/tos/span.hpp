@@ -10,7 +10,9 @@
 #if defined(__cpp_lib_string_view)
 #include <string_view>
 #endif
+#include <string>
 #include <vector>
+
 
 namespace tos {
 /**
@@ -134,6 +136,24 @@ public:
     }
 #endif
 
+    template<class U = T,
+             typename = std::enable_if_t<
+                 std::is_same_v<std::remove_const_t<U>, std::string::value_type> &&
+                 !std::is_const_v<U>>>
+    constexpr span(std::string& str)
+        : m_base(str.data())
+        , m_len(str.size()) {
+    }
+
+    template<class U = T,
+             typename = std::enable_if_t<
+                 std::is_same_v<std::remove_const_t<U>, std::string::value_type> &&
+                 std::is_const_v<U>>>
+    constexpr span(const std::string& str)
+        : m_base(str.data())
+        , m_len(str.size()) {
+    }
+
     /**
      * Returns the number of elements in the span
      * @return tne number of elements
@@ -235,7 +255,7 @@ public:
      * @return a new span
      */
     constexpr span slice(size_t begin) {
-        return {m_base + begin, size() - begin};
+        return slice(begin, size() - begin);
     }
 
 private:
@@ -245,6 +265,10 @@ private:
 
 #if defined(__cpp_deduction_guides) && defined(__cpp_lib_string_view)
 span(std::string_view)->span<const char>;
+#endif
+#if defined(__cpp_deduction_guides)
+span(const std::string&)->span<const char>;
+span(std::string&)->span<char>;
 #endif
 
 template<class T>
@@ -259,7 +283,7 @@ span<T> empty_span() {
  * @return a span containing t
  */
 template<class T>
-span<T> monospan(T& t) {
+constexpr span<T> monospan(T& t) {
     return span<T>(&t, 1);
 }
 
@@ -268,10 +292,16 @@ span<U> spanify(T&& t) {
     return span<U>(std::forward<T>(t));
 }
 
-template<class T, class U>
+/**
+ * Given a span of type U, creates a view on that span where the type is the given
+ * raw type.
+ *
+ * Size of the given type must be 1.
+ */
+template<class T = const uint8_t, class U>
 span<T> raw_cast(span<U> sp) {
     static_assert(sizeof(T) == 1, "");
-    return {reinterpret_cast<T*>(sp.data()), sp.size() * sizeof(U)};
+    return {reinterpret_cast<T*>(sp.data()), sp.size_bytes()};
 }
 
 template<class T>
@@ -297,5 +327,10 @@ template<class T>
 constexpr bool operator==(tos::span<T> left, span<T> right) {
     return static_cast<tos::span<const T>>(left) ==
            static_cast<tos::span<const T>>(right);
+}
+
+template<class T, class U>
+constexpr bool operator!=(tos::span<T> left, span<U> right) {
+    return !(left == right);
 }
 } // namespace tos

@@ -23,7 +23,9 @@ void tick_task() {
     tos::event pinsem;
     auto handler = [&] { pinsem.fire(); };
 
-    g->attach_interrupt(2_pin, tos::pin_change::falling, handler);
+    tos::avr::exti external_interrupts;
+    external_interrupts->attach(
+        2_pin, tos::pin_change::falling, tos::function_ref<void()>(handler));
 
     auto eeprom = tos::open(tos::devs::eeprom<0>);
     char numb[sizeof(int)];

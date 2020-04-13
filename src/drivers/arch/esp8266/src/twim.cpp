@@ -38,8 +38,8 @@ twim::twim(gpio& gpio, tos::esp82::pin_t clock_pin, tos::esp82::pin_t data_pin) 
     // twi_setClock(400000);
 }
 
-twi_tx_res twim::transmit(twi_addr_t to, span<const char> buf) noexcept {
-    auto res = twi_writeTo(to.addr, (unsigned char*)buf.data(), buf.size(), true);
+twi_tx_res twim::transmit(twi_addr_t to, span<const uint8_t> buf) noexcept {
+    auto res = twi_writeTo(to.addr, const_cast<uint8_t*>(buf.data()), buf.size(), true);
     tos::this_thread::yield();
     switch (res) {
     case I2C_OK:
@@ -49,8 +49,8 @@ twi_tx_res twim::transmit(twi_addr_t to, span<const char> buf) noexcept {
     }
 }
 
-twi_rx_res twim::receive(twi_addr_t from, span<char> buf) noexcept {
-    auto res = twi_readFrom(from.addr, (unsigned char*)buf.data(), buf.size(), true);
+twi_rx_res twim::receive(twi_addr_t from, span<uint8_t> buf) noexcept {
+    auto res = twi_readFrom(from.addr, buf.data(), buf.size(), true);
     tos::this_thread::yield();
     switch (res) {
     case I2C_OK:

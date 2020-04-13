@@ -1,4 +1,7 @@
-find_program(FLATBUFFERS_FLATC_EXECUTABLE NAMES flatc)
+find_program(FLATBUFFERS_FLATC_EXECUTABLE 
+    NAMES flatc
+    HINTS C:/x-tools/flatbuffers/bin /opt/x-tools/flatbuffers/bin)
+    
 message(STATUS "Flatc: ${FLATBUFFERS_FLATC_EXECUTABLE}")
 
 if(NOT ${FLATBUFFERS_FLATC_EXECUTABLE} MATCHES "NOTFOUND")
@@ -28,7 +31,7 @@ if(NOT ${FLATBUFFERS_FLATC_EXECUTABLE} MATCHES "NOTFOUND")
         add_dependencies(${Name} ${Name}_IMPL)
     endfunction()
 else()
-    function(FLATBUFFERS_GENERATE_C_HEADERS Name)
+    function(FLATBUFFERS_GENERATE_C_HEADERS Name Subdir)
         message(ERROR "flatc executable not found!")
     endfunction()
 endif()

@@ -9,22 +9,15 @@
 #include <tos/print.hpp>
 #include <tos/fixed_fifo.hpp>
 
-void gap_params_init();
-void gatt_init();
-
 auto blink_task = []
 {
     using namespace tos;
     using namespace tos_literals;
-    constexpr auto usconf = tos::usart_config()
-        .add(115200_baud_rate)
-        .add(usart_parity::disabled)
-        .add(usart_stop_bit::one);
 
     auto g = open(tos::devs::gpio);
     g->set_pin_mode(13_pin, pin_mode::out);
 
-    auto usart = open(tos::devs::usart<0>, usconf, 6_pin, 8_pin);
+    auto usart = open(tos::devs::usart<0>, tos::uart::default_115200, 8_pin, 6_pin);
 
     tos::println(usart, "hello");
 

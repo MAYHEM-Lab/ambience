@@ -71,7 +71,7 @@ private:
 };
 
 template<class StorageT>
-class basic_canvas : private StorageT {
+class basic_canvas : private StorageT, public self_pointing<basic_canvas<StorageT>> {
     using StorageT::buffer;
 
 public:

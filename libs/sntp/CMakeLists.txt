@@ -1,3 +1,6 @@
+if (NOT ${TOS_CORE} MATCHES "esp82")
+    return()
+endif()
 
 add_library(lwip_sntp sntp.cpp include/lwip_sntp/sntp.h include/lwip_sntp/time.h)
 #target_compile_definitions(lwip_sntp PUBLIC LWIP_DEBUG)

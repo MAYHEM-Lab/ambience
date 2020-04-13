@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <cstdint>
 #include <algorithm>
+#include <cstdint>
 
 namespace tos::gfx {
 /**
@@ -50,8 +50,8 @@ struct rectangle {
     }
 
     constexpr void set_other_corner(const point& other_corner) {
-        size = {std::max(0, other_corner.x - corner.x),
-                std::max(0, other_corner.y - corner.y)};
+        size = {std::max<int>(0, other_corner.x - corner.x),
+                std::max<int>(0, other_corner.y - corner.y)};
     }
 };
 

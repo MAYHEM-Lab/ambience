@@ -78,7 +78,7 @@ auto task = [] {
 
     draw_text(oled,
               font,
-              str.get(),
+              tos::raw_cast<const char>(str.get()),
               tos::gfx::point{24, 0},
               tos::gfx::text_direction::vertical);
 
@@ -94,7 +94,7 @@ auto task = [] {
         last = system_get_time();
         draw_text(oled,
                   font,
-                  str.get(),
+                  tos::raw_cast<const char>(str.get()),
                   tos::gfx::point{36, 0},
                   tos::gfx::text_direction::vertical);
 

@@ -32,11 +32,11 @@ namespace tos
             }
         }
 
-        twi_tx_res twim::transmit(twi_addr_t to, span<const char> buf) noexcept
+        twi_tx_res twim::transmit(twi_addr_t to, span<const uint8_t> buf) noexcept
         {
             nrfx_twim_enable(&twim0);
             tos::kern::refresh_interrupts();
-            auto ret = nrfx_twim_tx(&twim0, to.addr, (const uint8_t*)buf.data(), buf.size(), false);
+            auto ret = nrfx_twim_tx(&twim0, to.addr, buf.data(), buf.size(), false);
 
             if (ret != NRFX_SUCCESS)
             {
@@ -55,11 +55,11 @@ namespace tos
             }
         }
 
-        twi_rx_res twim::receive(twi_addr_t from, span<char> buf) noexcept
+        twi_rx_res twim::receive(twi_addr_t from, span<uint8_t> buf) noexcept
         {
             nrfx_twim_enable(&twim0);
             tos::kern::refresh_interrupts();
-            auto ret = nrfx_twim_rx(&twim0, from.addr, (uint8_t*)buf.data(), buf.size());
+            auto ret = nrfx_twim_rx(&twim0, from.addr, buf.data(), buf.size());
 
             if (ret != NRFX_SUCCESS)
             {

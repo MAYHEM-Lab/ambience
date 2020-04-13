@@ -2,12 +2,12 @@
 #include "tos/mutex.hpp"
 #include "tos/thread.hpp"
 
+#include <arch/detail/flash.hpp>
 #include <arch/flash.hpp>
 #include <cstdint>
 #include <cstring>
 #include <stm32_hal/flash.hpp>
 #include <stm32_hal/flash_ex.hpp>
-#include <arch/detail/flash.hpp>
 
 extern "C" {
 void FLASH_IRQHandler() {
@@ -61,13 +61,15 @@ tos::expected<void, flash_errors> flash::erase(sector_id_t sector_id) {
     erase_info.Sector = sector_id;
     erase_info.NbSectors = 1;
 #endif
-    
+
     auto erase_status = HAL_FLASHEx_Erase_IT(&erase_info);
     if (erase_status != HAL_OK) {
         return unexpected(flash_errors::erase_failed);
     }
 
+    tos::kern::busy();
     m_done.down();
+    tos::kern::unbusy();
 
     if (m_last_op_fail) {
         return unexpected(flash_errors::operation_failed);
@@ -77,7 +79,7 @@ tos::expected<void, flash_errors> flash::erase(sector_id_t sector_id) {
 }
 
 expected<void, flash_errors>
-flash::write(sector_id_t sector_id, span<const char> data, size_t offset) {
+flash::write(sector_id_t sector_id, span<const uint8_t> data, size_t offset) {
     if ((data.size() % sizeof(flash_align_t)) != 0) {
         return unexpected(flash_errors::bad_size);
     }
@@ -85,7 +87,7 @@ flash::write(sector_id_t sector_id, span<const char> data, size_t offset) {
     auto unlock_status = HAL_FLASH_Unlock();
 
     clear_flash_flags();
-    
+
     if (unlock_status != HAL_OK) {
         return unexpected(flash_errors::unlock_failed);
     }
@@ -105,7 +107,9 @@ flash::write(sector_id_t sector_id, span<const char> data, size_t offset) {
             return unexpected(flash_errors::operation_failed);
         }
 
+        tos::kern::busy();
         m_done.down();
+        tos::kern::unbusy();
 
         if (m_last_op_fail) {
             return unexpected(flash_errors::operation_failed);
@@ -119,8 +123,8 @@ flash::write(sector_id_t sector_id, span<const char> data, size_t offset) {
 }
 
 expected<void, flash_errors>
-flash::read(flash::sector_id_t sector_id, span<char> data, size_t offset) {
-    if(data.size()% sizeof(flash_align_t)!=0){
+flash::read(flash::sector_id_t sector_id, span<uint8_t> data, size_t offset) {
+    if (data.size() % sizeof(flash_align_t) != 0) {
         return unexpected(flash_errors::bad_size);
     }
 
@@ -131,13 +135,13 @@ flash::read(flash::sector_id_t sector_id, span<char> data, size_t offset) {
 
     while (!data.empty()) {
         flash_align_t temp;
-        auto ptr = reinterpret_cast<const flash_align_t *>(addr);
+        auto ptr = reinterpret_cast<const flash_align_t*>(addr);
         temp = *ptr;
         std::memcpy(data.data(), &temp, sizeof temp);
         data = data.slice(sizeof temp);
         addr += sizeof temp;
     }
-    
+
     return expected<void, flash_errors>();
 }
 

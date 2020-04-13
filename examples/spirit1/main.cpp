@@ -11,6 +11,7 @@
 #include <arch/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
+#include <tos/sync_ring_buf.hpp>
 
 using namespace tos;
 using namespace tos::stm32;

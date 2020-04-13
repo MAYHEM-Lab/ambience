@@ -27,6 +27,7 @@ asio::io_service& get_io()
     return *g_io;
 }
 
+extern "C"
 int main()
 {
     asio::io_service io;
@@ -42,11 +43,16 @@ int main()
     {
         auto res = tos::sched.schedule();
         if (io.stopped())
+        {
             io.reset();
-        io.run_one();
+        }
+        io.poll();
         if (res == tos::exit_reason::restart)
         {
-            return 0;
+            break;
         }
     }
+
+    io.run();
+    return 0;
 }

@@ -2,25 +2,26 @@
 // Created by Mehmet Fatih BAKIR on 15/04/2018.
 //
 
+#include "app.hpp"
+#include "tos/function_ref.hpp"
+
 #include <arch/drivers.hpp>
+#include <avr/io.h>
+#include <common/alarm.hpp>
+#include <common/dht22.hpp>
+#include <common/gpio.hpp>
+#include <stdlib.h>
+#include <tos/arch.hpp>
+#include <tos/compiler.hpp>
+#include <tos/devices.hpp>
+#include <tos/event.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
-#include <tos/arch.hpp>
-#include <common/gpio.hpp>
-#include <tos/devices.hpp>
-#include <stdlib.h>
-#include <common/dht22.hpp>
-#include <util/delay.h>
-#include <tos/event.hpp>
-#include <common/alarm.hpp>
-#include <avr/io.h>
-#include <tos/compiler.hpp>
 #include <tos/semaphore.hpp>
-#include "app.hpp"
+#include <util/delay.h>
 
 
-void main_task()
-{
+void main_task() {
     using namespace tos;
     using namespace tos::tos_literals;
 
@@ -31,14 +32,13 @@ void main_task()
     g->set_pin_mode(2_pin, tos::pin_mode::in_pullup);
 
     tos::event pinsem;
-    auto handler = [&]{
-        pinsem.fire();
-    };
+    auto handler = [&] { pinsem.fire(); };
 
-    g->attach_interrupt(2_pin, tos::pin_change::rising, handler);
+    tos::avr::exti external_interrupts;
+    external_interrupts->attach(
+        2_pin, tos::pin_change::rising, tos::function_ref<void()>(handler));
 
-    while (true)
-    {
+    while (true) {
         g.set_pin_mode(13_pin, tos::pin_mode::out);
         g.write(13_pin, tos::digital::high);
 
@@ -47,9 +47,8 @@ void main_task()
         auto tmr = open(tos::devs::timer<1>);
         auto alarm = open(tos::devs::alarm, *tmr);
 
-        auto d = tos::make_dht(g, [](std::chrono::microseconds us) {
-            _delay_us(us.count());
-        });
+        auto d =
+            tos::make_dht(g, [](std::chrono::microseconds us) { _delay_us(us.count()); });
 
         using namespace std::chrono_literals;
         alarm.sleep_for(2s);
@@ -57,20 +56,17 @@ void main_task()
         tos::print(usart, "hi");
 
         usart.clear();
-        std::array<char, 2> buf;
+        std::array<uint8_t, 2> buf;
         auto r = usart.read(buf, alarm, 5s);
 
-        if (r.size() == 2)
-        {
+        if (r.size() == 2) {
             auto res = d.read(10_pin);
 
             int retries = 0;
-            while (res != tos::dht_res::ok)
-            {
-                //tos::println(usart, int8_t(res));
+            while (res != tos::dht_res::ok) {
+                // tos::println(usart, int8_t(res));
                 alarm.sleep_for(2s);
-                if (retries == 5)
-                {
+                if (retries == 5) {
                     break;
                     // err
                 }
@@ -78,18 +74,15 @@ void main_task()
                 res = d.read(10_pin);
             }
 
-            temp::sample s { d.temperature, d.humidity, temp::GetTemp(alarm) };
-            struct
-            {
-                uint8_t chk_sum{ 0 };
+            temp::sample s{d.temperature, d.humidity, temp::GetTemp(alarm)};
+            struct {
+                uint8_t chk_sum{0};
                 decltype(usart)* str;
-                int write(span<const char> buf)
-                {
-                    for (auto c : buf)
-                    {
+                int write(span<const uint8_t> buf) {
+                    for (auto c : buf) {
                         chk_sum += uint8_t(c);
                     }
-                    static char b[13];
+                    static uint8_t b[13];
                     std::memcpy(b, buf.data(), 12);
                     b[12] = chk_sum;
                     auto res = str->write(b);
@@ -97,8 +90,8 @@ void main_task()
                 }
             } chk_str;
             chk_str.str = &usart;
-            chk_str.write({ (const char*)&s, sizeof s });
-            //usart.write({ (const char*)&chk_str.chk_sum, 1 });
+            chk_str.write({(const uint8_t*)&s, sizeof s});
+            // usart.write({ (const char*)&chk_str.chk_sum, 1 });
         }
 
         g.write(13_pin, tos::digital::low);
@@ -107,7 +100,6 @@ void main_task()
     }
 }
 
-void tos_main()
-{
+void tos_main() {
     tos::launch(tos::alloc_stack, main_task);
 }

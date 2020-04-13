@@ -1,3 +1,7 @@
+add_library(nrf52_prs ${SDK_ROOT}/modules/nrfx/drivers/src/prs/nrfx_prs.c)
+target_link_libraries(nrf52_prs PUBLIC tos_core)
+target_compile_definitions(nrf52_prs PUBLIC NRFX_PRS_ENABLED=1 NRFX_PRS_BOX_0_ENABLED=1)
+
 add_library(nrf52_gpio include/arch/gpio.hpp src/gpio.cpp)
 target_link_libraries(nrf52_gpio PUBLIC tos_util tos_gpio tos_core)
 tos_install(nrf52_gpio ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -17,21 +21,21 @@ target_compile_definitions(nrf52_timer PRIVATE
         NRFX_TIMER_ENABLED=1
         NRFX_TIMER0_ENABLED=1
         NRFX_TIMER1_ENABLED=1
+        NRFX_TIMER2_ENABLED=1
         TIMER_LEGACY_SUPPORT=0)
 
 add_library(nrf52_twim
     ${SDK_ROOT}/modules/nrfx/drivers/src/nrfx_twim.c include/arch/twim.hpp src/twim.cpp)
-target_link_libraries(nrf52_twim PUBLIC tos_core)
+target_link_libraries(nrf52_twim PUBLIC tos_core nrf52_prs)
 tos_install(nrf52_twim ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_definitions(nrf52_twim PRIVATE
     NRFX_TWIM_ENABLED=1
     NRFX_TWIM0_ENABLED=1
     TWIM_LEGACY_SUPPORT=0)
 
-
 add_library(nrf52_spim
         ${SDK_ROOT}/modules/nrfx/drivers/src/nrfx_spim.c include/arch/spi.hpp src/stub.cpp)
-target_link_libraries(nrf52_spim PUBLIC tos_core)
+target_link_libraries(nrf52_spim PUBLIC tos_core nrf52_prs)
 tos_install(nrf52_spim ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_definitions(nrf52_spim PUBLIC
         NRFX_SPIM_ENABLED=1

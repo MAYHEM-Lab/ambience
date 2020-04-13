@@ -24,6 +24,7 @@ namespace debug {
  * @tparam ErrorTagType type for an explanation for the crash
  */
 template<class ErrorTagType>
+TOS_NO_OPTIMIZE
 [[noreturn]] void panic(ErrorTagType&&) {
     tos_force_reset();
 }

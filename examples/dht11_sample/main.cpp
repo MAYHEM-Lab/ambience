@@ -22,7 +22,7 @@ void send(tos::esp82::wifi_connection& c) {
 
     auto res = dht.read(tos::esp82::pin_t{4});
     // tos::println(usart, int(res), int(dht.temperature), int(dht.humidity));
-    static char buf[128];
+    static uint8_t buf[128];
     tos::msgpack::packer p{buf};
     auto arr = p.insert_arr(2);
     arr.insert(dht.temperature);

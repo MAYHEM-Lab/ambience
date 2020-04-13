@@ -86,6 +86,6 @@ struct ctx {
 } // namespace kern
 } // namespace tos
 
-#define save_ctx(ctx) (return_codes) setjmp((ctx).buf)
+#define save_ctx(ctx) (::tos::return_codes) setjmp((ctx).buf)
 
 #define save_context(tcb, ctx) (tcb).set_ctx((ctx)), save_ctx(ctx)
