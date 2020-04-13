@@ -5,6 +5,7 @@
 #include <tos/print.hpp>
 #include <tos/self_pointing.hpp>
 #include <tos/mutex.hpp>
+#include <memory>
 
 namespace tos::debug {
 template<class SerialT>
@@ -18,7 +19,7 @@ public:
 
     bool begin(log_level level) override {
         m_prot->lock();
-        tos::print(m_serial, "[serial_sink] [", level, "] ", tos::no_separator());
+        tos::print(m_serial, "[", level, "] ", tos::no_separator());
         return true;
     }
 
