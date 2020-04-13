@@ -6,17 +6,22 @@
 #include <tos/expected.hpp>
 #include <tos/compiler.hpp>
 
-tos::expected<int, int> NO_INLINE foo()
+namespace tos {
+namespace {
+NO_INLINE
+expected<int, int> foo()
 {
     return tos::unexpected(3);
 }
 
-tos::expected<int, int> NO_INLINE bar()
+NO_INLINE
+expected<int, int> bar()
 {
     return 3;
 }
 
-auto NO_INLINE fwd()
+NO_INLINE
+auto fwd()
 {
     return bar();
 }
@@ -68,7 +73,7 @@ public:
     bool moved = false;
 };
 
-tos::expected<move_only, int> test_move_only() { return move_only{}; }
+expected<move_only, int> test_move_only() { return move_only{}; }
 
 TEST_CASE("move only")
 {
@@ -78,4 +83,6 @@ TEST_CASE("move only")
     REQUIRE(res);
     REQUIRE(!force_get(res2).moved);
     REQUIRE(force_get(res).moved);
+} 
+}
 }
