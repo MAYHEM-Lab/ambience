@@ -11,7 +11,8 @@
 namespace tos {
 namespace nrf52 {
 static const nrfx_timer_t tmrs[] = {{NRF_TIMER0, NRFX_TIMER0_INST_IDX, TIMER0_CC_NUM},
-                                    {NRF_TIMER1, NRFX_TIMER1_INST_IDX, TIMER1_CC_NUM}};
+                                    {NRF_TIMER1, NRFX_TIMER1_INST_IDX, TIMER1_CC_NUM},
+                                    {NRF_TIMER2, NRFX_TIMER2_INST_IDX, TIMER2_CC_NUM}};
 
 timer0::timer0(int idx)
     : m_cb(+[](void*) {})
@@ -55,7 +56,9 @@ void timer0::disable() {
 }
 
 uint32_t timer0::get_counter() const {
-    return nrfx_timer_capture(&tmrs[m_idx], NRF_TIMER_CC_CHANNEL0);
+    auto ticks =
+        std::min(m_ticks, nrfx_timer_capture(&tmrs[m_idx], NRF_TIMER_CC_CHANNEL1));
+    return ticks;
 }
 
 uint32_t timer0::get_period() const {

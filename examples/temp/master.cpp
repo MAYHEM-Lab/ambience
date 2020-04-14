@@ -2,97 +2,90 @@
 // Created by Mehmet Fatih BAKIR on 11/10/2018.
 //
 
+#include "app.hpp"
+
 #include <arch/drivers.hpp>
-#include <common/xbee.hpp>
-#include <common/alarm.hpp>
-
-#include <tos/ft.hpp>
-#include <tos/print.hpp>
-#include <tos/version.hpp>
-
 #include <array>
 #include <avr/wdt.h>
+#include <common/alarm.hpp>
 #include <common/dht22.hpp>
-#include <util/delay.h>
-#include <tos/mem_stream.hpp>
-#include "app.hpp"
 #include <common/ina219.hpp>
+#include <common/xbee.hpp>
+#include <tos/ft.hpp>
+#include <tos/mem_stream.hpp>
+#include <tos/print.hpp>
 #include <tos/semaphore.hpp>
+#include <tos/version.hpp>
+#include <util/delay.h>
 
 char trace_buf[128];
-tos::omemory_stream trace{ trace_buf };
+tos::omemory_stream trace{trace_buf};
 
-namespace temp
-{
-    template <class GpioT, class AlarmT, class UsartT>
-    sample read_slave(GpioT& gpio, AlarmT& alarm, UsartT& usart)
-    {
-        using namespace tos::tos_literals;
-        using namespace std::chrono_literals;
+namespace temp {
+template<class GpioT, class AlarmT, class UsartT>
+sample read_slave(GpioT& gpio, AlarmT& alarm, UsartT& usart) {
+    using namespace tos::tos_literals;
+    using namespace std::chrono_literals;
 
-		// wake up the slave and wait for it to boot
-		//usart.clear();
-        gpio.write(11_pin, tos::digital::high);
-        alarm.sleep_for(5000ms);
+    // wake up the slave and wait for it to boot
+    // usart.clear();
+    gpio.write(11_pin, tos::digital::high);
+    alarm.sleep_for(5000ms);
 
-        std::array<char, 2> wait;
-        auto res = usart.read(wait, alarm, 5s);
+    std::array<uint8_t, 2> wait;
+    auto res = usart.read(wait, alarm, 5s);
 
-        if (res.size() != 2 || res[0] != 'h' || res[1] != 'i')
-        {
-            gpio.write(11_pin, tos::digital::low);
-			tos::println(trace, "slave non-responsive", res.size(), res);
-            return temp::sample{ -1, -1, -1 };
-        }
-
-        std::array<char, sizeof(temp::sample)> buf;
-
-        tos::print(usart, "go");
-        alarm.sleep_for(10s);
-        auto r = usart.read(buf, alarm, 5s);
-
-        if (r.size() != buf.size())
-        {
-            gpio.write(11_pin, tos::digital::low);
-			tos::println(trace, "slave sent garbage");
-            return temp::sample{ -1, -1, -1 };
-        }
-
-        std::array<char, 1> chk_buf;
-
-        auto chkbuf = usart.read(chk_buf, alarm, 5s);
-        if (chkbuf.size() == 0)
-        {
-            gpio.write(11_pin, tos::digital::low);
-			tos::println(trace, "slave omitted checksum");
-            return temp::sample{ -1, -1, -1 };
-        }
-
+    if (res.size() != 2 || res[0] != 'h' || res[1] != 'i') {
         gpio.write(11_pin, tos::digital::low);
-        alarm.sleep_for(5ms);
-
-        uint8_t chk = 0;
-        for (char c : buf)
-        {
-            chk += uint8_t (c);
-        }
-
-        usart.write(buf);
-        usart.write(chkbuf);
-
-        usart.write(tos::raw_cast<char>(tos::span<uint8_t>{&chk,1}));
-
-        if (uint8_t(chkbuf[0]) != chk)
-        {
-			tos::println(trace, "slave checksum mismatch");
-            return temp::sample{ -1, -1, -1 };
-        }
-
-		tos::println(trace, "slave success");
-        temp::sample s;
-        memcpy(&s, buf.data(), sizeof(temp::sample));
-        return s;
+        tos::println(
+            trace, "slave non-responsive", res.size(), tos::raw_cast<const char>(res));
+        return temp::sample{-1, -1, -1};
     }
+
+    std::array<uint8_t, sizeof(temp::sample)> buf;
+
+    tos::print(usart, "go");
+    alarm.sleep_for(10s);
+    auto r = usart.read(buf, alarm, 5s);
+
+    if (r.size() != buf.size()) {
+        gpio.write(11_pin, tos::digital::low);
+        tos::println(trace, "slave sent garbage");
+        return temp::sample{-1, -1, -1};
+    }
+
+    std::array<uint8_t, 1> chk_buf;
+
+    auto chkbuf = usart.read(chk_buf, alarm, 5s);
+    if (chkbuf.size() == 0) {
+        gpio.write(11_pin, tos::digital::low);
+        tos::println(trace, "slave omitted checksum");
+        return temp::sample{-1, -1, -1};
+    }
+
+    gpio.write(11_pin, tos::digital::low);
+    alarm.sleep_for(5ms);
+
+    uint8_t chk = 0;
+    for (char c : buf) {
+        chk += uint8_t(c);
+    }
+
+    usart.write(buf);
+    usart.write(chkbuf);
+
+    usart.write(tos::monospan(chk));
+
+    if (uint8_t(chkbuf[0]) != chk) {
+        tos::println(trace, "slave checksum mismatch");
+        return temp::sample{-1, -1, -1};
+    }
+
+    tos::println(trace, "slave success");
+    temp::sample s;
+    memcpy(&s, buf.data(), sizeof(temp::sample));
+    return s;
+}
 } // namespace temp
 
 /**
@@ -106,26 +99,23 @@ namespace temp
  *
  * @param dur seconds to at least sleep for
  */
-void hibernate(tos::avr::wdt& wdt, std::chrono::seconds dur)
-{
+void hibernate(tos::avr::wdt& wdt, std::chrono::seconds dur) {
     using namespace std::chrono_literals;
 
     wdt_reset();
-    while (dur > 8s)
-    {
+    while (dur > 8s) {
         wdt.wait(tos::avr::wdt_times::to_8s);
         dur -= 8s;
 
-        //wdt_enable(WDTO_8S);
-        //WDTCSR |= (1 << WDIE);
-        //wait_wdt();
+        // wdt_enable(WDTO_8S);
+        // WDTCSR |= (1 << WDIE);
+        // wait_wdt();
     }
 }
 
 void reset_cpu();
 
-void tx_task()
-{
+void tx_task() {
     using namespace tos;
     using namespace tos::tos_literals;
 
@@ -159,9 +149,8 @@ void tx_task()
 
                 gpio.set_pin_mode(12_pin, tos::pin_mode::in_pullup);
 
-                auto d = tos::make_dht(gpio, [](std::chrono::microseconds us) {
-                    _delay_us(us.count());
-                });
+                auto d = tos::make_dht(
+                    gpio, [](std::chrono::microseconds us) { _delay_us(us.count()); });
 
                 int tries = 1;
                 auto res = d.read(12_pin);
@@ -179,9 +168,8 @@ void tx_task()
                 }
 
                 std::array<temp::sample, 2> samples = {
-                        temp::sample{d.temperature, d.humidity, temp::GetTemp(alarm)},
-                        temp::read_slave(gpio, alarm, usart)
-                };
+                    temp::sample{d.temperature, d.humidity, temp::GetTemp(alarm)},
+                    temp::read_slave(gpio, alarm, usart)};
 
                 tos::println(trace, int(samples[0].temp), int(samples[0].cpu));
                 tos::println(trace, int(samples[1].cpu));
@@ -202,14 +190,16 @@ void tx_task()
                     temp::print(buff, temp::slave_id, samples[1]);
 
                     constexpr xbee::addr_16 base_addr{0x0010};
-                    xbee::tx16_req req{base_addr, tos::raw_cast<const uint8_t>(buff.get()), xbee::frame_id_t{1}};
+                    xbee::tx16_req req{base_addr,
+                                       tos::raw_cast<const uint8_t>(buff.get()),
+                                       xbee::frame_id_t{1}};
                     x.transmit(req);
 
                     alarm.sleep_for(100ms);
                     auto tx_r = xbee::read_tx_status(usart, alarm);
 
                     if (tx_r) {
-                        auto &res = force_get(tx_r);
+                        auto& res = force_get(tx_r);
                         if (res.status == xbee::tx_status::statuses::success) {
                             tos::println(trace, "xbee sent!");
                         } else {
@@ -225,7 +215,7 @@ void tx_task()
                 gpio.write(7_pin, tos::digital::low);
             }
 
-            tos::println(usart, trace.get());
+            tos::println(usart, tos::raw_cast<const char>(trace.get()));
         }
 
         tos::println(usart, "hibernating");
@@ -235,8 +225,7 @@ void tx_task()
     }
 }
 
-void tos_main()
-{
+void tos_main() {
     static tos::stack_storage<512> sstack;
     tos::launch(sstack, tx_task);
 }

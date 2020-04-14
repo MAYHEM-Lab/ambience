@@ -62,19 +62,16 @@ public:
 
     int write(tos::span<const uint8_t> buf);
 
-    int write(tos::span<const char> buf) {
-        return write(tos::raw_cast<const uint8_t>(buf));
-    }
-
-    tos::span<char> read(tos::span<char> b);
+    tos::span<uint8_t> read(tos::span<uint8_t> b);
 
     template<class AlarmT>
-    tos::span<char> read(tos::span<char> b, AlarmT& alarm, std::chrono::milliseconds to);
+    tos::span<uint8_t> read(tos::span<uint8_t> b, AlarmT& alarm, std::chrono::milliseconds to);
 
     ~usart() {
         NVIC_DisableIRQ(m_def->irq);
         HAL_UART_DeInit(&m_handle);
         m_def->rcc_dis();
+        tos::kern::unbusy();
     }
 
     void isr() {
@@ -189,12 +186,12 @@ inline usart::usart(const detail::usart_def& x,
     HAL_NVIC_SetPriority(m_def->irq, 0, 0);
     HAL_NVIC_EnableIRQ(m_def->irq);
 
-    HAL_UART_Receive_IT(&m_handle, &m_recv_byte, 1);
+    tos::kern::busy();
 }
 
 template<class AlarmT>
-tos::span<char>
-usart::read(tos::span<char> b, AlarmT& alarm, std::chrono::milliseconds to) {
+tos::span<uint8_t>
+usart::read(tos::span<uint8_t> b, AlarmT& alarm, std::chrono::milliseconds to) {
     size_t total = 0;
     auto len = b.size();
     auto buf = b.data();
@@ -212,7 +209,7 @@ usart::read(tos::span<char> b, AlarmT& alarm, std::chrono::milliseconds to) {
     return b.slice(0, total);
 }
 
-inline tos::span<char> usart::read(tos::span<char> b) {
+inline tos::span<uint8_t> usart::read(tos::span<uint8_t> b) {
     size_t total = 0;
     auto len = b.size();
     auto buf = b.data();
@@ -235,7 +232,9 @@ inline int usart::write(tos::span<const uint8_t> buf) {
     if (res != HAL_OK) {
         return -1;
     }
+    tos::kern::busy();
     tx_s.down();
+    tos::kern::unbusy();
     return buf.size();
 }
 

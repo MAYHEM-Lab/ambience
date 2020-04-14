@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <common/driver_base.hpp>
 #include <cstdint>
 #include <tos/ct_map.hpp>
@@ -41,7 +42,7 @@ struct rx_tx_pins {
 };
 
 template<class PinT>
-rx_tx_pins(const PinT&, const PinT&)->rx_tx_pins<PinT>;
+rx_tx_pins(const PinT&, const PinT&) -> rx_tx_pins<PinT>;
 } // namespace uart
 
 template<class...>
@@ -69,6 +70,10 @@ static constexpr auto default_9600 = usart_config()
                                          .add(tos::usart_baud_rate{9600})
                                          .add(tos::usart_parity::disabled)
                                          .add(tos::usart_stop_bit::one);
+static constexpr auto default_115200 = usart_config()
+                                           .add(tos::usart_baud_rate{115200})
+                                           .add(tos::usart_parity::disabled)
+                                           .add(tos::usart_stop_bit::one);
 } // namespace uart
 
 namespace tos_literals {
@@ -84,9 +89,20 @@ template<int N>
 static constexpr usart_t<N> usart{};
 } // namespace devs
 
+/**
+ * This type represents an interface type to any USART in tos.
+ *
+ * This class is not meant to be inherited by the drivers, but rather, objects
+ * that implement this interface should be acquired by _erasing_ the concrete
+ * driver using the `tos::erase_usart` function.
+ *
+ * As it uses virtual functions as the actual driver interface, it'll be less
+ * efficient to use this type instead of the concrete object or a function template
+ * that's parameterized over the actual USART type.
+ */
 struct any_usart : public self_pointing<any_usart> {
-    virtual int write(tos::span<const char>) = 0;
-    virtual tos::span<char> read(tos::span<char>) = 0;
+    virtual int write(tos::span<const uint8_t>) = 0;
+    virtual tos::span<uint8_t> read(tos::span<uint8_t>) = 0;
     virtual ~any_usart() = default;
 };
 
@@ -102,11 +118,11 @@ public:
         : m_impl{std::move(usart)} {
     }
 
-    int write(tos::span<const char> span) override {
+    int write(tos::span<const uint8_t> span) override {
         return m_impl->write(span);
     }
 
-    span<char> read(tos::span<char> span) override {
+    span<uint8_t> read(tos::span<uint8_t> span) override {
         return m_impl->read(span);
     }
 
@@ -115,18 +131,93 @@ private:
 };
 } // namespace detail
 
-class null_usart : public any_usart {
+/**
+ * This class implements a USART driver that discards every piece of
+ * data that's passed to it.
+ */
+class null_usart : public self_pointing<null_usart> {
 public:
-    int write(tos::span<const char>) override {
+    int write(tos::span<const uint8_t>) {
         return 0;
     }
-    span<char> read(tos::span<char>) override {
-        return tos::span<char>(nullptr);
+    span<uint8_t> read(tos::span<uint8_t>) {
+        return tos::span<uint8_t>(nullptr);
     }
 };
 
+/**
+ * Erases the type of the given concrete USART driver object. Returns
+ * an object that implements the `tos::any_usart` interface.
+ *
+ *      tos::any_usart* output;
+ *      auto concrete_driver = tos::open(tos::devs::usart<0>, ...args...);
+ *      output = &concrete_driver; // Compilation error!
+ *      auto erased_usart = tos::erase_usart(std::move(concrete_driver));
+ *      output = &erased_usart; // Ok.
+ *
+ * This function does not perform any memory allocation. The passed
+ * object will be stored in the erased object by value. If you do not
+ * wish to transfer ownership of the driver, pass the address of the
+ * driver you wish to erase:
+ *
+ *      auto erased_usart = tos::erase_usart(&concrete_driver);
+ *
+ * The deleted driver must implement the whole USART driver interface. For
+ * instance, USART drivers providing only a write function but no read
+ * function cannot be type-erased.
+ */
 template<class UsartT>
 auto erase_usart(UsartT&& usart) -> detail::erased_usart<UsartT> {
     return {std::forward<UsartT>(usart)};
 }
+
+template<class T, size_t BufferSize = 512>
+class buffered_usart : public self_pointing<buffered_usart<T, BufferSize>> {
+public:
+    explicit buffered_usart(T t)
+        : m_impl(std::move(t)) {
+    }
+
+    int write(tos::span<const uint8_t> span) {
+        if (m_disabled || (span.size() + m_buf_cur > m_buffer.size())) {
+            flush();
+            m_impl->write(span);
+        } else {
+            std::copy_n(span.begin(), span.size(), m_buffer.begin() + m_buf_cur);
+            m_buf_cur += span.size();
+        }
+        return span.size();
+    }
+
+    span<uint8_t> read(tos::span<uint8_t> span) {
+        return m_impl->read(span);
+    }
+
+    ~buffered_usart() {
+        flush();
+    }
+
+    void flush() {
+        if (m_buf_cur == 0) {
+            return;
+        }
+        m_impl->write(tos::span<const uint8_t>(m_buffer).slice(0, m_buf_cur));
+        m_buf_cur = 0;
+    }
+
+    void disable_buffer() {
+        flush();
+        m_disabled = true;
+    }
+
+    void enable_buffer() {
+        m_disabled = false;
+    }
+
+private:
+    bool m_disabled = false;
+    T m_impl;
+    std::array<uint8_t, BufferSize> m_buffer;
+    uint16_t m_buf_cur = 0;
+};
 } // namespace tos

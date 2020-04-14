@@ -61,6 +61,12 @@ namespace tos
             return m_fun(std::forward<CallArgTs>(args)..., m_data);
         }
 
+        template <class... CallArgTs>
+        RetT operator()(CallArgTs&&... args) const
+        {
+            return m_fun(std::forward<CallArgTs>(args)..., m_data);
+        }
+
     private:
         internal_funptr_t m_fun;
         void* m_data;

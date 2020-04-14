@@ -3,18 +3,15 @@
 //
 
 #include <arch/drivers.hpp>
-#include <common/xbee.hpp>
 #include <common/alarm.hpp>
-
+#include <common/xbee.hpp>
 #include <tos/ft.hpp>
-#include <tos/print.hpp>
-#include <tos/version.hpp>
-#include <tos/semaphore.hpp>
-
 #include <tos/mem_stream.hpp>
+#include <tos/print.hpp>
+#include <tos/semaphore.hpp>
+#include <tos/version.hpp>
 
-void tx_task()
-{
+void tx_task() {
     using namespace tos::tos_literals;
     using namespace std::chrono_literals;
 
@@ -26,25 +23,23 @@ void tx_task()
     auto alarm = tos::open(tos::devs::alarm, *tmr);
 
     tos::println(usart, "send a character to get into the debugger");
-    char debug_buf[1];
+    uint8_t debug_buf[1];
     auto res = usart.read(debug_buf, alarm, 5s);
 
-    if (res.size() != 0)
-    {
+    if (res.size() != 0) {
         tos::println(usart, "hello! you're in the debugger");
 
         bool debug = true;
 
-        while (debug)
-        {
+        while (debug) {
             auto res = usart.read(debug_buf); // wait for a command, possible forever
 
-            switch (res[0])
-            {
-                case 'c':
-                    debug = false;
-                    break;
-                default: break;
+            switch (res[0]) {
+            case 'c':
+                debug = false;
+                break;
+            default:
+                break;
             }
         }
 
@@ -57,8 +52,7 @@ void tx_task()
 
     int seq = 0;
 
-    while (true)
-    {
+    while (true) {
         namespace xbee = tos::xbee;
         usart->clear();
 
@@ -68,30 +62,26 @@ void tx_task()
 
         xbee::tx_status stat;
         stat.status = xbee::tx_status::statuses::cca_fail;
-        if (r)
-        {
-            tos::xbee_s1<tos::avr::usart0> x {usart};
+        if (r) {
+            tos::xbee_s1<tos::avr::usart0> x{usart};
 
             static char msg_buf[100];
             tos::omemory_stream buff{msg_buf};
 
             tos::println(buff, seq++);
 
-            constexpr xbee::addr_16 base_addr{ 0x0010 };
-            xbee::tx16_req req { base_addr, tos::raw_cast<const uint8_t>(buff.get()), xbee::frame_id_t{1} };
+            constexpr xbee::addr_16 base_addr{0x0010};
+            xbee::tx16_req req{
+                base_addr, tos::raw_cast<const uint8_t>(buff.get()), xbee::frame_id_t{1}};
             x.transmit(req);
 
             alarm.sleep_for(100ms);
             int retries = 5;
-            while (stat.status != xbee::tx_status::statuses::success && retries --> 0)
-            {
+            while (stat.status != xbee::tx_status::statuses::success && retries-- > 0) {
                 auto tx_r = xbee::read_tx_status(usart, alarm);
-                if (tx_r)
-                {
+                if (tx_r) {
                     stat = tos::force_get(tx_r);
-                }
-                else
-                {
+                } else {
                     stat.status = xbee::tx_status::statuses::cca_fail;
                 }
             }
@@ -107,7 +97,6 @@ void tx_task()
     }
 }
 
-void tos_main()
-{
+void tos_main() {
     tos::launch(tos::alloc_stack, tx_task);
 }

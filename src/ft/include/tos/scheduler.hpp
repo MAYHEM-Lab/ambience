@@ -54,7 +54,7 @@ void make_runnable(struct tcb& t);
  * If the interrupts are not disabled when this function
  * is called, the behaviour is undefined
  */
-void suspend_self(const int_guard&);
+void suspend_self(const no_interrupts&);
 // pre-condition: interrupts must be disabled
 
 /**
@@ -100,8 +100,7 @@ public:
      */
     exit_reason schedule();
 
-    template<class TaskT>
-    void make_runnable(TaskT& task) {
+    void make_runnable(tcb& task) {
         m_run_queue.push_back(task);
     }
 

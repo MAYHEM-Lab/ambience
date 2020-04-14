@@ -1,10 +1,15 @@
 #pragma once
+
 #include <algorithm>
 #include <optional>
 #include <tos/crc32.hpp>
 #include <tos/expected.hpp>
 #include <tos/fixed_fifo.hpp>
+#include <tos/ft.hpp>
+#include <tos/mutex.hpp>
 #include <tos/self_pointing.hpp>
+#include <tos/semaphore.hpp>
+#include <tos/stack_storage.hpp>
 #include <vector>
 
 namespace tos {
@@ -19,63 +24,89 @@ public:
         , m_streamid(streamid) {
     }
 
-    int write(tos::span<const char> span) {
+    int write(tos::span<const uint8_t> span) {
         return m_multiplexer->write(this->m_streamid, span);
     }
 
-    tos::span<char> read(tos::span<char> span) {
+    tos::span<uint8_t> read(tos::span<uint8_t> span) {
         return m_multiplexer->read(this->m_streamid, span);
     }
 
+    [[nodiscard]] streamid_t get_stream_id() const {
+        return m_streamid;
+    }
+
 private:
-    streamid_t m_streamid;
     MultiplexerT* m_multiplexer;
+    streamid_t m_streamid;
 };
 
 enum class serial_multiplexer_errors
 {
     stream_closed,
-    bad_crc
+    bad_crc,
+    bad_magic
 };
-
-template <size_t BufferSize>
+ 
+template<size_t BufferSize>
 struct stream_buffer {
-    tos::basic_fixed_fifo<char, BufferSize, ring_buf> data;
+    tos::basic_fixed_fifo<uint8_t, BufferSize, ring_buf> data;
+    tos::semaphore bytes{0};
+    int total = 0;
 
-    void append(tos::span<const char> span) {
+    void append(tos::span<const uint8_t> span) {
         for (auto chr : span) {
             if (data.size() == data.capacity())
                 return;
             data.push(chr);
+            bytes.up();
         }
     }
 
-    tos::span<char> read(tos::span<char> span) {
+    tos::span<uint8_t> read(tos::span<uint8_t> span) {
         for (auto& chr : span) {
+            bytes.down();
             chr = data.pop();
         }
         return span;
     }
 
     void clear() {
+        reset(bytes, 0);
         data = decltype(data){};
     }
 };
 
-template<class UsartT, class StreamDataT = stream_buffer<32>>
+template<class UsartT, class StreamDataT = stream_buffer<512>>
 class serial_multiplexer {
+private:
+    tos::kern::tcb* m_thread;
+
 public:
     using usart_type = UsartT;
     using streamid_t = uint16_t;
     using checksum_type = uint32_t;
 
-    explicit serial_multiplexer(UsartT usart)
+    explicit serial_multiplexer(UsartT usart,
+                                std::initializer_list<streamid_t> with_streams,
+                                bool write_only = false)
         : m_usart(std::move(usart)) {
+        for (auto id : with_streams) {
+            create_stream(id);
+        }
+        if (write_only) {
+            return;
+        }
+        m_thread = &launch(stack_size_t{TOS_DEFAULT_STACK_SIZE}, [this] { thread(); });
+    }
+
+    explicit serial_multiplexer(UsartT usart, bool write_only = false)
+        : serial_multiplexer(std::move(usart), {}, write_only) {
     }
 
     multiplexed_stream<serial_multiplexer> create_stream(streamid_t streamid) {
         if (auto stream = find_stream(streamid); !stream) {
-            m_streams.emplace_back(streamid, StreamDataT{});
+            m_streams.emplace_back(streamid, std::make_unique<StreamDataT>());
         }
         return multiplexed_stream(*this, streamid);
     }
@@ -88,92 +119,83 @@ public:
         return multiplexed_stream(*this, streamid);
     }
 
-    int write(streamid_t streamid, tos::span<const char> span) {
+    int write(streamid_t streamid, tos::span<const uint8_t> span) {
+        tos::lock_guard g{m_write_prot};
         this->m_usart->write(magic_numbers);
-        this->m_usart->write(raw_cast<const char>(tos::monospan(streamid)));
-        uint16_t size = (uint64_t)span.size();
-        this->m_usart->write(raw_cast<const char>(tos::monospan(size)));
+        this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(streamid)));
+        uint16_t size = span.size();
+        this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(size)));
         this->m_usart->write(span);
-        uint32_t crc32 = tos::crc32(tos::raw_cast<const uint8_t>(span));
-        this->m_usart->write(raw_cast<const char>(tos::monospan(crc32)));
+        uint32_t crc32 = tos::crc32(span);
+        this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(crc32)));
 
         return span.size();
     }
 
-    tos::span<char> read(streamid_t streamid, tos::span<char> span) {
+    tos::span<uint8_t> read(streamid_t streamid, tos::span<uint8_t> span) {
         auto stream = this->find_stream(streamid);
 
-        if (!stream)
-            return tos::empty_span<char>();
-
-        auto readinto = span;
-
-        while (true) {
-            auto curslice =
-                readinto.slice(0, std::min(readinto.size(), stream->data.size()));
-            stream->read(curslice);
-            readinto = readinto.slice(curslice.size());
-
-            if (readinto.size() != 0) {
-                while (true) {
-                    auto next_packet_res = next_packet();
-                    if (!next_packet_res) {
-                        switch (force_error(next_packet_res)) {
-                            case serial_multiplexer_errors::stream_closed:
-                                // Stream is dead
-                                return tos::empty_span<char>();
-                            default:
-                                continue;
-                        }
-                    }
-
-                    // We got a packet
-                    if (force_get(next_packet_res) == streamid) {
-                        break;
-                    }
-                }
-            } else
-                break;
+        if (!stream) {
+            return tos::empty_span<uint8_t>();
         }
+
+        stream->read(span);
+
         return span;
     }
 
-    constexpr static std::array<char, 8> magic_numbers = {
+    constexpr static std::array<uint8_t, 8> magic_numbers = {
         0x78, 0x9c, 0xc5, 0x45, 0xe3, 0xc8, 0x0e, 0x37};
 
+    ~serial_multiplexer() {
+        m_stop = true;
+    }
+
 private:
+    tos::mutex m_write_prot;
+    bool m_stop = false;
+    void thread() {
+        while (!m_stop) {
+            auto rd = next_packet();
+            if (rd) {
+            } else {
+                if (force_error(rd) == serial_multiplexer_errors::stream_closed) {
+                    m_stop = true;
+                }
+            }
+        }
+    }
+
     StreamDataT* find_stream(streamid_t streamid) {
-        auto it = std::find_if(
-            this->m_streams.begin(), this->m_streams.end(), [streamid](auto& stream) {
-                return stream.first == streamid;
-            });
+        auto it =
+            std::find_if(this->m_streams.begin(),
+                         this->m_streams.end(),
+                         [streamid](auto& stream) { return stream.first == streamid; });
         if (it == this->m_streams.end())
             return nullptr;
-        return &it->second;
+        return it->second.get();
     }
 
     tos::expected<streamid_t, serial_multiplexer_errors> next_packet() {
-        begin_magicnumber:
         for (auto chr : magic_numbers) {
-            char tmp;
+            uint8_t tmp;
             auto read_res = m_usart->read(tos::monospan(tmp));
             if (read_res.empty()) {
                 return tos::unexpected(serial_multiplexer_errors::stream_closed);
             }
             if (tmp != chr) {
-                goto begin_magicnumber;
+                return tos::unexpected(serial_multiplexer_errors::bad_magic);
             }
         }
 
         streamid_t streamid;
-        uint16_t size;
-
-        auto read_res = m_usart->read(raw_cast<char>(tos::monospan(streamid)));
+        auto read_res = m_usart->read(raw_cast<uint8_t>(tos::monospan(streamid)));
         if (read_res.empty()) {
             return tos::unexpected(serial_multiplexer_errors::stream_closed);
         }
 
-        read_res = m_usart->read(raw_cast<char>(tos::monospan(size)));
+        uint16_t size;
+        read_res = m_usart->read(raw_cast<uint8_t>(tos::monospan(size)));
         if (read_res.empty()) {
             return tos::unexpected(serial_multiplexer_errors::stream_closed);
         }
@@ -183,7 +205,7 @@ private:
             // Received a packet for a non-existent stream, but we still have to read the
             // content + checksum
             for (uint16_t i = 0; i < size + sizeof(checksum_type); ++i) {
-                char tmp;
+                uint8_t tmp;
                 read_res = m_usart->read(tos::monospan(tmp));
                 if (read_res.empty()) {
                     return tos::unexpected(serial_multiplexer_errors::stream_closed);
@@ -194,7 +216,7 @@ private:
 
         uint32_t crc = 0;
         for (uint16_t i = 0; i < size; ++i) {
-            char tmp;
+            uint8_t tmp;
             read_res = m_usart->read(tos::monospan(tmp));
             if (read_res.empty()) {
                 // Did not get to read the whole packet, drop it
@@ -206,7 +228,7 @@ private:
         }
 
         uint32_t wire_crc;
-        read_res = m_usart->read(tos::raw_cast<char>(tos::monospan(wire_crc)));
+        read_res = m_usart->read(tos::raw_cast<uint8_t>(tos::monospan(wire_crc)));
         if (read_res.empty()) {
             // Did not get to read the whole CRC, drop packet
             stream->clear();
@@ -223,6 +245,6 @@ private:
     }
 
     UsartT m_usart;
-    std::vector<std::pair<streamid_t, StreamDataT>> m_streams;
+    std::vector<std::pair<streamid_t, std::unique_ptr<StreamDataT>>> m_streams;
 };
 } // namespace tos

@@ -19,7 +19,7 @@ target_link_libraries(esp82_udp PUBLIC esp82_wifi tos_inet)
 
 add_library(esp82_tcp include/arch/tcp.hpp src/tcp.cpp)
 tos_install(esp82_tcp ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(esp82_tcp PUBLIC esp82_wifi tos_inet)
+target_link_libraries(esp82_tcp PUBLIC esp82_wifi tos_inet tos::libcxx)
 target_compile_definitions(esp82_tcp PUBLIC ESP_TCP_VERBOSE)
 
 add_library(esp82_gpio include/arch/gpio.hpp src/gpio.cpp)
@@ -41,7 +41,7 @@ target_include_directories(esp82_adc PRIVATE src)
 tos_install(esp82_adc ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_adc PUBLIC tos_core)
 
-add_library(esp82_nvm include/arch/nvm.hpp)
+add_library(esp82_nvm include/arch/nvm.hpp src/nvm.cpp)
 tos_install(esp82_nvm ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(esp82_nvm PUBLIC tos_core)
 

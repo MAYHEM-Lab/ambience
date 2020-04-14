@@ -1,10 +1,10 @@
 #pragma once
 
+#include <csetjmp>
+#include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <new>
-#include <setjmp.h>
-#include <stdlib.h>
-#include <string.h>
 #include <tos/compiler.hpp>
 #include <tos/debug/panic.hpp>
 #include <tos/interrupt.hpp>
@@ -13,15 +13,13 @@
 #include <tos/stack_storage.hpp>
 #include <tos/tcb.hpp>
 
-namespace tos {
-namespace this_thread {
+namespace tos::this_thread {
 inline thread_id_t get_id() {
     if (!impl::cur_thread)
         return {static_cast<uintptr_t>(-1)};
     return {reinterpret_cast<uintptr_t>(impl::cur_thread)};
 }
-} // namespace this_thread
-} // namespace tos
+} // namespace tos::this_thread
 
 namespace tos {
 extern kern::scheduler sched;
@@ -51,7 +49,7 @@ namespace kern {
     switch_context(sched.main_context, return_codes::do_exit);
 }
 
-inline void suspend_self(const int_guard&) {
+inline void suspend_self(const no_interrupts&) {
     kern::ctx ctx;
     if (save_context(*impl::cur_thread, ctx) == return_codes::saved) {
         switch_context(sched.main_context, return_codes::suspend);
@@ -69,7 +67,7 @@ struct super_tcb final : tcb {
 
     // This must not be inlined so that we don't mess up with the compiler's
     // stack allocation assumptions.
-    [[noreturn]] void NO_INLINE start() {
+    [[noreturn]] NO_INLINE void start() {
         // interrupts should be enabled before entering _user space_
         kern::enable_interrupts();
 
@@ -78,6 +76,13 @@ struct super_tcb final : tcb {
         this_thread::exit(nullptr);
     }
 
+    ~super_tcb() final {
+        // no if constexpr in C++14
+        if /*constexpr*/ (FreeStack)
+            tos_stack_free(get_task_base());
+    }
+
+private:
     /**
      * This function computes the beginning of the memory block
      * of the task this tcb belongs to.
@@ -88,13 +93,6 @@ struct super_tcb final : tcb {
         return reinterpret_cast<char*>(this) - m_tcb_off;
     }
 
-    ~super_tcb() final {
-        // no if constexpr in C++14
-        if /*constexpr*/ (FreeStack)
-            tos_stack_free(get_task_base());
-    }
-
-private:
     uint16_t m_tcb_off; // we store the offset of this object from the task base
     FunT m_fun;
     std::tuple<Args...> m_args;
@@ -123,7 +121,7 @@ prep_lambda_layout(tos::span<uint8_t> task_data, FuncT&& func, ArgTs&&... args) 
 }
 
 template<class TaskT>
-inline thread_id_t __attribute__((optimize("-Os"))) scheduler::start(TaskT& t) {
+TOS_SIZE_OPTIMIZE inline thread_id_t scheduler::start(TaskT& t) {
     static_assert(std::is_base_of<tcb, TaskT>{}, "Tasks must inherit from tcb class!");
 
     // New threads are runnable by default.
@@ -152,7 +150,7 @@ inline thread_id_t __attribute__((optimize("-Os"))) scheduler::start(TaskT& t) {
 
     static_cast<TaskT*>(impl::cur_thread)->start();
 
-    __builtin_unreachable();
+    TOS_UNREACHABLE();
 }
 
 inline void busy() {
@@ -220,7 +218,7 @@ inline void make_runnable(tcb& t) {
 } // namespace kern
 
 template<bool FreeStack, class FuncT, class... ArgTs>
-inline auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
+auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
     auto& t = kern::prep_lambda_layout<FreeStack>(
         task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     sched.start(t);
@@ -228,7 +226,7 @@ inline auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args)
 }
 
 template<class FuncT, class... ArgTs>
-inline auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
+auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
     auto ptr = tos_stack_alloc(stack_sz.sz);
     if (!ptr) {
         tos::debug::panic("Stack allocation failed");
@@ -240,9 +238,8 @@ inline auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
 }
 
 template<class FuncT, class... ArgTs, size_t StSz>
-inline auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
-    return launch<false>(
-        stack, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
+auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
+    return launch<false>(stack, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
 }
 
 inline void this_thread::exit(void*) {

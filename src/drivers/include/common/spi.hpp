@@ -11,6 +11,7 @@
 #include <tos/expected.hpp>
 #include <tos/moved_flag.hpp>
 #include <tos/span.hpp>
+#include <type_traits>
 
 namespace tos {
 namespace spi {
@@ -32,9 +33,8 @@ auto exchange(SpiT& spi, uint8_t val) {
 template<class T>
 struct spi_transaction {
 public:
-    explicit spi_transaction(T& spi,
-                             typename T::gpio_type& gpio,
-                             typename T::gpio_type::pin_type pin)
+    using gpio_type = typename std::remove_pointer_t<T>::gpio_type;
+    explicit spi_transaction(T spi, gpio_type* gpio, typename gpio_type::pin_type pin)
         : m_pin{pin}
         , m_g{gpio}
         , m_spi{spi} {
@@ -47,8 +47,8 @@ public:
         }
     }
 
-    T* operator->() {
-        return &m_spi;
+    T& operator->() {
+        return m_spi;
     }
 
     spi_transaction(spi_transaction&& rhs) noexcept = default;
@@ -61,9 +61,9 @@ public:
 
 private:
     moved_flag m_omit;
-    T& m_spi;
-    typename T::gpio_type& m_g;
-    typename T::gpio_type::pin_type m_pin;
+    T m_spi;
+    gpio_type* m_g;
+    typename gpio_type::pin_type m_pin;
 };
 
 struct spi_mode {

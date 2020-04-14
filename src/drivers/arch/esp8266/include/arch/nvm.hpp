@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <tos/expected.hpp>
 #include <tos/interrupt.hpp>
 #include <tos/span.hpp>
@@ -26,7 +27,13 @@ class spi_flash {
 public:
     using sector_id_t = uint16_t;
 
-    size_t sector_size_bytes() const { return SPI_FLASH_SEC_SIZE; }
+    size_t sector_count() const {
+        return (1 << ((spi_flash_get_id() >> 16) & 0xFF)) / sector_size_bytes();
+    }
+
+    size_t sector_size_bytes() const {
+        return SPI_FLASH_SEC_SIZE;
+    }
 
     expected<void, flash_errors> erase(sector_id_t sector) {
         tos::int_guard ig;
@@ -50,7 +57,9 @@ public:
         }
 
         auto res = spi_flash_write(
-            (uint32_t)sector * sector_size_bytes() + offset, (uint32*)data.data(), data.size());
+            static_cast<uint32_t>(sector * sector_size_bytes() + offset),
+            const_cast<uint32*>(reinterpret_cast<const uint32*>(data.data())),
+            data.size());
         if (res == SPI_FLASH_RESULT_OK) {
             return {};
         } else {
@@ -69,8 +78,10 @@ public:
             return unexpected(flash_errors::misaligned_size);
         }
 
-        auto res = spi_flash_read(
-            (uint32_t)sector * sector_size_bytes() + offset, (uint32*)buf.data(), buf.size());
+        auto res =
+            spi_flash_read(static_cast<uint32_t>(sector * sector_size_bytes() + offset),
+                           reinterpret_cast<uint32*>(buf.data()),
+                           buf.size());
         if (res == SPI_FLASH_RESULT_OK) {
             return {};
         } else {

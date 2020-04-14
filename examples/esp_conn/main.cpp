@@ -14,12 +14,12 @@
 #include <tos/utility.hpp>
 #include <tos/version.hpp>
 
-char buf[512];
+uint8_t buf[512];
 void task() {
     using namespace tos::tos_literals;
     using namespace std::chrono_literals;
 
-    auto usart = open(tos::devs::usart<0>, tos::uart::default_9600);
+    auto usart = open(tos::devs::usart<0>, tos::uart::default_115200);
 
     tos::println(usart, "\n\n\n\n");
     tos::println(usart, tos::platform::board_name);
@@ -49,7 +49,7 @@ void task() {
 
     tos::esp82::wifi w;
 conn_:
-    auto res = w.connect("cs190b", "cs190bcs190b");
+    auto res = w.connect("mayhem", "z00mz00m");
     state = 1;
 
     // tos::println(usart, "connected?", bool(res));
@@ -66,26 +66,21 @@ conn_:
     lwip_init();
 
     for (; true; ++i) {
-        auto try_conn = tos::esp82::connect(wconn, {{3, 122, 138, 41}}, {80});
+        auto try_conn = tos::esp82::connect(wconn, tos::parse_ipv4_address("93.184.216.34"), {80});
         state = 3;
 
         if (!try_conn) {
             ++fail;
-            // tos::println(usart, "couldn't connect");
             continue;
         }
 
-        state = 4;
-
         auto& conn = force_get(try_conn);
         tos::tcp_stream<tos::esp82::tcp_endpoint> stream{std::move(conn)};
-
-        state = 5;
-
-        stream.write("GET / HTTP/1.1\r\n"
-                     "Host: bakir.io\r\n"
-                     "Connection: close\r\n"
-                     "\r\n");
+        state = 4;
+        tos::println(stream, "GET / HTTP/1.1");
+        tos::println(stream, "Host: example.com");
+        tos::println(stream, "Connection: close");
+        tos::println(stream);
 
         state = 6;
 

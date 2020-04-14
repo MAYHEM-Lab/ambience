@@ -18,11 +18,10 @@ void nrf_task() {
     tos::println(*usart, "hello");
 
     auto spi = open(tos::devs::spi<0>, tos::spi_mode::master);
-    spi->enable();
 
     auto g = open(tos::devs::gpio);
 
-    tos::nrf24<decltype(g), decltype(spi)> nrf(g, spi, 8_pin, 10_pin, 2_pin);
+    tos::nrf24<decltype(&g), decltype(&spi)> nrf(&g, &spi, 8_pin, 10_pin, 2_pin);
 
     tos::println(*usart, "is connected:", nrf.is_connected());
     tos::println(

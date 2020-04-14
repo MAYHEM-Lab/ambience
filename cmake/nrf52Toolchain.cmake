@@ -19,12 +19,14 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING "")
 
 set(SDK_ROOT /opt/x-tools/nRF5_SDK_15.3.0_59ac345)
 
-include_directories(SYSTEM ${SDK_ROOT}/components/toolchain/cmsis/include/)
 include_directories(SYSTEM ${SDK_ROOT}/integration/nrfx)
+
 include_directories(SYSTEM ${SDK_ROOT}/modules/nrfx)
 include_directories(SYSTEM ${SDK_ROOT}/modules/nrfx/mdk/)
 include_directories(SYSTEM ${SDK_ROOT}/modules/nrfx/hal)
 include_directories(SYSTEM ${SDK_ROOT}/modules/nrfx/drivers/include)
+
+include_directories(SYSTEM ${SDK_ROOT}/components/toolchain/cmsis/include/)
 include_directories(SYSTEM ${SDK_ROOT}/components/libraries/delay)
 include_directories(SYSTEM ${SDK_ROOT}/components/libraries/log)
 include_directories(SYSTEM ${SDK_ROOT}/components/libraries/timer)

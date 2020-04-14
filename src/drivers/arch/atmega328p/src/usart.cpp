@@ -54,18 +54,18 @@ struct open_state {
      * Synchronizes the availabilty of the write buffer
      */
     tos::mutex write_avail;
-    const char* volatile write = nullptr;
+    const uint8_t* volatile write = nullptr;
     uint16_t len = 0;
 
     tos::semaphore write_done{0};
 
-    ringbuf<char, 32> read_buf;
+    ringbuf<uint8_t, 32> read_buf;
     tos::semaphore have_data{0};
 };
 
 std::optional<open_state> state;
 
-void write_usart(tos::span<const char> buf) {
+void write_usart(tos::span<const uint8_t> buf) {
     tos::lock_guard<tos::mutex> lg{state->write_avail};
 
     state->len = buf.size();
@@ -113,7 +113,7 @@ void usart0::options(usart_modes m, usart_parity p, usart_stop_bit s) {
     UCSR0C = usart_control(m, p, s);
 }
 
-span<char> usart0::read(span<char> b) {
+span<uint8_t> usart0::read(span<uint8_t> b) {
     size_t total = 0;
     auto len = b.size();
     auto buf = b.data();
@@ -135,7 +135,7 @@ void usart0::clear() {
     state->read_buf.clear();
 }
 
-span<char> usart0::read(span<char> b,
+span<uint8_t> usart0::read(span<uint8_t> b,
                         tos::alarm<tos::avr::timer1>& alarm,
                         const std::chrono::milliseconds& to) {
     size_t total = 0;
@@ -156,14 +156,14 @@ span<char> usart0::read(span<char> b,
     return b.slice(0, total);
 }
 
-int usart0::write(span<const char> buf) {
+int usart0::write(span<const uint8_t> buf) {
     write_usart(buf);
     return buf.size() - state->len;
 }
 } // namespace avr
 } // namespace tos
 
-static void put_sync(const char data) {
+static void put_sync(const uint8_t data) {
     while (!(UCSR0A & (1 << UDRE0)))
         ;
     UDR0 = data;
@@ -171,7 +171,7 @@ static void put_sync(const char data) {
 
 namespace tos {
 namespace avr {
-void write_sync(span<const char> buf) {
+void write_sync(span<const uint8_t> buf) {
     for (auto c : buf) {
         put_sync(c);
     }
