@@ -4,19 +4,34 @@
 
 #pragma once
 
+#include <boost/asio/posix/stream_descriptor.hpp>
 #include <common/driver_base.hpp>
 #include <common/tty.hpp>
 #include <common/usart.hpp>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+#include <tos/semaphore.hpp>
 #include <tos/span.hpp>
 
 #undef putc
 
 namespace tos {
 namespace x86 {
+class stderr_adapter : public self_pointing<stderr_adapter> {
+public:
+    int write(span<const uint8_t> buf);
+};
+
 class stdio : public self_pointing<stdio> {
 public:
-    static int write(span<const uint8_t> buf);
-    static span<uint8_t> read(span<uint8_t> buf);
+    stdio();
+
+    int write(span<const uint8_t> buf);
+    span<uint8_t> read(span<uint8_t> buf);
+
+private:
+    boost::asio::posix::stream_descriptor m_input;
 };
 } // namespace x86
 

@@ -7,7 +7,6 @@ add_library(tos_util
 
     include/tos/fixed_fifo.hpp
     include/tos/sync_ring_buf.hpp
-    include/tos/io/serial_multiplexer.hpp
 )
 
 add_library(tos_util_core
@@ -33,7 +32,7 @@ add_library(tos_util_core
     include/tos/moved_flag.hpp
 )
 
-target_compile_features(tos_util_core PUBLIC cxx_std_14)
+target_compile_features(tos_util_core PUBLIC cxx_std_17)
 target_link_libraries(tos_util_core PUBLIC tos::libcxx)
 
 target_link_libraries(tos_util PUBLIC tos_util_core tos::ft)
@@ -43,16 +42,26 @@ add_library(tos::util ALIAS tos_util)
 tos_install(tos_util ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_util_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(serial_mux
+        include/tos/io/serial_multiplexer.hpp
+        src/io/serial_multiplexer.cpp
+        )
+target_link_libraries(serial_mux PUBLIC tos_util_core tos::ft)
+
 if (BUILD_TESTS)
     add_executable(uuid_test src/uuid_test.cpp)
     target_link_libraries(uuid_test PUBLIC tests_main tos_util_core)
-    add_test(uuid_test uuid_test)
+    add_test(NAME uuid_test COMMAND uuid_test)
 
     add_executable(hex_test src/hex_test.cpp)
     target_link_libraries(hex_test PUBLIC tests_main tos_util_core)
-    add_test(hex_test hex_test)
+    add_test(NAME hex_test COMMAND hex_test)
 
 	add_executable(mem_stream_test src/mem_stream_test.cpp)
 	target_link_libraries(mem_stream_test PUBLIC tests_main tos_util_core)
-	add_test(mem_stream_test mem_stream_test)
+    add_test(NAME mem_stream_test COMMAND mem_stream_test)
+
+    add_executable(intrusive_ptr_test src/intrusive_ptr_test.cpp)
+    target_link_libraries(intrusive_ptr_test PUBLIC tests_main tos_util_core)
+    add_test(NAME intrusive_ptr_test COMMAND intrusive_ptr_test)
 endif()

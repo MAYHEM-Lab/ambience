@@ -15,7 +15,10 @@ namespace tos {
 template<class CharT, class StreamT>
 span<CharT> read_until(StreamT& str, span<const CharT> until, span<CharT> buffer) {
     for (size_t i = 0; i < buffer.size(); ++i) {
-        str->read(tos::raw_cast<uint8_t>(buffer.slice(i, 1)));
+        auto res = str->read(tos::raw_cast<uint8_t>(buffer.slice(i, 1)));
+        if (res.empty()) {
+            return buffer.slice(0, i);
+        }
         if (buffer.slice(i - until.size() + 1, until.size()) == until) {
             return buffer.slice(0, i + 1);
         }
