@@ -1,5 +1,4 @@
 # Tos
-[![CircleCI](https://circleci.com/gh/FatihBAKIR/tos.svg?style=svg&circle-token=acae0aae6ddbc486e9644319894828f403ae9e9f)](https://circleci.com/gh/FatihBAKIR/tos)
 
 Tos is a cooperative multitasking library operating system focused on efficiency and compile time safety features.
 
