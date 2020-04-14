@@ -3,7 +3,6 @@
 //
 
 #include <algorithm>
-#include <iostream>
 #include <tos/intrusive_list.hpp>
 #include <tos/memory/free_list.hpp>
 
