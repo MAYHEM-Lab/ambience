@@ -24,7 +24,7 @@ add_library(tos_util_core
 )
 
 target_compile_features(tos_util_core PUBLIC cxx_std_17)
-target_link_libraries(tos_util_core PUBLIC tos::libcxx)
+target_link_libraries(tos_util_core PUBLIC tos::libcxx tos_memory)
 
 add_library(tos_util
         src/stub.cpp
@@ -40,7 +40,6 @@ target_link_libraries(tos_util PUBLIC tos_util_core tos::ft)
 add_library(tos::util ALIAS tos_util)
 
 tos_install(tos_util ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(tos_util PUBLIC "-Wl,--whole-archive $<TARGET_FILE:tos_util_core> -Wl,--no-whole-archive")
 target_link_libraries(tos_util PUBLIC tos_memory)
 tos_install(tos_util_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
