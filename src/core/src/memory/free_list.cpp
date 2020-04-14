@@ -15,7 +15,7 @@ struct free_header : list_node<free_header> {
     size_t size;
 };
 
-struct allocation_header {
+struct alignas(16) allocation_header {
     size_t size;
 };
 
@@ -31,6 +31,9 @@ free_list::free_list(tos::span<uint8_t> buffer)
 }
 
 void* free_list::allocate(size_t size) {
+    if (size % 16 != 0) {
+        size += 16 - size % 16;
+    }
     auto sz = std::max(sizeof(free_header), size + sizeof(allocation_header));
 
     auto first_fit =
