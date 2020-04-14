@@ -8,6 +8,7 @@ workflows:
     - stm32_build
     - avr_build
     - x86_build
+    - ti_build
 jobs:
   nrf52_build:
     docker:
@@ -27,12 +28,6 @@ jobs:
           name: Move the toolchain
           command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-8-2018-q4-major /opt/x-tools
       - run:
-          name: Download nRF52 SDK
-          command: wget http://cs.ucsb.edu/~bakir/nRF5_SDK_15.3.0_59ac345.zip -O nrf5-sdk.zip
-      - run:
-          name: Extract SDK
-          command: unzip nrf5-sdk.zip -d /opt/x-tools
-      - run:
           name: Generate Project
           command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=nrf52/832 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
@@ -44,6 +39,30 @@ jobs:
           command: mkdir build_840 && cd build_840 && cmake -G Ninja -DTOS_CPU=nrf52/840 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
           working_directory: build_840/
+          name: Build Project
+          command: ninja
+  ti_build:
+    docker:
+      - image: bakir/tos-builder-base
+    steps:
+      - checkout
+      - run:
+          name: Get submodules
+          command: git submodule update --init --recursive
+      - run:
+          name: Download toolchain
+          command: wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-x86_64-linux.tar.bz2
+      - run:
+          name: Extract toolchain
+          command: tar xf gcc-arm-none-eabi-9-2019-q4-major-linux.tar.bz2
+      - run:
+          name: Move the toolchain
+          command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-9-2019-q4-major /opt/x-tools
+      - run:
+          name: Generate Project
+          command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=ti/cc3220sf -DCMAKE_BUILD_TYPE=MinSizeRel ..
+      - run:
+          working_directory: build/
           name: Build Project
           command: ninja
   stm32_build:
@@ -69,12 +88,6 @@ jobs:
       - run:
           name: Move the toolchain
           command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-8-2018-q4-major /opt/x-tools
-      - run:
-          name: Download libopencm3
-          command: wget http://cs.ucsb.edu/~bakir/libopencm3.zip -O libopencm3.zip
-      - run:
-          name: Extract libopencm3
-          command: unzip libopencm3.zip -d /opt/x-tools
       - run:
           name: Generate Project
           command: mkdir build-f103 && cd build-f103 && cmake -G Ninja -DTOS_CPU=stm32/f1/03c8 -DCMAKE_BUILD_TYPE=MinSizeRel ..
@@ -130,7 +143,7 @@ jobs:
             CC: clang-8
             CXX: clang++-8
           name: Generate Project
-          command: mkdir clang-build && cd clang-build && cmake -G Ninja -DTOS_BOARD=hosted/x86 -DBUILD_TESTS=ON ..
+          command: mkdir clang-build && cd clang-build && cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_BOARD=hosted/x86 -DBUILD_TESTS=ON ..
       - run:
           working_directory: clang-build/
           name: Build Project
@@ -180,16 +193,16 @@ jobs:
         command: git submodule update --init --recursive
     - run:
         name: Download toolchain
-        command: wget http://cs.ucsb.edu/~bakir/esp-tos-sdk.tar.bz2
+        command: wget https://github.com/earlephilhower/esp-quick-toolchain/releases/download/3.0.0-gnu5/x86_64-linux-gnu.xtensa-lx106-elf-a5c9861.1575819473.tar.gz
     - run:
         name: Create toolchain dir
-        command: mkdir -p /opt/x-tools/tos-esp-sdk
+        command: mkdir -p /opt/x-tools
     - run:
         name: Extract toolchain
-        command: tar xf esp-tos-sdk.tar.bz2 -C /opt/x-tools/tos-esp-sdk
+        command: tar xf x86_64-linux-gnu.xtensa-lx106-elf-a5c9861.1575819473.tar.gz -C /opt/x-tools/
     - run:
         name: Generate Project
-        command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=nodemcu -DCMAKE_BUILD_TYPE=MinSizeRel ..
+        command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=esp/8266 -DCMAKE_BUILD_TYPE=MinSizeRel ..
     - run:
         working_directory: build/
         name: Build Project

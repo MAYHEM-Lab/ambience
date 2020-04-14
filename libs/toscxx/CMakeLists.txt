@@ -82,10 +82,12 @@ target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NA
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_ATOMIC_HEADER)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_ABI_VERSION=2)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_LONG_DOUBLE)
 
 if(${TOS_CORE} MATCHES "atmega")
     target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_FLOATING_POINT)
     target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_WCHAR)
+    target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_LONG_LONG)
 endif()
 if(${TOS_CORE} MATCHES "esp8266")
     target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_FLOATING_POINT)

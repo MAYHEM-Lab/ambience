@@ -1,5 +1,4 @@
 # Tos
-[![CircleCI](https://circleci.com/gh/FatihBAKIR/tos.svg?style=svg&circle-token=acae0aae6ddbc486e9644319894828f403ae9e9f)](https://circleci.com/gh/FatihBAKIR/tos)
 
 Tos is a cooperative multitasking library operating system focused on efficiency and compile time safety features.
 
@@ -16,12 +15,14 @@ Supported and tested targets:
 | ARM    | STM32F746 (cortex m7) |
 | ARM    | nRF528232 (cortex m4) |
 | ARM    | nRF528240 (cortex m4) |
+| ARM    | CC3235SF (cortex m4) |
+| ARM    | CC3220SF (cortex m4) |
 | Xtensa | ESP8266 |
 | x86    | any (runs in userspace) |
 
 ## In a nutshell
 
-+ Cooperative multitasking kernel
++ Cooperative multitasking kernel, with optional per-thread preemption
 + Efficient, zero overhead abstraction model
 + First class C++ support, with extensive standard library support, including C++2a features
 + Written using modern programming practices with focus on maintainability, safety and portability

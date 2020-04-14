@@ -23,6 +23,27 @@ if (BUILD_TESTS)
     target_link_libraries(tos_memory_free_list_test PUBLIC tests_main tos_memory)
     add_test(tos_memory_free_list_test tos_memory_free_list_test)
 endif()
+
+add_library(tos_debug_log
+        src/log.cpp
+        include/tos/debug/log.hpp
+        include/tos/debug/detail/logger_base.hpp
+        include/tos/debug/detail/log_message.hpp
+        include/tos/debug/sinks/serial_sink.hpp
+        include/tos/debug/sinks/null_sink.hpp
+        include/tos/debug/sinks/sink.hpp include/tos/debug/sinks/clock_adapter.hpp)
+target_include_directories(tos_debug_log PUBLIC include)
+target_link_libraries(tos_debug_log PUBLIC tos_util_core tos_print)
+
+add_library(tos_dynamic_log src/dynamic_log.cpp include/tos/debug/dynamic_log.hpp)
+target_link_libraries(tos_dynamic_log PUBLIC tos_debug_log)
+
+if (BUILD_TESTS)
+    add_executable(log_tests log_tests.cpp)
+    target_link_libraries(log_tests PUBLIC tests_main tos_core tos_debug_log)
+    add_test(NAME log_tests COMMAND log_tests)
+endif()
+
 set(TOS_CORE_HEADERS
         include/tos/devices.hpp
         include/tos/char_stream.hpp
@@ -43,7 +64,7 @@ add_library(tos::print ALIAS tos_print)
 add_library(tos_core src/stub.cpp ${TOS_CORE_HEADERS} src/tos_init.cpp src/device_id.cpp src/debug.cpp)
 target_compile_definitions(tos_core PUBLIC TOS_GIT_SHA1=\"${GIT_SHA1}\")
 target_link_libraries(tos_core PUBLIC tos_mem tos_util)
-target_link_libraries(tos_core PUBLIC tos::libcxx)
+target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug_log)
 add_library(tos::core ALIAS tos_core)
 
 add_library(tos_arch_core src/stub.cpp)
@@ -58,6 +79,11 @@ target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core)
 
 target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_arch)
 target_compile_definitions(tos_core PUBLIC TOS_ARCH_${TOS_ARCH_NAME})
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    target_compile_options(tos_core PUBLIC -fdiagnostics-color=always)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    target_compile_options(tos_core PUBLIC -fdiagnostics-color)
+endif ()
 
 tos_install(tos_arch ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_arch_core ${CMAKE_CURRENT_SOURCE_DIR}/include)

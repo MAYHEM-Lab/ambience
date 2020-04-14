@@ -10,7 +10,7 @@
 
 namespace tos {
 template<class I2CT>
-struct ssd1306 {
+struct ssd1306 : public self_pointing<ssd1306<I2CT>> {
 public:
     ssd1306(I2CT i2c, tos::twi_addr_t i2c_addr, uint16_t cols, uint16_t rows);
 

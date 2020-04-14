@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  This file conforms to the DTD xdc/bld/build.dtd -->
+<package name="ti.sysbios.rts.ti" version="1, 0, 0, 0" producerId="undefined">
+    <units>
+        <module name="ThreadLocalStorage"/>
+        <module name="ReentSupport"/>
+    </units>
+    <sources>
+        <srcFile name="package/package_ti.sysbios.rts.ti.c"/>
+        <srcFile name="aeabi_portable.c"/>
+        <srcFile name="ReentSupport.c"/>
+    </sources>
+    <configscripts>
+    </configscripts>
+    <makefiles>
+        <srcFile name="package.mak" src="package.bld"/>
+        <srcFile name="package/package.xdc.dep" src="package.xdc"/>
+        <srcFile name="package/package.cfg.dep" src="package.xdc"/>
+        <srcFile name="lib/debug/ti.sysbios.rts.ti.aem4.mak" src="package.bld"/>
+        <srcFile name="package/lib/lib/debug/ti.sysbios.rts.ti/package/package_ti.sysbios.rts.ti.oem4.dep" src="package/package_ti.sysbios.rts.ti.c"/>
+        <srcFile name="package/lib/lib/debug/ti.sysbios.rts.ti/aeabi_portable.oem4.dep" src="aeabi_portable.c"/>
+        <srcFile name="package/lib/lib/debug/ti.sysbios.rts.ti/ReentSupport.oem4.dep" src="ReentSupport.c"/>
+        <srcFile name="lib/debug/ti.sysbios.rts.ti.am4g.mak" src="package.bld"/>
+        <srcFile name="package/lib/lib/debug/ti.sysbios.rts.ti/package/package_ti.sysbios.rts.ti.om4g.dep" src="package/package_ti.sysbios.rts.ti.c"/>
+        <srcFile name="package/lib/lib/debug/ti.sysbios.rts.ti/aeabi_portable.om4g.dep" src="aeabi_portable.c"/>
+        <srcFile name="package/lib/lib/debug/ti.sysbios.rts.ti/ReentSupport.om4g.dep" src="ReentSupport.c"/>
+        <srcFile name="lib/debug/ti.sysbios.rts.ti.arm4.mak" src="package.bld"/>
+        <srcFile name="package/lib/lib/debug/ti.sysbios.rts.ti/package/package_ti.sysbios.rts.ti.orm4.dep" src="package/package_ti.sysbios.rts.ti.c"/>
+        <srcFile name="package/lib/lib/debug/ti.sysbios.rts.ti/aeabi_portable.orm4.dep" src="aeabi_portable.c"/>
+        <srcFile name="package/lib/lib/debug/ti.sysbios.rts.ti/ReentSupport.orm4.dep" src="ReentSupport.c"/>
+        <srcFile name="package/rel/ti_sysbios_rts_ti.tar.dep" src="package/rel/ti_sysbios_rts_ti.xdc.inc"/>
+    </makefiles>
+    <targets>
+        <target name="ti.targets.arm.elf.M4"
+            version="ti.targets.arm.elf.M4{1,0,18.12,3"
+            rawVersion="18.12.3"
+            platform="ti.platforms.tiva:TM4C1294NCPDT:1"
+            isa="v7M4"
+            suffix="em4"
+            rootDir="/db/vendors/ti/arm/18.12.3.LTS/Linux"
+            os="undefined"
+            rts="ti.targets.arm.rtsarm">
+            <model endian="little"
+                codeModel="thumb2"
+                dataModel="undefined"/>
+        </target>
+        <target name="gnu.targets.arm.M4"
+            version="gnu.targets.arm.M4{1,0,7.2,1"
+            rawVersion="7.2.1"
+            platform="ti.platforms.tiva:TM4C1294NCPDT"
+            isa="v7M4"
+            suffix="m4g"
+            rootDir="/db/vendors/linaro/gcc-arm-none-eabi-7-2017-q4-major"
+            os="undefined"
+            rts="gnu.targets.arm.rtsv7M">
+            <model endian="little"
+                codeModel="thumb2"
+                dataModel="undefined"/>
+        </target>
+        <target name="iar.targets.arm.M4"
+            version="iar.targets.arm.M4{1,0,8.32,2"
+            rawVersion="8.32.2.178"
+            platform="ti.platforms.tiva:TM4C1294NCPDT:1"
+            isa="v7M4"
+            suffix="rm4"
+            rootDir="/db/vendors/iar/arm/8.32.2/Linux"
+            os="undefined"
+            rts="iar.targets.arm.rts">
+            <model endian="little"
+                codeModel="thumb2"
+                dataModel="undefined"/>
+        </target>
+    </targets>
+    <libraries>
+    <library name="lib/debug/ti.sysbios.rts.ti"
+        pname="lib/debug/ti.sysbios.rts.ti.aem4"
+        profile="debug"
+        target="ti.targets.arm.elf.M4"/>
+    <library name="lib/debug/ti.sysbios.rts.ti"
+        pname="lib/debug/ti.sysbios.rts.ti.am4g"
+        profile="debug"
+        target="gnu.targets.arm.M4"/>
+    <library name="lib/debug/ti.sysbios.rts.ti"
+        pname="lib/debug/ti.sysbios.rts.ti.arm4"
+        profile="debug"
+        target="iar.targets.arm.M4"/>
+    </libraries>
+    <configurations>
+    </configurations>
+    <executables>
+    </executables>
+    <tests>
+    </tests>
+    <releases relDir="package/rel/">
+    <release name="ti_sysbios_rts_ti"
+        pname="ti_sysbios_rts_ti.tar"
+        label="default"
+        relScript="ti/sysbios/libFilter.xs">
+        <file name="package/package.bld.xml"/>
+        <file name="package/build.cfg"/>
+        <file name="package/package.xdc.inc"/>
+        <file name="package.bld"/>
+        <file name="aeabi_portable.c"/>
+        <file name="linkcmd.xdt"/>
+        <file name="tls_get_tp.asm"/>
+        <file name="package/package.cfg.xdc.inc"/>
+        <file name="lib/debug/ti.sysbios.rts.ti.aem4"/>
+        <file name="package/package_ti.sysbios.rts.ti.c"/>
+        <file name="ReentSupport.c"/>
+        <file name="lib/debug/ti.sysbios.rts.ti.am4g"/>
+        <file name="lib/debug/ti.sysbios.rts.ti.arm4"/>
+    </release>
+    </releases>
+    <repositories>
+    </repositories>
+</package>

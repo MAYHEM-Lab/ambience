@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <tos/ft.hpp>
 #include <tos/interrupt.hpp>
+#include <nrf_pwr_mgmt.h>
 
 #ifdef SOFTDEVICE_PRESENT
 #include "nrf_sdh.h"
@@ -22,31 +23,7 @@ void tos_main();
 int main() {
     tos::kern::enable_interrupts();
 
-    /* Start 16 MHz crystal oscillator */
-    NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-    NRF_CLOCK->TASKS_HFCLKSTART = 1;
-
-    /* Wait for the external oscillator to start up */
-    while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0) {
-        // Do nothing.
-    }
-
-    /* Start low frequency crystal oscillator for app_timer(used by bsp)*/
-    NRF_CLOCK->LFCLKSRC = (CLOCK_LFCLKSRC_SRC_Xtal << CLOCK_LFCLKSRC_SRC_Pos);
-    NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
-    NRF_CLOCK->TASKS_LFCLKSTART = 1;
-
-    while (NRF_CLOCK->EVENTS_LFCLKSTARTED == 0) {
-        // Do nothing.
-    }
-
-    // RTC1 could be enabled by bootloader. Disable it
-    NVIC_DisableIRQ(RTC1_IRQn);
-    NRF_RTC1->EVTENCLR = RTC_EVTEN_COMPARE0_Msk;
-    NRF_RTC1->INTENCLR = RTC_INTENSET_COMPARE0_Msk;
-    NRF_RTC1->TASKS_STOP = 1;
-    NRF_RTC1->TASKS_CLEAR = 1;
-
+    nrf_pwr_mgmt_init();
     tos_main();
 
     while (true) {

@@ -1,8 +1,6 @@
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR xtensa)
 
-set(SDK_ROOT ${TOOLS_BASE})
-
 include(FindToolchain)
 find_gnu_toolchain(TRIPLE xtensa-lx106-elf SET)
 
@@ -18,7 +16,7 @@ set(LX106_FLAGS "-DICACHE_FLASH -mtext-section-literals -mlongcalls -nostdlib -U
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LX106_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LX106_FLAGS}")
 
-set(TOS_PROVIDE_LIBCXX ON)
+set(TOS_PROVIDE_LIBCXX OFF)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "CFLAGS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "CXXFLAGS")

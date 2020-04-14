@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <common/driver_base.hpp>
 #include <cstdint>
 #include <tos/ct_map.hpp>
@@ -41,7 +42,7 @@ struct rx_tx_pins {
 };
 
 template<class PinT>
-rx_tx_pins(const PinT&, const PinT&)->rx_tx_pins<PinT>;
+rx_tx_pins(const PinT&, const PinT&) -> rx_tx_pins<PinT>;
 } // namespace uart
 
 template<class...>
@@ -169,4 +170,54 @@ template<class UsartT>
 auto erase_usart(UsartT&& usart) -> detail::erased_usart<UsartT> {
     return {std::forward<UsartT>(usart)};
 }
+
+template<class T, size_t BufferSize = 512>
+class buffered_usart : public self_pointing<buffered_usart<T, BufferSize>> {
+public:
+    explicit buffered_usart(T t)
+        : m_impl(std::move(t)) {
+    }
+
+    int write(tos::span<const uint8_t> span) {
+        if (m_disabled || (span.size() + m_buf_cur > m_buffer.size())) {
+            flush();
+            m_impl->write(span);
+        } else {
+            std::copy_n(span.begin(), span.size(), m_buffer.begin() + m_buf_cur);
+            m_buf_cur += span.size();
+        }
+        return span.size();
+    }
+
+    span<uint8_t> read(tos::span<uint8_t> span) {
+        return m_impl->read(span);
+    }
+
+    ~buffered_usart() {
+        flush();
+    }
+
+    void flush() {
+        if (m_buf_cur == 0) {
+            return;
+        }
+        m_impl->write(tos::span<const uint8_t>(m_buffer).slice(0, m_buf_cur));
+        m_buf_cur = 0;
+    }
+
+    void disable_buffer() {
+        flush();
+        m_disabled = true;
+    }
+
+    void enable_buffer() {
+        m_disabled = false;
+    }
+
+private:
+    bool m_disabled = false;
+    T m_impl;
+    std::array<uint8_t, BufferSize> m_buffer;
+    uint16_t m_buf_cur = 0;
+};
 } // namespace tos

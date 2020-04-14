@@ -1,0 +1,138 @@
+%%{
+/*
+ * Copyright (c) 2019 Texas Instruments Incorporated - http://www.ti.com
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * *  Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * *  Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * *  Neither the name of Texas Instruments Incorporated nor the names of
+ *    its contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ *  ======== SlNet.Config.c.xdt ========
+ */
+%%}
+%%{
+    let SlNet = args[0];
+    let hasNDK = false;
+    let hasWiFi = false;
+%%}
+/*
+ *  ======== ti.net/SlNet ========
+ */
+#include <stdint.h>
+#include <stdlib.h>
+#include "string.h"
+
+#include <ti/net/slnetif.h>
+#include <ti/net/slnetutils.h>
+#include <ti/net/slnetsock.h>
+#include <ti/net/slnet.h>
+% for (let i = 0; i< SlNet.$instances.length; i++) {
+%   let inst = SlNet.$instances[i];
+%   if (!hasNDK && (inst.networkIfFxnList == "NDK")) {
+#include <ti/ndk/slnetif/slnetifndk.h>
+%       hasNDK = true;
+%   }
+%   else if (!hasWiFi && (inst.networkIfFxnList == "SimpleLink WiFi")) {
+#include <ti/drivers/net/wifi/slnetifwifi.h>
+%       hasWiFi = true;
+%   }
+%   // TODO - enable users to #include a header for "custom"
+% }
+
+/* This generated function must be called after the network stack(s) are
+ * initialized.
+ */
+int32_t ti_net_SlNet_initConfig() {
+    int32_t status;
+
+    status = SlNetIf_init(0);
+
+    if (status == 0) {
+        status = SlNetSock_init(0);
+    }
+
+    if (status == 0) {
+        SlNetUtil_init(0);
+    }
+
+% for (let i = 0; i< SlNet.$instances.length; i++) {
+%   let inst = SlNet.$instances[i];
+    /* add `inst.$name` interface */
+    if (status == 0) {
+%   if (inst.networkIfFxnList == "Custom") {
+        extern SlNetIf_Config_t `inst.customFuncList`;
+%   } /* end of: if (inst.networkIfFxnList == "customFuncList") { */
+        status = SlNetIf_add(SLNETIF_ID_`inst.id`, "`inst.ifName`",
+%   if (inst.networkIfFxnList == "NDK") {
+%     if (inst.enableSecureSocks) {
+                (const SlNetIf_Config_t *)&SlNetIfConfigNDKSec,
+%     } else {
+                (const SlNetIf_Config_t *)&SlNetIfConfigNDK,
+%     }
+%   } /* end of: if (inst.networkIfFxnList == "NDK") { */
+%   else if (inst.networkIfFxnList == "SimpleLink WiFi") {
+                (const SlNetIf_Config_t *)&SlNetIfConfigWifi,
+%   } /* end of: else if (inst.networkIfFxnList == "SimpleLink WiFi") { */
+%   else {
+                (const SlNetIf_Config_t *)&`inst.customFuncList`,
+%   }
+                `inst.priority`);
+    }
+
+%   if(inst.enableSecureSocks) {
+%   for (let j = 0; j < inst.secObjs; j++) {
+%       let secObj = inst["CONFIG_SECOBJ_" + j];
+    if (status == 0) {
+%       let secObjObject = null;
+%       let secObjObjectLen = null;
+%       if (secObj.dataInputMethod == "Reference to Secure Object Variable")  {
+%           secObjObject = secObj.secObjVariable;
+%           secObjObjectLen = secObj.secObjVariableSize;
+        extern uint8_t `secObj.secObjVariable`[];
+        extern uint16_t `secObj.secObjVariableSize`;
+%       } /* end of: if (secObj.dataInputMethod == "Reference to Secure Object Variable") */
+%       else if (secObj.dataInputMethod == "Secure Object Text") {
+%           secObjObject = "config_secobj" + j + "_array";
+%           secObjObjectLen = "config_secobj" + j + "_array_length";
+        static uint8_t `secObjObject`[] =
+%           let secObjLines = secObj.secObjText.split("\n");
+%           for(let k = 0; k < secObjLines.length - 1; k++) {
+            "`secObjLines[k]`\n"
+%           } /* end of: for(let k = 0; k < secObjLines.length - 1; k++) { */
+            "`secObjLines[secObjLines.length - 1]`";
+        static const uint16_t `secObjObjectLen` = sizeof(config_secobj`j`_array);
+%       } /* end of: else if (secObj.dataInputMethod == "Secure Object Text") { */
+
+        status = SlNetIf_loadSecObj(`secObj.secObjType`, "`secObj.$name`",
+                strlen("`secObj.$name`"), `secObjObject`, `secObjObjectLen`, SLNETIF_ID_`inst.id`);
+    }
+%   } /* end of: for (let j = 0; j < inst.secObjs; j++) { */
+%   } /* end of: if(inst.enableSecureSocks) { */
+% } /*end of for (let i = 0; i< SlNet.$instances.length; i++) */
+    return (status);
+}
