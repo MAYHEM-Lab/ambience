@@ -23,6 +23,7 @@ if (BUILD_TESTS)
     target_link_libraries(tos_memory_free_list_test PUBLIC tests_main tos_memory)
     add_test(NAME tos_memory_free_list_test COMMAND tos_memory_free_list_test)
 endif()
+
 add_library(tos_debug_log
         src/log.cpp
         include/tos/debug/log.hpp
