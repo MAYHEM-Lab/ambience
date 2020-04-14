@@ -5,7 +5,7 @@
 #include <ctype.h>
 #include <arch/cc.h>
 #include <cstdlib>
-#include <tos/thread.hpp>
+#include <tos/ft.hpp>
 
 extern "C"
 {
@@ -27,6 +27,7 @@ void _exit()
 {
     tos::this_thread::exit();
 }
+
 _PTR
 _malloc_r (struct _reent *, size_t sz)
 {

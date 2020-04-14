@@ -168,16 +168,16 @@ jobs:
         command: git submodule update --init --recursive
     - run:
         name: Download toolchain
-        command: wget http://cs.ucsb.edu/~bakir/esp-tos-sdk.tar.bz2
+        command: wget https://github.com/earlephilhower/esp-quick-toolchain/releases/download/3.0.0-gnu5/x86_64-linux-gnu.xtensa-lx106-elf-a5c9861.1575819473.tar.gz
     - run:
         name: Create toolchain dir
-        command: mkdir -p /opt/x-tools/tos-esp-sdk
+        command: mkdir -p /opt/x-tools
     - run:
         name: Extract toolchain
-        command: tar xf esp-tos-sdk.tar.bz2 -C /opt/x-tools/tos-esp-sdk
+        command: tar xf x86_64-linux-gnu.xtensa-lx106-elf-a5c9861.1575819473.tar.gz -C /opt/x-tools/
     - run:
         name: Generate Project
-        command: mkdir build && cd build && cmake -G Ninja -DTOS_BOARD=nodemcu -DCMAKE_BUILD_TYPE=MinSizeRel ..
+        command: mkdir build && cd build && cmake -G Ninja -DTOS_CPU=esp/8266 -DCMAKE_BUILD_TYPE=MinSizeRel ..
     - run:
         working_directory: build/
         name: Build Project

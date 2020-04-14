@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/xtensa-lx106-elf/lib/gcc/xtensa-lx106-elf/8.3.0/include/stdint.h"
+#include <stdint.h>
 
 #include <common/timer.hpp>
 #include <tos/function_ref.hpp>
