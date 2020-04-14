@@ -36,7 +36,7 @@ endfunction()
 
 set(TOS_FLAGS "-Wall -Wextra -Wpedantic \
      -ffunction-sections -fdata-sections -ffreestanding -g -pedantic \
-        -Wno-unknown-pragmas")
+     -Wno-unknown-pragmas")
 
 message(STATUS "${CMAKE_CXX_COMPILER_ID}")
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
@@ -77,26 +77,11 @@ function(tos_install _target)
 
     if (${ARGC} GREATER 1)
         set(HEADER_PATH ${ARGV1})
-        #install(DIRECTORY ${HEADER_PATH}/ DESTINATION "${INCLUDE_DEST}")
     endif()
 
     target_include_directories(${_target} PUBLIC
             $<BUILD_INTERFACE:${HEADER_PATH}>
             $<INSTALL_INTERFACE:${INCLUDE_DEST}>)
-
-    #[[install(TARGETS ${_target} DESTINATION "${LIB_DEST}")
-
-    configure_file("${THIS_DIR}/cmake-config.cmake.in" ${CMAKE_CURRENT_BINARY_DIR}/${_target}-config.cmake @ONLY)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${_target}-config.cmake DESTINATION ${LIB_DEST})
-
-    install(TARGETS ${_target} EXPORT ${_target} DESTINATION "${LIB_DEST}")
-    install(EXPORT ${_target} DESTINATION "${LIB_DEST}")
-
-    if (${ARGC} GREATER 2)
-        message(STATUS "Have a share dir, install it")
-        set(SHARE_PATH ${ARGV2})
-        install(DIRECTORY ${SHARE_PATH} DESTINATION "${SHARE_DEST}")
-    endif()]]
 endfunction()
 
 install(FILES ${THIS_DIR}/tos-config.cmake DESTINATION "lib/tos")
