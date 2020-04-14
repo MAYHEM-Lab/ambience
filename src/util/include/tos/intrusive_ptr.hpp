@@ -4,72 +4,110 @@
 
 #pragma once
 
-namespace tos
-{
-    template <class T>
-    class intrusive_ptr
-    {
-    public:
-        intrusive_ptr() : m_ptr(nullptr) {}
+#include <cstddef>
+#include <type_traits>
 
-        intrusive_ptr(decltype(nullptr)) : m_ptr(nullptr) {}
+namespace tos {
+template<class T>
+class intrusive_ptr {
+public:
+    using element_type = T;
 
-        intrusive_ptr(T* t) : m_ptr(t)
-        {
-            intrusive_ref(m_ptr);
-        }
+    /**
+     * Constructs a null pointer.
+     */
+    intrusive_ptr()
+        : m_ptr(nullptr) {
+    }
 
-        intrusive_ptr(const intrusive_ptr& rhs) noexcept : m_ptr(rhs.m_ptr)
-        {
-            intrusive_ref(m_ptr);
-        }
+    intrusive_ptr(std::nullptr_t)
+        : m_ptr(nullptr) {
+    }
 
-        intrusive_ptr(intrusive_ptr&& rhs) noexcept : m_ptr(rhs.m_ptr)
-        {
-            rhs.m_ptr = nullptr;
-        }
+    template <class U, std::enable_if_t<std::is_convertible_v<U*, T*>>* = nullptr>
+    explicit intrusive_ptr(U* t)
+        : m_ptr(t) {
+        intrusive_ref(m_ptr);
+    }
 
-        intrusive_ptr&operator=(const intrusive_ptr& rhs) noexcept
-        {
-            reset();
-            intrusive_ref(m_ptr);
-            m_ptr = rhs.m_ptr;
+    intrusive_ptr(const intrusive_ptr& rhs) noexcept
+        : m_ptr(rhs.m_ptr) {
+        intrusive_ref(m_ptr);
+    }
 
+    intrusive_ptr(intrusive_ptr&& rhs) noexcept
+        : m_ptr(rhs.m_ptr) {
+        rhs.m_ptr = nullptr;
+    }
+
+    intrusive_ptr& operator=(const intrusive_ptr& rhs) noexcept {
+        if (&rhs == this) {
             return *this;
         }
 
-        intrusive_ptr&operator=(intrusive_ptr&& rhs) noexcept
-        {
-            reset();
-            m_ptr = rhs.m_ptr;
-            rhs.m_ptr = nullptr;
+        reset();
+        intrusive_ref(m_ptr);
+        m_ptr = rhs.m_ptr;
+
+        return *this;
+    }
+
+    intrusive_ptr& operator=(intrusive_ptr&& rhs) noexcept {
+        if (&rhs == this) {
             return *this;
         }
 
-        T* get() { return m_ptr; }
-        const T* get() const { return m_ptr; }
+        reset();
+        m_ptr = rhs.m_ptr;
+        rhs.m_ptr = nullptr;
+        return *this;
+    }
 
-        T*operator->() { return get(); }
-        const T*operator->() const { return get(); }
+    T* get() {
+        return m_ptr;
+    }
 
-        T&operator*() { return *get(); }
-        const T&operator*() const { return *get(); }
+    const T* get() const {
+        return m_ptr;
+    }
 
-        explicit operator bool(){
-            return m_ptr;
-        }
+    T* operator->() {
+        return get();
+    }
 
-        void reset()
-        {
-            if (!m_ptr) return;
-            intrusive_unref(m_ptr);
-        }
+    const T* operator->() const {
+        return get();
+    }
 
-        ~intrusive_ptr()
-        {
-            reset();
-        }
-    private:
-        T* m_ptr;
-    };
+    T& operator*() {
+        return *get();
+    }
+
+    const T& operator*() const {
+        return *get();
+    }
+
+    explicit operator bool() {
+        return m_ptr;
+    }
+
+    void reset() {
+        if (!m_ptr)
+            return;
+        intrusive_unref(m_ptr);
+    }
+
+    ~intrusive_ptr() {
+        reset();
+    }
+
+private:
+    T* m_ptr;
+};
+
+template <class U, class T>
+intrusive_ptr<U> static_pointer_cast(const intrusive_ptr<T>& ptr) {
+    static_assert(std::is_convertible_v<T*, U*>);
+    return intrusive_ptr<U>(static_cast<U*>(ptr.get()));
 }
+} // namespace tos

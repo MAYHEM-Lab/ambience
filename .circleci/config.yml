@@ -124,7 +124,7 @@ jobs:
             CC: clang-8
             CXX: clang++-8
           name: Generate Project
-          command: mkdir clang-build && cd clang-build && cmake -G Ninja -DTOS_BOARD=hosted/x86 -DBUILD_TESTS=ON ..
+          command: mkdir clang-build && cd clang-build && cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_BOARD=hosted/x86 -DBUILD_TESTS=ON ..
       - run:
           working_directory: clang-build/
           name: Build Project

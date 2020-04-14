@@ -7,6 +7,7 @@
 #include <common/gpio.hpp>
 #include <cstdint>
 #include <tos/ft.hpp>
+#include <tos/self_pointing.hpp>
 #include <type_traits>
 #include <utility>
 
@@ -100,7 +101,9 @@ static constexpr uint8_t LUTDefault_part[] = {WRITE_LUT_REGISTER, // command
 } // namespace waveshare_29bw_constants
 
 template<class SpiT>
-class waveshare_29bw : public non_copy_movable {
+class waveshare_29bw
+    : public non_copy_movable
+    , public self_pointing<waveshare_29bw<SpiT>> {
 public:
     using gpio_type = typename std::remove_pointer_t<SpiT>::gpio_type;
     using PinT = typename gpio_type::pin_type;

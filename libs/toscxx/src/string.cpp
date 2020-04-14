@@ -216,6 +216,7 @@ as_float(const string& func, const string& s, size_t* idx )
     return as_float_helper<double>( func, s, idx, strtod );
 }
 
+#if !defined(_LIBCPP_HAS_NO_LONG_DOUBLE)
 template<>
 inline
 long double
@@ -223,6 +224,7 @@ as_float( const string& func, const string& s, size_t* idx )
 {
     return as_float_helper<long double>( func, s, idx, strtold );
 }
+#endif
 
 template<>
 inline
