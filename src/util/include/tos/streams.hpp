@@ -26,16 +26,28 @@ span<CharT> read_until(StreamT& str, span<const CharT> until, span<CharT> buffer
     return buffer;
 }
 
+/**
+ * Reads from the given stream until the stream closes,
+ * or the given buffer is filled up.
+ *
+ * A stream is considered closed if it returns an
+ * unexpected value or a read reads 0 bytes.
+ */
 template<class CharT, class StreamT>
 span<CharT> read_to_end(StreamT& str, span<CharT> buf) {
     auto b = buf;
     while (b.size() != 0) {
         auto rd = str->read(b);
+
         if (!rd) {
             break;
         }
 
         auto& r = force_get(rd);
+        if (r.empty()) {
+            break;
+        }
+
         b = b.slice(r.size(), b.size() - r.size());
     }
     return buf.slice(0, buf.size() - b.size());

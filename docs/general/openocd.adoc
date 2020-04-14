@@ -21,6 +21,7 @@ There are other forks of openocd for ESP32 and RISC V, which we don't use now.
 
 Install the dependencies:
 
+[source,sh]
 ----
 $ sudo apt-get install -y make libtool pkg-config autoconf automake texinfo libusb-1.0
 ----

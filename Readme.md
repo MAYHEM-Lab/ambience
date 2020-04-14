@@ -23,7 +23,7 @@ Supported and tested targets:
 
 ## In a nutshell
 
-+ Cooperative multitasking kernel
++ Cooperative multitasking kernel, with optional per-thread preemption
 + Efficient, zero overhead abstraction model
 + First class C++ support, with extensive standard library support, including C++2a features
 + Written using modern programming practices with focus on maintainability, safety and portability

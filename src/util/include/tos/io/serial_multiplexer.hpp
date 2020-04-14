@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <optional>
 #include <tos/crc32.hpp>
+#include <tos/debug/log.hpp>
 #include <tos/expected.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/ft.hpp>
@@ -47,7 +48,7 @@ enum class serial_multiplexer_errors
     bad_crc,
     bad_magic
 };
- 
+
 template<size_t BufferSize>
 struct stream_buffer {
     tos::basic_fixed_fifo<uint8_t, BufferSize, ring_buf> data;
@@ -89,8 +90,10 @@ public:
 
     explicit serial_multiplexer(UsartT usart,
                                 std::initializer_list<streamid_t> with_streams,
-                                bool write_only = false)
-        : m_usart(std::move(usart)) {
+                                bool write_only = false,
+                                bool create_unknown = false)
+        : m_usart(std::move(usart))
+        , m_create_unknown(create_unknown) {
         for (auto id : with_streams) {
             create_stream(id);
         }
@@ -184,6 +187,7 @@ private:
                 return tos::unexpected(serial_multiplexer_errors::stream_closed);
             }
             if (tmp != chr) {
+                LOG_TRACE("Magic bytes did not match");
                 return tos::unexpected(serial_multiplexer_errors::bad_magic);
             }
         }
@@ -202,16 +206,22 @@ private:
 
         auto stream = find_stream(streamid);
         if (!stream) {
-            // Received a packet for a non-existent stream, but we still have to read the
-            // content + checksum
-            for (uint16_t i = 0; i < size + sizeof(checksum_type); ++i) {
-                uint8_t tmp;
-                read_res = m_usart->read(tos::monospan(tmp));
-                if (read_res.empty()) {
-                    return tos::unexpected(serial_multiplexer_errors::stream_closed);
+            LOG_INFO("Received packet from non-existent stream", streamid);
+            if (m_create_unknown) {
+                create_stream(streamid);
+                stream = find_stream(streamid);
+            } else {
+                // Received a packet for a non-existent stream, but we still have to read
+                // the content + checksum
+                for (uint16_t i = 0; i < size + sizeof(checksum_type); ++i) {
+                    uint8_t tmp;
+                    read_res = m_usart->read(tos::monospan(tmp));
+                    if (read_res.empty()) {
+                        return tos::unexpected(serial_multiplexer_errors::stream_closed);
+                    }
                 }
+                return streamid;
             }
-            return streamid;
         }
 
         uint32_t crc = 0;
@@ -246,5 +256,6 @@ private:
 
     UsartT m_usart;
     std::vector<std::pair<streamid_t, std::unique_ptr<StreamDataT>>> m_streams;
+    bool m_create_unknown;
 };
 } // namespace tos

@@ -95,12 +95,6 @@ jobs:
           name: Move the toolchain
           command: mkdir -p /opt/x-tools/; mv gcc-arm-none-eabi-8-2018-q4-major /opt/x-tools
       - run:
-          name: Download libopencm3
-          command: wget http://cs.ucsb.edu/~bakir/libopencm3.zip -O libopencm3.zip
-      - run:
-          name: Extract libopencm3
-          command: unzip libopencm3.zip -d /opt/x-tools
-      - run:
           name: Generate Project
           command: mkdir build-f103 && cd build-f103 && cmake -G Ninja -DTOS_CPU=stm32/f1/03c8 -DCMAKE_BUILD_TYPE=MinSizeRel ..
       - run:
