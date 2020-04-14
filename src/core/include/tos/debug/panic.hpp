@@ -5,6 +5,7 @@
 #pragma once
 
 #include <tos/arch.hpp>
+#include <tos/debug/log.hpp>
 
 namespace tos {
 namespace debug {
@@ -24,7 +25,9 @@ namespace debug {
  * @tparam ErrorTagType type for an explanation for the crash
  */
 template<class ErrorTagType>
-[[noreturn]] void panic(ErrorTagType&&) {
+TOS_NO_OPTIMIZE
+[[noreturn]] void panic(ErrorTagType&& err) {
+    tos::debug::fatal(err);
     tos_force_reset();
 }
 } // namespace debug
