@@ -56,7 +56,9 @@ template <> struct char_traits<wchar_t>;
 #include <algorithm>  // for search and min
 #include <cstdio>     // For EOF.
 #include <memory>     // for __murmur2_or_cityhash
+#if !defined(_LIBCPP_HAS_NO_WCHAR)
 #include <cwchar>
+#endif
 
 #include <__debug>
 
