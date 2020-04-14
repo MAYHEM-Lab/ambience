@@ -6,48 +6,52 @@
 
 #include <new>
 
-alignas(16) uint8_t heap[1024*1024];
-tos::memory::free_list alloc(heap);
+alignas(16) uint8_t heap[1024*1024*16];
+
+auto& get_allocator() {
+    static tos::memory::free_list alloc(heap);
+    return alloc;
+}
 
 void operator delete (void* pt, size_t){
-    alloc.free(pt);
+    get_allocator().free(pt);
 }
 
 void operator delete (void* pt)
 {
-    alloc.free(pt);
+    get_allocator().free(pt);
 }
 
 void operator delete[] (void* pt)
 {
-    alloc.free(pt);
+    get_allocator().free(pt);
 }
 
 void operator delete[] (void* pt, size_t)
 {
-    alloc.free(pt);
+    get_allocator().free(pt);
 }
 
 void* operator new(size_t sz)
 {
-    auto ptr = alloc.allocate(sz);
+    auto ptr = get_allocator().allocate(sz);
     return ptr;
 }
 
 void* operator new[](size_t sz)
 {
-    auto ptr = alloc.allocate(sz);
+    auto ptr = get_allocator().allocate(sz);
     return ptr;
 }
 
 void* operator new(size_t sz, const std::nothrow_t&) noexcept
 {
-    auto ptr = alloc.allocate(sz);
+    auto ptr = get_allocator().allocate(sz);
     return ptr;
 }
 
 void* operator new[](size_t sz, const std::nothrow_t&) noexcept
 {
-    auto ptr = alloc.allocate(sz);
+    auto ptr = get_allocator().allocate(sz);
     return ptr;
 }
