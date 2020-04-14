@@ -243,7 +243,7 @@ namespace debug = tos::debug;
 tos::stack_storage<TOS_DEFAULT_STACK_SIZE> stack;
 void tos_main() {
     tos::launch(stack, [] {
-        tos::raspi3::uart0 uart;
+        auto uart = tos::open(tos::devs::usart<0>, tos::uart::default_115200);
         tos::println(uart, "Hello from tos!");
         auto serial = tos::raspi3::get_board_serial();
         tos::println(uart, "Serial no:", serial);

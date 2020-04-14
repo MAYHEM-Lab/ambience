@@ -12,7 +12,7 @@ void delay(int32_t count) {
 }
 } // namespace
 
-uart0::uart0() {
+uart0::uart0(usart_constraint&&) {
     // Disable UART0.
     UART0->CR = 0;
 
