@@ -41,9 +41,9 @@ struct static_enable {
 template<class SinkT, class Enabler = dynamic_enable>
 class logger_base : public Enabler {
 public:
-    explicit logger_base(SinkT sink)
+    explicit logger_base(SinkT sink, log_level level = log_level::all)
         : m_sink(std::move(sink))
-        , m_level{log_level::all} {
+        , m_level{level} {
     }
 
     template<class... Ts>
@@ -83,6 +83,15 @@ public:
     }
 
     template<class... Ts>
+    ALWAYS_INLINE bool error(const Ts&... args) {
+        if (!would_log(log_level::error)) {
+            return false;
+        }
+        log_to_sink(m_sink, log_level::error, args...);
+        return true;
+    }
+
+    template<class... Ts>
     ALWAYS_INLINE bool fatal(const Ts&... args) {
         if (!would_log(log_level::fatal)) {
             return false;
@@ -109,4 +118,6 @@ class any_logger : public logger_base<any_sink*, dynamic_enable> {
 public:
     using logger_base::logger_base;
 };
+
+detail::any_logger& null_log_instance();
 } // namespace tos::debug::detail

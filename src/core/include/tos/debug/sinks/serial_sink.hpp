@@ -2,12 +2,14 @@
 
 #include "sink.hpp"
 
+#include <memory>
+#include <tos/mutex.hpp>
 #include <tos/print.hpp>
 #include <tos/self_pointing.hpp>
 
 namespace tos::debug {
 template<class SerialT>
-class serial_sink final
+class serial_sink
     : public detail::any_sink
     , public self_pointing<serial_sink<SerialT>> {
 public:
@@ -16,7 +18,8 @@ public:
     }
 
     bool begin(log_level level) override {
-        tos::print(m_serial, "[serial_sink] [", level, "] ", tos::no_separator());
+        m_prot->lock();
+        tos::print(m_serial, "[", level, "] ", tos::no_separator());
         return true;
     }
 
@@ -41,11 +44,17 @@ public:
         tos::print(m_serial, " ");
     }
 
+    void add(span<const uint8_t> buf) override {
+        tos::print(m_serial, buf, "");
+    }
+
     void end() override {
         tos::println(m_serial);
+        m_prot->unlock();
     }
 
 public:
+    std::unique_ptr<tos::mutex> m_prot = std::make_unique<tos::mutex>();
     SerialT m_serial;
 };
 } // namespace tos::debug

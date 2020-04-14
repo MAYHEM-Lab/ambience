@@ -4,6 +4,7 @@
 
 #include <app_error.h>
 #include <arch/ble/advertising.hpp>
+#include <ble_advertising/ble_advertising.h>
 
 static ble_uuid_t m_adv_uuids[] = {{0xDDDD, BLE_UUID_TYPE_VENDOR_BEGIN}};
 
@@ -35,11 +36,11 @@ advertising::advertising(std::chrono::milliseconds duration,
     m_ble_obs.obs.handler = ble_advertising_on_ble_evt;
     m_ble_obs.obs.p_context = &m_advertising;
 
-    m_soc_obs.obs.handler = ble_advertising_on_sys_evt;
-    m_soc_obs.obs.p_context = &m_advertising;
+    /*m_soc_obs.obs.handler = ble_advertising_on_sys_evt;
+    m_soc_obs.obs.p_context = &m_advertising;*/
 
     nrf_events.attach(m_ble_obs);
-    nrf_events.attach(m_soc_obs);
+    //nrf_events.attach(m_soc_obs);
 
     // https://devzone.nordicsemi.com/f/nordic-q-a/33504/what-does-app_ble_conn_cfg_tag-do
     constexpr auto tag = 1;

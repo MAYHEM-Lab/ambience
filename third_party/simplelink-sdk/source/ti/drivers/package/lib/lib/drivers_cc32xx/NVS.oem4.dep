@@ -1,0 +1,18 @@
+package/lib/lib/drivers_cc32xx/NVS.oem4: NVS.c /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdbool.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stddef.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdint.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdlib.h /vagrant/Q3_ENG_SDK_250919/sdk_root/source/ti/drivers/dpl/HwiP.h /vagrant/Q3_ENG_SDK_250919/sdk_root/source/ti/drivers/NVS.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/_ti_config.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/_stdint40.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/stdint.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/cdefs.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_types.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/xlocale/_stdlib.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/linkage.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/machine/_stdint.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_stdint.h /opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/machine/_types.h 
+NVS.c:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdbool.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stddef.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdint.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/stdlib.h:
+/vagrant/Q3_ENG_SDK_250919/sdk_root/source/ti/drivers/dpl/HwiP.h:
+/vagrant/Q3_ENG_SDK_250919/sdk_root/source/ti/drivers/NVS.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/_ti_config.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/_stdint40.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/stdint.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/cdefs.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_types.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/xlocale/_stdlib.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/linkage.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/machine/_stdint.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/sys/_stdint.h:
+/opt/ti/ccs-latest/ccs/tools/compiler/ti-cgt-arm_18.12.3.LTS/include/machine/_types.h:

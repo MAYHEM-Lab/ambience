@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string_view>
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
+#include <string_view>
 #include <tos/debug/detail/log_level.hpp>
 
 namespace tos::debug::detail {
@@ -10,6 +10,7 @@ struct any_sink {
     virtual bool begin(log_level) = 0;
     virtual void add(int64_t i) = 0;
     virtual void add(std::string_view str) = 0;
+    virtual void add(span<const uint8_t> buf) = 0;
     virtual void add(bool b) = 0;
     virtual void add(void* ptr) = 0;
     virtual void add(log_level) = 0;
@@ -42,8 +43,9 @@ struct any_sink {
 
 template<class Sink, class... Ts>
 void log_to_sink(Sink& sink, log_level level, const Ts&... ts) {
-    if (!sink->begin(level)) return;
+    if (!sink->begin(level))
+        return;
     (sink->add(ts), ...);
     sink->end();
 }
-}
+} // namespace tos::debug::detail

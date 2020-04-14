@@ -6,6 +6,7 @@
 namespace tos::debug {
 enum class log_level : uint8_t
 {
+    none,
     fatal,
     error,
     warning,
@@ -16,20 +17,28 @@ enum class log_level : uint8_t
     all = trace
 };
 
-template <class SerialT>
+template<class SerialT>
 void print(SerialT& serial, log_level level) {
     using tos::print;
-    print(serial, [level]{
-        switch(level) {
-        case log_level::fatal: return "fatal";
-        case log_level::error: return "error";
-        case log_level::warning: return "warning";
-        case log_level::log: return "log";
-        case log_level::debug: return "debug";
-        case log_level::info: return "info";
-        case log_level::trace: return "trace";
-        default: return "unknown";
+    print(serial, [level] {
+        switch (level) {
+        case log_level::fatal:
+            return "fatal";
+        case log_level::error:
+            return "error";
+        case log_level::warning:
+            return "warning";
+        case log_level::log:
+            return "log";
+        case log_level::debug:
+            return "debug";
+        case log_level::info:
+            return "info";
+        case log_level::trace:
+            return "trace";
+        default:
+            return "unknown";
         }
     }());
 }
-}
+} // namespace tos::debug

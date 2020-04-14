@@ -1,0 +1,7 @@
+set(TOS_CORE cc32xx)
+set(TOS_DRIVERS cc32xx)
+SET(TOS_CPU_ARCH cortex-m4)
+set(TOS_DEF_STACK 1024)
+set(TOS_TOOLCHAIN TIToolchain)
+set(TI_TARGET CC32XX)
+set(COMPILE_FLAGS "-mfloat-abi=soft")
