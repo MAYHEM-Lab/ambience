@@ -40,7 +40,7 @@ public:
                                 });
         m_read.down();
         if (ec) {
-            std::cerr << "Error: " << ec.message() << '\n';
+            LOG_WARN("Error", ec.message());
         }
         return buf.slice(0, size);
     }
