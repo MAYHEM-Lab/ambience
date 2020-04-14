@@ -7,7 +7,7 @@
 #include <common/adxl345/constants.hpp>
 #include <common/i2c.hpp>
 #include <stdint.h>
-#include <tos/debug/debug.hpp>
+#include <tos/debug/log.hpp>
 #include <tos/span.hpp>
 
 namespace tos {
@@ -106,7 +106,7 @@ bool adxl345<TwimT>::readFromI2C(uint8_t address, int num, uint8_t* buff) {
     }
     auto res = m_twim->receive({ADXL345_DEVICE}, tos::span<uint8_t>(buff, num));
     if (res != tos::twi_rx_res::ok) {
-        tos_debug_print("read error! %d", int(res));
+        tos::debug::error("read error", int(res));
 
         // TODO: ERR
         return false;
@@ -119,7 +119,7 @@ bool adxl345<TwimT>::writeToI2C(uint8_t address, uint8_t val) {
     uint8_t buf[] = {address, val};
     auto res = m_twim->transmit({ADXL345_DEVICE}, buf);
     if (res != tos::twi_tx_res::ok) {
-        tos_debug_print("write error! %d", int(res));
+        tos::debug::error("write error", int(res));
         // TODO: ERR
         return false;
     }
