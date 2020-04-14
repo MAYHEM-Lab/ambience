@@ -1,6 +1,6 @@
 project(tos C CXX ASM)
 
-add_library(aarch64_core core.cpp)
+add_library(aarch64_core core.cpp cxxrt.cpp)
 target_include_directories(aarch64_core PUBLIC include)
 target_compile_features(aarch64_core PUBLIC cxx_std_17)
 target_link_libraries(aarch64_core PUBLIC cmsis::core)
