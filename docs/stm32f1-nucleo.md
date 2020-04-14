@@ -20,13 +20,7 @@ Test your setup by building the core:
 make tos_core
 ```
 
-If this succeeds, you're ready to go! Go into the blink example directory in the build dir:
-
-```
-cd examples/stm32_blink
-```
-
-And build the example:
+If this succeeds, you're ready to go! Now build the blink example:
 
 ```
 make blink
@@ -35,5 +29,5 @@ make blink
 You can flash this image on the board using:
 
 ```
-openocd -f target/stm32f1x.cfg -f interface/stlink.cfg -c "program blink verify reset exit"
+openocd -f target/stm32f1x.cfg -f interface/stlink.cfg -c "program bin/blink verify reset exit"
 ```
