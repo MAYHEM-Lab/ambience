@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "../../../../../../../../../opt/x-tools/tos-esp-sdk/sdk/third_party/include/lwip/udp.h"
-
+#include <lwip/udp.h>
+#include <cstring>
 #include <common/inet/lwip.hpp>
 #include <common/inet/tcp_ip.hpp>
 #include <tos/expected.hpp>
