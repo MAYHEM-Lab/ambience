@@ -7,6 +7,7 @@
 
 namespace tos::memory {
 struct free_header;
+
 class free_list {
 public:
     explicit free_list(span<uint8_t> buffer);
@@ -14,6 +15,7 @@ public:
     void* allocate(size_t size);
     void free(void* ptr);
 
+    [[nodiscard]]
     size_t available_memory() const {
         return m_buffer.size() - m_used;
     }
