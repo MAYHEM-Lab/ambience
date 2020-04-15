@@ -2,6 +2,7 @@
 // Created by fatih on 10/17/19.
 //
 
+#include "bitfield.hpp"
 #include "tos/debug/debug.hpp"
 #include "tos/expected.hpp"
 #include "tos/thread.hpp"
@@ -12,17 +13,16 @@
 #include <tos/ft.hpp>
 #include <tos/memory.hpp>
 
-#include "bitfield.hpp"
-
 namespace cmsis {
 enum class mpu_errors
-{};
+{
+};
 
 union RASR_reg_t {
     uint32_t raw;
     BitField<0, 1> enable;
     BitField<1, 5> size;
-    //BitField<6, 2> reserved;
+    // BitField<6, 2> reserved;
     BitField<8, 8> subregion_disable;
     BitField<8, 8> srd;
     BitField<16, 1> bufferable;
@@ -33,13 +33,13 @@ union RASR_reg_t {
     BitField<18, 1> s;
     BitField<19, 3> type_extension;
     BitField<19, 3> tex;
-    //BitField<22, 2> reserved;
+    // BitField<22, 2> reserved;
     BitField<24, 3> access_permissions;
     BitField<24, 3> ap;
-    //BitField<27, 1> reserved;
+    // BitField<27, 1> reserved;
     BitField<28, 1> execute_never;
     BitField<28, 1> xn;
-    //BitField<29, 3> reserved;
+    // BitField<29, 3> reserved;
 };
 
 class mpu
@@ -136,7 +136,7 @@ tos::expected<void, mpu_errors> mpu::set_region(int region_id,
     rasr.subregion_disable = 0;
     rasr.size = size_field;
     rasr.enable = true;
-    
+
     MPU->RBAR = tmp_rbar;
 
     tos::detail::memory_barrier();
@@ -162,7 +162,7 @@ void require_impl(bool expr, const char* /* str */) {
 #define REQUIRE(expr) require_impl(bool(expr), #expr)
 
 struct memory_map {
-    static constexpr inline tos::memory_region all{ .base = 0, .size = 64 };
+    static constexpr inline tos::memory_region all{.base = 0, .size = 64};
 };
 
 struct named_memory_region : tos::memory_region {
@@ -171,14 +171,12 @@ struct named_memory_region : tos::memory_region {
 
 constexpr auto get_memory_map() {
     std::array<named_memory_region, 5> map{};
-    map[0] = { {.base = 0x00000000, .size = 0x1FFFFFFF}, "Code" };
-    map[1] = { {.base = 0x40000000, .size = 0x1FFFFFFF}, "Peripheral" };
+    map[0] = {{.base = 0x00000000, .size = 0x1FFFFFFF}, "Code"};
+    map[1] = {{.base = 0x40000000, .size = 0x1FFFFFFF}, "Peripheral"};
     return map;
 }
 
-struct address_space {
-
-};
+struct address_space {};
 
 void mpu_task() {
     cmsis::mpu mpu;
