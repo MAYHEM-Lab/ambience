@@ -1,6 +1,6 @@
 project(tos)
 
-add_library(lx106_usart include/arch/usart.hpp src/uart_register.h src/new_uart_priv.h src/uart_driver.cpp)
+add_library(lx106_usart include/arch/usart.hpp src/uart_register.h src/new_uart_priv.h src/usart.cpp)
 target_link_libraries(lx106_usart PRIVATE tos_core esp8266_impl)
 tos_install(lx106_usart ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
