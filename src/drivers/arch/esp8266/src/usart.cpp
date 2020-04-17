@@ -294,7 +294,6 @@ void interrupt_handler(void* arg) {
 
     if (status.rxfifo_full || status.rxfifo_tout) {
         auto uart0_rxfifo_len = uart->status.rxfifo_cnt;
-        tos::debug::log("Have", uart0_rxfifo_len, "bytes");
         for (size_t i = 0; i < uart0_rxfifo_len; ++i) {
             if (state.rx_buf.size() == state.rx_buf.capacity()) {
                 tos::debug::do_not_optimize(uart->fifo.rw_byte);
