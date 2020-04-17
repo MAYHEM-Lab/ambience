@@ -6,25 +6,18 @@
 
 #include "tos_platform.hpp"
 
-extern "C"
-{
-inline void __attribute__((always_inline)) tos_set_stack_ptr(char* ptr)
-{
+extern "C" {
+inline void __attribute__((always_inline)) tos_set_stack_ptr(char* ptr) {
     __asm__ __volatile__("mov sp, %0" : : "r"(ptr) : "memory");
 }
 
-inline void* __attribute__((always_inline)) tos_get_stack_ptr()
-{
-   void* sp;
-   __asm__ __volatile__("mov %0, a1;" : "=r"(sp) ::);
-   return sp;
+inline void* __attribute__((always_inline)) tos_get_stack_ptr() {
+    void* sp;
+    __asm__ __volatile__("mov %0, a1;" : "=r"(sp)::);
+    return sp;
 }
 }
 
-namespace tos
-{
-    namespace esp82
-    {
-        static constexpr auto main_task_prio = 0;
-    }
+namespace tos::esp82 {
+static constexpr auto main_task_prio = 0;
 }
