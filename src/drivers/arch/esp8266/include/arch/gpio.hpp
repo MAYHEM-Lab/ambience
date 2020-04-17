@@ -94,15 +94,15 @@ inline void gpio::set_pin_mode(pin_t pin, tos::pin_mode::output_t) {
     gpio_output_set(0, 0, pin.mask, 0);
 }
 
-bool ALWAYS_INLINE gpio::read(const pin_t& pin) {
+ALWAYS_INLINE bool gpio::read(const pin_t& pin) {
     return (GPIO_REG_READ(GPIO_IN_ADDRESS) >> pin.pin) & 1;
 }
 
-void ALWAYS_INLINE gpio::write(pin_t pin, digital::high_t) {
+ALWAYS_INLINE void gpio::write(pin_t pin, digital::high_t) {
     GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pin.mask);
 }
 
-void ALWAYS_INLINE gpio::write(pin_t pin, digital::low_t) {
+ALWAYS_INLINE void gpio::write(pin_t pin, digital::low_t) {
     GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pin.mask);
 }
 
