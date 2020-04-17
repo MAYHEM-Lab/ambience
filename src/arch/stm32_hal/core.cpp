@@ -12,8 +12,4 @@ extern "C" {
     NVIC_SystemReset();
     TOS_UNREACHABLE();
 }
-
-void* tos_stack_alloc(size_t sz) { return malloc(sz); }
-
-void tos_stack_free(void* ptr) { return free(ptr); }
 }

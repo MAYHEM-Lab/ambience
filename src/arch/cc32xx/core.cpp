@@ -26,8 +26,4 @@ void tos_enable_interrupts() {
 void tos_disable_interrupts() {
     interrupt_disable_key = HwiP_disable();
 }
-
-void* tos_stack_alloc(size_t sz) { return malloc(sz); }
-
-void tos_stack_free(void* ptr) { return free(ptr); }
 }

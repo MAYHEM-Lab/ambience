@@ -39,15 +39,4 @@ void __attribute__((naked, used, section(".init3"))) wdt_init(void)
 {
     reset_cpu();
 }
-
-alignas(alignof(std::max_align_t)) static char stack[512];
-int stack_index = 0;
-void* tos_stack_alloc(size_t sz)
-{
-    return stack + sz * stack_index++;
-}
-
-void tos_stack_free(void*)
-{
-}
 }

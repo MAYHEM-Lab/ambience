@@ -16,19 +16,6 @@ extern "C" {
 #include <tos/compiler.hpp>
 
 extern "C" {
-void* ICACHE_FLASH_ATTR tos_stack_alloc(size_t size) {
-    auto res = os_malloc(size);
-    if (res == nullptr) {
-        while (true)
-            ;
-    }
-    return res;
-}
-
-void ICACHE_FLASH_ATTR tos_stack_free(void* data) {
-    os_free(data);
-}
-
 #define xt_rsil(level)                                                                   \
     (__extension__({                                                                     \
         uint32_t state;                                                                  \
