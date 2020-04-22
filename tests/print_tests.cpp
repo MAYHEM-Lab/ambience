@@ -4,6 +4,7 @@
 
 #include "doctest.h"
 
+#include <iostream>
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
 
@@ -39,5 +40,16 @@ TEST_CASE("empty line") {
 
     REQUIRE_EQ(str.get().size(), 2);
 }
+
+TEST_CASE("float test") {
+    std::array<char, 1024> buf;
+    tos::omemory_stream str(buf);
+    tos::print(str, (double)15.25);
+    std::cout << "HELOLO" << std::endl;
+
+
+    REQUIRE_EQ(strcmp((const char*)str.get().data(), "15.25000000"), 0);
+}
+
 } // namespace
 } // namespace tos
