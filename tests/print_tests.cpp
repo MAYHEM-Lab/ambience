@@ -46,7 +46,7 @@ TEST_CASE("float test") {
     tos::omemory_stream str(buf);
     tos::print(str, (double)15.25);
 
-    REQUIRE_EQ(strcmp((const char*)str.get().data(), "15.25000000"), 0);
+    REQUIRE_EQ(0, strcmp((const char*)str.get().data(), "15.25000000"));
 }
 
 } // namespace
