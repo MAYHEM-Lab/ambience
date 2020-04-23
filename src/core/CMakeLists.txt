@@ -75,7 +75,7 @@ add_library(tos_arch_core src/stub.cpp)
 target_link_libraries(tos_arch_core PUBLIC ${TOS_ARCH_NAME}_core)
 
 add_library(tos_arch include/tos/arch.hpp src/stub.cpp)
-target_link_libraries(tos_arch PUBLIC ${TOS_ARCH_NAME}_impl)
+target_link_libraries(tos_arch PUBLIC tos_arch_core ${TOS_ARCH_NAME}_impl)
 message(STATUS ${TOS_ARCH_NAME}_impl)
 
 add_library(tos_interrupt include/tos/interrupt.hpp src/interrupt.cpp)
