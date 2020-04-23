@@ -49,7 +49,7 @@ add_library(tos_debug
         include/tos/debug/stack_dump.hpp
         include/tos/debug/panic.hpp
         src/debug.cpp)
-target_link_libraries(tos_debug PUBLIC tos_util_core tos_debug_log)
+target_link_libraries(tos_debug PUBLIC tos_util_core tos_debug_log tos_arch)
 
 set(TOS_CORE_HEADERS
         include/tos/devices.hpp
@@ -62,7 +62,7 @@ set(TOS_CORE_HEADERS
         include/tos/barrier.hpp)
 
 add_library(tos_print include/tos/print.hpp src/print.cpp)
-target_link_libraries(tos_print PUBLIC tos_util tos::libcxx)
+target_link_libraries(tos_print PUBLIC tos_util_core tos::libcxx)
 add_library(tos::print ALIAS tos_print)
 
 add_library(tos_core src/stub.cpp ${TOS_CORE_HEADERS} src/tos_init.cpp src/device_id.cpp)
