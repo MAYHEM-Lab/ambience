@@ -3,7 +3,7 @@ project(tos)
 add_subdirectory(arch/${TOS_DRIVERS})
 
 add_library(tos_drivers include/common/driver_base.hpp src/stub.cpp)
-target_link_libraries(tos_drivers PUBLIC tos_util_core tos_arch_core tos_ft)
+target_link_libraries(tos_drivers PUBLIC tos_util_core tos_arch_core tos_ft tos_debug)
 tos_install(tos_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_library(tos::drivers ALIAS tos_drivers)
 
