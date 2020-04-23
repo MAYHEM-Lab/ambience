@@ -52,6 +52,8 @@ struct benchmark : benchmark_base {
 template <class T>
 benchmark(const char*, T) -> benchmark<T>;
 
+using any_bench = bench<any_clock*>;
+
 template <class T>
 void run_global_benchmarks(T& benchmarker) {
     for (auto& bench : benchmarks) {
