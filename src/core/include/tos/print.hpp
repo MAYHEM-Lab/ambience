@@ -4,18 +4,23 @@
 
 #pragma once
 
+#include <chrono>
+#include <cstddef>
 #include <stdint.h>
 #include <string.h>
 #include <tos/span.hpp>
 #include <tos/utility.hpp>
-#include <cstddef>
-#include <chrono>
 
 namespace tos {
+
+namespace detail {
+static constexpr char lookup[] = {
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+}
+
 inline tos::span<const char> itoa(int64_t i, int base = 10) {
     static char intbuf[std::numeric_limits<decltype(i)>::digits10 + 1];
-    static constexpr char lookup[] = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+
     int64_t j = 0, isneg = 0;
 
     if (i == 0) {
@@ -28,7 +33,7 @@ inline tos::span<const char> itoa(int64_t i, int base = 10) {
     }
 
     while (i != 0) {
-        intbuf[j++] = lookup[(i % base)];
+        intbuf[j++] = detail::lookup[(i % base)];
         i /= base;
     }
 
@@ -102,8 +107,21 @@ void print(CharOstreamT& ostr, int x) {
     print(ostr, itoa(x, 10));
 }
 
+
+template<class CharOstreamT>
+void print(CharOstreamT& ostr, double x) {
+    static constexpr size_t decimal_places = 8;
+    print(ostr, itoa((int)x));
+    print(ostr, ".");
+    for (size_t i = 0; i < decimal_places; ++i) {
+        x *= 10.0;
+        print(ostr, detail::lookup[((int)x) % 10]);
+    }
+}
+
+
 template<class CharOstreamT,
-		 class U = uintptr_t,
+         class U = uintptr_t,
          class = std::enable_if_t<!std::is_same_v<U, uint64_t>>>
 void print(CharOstreamT& ostr, uintptr_t ptr) {
     // print(ostr, '0');
@@ -136,7 +154,7 @@ void print(CharOstreamT& ostr, bool b) {
     print(ostr, b ? "true" : "false");
 }
 
-template <class StrT>
+template<class StrT>
 void print(StrT& ostr, span<const uint8_t> buf) {
     for (auto byte : buf) {
         auto itoa_res = itoa(byte, 16);
@@ -152,19 +170,20 @@ template<class T>
 struct separator_t {
     T sep;
 
-    template <class StreamT>
+    template<class StreamT>
     friend void print(StreamT& str, const separator_t<T>& sep) {
         using tos::print;
         print(str, sep.sep);
     }
 };
 
-template <>
+template<>
 struct separator_t<std::nullptr_t> {
-    template <class StreamT>
+    template<class StreamT>
     friend void print(StreamT&, const separator_t<std::nullptr_t>&) {
     }
 };
+
 constexpr void get_separator_or() = delete;
 
 template<class FirstT, class... Ts>
@@ -236,12 +255,12 @@ void println(CharOstreamT& ostr, T&&... t) {
     println(ostr);
 }
 
-template <class StrT>
+template<class StrT>
 void print(StrT& ostr, std::chrono::milliseconds ms) {
     print(ostr, int(ms.count()), "ms", tos::no_separator());
 }
 
-template <class StrT>
+template<class StrT>
 void print(StrT& ostr, std::chrono::microseconds us) {
     print(ostr, int(us.count()), "us", tos::no_separator());
 }
