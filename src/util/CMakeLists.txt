@@ -35,7 +35,7 @@ add_library(tos_util
         include/tos/sync_ring_buf.hpp
         )
 
-target_link_libraries(tos_util PUBLIC tos_util_core tos::ft)
+target_link_libraries(tos_util PUBLIC tos_debug tos_util_core tos::ft)
 
 add_library(tos::util ALIAS tos_util)
 

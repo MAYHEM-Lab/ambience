@@ -44,27 +44,31 @@ if (BUILD_TESTS)
     add_test(NAME log_tests COMMAND log_tests)
 endif()
 
+add_library(tos_debug
+        include/tos/debug/debug.hpp
+        include/tos/debug/stack_dump.hpp
+        include/tos/debug/panic.hpp
+        src/debug.cpp)
+target_link_libraries(tos_debug PUBLIC tos_util_core tos_debug_log)
+
 set(TOS_CORE_HEADERS
         include/tos/devices.hpp
         include/tos/char_stream.hpp
         include/tos/arch.hpp
         include/tos/version.hpp
-        include/tos/debug/debug.hpp
         include/tos/device_id.hpp
         include/tos/driver_traits.hpp
         include/tos/delay.hpp
-        include/tos/barrier.hpp
-        include/tos/debug/stack_dump.hpp
-        include/tos/debug/panic.hpp)
+        include/tos/barrier.hpp)
 
 add_library(tos_print include/tos/print.hpp src/print.cpp)
 target_link_libraries(tos_print PUBLIC tos_util tos::libcxx)
 add_library(tos::print ALIAS tos_print)
 
-add_library(tos_core src/stub.cpp ${TOS_CORE_HEADERS} src/tos_init.cpp src/device_id.cpp src/debug.cpp)
+add_library(tos_core src/stub.cpp ${TOS_CORE_HEADERS} src/tos_init.cpp src/device_id.cpp)
 target_compile_definitions(tos_core PUBLIC TOS_GIT_SHA1=\"${GIT_SHA1}\")
 target_link_libraries(tos_core PUBLIC tos_mem tos_util)
-target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug_log)
+target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug)
 add_library(tos::core ALIAS tos_core)
 
 add_library(tos_arch_core src/stub.cpp)
