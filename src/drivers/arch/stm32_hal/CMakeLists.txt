@@ -22,7 +22,7 @@ target_link_libraries(stm32_i2c PUBLIC tos::drivers)
 tos_install(stm32_i2c ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(stm32_exti include/arch/exti.hpp src/exti.cpp)
-target_link_libraries(stm32_exti PUBLIC tos::drivers etl)
+target_link_libraries(stm32_exti PUBLIC tos::drivers etl tos_debug)
 tos_install(stm32_exti ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(stm32_flash include/arch/flash.hpp src/flash.cpp)
@@ -39,7 +39,7 @@ target_link_libraries(stm32_drivers PUBLIC
         stm32_exti
         stm32_flash
         )
-target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> $<TARGET_FILE:stm32_spi> $<TARGET_FILE:stm32_exti> -Wl,--no-whole-archive")
+target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:tos_debug_log> $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> $<TARGET_FILE:stm32_spi> $<TARGET_FILE:stm32_exti> -Wl,--no-whole-archive")
 tos_install(stm32_drivers)
 
 set_target_properties(stm32_drivers PROPERTIES
