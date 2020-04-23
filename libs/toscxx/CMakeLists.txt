@@ -113,3 +113,4 @@ tos_install(base_libcxx)
 
 add_executable(libcpp_test src/libcpp_test.cpp)
 target_link_libraries(libcpp_test PUBLIC tos_core arch_drivers tos::libcxx)
+set_target_properties(libcpp_test PROPERTIES CXX_EXTENSIONS OFF)
