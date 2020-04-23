@@ -46,7 +46,9 @@ TEST_CASE("float test") {
     tos::omemory_stream str(buf);
     tos::print(str, (double)15.25);
 
-    REQUIRE_EQ(0, strcmp((const char*)str.get().data(), "15.25000000"));
+    using namespace std::string_view_literals;
+    REQUIRE_EQ("15.25000000"sv,
+               std::string_view((const char*)str.get().data(), str.get().size()));
 }
 
 } // namespace
