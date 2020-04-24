@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <tos/ct_map.hpp>
 #include <tos/devices.hpp>
+#include <tos/mutex.hpp>
 #include <tos/span.hpp>
 
 namespace tos {
@@ -171,6 +172,31 @@ auto erase_usart(UsartT&& usart) -> detail::erased_usart<UsartT> {
     return {std::forward<UsartT>(usart)};
 }
 
+template<class T>
+class thread_safe_usart : public self_pointing<thread_safe_usart<T>> {
+public:
+    template <class U, std::enable_if_t<!std::is_same_v<U, thread_safe_usart>>* = nullptr>
+    explicit thread_safe_usart(U&& t)
+        : m_impl(std::forward<U>(t)) {
+    }
+
+    auto write(span<const uint8_t> span) {
+        lock_guard lk{m_mutex};
+        return m_impl->write(span);
+    }
+
+    auto read(span<uint8_t> span) {
+        lock_guard lk{m_mutex};
+        return m_impl->read(span);
+    }
+
+public:
+    mutex m_mutex;
+    T m_impl;
+};
+
+template <class T>
+thread_safe_usart(T&&) -> thread_safe_usart<T>;
 template<class T, size_t BufferSize = 512>
 class buffered_usart : public self_pointing<buffered_usart<T, BufferSize>> {
 public:
