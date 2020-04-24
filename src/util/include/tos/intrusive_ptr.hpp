@@ -110,4 +110,9 @@ intrusive_ptr<U> static_pointer_cast(const intrusive_ptr<T>& ptr) {
     static_assert(std::is_convertible_v<T*, U*>);
     return intrusive_ptr<U>(static_cast<U*>(ptr.get()));
 }
+
+template <class T, class... ArgTs>
+intrusive_ptr<T> make_intrusive(ArgTs&&... args) {
+    return intrusive_ptr(new T(std::forward<ArgTs>(args)...));
+}
 } // namespace tos
