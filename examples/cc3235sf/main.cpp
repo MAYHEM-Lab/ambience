@@ -83,8 +83,9 @@ void task() {
 
     tos::println(uart);
 
-    tos::cc32xx::simplelink_wifi wifi(erased);
+    tos::cc32xx::simplelink_wifi wifi;
     wifi.set_event_handler(*new ev_handler);
+    wifi.connect("SSID", "PASS");
 
     tos::cc32xx::timer tim(0);
     tos::alarm alarm(tim);

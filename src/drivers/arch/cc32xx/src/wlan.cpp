@@ -32,14 +32,16 @@ tos::expected<void, network_errors> set_mac_address(tos::mac_addr_t address) {
     return tos::unexpected(network_errors(res));
 }
 
+static tos::stack_storage<4096> wifi_stack;
 simplelink_wifi::simplelink_wifi() {
-    launch(stack_size_t{4096}, [this] {
+    launch(wifi_stack, [this] {
         SPI_init();
         thread();
     });
 }
 
 simplelink_wifi::~simplelink_wifi() {
+    sl_Stop(1);
 }
 
 static tos::stack_storage<4096> srt_stack;
@@ -50,10 +52,21 @@ void simplelink_wifi::thread() {
     LOG_TRACE(start_res);
     auto set_mode = sl_WlanSetMode(ROLE_STA);
     LOG_TRACE(set_mode);
-    auto stop = sl_Stop(0);
+    auto stop = sl_Stop(1);
     LOG_TRACE(stop);
     start_res = sl_Start(nullptr, nullptr, nullptr);
     LOG_TRACE(start_res);
+
+    SlWlanPmPolicyParams_t PmPolicyParams;
+    memset(&PmPolicyParams, 0, sizeof(SlWlanPmPolicyParams_t));
+    PmPolicyParams.MaxSleepTimeMs = 60'000; // max sleep time in mSec
+    auto policy_res = sl_WlanPolicySet(SL_WLAN_POLICY_PM,
+                                       SL_WLAN_LONG_SLEEP_INTERVAL_POLICY,
+                                       (_u8*)&PmPolicyParams,
+                                       sizeof(PmPolicyParams));
+    // sl_WlanPolicySet(SL_WLAN_POLICY_PM, SL_WLAN_LOW_POWER_POLICY, nullptr,0);
+    // sl_WlanPolicySet(SL_WLAN_POLICY_PM, SL_WLAN_NORMAL_POLICY, nullptr,0);
+    LOG_TRACE("policy:", policy_res);
 
     SlDeviceVersion_t firmwareVersion{};
 
@@ -65,18 +78,18 @@ void simplelink_wifi::thread() {
     LOG_TRACE("Host driver version:", SL_DRIVER_VERSION);
 
     LOG_TRACE("Build Version",
-                      int(firmwareVersion.NwpVersion[0]),
-                      int(firmwareVersion.NwpVersion[1]),
-                      int(firmwareVersion.NwpVersion[2]),
-                      int(firmwareVersion.NwpVersion[3]),
-                      int(firmwareVersion.FwVersion[0]),
-                      int(firmwareVersion.FwVersion[1]),
-                      int(firmwareVersion.FwVersion[2]),
-                      int(firmwareVersion.FwVersion[3]),
-                      int(firmwareVersion.PhyVersion[0]),
-                      int(firmwareVersion.PhyVersion[1]),
-                      int(firmwareVersion.PhyVersion[2]),
-                      int(firmwareVersion.PhyVersion[3]));
+              int(firmwareVersion.NwpVersion[0]),
+              int(firmwareVersion.NwpVersion[1]),
+              int(firmwareVersion.NwpVersion[2]),
+              int(firmwareVersion.NwpVersion[3]),
+              int(firmwareVersion.FwVersion[0]),
+              int(firmwareVersion.FwVersion[1]),
+              int(firmwareVersion.FwVersion[2]),
+              int(firmwareVersion.FwVersion[3]),
+              int(firmwareVersion.PhyVersion[0]),
+              int(firmwareVersion.PhyVersion[1]),
+              int(firmwareVersion.PhyVersion[2]),
+              int(firmwareVersion.PhyVersion[3]));
 
     auto set_res = set_mac_address({0xDA, 0x53, 0x83, 0x81, 0x41, 0x6B});
     if (!set_res) {
@@ -85,21 +98,6 @@ void simplelink_wifi::thread() {
 
     auto mac = get_mac_address();
     // tos::debug::info("Mac Address:", mac);
-
-    const char* password = "@bakir123";
-    SlWlanSecParams_t SecParams;
-    SecParams.Type = SL_WLAN_SEC_TYPE_WPA_WPA2;
-    SecParams.Key = reinterpret_cast<int8_t*>(const_cast<char*>(password));
-    SecParams.KeyLen = strlen(password);
-
-    const char* name = "bkr";
-    auto res = sl_WlanConnect(reinterpret_cast<const int8_t*>(name),
-                              std::strlen(name),
-                              nullptr,
-                              &SecParams,
-                              nullptr);
-
-    LOG("Connect:", int(res));
 
     using namespace tos::cc32xx;
 
@@ -133,5 +131,27 @@ void simplelink_wifi::thread() {
 
         loop_sem.down();
     }
+}
+
+void simplelink_wifi::connect(std::string_view SSID, std::string_view password) {
+    SlWlanSecParams_t SecParams;
+    SecParams.Type = SL_WLAN_SEC_TYPE_WPA_WPA2;
+    SecParams.Key = reinterpret_cast<int8_t*>(const_cast<char*>(password.data()));
+    SecParams.KeyLen = password.size();
+
+    auto res = sl_WlanConnect(reinterpret_cast<const int8_t*>(SSID.data()),
+                              SSID.size(),
+                              nullptr,
+                              &SecParams,
+                              nullptr);
+
+    LOG("Connect:", int(res));
+}
+
+void null_event_handler::handle(const ip_acquired& acquired) {
+}
+void null_event_handler::handle(const wifi_connected& connected) {
+}
+void null_event_handler::handle(const wifi_disconnected& disconnected) {
 }
 } // namespace tos::cc32xx

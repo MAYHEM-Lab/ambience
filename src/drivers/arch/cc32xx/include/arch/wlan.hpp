@@ -20,17 +20,26 @@ struct iwifi_event_handler {
     virtual ~iwifi_event_handler() = default;
 };
 
+struct null_event_handler : iwifi_event_handler {
+    void handle(const ip_acquired& acquired) override;
+    void handle(const wifi_connected& connected) override;
+    void handle(const wifi_disconnected& disconnected) override;
+};
+
 class simplelink_wifi {
 public:
     simplelink_wifi();
     ~simplelink_wifi();
+
+    void connect(std::string_view SSID, std::string_view password);
 
     void set_event_handler(iwifi_event_handler& handler) {
         m_ev_handler = &handler;
     }
 
 private:
-    iwifi_event_handler* m_ev_handler;
+    null_event_handler def_handler;
+    iwifi_event_handler* m_ev_handler = &def_handler;
     void thread();
 };
 
