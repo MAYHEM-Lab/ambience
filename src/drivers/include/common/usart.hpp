@@ -204,7 +204,7 @@ public:
         : m_impl(std::move(t)) {
     }
 
-    int write(tos::span<const uint8_t> span) {
+    auto write(tos::span<const uint8_t> span) {
         if (m_disabled || (span.size() + m_buf_cur > m_buffer.size())) {
             flush();
             m_impl->write(span);
@@ -215,7 +215,7 @@ public:
         return span.size();
     }
 
-    span<uint8_t> read(tos::span<uint8_t> span) {
+    auto read(tos::span<uint8_t> span) {
         return m_impl->read(span);
     }
 
