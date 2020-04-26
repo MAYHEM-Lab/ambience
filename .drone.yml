@@ -1,0 +1,20 @@
+kind: pipeline
+type: kubernetes
+name: Build and test
+   
+steps:
+- name: stm32l4
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir build && cd build
+    - cmake -G Ninja -DTOS_CPU=stm32/l4/75 -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
+- name: clang
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir clang-build && cd clang-build
+    - CC=clang CXX=clang++ cmake -G Ninja -DTOS_CPU=x86/hosted -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_TESTS=ON ..
+    - ninja
+    - ctest
