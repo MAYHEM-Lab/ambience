@@ -18,3 +18,17 @@ steps:
     - CC=clang CXX=clang++ cmake -G Ninja -DTOS_CPU=x86/hosted -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_TESTS=ON ..
     - ninja
     - ctest
+- name: nrf52840
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir nrf52840_build && cd nrf52840_build
+    - cmake -G Ninja -DTOS_CPU=nrf52/840 -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
+- name: nrf52832
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir nrf52832_build && cd nrf52832_build
+    - cmake -G Ninja -DTOS_CPU=nrf52/832 -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
