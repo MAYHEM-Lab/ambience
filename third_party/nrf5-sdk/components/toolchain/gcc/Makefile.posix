@@ -1,3 +1,0 @@
-GNU_INSTALL_ROOT ?= /opt/x-tools/gcc-arm-none-eabi-8-2018-q4-major/bin/
-GNU_VERSION ?= 8.3.0
-GNU_PREFIX ?= arm-none-eabi
