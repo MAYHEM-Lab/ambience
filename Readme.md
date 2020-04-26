@@ -1,5 +1,5 @@
 # Tos
-[![Build Status](https://drone.k3s.fatihbakir.net/api/badges/FatihBAKIR/tos/status.svg)](https://drone.k3s.fatihbakir.net/FatihBAKIR/tos)
+[![Build Status](http://drone.k3s.fatihbakir.net/api/badges/FatihBAKIR/tos/status.svg)](http://drone.k3s.fatihbakir.net/FatihBAKIR/tos)
 
 Tos is a cooperative multitasking library operating system focused on efficiency and compile time safety features.
 
