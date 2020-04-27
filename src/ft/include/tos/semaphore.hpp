@@ -84,7 +84,7 @@ public:
     }
 
 private:
-    CountT m_count;
+    volatile CountT m_count;
     waitable m_wait;
 
     /**
