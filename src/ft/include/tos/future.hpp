@@ -19,6 +19,11 @@ struct promise_info_base {
         m_ready.up();
     }
 
+    [[nodiscard]]
+    bool ready() const {
+        return get_count(m_ready) != 0;
+    }
+
     uint8_t ref_cnt = 1;
 
 protected:
@@ -65,6 +70,10 @@ struct promise_info<void> : public promise_info_base {
         m_ready.up();
     }
 
+    void set_isr() {
+        m_ready.up_isr();
+    }
+
     promise_info() = default;
 
     ~promise_info() {
@@ -105,8 +114,13 @@ public:
         m_info->set();
     }
 
-    void set(T&& t) {
-        m_info->set(std::move(t));
+    void set_isr() {
+        m_info->set_isr();
+    }
+
+    template <class U = T>
+    std::enable_if_t<!std::is_same_v<U, void>> set(U&& t) {
+        m_info->set(std::forward<U>(t));
     }
 
     future<T> get_future();
@@ -120,6 +134,11 @@ template<class T>
 class future {
 public:
     future() = default;
+
+    void busy_wait() {
+        Expects(m_ptr);
+        while (!m_ptr->ready());
+    }
 
     void wait() {
         Expects(m_ptr);
