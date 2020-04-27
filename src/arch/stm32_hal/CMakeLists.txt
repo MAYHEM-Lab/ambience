@@ -8,6 +8,7 @@ add_subdirectory(external/${HAL_NAME})
 add_library(stm32_hal_core
         include/tos_arch.hpp
         core.cpp
+        include/stm32_hal/dma.hpp
         include/stm32_hal/hal.hpp
         include/stm32_hal/gpio.hpp
         include/stm32_hal/rcc.hpp
