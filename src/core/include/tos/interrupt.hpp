@@ -9,17 +9,16 @@
 #include <tos/barrier.hpp>
 
 namespace tos {
-namespace kern {
-namespace detail {
+namespace global {
 inline int8_t disable_depth;
 }
-
+namespace kern {
 inline void disable_interrupts() {
     tos::detail::memory_barrier();
-    if (detail::disable_depth == 0) {
+    if (global::disable_depth == 0) {
         tos_disable_interrupts();
     }
-    detail::disable_depth++;
+    global::disable_depth++;
     tos::detail::memory_barrier();
 }
 
@@ -31,8 +30,8 @@ inline void disable_interrupts() {
  */
 inline void enable_interrupts() {
     tos::detail::memory_barrier();
-    detail::disable_depth--;
-    if (detail::disable_depth == 0) {
+    global::disable_depth--;
+    if (global::disable_depth == 0) {
         tos_enable_interrupts();
     }
     tos::detail::memory_barrier();
@@ -47,7 +46,7 @@ inline void enable_interrupts() {
  * depending on the TOS interrupt status.
  */
 inline void refresh_interrupts() {
-    if (detail::disable_depth > 0) {
+    if (global::disable_depth > 0) {
         tos_disable_interrupts();
     } else {
         tos_enable_interrupts();
