@@ -10,7 +10,7 @@
 
 namespace tos {
 namespace global {
-inline int8_t disable_depth;
+inline int8_t disable_depth = 1;
 }
 namespace kern {
 inline void disable_interrupts() {
