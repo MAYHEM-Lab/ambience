@@ -58,6 +58,16 @@ include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 target_compile_definitions(tos_build_info PRIVATE TOS_GIT_SHA1=\"${GIT_SHA1}\")
 
+add_library(tos_arch_core src/stub.cpp)
+target_link_libraries(tos_arch_core PUBLIC ${TOS_ARCH_NAME}_core)
+
+add_library(tos_arch include/tos/arch.hpp src/stub.cpp)
+target_link_libraries(tos_arch PUBLIC tos_arch_core ${TOS_ARCH_NAME}_impl)
+message(STATUS ${TOS_ARCH_NAME}_impl)
+
+add_library(tos_interrupt include/tos/interrupt.hpp src/interrupt.cpp)
+target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core)
+
 add_library(tos_core
         include/tos/devices.hpp
         include/tos/char_stream.hpp
@@ -70,30 +80,14 @@ add_library(tos_core
         src/device_id.cpp)
 target_link_libraries(tos_core PUBLIC tos_mem tos_util tos_build_info)
 target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug)
+target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_arch)
 target_include_directories(tos_core PUBLIC include)
+target_compile_definitions(tos_core PUBLIC TOS_ARCH_${TOS_ARCH_NAME})
 add_library(tos::core ALIAS tos_core)
 
 add_library(tos_print include/tos/print.hpp src/print.cpp)
 target_link_libraries(tos_print PUBLIC tos_util_core tos::libcxx)
 add_library(tos::print ALIAS tos_print)
-
-add_library(tos_arch_core src/stub.cpp)
-target_link_libraries(tos_arch_core PUBLIC ${TOS_ARCH_NAME}_core)
-
-add_library(tos_arch include/tos/arch.hpp src/stub.cpp)
-target_link_libraries(tos_arch PUBLIC tos_arch_core ${TOS_ARCH_NAME}_impl)
-message(STATUS ${TOS_ARCH_NAME}_impl)
-
-add_library(tos_interrupt include/tos/interrupt.hpp src/interrupt.cpp)
-target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core)
-
-target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_arch)
-target_compile_definitions(tos_core PUBLIC TOS_ARCH_${TOS_ARCH_NAME})
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    target_compile_options(tos_core PUBLIC -fdiagnostics-color=always)
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    target_compile_options(tos_core PUBLIC -fdiagnostics-color)
-endif ()
 
 tos_install(tos_arch ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_arch_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
