@@ -10,6 +10,13 @@ steps:
     - mkdir build && cd build
     - cmake -G Ninja -DTOS_CPU=stm32/l4/75 -DCMAKE_BUILD_TYPE=MinSizeRel ..
     - ninja
+- name: stm32f1
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir stm32f1_build && cd stm32f1_build
+    - cmake -G Ninja -DTOS_CPU=stm32/f1/03c8 -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
 - name: clang
   image: bakir/tos-drone-builder:latest
   pull: always
@@ -31,4 +38,18 @@ steps:
   commands:
     - mkdir nrf52832_build && cd nrf52832_build
     - cmake -G Ninja -DTOS_CPU=nrf52/832 -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
+- name: avr
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir avr_build && cd avr_build
+    - cmake -G Ninja -DTOS_CPU=atmega/328p -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
+- name: esp8266
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir esp8266_build && cd esp8266_build
+    - cmake -G Ninja -DTOS_CPU=esp/8266 -DCMAKE_BUILD_TYPE=MinSizeRel ..
     - ninja
