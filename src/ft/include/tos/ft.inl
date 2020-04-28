@@ -27,7 +27,7 @@ inline kern::scheduler sched;
 namespace this_thread {
 inline void yield() {
     tos::int_guard ig;
-    kern::ctx ctx;
+    kern::processor_state ctx;
     if (save_context(*impl::cur_thread, ctx) == return_codes::saved) {
         kern::make_runnable(*impl::cur_thread);
         switch_context(sched.main_context, return_codes::yield);
@@ -50,7 +50,7 @@ namespace kern {
 }
 
 inline void suspend_self(const no_interrupts&) {
-    kern::ctx ctx;
+    kern::processor_state ctx;
     if (save_context(*impl::cur_thread, ctx) == return_codes::saved) {
         switch_context(sched.main_context, return_codes::suspend);
     }
@@ -130,7 +130,7 @@ TOS_SIZE_OPTIMIZE inline thread_id_t scheduler::start(TaskT& t) {
     num_threads++;
 
     // prepare the initial ctx for the new task
-    auto ctx_ptr = new ((char*)&t - sizeof(ctx)) ctx;
+    auto ctx_ptr = new ((char*)&t - sizeof(processor_state)) processor_state;
 
     kern::disable_interrupts();
     if (save_context(t, *ctx_ptr) == return_codes::saved) {
@@ -194,7 +194,7 @@ inline exit_reason scheduler::schedule() {
             impl::cur_thread = &m_run_queue.front();
             m_run_queue.pop_front();
 
-            switch_context(self()->get_ctx(), return_codes::scheduled);
+            switch_context(self()->get_processor_state(), return_codes::scheduled);
         }
         case return_codes::do_exit: {
             // TODO(#34): Potentially a use-after-free. See the issue.

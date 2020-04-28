@@ -1,16 +1,15 @@
 #pragma once
 
 #include <algorithm>
+#include <csetjmp>
 #include <cstddef>
-#include <setjmp.h>
 #include <tos/arch.hpp>
 #include <tos/intrusive_list.hpp>
 #include <tos/utility.hpp>
 #include <utility>
 
-namespace tos {
-namespace kern {
-struct ctx;
+namespace tos::kern {
+struct processor_state;
 
 /**
  * This type represents an execution context in the system.
@@ -28,11 +27,11 @@ struct alignas(alignof(std::max_align_t)) tcb : public list_node<tcb> {
      *
      * @return execution context of the task
      */
-    ctx& get_ctx() {
+    processor_state& get_processor_state() {
         return *m_ctx;
     }
 
-    void set_ctx(ctx& buf) {
+    void set_processor_state(processor_state& buf) {
         m_ctx = &buf;
     }
 
@@ -44,12 +43,11 @@ struct alignas(alignof(std::max_align_t)) tcb : public list_node<tcb> {
     virtual ~tcb() = 0;
 
 private:
-    ctx* m_ctx;
+    processor_state* m_ctx;
 };
 
 inline tcb::~tcb() = default;
-} // namespace kern
-} // namespace tos
+} // namespace tos::kern
 
 namespace tos {
 enum class return_codes : uint8_t
@@ -74,11 +72,11 @@ enum class return_codes : uint8_t
 };
 
 namespace kern {
-struct ctx {
+struct processor_state {
     jmp_buf buf;
 };
 
-[[noreturn]] inline void switch_context(kern::ctx& j, return_codes rc) {
+[[noreturn]] inline void switch_context(kern::processor_state& j, return_codes rc) {
     longjmp(j.buf, static_cast<int>(rc));
 
     __builtin_unreachable();
@@ -88,4 +86,4 @@ struct ctx {
 
 #define save_ctx(ctx) (::tos::return_codes) setjmp((ctx).buf)
 
-#define save_context(tcb, ctx) (tcb).set_ctx((ctx)), save_ctx(ctx)
+#define save_context(tcb, ctx) (tcb).set_processor_state((ctx)), save_ctx(ctx)

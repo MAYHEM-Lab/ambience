@@ -104,7 +104,7 @@ public:
         m_run_queue.push_back(task);
     }
 
-    ctx main_context{};
+    processor_state main_context{};
     uint8_t busy = 0;
 
 private:
