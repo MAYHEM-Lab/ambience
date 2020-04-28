@@ -51,7 +51,7 @@ add_library(tos_debug
         src/debug.cpp)
 target_link_libraries(tos_debug PUBLIC tos_util_core tos_debug_log tos_arch)
 
-set(TOS_CORE_HEADERS
+add_library(tos_core
         include/tos/devices.hpp
         include/tos/char_stream.hpp
         include/tos/arch.hpp
@@ -59,17 +59,17 @@ set(TOS_CORE_HEADERS
         include/tos/device_id.hpp
         include/tos/driver_traits.hpp
         include/tos/delay.hpp
-        include/tos/barrier.hpp)
-
-add_library(tos_print include/tos/print.hpp src/print.cpp)
-target_link_libraries(tos_print PUBLIC tos_util_core tos::libcxx)
-add_library(tos::print ALIAS tos_print)
-
-add_library(tos_core src/stub.cpp ${TOS_CORE_HEADERS} src/tos_init.cpp src/device_id.cpp)
+        include/tos/barrier.hpp
+        src/tos_init.cpp
+        src/device_id.cpp)
 target_compile_definitions(tos_core PUBLIC TOS_GIT_SHA1=\"${GIT_SHA1}\")
 target_link_libraries(tos_core PUBLIC tos_mem tos_util)
 target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug)
 add_library(tos::core ALIAS tos_core)
+
+add_library(tos_print include/tos/print.hpp src/print.cpp)
+target_link_libraries(tos_print PUBLIC tos_util_core tos::libcxx)
+add_library(tos::print ALIAS tos_print)
 
 add_library(tos_arch_core src/stub.cpp)
 target_link_libraries(tos_arch_core PUBLIC ${TOS_ARCH_NAME}_core)
