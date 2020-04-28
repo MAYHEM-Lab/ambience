@@ -13,6 +13,7 @@
 #include <tos/stack_storage.hpp>
 #include <tos/tcb.hpp>
 #include <tos/ft.hpp>
+#include <tos/context.hpp>
 
 namespace tos::this_thread {
 inline thread_id_t get_id() {
@@ -63,7 +64,8 @@ template<bool FreeStack, class FunT, class... Args>
 struct super_tcb final : tcb {
     template<class FunU, class... ArgUs>
     super_tcb(uint16_t stk_sz, FunU&& fun, ArgUs&&... args)
-        : m_tcb_off(stk_sz - sizeof(super_tcb))
+        : tcb(global::default_context),
+        m_tcb_off(stk_sz - sizeof(super_tcb))
         , m_fun{std::forward<FunU>(fun)}
         , m_args{std::forward<ArgUs>(args)...} {
     }
@@ -80,8 +82,7 @@ struct super_tcb final : tcb {
     }
 
     ~super_tcb() final {
-        if constexpr (FreeStack)
-        {
+        if constexpr (FreeStack) {
             delete[] get_task_base();
         }
     }
@@ -231,7 +232,7 @@ auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
 
 template<class FuncT, class... ArgTs>
 auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
-    auto ptr = new char[stack_sz.sz];
+    auto ptr = new (std::nothrow) char[stack_sz.sz];
     if (!ptr) {
         tos::debug::panic("Stack allocation failed");
     }
@@ -248,5 +249,11 @@ auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
 
 inline void this_thread::exit(void*) {
     kern::thread_exit();
+}
+
+inline context* current_context() {
+    if (!self())
+        return nullptr;
+    return self()->m_context;
 }
 } // namespace tos
