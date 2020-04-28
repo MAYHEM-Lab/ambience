@@ -12,7 +12,7 @@
 #include <tos/print.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/utility.hpp>
-#include <tos/version.hpp>
+#include <tos/build.hpp>
 
 uint8_t buf[512];
 void task() {
@@ -23,7 +23,7 @@ void task() {
 
     tos::println(usart, "\n\n\n\n");
     tos::println(usart, tos::platform::board_name);
-    tos::println(usart, tos::vcs::commit_hash);
+    tos::println(usart, tos::build::commit_hash());
 
     int rd_loop = 0;
     int success = 0;
@@ -35,7 +35,7 @@ void task() {
         auto alarm = tos::open(tos::devs::alarm, timer);
 
         tos::println(usart, "Logger thread running");
-        tos::println(usart, "Logger thread:", tos::impl::cur_thread->get_ctx().buf[0]);
+        tos::println(usart, "Logger thread:", tos::global::cur_thread->get_processor_state().buf[0]);
 
         while (true) {
             tos::this_thread::sleep_for(alarm, 1s);

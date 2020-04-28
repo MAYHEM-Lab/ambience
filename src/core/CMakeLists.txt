@@ -1,8 +1,5 @@
 include(CMakeRC)
 
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC GIT_SHA1)
-
 add_library(tos_mem include/tos/memory.hpp src/memory.cpp)
 
 add_library(tos_memory include/tos/memory/buddy.hpp src/memory/buddy.cpp include/tos/memory/bump.hpp src/memory/free_list.cpp)
@@ -51,20 +48,29 @@ add_library(tos_debug
         src/debug.cpp)
 target_link_libraries(tos_debug PUBLIC tos_util_core tos_debug_log tos_arch)
 
+add_library(tos_build_info
+        include/tos/build.hpp
+        src/build.cpp)
+target_include_directories(tos_build_info PUBLIC include)
+target_link_libraries(tos_build_info PUBLIC tos_util_core)
+
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+target_compile_definitions(tos_build_info PRIVATE TOS_GIT_SHA1=\"${GIT_SHA1}\")
+
 add_library(tos_core
         include/tos/devices.hpp
         include/tos/char_stream.hpp
         include/tos/arch.hpp
-        include/tos/version.hpp
         include/tos/device_id.hpp
         include/tos/driver_traits.hpp
         include/tos/delay.hpp
         include/tos/barrier.hpp
         src/tos_init.cpp
         src/device_id.cpp)
-target_compile_definitions(tos_core PUBLIC TOS_GIT_SHA1=\"${GIT_SHA1}\")
-target_link_libraries(tos_core PUBLIC tos_mem tos_util)
+target_link_libraries(tos_core PUBLIC tos_mem tos_util tos_build_info)
 target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug)
+target_include_directories(tos_core PUBLIC include)
 add_library(tos::core ALIAS tos_core)
 
 add_library(tos_print include/tos/print.hpp src/print.cpp)
