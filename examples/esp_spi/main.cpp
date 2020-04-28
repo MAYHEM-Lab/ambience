@@ -5,7 +5,6 @@
 #include <arch/drivers.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
-#include <tos/version.hpp>
 
 void spi_task() {
     auto g = tos::open(tos::devs::gpio);
@@ -20,7 +19,6 @@ void spi_task() {
 
     tos::print(usart, "\n\n\n\n\n\n");
     tos::println(usart, tos::platform::board_name);
-    tos::println(usart, tos::vcs::commit_hash);
 
     while (true) {
         using namespace std::chrono_literals;

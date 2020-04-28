@@ -9,7 +9,6 @@
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
 #include <tos/semaphore.hpp>
-#include <tos/version.hpp>
 
 void tx_task() {
     using namespace tos::tos_literals;

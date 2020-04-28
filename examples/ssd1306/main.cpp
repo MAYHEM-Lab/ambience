@@ -8,7 +8,6 @@
 #include <tos/ft.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
-#include <tos/version.hpp>
 #include <common/clock.hpp>
 #include <tos/gfx/text.hpp>
 #include <tos/gfx/dimensions.hpp>

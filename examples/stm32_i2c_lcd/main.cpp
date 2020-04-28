@@ -7,7 +7,6 @@
 #include <tos/ft.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
-#include <tos/version.hpp>
 
 namespace tos {
 void delay_ms(std::chrono::milliseconds ms) {

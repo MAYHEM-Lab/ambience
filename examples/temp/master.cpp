@@ -15,7 +15,6 @@
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
 #include <tos/semaphore.hpp>
-#include <tos/version.hpp>
 #include <util/delay.h>
 
 char trace_buf[128];

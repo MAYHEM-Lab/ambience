@@ -4,8 +4,8 @@
 
 #include <arch/drivers.hpp>
 #include <common/lcd.hpp>
+#include <tos/build.hpp>
 #include <tos/print.hpp>
-#include <tos/version.hpp>
 
 void lcd_main() {
     using namespace tos::tos_literals;
@@ -33,7 +33,9 @@ void lcd_main() {
         tos::print(lcd, tos::platform::arch_name, tos::platform::vendor_name);
 
         lcd.set_cursor(0, 2);
-        tos::print(lcd, tos::span<const char>(tos::vcs::commit_hash).slice(0, 7));
+        tos::print(lcd,
+                   tos::span<const char>(raw_cast<const char>(tos::build::commit_hash()))
+                       .slice(0, 7));
 
         lcd.set_cursor(0, 3);
         tos::print(lcd, int32_t(x));

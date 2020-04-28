@@ -9,7 +9,6 @@
 #include <tos/print.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/utility.hpp>
-#include <tos/version.hpp>
 
 auto gpio = open(tos::devs::gpio);
 auto dht =
@@ -47,7 +46,6 @@ void task() {
 
     tos::print(usart, "\n\n\n\n\n\n");
     tos::println(usart, tos::platform::board_name);
-    tos::println(usart, tos::vcs::commit_hash);
 
     tos::esp82::wifi w;
 

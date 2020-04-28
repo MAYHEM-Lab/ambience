@@ -10,7 +10,6 @@
 #include <tos/utility.hpp>
 
 #include <arch/drivers.hpp>
-#include <tos/version.hpp>
 #include <tos/fixed_fifo.hpp>
 
 #include <lwip/init.h>
