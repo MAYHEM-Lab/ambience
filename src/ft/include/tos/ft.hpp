@@ -14,7 +14,7 @@
 #include <tos/types.hpp>
 
 namespace tos {
-namespace impl {
+namespace global {
 inline kern::tcb* cur_thread;
 } // namespace impl
 
@@ -26,7 +26,7 @@ inline kern::tcb* cur_thread;
  * @return pointer to the current thread
  */
 inline kern::tcb* self() {
-    return impl::cur_thread;
+    return global::cur_thread;
 }
 
 /**

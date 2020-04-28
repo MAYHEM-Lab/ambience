@@ -36,12 +36,12 @@ int main()
     tos::kern::enable_interrupts();
 
     tos_main();
-    tos::sched.schedule();
+    tos::global::sched.schedule();
     io.run_one();
 
     while (true)
     {
-        auto res = tos::sched.schedule();
+        auto res = tos::global::sched.schedule();
         if (io.stopped())
         {
             io.reset();

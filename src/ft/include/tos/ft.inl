@@ -15,28 +15,30 @@
 
 namespace tos::this_thread {
 inline thread_id_t get_id() {
-    if (!impl::cur_thread)
+    if (!self())
         return {static_cast<uintptr_t>(-1)};
-    return {reinterpret_cast<uintptr_t>(impl::cur_thread)};
+    return {reinterpret_cast<uintptr_t>(self())};
 }
 } // namespace tos::this_thread
 
 namespace tos {
+namespace global {
 inline kern::scheduler sched;
+} // namespace global
 
 namespace this_thread {
 inline void yield() {
     tos::int_guard ig;
     kern::processor_state ctx;
-    if (save_context(*impl::cur_thread, ctx) == return_codes::saved) {
-        kern::make_runnable(*impl::cur_thread);
-        switch_context(sched.main_context, return_codes::yield);
+    if (save_context(*self(), ctx) == return_codes::saved) {
+        kern::make_runnable(*self());
+        switch_context(global::sched.main_context, return_codes::yield);
     }
 }
 
 inline void block_forever() {
     kern::disable_interrupts();
-    switch_context(sched.main_context, return_codes::suspend);
+    switch_context(global::sched.main_context, return_codes::suspend);
 }
 } // namespace this_thread
 
@@ -46,13 +48,13 @@ namespace kern {
 
     // no need to save the current context, we'll exit
 
-    switch_context(sched.main_context, return_codes::do_exit);
+    switch_context(global::sched.main_context, return_codes::do_exit);
 }
 
 inline void suspend_self(const no_interrupts&) {
     kern::processor_state ctx;
-    if (save_context(*impl::cur_thread, ctx) == return_codes::saved) {
-        switch_context(sched.main_context, return_codes::suspend);
+    if (save_context(*self(), ctx) == return_codes::saved) {
+        switch_context(global::sched.main_context, return_codes::suspend);
     }
 }
 
@@ -147,19 +149,19 @@ TOS_SIZE_OPTIMIZE inline thread_id_t scheduler::start(TaskT& t) {
      * set the stack pointer so the new thread will have an
      * independent execution context
      */
-    tos_set_stack_ptr(reinterpret_cast<char*>(impl::cur_thread));
+    tos_set_stack_ptr(reinterpret_cast<char*>(global::cur_thread));
 
-    static_cast<TaskT*>(impl::cur_thread)->start();
+    static_cast<TaskT*>(global::cur_thread)->start();
 
     TOS_UNREACHABLE();
 }
 
 inline void busy() {
-    sched.busy++;
+    global::sched.busy++;
 }
 
 inline void unbusy() {
-    sched.busy--;
+    global::sched.busy--;
 }
 
 inline exit_reason scheduler::schedule() {
@@ -191,7 +193,7 @@ inline exit_reason scheduler::schedule() {
 
         switch (why) {
         case return_codes::saved: {
-            impl::cur_thread = &m_run_queue.front();
+            global::cur_thread = &m_run_queue.front();
             m_run_queue.pop_front();
 
             switch_context(self()->get_processor_state(), return_codes::scheduled);
@@ -208,13 +210,13 @@ inline exit_reason scheduler::schedule() {
             break;
         }
 
-        impl::cur_thread = nullptr;
+        global::cur_thread = nullptr;
         return exit_reason::yield;
     }
 }
 
 inline void make_runnable(tcb& t) {
-    sched.make_runnable(t);
+    global::sched.make_runnable(t);
 }
 } // namespace kern
 
@@ -222,7 +224,7 @@ template<bool FreeStack, class FuncT, class... ArgTs>
 auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
     auto& t = kern::prep_lambda_layout<FreeStack>(
         task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
-    sched.start(t);
+    global::sched.start(t);
     return t;
 }
 

@@ -75,7 +75,7 @@ int main() {
     GPIO_init();
     while (true) {
         GPIO_write(4, 1);
-        auto res = tos::sched.schedule();
+        auto res = tos::global::sched.schedule();
         if (res == tos::exit_reason::restart) {
             tos_force_reset();
         }
