@@ -5,9 +5,11 @@
 #include <tos/scheduler.hpp>
 
 extern "C" {
-int __dso_handle;
+void* __dso_handle;
+void _fini() {
 }
-extern "C" void _init() {
+void _init() {
+}
 }
 
 extern void tos_main();
