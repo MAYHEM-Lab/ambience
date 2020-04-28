@@ -42,10 +42,25 @@ target_link_libraries(tos_debug_log PUBLIC tos_util_core tos_print)
 add_library(tos_dynamic_log src/dynamic_log.cpp include/tos/debug/dynamic_log.hpp)
 target_link_libraries(tos_dynamic_log PUBLIC tos_debug_log)
 
+add_library(tos_context
+        src/context.cpp
+        include/tos/context.hpp
+        include/tos/components/name.hpp
+        include/tos/components/component.hpp
+        include/tos/components/allocator.hpp
+        include/tos/components/threads.hpp
+        src/components/threads.cpp)
+target_link_libraries(tos_context PUBLIC tos_util_core)
+target_include_directories(tos_context PUBLIC include)
+
 if (BUILD_TESTS)
     add_executable(log_tests log_tests.cpp)
     target_link_libraries(log_tests PUBLIC tests_main tos_core tos_debug_log)
     add_test(NAME log_tests COMMAND log_tests)
+
+    add_executable(context_tests src/context_test.cpp)
+    target_link_libraries(context_tests PUBLIC tests_main tos_core)
+    add_test(NAME context_tests COMMAND context_tests)
 endif()
 
 add_library(tos_debug
@@ -87,7 +102,7 @@ add_library(tos_core
         src/tos_init.cpp
         src/device_id.cpp)
 target_link_libraries(tos_core PUBLIC tos_mem tos_util tos_build_info)
-target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug)
+target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug tos_context)
 target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_arch)
 target_include_directories(tos_core PUBLIC include)
 target_compile_definitions(tos_core PUBLIC TOS_PLATFORM_${TOS_PLATFORM_NAME})
