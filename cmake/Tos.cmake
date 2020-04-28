@@ -42,7 +42,7 @@ message(STATUS "${CMAKE_CXX_COMPILER_ID}")
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     message(STATUS "Using gcc")
 
-    set(TOS_GCC_FLAGS "-fdump-ipa-cgraph -fstack-usage -freorder-functions")
+    set(TOS_GCC_FLAGS "-fdiagnostics-color=always -fdump-ipa-cgraph -fstack-usage -freorder-functions")
 
     set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions -fno-exceptions -fno-rtti -fno-unwind-tables")
 
@@ -50,7 +50,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,--gc-sections")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(STATUS "Using Clang")
-    set(TOS_FLAGS "${TOS_FLAGS} -D__ELF__")
+    set(TOS_FLAGS "${TOS_FLAGS} -D__ELF__ -fdiagnostics-color")
 endif()
 
 set(TOS_C_FLAGS "${TOS_FLAGS} -U__STRICT_ANSI__")
