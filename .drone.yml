@@ -53,3 +53,10 @@ steps:
     - mkdir esp8266_build && cd esp8266_build
     - cmake -G Ninja -DTOS_CPU=esp/8266 -DCMAKE_BUILD_TYPE=MinSizeRel ..
     - ninja
+- name: cc3220sf
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir cc3220sf_build && cd cc3220sf_build
+    - cmake -G Ninja -DTOS_CPU=ti/cc3220sf -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
