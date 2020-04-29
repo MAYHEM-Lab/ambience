@@ -131,8 +131,10 @@ private:
     friend auto with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT &&)
         -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal)));
 
-    template<class ExpectedT>
-    friend decltype(auto) force_get(ExpectedT&&);
+    template<class ExpectedT,
+        class UnexpectedT,
+        std::enable_if_t<!std::is_same_v<ExpectedT, void>>*>
+    friend ExpectedT& force_get(expected<ExpectedT, UnexpectedT>& e);
     template<class ExpectedT>
     friend decltype(auto) force_error(ExpectedT&&);
 };
@@ -159,7 +161,7 @@ ALWAYS_INLINE decltype(auto) force_error(ExpectedT&& e) {
 template <class UnexpectedT>
 ALWAYS_INLINE void force_get(expected<void, UnexpectedT>& e) {
     if (!e) {
-        tos_force_get_failed(nullptr);
+        return std::forward<decltype(*e.m_internal)>(*e.m_internal);
     }
 }
 
