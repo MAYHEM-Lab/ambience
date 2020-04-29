@@ -135,6 +135,12 @@ private:
         class UnexpectedT,
         std::enable_if_t<!std::is_same_v<ExpectedT, void>>*>
     friend ExpectedT& force_get(expected<ExpectedT, UnexpectedT>& e);
+
+    template<class ExpectedT,
+        class UnexpectedT,
+        std::enable_if_t<!std::is_same_v<ExpectedT, void>>*>
+    friend ExpectedT&& force_get(expected<ExpectedT, UnexpectedT>&& e);
+
     template<class ExpectedT>
     friend decltype(auto) force_error(ExpectedT&&);
 };
@@ -166,11 +172,22 @@ ALWAYS_INLINE void force_get(expected<void, UnexpectedT>& e) {
 }
 
 template<class ExpectedT,
+    class UnexpectedT,
+    std::enable_if_t<!std::is_same_v<ExpectedT, void>>* = nullptr>
+ALWAYS_INLINE ExpectedT&& force_get(expected<ExpectedT, UnexpectedT>&& e) {
+    if (e) {
+        return std::move(*e.m_internal);
+    }
+
+    tos_force_get_failed(nullptr);
+}
+
+template<class ExpectedT,
          class UnexpectedT,
          std::enable_if_t<!std::is_same_v<ExpectedT, void>>* = nullptr>
 ALWAYS_INLINE ExpectedT& force_get(expected<ExpectedT, UnexpectedT>& e) {
     if (e) {
-        return std::forward<decltype(*e.m_internal)>(*e.m_internal);
+        return *e.m_internal;
     }
 
     tos_force_get_failed(nullptr);
