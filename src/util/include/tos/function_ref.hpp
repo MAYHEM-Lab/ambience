@@ -6,6 +6,7 @@
 
 #include <tos/debug/panic.hpp>
 #include <tos/utility.hpp>
+#include <tos/meta/function_traits.hpp>
 
 namespace tos {
 namespace detail {
@@ -116,4 +117,28 @@ private:
 
 template<class ToFun, class RetT, class... ArgTs>
 ToFun unsafe_function_ref_cast(const function_ref<RetT(ArgTs...)>& from);
+
+namespace detail {
+template<class...>
+class to_fun_ref;
+template<class ClassT, class RetT, class... ArgTs>
+class to_fun_ref<ClassT, RetT, meta::list<ArgTs...>> {
+public:
+    using type = function_ref<RetT(ArgTs...)>;
+
+    template<auto MemberFun>
+    static RetT forwarder(ArgTs... args, void* user) {
+        auto instance = static_cast<ClassT*>(user);
+        return (instance->*MemberFun)(args...);
+    }
+};
+} // namespace detail
+template<auto MemberFun>
+auto mem_function_ref(typename meta::function_traits<decltype(MemberFun)>::class_t& ins) {
+    using Traits = meta::function_traits<decltype(MemberFun)>;
+    using FunRef = detail::to_fun_ref<typename Traits::class_t,
+                                      typename Traits::ret_t,
+                                      typename Traits::arg_ts>;
+    return typename FunRef::type(&FunRef::template forwarder<MemberFun>, &ins);
+}
 } // namespace tos
