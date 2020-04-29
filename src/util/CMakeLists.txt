@@ -21,6 +21,8 @@ add_library(tos_util_core
     include/nonstd/expected.hpp
     include/tos/uuid.hpp
     include/tos/moved_flag.hpp
+    include/tos/functional.hpp
+    include/tos/meta/function_traits.hpp
 )
 
 target_compile_features(tos_util_core PUBLIC cxx_std_17)
@@ -65,4 +67,8 @@ if (BUILD_TESTS)
     add_executable(intrusive_ptr_test src/intrusive_ptr_test.cpp)
     target_link_libraries(intrusive_ptr_test PUBLIC tests_main tos_util_core)
     add_test(NAME intrusive_ptr_test COMMAND intrusive_ptr_test)
+
+    add_executable(mem_fn_test src/mem_fn_test.cpp)
+    target_link_libraries(mem_fn_test PUBLIC tests_main tos_util_core)
+    add_test(NAME mem_fn_test COMMAND mem_fn_test)
 endif()
