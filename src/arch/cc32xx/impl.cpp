@@ -69,7 +69,7 @@ int main() {
     Power_init();
     Power_enablePolicy();
 
-    tos::kern::detail::disable_depth = 0;
+    tos::global::disable_depth = 0;
     tos_main();
 
     GPIO_init();
