@@ -71,4 +71,8 @@ if (BUILD_TESTS)
     add_executable(mem_fn_test src/mem_fn_test.cpp)
     target_link_libraries(mem_fn_test PUBLIC tests_main tos_util_core)
     add_test(NAME mem_fn_test COMMAND mem_fn_test)
+
+    add_executable(offsetof_test src/offsetof_test.cpp)
+    target_link_libraries(offsetof_test PUBLIC tests_main tos_util_core)
+    add_test(NAME offsetof_test COMMAND offsetof_test)
 endif()
