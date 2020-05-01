@@ -41,7 +41,7 @@ static void power_down(int mode)
 
 extern void tos_main();
 
-[[noreturn]] int TOS_EXPORT TOS_MAIN main()
+[[noreturn]] int main()
 {
     tos::kern::enable_interrupts();
 

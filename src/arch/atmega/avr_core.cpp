@@ -2,8 +2,6 @@
 // Created by fatih on 1/9/19.
 //
 
-#include <avr/delay.h>
-
 #include <avr/io.h>
 #include <avr/wdt.h>
 
