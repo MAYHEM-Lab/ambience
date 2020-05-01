@@ -88,7 +88,7 @@ void task() {
     wifi.connect("SSID", "PASS");
 
     tos::cc32xx::timer tim(0);
-    tos::alarm alarm(tim);
+    tos::alarm alarm(&tim);
 
     while (true) {
         using namespace std::chrono_literals;
