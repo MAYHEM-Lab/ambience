@@ -19,8 +19,17 @@ struct any_sink {
         add(static_cast<int64_t>(i));
     }
 
+    template<class T = int16_t, typename = std::enable_if_t<!std::is_same<T, int>{}>>
+    void add(int16_t i) {
+        add(static_cast<int16_t>(i));
+    }
+
     template<class T = int32_t, typename = std::enable_if_t<!std::is_same<T, int>{}>>
     void add(int32_t i) {
+        add(static_cast<int64_t>(i));
+    }
+
+    void add(uint16_t i) {
         add(static_cast<int64_t>(i));
     }
 
