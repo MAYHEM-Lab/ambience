@@ -42,7 +42,7 @@ void tick_task() {
 
     while (true) {
         using namespace std::chrono_literals;
-        alarm.sleep_for(1s);
+        tos::this_thread::sleep_for(alarm, 1s);
         tos::println(*usart, "Tick");
     }
 }

@@ -42,7 +42,7 @@ auto task = [] {
         fifo.push({x, y, z});
 
         using namespace std::chrono_literals;
-        alarm->sleep_for(200ms);
+        tos::this_thread::sleep_for(alarm, 200ms);
     }
 };
 

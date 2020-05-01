@@ -43,7 +43,7 @@ void lcd_main() {
         lcd.set_cursor(0, 3);
         tos::print(lcd, x);
 
-        alarm.sleep_for(100ms);
+        tos::this_thread::sleep_for(alarm, 100ms);
     }
 }
 

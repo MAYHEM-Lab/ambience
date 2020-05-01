@@ -56,7 +56,7 @@ void tx_task() {
         usart->clear();
 
         gpio.write(7_pin, tos::digital::high);
-        alarm.sleep_for(100ms);
+        tos::this_thread::sleep_for(alarm, 100ms);
         auto r = xbee::read_modem_status(usart, alarm);
 
         xbee::tx_status stat;
@@ -74,7 +74,7 @@ void tx_task() {
                 base_addr, tos::raw_cast<const uint8_t>(buff.get()), xbee::frame_id_t{1}};
             x.transmit(req);
 
-            alarm.sleep_for(100ms);
+            tos::this_thread::sleep_for(alarm, 100ms);
             int retries = 5;
             while (stat.status != xbee::tx_status::statuses::success && retries-- > 0) {
                 auto tx_r = xbee::read_tx_status(usart, alarm);
@@ -91,7 +91,7 @@ void tx_task() {
         tos::println(usart, int(stat.status));
 
         gpio.write(13_pin, tos::digital::high);
-        alarm.sleep_for(1s);
+        tos::this_thread::sleep_for(alarm, 1s);
         gpio.write(13_pin, tos::digital::low);
     }
 }

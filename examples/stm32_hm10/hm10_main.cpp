@@ -50,7 +50,7 @@ auto hm10_task = []{
     auto alarm = tos::open(tos::devs::alarm, tmr);
 
     using namespace std::chrono_literals;
-    alarm.sleep_for(100ms);
+    tos::this_thread::sleep_for(alarm, 100ms);
 
     tos::println(usart, "hello");
 

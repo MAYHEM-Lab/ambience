@@ -59,7 +59,7 @@ auto udp_task = []{
         }
 
         using namespace std::chrono_literals;
-        alarm.sleep_for(10ms);
+        tos::this_thread::sleep_for(alarm, 10ms);
     }
 };
 

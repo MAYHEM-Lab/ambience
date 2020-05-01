@@ -74,7 +74,7 @@ void fake_task() {
         vecs.push({acc.sample(), 0, 0});
         using namespace std::chrono_literals;
         cnt++;
-        alarm.sleep_for(10ms);
+        tos::this_thread::sleep_for(alarm, 10ms);
     }
 }
 
@@ -98,7 +98,7 @@ void sample_task() {
         v.z = z;
         vecs.push({v, 0, count++});
         using namespace std::chrono_literals;
-        alarm.sleep_for(10ms);
+        tos::this_thread::sleep_for(alarm, 10ms);
     }
 }
 

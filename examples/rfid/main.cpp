@@ -71,7 +71,7 @@ void blink_task()
         tos::spi_transaction<decltype(spi)> tr{spi, g, cs};
         tos::println(*usart, "exchange", int(tr->exchange(0)));
         using namespace std::chrono_literals;
-        alarm.sleep_for(1s);
+        tos::this_thread::sleep_for(alarm, 1s);
     }
 
     tos::this_thread::block_forever();
@@ -87,7 +87,7 @@ void blink_task()
     {
         tos::println(usart, rfid.PICC_IsNewCardPresent());
         using namespace std::chrono_literals;
-        alarm.sleep_for(100ms);
+        tos::this_thread::sleep_for(alarm, 100ms);
     }
 }
 

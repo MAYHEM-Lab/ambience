@@ -29,7 +29,7 @@ sample read_slave(GpioT& gpio, AlarmT& alarm, UsartT& usart) {
     // wake up the slave and wait for it to boot
     // usart.clear();
     gpio.write(11_pin, tos::digital::high);
-    alarm.sleep_for(5000ms);
+    tos::this_thread::sleep_for(alarm, 5000ms);
 
     std::array<uint8_t, 2> wait;
     auto res = usart.read(wait, alarm, 5s);
@@ -44,7 +44,7 @@ sample read_slave(GpioT& gpio, AlarmT& alarm, UsartT& usart) {
     std::array<uint8_t, sizeof(temp::sample)> buf;
 
     tos::print(usart, "go");
-    alarm.sleep_for(10s);
+    tos::this_thread::sleep_for(alarm, 10s);
     auto r = usart.read(buf, alarm, 5s);
 
     if (r.size() != buf.size()) {
@@ -63,7 +63,7 @@ sample read_slave(GpioT& gpio, AlarmT& alarm, UsartT& usart) {
     }
 
     gpio.write(11_pin, tos::digital::low);
-    alarm.sleep_for(5ms);
+    tos::this_thread::sleep_for(alarm, 5ms);
 
     uint8_t chk = 0;
     for (char c : buf) {
@@ -144,7 +144,7 @@ void tx_task() {
                 auto alarm = tos::open(tos::devs::alarm, *tmr);
 
                 using namespace std::chrono_literals;
-                alarm.sleep_for(2s);
+                tos::this_thread::sleep_for(alarm, 2s);
 
                 gpio.set_pin_mode(12_pin, tos::pin_mode::in_pullup);
 
@@ -156,7 +156,7 @@ void tx_task() {
 
                 while (res != tos::dht_res::ok && tries < 5) {
                     tos::println(trace, "dht non-responsive");
-                    alarm.sleep_for(2s);
+                    tos::this_thread::sleep_for(alarm, 2s);
                     res = d.read(12_pin);
                     ++tries;
                 }
@@ -176,7 +176,7 @@ void tx_task() {
                 namespace xbee = tos::xbee;
                 gpio.write(7_pin, tos::digital::high);
 
-                alarm.sleep_for(100ms);
+                tos::this_thread::sleep_for(alarm, 100ms);
                 auto r = xbee::read_modem_status(usart, alarm);
 
                 if (r) {
@@ -194,7 +194,7 @@ void tx_task() {
                                        xbee::frame_id_t{1}};
                     x.transmit(req);
 
-                    alarm.sleep_for(100ms);
+                    tos::this_thread::sleep_for(alarm, 100ms);
                     auto tx_r = xbee::read_tx_status(usart, alarm);
 
                     if (tx_r) {

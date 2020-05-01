@@ -25,7 +25,7 @@ void adc_main()
     while (true)
     {
         using namespace std::chrono_literals;
-        alarm.sleep_for(500ms);
+        tos::this_thread::sleep_for(alarm, 500ms);
         auto x = a.read();
         tos::println(usart, int(x));
     }

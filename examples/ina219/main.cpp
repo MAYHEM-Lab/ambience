@@ -24,7 +24,7 @@ void main_task() {
 
     while (true) {
         using namespace std::chrono_literals;
-        alarm.sleep_for(500ms);
+        tos::this_thread::sleep_for(alarm, 500ms);
         int curr = ina.getCurrent_mA();
         int v = ina.getBusVoltage_V();
 

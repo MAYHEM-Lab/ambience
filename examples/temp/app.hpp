@@ -43,7 +43,7 @@ static_assert(sizeof(sample) == 12, "");
         ADCSRA |= (1 << ADEN) | (6 << ADPS0);       // enable the ADC div64
 
         using namespace std::chrono_literals;
-        alarm.sleep_for(20ms);
+        tos::this_thread::sleep_for(alarm, 20ms);
 
         ADCSRA |= (1 << ADSC);      // Start the ADC
 

@@ -74,7 +74,7 @@ conn_:
         send(wconn);
         system_deep_sleep_set_option(0);
         system_deep_sleep_instant(30'000'000);
-        // alarm.sleep_for(30s);
+        // tos::this_thread::sleep_for(alarm, 30s);
     }
 }
 

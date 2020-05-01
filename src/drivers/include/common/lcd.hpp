@@ -112,13 +112,13 @@ void lcd<I2cT>::begin(AlarmT& alarm) {
     using namespace std::chrono_literals;
 
     expanderWrite(m_backlight);
-    alarm.sleep_for(200ms);
+    tos::this_thread::sleep_for(alarm, 200ms);
 
     write4bits(0x30);
-    alarm.sleep_for(5ms);
+    tos::this_thread::sleep_for(alarm, 5ms);
 
     write4bits(0x30);
-    alarm.sleep_for(5ms);
+    tos::this_thread::sleep_for(alarm, 5ms);
 
     write4bits(0x30);
     tos::delay_us(150us);

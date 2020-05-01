@@ -84,9 +84,9 @@ void wifi_task()
 
     using namespace std::chrono_literals;
     g->write(reset_pin, tos::digital::low);
-    alarm->sleep_for(10ms);
+    tos::this_thread::sleep_for(alarm, 10ms);
     g->write(reset_pin, tos::digital::high);
-    alarm->sleep_for(500ms);
+    tos::this_thread::sleep_for(alarm, 500ms);
 
     tos::println(usart, "xchg");
     g->write(cs_pin, digital::low);
@@ -114,7 +114,7 @@ void wifi_task()
         char buf[2];
         memcpy(buf, &c, 2);
         tos::println(usart, buf);
-        alarm->sleep_for(10ms);
+        tos::this_thread::sleep_for(alarm, 10ms);
     }
     g->write(cs_pin, digital::high);
 
