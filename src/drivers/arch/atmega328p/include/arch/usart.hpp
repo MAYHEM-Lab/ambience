@@ -46,7 +46,7 @@ namespace tos {
             void clear();
 
             static span<uint8_t> read(span<uint8_t> buf);
-            static span<uint8_t> read(span<uint8_t> buf, tos::alarm<tos::avr::timer1>&, const std::chrono::milliseconds&);
+            static span<uint8_t> read(span<uint8_t> buf, tos::alarm<tos::avr::timer1*>&, const std::chrono::milliseconds&);
 
             static int write(span<const uint8_t> buf);
 

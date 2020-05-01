@@ -136,7 +136,7 @@ void usart0::clear() {
 }
 
 span<uint8_t> usart0::read(span<uint8_t> b,
-                        tos::alarm<tos::avr::timer1>& alarm,
+                        tos::alarm<tos::avr::timer1*>& alarm,
                         const std::chrono::milliseconds& to) {
     size_t total = 0;
     auto len = b.size();
