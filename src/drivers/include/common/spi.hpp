@@ -60,10 +60,10 @@ public:
     spi_transaction& operator=(spi_transaction&&) = delete;
 
 private:
-    moved_flag m_omit;
-    T m_spi;
-    gpio_type* m_g;
     typename gpio_type::pin_type m_pin;
+    gpio_type* m_g;
+    T m_spi;
+    moved_flag m_omit;
 };
 
 struct spi_mode {
