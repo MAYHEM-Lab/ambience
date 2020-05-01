@@ -18,6 +18,10 @@ struct any_sink {
     void add(int i) {
         add(static_cast<int64_t>(i));
     }
+    
+    void add(int32_t i) {
+        add(static_cast<int64_t>(i));
+    }
 
     void add(uint32_t i) {
         add(static_cast<int64_t>(i));
