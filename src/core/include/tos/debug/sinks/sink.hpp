@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string_view>
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
+#include <string_view>
 #include <tos/debug/detail/log_level.hpp>
 
 namespace tos::debug::detail {
@@ -18,7 +18,8 @@ struct any_sink {
     void add(int i) {
         add(static_cast<int64_t>(i));
     }
-    
+
+    template<class T = int32_t, typename = std::enable_if_t<!std::is_same<T, int>{}>>
     void add(int32_t i) {
         add(static_cast<int64_t>(i));
     }
@@ -47,8 +48,9 @@ struct any_sink {
 
 template<class Sink, class... Ts>
 void log_to_sink(Sink& sink, log_level level, const Ts&... ts) {
-    if (!sink->begin(level)) return;
+    if (!sink->begin(level))
+        return;
     (sink->add(ts), ...);
     sink->end();
 }
-}
+} // namespace tos::debug::detail
