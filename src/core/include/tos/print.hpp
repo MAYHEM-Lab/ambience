@@ -264,4 +264,9 @@ template<class StrT>
 void print(StrT& ostr, std::chrono::microseconds us) {
     print(ostr, int(us.count()), "us", tos::no_separator());
 }
+
+template<class StrT>
+void print(StrT& ostr, std::string_view sv) {
+    print(ostr, span<const char>(sv.begin(), sv.size()));
+}
 } // namespace tos
