@@ -47,7 +47,7 @@ auto hm10_task = []{
                   GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART3_PR_TX);
 
     auto tmr = tos::open(tos::devs::timer<2>);
-    auto alarm = tos::open(tos::devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     using namespace std::chrono_literals;
     tos::this_thread::sleep_for(alarm, 100ms);

@@ -141,7 +141,7 @@ void tx_task() {
 
             {
                 auto tmr = tos::open(tos::devs::timer<1>);
-                auto alarm = tos::open(tos::devs::alarm, *tmr);
+                tos::alarm alarm(&*tmr);
 
                 using namespace std::chrono_literals;
                 tos::this_thread::sleep_for(alarm, 2s);

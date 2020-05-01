@@ -16,7 +16,7 @@ void lcd_main() {
     lcd<decltype(&i2c)> lcd{&i2c, {0x27}, 20, 4};
 
     auto tmr = open(devs::timer<1>);
-    auto alarm = open(devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     lcd.begin(alarm);
     lcd.backlight();

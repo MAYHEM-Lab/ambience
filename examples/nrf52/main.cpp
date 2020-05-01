@@ -22,7 +22,7 @@ auto blink_task = []
     tos::println(usart, "hello");
 
     auto timer = open(tos::devs::timer<1>);
-    auto alarm = open(tos::devs::alarm, timer);
+    tos::alarm alarm(&timer);
 
     while (true)
     {

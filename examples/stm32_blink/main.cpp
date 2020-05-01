@@ -20,7 +20,7 @@ void blink_task() {
     auto g = tos::open(tos::devs::gpio);
 
     auto timer = open(devs::timer<2>);
-    auto alarm = open(devs::alarm, timer);
+    tos::alarm alarm(&timer);
 
     auto usart =
         open(devs::usart<1>, tos::uart::default_115200, usart_rx_pin, usart_tx_pin);

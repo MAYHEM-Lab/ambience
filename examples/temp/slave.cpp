@@ -45,7 +45,7 @@ void main_task() {
         g.set_pin_mode(10_pin, tos::pin_mode::in_pullup);
 
         auto tmr = open(tos::devs::timer<1>);
-        auto alarm = open(tos::devs::alarm, *tmr);
+        tos::alarm alarm(&*tmr);
 
         auto d =
             tos::make_dht(g, [](std::chrono::microseconds us) { _delay_us(us.count()); });

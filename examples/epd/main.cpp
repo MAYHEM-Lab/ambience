@@ -34,7 +34,7 @@ void blink_task() {
     g.write(data_command, tos::digital::high);
 
     auto timer = tos::open(tos::devs::timer<2>);
-    auto alarm = tos::open(tos::devs::alarm, timer);
+    tos::alarm alarm(&timer);
 
     tos::stm32::spi spi(tos::stm32::detail::spis[0], 19_pin, std::nullopt, 21_pin);
 

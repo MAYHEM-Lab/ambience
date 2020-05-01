@@ -38,7 +38,7 @@ void tick_task() {
     using namespace tos::tos_literals;
 
     auto tmr = open(tos::devs::timer<1>);
-    auto alarm = open(tos::devs::alarm, *tmr);
+    tos::alarm alarm(&*tmr);
 
     while (true) {
         using namespace std::chrono_literals;

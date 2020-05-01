@@ -67,7 +67,7 @@ conn_:
     lwip_init();
 
     auto tmr = open(tos::devs::timer<0>);
-    auto alarm = open(tos::devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     while (true) {
         using namespace std::chrono_literals;

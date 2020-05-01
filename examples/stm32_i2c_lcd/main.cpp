@@ -27,7 +27,7 @@ void lcd_main() {
     lcd lcd{&t, {0x27}, 20, 4};
 
     auto tmr = open(devs::timer<2>);
-    auto alarm = open(devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     lcd.begin(alarm);
     lcd.backlight();

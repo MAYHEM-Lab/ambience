@@ -20,7 +20,7 @@ void main_task() {
     ina219<decltype(&i2c)> ina{twi_addr_t{0x41}, &i2c};
 
     auto tmr = open(devs::timer<1>);
-    auto alarm = open(devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     while (true) {
         using namespace std::chrono_literals;

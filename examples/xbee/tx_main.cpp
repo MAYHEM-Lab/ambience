@@ -19,7 +19,7 @@ void tx_task() {
     auto gpio = tos::open(tos::devs::gpio);
 
     auto tmr = tos::open(tos::devs::timer<1>);
-    auto alarm = tos::open(tos::devs::alarm, *tmr);
+    tos::alarm alarm(&*tmr);
 
     tos::println(usart, "send a character to get into the debugger");
     uint8_t debug_buf[1];

@@ -62,7 +62,7 @@ void blink_task()
     g.write(cs, tos::digital::high);
 
     auto tmr = tos::open(tos::devs::timer<2>);
-    auto alarm = tos::open(tos::devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     tos::stm32::spi spi(tos::stm32::detail::spis[0]);
 

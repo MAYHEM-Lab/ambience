@@ -34,7 +34,7 @@ auto task = [] {
     sensor.setRangeSetting(2);
 
     auto tmr = tos::open(tos::devs::timer<0>);
-    auto alarm = tos::open(tos::devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     while (true) {
         auto [x, y, z] = sensor.read();

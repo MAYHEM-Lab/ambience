@@ -102,7 +102,7 @@ void ble_task() {
     auto g = tos::open(tos::devs::gpio);
 
     auto timer = open(tos::devs::timer<2>);
-    auto alarm = open(tos::devs::alarm, timer);
+    tos::alarm alarm(&timer);
     auto erased_alarm = tos::erase_alarm(&alarm);
 
     auto usart = tos::open(tos::devs::usart<1>, tos::uart::default_115200, 23_pin, 22_pin);

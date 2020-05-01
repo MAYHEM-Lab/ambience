@@ -42,7 +42,7 @@ auto udp_task = []{
     };
 
     auto timer = tos::open(tos::devs::timer<0>);
-    auto alarm = tos::open(tos::devs::alarm, timer);
+    tos::alarm alarm(&timer);
 
     int i = 0;
     for (;;)

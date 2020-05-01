@@ -32,7 +32,7 @@ void task() {
     int i = 0;
     auto log_ip_task = [&] {
         auto timer = tos::open(tos::devs::timer<0>);
-        auto alarm = tos::open(tos::devs::alarm, timer);
+        tos::alarm alarm(&timer);
 
         tos::println(usart, "Logger thread running");
         tos::println(usart, "Logger thread:", tos::self()->get_processor_state().buf[0]);

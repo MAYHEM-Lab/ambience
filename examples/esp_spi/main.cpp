@@ -11,7 +11,7 @@ void spi_task() {
     auto spi = tos::open(tos::devs::spi<0>, tos::spi_mode::master, g);
 
     auto tmr = tos::open(tos::devs::timer<0>);
-    auto alarm = tos::open(tos::devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     using namespace tos::tos_literals;
 

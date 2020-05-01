@@ -68,7 +68,7 @@ void wifi_task()
     g->set_pin_mode(dr_pin, tos::pin_mode::in);
 
     auto timer = open(tos::devs::timer<2>);
-    auto alarm = open(tos::devs::alarm, timer);
+    tos::alarm alarm(&timer);
 
     constexpr auto usconf = tos::usart_config()
         .add(115200_baud_rate)

@@ -48,7 +48,7 @@ void lcd_main() {
     oled.dim(false);
 
     auto tmr = open(devs::timer<2>);
-    auto alarm = open(devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     auto tmr3 = open(devs::timer<3>);
     tos::clock clk(&tmr3);

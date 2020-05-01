@@ -20,7 +20,7 @@ void adc_main()
     tos::esp82::adc a;
 
     auto timer = open(tos::devs::timer<0>);
-    auto alarm = open(tos::devs::alarm, timer);
+    tos::alarm alarm(&timer);
 
     while (true)
     {

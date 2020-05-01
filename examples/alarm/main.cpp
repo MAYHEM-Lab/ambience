@@ -15,7 +15,7 @@ void tick_task() {
     auto usart = open(tos::devs::usart<0>, tos::uart::default_9600);
 
     auto tmr = open(tos::devs::timer<1>);
-    auto alarm = open(tos::devs::alarm, *tmr);
+    tos::alarm alarm(&*tmr);
 
     tos::println(*usart, "Hello!");
     while (true) {

@@ -400,7 +400,7 @@ void radio_task(bool is_tx) {
     g->set_pin_mode(exti_pin, pin_mode::in_pullup);
 
     auto timer = open(tos::devs::timer<2>);
-    auto alarm = open(tos::devs::alarm, timer);
+    tos::alarm alarm(&timer);
 
     auto usart = tos::open(
         tos::devs::usart<1>, tos::uart::default_9600, usart_rx_pin, usart_tx_pin);
