@@ -85,7 +85,12 @@ public:
               [](ArgTs... args, void* data) -> RetT {
                   static_assert(!std::is_const_v<T>, "Function cannot be a temporary!");
                   auto& actual_fun = *static_cast<T*>(data);
-                  return actual_fun(std::forward<ArgTs>(args)...);
+                  if constexpr (std::is_same_v<RetT, void>) {
+                      actual_fun(std::forward<ArgTs>(args)...);
+                      return;
+                  } else {
+                      return actual_fun(std::forward<ArgTs>(args)...);
+                  }
               },
               &func) {
     }
