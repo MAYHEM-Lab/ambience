@@ -7,6 +7,7 @@
 #include <chrono>
 #include <avr/io.h>
 #include <tos/print.hpp>
+#include <tos/ft.hpp>
 
 namespace temp
 {
