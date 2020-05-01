@@ -60,6 +60,7 @@ namespace etl
     /// The function operator that will be overridden.
     //*************************************************************************
     virtual void operator ()(TParameter) const = 0;
+    virtual ~ifunction() = default;
   };
 
   //***************************************************************************
@@ -77,6 +78,7 @@ namespace etl
     /// The function operator that will be overridden.
     //*************************************************************************
     virtual void operator ()() const = 0;
+    virtual ~ifunction() = default;
   };
 
   //***************************************************************************
