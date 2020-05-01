@@ -32,7 +32,7 @@ ALWAYS_INLINE void do_not_optimize(Tp& value) {
 
 #if defined(TOS_ARCH_esp8266)
 extern "C" int ets_printf(const char* format, ...) __attribute__((format(printf, 1, 2)));
-#define tos_debug_print
+#define tos_debug_print(...)
 #endif
 
 #if defined(TOS_ARCH_nrf52)
