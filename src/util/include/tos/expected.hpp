@@ -81,7 +81,7 @@ public:
     }
 
     template<class U = T,
-             typename = std::enable_if_t<!is_expected<std::remove_reference_t<U>>{}>>
+        typename = std::enable_if_t<!is_expected<std::remove_reference_t<U>>{}>>
     constexpr expected(U&& u)
         : m_internal(std::forward<U>(u)) {
     }
@@ -119,7 +119,7 @@ private:
 
     template<class ExpectedT, class HandlerT, class ErrHandlerT>
     friend auto with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT &&)
-        -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal)));
+    -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal)));
 
     template<class ExpectedT,
              class UnexpectedT,
@@ -131,13 +131,16 @@ private:
              std::enable_if_t<!std::is_same_v<ExpectedT, void>>*>
     friend ExpectedT&& force_get(expected<ExpectedT, UnexpectedT>&& e);
 
+    template <class UnexpectedT>
+    friend void force_get(expected<void, UnexpectedT>& e);
+
     template<class ExpectedT>
     friend decltype(auto) force_error(ExpectedT&&);
 };
 
 template<class ExpectedT, class HandlerT, class ErrHandlerT>
 ALWAYS_INLINE auto with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT&& err_handler)
-    -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal))) {
+-> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal))) {
     if (e) {
         return have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal));
     }
@@ -157,7 +160,7 @@ ALWAYS_INLINE decltype(auto) force_error(ExpectedT&& e) {
 template<class UnexpectedT>
 ALWAYS_INLINE void force_get(expected<void, UnexpectedT>& e) {
     if (!e) {
-        return std::forward<decltype(*e.m_internal)>(*e.m_internal);
+        tos_force_get_failed(nullptr);
     }
 }
 
@@ -173,8 +176,8 @@ ALWAYS_INLINE ExpectedT&& force_get(expected<ExpectedT, UnexpectedT>&& e) {
 }
 
 template<class ExpectedT,
-         class UnexpectedT,
-         std::enable_if_t<!std::is_same_v<ExpectedT, void>>* = nullptr>
+    class UnexpectedT,
+    std::enable_if_t<!std::is_same_v<ExpectedT, void>>* = nullptr>
 ALWAYS_INLINE ExpectedT& force_get(expected<ExpectedT, UnexpectedT>& e) {
     if (e) {
         return *e.m_internal;
