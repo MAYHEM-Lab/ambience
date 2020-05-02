@@ -36,7 +36,8 @@ public:
     void
     operator()(lwip::events::recv_t, BaseEndpointT&, lwip::buffer&&) ICACHE_FLASH_ATTR;
 
-    bool ALWAYS_INLINE disconnected() const {
+    ALWAYS_INLINE
+    bool disconnected() const {
         return m_discon;
     }
 
