@@ -30,7 +30,7 @@ steps:
   pull: always
   commands:
     - mkdir gcc-size-build && cd gcc-size-build
-    - cmake -G Ninja -DTOS_CPU=x86/hosted -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_TESTS=ON ..
+    - CC=gcc-8 CXX=g++-8 cmake -G Ninja -DTOS_CPU=x86/hosted -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_TESTS=ON ..
     - ninja
     - ctest
 - name: gcc-debug
@@ -38,7 +38,7 @@ steps:
   pull: always
   commands:
     - mkdir gdd-debug-build && cd gdd-debug-build
-    - cmake -G Ninja -DTOS_CPU=x86/hosted -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON ..
+    - CC=gcc-8 CXX=g++-8 cmake -G Ninja -DTOS_CPU=x86/hosted -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON ..
     - ninja
     - ctest
 - name: nrf52840
