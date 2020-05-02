@@ -17,7 +17,6 @@
 #include <caps/emsha_signer.hpp>
 #include "monotonic_clock.hpp"
 
-
 extern "C" void optimistic_yield(uint32_t){
     static uint32_t last_yield = 0;
     if (system_get_time() - last_yield > 1'000'000  || last_yield == 0)
@@ -38,7 +37,7 @@ sock_read(void *ctx, unsigned char *buf, size_t len)
 {
     auto ptr = static_cast<tcp_ptr>(ctx);
     for (;;) {
-        auto res = ptr->read({ (char*)buf, len });
+        auto res = ptr->read({ (uint8_t*)buf, len });
 
         if (!res)
         {
@@ -66,7 +65,7 @@ sock_write(void *ctx, const unsigned char *buf, size_t len)
     tos_debug_print("write %d\n", int(len));
     if (ptr->disconnected())
         return -1;
-    return ptr->write({ (const char*)buf, len });
+    return ptr->write({ (const uint8_t*)buf, len });
 }
 
 /*
@@ -86,18 +85,20 @@ static const char *HTTP_RES =
 
 unsigned char iobuf[5000];
 br_ssl_server_context sc;
+
+tos::semaphore available{1};
 template <class StreamT, class UsartT>
 void handle_sock(StreamT& p, UsartT& usart)
 {
     tos::println(usart, "got req");
-    br_sslio_context ioc;
 
     br_ssl_engine_set_buffer(&sc.eng, iobuf, sizeof iobuf, 1);
     br_ssl_server_reset(&sc);
 
+    br_sslio_context ioc;
     br_sslio_init(&ioc, &sc.eng, sock_read, &p, sock_write, &p);
 
-    //system_update_cpu_freq(SYS_CPU_160MHZ);
+    system_update_cpu_freq(SYS_CPU_160MHZ);
     system_soft_wdt_stop();
     auto lcwn = 0;
     for (;;) {
@@ -117,20 +118,21 @@ void handle_sock(StreamT& p, UsartT& usart)
             lcwn = 0;
         }
     }
-    system_soft_wdt_restart();
-
-    //system_update_cpu_freq(SYS_CPU_80MHZ);
-
     br_sslio_write_all(&ioc, HTTP_RES, strlen(HTTP_RES));
     br_sslio_close(&ioc);
 
     client_drop:
+    system_soft_wdt_restart();
+    system_update_cpu_freq(SYS_CPU_80MHZ);
+
     auto err = br_ssl_engine_last_error(&sc.eng);
     if (err == 0) {
         tos::println(usart, "SSL closed (correctly).");
     } else {
         tos::println(usart, "SSL error:", err);
     }
+    tos::println(usart, "Up");
+    available.up();
 }
 
 //static unsigned char sign_buf[512];
@@ -176,17 +178,23 @@ auto verify(caps::emsha::hash_t hash)
 //    return h;
 //}
 
+extern "C" {
+uint32_t tos_rand_source() {
+    return 4;
+}
+}
+
 extern rst_info rst;
 tos::stack_storage<1024 * 8> s;
 void server()
 {
     using namespace tos;
     using namespace tos::tos_literals;
-    auto usart = tos::open(tos::devs::usart<0>, tos::uart::default_9600);
+    auto usart = tos::open(tos::devs::usart<0>, tos::uart::default_115200);
 
     tos::esp82::wifi w;
     conn:
-    auto res = w.connect("UCSB Wireless Web");
+    auto res = w.connect("bkr", "@bakir123");
     tos::println(usart, "connected?", bool(res));
     if (!res) goto conn;
 
@@ -200,45 +208,22 @@ void server()
 
     br_ec_compute_pub(br_ec_get_default(), &k, kbuf, &EC);
 
-    //get_pubkey();
-    tos::semaphore wait{0};
-    tos::launch(s, [&]{
-        uint8_t buf[] = "hello world";
-        caps::emsha::signer s("foo");
-        for (int i = 0; i < 30; ++i)
-        {
-            auto vbeg = tos::high_resolution_clock::now();
-            auto hash = s.hash(buf);
-            auto sz = sign(hash);
-            auto end = tos::high_resolution_clock::now();
-            tos::println(usart, "sign", int((end - vbeg).count()), int(sz));
-//
-//            sign_buf[0] ^= 3;
-
-            bool r;
-            vbeg = tos::high_resolution_clock::now();
-            {
-                auto hash = s.hash(buf);
-                r = verify(hash);
-            }
-            end = tos::high_resolution_clock::now();
-            tos::println(usart, "eq", r, int((end - vbeg).count()));
-        }
-        wait.up();
-    });
-    wait.down();
-
     tos::esp82::tcp_socket src_sock{wconn, port_num_t{ 9993 }};
 
     tos::println(usart, "reset reason:", int(rst.reason), (void*)rst.epc1);
     auto acceptor = [&](auto&, tos::esp82::tcp_endpoint&& ep){
+        ets_printf("count: %d", get_count(available));
+        if (get_count(available) != 1) {
+            return false;
+        }
+        available.down();
         tos::launch(s,
                     [p = std::make_unique<tos::tcp_stream<tos::esp82::tcp_endpoint>>(std::move(ep)), &usart]{
                         handle_sock(*p, usart);
                     });
         return true;
     };
-    src_sock.accept(acceptor);
+    src_sock.async_accept(acceptor);
     tos::this_thread::block_forever();
 }
 

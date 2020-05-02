@@ -19,10 +19,10 @@ elseif(${TOS_CORE} MATCHES "esp")
 
     add_subdirectory(esp_lwip)
     add_subdirectory(esp_conn)
-    #add_subdirectory(esp_ssl)
+    add_subdirectory(esp_ssl)
     add_subdirectory(esp_spi)
     add_subdirectory(esp_adc)
-    #add_subdirectory(bearssl)
+    add_subdirectory(bearssl)
 
     #add_subdirectory(aws_push)
 
