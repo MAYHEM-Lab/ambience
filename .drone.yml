@@ -17,12 +17,28 @@ steps:
     - mkdir stm32f1_build && cd stm32f1_build
     - cmake -G Ninja -DTOS_CPU=stm32/f1/03c8 -DCMAKE_BUILD_TYPE=MinSizeRel ..
     - ninja
-- name: clang
+- name: clang-size
   image: bakir/tos-drone-builder:latest
   pull: always
   commands:
     - mkdir clang-build && cd clang-build
     - CC=clang CXX=clang++ cmake -G Ninja -DTOS_CPU=x86/hosted -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_TESTS=ON ..
+    - ninja
+    - ctest
+- name: gcc-size
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir gcc-size-build && cd gcc-size-build
+    - cmake -G Ninja -DTOS_CPU=x86/hosted -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_TESTS=ON ..
+    - ninja
+    - ctest
+- name: gcc-debug
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir gdd-debug-build && cd gdd-debug-build
+    - cmake -G Ninja -DTOS_CPU=x86/hosted -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON ..
     - ninja
     - ctest
 - name: nrf52840
