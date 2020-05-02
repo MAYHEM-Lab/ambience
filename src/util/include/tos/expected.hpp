@@ -103,16 +103,6 @@ public:
         return m_internal.has_value();
     }
 
-    template<class ResT, typename = std::enable_if_t<!std::is_same_v<T, ResT>>>
-    constexpr operator expected<ResT, ErrT>() const {
-        if (*this) {
-            tos_force_get_failed(nullptr);
-            __builtin_unreachable();
-        }
-
-        return unexpected(m_internal.error());
-    }
-
     explicit constexpr operator std::optional<T>() const {
         if (!*this) {
             return std::nullopt;
@@ -132,13 +122,13 @@ private:
         -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal)));
 
     template<class ExpectedT,
-        class UnexpectedT,
-        std::enable_if_t<!std::is_same_v<ExpectedT, void>>*>
+             class UnexpectedT,
+             std::enable_if_t<!std::is_same_v<ExpectedT, void>>*>
     friend ExpectedT& force_get(expected<ExpectedT, UnexpectedT>& e);
 
     template<class ExpectedT,
-        class UnexpectedT,
-        std::enable_if_t<!std::is_same_v<ExpectedT, void>>*>
+             class UnexpectedT,
+             std::enable_if_t<!std::is_same_v<ExpectedT, void>>*>
     friend ExpectedT&& force_get(expected<ExpectedT, UnexpectedT>&& e);
 
     template<class ExpectedT>
@@ -164,7 +154,7 @@ ALWAYS_INLINE decltype(auto) force_error(ExpectedT&& e) {
     tos_force_get_failed(nullptr);
 }
 
-template <class UnexpectedT>
+template<class UnexpectedT>
 ALWAYS_INLINE void force_get(expected<void, UnexpectedT>& e) {
     if (!e) {
         return std::forward<decltype(*e.m_internal)>(*e.m_internal);
@@ -172,8 +162,8 @@ ALWAYS_INLINE void force_get(expected<void, UnexpectedT>& e) {
 }
 
 template<class ExpectedT,
-    class UnexpectedT,
-    std::enable_if_t<!std::is_same_v<ExpectedT, void>>* = nullptr>
+         class UnexpectedT,
+         std::enable_if_t<!std::is_same_v<ExpectedT, void>>* = nullptr>
 ALWAYS_INLINE ExpectedT&& force_get(expected<ExpectedT, UnexpectedT>&& e) {
     if (e) {
         return std::move(*e.m_internal);
@@ -208,3 +198,11 @@ struct ignore_t {
 };
 static constexpr ignore_t ignore{};
 } // namespace tos
+
+#define EXPECTED_TRY(...)                                                                \
+    ({                                                                                   \
+        auto&& res = (__VA_ARGS__);                                                      \
+        if (!res)                                                                        \
+            return unexpected(force_error(res));                                         \
+        force_get(res);                                                                  \
+    })
