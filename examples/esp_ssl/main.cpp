@@ -19,6 +19,10 @@
 #include <tos/utility.hpp>
 #include <tos_arch.hpp>
 
+extern "C" {
+uint32_t esp_random();
+}
+
 br_ssl_client_context sc;
 br_x509_minimal_context xc;
 unsigned char iobuf[BR_SSL_BUFSIZE_MONO];
@@ -60,7 +64,7 @@ static int sock_write(void* ctx, const unsigned char* buf, size_t len) {
     return ptr->write({(const uint8_t*)buf, len});
 }
 
-extern "C" void optimistic_yield(uint32_t) {
+extern "C" void tos_this_thread_yield(uint32_t) {
     static uint32_t last_yield = 0;
     if (system_get_time() - last_yield > 1'000'000 || last_yield == 0) {
         tos_debug_print("yielding\n");
@@ -69,6 +73,7 @@ extern "C" void optimistic_yield(uint32_t) {
         last_yield = system_get_time();
     }
 }
+
 static const unsigned char TA0_DN[] = {
     0x30, 0x61, 0x31, 0x0B, 0x30, 0x09, 0x06, 0x03, 0x55, 0x04, 0x06, 0x13,
     0x02, 0x55, 0x53, 0x31, 0x15, 0x30, 0x13, 0x06, 0x03, 0x55, 0x04, 0x0A,
@@ -165,7 +170,7 @@ private:
 
 extern "C" {
 uint32_t tos_rand_source() {
-    return 4;
+    return esp_random();
 }
 }
 
@@ -216,6 +221,7 @@ conn:
 
         if (!conn) {
             tos::println(usart, "couldn't connect");
+            tos::println(usart, "connected:", wconn.is_connected());
             continue;
         }
 
