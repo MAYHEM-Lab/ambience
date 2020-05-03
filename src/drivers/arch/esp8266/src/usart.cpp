@@ -288,6 +288,7 @@ struct uart_state {
 
 uart_state state;
 
+ISR_AVAILABLE
 void interrupt_handler(void* arg) {
     auto uart = static_cast<volatile UART_CONTROL_BLOCK*>(arg);
     auto& status = uart->int_st;
