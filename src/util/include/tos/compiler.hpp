@@ -27,3 +27,5 @@
 #define TOS_NO_OPTIMIZE [[clang::optnone]]
 #define TOS_SIZE_OPTIMIZE [[clang::minsize]]
 #endif
+
+#define ISR_AVAILABLE [[gnu::section(".isr_text")]]
