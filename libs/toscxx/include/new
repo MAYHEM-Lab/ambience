@@ -128,7 +128,7 @@ namespace std  // purposefully not using versioning namespace
 
 #if !defined(_LIBCPP_ABI_MICROSOFT) || defined(_LIBCPP_NO_VCRUNTIME)
 struct _LIBCPP_TYPE_VIS nothrow_t {};
-extern _LIBCPP_FUNC_VIS const nothrow_t nothrow;
+inline _LIBCPP_FUNC_VIS const nothrow_t nothrow;
 
 class _LIBCPP_EXCEPTION_ABI bad_alloc
     : public exception
