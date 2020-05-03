@@ -141,6 +141,8 @@ br_rsa_i15_private(unsigned char *x, const br_rsa_private_key *sk)
 	mp = mq + 2 * fwlen;
 	memmove(mp, t1, fwlen * sizeof *t1);
 
+        tos_this_thread_yield();
+
 	/*
 	 * Compute s2 = x^dq mod q.
 	 */
@@ -150,6 +152,8 @@ br_rsa_i15_private(unsigned char *x, const br_rsa_private_key *sk)
 	r &= br_i15_modpow_opt(s2, sk->dq, sk->dqlen, mq, q0i,
 		mq + 3 * fwlen, TLEN - 3 * fwlen);
 
+        tos_this_thread_yield();
+        
 	/*
 	 * Compute s1 = x^dq mod q.
 	 */

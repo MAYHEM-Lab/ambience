@@ -135,6 +135,8 @@ br_rsa_i31_private(unsigned char *x, const br_rsa_private_key *sk)
 	mp = mq + 2 * fwlen;
 	memmove(mp, t1, fwlen * sizeof *t1);
 
+        tos_this_thread_yield();
+
 	/*
 	 * Compute s2 = x^dq mod q.
 	 */
@@ -143,6 +145,8 @@ br_rsa_i31_private(unsigned char *x, const br_rsa_private_key *sk)
 	br_i31_decode_reduce(s2, x, xlen, mq);
 	r &= br_i31_modpow_opt(s2, sk->dq, sk->dqlen, mq, q0i,
 		mq + 3 * fwlen, TLEN - 3 * fwlen);
+
+        tos_this_thread_yield();
 
 	/*
 	 * Compute s1 = x^dp mod p.

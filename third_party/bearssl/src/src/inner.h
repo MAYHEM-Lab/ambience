@@ -2580,4 +2580,10 @@ br_cpuid(uint32_t mask_eax, uint32_t mask_ebx,
 
 /* ==================================================================== */
 
+#if defined(TOS)
+extern void tos_this_thread_yield();
+#else
+#define tos_this_thread_yield(...)
+#endif
+
 #endif
