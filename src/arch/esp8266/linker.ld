@@ -185,6 +185,7 @@ SECTIONS
     *libbearssl.a:(.literal.* .text.* .irom.text.src*)
 
     *libm.a:(.literal .text .literal.* .text.*)
+    *ltrans.o(.literal .text .literal.* .text.*)
 
     *(.irom0.literal .irom.literal .irom.text.literal .irom0.text .irom.text)
     _irom0_text_end = ABSOLUTE(.);
@@ -221,6 +222,8 @@ SECTIONS
     *(.entry.text)
     *(.init.literal)
     *(.init)
+    *(.isr_text)
+    *(.iram_text .iram_text.*)
     *(.literal .text .literal.* .text.* .stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
     *(.fini.literal)
     *(.fini)
