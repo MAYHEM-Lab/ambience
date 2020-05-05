@@ -31,6 +31,16 @@ public:
         intrusive_ref(m_ptr);
     }
 
+    template <class U, std::enable_if_t<std::is_convertible_v<U*, T*>>* = nullptr>
+    intrusive_ptr(const intrusive_ptr<U>& rhs) : m_ptr(rhs.m_ptr) {
+        intrusive_ref(m_ptr);
+    }
+
+    template <class U, std::enable_if_t<std::is_convertible_v<U*, T*>>* = nullptr>
+    intrusive_ptr(intrusive_ptr<U>&& rhs) : m_ptr(rhs.m_ptr) {
+        rhs.m_ptr = nullptr;
+    }
+
     intrusive_ptr(const intrusive_ptr& rhs) noexcept
         : m_ptr(rhs.m_ptr) {
         intrusive_ref(m_ptr);
