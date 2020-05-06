@@ -2,7 +2,14 @@ include(CMakeRC)
 
 add_library(tos_mem include/tos/memory.hpp src/memory.cpp)
 
-add_library(tos_memory include/tos/memory/buddy.hpp src/memory/buddy.cpp include/tos/memory/bump.hpp src/memory/free_list.cpp)
+add_library(tos_memory
+        include/tos/memory/buddy.hpp
+        src/memory/buddy.cpp
+        include/tos/memory/bump.hpp
+        src/memory/free_list.cpp
+        include/tos/memory/polymorphic_allocator.hpp
+        include/tos/memory/malloc.hpp
+        include/tos/memory/null_allocator.hpp)
 target_link_libraries(tos_memory PUBLIC tos_util_core)
 target_include_directories(tos_memory PUBLIC include)
 
