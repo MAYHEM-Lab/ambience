@@ -203,6 +203,6 @@ static constexpr ignore_t ignore{};
     ({                                                                                   \
         auto&& res = (__VA_ARGS__);                                                      \
         if (!res)                                                                        \
-            return unexpected(force_error(res));                                         \
+            return ::tos::unexpected(force_error(res));                                         \
         force_get(res);                                                                  \
     })
