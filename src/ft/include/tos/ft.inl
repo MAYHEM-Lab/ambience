@@ -24,6 +24,12 @@ inline thread_id_t get_id() {
 } // namespace tos::this_thread
 
 namespace tos {
+inline context& current_context() {
+    if (!self())
+        return default_context();
+    return self()->get_context();
+}
+
 namespace global {
 inline kern::scheduler sched;
 } // namespace global
@@ -64,7 +70,7 @@ template<bool FreeStack, class FunT, class... Args>
 struct super_tcb final : tcb {
     template<class FunU, class... ArgUs>
     super_tcb(uint16_t stk_sz, FunU&& fun, ArgUs&&... args)
-        : tcb(global::default_context),
+        : tcb(current_context()),
         m_tcb_off(stk_sz - sizeof(super_tcb))
         , m_fun{std::forward<FunU>(fun)}
         , m_args{std::forward<ArgUs>(args)...} {
@@ -249,11 +255,5 @@ auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
 
 inline void this_thread::exit(void*) {
     kern::thread_exit();
-}
-
-inline context* current_context() {
-    if (!self())
-        return nullptr;
-    return self()->m_context;
 }
 } // namespace tos
