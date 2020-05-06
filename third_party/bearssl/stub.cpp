@@ -10,6 +10,7 @@ time_t time(time_t*) {
     return {};
 }
 
+[[gnu::weak]]
 uint32_t tos_rand_source(void) {
     return 4;
 }
