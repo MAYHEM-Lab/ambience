@@ -41,6 +41,7 @@ private:
     null_event_handler def_handler;
     iwifi_event_handler* m_ev_handler = &def_handler;
     void thread();
+    semaphore m_working{0};
 };
 
 tos::mac_addr_t get_mac_address();

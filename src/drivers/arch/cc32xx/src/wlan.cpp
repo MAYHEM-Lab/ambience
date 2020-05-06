@@ -38,6 +38,7 @@ simplelink_wifi::simplelink_wifi() {
         SPI_init();
         thread();
     });
+    m_working.down();
 }
 
 simplelink_wifi::~simplelink_wifi() {
@@ -106,6 +107,8 @@ void simplelink_wifi::thread() {
             socket_runtime::instance().run();
         }
     });
+
+    m_working.up();
 
     while (true) {
         sl_Task(nullptr);
