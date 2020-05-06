@@ -8,7 +8,6 @@
 #include <tos/intrusive_list.hpp>
 #include <tos/utility.hpp>
 #include <utility>
-#include <tos/components/threads.hpp>
 
 namespace tos::kern {
 struct processor_state;
@@ -21,12 +20,7 @@ struct processor_state;
  * as starting threads or passing arguments.
  */
 struct alignas(alignof(std::max_align_t)) tcb : public list_node<tcb> {
-    explicit tcb(context& ctx_ptr)
-        : m_context{&ctx_ptr} {
-        if (auto threads = m_context->get_component<threads_component>(); threads) {
-            threads->thread_created(*this);
-        }
-    }
+    explicit tcb(context& ctx_ptr);
     /**
      * Returns a reference to the context of the task.
      *
@@ -50,17 +44,14 @@ struct alignas(alignof(std::max_align_t)) tcb : public list_node<tcb> {
      */
     virtual ~tcb() = 0;
 
-    context* m_context;
+    void set_context(context& ctx);
+    context& get_context();
 
+    list_node<tcb> m_siblings;
 private:
+    context* m_context;
     processor_state* m_ctx;
 };
-
-inline tcb::~tcb() {
-    if (auto threads = m_context->get_component<threads_component>(); threads) {
-        threads->thread_exited(*this);
-    }
-}
 } // namespace tos::kern
 
 namespace tos {
