@@ -20,20 +20,26 @@ private:
 template<class... Components>
 class static_context : public context {
 public:
+    static_context() = default;
+
+    template<class... Initializers>
+    explicit static_context(Initializers&&... init)
+        : m_components{std::forward<Initializers>(init)...} {
+    }
+
     auto& all_components() {
         return m_components;
     }
+
 private:
     std::tuple<Components...> m_components;
     component* get_component_with_id([[maybe_unused]] component_id_t id) override;
 };
 
-namespace global {
 /**
  * All threads belong to this context by default.
  */
-inline static_context<> default_context;
-}
+context& default_context();
 } // namespace tos
 
 // impl
