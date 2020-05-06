@@ -4,7 +4,7 @@
 
 namespace tos::debug {
 [[noreturn]]
-bool default_assert_handler() {
+inline bool default_assert_handler() {
     panic("Assertion failed");
 }
 }
