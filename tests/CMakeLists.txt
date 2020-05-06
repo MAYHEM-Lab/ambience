@@ -42,3 +42,4 @@ add_test(NAME print_tests COMMAND print_tests)
 add_test(NAME streams_test COMMAND streams_test)
 
 add_subdirectory(io)
+add_subdirectory(context)

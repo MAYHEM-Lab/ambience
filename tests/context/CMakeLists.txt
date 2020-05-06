@@ -1,0 +1,2 @@
+add_executable(thread_context_test thread_context_test.cpp)
+target_link_libraries(thread_context_test PUBLIC tests_main tos_ft)
