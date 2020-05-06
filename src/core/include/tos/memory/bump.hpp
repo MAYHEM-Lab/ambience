@@ -29,7 +29,7 @@ struct bump_allocator {
         return alloc;
     }
 
-    void deallocate(void*) {
+    void free(void*) {
         // deallocate in a bump allocator does nothing
     }
 
