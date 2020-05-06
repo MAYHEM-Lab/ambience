@@ -3,9 +3,9 @@
 #include <iterator>
 #include <stddef.h>
 #include <stdint.h>
+#include <tos/meta/offsetof.hpp>
 #include <tos/utility.hpp>
 #include <utility>
-#include <tos/meta/offsetof.hpp>
 
 namespace tos {
 template<class T, class Access>
@@ -289,6 +289,10 @@ public:
      * @return the end iterator
      */
     iterator_t end() const;
+
+    iterator_t unsafe_find(T& t) const {
+        return iterator_t{&Access::template access<T>(t)};
+    }
 };
 } // namespace tos
 
