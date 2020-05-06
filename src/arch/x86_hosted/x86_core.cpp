@@ -4,11 +4,13 @@
 
 #include <cstddef>
 #include <cstdlib>
+#include <csignal>
 
 extern "C"
 {
 void tos_force_reset()
 {
+    raise(SIGTRAP);
     exit(1);
 }
 
