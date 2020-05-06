@@ -10,7 +10,6 @@ add_library(tos_util_core
     include/tos/ring_buf.hpp
     include/tos/function_ref.hpp
     include/tos/utility.hpp
-    src/new.cpp
     src/cxxrt.cpp
     include/tos/span.hpp
     include/tos/ct_map.hpp
@@ -33,6 +32,7 @@ add_library(tos_util
         src/stub.cpp
         src/expected.cpp
         include/tos/expected.hpp
+        src/new.cpp
 
         include/tos/fixed_fifo.hpp
         include/tos/sync_ring_buf.hpp
