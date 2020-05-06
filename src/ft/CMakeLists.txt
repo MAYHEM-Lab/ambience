@@ -13,12 +13,15 @@ add_library(tos_ft
         src/semaphore.cpp
         include/tos/ft.inl
         include/tos/thread.hpp
-        include/tos/types.hpp)
+        include/tos/types.hpp
+        src/tcb.cpp
+        include/tos/components/threads.hpp
+        src/components/threads.cpp)
 
 target_link_libraries(tos_ft PUBLIC tos_util_core)
 target_link_libraries(tos_ft PUBLIC tos_interrupt)
 target_link_libraries(tos_ft PUBLIC tos::libcxx)
-target_link_libraries(tos_ft PUBLIC tos_alarm)
+target_link_libraries(tos_ft PUBLIC tos_alarm tos_context)
 target_compile_definitions(tos_ft PUBLIC TOS_DEFAULT_STACK_SIZE=${TOS_DEF_STACK})
 
 add_library(tos::ft ALIAS tos_ft)
