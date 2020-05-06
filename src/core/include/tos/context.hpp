@@ -13,7 +13,6 @@ struct context : list_node<context> {
 
     virtual ~context() = default;
 
-private:
     virtual component* get_component_with_id(component_id_t) = 0;
 };
 
@@ -40,6 +39,33 @@ private:
  * All threads belong to this context by default.
  */
 context& default_context();
+
+class overlay_context : public context {
+public:
+    overlay_context(context& new_ctx, context& old_ctx) : m_new{&new_ctx}, m_old{&old_ctx} {}
+
+protected:
+    component* get_component_with_id(component_id_t id) override {
+        auto first = m_new->get_component_with_id(id);
+        if (first == nullptr) {
+            return m_old->get_component_with_id(id);
+        }
+        return first;
+    }
+
+public:
+    context& get_new() {
+        return *m_new;
+    }
+
+    context& get_old() {
+        return *m_old;
+    }
+
+private:
+    context* m_new;
+    context* m_old;
+};
 } // namespace tos
 
 // impl
@@ -57,7 +83,7 @@ auto idof(T&) -> std::integral_constant<component_id_t, std::remove_reference_t<
 template<class... Components>
 component* static_context<Components...>::get_component_with_id(component_id_t id) {
 #define CTX_CASE(i)                                                                      \
-    case decltype(detail::idof(std::get<i>(m_components)))::value:                         \
+    case decltype(detail::idof(std::get<i>(m_components)))::value:                       \
         return &std::get<i>(m_components);
 
     if constexpr (sizeof...(Components) == 1) {
