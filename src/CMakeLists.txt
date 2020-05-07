@@ -1,6 +1,6 @@
 project(tos)
 
-add_subdirectory(arch)
+add_subdirectory(platform)
 message(STATUS "TOS_ARCH_${TOS_ARCH_NAME}")
 set(TOS_ARCH_NAME ${TOS_ARCH_NAME} PARENT_SCOPE)
 
