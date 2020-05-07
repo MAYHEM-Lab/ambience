@@ -59,7 +59,7 @@ void tos_main()
     using namespace tos;
     using namespace tos::tos_literals;
 
-#if !defined(TOS_ARCH_x86)
+#if !defined(TOS_PLATFORM_x86)
     constexpr auto usconf = tos::usart_config()
             .add(115200_baud_rate)
             .add(usart_parity::disabled)

@@ -30,29 +30,29 @@ ALWAYS_INLINE void do_not_optimize(Tp& value) {
 } // namespace debug
 } // namespace tos
 
-#if defined(TOS_ARCH_esp8266)
+#if defined(TOS_PLATFORM_esp8266)
 extern "C" int ets_printf(const char* format, ...) __attribute__((format(printf, 1, 2)));
 #define tos_debug_print(...)
 #endif
 
-#if defined(TOS_ARCH_nrf52)
+#if defined(TOS_PLATFORM_nrf52)
 #define tos_debug_print(...)
 #endif
 
-#if defined(TOS_ARCH_stm32_hal)
+#if defined(TOS_PLATFORM_stm32_hal)
 #define tos_debug_print(...)
 #endif
 
-#if defined(TOS_ARCH_x86_hosted)
+#if defined(TOS_PLATFORM_x86_hosted)
 #include <stdio.h>
 #define tos_debug_print printf
 #endif
 
-#if defined(TOS_ARCH_atmega)
+#if defined(TOS_PLATFORM_atmega)
 #define tos_debug_print(...)
 #endif
 
-#if defined(TOS_ARCH_cc32xx)
+#if defined(TOS_PLATFORM_cc32xx)
 #define tos_debug_print(...)
 #endif
 

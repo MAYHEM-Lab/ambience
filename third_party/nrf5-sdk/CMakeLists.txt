@@ -1,4 +1,4 @@
-if (NOT ${TOS_CORE} MATCHES "nrf5")
+if (NOT ${TOS_PLATFORM} MATCHES "nrf5")
     return()
 endif ()
 

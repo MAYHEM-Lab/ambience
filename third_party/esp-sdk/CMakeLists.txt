@@ -1,4 +1,4 @@
-if (NOT ${TOS_CORE} MATCHES "esp82")
+if (NOT ${TOS_PLATFORM} MATCHES "esp82")
     return()
 endif()
 

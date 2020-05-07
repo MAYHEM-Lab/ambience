@@ -2,7 +2,7 @@ add_library(tos_sntp tos_sntp.cpp include/tos/sntp.hpp)
 target_link_libraries(tos_sntp PUBLIC tos_core)
 target_include_directories(tos_sntp PUBLIC include)
 
-if (NOT ${TOS_CORE} MATCHES "esp82")
+if (NOT ${TOS_PLATFORM} MATCHES "esp82")
     return()
 endif()
 

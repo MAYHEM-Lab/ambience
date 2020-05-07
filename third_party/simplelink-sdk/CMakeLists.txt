@@ -1,4 +1,4 @@
-if (NOT ${TOS_CORE} MATCHES "cc32xx")
+if (NOT ${TOS_PLATFORM} MATCHES "cc32xx")
     return()
 endif()
 add_library(ti_sdk "")

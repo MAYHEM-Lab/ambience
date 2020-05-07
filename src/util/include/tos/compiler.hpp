@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(TOS_ARCH_avr)
+#if defined(TOS_PLATFORM_avr)
 #define TOS_MAIN __attribute__((OS_main))
 #define TOS_TASK __attribute__((OS_task))
 #else

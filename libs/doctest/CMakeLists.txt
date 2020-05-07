@@ -1,4 +1,4 @@
-if (NOT ${TOS_CORE} MATCHES "x86")
+if (NOT ${TOS_PLATFORM} MATCHES "x86")
     return()
 endif()
 add_library(doctest INTERFACE)

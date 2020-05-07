@@ -21,7 +21,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 template class _LIBCPP_CLASS_TEMPLATE_INSTANTIATION_VIS __basic_string_common<true>;
 
 template class _LIBCPP_CLASS_TEMPLATE_INSTANTIATION_VIS basic_string<char>;
-#if !defined(TOS_ARCH_avr)
+#if !defined(TOS_PLATFORM_avr)
 template class _LIBCPP_CLASS_TEMPLATE_INSTANTIATION_VIS basic_string<wchar_t>;
 #endif
 

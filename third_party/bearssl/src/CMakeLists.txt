@@ -13,7 +13,7 @@ endif ()
 add_library(BearSSL::BearSSL ALIAS bearssl)
 
 add_subdirectory(src)
-if (NOT TOS OR ${TOS_CORE} MATCHES "x86")
+if (NOT TOS OR ${TOS_PLATFORM} MATCHES "x86")
     message(STATUS "Building tools")
     add_subdirectory(samples)
     add_subdirectory(tools)
