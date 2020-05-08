@@ -11,6 +11,8 @@
 namespace tos {
 template<class T>
 class intrusive_ptr {
+    template <class U>
+    friend class intrusive_ptr;
 public:
     using element_type = T;
 
@@ -115,6 +117,26 @@ public:
 private:
     T* m_ptr;
 };
+
+template <class T>
+bool operator==(const intrusive_ptr<T>& left, const intrusive_ptr<T>& right) {
+    return left.get() == right.get();
+}
+
+template <class T>
+bool operator!=(const intrusive_ptr<T>& left, const intrusive_ptr<T>& right) {
+    return left.get() != right.get();
+}
+
+template <class T>
+bool operator==(const intrusive_ptr<T>& left, std::nullptr_t) {
+    return left.get() == nullptr;
+}
+
+template <class T>
+bool operator!=(std::nullptr_t, const intrusive_ptr<T>& right) {
+    return nullptr != right.get();
+}
 
 template <class U, class T>
 intrusive_ptr<U> static_pointer_cast(const intrusive_ptr<T>& ptr) {
