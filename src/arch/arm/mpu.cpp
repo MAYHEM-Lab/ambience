@@ -1,6 +1,10 @@
 #include <arch/mpu.hpp>
 #include <tos/barrier.hpp>
+#if defined(TOS_PLATFORM_nrf52)
+#include <nrf.h>
+#endif
 
+#if defined(MPU)
 extern "C" void MemManage_Handler() {
     tos::arm::mpu::get(0)->isr();
 }
@@ -107,3 +111,4 @@ void mpu::isr() {
     m_callback();
 }
 } // namespace tos::arm
+#endif
