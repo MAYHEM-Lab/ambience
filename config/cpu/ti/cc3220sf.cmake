@@ -1,3 +1,4 @@
+set(TOS_ARCH arm)
 set(TOS_PLATFORM cc32xx)
 set(TOS_DRIVERS cc32xx)
 SET(TOS_CPU_ARCH cortex-m4)
