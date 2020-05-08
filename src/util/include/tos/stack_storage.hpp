@@ -41,7 +41,7 @@ struct stack_size_t
  * Care must be taken to ensure no two threads are ever launched on the
  * same stack storage object.
  */
-template <std::size_t Len>
+template <std::size_t Len = TOS_DEFAULT_STACK_SIZE>
 struct stack_storage
 {
     using StorageT = std::aligned_storage_t<Len, alignof(std::max_align_t)>;
