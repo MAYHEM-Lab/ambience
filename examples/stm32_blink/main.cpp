@@ -9,13 +9,28 @@
 #include <tos/print.hpp>
 #include <tos/semaphore.hpp>
 
+namespace boards {
+struct stm32f7_disco {
+    static constexpr int led_pin = ('i' - 'a') * 16 + 1;
+    static constexpr int tx_pin = 9;
+    static constexpr int rx_pin = 23;
+};
+struct stm32l4_disco {
+    static constexpr int led_pin = 5;
+    static constexpr int tx_pin = 22;
+    static constexpr int rx_pin = 23;
+};
+}
+
+constexpr auto board = boards::stm32f7_disco{};
+
 void blink_task() {
     using namespace tos;
     using namespace tos_literals;
 
-    auto led_pin = 5_pin;
-    auto usart_rx_pin = 23_pin;
-    auto usart_tx_pin = 22_pin;
+    auto led_pin = operator""_pin(board.led_pin);
+    auto usart_rx_pin = operator""_pin(board.rx_pin);
+    auto usart_tx_pin = operator""_pin(board.tx_pin);
 
     auto g = tos::open(tos::devs::gpio);
 
