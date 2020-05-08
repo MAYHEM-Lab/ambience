@@ -6,6 +6,12 @@ extern "C" void MemManage_Handler() {
 }
 
 namespace tos::arm {
+namespace {
+void nvic_set_priority(IRQn_Type irq, int preempt, int sub) {
+    auto prioritygroup = NVIC_GetPriorityGrouping();
+    NVIC_SetPriority(irq, NVIC_EncodePriority(prioritygroup, preempt, sub));
+}
+}
 mpu::mpu()
     : tracked_driver(0) {
     // Enable MPU and let privileged mode access everything
@@ -15,7 +21,7 @@ mpu::mpu()
     // Otherwise we'll get a HardFault
     SCB->SHCSR |= SCB_SHCSR_MEMFAULTENA_Msk;
 
-    HAL_NVIC_SetPriority(MemoryManagement_IRQn, 0, 0);
+    nvic_set_priority(MemoryManagement_IRQn, 0, 0);
     NVIC_EnableIRQ(MemoryManagement_IRQn);
 }
 
