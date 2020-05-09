@@ -1,8 +1,7 @@
+#include <arch/cmsis.hpp>
 #include <arch/mpu.hpp>
+#include <arch/nvic.hpp>
 #include <tos/barrier.hpp>
-#if defined(TOS_PLATFORM_nrf52)
-#include <nrf.h>
-#endif
 
 #if defined(MPU)
 extern "C" void MemManage_Handler() {
@@ -15,18 +14,20 @@ void nvic_set_priority(IRQn_Type irq, int preempt, int sub) {
     auto prioritygroup = NVIC_GetPriorityGrouping();
     NVIC_SetPriority(irq, NVIC_EncodePriority(prioritygroup, preempt, sub));
 }
-}
+} // namespace
 mpu::mpu()
     : tracked_driver(0) {
     // Enable MPU and let privileged mode access everything
     MPU->CTRL = MPU_CTRL_ENABLE_Msk | MPU_CTRL_PRIVDEFENA_Msk;
 
+#if defined(SCB_SHCSR_MEMFAULTENA_Msk)
     // Enable the MemFault exception to be fired
     // Otherwise we'll get a HardFault
     SCB->SHCSR |= SCB_SHCSR_MEMFAULTENA_Msk;
 
     nvic_set_priority(MemoryManagement_IRQn, 0, 0);
     NVIC_EnableIRQ(MemoryManagement_IRQn);
+#endif
 }
 
 size_t mpu::min_region_size() const {

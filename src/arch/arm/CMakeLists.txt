@@ -1,6 +1,9 @@
-add_library(arch_arm "" include/arch/assembly.hpp)
+add_library(arch_arm "")
 target_include_directories(arch_arm PUBLIC include)
 target_sources(arch_arm PRIVATE
+        include/arch/cmsis.hpp
+        include/arch/assembly.hpp
+        include/arch/nvic.hpp
         include/arch/mpu.hpp
         stub.cpp
         mpu.cpp)
