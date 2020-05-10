@@ -7,6 +7,7 @@ include(config/HandleConfig.cmake)
 
 project(tos VERSION 0.1.0)
 
+option(BUILD_DOCS "Build documentation" OFF)
 option(BUILD_TESTS "Build unit tests, only works on hosted x86" OFF)
 option(BUILD_EXAMPLES "Build examples" ON)
 
@@ -28,3 +29,5 @@ if (BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
+
+add_subdirectory(docs)
