@@ -1,7 +1,7 @@
 #include <arch/udp.hpp>
 
 namespace asio = boost::asio;
-namespace tos::x86 {
+namespace tos::hosted {
 udp_socket::udp_socket(boost::asio::io_service& io)
     : m_sock(std::make_unique<asio::ip::udp::socket>(io)) {
     m_sock->open(asio::ip::udp::v4());
@@ -26,4 +26,4 @@ udp_socket::receive_from(tos::span<uint8_t> data, udp_endpoint_t& from) {
     std::copy(from_bytes.begin(), from_bytes.end(), from.addr.addr.begin());
     return data.slice(0, sz);
 }
-} // namespace tos::x86
+} // namespace tos::hosted

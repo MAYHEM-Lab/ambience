@@ -68,7 +68,7 @@ private:
         using namespace std::string_literals;
         auto path = "/tmp/tdb/channel"s + std::to_string(i);
         ::unlink(path.c_str());
-        auto sock = tos::x86::unix_listener(path);
+        auto sock = tos::hosted::unix_listener(path);
         sock.listen();
 
         while (!m_cancel) {
@@ -89,7 +89,7 @@ private:
     StreamT m_str;
 
     tos::mutex m_socks_lock;
-    std::vector<std::unique_ptr<tos::x86::unix_socket>> m_unix_socks;
+    std::vector<std::unique_ptr<tos::hosted::unix_socket>> m_unix_socks;
     std::vector<tos::kern::tcb*> m_per_sock_thread;
 };
 
@@ -100,18 +100,18 @@ public:
         LOG_INFO("Version 0.1");
         LOG_INFO("Connecting to device over /dev/ttyACM0");
         LOG_INFO("Opening device");
-        m_mux =
-            std::make_unique<tos::serial_multiplexer<std::unique_ptr<tos::x86::usart>>>(
-                std::make_unique<tos::x86::usart>(
-                    get_io(), "/dev/ttyACM0", tos::uart::default_115200),
-                std::initializer_list<uint16_t>{0, 1});
+        m_mux = std::make_unique<
+            tos::serial_multiplexer<std::unique_ptr<tos::hosted::usart>>>(
+            std::make_unique<tos::hosted::usart>(
+                get_io(), "/dev/ttyACM0", tos::uart::default_115200),
+            std::initializer_list<uint16_t>{0, 1});
         LOG_INFO("Launching channel owner threads");
 
         for (int i : {0, 1}) {
             m_channels.emplace(i, *m_mux->get_stream(i));
         }
 
-        tos::launch(tos::alloc_stack, [this] { repl(tos::x86::stdio{}); });
+        tos::launch(tos::alloc_stack, [this] { repl(tos::hosted::stdio{}); });
 
         static tos::semaphore int_sem{0};
 
@@ -157,17 +157,17 @@ private:
 
     std::unordered_map<int,
                        channel_owner<multiplexed_stream<
-                           serial_multiplexer<std::unique_ptr<x86::usart>>>>>
+                           serial_multiplexer<std::unique_ptr<hosted::usart>>>>>
         m_channels;
-    std::unique_ptr<tos::serial_multiplexer<std::unique_ptr<x86::usart>>> m_mux;
+    std::unique_ptr<tos::serial_multiplexer<std::unique_ptr<hosted::usart>>> m_mux;
 };
 } // namespace tos::tdb
 
 void tos_main() {
     tos::debug::set_default_log(
         new tos::debug::detail::any_logger(new tos::debug::clock_sink_adapter{
-            tos::debug::serial_sink(tos::x86::stderr_adapter{}),
-            tos::x86::clock<std::chrono::system_clock>{}}));
+            tos::debug::serial_sink(tos::hosted::stderr_adapter{}),
+            tos::hosted::clock<std::chrono::system_clock>{}}));
 
     tos::launch(tos::alloc_stack, tos::tdb::multiplexer{});
 }

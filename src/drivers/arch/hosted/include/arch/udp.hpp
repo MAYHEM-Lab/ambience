@@ -1,13 +1,13 @@
 #pragma once
 
+#include <boost/asio/ip/udp.hpp>
 #include <common/inet/tcp_ip.hpp>
 #include <cstdint>
 #include <tos/expected.hpp>
 #include <tos/self_pointing.hpp>
 #include <tos/span.hpp>
-#include <boost/asio/ip/udp.hpp>
 
-namespace tos::x86 {
+namespace tos::hosted {
 class udp_socket : public self_pointing<udp_socket> {
 public:
     udp_socket(boost::asio::io_service& io);
@@ -22,4 +22,4 @@ private:
     std::unique_ptr<boost::asio::ip::udp::socket> m_sock;
 };
 
-} // namespace tos::x86
+} // namespace tos::hosted

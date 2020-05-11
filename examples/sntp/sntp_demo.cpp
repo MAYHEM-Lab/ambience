@@ -4,8 +4,8 @@
 #include <iostream>
 
 void sntp_task() {
-    tos::x86::stdio io;
-    tos::x86::udp_socket sock(get_io());
+    tos::hosted::stdio io;
+    tos::hosted::udp_socket sock(get_io());
     sock.send_to(tos::raw_cast(tos::span("hello")), {
         .addr = tos::parse_ipv4_address("127.0.0.1"),
         .port = {9993}

@@ -1,23 +1,23 @@
 #pragma once
 
-#include <boost/asio/serial_port.hpp>
-#include <common/usart.hpp>
 #include <boost/asio/read.hpp>
+#include <boost/asio/serial_port.hpp>
 #include <boost/asio/write.hpp>
+#include <common/usart.hpp>
 #include <tos/expected.hpp>
 #include <tos/semaphore.hpp>
 
-namespace tos::x86 {
+namespace tos::hosted {
 using usart_constraint = ct_map<usart_key_policy,
-    el_t<usart_baud_rate, const usart_baud_rate&>,
-    el_t<usart_parity, const usart_parity&>,
-    el_t<usart_stop_bit, const usart_stop_bit&>>;
+                                el_t<usart_baud_rate, const usart_baud_rate&>,
+                                el_t<usart_parity, const usart_parity&>,
+                                el_t<usart_stop_bit, const usart_stop_bit&>>;
 
 struct usart {
 public:
     usart(boost::asio::io_service& io,
-                 std::string_view serial_name,
-                 usart_constraint&& config)
+          std::string_view serial_name,
+          usart_constraint&& config)
         : m_port(io, std::string(serial_name)) {
         namespace asio = boost::asio;
         m_port.set_option(
@@ -35,9 +35,9 @@ public:
         boost::asio::async_write(m_port,
                                  boost::asio::buffer(buf.data(), buf.size()),
                                  [&](boost::system::error_code e, std::size_t len) {
-                                   size = len;
-                                   ec = e;
-                                   m_write.up();
+                                     size = len;
+                                     ec = e;
+                                     m_write.up();
                                  });
         m_write.down();
         return buf.size();
@@ -49,9 +49,9 @@ public:
         boost::asio::async_read(m_port,
                                 boost::asio::buffer(buf.data(), buf.size()),
                                 [&](boost::system::error_code e, std::size_t len) {
-                                  size = len;
-                                  ec = e;
-                                  m_read.up();
+                                    size = len;
+                                    ec = e;
+                                    m_read.up();
                                 });
         m_read.down();
         if (ec) {
@@ -73,4 +73,4 @@ private:
     semaphore m_write{0};
     boost::asio::serial_port m_port;
 };
-} // namespace tos::x86
+} // namespace tos::hosted

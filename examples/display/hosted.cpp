@@ -5,7 +5,7 @@
 #include <tos/debug/sinks/serial_sink.hpp>
 
 void display_task() {
-    tos::x86::display d({296, 128});
+    tos::hosted::display d({296, 128});
     auto painter = d.get_painter();
     painter->draw(tos::gfx::rectangle{{0, 0}, {128, 64}},
                   tos::gfx::fixed_color{{0, 0, 128}});
@@ -16,8 +16,8 @@ void display_task() {
 void tos_main() {
     tos::debug::set_default_log(
         new tos::debug::detail::any_logger(new tos::debug::clock_sink_adapter{
-            tos::debug::serial_sink(tos::x86::stderr_adapter{}),
-            tos::x86::clock<std::chrono::system_clock>{}}));
+            tos::debug::serial_sink(tos::hosted::stderr_adapter{}),
+            tos::hosted::clock<std::chrono::system_clock>{}}));
 
     tos::launch(tos::alloc_stack, display_task);
 }

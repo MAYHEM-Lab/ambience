@@ -17,7 +17,7 @@
 #undef putc
 
 namespace tos {
-namespace x86 {
+namespace hosted {
 class stderr_adapter : public self_pointing<stderr_adapter> {
 public:
     int write(span<const uint8_t> buf);
@@ -33,14 +33,14 @@ public:
 private:
     boost::asio::posix::stream_descriptor m_input;
 };
-} // namespace x86
+} // namespace hosted
 
 template<class T>
-inline x86::stdio open_impl(devs::usart_t<0>, T) {
+inline hosted::stdio open_impl(devs::usart_t<0>, T) {
     return {};
 }
 
-inline x86::stdio open_impl(devs::tty_t<0>) {
+inline hosted::stdio open_impl(devs::tty_t<0>) {
     return {};
 }
 } // namespace tos

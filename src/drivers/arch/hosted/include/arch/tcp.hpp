@@ -11,7 +11,7 @@
 #include <tos/expected.hpp>
 #include <tos/semaphore.hpp>
 
-namespace tos::x86 {
+namespace tos::hosted {
 class tcp_socket : public self_pointing<tcp_socket> {
 public:
     explicit tcp_socket(std::unique_ptr<boost::asio::ip::tcp::socket> sock)
@@ -123,4 +123,4 @@ connect(ipv4_addr_t addr, port_num_t port) {
 
     return std::make_unique<tcp_socket>(std::move(sock));
 }
-} // namespace tos::x86
+} // namespace tos::hosted

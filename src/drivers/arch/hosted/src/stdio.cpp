@@ -6,7 +6,7 @@
 #include <boost/asio/read.hpp>
 #include <iostream>
 
-namespace tos::x86 {
+namespace tos::hosted {
 stdio::stdio()
     : m_input{get_io(), ::dup(STDIN_FILENO)} {
 }
@@ -41,4 +41,4 @@ int stderr_adapter::write(span<const uint8_t> buf) {
     tos::this_thread::yield();
     return buf.size();
 }
-} // namespace tos
+} // namespace tos::hosted

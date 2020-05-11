@@ -7,15 +7,16 @@
 #include <boost/asio.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <common/inet/tcp_ip.hpp>
+#include <iostream>
 #include <memory>
 #include <tos/expected.hpp>
 #include <tos/semaphore.hpp>
-#include <iostream>
 
-namespace tos::x86 {
+namespace tos::hosted {
 class unix_socket : public self_pointing<unix_socket> {
 public:
-    explicit unix_socket(std::unique_ptr<boost::asio::local::stream_protocol::socket> sock)
+    explicit unix_socket(
+        std::unique_ptr<boost::asio::local::stream_protocol::socket> sock)
         : m_sock{std::move(sock)} {
     }
 
@@ -103,8 +104,8 @@ connect(const std::string& path) {
     boost::system::error_code ec;
     semaphore wait_sem{0};
     sock->async_connect(endpoint, [&](boost::system::error_code e) {
-      ec = e;
-      wait_sem.up();
+        ec = e;
+        wait_sem.up();
     });
     wait_sem.down();
 
@@ -114,4 +115,4 @@ connect(const std::string& path) {
 
     return std::make_unique<unix_socket>(std::move(sock));
 }
-} // namespace tos::x86
+} // namespace tos::hosted

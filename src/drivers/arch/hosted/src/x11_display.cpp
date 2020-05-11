@@ -10,11 +10,7 @@
 #include <tos/gfx/painter.hpp>
 #include <tos/semaphore.hpp>
 
-namespace tos::x86::x11 {
-struct window {};
-} // namespace tos::x86::x11
-
-namespace tos::x86 {
+namespace tos::hosted {
 struct display_impl {
     display_impl(const gfx::dimensions& dims);
 
@@ -201,4 +197,4 @@ std::unique_ptr<gfx::painter> display::get_painter() {
 }
 
 display::~display() = default;
-} // namespace tos::x86
+} // namespace tos::hosted

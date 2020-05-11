@@ -2,7 +2,7 @@
 
 #include <common/clock.hpp>
 
-namespace tos::x86 {
+namespace tos::hosted {
 template<class ClockT>
 class clock : public any_clock {
 public:
@@ -11,4 +11,4 @@ public:
         return time_point{std::chrono::duration_cast<std::chrono::microseconds>(tm)};
     }
 };
-} // namespace tos::x86
+} // namespace tos::hosted

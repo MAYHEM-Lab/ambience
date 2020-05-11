@@ -14,7 +14,7 @@
 #include <tos/function_ref.hpp>
 
 namespace tos {
-namespace x86 {
+namespace hosted {
 class timer
     : public self_pointing<timer>
     , public non_copy_movable {
@@ -62,9 +62,9 @@ private:
     tos::function_ref<void()> m_cb;
     std::chrono::milliseconds m_interval;
 };
-} // namespace x86
+} // namespace hosted
 
-x86::timer open_impl(devs::timer_t<0>) {
+hosted::timer open_impl(devs::timer_t<0>) {
     return {};
 }
 } // namespace tos

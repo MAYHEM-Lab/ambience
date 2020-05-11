@@ -3,7 +3,7 @@
 void tcp_task() {
     auto uart = tos::open(tos::devs::usart<0>, tos::uart::default_115200);
 
-    auto conn = tos::x86::connect(tos::parse_ipv4_address("93.184.216.34"), {80});
+    auto conn = tos::hosted::connect(tos::parse_ipv4_address("93.184.216.34"), {80});
     if (!conn) {
         return;
     }
