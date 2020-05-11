@@ -5,7 +5,7 @@ add_tosdoc(
     nrf52_dk.md
     stm32f1-nucleo.md
     troubleshooting.adoc
-    Building.md)
+    Building.adoc)
 
 add_subdirectory(cpp)
 add_subdirectory(cpus)

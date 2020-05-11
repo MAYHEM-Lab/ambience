@@ -51,3 +51,4 @@ if (X11_FOUND)
 endif()
 
 add_library(arch_drivers ALIAS x86_drivers)
+add_subdirectory(docs)
