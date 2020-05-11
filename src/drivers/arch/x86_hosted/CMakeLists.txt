@@ -37,4 +37,17 @@ target_link_libraries(x86_drivers PUBLIC
         x86_clocks)
 tos_install(x86_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+find_package(X11)
+
+if (X11_FOUND)
+    message(STATUS "Found X11, enabling display emulation")
+    add_library(x86_display "" include/arch/display.hpp)
+    target_sources(x86_display PRIVATE
+        src/x11_display.cpp)
+    target_include_directories(x86_display PUBLIC ${X11_INCLUDE_DIR})
+    target_link_libraries(x86_display PUBLIC ${X11_LIBRARIES} tos::drivers x86_hosted_impl tos_gfx)
+    target_link_libraries(x86_drivers PUBLIC x86_display)
+    target_include_directories(x86_display PUBLIC "include")
+endif()
+
 add_library(arch_drivers ALIAS x86_drivers)
