@@ -5,6 +5,7 @@
 #pragma once
 
 #include "cpp_clocks.hpp"
+#include "display.hpp"
 #include "stdio.hpp"
 #include "tcp.hpp"
 #include "timer.hpp"

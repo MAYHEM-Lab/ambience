@@ -26,6 +26,11 @@ add_library(x86_clocks include/arch/cpp_clocks.hpp src/cpp_clocks.cpp)
 target_link_libraries(x86_clocks PUBLIC tos::core x86_hosted_impl)
 tos_install(x86_clocks ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(x86_display
+        include/arch/display.hpp)
+target_include_directories(x86_display PUBLIC "include")
+target_link_libraries(x86_display PUBLIC tos::drivers x86_hosted_impl tos_gfx)
+
 add_library(x86_drivers include/arch/drivers.hpp src/stub.cpp)
 target_link_libraries(x86_drivers PUBLIC
         x86_stdio
@@ -34,20 +39,21 @@ target_link_libraries(x86_drivers PUBLIC
         x86_usart
         x86_tcp
         x86_udp
-        x86_clocks)
+        x86_clocks
+        x86_display)
 tos_install(x86_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 find_package(X11)
 
-if (X11_FOUND)
+if (NOT DISABLE_X11 AND X11_FOUND)
     message(STATUS "Found X11, enabling display emulation")
-    add_library(x86_display "" include/arch/display.hpp)
     target_sources(x86_display PRIVATE
         src/x11_display.cpp)
     target_include_directories(x86_display PUBLIC ${X11_INCLUDE_DIR})
-    target_link_libraries(x86_display PUBLIC ${X11_LIBRARIES} tos::drivers x86_hosted_impl tos_gfx)
-    target_link_libraries(x86_drivers PUBLIC x86_display)
-    target_include_directories(x86_display PUBLIC "include")
+    target_link_libraries(x86_display PUBLIC ${X11_LIBRARIES})
+else()
+    target_sources(x86_display PRIVATE
+            src/null_display.cpp)
 endif()
 
 add_library(arch_drivers ALIAS x86_drivers)
