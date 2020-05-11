@@ -38,6 +38,7 @@ span<uint8_t> stdio::read(span<uint8_t> buf) {
 int stderr_adapter::write(span<const uint8_t> buf) {
     ::std::cerr.write(reinterpret_cast<const char*>(buf.data()), buf.size());
     ::std::cerr.flush();
+    tos::this_thread::yield();
     return buf.size();
 }
 } // namespace tos
