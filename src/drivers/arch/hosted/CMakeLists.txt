@@ -43,6 +43,13 @@ target_link_libraries(hosted_drivers PUBLIC
         x86_display)
 tos_install(hosted_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+# Tap driver is only available on linux right now.
+if (UNIX AND NOT APPLE)
+    add_library(hosted_tap_network include/arch/tap.hpp src/tap_network.cpp)
+    target_include_directories(hosted_tap_network PUBLIC include)
+    target_link_libraries(hosted_tap_network PUBLIC tos::drivers)
+    target_link_libraries(hosted_drivers PUBLIC hosted_tap_network)
+endif()
 
 find_package(X11)
 
