@@ -188,7 +188,7 @@
    --------------------------------
 */
 #define LWIP_IPV4                       1
-#define LWIP_IPV6                       1
+#define LWIP_IPV6                       0
 
 /**
  * IP_FORWARD==1: Enables the ability to forward IP packets across network
@@ -458,7 +458,7 @@
 #define RAW_DEBUG        LWIP_DBG_ON
 #define ICMP_DEBUG       LWIP_DBG_ON
 #define UDP_DEBUG        LWIP_DBG_OFF
-#define TCP_DEBUG        LWIP_DBG_OFF
+#define TCP_DEBUG        LWIP_DBG_ON
 #define TCP_INPUT_DEBUG  LWIP_DBG_ON
 #define TCP_OUTPUT_DEBUG LWIP_DBG_ON
 #define TCP_RTO_DEBUG    LWIP_DBG_ON
@@ -471,7 +471,20 @@
 #define DHCP_DEBUG       LWIP_DBG_ON
 #define IP6_DEBUG        LWIP_DBG_OFF
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern void tos_debug_out(const char*);
 extern unsigned char debug_flags;
 #define LWIP_DBG_TYPES_ON debug_flags
+
+#ifdef __cplusplus
+}
+#endif
+
+#define LWIP_NETIF_HOSTNAME 1
+#define LWIP_NETIF_LINK_CALLBACK 1
+
+//#define LWIP_PLATFORM_DIAG(x) tos_debug_out(x)
 
 #endif /* LWIP_LWIPOPTS_H */
