@@ -31,8 +31,8 @@ add_library(x86_display
 target_include_directories(x86_display PUBLIC "include")
 target_link_libraries(x86_display PUBLIC tos::drivers x86_hosted_impl tos_gfx)
 
-add_library(x86_drivers include/arch/drivers.hpp src/stub.cpp)
-target_link_libraries(x86_drivers PUBLIC
+add_library(hosted_drivers include/arch/drivers.hpp src/stub.cpp)
+target_link_libraries(hosted_drivers PUBLIC
         x86_stdio
         x86_timer
         x86_unix_sockets
@@ -41,7 +41,8 @@ target_link_libraries(x86_drivers PUBLIC
         x86_udp
         x86_clocks
         x86_display)
-tos_install(x86_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
+tos_install(hosted_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 
 find_package(X11)
 
@@ -56,5 +57,5 @@ else()
             src/null_display.cpp)
 endif()
 
-add_library(arch_drivers ALIAS x86_drivers)
+add_library(arch_drivers ALIAS hosted_drivers)
 add_subdirectory(docs)
