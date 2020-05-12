@@ -18,14 +18,6 @@
 #include <tos/intrusive_list.hpp>
 #include <tos/track_ptr.hpp>
 
-#ifdef TOS_HAVE_SSL
-#include <lwipr_compat/lwipr_compat.h>
-#undef putc
-#undef getc
-#undef printf
-#include <ssl/tls1.h>
-#endif
-
 namespace tos {
 namespace esp82 {
 class tcp_endpoint : public non_copyable {
