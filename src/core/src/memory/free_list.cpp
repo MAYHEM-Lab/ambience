@@ -51,6 +51,7 @@ void* free_list::allocate(size_t size) {
     }
 
     m_used += sz;
+    m_peak = std::max(m_used, m_peak);
     auto header = new (&*first_fit) allocation_header{sz};
     return header + 1;
 }
