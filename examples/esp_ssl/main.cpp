@@ -64,7 +64,7 @@ static int sock_write(void* ctx, const unsigned char* buf, size_t len) {
     return ptr->write({(const uint8_t*)buf, len});
 }
 
-extern "C" void tos_this_thread_yield(uint32_t) {
+extern "C" void tos_this_thread_yield() {
     static uint32_t last_yield = 0;
     if (system_get_time() - last_yield > 1'000'000 || last_yield == 0) {
         tos_debug_print("yielding\n");
