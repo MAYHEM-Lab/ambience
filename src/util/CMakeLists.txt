@@ -23,7 +23,8 @@ add_library(tos_util_core
     include/tos/moved_flag.hpp
     include/tos/functional.hpp
     include/tos/meta/function_traits.hpp
-    include/tos/string.hpp)
+    include/tos/string.hpp
+    src/base64.cpp)
 
 target_compile_features(tos_util_core PUBLIC cxx_std_17)
 target_link_libraries(tos_util_core PUBLIC tos::libcxx tos_memory)
@@ -79,4 +80,8 @@ if (BUILD_TESTS)
     add_executable(split_test src/split_test.cpp)
     target_link_libraries(split_test PUBLIC tests_main tos_util_core)
     add_test(NAME split_test COMMAND split_test)
+
+    add_executable(base64_test src/base64_test.cpp)
+    target_link_libraries(base64_test PUBLIC tests_main tos_util_core)
+    add_test(NAME base64_test COMMAND base64_test)
 endif()
