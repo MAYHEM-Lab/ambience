@@ -17,7 +17,7 @@ void split(std::string_view sv, std::string_view delim, OutIt it) {
     }
 }
 
-std::vector<std::string_view> split(std::string_view sv, std::string_view delim) {
+inline std::vector<std::string_view> split(std::string_view sv, std::string_view delim) {
     std::vector<std::string_view> splitted;
     split(sv, delim, std::back_inserter(splitted));
     return splitted;
