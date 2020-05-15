@@ -3,8 +3,8 @@ if (NOT ${TOS_PLATFORM} MATCHES "nrf5")
 endif ()
 
 add_library(nrf_cc310 INTERFACE)
-target_link_libraries(nrf_cc310 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/external/nrf_cc310/lib/cortex-m4/hard-float/libnrf_cc310_0.9.12.a)
-target_include_directories(nrf_cc310 SYSTEM INTERFACE external/nrf_cc310/include)
+target_link_libraries(nrf_cc310 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src/external/nrf_cc310/lib/cortex-m4/hard-float/libnrf_cc310_0.9.12.a)
+target_include_directories(nrf_cc310 SYSTEM INTERFACE src/external/nrf_cc310/include)
 
 add_library(nrf5-sdk-prs src/modules/nrfx/drivers/src/prs/nrfx_prs.c)
 target_compile_definitions(nrf5-sdk-prs PUBLIC NRFX_PRS_ENABLED=1 NRFX_PRS_BOX_0_ENABLED=1)
