@@ -12,6 +12,7 @@
 #include <tos/span.hpp>
 #include <tos/stack_storage.hpp>
 #include <tos/tcb.hpp>
+#include <tos/ft.hpp>
 
 namespace tos::this_thread {
 inline thread_id_t get_id() {
