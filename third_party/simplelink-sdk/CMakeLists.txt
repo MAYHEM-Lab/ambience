@@ -84,6 +84,7 @@ target_sources(ti_drivers PRIVATE
         source/ti/drivers/Timer.c
         source/ti/drivers/SPI.c
         source/ti/drivers/power/PowerCC32XX.c
+        source/ti/drivers/crypto/CryptoCC32XX.c
         source/ti/boards/CC3220SF_LAUNCHXL/CC3220SF_LAUNCHXL.c)
 target_include_directories(ti_drivers PUBLIC source/)
 target_link_libraries(ti_drivers PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/source/ti/drivers/lib/drivers_cc32xx.am4g)
