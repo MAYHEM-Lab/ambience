@@ -197,11 +197,13 @@ public:
 
 template <class T>
 thread_safe_usart(T&&) -> thread_safe_usart<T>;
+
 template<class T, size_t BufferSize = 512>
 class buffered_usart : public self_pointing<buffered_usart<T, BufferSize>> {
 public:
-    explicit buffered_usart(T t)
-        : m_impl(std::move(t)) {
+    template <class U, std::enable_if_t<!std::is_same_v<U, buffered_usart>>* = nullptr>
+    explicit buffered_usart(U&& t)
+        : m_impl(std::forward<U>(t)) {
     }
 
     auto write(tos::span<const uint8_t> span) {
@@ -246,4 +248,7 @@ private:
     std::array<uint8_t, BufferSize> m_buffer;
     uint16_t m_buf_cur = 0;
 };
+
+template <class T>
+buffered_usart(T&&) -> buffered_usart<T>;
 } // namespace tos
