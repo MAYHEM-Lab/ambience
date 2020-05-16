@@ -26,6 +26,14 @@ struct null_event_handler : iwifi_event_handler {
     void handle(const wifi_disconnected& disconnected) override;
 };
 
+enum class power_policy {
+    always_on,
+    low_latency,
+    normal,
+    power_save,
+    long_sleep_interval
+};
+
 class simplelink_wifi {
 public:
     simplelink_wifi();
@@ -36,6 +44,8 @@ public:
     void set_event_handler(iwifi_event_handler& handler) {
         m_ev_handler = &handler;
     }
+
+    static void set_power_policy(power_policy policy);
 
 private:
     null_event_handler def_handler;

@@ -58,17 +58,6 @@ void simplelink_wifi::thread() {
     start_res = sl_Start(nullptr, nullptr, nullptr);
     LOG_TRACE(start_res);
 
-    SlWlanPmPolicyParams_t PmPolicyParams;
-    memset(&PmPolicyParams, 0, sizeof(SlWlanPmPolicyParams_t));
-    PmPolicyParams.MaxSleepTimeMs = 60'000; // max sleep time in mSec
-    auto policy_res = sl_WlanPolicySet(SL_WLAN_POLICY_PM,
-                                       SL_WLAN_LONG_SLEEP_INTERVAL_POLICY,
-                                       (_u8*)&PmPolicyParams,
-                                       sizeof(PmPolicyParams));
-    // sl_WlanPolicySet(SL_WLAN_POLICY_PM, SL_WLAN_LOW_POWER_POLICY, nullptr,0);
-    // sl_WlanPolicySet(SL_WLAN_POLICY_PM, SL_WLAN_NORMAL_POLICY, nullptr,0);
-    LOG_TRACE("policy:", policy_res);
-
     SlDeviceVersion_t firmwareVersion{};
 
     uint8_t ucConfigOpt = SL_DEVICE_GENERAL_VERSION;
@@ -149,6 +138,37 @@ void simplelink_wifi::connect(std::string_view SSID, std::string_view password) 
                               nullptr);
 
     LOG("Connect:", int(res));
+}
+
+void simplelink_wifi::set_power_policy(power_policy policy) {
+    int policy_res;
+    switch (policy) {
+    case power_policy::always_on:
+        sl_WlanPolicySet(SL_WLAN_POLICY_PM, SL_WLAN_ALWAYS_ON_POLICY, nullptr, 0);
+        break;
+    case power_policy::low_latency:
+        sl_WlanPolicySet(SL_WLAN_POLICY_PM, SL_WLAN_LOW_LATENCY_POLICY, nullptr, 0);
+        break;
+    case power_policy::normal:
+        policy_res =
+            sl_WlanPolicySet(SL_WLAN_POLICY_PM, SL_WLAN_NORMAL_POLICY, nullptr, 0);
+        break;
+    case power_policy::power_save:
+        policy_res =
+            sl_WlanPolicySet(SL_WLAN_POLICY_PM, SL_WLAN_LOW_POWER_POLICY, nullptr, 0);
+        break;
+    case power_policy::long_sleep_interval: {
+        SlWlanPmPolicyParams_t PmPolicyParams;
+        memset(&PmPolicyParams, 0, sizeof(SlWlanPmPolicyParams_t));
+        PmPolicyParams.MaxSleepTimeMs = 60'000; // max sleep time in mSec
+        policy_res = sl_WlanPolicySet(SL_WLAN_POLICY_PM,
+                                      SL_WLAN_LONG_SLEEP_INTERVAL_POLICY,
+                                      (_u8*)&PmPolicyParams,
+                                      sizeof(PmPolicyParams));
+
+    } break;
+    }
+    LOG_TRACE("policy:", policy_res);
 }
 
 void null_event_handler::handle(const ip_acquired& acquired) {
