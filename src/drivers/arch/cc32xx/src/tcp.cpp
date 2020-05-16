@@ -65,17 +65,17 @@ void tcp_socket::signal_select_rx() {
             return;
         }
         if (res == 0) {
-            tos::debug::trace("received 0 bytes, end of stream!");
             close();
             m_closed = true;
             m_len.up();
+            tos::debug::trace("received 0 bytes, end of stream!");
             return;
         }
         //tos::debug::trace("receiving", res, "bytes");
         for (auto byte : span(buf).slice(0, res)) {
             if (m_recv_buffer.size() == m_recv_buffer.capacity()) {
                 // Out of buffer space
-                tos::debug::warn("overrun");
+                tos::debug::warn("TCP RX Overrun! Lost data!");
                 return;
             }
             m_recv_buffer.push(byte);
@@ -110,7 +110,7 @@ expected<size_t, network_errors> tcp_socket::write(span<const uint8_t> buffer) {
     return buffer.size();
 }
 
-expected<std::unique_ptr<tcp_socket>, connect_errors>
+expected<intrusive_ptr<tcp_socket>, connect_errors>
 connect(simplelink_wifi&, ipv4_addr_t address, port_num_t port) {
     auto socket = sl_Socket(SL_AF_INET, SL_SOCK_STREAM, 0);
     if (socket < 0) {
@@ -130,6 +130,6 @@ connect(simplelink_wifi&, ipv4_addr_t address, port_num_t port) {
         LOG_WARN("Connect failed:", res);
         return unexpected(connect_errors::connect_error);
     }
-    return std::make_unique<tcp_socket>(socket);
+    return make_intrusive<tcp_socket>(socket);
 }
 } // namespace tos::cc32xx

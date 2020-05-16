@@ -10,6 +10,7 @@
 #include <tos/function_ref.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/sync_ring_buf.hpp>
+#include <tos/intrusive_ptr.hpp>
 
 namespace tos::cc32xx {
 class tcp_socket : public socket_base<tcp_socket> {
@@ -57,6 +58,6 @@ enum class connect_errors
     connect_error
 };
 
-expected<std::unique_ptr<tcp_socket>, connect_errors>
+expected<intrusive_ptr<tcp_socket>, connect_errors>
 connect(class simplelink_wifi& wifi, ipv4_addr_t addr, port_num_t port);
 } // namespace tos::cc32xx

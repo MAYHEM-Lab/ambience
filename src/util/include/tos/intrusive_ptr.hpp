@@ -146,6 +146,6 @@ intrusive_ptr<U> static_pointer_cast(const intrusive_ptr<T>& ptr) {
 
 template <class T, class... ArgTs>
 intrusive_ptr<T> make_intrusive(ArgTs&&... args) {
-    return intrusive_ptr(new T(std::forward<ArgTs>(args)...));
+    return intrusive_ptr<T>(new T(std::forward<ArgTs>(args)...));
 }
 } // namespace tos

@@ -49,10 +49,9 @@ expected<void, network_errors> socket_base<SocketT>::set_nonblocking(bool non_bl
 
 template<class SocketT>
 expected<void, network_errors> socket_base<SocketT>::close() {
-    if (m_handle == -1) {
+    if (closed()) {
         return {};
     }
-    socket_runtime::instance().remove_socket(self());
     sl_Close(native_handle());
     m_handle = -1;
     return {};
