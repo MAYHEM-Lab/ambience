@@ -126,6 +126,7 @@ connect(simplelink_wifi&, ipv4_addr_t address, port_num_t port) {
         SL_IPV4_VAL(address.addr[0], address.addr[1], address.addr[2], address.addr[3]));
     auto res = sl_Connect(socket, reinterpret_cast<SlSockAddr_t*>(&addr), sizeof addr);
     if (res < 0) {
+        sl_Close(socket);
         LOG_WARN("Connect failed:", res);
         return unexpected(connect_errors::connect_error);
     }
