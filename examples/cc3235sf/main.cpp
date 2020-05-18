@@ -10,6 +10,8 @@
 #include <arch/wlan.hpp>
 #include <common/inet/tcp_ip.hpp>
 #include <common/usart.hpp>
+#include <tos/debug/dynamic_log.hpp>
+#include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/streams.hpp>
@@ -80,6 +82,11 @@ void task() {
     auto erased = tos::erase_usart(&uart);
     ::uart = &erased;
     ::log = &erased;
+
+    tos::debug::serial_sink sink{&uart};
+    tos::debug::detail::any_logger log_{&sink};
+    log_.set_log_level(tos::debug::log_level::all);
+    tos::debug::set_default_log(&log_);
 
     tos::println(uart);
 
