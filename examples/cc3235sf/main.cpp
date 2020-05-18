@@ -78,6 +78,18 @@ void task() {
     g.set_pin_mode(pin, tos::pin_mode::out);
     g.write(pin, tos::digital::high);
 
+    auto prog_btn = 0_pin;
+    g.set_pin_mode(prog_btn, tos::pin_mode::in_pulldown);
+
+    if (g.read(prog_btn)) {
+        while (true) {
+            g.write(pin, tos::digital::high);
+            for (int i = 0; i < 1'000'000; ++i) asm volatile("nop");
+            g.write(pin, tos::digital::low);
+            for (int i = 0; i < 1'000'000; ++i) asm volatile("nop");
+        }
+    }
+
     tos::cc32xx::uart uart(0);
     auto erased = tos::erase_usart(&uart);
     ::uart = &erased;
