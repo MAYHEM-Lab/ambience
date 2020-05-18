@@ -42,7 +42,7 @@ public:
 
     expected<void, network_errors> listen();
 
-    expected<std::unique_ptr<tcp_socket>, network_errors> accept();
+    expected<intrusive_ptr<tcp_socket>, network_errors> accept();
 
     using socket_base::native_handle;
 

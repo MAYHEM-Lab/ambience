@@ -126,6 +126,16 @@ void socket_runtime::handle_select(const SlFdSet_t& rx, const SlFdSet_t& write) 
         }
     }
 
+    for (auto it = m_tcp_listeners.begin(); it != m_tcp_listeners.end(); ) {
+        auto& sock = *it;
+        if (sock.closed() || sock.refcount() == 1) {
+            m_tcp_listeners.erase(it++);
+            intrusive_unref(&sock);
+        } else {
+            ++it;
+        }
+    }
+
     for (auto it = m_tcp_sockets.begin(); it != m_tcp_sockets.end(); ) {
         auto& sock = *it;
         if (sock.closed() || sock.refcount() == 1) {
@@ -144,6 +154,7 @@ void socket_runtime::register_socket(udp_socket& socket) {
     m_udp_sockets.push_front(socket);
     // m_request_interruption = true;
     // m_select_sem.up();
+    intrusive_ref(&socket);
     m_count_sem.up();
 }
 
@@ -161,6 +172,7 @@ void socket_runtime::register_socket(tcp_listener& socket) {
     m_tcp_listeners.push_front(socket);
     // m_request_interruption = true;
     // m_select_sem.up();
+    intrusive_ref(&socket);
     m_count_sem.up();
 }
 

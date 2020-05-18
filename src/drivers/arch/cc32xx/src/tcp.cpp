@@ -26,21 +26,22 @@ void tcp_listener::signal_select() {
     m_accept_sem.up();
 }
 
-expected<std::unique_ptr<tcp_socket>, network_errors> tcp_listener::accept() {
+expected<intrusive_ptr<tcp_socket>, network_errors> tcp_listener::accept() {
     m_accept_sem.down();
     SlSockAddrIn_t Addr;
     uint16_t addr_len = sizeof Addr;
     auto accept_res = sl_Accept(native_handle(), (SlSockAddr_t*)&Addr, &addr_len);
     if (accept_res < 0) {
         // wtf
-        tos::debug::warn("bad accept");
+        LOG_WARN("Bad accept", accept_res);
         return unexpected(network_errors(accept_res));
     }
-    auto sock = std::make_unique<tcp_socket>(accept_res);
+    auto sock = make_intrusive<tcp_socket>(accept_res);
     if (!sock) {
+        LOG_WARN("Allocation failed");
         return unexpected(network_errors(SL_ERROR_UTILS_MEM_ALLOC));
     }
-    tos::debug::info("Got socket:", int(accept_res));
+    LOG_TRACE("Got socket:", int(accept_res));
     return sock;
 }
 
