@@ -70,10 +70,9 @@ public:
 
 void task() {
     using namespace tos::tos_literals;
-    auto pin = 4_pin;
+    auto pin = 5_pin;
     tos::cc32xx::gpio g;
 
-    g.set_pin_mode(5_pin, tos::pin_mode::out);
     g.set_pin_mode(6_pin, tos::pin_mode::out);
     g.set_pin_mode(pin, tos::pin_mode::out);
     g.write(pin, tos::digital::high);
@@ -112,10 +111,10 @@ void task() {
     while (true) {
         using namespace std::chrono_literals;
         g.write(pin, tos::digital::high);
-        // tos::println(uart, "high");
+        tos::println(uart, "high");
         tos::this_thread::sleep_for(alarm, 1000ms);
         g.write(pin, tos::digital::low);
-        // tos::println(uart, "low");
+        tos::println(uart, "low");
         tos::this_thread::sleep_for(alarm, 1000ms);
     }
 }
@@ -140,6 +139,6 @@ void flash_task() {
 }
 
 void tos_main() {
-    tos::launch(tos::alloc_stack, flash_task);
-    // tos::launch(tos::alloc_stack, task);
+    //tos::launch(tos::alloc_stack, flash_task);
+     tos::launch(tos::alloc_stack, task);
 }
