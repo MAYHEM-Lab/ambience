@@ -97,7 +97,7 @@ extern void MPUHandler();
 //
 //*****************************************************************************
 __attribute__ ((section(".resetVecs"))) __attribute__ ((used))
-static void (* const resetVectors[16])(void) =
+void (* const resetVectors[16])(void) =
 {
     (void (*)(void))((uint32_t)&_stack_end),
                                          // The initial stack pointer
