@@ -31,10 +31,10 @@ void udp_socket() {
     }
 }
 
-std::unique_ptr<tos::cc32xx::tcp_socket> get_connection() {
-    tos::cc32xx::tcp_listener listener({8080});
-    listener.listen();
-    auto sock = listener.accept();
+tos::intrusive_ptr<tos::cc32xx::tcp_socket> get_connection() {
+    auto listener = tos::make_intrusive<tos::cc32xx::tcp_listener>(tos::port_num_t{8080});
+    listener->listen();
+    auto sock = listener->accept();
     tos::println(uart, "accept returned", bool(sock));
     if (!sock) {
         tos::println(uart, "accept error!");
