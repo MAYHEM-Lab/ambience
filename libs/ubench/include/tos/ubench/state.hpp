@@ -6,7 +6,7 @@
 
 #include <common/clock.hpp>
 #include <cstdint>
-#include <tos/thread.hpp>
+#include <tos/ft.hpp>
 #include <tos/utility.hpp>
 
 namespace tos::bench {
