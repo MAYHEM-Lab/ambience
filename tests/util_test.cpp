@@ -4,37 +4,53 @@
 
 #include "doctest.h"
 
-#include <tos/ring_buf.hpp>
 #include <tos/fixed_fifo.hpp>
+#include <tos/ring_buf.hpp>
 
-TEST_CASE("base ring buffer")
-{
-    tos::ring_buf rb{ 4 };
+namespace tos {
+namespace {
+TEST_CASE("base ring buffer") {
+    tos::ring_buf rb{4};
     REQUIRE(rb.capacity() == 4);
-    REQUIRE(rb.push() == 0);    REQUIRE(rb.size() == 1);
-    REQUIRE(rb.push() == 1);    REQUIRE(rb.size() == 2);
-    REQUIRE(rb.push() == 2);    REQUIRE(rb.size() == 3);
-    REQUIRE(rb.push() == 3);    REQUIRE(rb.size() == 4);
-    REQUIRE(rb.pop() == 0);     REQUIRE(rb.size() == 3);
-    REQUIRE(rb.push() == 0);    REQUIRE(rb.size() == 4);
-    REQUIRE(rb.pop() == 1);     REQUIRE(rb.size() == 3);
-    REQUIRE(rb.push() == 1);    REQUIRE(rb.size() == 4);
-    REQUIRE(rb.pop() == 2);     REQUIRE(rb.size() == 3);
-    REQUIRE(rb.push() == 2);    REQUIRE(rb.size() == 4);
-    REQUIRE(rb.pop() == 3);     REQUIRE(rb.size() == 3);
-    REQUIRE(rb.push() == 3);    REQUIRE(rb.size() == 4);
-    REQUIRE(rb.pop() == 0);     REQUIRE(rb.size() == 3);
-    REQUIRE(rb.pop() == 1);     REQUIRE(rb.size() == 2);
-    REQUIRE(rb.pop() == 2);     REQUIRE(rb.size() == 1);
-    REQUIRE(rb.pop() == 3);     REQUIRE(rb.size() == 0);
+    REQUIRE(rb.push() == 0);
+    REQUIRE(rb.size() == 1);
+    REQUIRE(rb.push() == 1);
+    REQUIRE(rb.size() == 2);
+    REQUIRE(rb.push() == 2);
+    REQUIRE(rb.size() == 3);
+    REQUIRE(rb.push() == 3);
+    REQUIRE(rb.size() == 4);
+    REQUIRE(rb.pop() == 0);
+    REQUIRE(rb.size() == 3);
+    REQUIRE(rb.push() == 0);
+    REQUIRE(rb.size() == 4);
+    REQUIRE(rb.pop() == 1);
+    REQUIRE(rb.size() == 3);
+    REQUIRE(rb.push() == 1);
+    REQUIRE(rb.size() == 4);
+    REQUIRE(rb.pop() == 2);
+    REQUIRE(rb.size() == 3);
+    REQUIRE(rb.push() == 2);
+    REQUIRE(rb.size() == 4);
+    REQUIRE(rb.pop() == 3);
+    REQUIRE(rb.size() == 3);
+    REQUIRE(rb.push() == 3);
+    REQUIRE(rb.size() == 4);
+    REQUIRE(rb.pop() == 0);
+    REQUIRE(rb.size() == 3);
+    REQUIRE(rb.pop() == 1);
+    REQUIRE(rb.size() == 2);
+    REQUIRE(rb.pop() == 2);
+    REQUIRE(rb.size() == 1);
+    REQUIRE(rb.pop() == 3);
+    REQUIRE(rb.size() == 0);
     REQUIRE(rb.push() == 0);
     REQUIRE(rb.push() == 1);
     REQUIRE(rb.push() == 2);
     REQUIRE(rb.push() == 3);
 }
 
-TEST_CASE("fifo test")
-{
+TEST_CASE("fifo test") {
     tos::basic_fixed_fifo<char, 4, tos::ring_buf> ff;
     ff.push('a');
     REQUIRE(ff.pop() == 'a');
@@ -53,3 +69,5 @@ TEST_CASE("fifo test")
     REQUIRE(ff.pop() == 'g');
     REQUIRE(ff.pop() == 'h');
 }
+} // namespace
+} // namespace tos
