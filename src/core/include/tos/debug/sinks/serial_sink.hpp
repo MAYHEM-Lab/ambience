@@ -2,10 +2,10 @@
 
 #include "sink.hpp"
 
+#include <memory>
+#include <tos/mutex.hpp>
 #include <tos/print.hpp>
 #include <tos/self_pointing.hpp>
-#include <tos/mutex.hpp>
-#include <memory>
 
 namespace tos::debug {
 template<class SerialT>

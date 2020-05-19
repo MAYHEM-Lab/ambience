@@ -23,4 +23,4 @@ public:
     void end() override {
     }
 };
-}
+} // namespace tos::debug
