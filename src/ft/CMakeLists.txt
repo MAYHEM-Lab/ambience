@@ -24,3 +24,5 @@ target_compile_definitions(tos_ft PUBLIC TOS_DEFAULT_STACK_SIZE=${TOS_DEF_STACK}
 add_library(tos::ft ALIAS tos_ft)
 
 tos_install(tos_ft ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_subdirectory(benchmarks)
