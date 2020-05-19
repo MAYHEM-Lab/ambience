@@ -42,7 +42,7 @@ message(STATUS "${CMAKE_CXX_COMPILER_ID}")
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     message(STATUS "Using gcc")
 
-    set(TOS_GCC_FLAGS "-fdiagnostics-color=always -fdump-ipa-cgraph -fstack-usage -freorder-functions")
+    set(TOS_GCC_FLAGS "-fdiagnostics-color=always -freorder-functions")
 
     set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions -fno-exceptions -fno-rtti -fno-unwind-tables")
 
