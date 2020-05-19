@@ -3,18 +3,14 @@
 //
 
 #include <ios>
-extern "C"
-{
-[[gnu::weak]]
-void __cxa_pure_virtual()
-{
-}
-
-void __cxa_atexit(void (*) (void *), void *, void *) {
+extern "C" {
+void __cxa_atexit(void (*)(void*), void*, void*) {
 }
 }
 
 namespace std {
-ios_base::Init::Init() {}
-ios_base::Init::~Init() {}
+ios_base::Init::Init() {
 }
+ios_base::Init::~Init() {
+}
+} // namespace std
