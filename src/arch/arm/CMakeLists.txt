@@ -5,6 +5,8 @@ target_sources(arch_arm PRIVATE
         include/arch/assembly.hpp
         include/arch/nvic.hpp
         include/arch/mpu.hpp
+        include/arch/core.hpp
         stub.cpp
-        mpu.cpp)
-target_link_libraries(arch_arm PUBLIC tos_util_core cmsis::core tos_drivers)
+        mpu.cpp
+        core.cpp)
+target_link_libraries(arch_arm PUBLIC tos_util_core cmsis::core tos_drivers tos_mmio)
