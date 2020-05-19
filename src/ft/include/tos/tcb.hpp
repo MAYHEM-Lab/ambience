@@ -4,6 +4,7 @@
 #include <csetjmp>
 #include <cstddef>
 #include <tos/arch.hpp>
+#include <tos/context.hpp>
 #include <tos/intrusive_list.hpp>
 #include <tos/utility.hpp>
 #include <utility>
@@ -19,6 +20,7 @@ struct processor_state;
  * as starting threads or passing arguments.
  */
 struct alignas(alignof(std::max_align_t)) tcb : public list_node<tcb> {
+    explicit tcb(context& ctx_ptr);
     /**
      * Returns a reference to the context of the task.
      *
@@ -42,11 +44,14 @@ struct alignas(alignof(std::max_align_t)) tcb : public list_node<tcb> {
      */
     virtual ~tcb() = 0;
 
+    void set_context(context& ctx);
+    context& get_context();
+
+    list_node<tcb> m_siblings;
 private:
+    context* m_context;
     processor_state* m_ctx;
 };
-
-inline tcb::~tcb() = default;
 } // namespace tos::kern
 
 namespace tos {

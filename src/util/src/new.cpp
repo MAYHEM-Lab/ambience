@@ -2,56 +2,56 @@
 // Created by Mehmet Fatih BAKIR on 14/05/2018.
 //
 
-#include "../../core/include/tos/memory/free_list.hpp"
-
 #include <new>
+#include <tos/context.hpp>
+#include <tos/components/allocator.hpp>
+#include <tos/ft.hpp>
 
-alignas(16) uint8_t heap[1024*1024*16];
-
-auto& get_allocator() {
-    static tos::memory::free_list alloc(heap);
-    return alloc;
-}
+using tos::allocator_component;
 
 void operator delete (void* pt, size_t){
-    get_allocator().free(pt);
+    if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
+        alloc->allocator->free(pt);
+        return;
+    }
 }
 
 void operator delete (void* pt)
 {
-    get_allocator().free(pt);
+    if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
+        alloc->allocator->free(pt);
+        return;
+    }
 }
 
 void operator delete[] (void* pt)
 {
-    get_allocator().free(pt);
+    if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
+        alloc->allocator->free(pt);
+        return;
+    }
 }
 
 void operator delete[] (void* pt, size_t)
 {
-    get_allocator().free(pt);
+    if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
+        alloc->allocator->free(pt);
+        return;
+    }
 }
 
 void* operator new(size_t sz)
 {
-    auto ptr = get_allocator().allocate(sz);
-    return ptr;
+    if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
+        return alloc->allocator->allocate(sz);
+    }
+    return nullptr;
 }
 
 void* operator new[](size_t sz)
 {
-    auto ptr = get_allocator().allocate(sz);
-    return ptr;
-}
-
-void* operator new(size_t sz, const std::nothrow_t&) noexcept
-{
-    auto ptr = get_allocator().allocate(sz);
-    return ptr;
-}
-
-void* operator new[](size_t sz, const std::nothrow_t&) noexcept
-{
-    auto ptr = get_allocator().allocate(sz);
-    return ptr;
+    if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
+        return alloc->allocator->allocate(sz);
+    }
+    return nullptr;
 }
