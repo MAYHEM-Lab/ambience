@@ -103,3 +103,5 @@ tos_install(tos_interrupt ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_print ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_mem ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_subdirectory(benchmarks)
