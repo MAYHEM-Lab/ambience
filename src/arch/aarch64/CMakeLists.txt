@@ -1,15 +1,1 @@
-project(tos C CXX ASM)
-
-add_library(aarch64_core core.cpp cxxrt.cpp)
-target_include_directories(aarch64_core PUBLIC include)
-target_compile_features(aarch64_core PUBLIC cxx_std_17)
-target_link_libraries(aarch64_core PUBLIC cmsis::core)
-target_compile_definitions(aarch64_core PUBLIC __PROGRAM_START=_start)
-
-add_library(aarch64_impl impl.cpp boot.S newlib_stubs.cpp mmu_init.cpp)
-target_include_directories(aarch64_impl PUBLIC include)
-target_link_libraries(aarch64_impl PUBLIC aarch64_core tos_ft raspi3_drivers)
-target_link_libraries(aarch64_impl PUBLIC "-T${CMAKE_CURRENT_SOURCE_DIR}/linker.ld")
-target_link_options(aarch64_impl PUBLIC -ffreestanding -nostdlib)
-target_link_libraries(aarch64_impl PUBLIC "-Wl,--start-group -lgcc -lm -lc -lg -lstdc++ -lsupc++ -Wl,--end-group -Wl,--undefined=_read")
-set_target_properties(aarch64_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)
+add_library(arch_aarch64 INTERFACE)
