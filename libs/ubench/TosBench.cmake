@@ -1,0 +1,18 @@
+if (NOT TARGET bench_main)
+    add_executable(bench_main)
+    target_link_libraries(bench_main PRIVATE tos_core arch_drivers ubench tos_dynamic_log)
+    set_target_properties(bench_main PROPERTIES CXX_EXTENSIONS OFF)
+endif()
+
+function(add_benchmark target)
+    message(STATUS "Benchmarking ${target}")
+    target_link_libraries(bench_main PRIVATE "-Wl,--whole-archive" ${target} "-Wl,--no-whole-archive")
+endfunction()
+
+if (${TOS_PLATFORM} MATCHES hosted)
+    target_sources(bench_main PRIVATE ${CMAKE_CURRENT_LIST_DIR}/hosted_bench_main.cpp)
+elseif(${TOS_PLATFORM} MATCHES cc32xx)
+    target_sources(bench_main PRIVATE ${CMAKE_CURRENT_LIST_DIR}/cc32xx_bench_main.cpp)
+else()
+    target_sources(bench_main PRIVATE ${CMAKE_CURRENT_LIST_DIR}/stub_bench_main.cpp)
+endif ()
