@@ -40,8 +40,7 @@ const char* WlanStatus[] = {"DISCONNECTED", "SCANING", "CONNECTING", "CONNECTED"
 
 void SignalEvent(tevents ev) {}
 
-static tos::null_usart uart;
-#define UART_PRINT(...) tos::print(uart, __VA_ARGS__)
+#define UART_PRINT(...) LOG(__VA_ARGS__)
 
 extern "C" {
 void SimpleLinkGeneralEventHandler(SlDeviceEvent_t* pDevEvent) {

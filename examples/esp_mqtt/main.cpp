@@ -65,7 +65,7 @@ int handle_samples(MQTT::Client<net_facade, timer_facade, 512>& client) {
 
 void fake_task() {
     auto tmr = tos::open(tos::devs::timer<0>);
-    auto alarm = tos::open(tos::devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     fake_accel acc{{0, 0, 0}, {1, 1, 1}};
 
@@ -74,7 +74,7 @@ void fake_task() {
         vecs.push({acc.sample(), 0, 0});
         using namespace std::chrono_literals;
         cnt++;
-        alarm.sleep_for(10ms);
+        tos::this_thread::sleep_for(alarm, 10ms);
     }
 }
 
@@ -87,7 +87,7 @@ void sample_task() {
     sens.setRangeSetting(2);
 
     auto tmr = tos::open(tos::devs::timer<0>);
-    auto alarm = tos::open(tos::devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     uint32_t count = 0;
     while (true) {
@@ -98,7 +98,7 @@ void sample_task() {
         v.z = z;
         vecs.push({v, 0, count++});
         using namespace std::chrono_literals;
-        alarm.sleep_for(10ms);
+        tos::this_thread::sleep_for(alarm, 10ms);
     }
 }
 

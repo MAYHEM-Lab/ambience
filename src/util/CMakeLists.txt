@@ -21,7 +21,10 @@ add_library(tos_util_core
     include/nonstd/expected.hpp
     include/tos/uuid.hpp
     include/tos/moved_flag.hpp
-)
+    include/tos/functional.hpp
+    include/tos/meta/function_traits.hpp
+    include/tos/string.hpp
+    src/base64.cpp)
 
 target_compile_features(tos_util_core PUBLIC cxx_std_17)
 target_link_libraries(tos_util_core PUBLIC tos::libcxx tos_memory)
@@ -35,7 +38,7 @@ add_library(tos_util
         include/tos/sync_ring_buf.hpp
         )
 
-target_link_libraries(tos_util PUBLIC tos_util_core tos::ft)
+target_link_libraries(tos_util PUBLIC tos_debug tos_util_core tos::ft)
 
 add_library(tos::util ALIAS tos_util)
 
@@ -65,4 +68,20 @@ if (BUILD_TESTS)
     add_executable(intrusive_ptr_test src/intrusive_ptr_test.cpp)
     target_link_libraries(intrusive_ptr_test PUBLIC tests_main tos_util_core)
     add_test(NAME intrusive_ptr_test COMMAND intrusive_ptr_test)
+
+    add_executable(mem_fn_test src/mem_fn_test.cpp)
+    target_link_libraries(mem_fn_test PUBLIC tests_main tos_util_core)
+    add_test(NAME mem_fn_test COMMAND mem_fn_test)
+
+    add_executable(offsetof_test src/offsetof_test.cpp)
+    target_link_libraries(offsetof_test PUBLIC tests_main tos_util_core)
+    add_test(NAME offsetof_test COMMAND offsetof_test)
+
+    add_executable(split_test src/split_test.cpp)
+    target_link_libraries(split_test PUBLIC tests_main tos_util_core)
+    add_test(NAME split_test COMMAND split_test)
+
+    add_executable(base64_test src/base64_test.cpp)
+    target_link_libraries(base64_test PUBLIC tests_main tos_util_core)
+    add_test(NAME base64_test COMMAND base64_test)
 endif()

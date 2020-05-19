@@ -11,6 +11,7 @@ In C++ code, when passing a callback, you have 3 options:
 
 For the first case, prefer using a template parameter to take the function:
 
+[source,cpp]
 ----
 template <class FuncT>
 void call_100_times(const FuncT& func) {
@@ -32,6 +33,7 @@ in the comments, and if possible, checked with a `static_assert`.
 
 For the second case, use `tos::function_ref`. It's a **non-owning** function reference:
 
+[source,cpp]
 ----
 void call_on_interrupt(tos::function_ref<void()> fn) {
   global_int_handler = fn; // free to copy!
@@ -79,6 +81,7 @@ it's pretty limited. It's use is prohibited unless there's a specific reason thi
 
 For completeness, here's how it looks like:
 
+[source,cpp]
 ----
 void call_on_interrupt(std::function<void()> fn) {
   global_int_handler = std::move(fn); // make sure you move it, as it'll allocate again on copy!
@@ -111,6 +114,7 @@ If you have a library that took the 1st option, either modify the library so it'
 
 A function pointer looks like this:
 
+[source,cpp]
 ----
 using fun_ptr_1 = void(*)();
 using fun_ptr_2 = void(*)(int);
@@ -123,6 +127,7 @@ using fun_ptr_3 = int(*)(char);
 
 That is, if you're using C++. With C, we have to resort to `typedef`s for the same things:
 
+[source,cpp]
 ----
 typedef void (*fun_ptr_1)();
 typedef void (*fun_ptr_2)(int);
@@ -131,6 +136,7 @@ typedef int (*fun_ptr_3)(char);
 
 If you have a function that takes a callback in C, it takes a parameter of type of a function pointer:
 
+[source,cpp]
 ----
 void call_100_times(fun_ptr_1 fun) {
   for (int i = 0; i < 100; ++i) fun();
@@ -140,6 +146,7 @@ void call_100_times(fun_ptr_1 fun) {
 
 Since this is C, the only way to use this function is to define another function and pass it:
 
+[source,cpp]
 ----
 void call_me() {
  // do something
@@ -152,6 +159,7 @@ int main() {
 
 This is fine and all, but imagine we'd like to print a local variable 100 times:
 
+[source,cpp]
 ----
 int main() {
   int x = get_x();
@@ -171,6 +179,7 @@ that will be passed back to the given callback so the called function has an ide
 This means that the function pointer type is changed to take one additional pointer. The type of this
 pointer must be a `void*` since `call_100_times` must be able to work with any context type:
 
+[source,cpp]
 ----
 using ctx_fun_ptr = void(*)(void*);
 void call_100_times(ctx_fun_ptr fun, void* ctx) {
@@ -199,6 +208,7 @@ speak C without an issue. When using C++, implement the callback functions as re
 members, pass `this` as the context pointer and use a lambda that will marshall the context back
 to `this` and call the handler:
 
+[source,cpp]
 ----
 class int_printer {
 public:

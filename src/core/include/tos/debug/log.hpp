@@ -16,6 +16,8 @@ template<class... Ts>
 ALWAYS_INLINE bool log(const Ts&... args) {
 #if !defined(TOS_NO_LOG)
     return default_log().log(args...);
+#else
+    return false;
 #endif
 }
 
@@ -23,6 +25,8 @@ template<class... Ts>
 ALWAYS_INLINE bool info(const Ts&... args) {
 #if !defined(TOS_NO_LOG)
     return default_log().info(args...);
+#else
+    return false;
 #endif
 }
 
@@ -30,6 +34,8 @@ template<class... Ts>
 ALWAYS_INLINE bool trace(const Ts&... args) {
 #if !defined(TOS_NO_LOG)
     return default_log().trace(args...);
+#else
+    return false;
 #endif
 }
 
@@ -37,6 +43,8 @@ template<class... Ts>
 ALWAYS_INLINE bool warn(const Ts&... args) {
 #if !defined(TOS_NO_LOG)
     return default_log().warn(args...);
+#else
+    return false;
 #endif
 }
 
@@ -44,6 +52,8 @@ template<class... Ts>
 ALWAYS_INLINE bool error(const Ts&... args) {
 #if !defined(TOS_NO_LOG)
     return default_log().error(args...);
+#else
+    return false;
 #endif
 }
 
@@ -51,6 +61,8 @@ template<class... Ts>
 ALWAYS_INLINE bool fatal(const Ts&... args) {
 #if !defined(TOS_NO_LOG)
     return default_log().fatal(args...);
+#else
+    return false;
 #endif
 }
 } // namespace tos::debug
@@ -59,6 +71,7 @@ ALWAYS_INLINE bool fatal(const Ts&... args) {
 #define __S_(x) __S(x)
 #define __S__LINE__ __S_(__LINE__)
 
+#if !defined(TOS_NO_LOG)
 #define LOG(...)                                                                         \
     (::tos::debug::default_log().would_log(::tos::debug::log_level::log) &&              \
      ::tos::debug::log("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
@@ -74,3 +87,10 @@ ALWAYS_INLINE bool fatal(const Ts&... args) {
 #define LOG_ERROR(...)                                                                   \
     (::tos::debug::default_log().would_log(::tos::debug::log_level::error) &&            \
      ::tos::debug::error("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
+#else
+#define LOG(...) false
+#define LOG_TRACE(...) false
+#define LOG_INFO(...) false
+#define LOG_WARN(...) false
+#define LOG_ERROR(...) false
+#endif

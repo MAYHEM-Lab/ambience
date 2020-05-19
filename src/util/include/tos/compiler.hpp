@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(TOS_ARCH_avr)
+#if defined(TOS_PLATFORM_avr)
 #define TOS_MAIN __attribute__((OS_main))
 #define TOS_TASK __attribute__((OS_task))
 #else
@@ -27,3 +27,7 @@
 #define TOS_NO_OPTIMIZE [[clang::optnone]]
 #define TOS_SIZE_OPTIMIZE [[clang::minsize]]
 #endif
+
+#define ISR_AVAILABLE [[gnu::section(".isr_text")]]
+
+#define USED __attribute__((used))

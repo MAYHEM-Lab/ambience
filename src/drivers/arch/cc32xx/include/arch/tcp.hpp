@@ -6,10 +6,11 @@
 
 #include "detail/socket_base.hpp"
 
+#include <tos/fixed_fifo.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/semaphore.hpp>
-#include <tos/fixed_fifo.hpp>
 #include <tos/sync_ring_buf.hpp>
+#include <tos/intrusive_ptr.hpp>
 
 namespace tos::cc32xx {
 class tcp_socket : public socket_base<tcp_socket> {
@@ -21,11 +22,13 @@ public:
     void signal_select_tx() {
     }
 
-    expected<span<uint8_t>, network_errors>
-    read(span<uint8_t> buffer);
+    expected<span<uint8_t>, network_errors> read(span<uint8_t> buffer);
 
-    expected<size_t, network_errors>
-    write(span<const uint8_t> buffer);
+    expected<size_t, network_errors> write(span<const uint8_t> buffer);
+
+    bool disconnected() const {
+        return m_closed;
+    }
 
 private:
     bool m_closed = false;
@@ -39,7 +42,7 @@ public:
 
     expected<void, network_errors> listen();
 
-    expected<std::unique_ptr<tcp_socket>, network_errors> accept();
+    expected<intrusive_ptr<tcp_socket>, network_errors> accept();
 
     using socket_base::native_handle;
 
@@ -48,4 +51,13 @@ public:
 private:
     semaphore m_accept_sem{0};
 };
-}
+
+enum class connect_errors
+{
+    socket_error,
+    connect_error
+};
+
+expected<intrusive_ptr<tcp_socket>, connect_errors>
+connect(class simplelink_wifi& wifi, ipv4_addr_t addr, port_num_t port);
+} // namespace tos::cc32xx

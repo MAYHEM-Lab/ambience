@@ -16,7 +16,7 @@ add_executable(expected_tests expected_test.cpp)
 target_link_libraries(expected_tests PUBLIC tests_main)
 
 add_executable(alarm_tests alarm_tests.cpp)
-target_link_libraries(alarm_tests PUBLIC tests_main x86_drivers)
+target_link_libraries(alarm_tests PUBLIC tests_main arch_drivers)
 
 add_executable(rn2903_test rn2903_test.cpp)
 target_link_libraries(rn2903_test PUBLIC tests_main tos::rn2903)

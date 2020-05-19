@@ -24,12 +24,36 @@ struct i2c_def {
 };
 
 inline const i2c_def i2cs[] = {
-    {I2C1, I2C1_EV_IRQn, I2C1_ER_IRQn, [] { __HAL_RCC_I2C1_CLK_ENABLE(); }},
+    {I2C1,
+     I2C1_EV_IRQn,
+     I2C1_ER_IRQn,
+     [] {
+         __HAL_RCC_I2C1_CLK_ENABLE();
+         __HAL_RCC_I2C1_FORCE_RESET();
+         HAL_Delay(10);
+         __HAL_RCC_I2C1_RELEASE_RESET();
+     }},
 #if defined(I2C2)
-    {I2C2, I2C2_EV_IRQn, I2C2_ER_IRQn, [] { __HAL_RCC_I2C2_CLK_ENABLE(); }},
+    {I2C2,
+     I2C2_EV_IRQn,
+     I2C2_ER_IRQn,
+     [] {
+         __HAL_RCC_I2C2_CLK_ENABLE();
+         __HAL_RCC_I2C2_FORCE_RESET();
+         HAL_Delay(10);
+         __HAL_RCC_I2C2_RELEASE_RESET();
+     }},
 #endif
 #if defined(I2C3)
-    {I2C3, I2C3_EV_IRQn, I2C3_ER_IRQn, [] { __HAL_RCC_I2C3_CLK_ENABLE(); }},
+    {I2C3,
+     I2C3_EV_IRQn,
+     I2C3_ER_IRQn,
+     [] {
+         __HAL_RCC_I2C3_CLK_ENABLE();
+         __HAL_RCC_I2C3_FORCE_RESET();
+         HAL_Delay(10);
+         __HAL_RCC_I2C3_RELEASE_RESET();
+     }},
 #endif
 };
 #else
@@ -40,8 +64,22 @@ struct i2c_def {
 };
 
 const i2c_def i2cs[] = {
-    {I2C1, I2C1_IRQn, [] { __HAL_RCC_I2C1_CLK_ENABLE(); }},
-    {I2C2, I2C2_IRQn, [] { __HAL_RCC_I2C2_CLK_ENABLE(); }},
+    {I2C1,
+     I2C1_IRQn,
+     [] {
+         __HAL_RCC_I2C1_CLK_ENABLE();
+         __HAL_RCC_I2C1_FORCE_RESET();
+         HAL_Delay(10);
+         __HAL_RCC_I2C1_RELEASE_RESET();
+     }},
+    {I2C2,
+     I2C2_IRQn,
+     [] {
+         __HAL_RCC_I2C2_CLK_ENABLE();
+         __HAL_RCC_I2C2_FORCE_RESET();
+         HAL_Delay(10);
+         __HAL_RCC_I2C2_RELEASE_RESET();
+     }},
 };
 
 #endif
@@ -54,7 +92,7 @@ class i2c
 public:
     i2c(const detail::i2c_def& def, gpio::pin_type scl, gpio::pin_type sda);
 
-    auto native_handle() {
+    I2C_HandleTypeDef* native_handle() {
         return &m_handle;
     }
 

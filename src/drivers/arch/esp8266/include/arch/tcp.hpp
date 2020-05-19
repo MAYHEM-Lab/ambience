@@ -18,14 +18,6 @@
 #include <tos/intrusive_list.hpp>
 #include <tos/track_ptr.hpp>
 
-#ifdef TOS_HAVE_SSL
-#include <lwipr_compat/lwipr_compat.h>
-#undef putc
-#undef getc
-#undef printf
-#include <ssl/tls1.h>
-#endif
-
 namespace tos {
 namespace esp82 {
 class tcp_endpoint : public non_copyable {
@@ -134,7 +126,10 @@ err_t accept_handler(void* user, tcp_pcb* new_conn, err_t err) {
     auto self = static_cast<tcp_socket*>(user);
 
     auto& handler = *(ConnHandlerT*)self->m_accept_handler;
-    /*auto res =*/handler(*self, tcp_endpoint{new_conn});
+    auto res = handler(*self, tcp_endpoint{new_conn});
+    if (!res) {
+        return ERR_ABRT;
+    }
     system_os_post(tos::esp82::main_task_prio, 0, 0);
     return ERR_OK;
 }
@@ -146,7 +141,6 @@ void tcp_socket::accept(ConnHandlerT& handler) {
 
 template<class ConnHandlerT>
 void tcp_socket::async_accept(ConnHandlerT& handler) {
-
     m_accept_handler = &handler;
 
     tcp_arg(m_conn, this);

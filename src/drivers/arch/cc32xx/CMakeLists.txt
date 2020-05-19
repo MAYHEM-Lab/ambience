@@ -44,14 +44,15 @@ set_target_properties(cc32xx_wlan PROPERTIES CXX_EXTENSIONS OFF)
 target_link_libraries(cc32xx_wlan PUBLIC "-Wl,--undefined=SimpleLinkSocketTriggerEventHandler")
 
 add_library(cc32xx_crypto
+        include/arch/crypto/aes.hpp
         include/arch/crypto/sha2.hpp
-        src/stub.cpp include/arch/crypto/crypto.hpp)
+        src/stub.cpp include/arch/crypto/crypto.hpp src/crypto/aes.cpp)
 target_link_libraries(cc32xx_crypto PUBLIC ti_drivers caps)
 target_include_directories(cc32xx_crypto PUBLIC include)
 
 add_library(cc32xx_drivers INTERFACE)
 target_link_libraries(cc32xx_drivers
-    INTERFACE
+        INTERFACE
         cc32xx_timer
         cc32xx_uart
         cc32xx_gpio
@@ -59,6 +60,6 @@ target_link_libraries(cc32xx_drivers
         cc32xx_wlan
         cc32xx_crypto
         cc32xx_flash
-)
+        )
 
 add_library(arch_drivers ALIAS cc32xx_drivers)

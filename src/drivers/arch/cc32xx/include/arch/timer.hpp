@@ -5,6 +5,7 @@
 #pragma once
 
 #include <common/driver_base.hpp>
+#include <common/timer.hpp>
 #include <cstdint>
 #include <ti/drivers/Timer.h>
 #include <tos/function_ref.hpp>
@@ -58,3 +59,9 @@ private:
     tos::function_ref<void()> m_fun{[](void*) {}};
 };
 } // namespace tos::cc32xx
+
+namespace tos {
+inline cc32xx::timer open_impl(devs::timer_t<0>) {
+    return cc32xx::timer(0);
+}
+} // namespace tos

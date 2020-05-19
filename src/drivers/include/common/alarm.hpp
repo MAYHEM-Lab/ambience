@@ -45,8 +45,8 @@ public:
     using sleeper_type = sleeper;
     using alarm_handle = intrusive_list<sleeper>::iterator_t;
 
-    explicit alarm(T& t)
-        : m_timer(&t) {
+    explicit alarm(T t)
+        : m_timer(std::move(t)) {
     }
 
     /**
@@ -130,18 +130,8 @@ private:
 
     int m_period = 1; // in milliseconds
     intrusive_list<sleeper> m_sleepers;
-    T* m_timer;
+    T m_timer;
 };
-
-namespace devs {
-using alarm_t = tos::dev<struct alarm_t_, 0>;
-static constexpr alarm_t alarm{};
-} // namespace devs
-
-template<class T>
-auto open_impl(devs::alarm_t, T& tmr) {
-    return alarm<std::remove_reference_t<T>>{tmr};
-}
 
 /**
  * This type represents a type erased alarm type.
@@ -149,6 +139,7 @@ auto open_impl(devs::alarm_t, T& tmr) {
  * Prefer using the concrete alarm objects over this.
  */
 struct any_alarm {
+    using sleeper_type = sleeper;
     using alarm_handle = intrusive_list<sleeper>::iterator_t;
 
     /**
@@ -212,7 +203,7 @@ public:
     }
 
     void sleep_for(std::chrono::milliseconds dur) override {
-        m_base_alarm->sleep_for(dur);
+        tos::this_thread::sleep_for(m_base_alarm, dur);
     }
 
     alarm_handle set_alarm(sleeper& s) override {
@@ -252,8 +243,9 @@ void sleep_for(AlarmT& alarm, const std::chrono::duration<Rep, Period>& duration
         ev.fire_isr();
         b = true;
     };
-    typename AlarmT::sleeper_type s{alarm->time_to_ticks(duration),
-                                    tos::function_ref<void()>(fun)};
+    using Type = std::remove_pointer_t<AlarmT>;
+    typename Type::sleeper_type s{alarm->time_to_ticks(duration),
+                                  tos::function_ref<void()>(fun)};
     alarm->set_alarm(s);
     if (!b) {
         ev.wait();

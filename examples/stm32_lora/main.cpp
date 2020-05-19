@@ -60,7 +60,7 @@ void lora_task()
     auto lora_uart = tos::open(tos::devs::usart<2>, lora_uart_config);
 
     auto tmr = tos::open(tos::devs::timer<2>);
-    auto alarm = tos::open(tos::devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     using namespace std::chrono_literals;
     tos::println(usart, "hello world");

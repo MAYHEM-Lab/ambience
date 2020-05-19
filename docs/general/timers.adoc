@@ -64,7 +64,7 @@ The main interface to an alarm is the `set_alarm` member:
 
 [source,cpp,indent=0]
 ----
-include::{rootdir}/src/drivers/include/common/alarm.hpp[lines=63]
+include::/src/drivers/include/common/alarm.hpp[lines=63]
     ...
 ----
 
@@ -72,7 +72,7 @@ It takes a `sleeper` object which is defined as:
 
 [source,cpp,indent=0]
 ----
-include::{rootdir}/src/drivers/include/common/alarm.hpp[lines=16..28]
+include::/src/drivers/include/common/alarm.hpp[lines=16..28]
 ----
 
 It's primary reason of existence is to provide an intrusive list of functions to be called. Each alarm user constructs one of these and passes a reference to it to an `alarm` object. The alarm object will put this `sleeper` into it's sleeper queue to call them when their time comes.

@@ -9,7 +9,6 @@
 #include <tos/print.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/utility.hpp>
-#include <tos/version.hpp>
 
 auto gpio = open(tos::devs::gpio);
 auto dht =
@@ -20,7 +19,7 @@ void send(tos::esp82::wifi_connection& c) {
         return;
     }
 
-    auto res = dht.read(tos::esp82::pin_t{4});
+    dht.read(tos::esp82::pin_t{4});
     // tos::println(usart, int(res), int(dht.temperature), int(dht.humidity));
     static uint8_t buf[128];
     tos::msgpack::packer p{buf};
@@ -47,7 +46,6 @@ void task() {
 
     tos::print(usart, "\n\n\n\n\n\n");
     tos::println(usart, tos::platform::board_name);
-    tos::println(usart, tos::vcs::commit_hash);
 
     tos::esp82::wifi w;
 
@@ -69,14 +67,14 @@ conn_:
     lwip_init();
 
     auto tmr = open(tos::devs::timer<0>);
-    auto alarm = open(tos::devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     while (true) {
         using namespace std::chrono_literals;
         send(wconn);
         system_deep_sleep_set_option(0);
         system_deep_sleep_instant(30'000'000);
-        // alarm.sleep_for(30s);
+        // tos::this_thread::sleep_for(alarm, 30s);
     }
 }
 

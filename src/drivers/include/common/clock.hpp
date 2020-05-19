@@ -8,9 +8,9 @@
 #include <common/driver_base.hpp>
 #include <cstdint>
 #include <tos/function_ref.hpp>
-#include <utility>
 #include <tos/interrupt.hpp>
 #include <tos/thread.hpp>
+#include <utility>
 
 namespace tos {
 /**
@@ -50,7 +50,6 @@ public:
     void operator()();
 
 private:
-
     uint32_t m_period; // in milliseconds
     uint32_t m_ticks = 0;
     TimerT m_timer;
@@ -73,31 +72,34 @@ struct any_steady_clock : self_pointing<any_steady_clock> {
 using any_clock = any_steady_clock;
 
 namespace detail {
-template <class ClockT>
+template<class ClockT>
 class erased_clock : public any_steady_clock {
 public:
-    explicit erased_clock(ClockT clk) : m_impl {std::move(clk)} {}
+    explicit erased_clock(ClockT clk)
+        : m_impl{std::move(clk)} {
+    }
 
     time_point now() const override {
-        return any_steady_clock::time_point{m_impl->now().time_since_epoch()};
+        return any_steady_clock::time_point{
+            std::chrono::duration_cast<duration>(m_impl->now().time_since_epoch())};
     }
 
 private:
     ClockT m_impl;
 };
-}
+} // namespace detail
 
-template <class ClockT>
+template<class ClockT>
 auto erase_clock(ClockT clock) -> detail::erased_clock<ClockT> {
     return detail::erased_clock<ClockT>{std::forward<ClockT>(clock)};
 }
 
-template <class ClockT>
+template<class ClockT>
 void delay(const ClockT& clock, std::chrono::microseconds dur, bool yield) {
     delay_until(clock, clock.now() + dur, yield);
 }
 
-template <class ClockT>
+template<class ClockT>
 void delay_until(const ClockT& clock, typename ClockT::time_point end, bool yield) {
     while (clock.now() < end) {
         if (yield) {

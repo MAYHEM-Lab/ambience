@@ -3,51 +3,45 @@
 //
 
 #include "doctest.h"
-#include <tos/expected.hpp>
+
 #include <tos/compiler.hpp>
+#include <tos/expected.hpp>
 
 namespace tos {
 namespace {
 NO_INLINE
-expected<int, int> foo()
-{
+expected<int, int> foo() {
     return tos::unexpected(3);
 }
 
 NO_INLINE
-expected<int, int> bar()
-{
+expected<int, int> bar() {
     return 3;
 }
 
 NO_INLINE
-auto fwd()
-{
+auto fwd() {
     return bar();
 }
 
-TEST_CASE("expected")
-{
+TEST_CASE("expected") {
     auto res = bar();
     REQUIRE(res);
     REQUIRE(force_get(res) == 3);
 }
 
-TEST_CASE("expected fwd")
-{
+TEST_CASE("expected fwd") {
     auto res = fwd();
     REQUIRE(res);
     REQUIRE(force_get(res) == 3);
 }
 
-TEST_CASE("unexpected")
-{
+TEST_CASE("unexpected") {
     auto res = foo();
     REQUIRE(!res);
 }
 
-TEST_CASE("move")
-{
+TEST_CASE("move") {
     auto res = bar();
     auto res2 = std::move(res);
     REQUIRE(res2);
@@ -55,14 +49,14 @@ TEST_CASE("move")
     REQUIRE(res);
 }
 
-TEST_CASE("with")
-{
-    REQUIRE(with(foo(), [](int x) { return x; }, [](int x){ return x; }) == 3);
-    REQUIRE(with(bar(), [](int x) { return x; }, [](int x){ return x; }) == 3);
+TEST_CASE("with") {
+    REQUIRE(with(
+                foo(), [](int x) { return x; }, [](int x) { return x; }) == 3);
+    REQUIRE(with(
+                bar(), [](int x) { return x; }, [](int x) { return x; }) == 3);
 }
 
-class move_only
-{
+class move_only {
 public:
     move_only() = default;
     move_only(const move_only&) = delete;
@@ -73,16 +67,28 @@ public:
     bool moved = false;
 };
 
-expected<move_only, int> test_move_only() { return move_only{}; }
+expected<move_only, int> test_move_only() {
+    return move_only{};
+}
 
-TEST_CASE("move only")
-{
+TEST_CASE("move only") {
     auto res = test_move_only();
     auto res2 = std::move(res);
     REQUIRE(res2);
     REQUIRE(res);
     REQUIRE(!force_get(res2).moved);
     REQUIRE(force_get(res).moved);
-} 
 }
+
+TEST_CASE("expected try works") {
+    auto failing_op = []() -> expected<int, int> { return unexpected(42); };
+    auto wrapping_op = [&]() -> expected<void, int> {
+        auto x = EXPECTED_TRY(failing_op());
+        // Will not reach here!
+        REQUIRE(false);
+        return {};
+    };
+    REQUIRE_EQ(false, bool(wrapping_op()));
 }
+} // namespace
+} // namespace tos

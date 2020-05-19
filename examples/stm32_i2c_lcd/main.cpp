@@ -7,7 +7,6 @@
 #include <tos/ft.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
-#include <tos/version.hpp>
 
 namespace tos {
 void delay_ms(std::chrono::milliseconds ms) {
@@ -28,7 +27,7 @@ void lcd_main() {
     lcd lcd{&t, {0x27}, 20, 4};
 
     auto tmr = open(devs::timer<2>);
-    auto alarm = open(devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     lcd.begin(alarm);
     lcd.backlight();
@@ -44,7 +43,7 @@ void lcd_main() {
         lcd.set_cursor(0, 3);
         tos::print(lcd, x);
 
-        alarm.sleep_for(100ms);
+        tos::this_thread::sleep_for(alarm, 100ms);
     }
 }
 

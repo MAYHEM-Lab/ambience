@@ -37,7 +37,7 @@ auto task = [] {
     auto gpio = tos::open(tos::devs::gpio);
 
     auto tmr = tos::open(tos::devs::timer<0>);
-    auto alarm = tos::open(tos::devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     tos::this_thread::sleep_for(alarm, 100ms);
 

@@ -4,6 +4,7 @@
 #include <common/alarm.hpp>
 #include <tos/barrier.hpp>
 #include <tos/waitable.hpp>
+#include <tos/compiler.hpp>
 
 namespace tos {
 enum class sem_ret
@@ -84,7 +85,7 @@ public:
     }
 
 private:
-    CountT m_count;
+    volatile CountT m_count;
     waitable m_wait;
 
     /**
@@ -192,6 +193,7 @@ sem_ret semaphore_base<CountT>::down(AlarmT& alarm,
 }
 
 template<class CountT>
+ISR_AVAILABLE
 inline void semaphore_base<CountT>::up_isr() noexcept {
     ++m_count;
     m_wait.signal_one();

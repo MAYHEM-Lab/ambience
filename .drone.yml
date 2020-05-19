@@ -1,0 +1,81 @@
+kind: pipeline
+type: kubernetes
+name: Build and test
+   
+steps:
+- name: stm32l4
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir build && cd build
+    - cmake -G Ninja -DTOS_CPU=stm32/l4/75 -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
+- name: stm32f1
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir stm32f1_build && cd stm32f1_build
+    - cmake -G Ninja -DTOS_CPU=stm32/f1/03c8 -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
+- name: clang-size
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir clang-build && cd clang-build
+    - CC=clang CXX=clang++ cmake -G Ninja -DTOS_CPU=x86/hosted -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_TESTS=ON ..
+    - ninja
+    - ctest
+    - ./bin/bench_main
+- name: gcc-size
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir gcc-size-build && cd gcc-size-build
+    - CC=gcc-8 CXX=g++-8 cmake -G Ninja -DTOS_CPU=x86/hosted -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_TESTS=ON ..
+    - ninja
+    - ctest
+    - ./bin/bench_main
+- name: gcc-debug
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir gcc-debug-build && cd gcc-debug-build
+    - CC=gcc-8 CXX=g++-8 cmake -G Ninja -DTOS_CPU=x86/hosted -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON ..
+    - ninja
+    - ctest
+    - ./bin/bench_main
+- name: nrf52840
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir nrf52840_build && cd nrf52840_build
+    - cmake -G Ninja -DTOS_CPU=nrf52/840 -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
+- name: nrf52832
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir nrf52832_build && cd nrf52832_build
+    - cmake -G Ninja -DTOS_CPU=nrf52/832 -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
+- name: avr
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir avr_build && cd avr_build
+    - cmake -G Ninja -DTOS_CPU=atmega/328p -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
+- name: esp8266
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir esp8266_build && cd esp8266_build
+    - cmake -G Ninja -DTOS_CPU=esp/8266 -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja
+- name: cc3220sf
+  image: bakir/tos-drone-builder:latest
+  pull: always
+  commands:
+    - mkdir cc3220sf_build && cd cc3220sf_build
+    - cmake -G Ninja -DTOS_CPU=ti/cc3220sf -DCMAKE_BUILD_TYPE=MinSizeRel ..
+    - ninja

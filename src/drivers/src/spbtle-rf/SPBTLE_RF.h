@@ -95,9 +95,9 @@ public:
     void reset() {
         using namespace std::chrono_literals;
         m_gpio->write(m_reset, tos::digital::low);
-        m_alarm_ptr->sleep_for(5ms);
+        tos::this_thread::sleep_for(m_alarm_ptr, 5ms);
         m_gpio->write(m_reset, tos::digital::high);
-        m_alarm_ptr->sleep_for(5ms);
+        tos::this_thread::sleep_for(m_alarm_ptr, 5ms);
     }
 
     int spi_write(tos::span<const uint8_t> d1,

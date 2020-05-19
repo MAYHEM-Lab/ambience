@@ -1,0 +1,8 @@
+/build/
+/libbearssl.a
+/brssl
+/testcrypto
+/testspeed
+/testx509
+compile_commands.json
+.clangd

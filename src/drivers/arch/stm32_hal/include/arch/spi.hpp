@@ -6,6 +6,7 @@
 
 #include "gpio.hpp"
 
+#include <arch/detail/afio.hpp>
 #include <optional>
 #include <stm32_hal/rcc.hpp>
 #include <stm32_hal/spi.hpp>
@@ -13,10 +14,8 @@
 #include <tos/expected.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/span.hpp>
-#include <arch/detail/afio.hpp>
 
-namespace tos {
-namespace stm32 {
+namespace tos::stm32 {
 namespace detail {
 struct spi_def {
     uint32_t spi;
@@ -67,13 +66,11 @@ private:
 
     SPI_HandleTypeDef m_handle;
 };
-} // namespace stm32
-} // namespace tos
+} // namespace tos::stm32
 
 // Implementation
 
-namespace tos {
-namespace stm32 {
+namespace tos::stm32 {
 inline spi::spi(detail::spi_def& spi,
                 gpio::pin_type sck,
                 std::optional<gpio::pin_type> miso,
@@ -96,7 +93,8 @@ inline spi::spi(detail::spi_def& spi,
     spi_init.CRCPolynomial = 7;
 
 #if !defined(STM32F1)
-    auto [sck_afio, miso_afio, mosi_afio] = detail::afio::get_spi_afio(spi.spi, sck, miso, mosi);
+    auto [sck_afio, miso_afio, mosi_afio] =
+        detail::afio::get_spi_afio(spi.spi, sck, miso, mosi);
 #endif
     {
         enable_rcc(sck.port);
@@ -199,6 +197,4 @@ inline void spi::isr() {
 inline void spi::tx_done_isr() {
     m_busy_sem.up_isr();
 }
-
-} // namespace stm32
-} // namespace tos
+} // namespace tos::stm32

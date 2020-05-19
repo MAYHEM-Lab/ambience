@@ -5,6 +5,7 @@
 #pragma once
 
 #include <tos/ubench/state.hpp>
+#include <tos/compiler.hpp>
 
 namespace tos::bench {
 template<class ClockT>
@@ -52,6 +53,8 @@ struct benchmark : benchmark_base {
 template <class T>
 benchmark(const char*, T) -> benchmark<T>;
 
+using any_bench = bench<any_clock*>;
+
 template <class T>
 void run_global_benchmarks(T& benchmarker) {
     for (auto& bench : benchmarks) {
@@ -62,4 +65,4 @@ void run_global_benchmarks(T& benchmarker) {
 }
 } // namespace tos::bench
 
-#define BENCHMARK(name) inline ::tos::bench::benchmark name##__{#name, &name}
+#define BENCHMARK(name) USED inline ::tos::bench::benchmark name##__{#name, &name}

@@ -6,6 +6,7 @@
 
 #include <arch/tcp.hpp>
 #include <common/driver_base.hpp>
+#include <common/inet/lwip.hpp>
 #include <tos/event.hpp>
 #include <tos/expected.hpp>
 #include <tos/fixed_fifo.hpp>
@@ -29,14 +30,12 @@ public:
 
     expected<span<uint8_t>, read_error> read(span<uint8_t>);
 
-    void operator()(lwip::events::sent_t, BaseEndpointT&, uint16_t) ICACHE_FLASH_ATTR;
-    void operator()(lwip::events::discon_t,
-                    BaseEndpointT&,
-                    lwip::discon_reason) ICACHE_FLASH_ATTR;
-    void
-    operator()(lwip::events::recv_t, BaseEndpointT&, lwip::buffer&&) ICACHE_FLASH_ATTR;
+    void operator()(lwip::events::sent_t, BaseEndpointT&, uint16_t);
+    void operator()(lwip::events::discon_t, BaseEndpointT&, lwip::discon_reason);
+    void operator()(lwip::events::recv_t, BaseEndpointT&, lwip::buffer&&);
 
-    bool ALWAYS_INLINE disconnected() const {
+    ALWAYS_INLINE
+    bool disconnected() const {
         return m_discon;
     }
 
@@ -75,6 +74,7 @@ inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::sent_t,
 #ifdef ESP_TCP_VERBOSE
     tos_debug_print("sent: %d\n", int(len));
 #endif
+    LOG_TRACE("Sent:", len);
     m_sent_bytes += len;
     m_write_sync.up();
 }
@@ -86,26 +86,26 @@ inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t,
     m_discon = true;
     m_write_sync.up();
     m_buffer.eof();
-#ifdef ESP_TCP_VERBOSE
+#ifdef TOS_TCP_VERBOSE
     tos_debug_print("closed: %d\n", int(r));
 #endif
 }
 
 template<class BaseEndpointT>
 int tcp_stream<BaseEndpointT>::write(tos::span<const uint8_t> buf) {
-    tos::lock_guard<tos::mutex> lk{m_busy};
+    tos::lock_guard lk{m_busy};
     if (m_discon) {
         return 0;
     }
     m_sent_bytes = 0;
     auto to_send = m_ep.send(buf);
-#ifdef ESP_TCP_VERBOSE
+#ifdef TOS_TCP_VERBOSE
     tos_debug_print("sending: %d\n", int(to_send));
 #endif
     while (m_sent_bytes != to_send && !m_discon) {
         m_write_sync.down();
     }
-#ifdef ESP_TCP_VERBOSE
+#ifdef TOS_TCP_VERBOSE
     tos_debug_print("sentt: %d\n", int(m_sent_bytes));
 #endif
     return m_sent_bytes;
@@ -115,7 +115,7 @@ template<class BaseEndpointT>
 inline void tcp_stream<BaseEndpointT>::operator()(lwip::events::recv_t,
                                                   BaseEndpointT&,
                                                   lwip::buffer&& buf) {
-#ifdef ESP_TCP_VERBOSE
+#ifdef TOS_TCP_VERBOSE
     tos_debug_print("recved %d\n", buf.size());
 #endif
     if (m_buffer.has_more()) {

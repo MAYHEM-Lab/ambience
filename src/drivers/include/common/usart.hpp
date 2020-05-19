@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <tos/ct_map.hpp>
 #include <tos/devices.hpp>
+#include <tos/mutex.hpp>
 #include <tos/span.hpp>
 
 namespace tos {
@@ -171,14 +172,41 @@ auto erase_usart(UsartT&& usart) -> detail::erased_usart<UsartT> {
     return {std::forward<UsartT>(usart)};
 }
 
+template<class T>
+class thread_safe_usart : public self_pointing<thread_safe_usart<T>> {
+public:
+    template <class U, std::enable_if_t<!std::is_same_v<U, thread_safe_usart>>* = nullptr>
+    explicit thread_safe_usart(U&& t)
+        : m_impl(std::forward<U>(t)) {
+    }
+
+    auto write(span<const uint8_t> span) {
+        lock_guard lk{m_mutex};
+        return m_impl->write(span);
+    }
+
+    auto read(span<uint8_t> span) {
+        lock_guard lk{m_mutex};
+        return m_impl->read(span);
+    }
+
+public:
+    mutex m_mutex;
+    T m_impl;
+};
+
+template <class T>
+thread_safe_usart(T&&) -> thread_safe_usart<T>;
+
 template<class T, size_t BufferSize = 512>
 class buffered_usart : public self_pointing<buffered_usart<T, BufferSize>> {
 public:
-    explicit buffered_usart(T t)
-        : m_impl(std::move(t)) {
+    template <class U, std::enable_if_t<!std::is_same_v<U, buffered_usart>>* = nullptr>
+    explicit buffered_usart(U&& t)
+        : m_impl(std::forward<U>(t)) {
     }
 
-    int write(tos::span<const uint8_t> span) {
+    auto write(tos::span<const uint8_t> span) {
         if (m_disabled || (span.size() + m_buf_cur > m_buffer.size())) {
             flush();
             m_impl->write(span);
@@ -189,7 +217,7 @@ public:
         return span.size();
     }
 
-    span<uint8_t> read(tos::span<uint8_t> span) {
+    auto read(tos::span<uint8_t> span) {
         return m_impl->read(span);
     }
 
@@ -220,4 +248,7 @@ private:
     std::array<uint8_t, BufferSize> m_buffer;
     uint16_t m_buf_cur = 0;
 };
+
+template <class T>
+buffered_usart(T&&) -> buffered_usart<T>;
 } // namespace tos

@@ -56,8 +56,8 @@ private:
         return ret;
     }
 
-    typename SpiT::gpio_type* m_gpio;
     SpiT* m_spi;
+    typename SpiT::gpio_type* m_gpio;
     pin_t m_cs;
 };
 

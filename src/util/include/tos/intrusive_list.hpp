@@ -3,30 +3,86 @@
 #include <iterator>
 #include <stddef.h>
 #include <stdint.h>
+#include <tos/meta/offsetof.hpp>
 #include <tos/utility.hpp>
 #include <utility>
 
 namespace tos {
-template<class T>
+template<class T, class Access>
 class intrusive_list;
-template<class T>
+
+template<class T, class Access>
 class intrusive_list_iterator;
 
 template<class T>
 class list_node : public non_copy_movable {
-    friend class intrusive_list<T>;
-    friend class intrusive_list_iterator<T>;
-
 public:
-    T* prev;
-    T* next;
+    list_node<T>* prev;
+    list_node<T>* next;
 };
 
-template<class T>
+struct through_base {
+    template<class T, class U>
+    static list_node<T>& access(U& u) {
+        static_assert(std::is_base_of_v<list_node<T>, U>);
+        return static_cast<list_node<T>&>(u);
+    }
+
+    template<class T, class U>
+    static const list_node<T>& access(const U& u) {
+        static_assert(std::is_base_of_v<list_node<T>, U>);
+        return static_cast<const list_node<T>&>(u);
+    }
+
+    template<class T, class U>
+    static T& reverse(list_node<U>& elem) {
+        static_assert(std::is_base_of_v<list_node<U>, T>);
+        return static_cast<T&>(elem);
+    }
+
+    template<class T, class U>
+    static const T& reverse(const list_node<U>& elem) {
+        static_assert(std::is_base_of_v<list_node<U>, T>);
+        return static_cast<const T&>(elem);
+    }
+};
+
+template<auto Member>
+struct through_member {
+    template<class T, class U>
+    static list_node<T>& access(U& u) {
+        return u.*Member;
+    }
+
+    template<class T, class U>
+    static const list_node<T>& access(const U& u) {
+        return u.*Member;
+    }
+
+    template<class T, class U>
+    static T& reverse(list_node<U>& elem) {
+        auto off = meta::offset_of<Member>();
+        return *reinterpret_cast<T*>(reinterpret_cast<char*>(&elem) - off);
+    }
+
+    template<class T, class U>
+    static const T& reverse(const list_node<U>& elem) {
+        auto off = meta::offset_of<Member>();
+        return *reinterpret_cast<const T*>(reinterpret_cast<const char*>(&elem) - off);
+    }
+
+private:
+};
+
+template<class T, class Access>
 class intrusive_list_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
 public:
-    T& operator*();
-    T* operator->();
+    T& operator*() {
+        return Access::template reverse<T>(*m_curr);
+    }
+    T* operator->() {
+        return &Access::template reverse<T>(*m_curr);
+    }
     const intrusive_list_iterator operator++(int);
     intrusive_list_iterator& operator++();
     const intrusive_list_iterator operator--(int);
@@ -39,48 +95,12 @@ public:
     }
 
 private:
-    friend class intrusive_list<T>;
-    explicit intrusive_list_iterator(T* p)
+    friend class intrusive_list<T, Access>;
+    explicit intrusive_list_iterator(list_node<T>* p)
         : m_curr(p) {
     }
-    T* m_curr;
+    list_node<T>* m_curr;
 };
-
-template<class T>
-T& intrusive_list_iterator<T>::operator*() {
-    return *m_curr;
-}
-
-template<class T>
-T* intrusive_list_iterator<T>::operator->() {
-    return m_curr;
-}
-
-template<class T>
-const intrusive_list_iterator<T> intrusive_list_iterator<T>::operator++(int) {
-    auto ret = *this;
-    ++(*this);
-    return ret;
-}
-
-template<class T>
-intrusive_list_iterator<T>& intrusive_list_iterator<T>::operator++() {
-    m_curr = m_curr->next;
-    return *this;
-}
-
-template<class T>
-const intrusive_list_iterator<T> intrusive_list_iterator<T>::operator--(int) {
-    auto ret = *this;
-    --(*this);
-    return ret;
-}
-
-template<class T>
-intrusive_list_iterator<T>& intrusive_list_iterator<T>::operator--() {
-    m_curr = m_curr->prev;
-    return *this;
-}
 
 /**
  * This class represents a non-owning doubly linked list
@@ -91,10 +111,10 @@ intrusive_list_iterator<T>& intrusive_list_iterator<T>::operator--() {
  *
  * @tparam T type of the objects to be stored in the list
  */
-template<class T>
+template<class T, class Access = through_base>
 class intrusive_list {
-    T* m_head;
-    T* m_tail;
+    list_node<T>* m_head;
+    list_node<T>* m_tail;
 
 public:
     /**
@@ -121,7 +141,7 @@ public:
 
     intrusive_list& operator=(const intrusive_list&) = delete;
 
-    using iterator_t = intrusive_list_iterator<T>;
+    using iterator_t = intrusive_list_iterator<T, Access>;
 
     /**
      * Returns the number of elements in the list
@@ -269,25 +289,29 @@ public:
      * @return the end iterator
      */
     iterator_t end() const;
+
+    iterator_t unsafe_find(T& t) const {
+        return iterator_t{&Access::template access<T>(t)};
+    }
 };
+} // namespace tos
 
-template<class T>
-bool intrusive_list_iterator<T>::operator!=(const intrusive_list_iterator& rhs) {
-    return m_curr != rhs.m_curr;
-}
+// Implementations
 
-template<class T>
-auto intrusive_list<T>::begin() const -> iterator_t {
+namespace tos {
+template<class T, class Access>
+auto intrusive_list<T, Access>::begin() const -> iterator_t {
     return iterator_t{m_head};
 }
 
-template<class T>
-auto intrusive_list<T>::end() const -> iterator_t {
+template<class T, class Access>
+auto intrusive_list<T, Access>::end() const -> iterator_t {
     return iterator_t{nullptr};
 }
 
-template<class T>
-auto intrusive_list<T>::push_back(T& t) -> iterator_t {
+template<class T, class Access>
+auto intrusive_list<T, Access>::push_back(T& elem) -> iterator_t {
+    auto& t = Access::template access<T>(elem);
     if (empty()) {
         m_head = &t;
         t.prev = nullptr;
@@ -300,8 +324,9 @@ auto intrusive_list<T>::push_back(T& t) -> iterator_t {
     return iterator_t{&t};
 }
 
-template<class T>
-auto intrusive_list<T>::push_front(T& t) -> iterator_t {
+template<class T, class Access>
+auto intrusive_list<T, Access>::push_front(T& elem) -> iterator_t {
+    auto& t = Access::template access<T>(elem);
     if (empty()) {
         m_tail = &t;
         t.next = nullptr;
@@ -314,13 +339,15 @@ auto intrusive_list<T>::push_front(T& t) -> iterator_t {
     return iterator_t{&t};
 }
 
-template<class T>
-auto intrusive_list<T>::insert(intrusive_list::iterator_t at, T& t) -> iterator_t {
+template<class T, class Access>
+auto intrusive_list<T, Access>::insert(intrusive_list::iterator_t at, T& elem)
+    -> iterator_t {
+    auto& t = Access::template access<T>(elem);
     if (at == begin()) {
-        push_front(t);
+        push_front(elem);
         return iterator_t{&t};
     } else if (at == end()) {
-        return push_back(t);
+        return push_back(elem);
     }
 
     t.prev = at->prev;
@@ -334,34 +361,34 @@ auto intrusive_list<T>::insert(intrusive_list::iterator_t at, T& t) -> iterator_
     return iterator_t{&t};
 }
 
-template<class T>
-T& intrusive_list<T>::front() {
-    return *m_head;
+template<class T, class Access>
+T& intrusive_list<T, Access>::front() {
+    return Access::template reverse<T>(*m_head);
 }
 
-template<class T>
-T& intrusive_list<T>::back() {
-    return *m_tail;
+template<class T, class Access>
+T& intrusive_list<T, Access>::back() {
+    return Access::template reverse<T>(*m_tail);
 }
 
-template<class T>
-const T& intrusive_list<T>::front() const {
-    return *m_head;
+template<class T, class Access>
+const T& intrusive_list<T, Access>::front() const {
+    return Access::template reverse<T>(*m_head);
 }
 
-template<class T>
-const T& intrusive_list<T>::back() const {
-    return *m_tail;
+template<class T, class Access>
+const T& intrusive_list<T, Access>::back() const {
+    return Access::template reverse<T>(*m_tail);
 }
 
-template<class T>
-void intrusive_list<T>::clear() {
+template<class T, class Access>
+void intrusive_list<T, Access>::clear() {
     m_head = nullptr;
     m_tail = nullptr;
 }
 
-template<class T>
-void intrusive_list<T>::pop_back() {
+template<class T, class Access>
+void intrusive_list<T, Access>::pop_back() {
     if (m_head == m_tail) {
         clear();
         return;
@@ -371,8 +398,8 @@ void intrusive_list<T>::pop_back() {
     m_tail->next = nullptr;
 }
 
-template<class T>
-void intrusive_list<T>::pop_front() {
+template<class T, class Access>
+void intrusive_list<T, Access>::pop_front() {
     if (m_head == m_tail) {
         clear();
         return;
@@ -382,8 +409,8 @@ void intrusive_list<T>::pop_front() {
     m_head->prev = nullptr;
 }
 
-template<class T>
-auto intrusive_list<T>::erase(iterator_t it) -> iterator_t {
+template<class T, class Access>
+auto intrusive_list<T, Access>::erase(iterator_t it) -> iterator_t {
     auto ptr = it.m_curr;
 
     if (m_head == m_tail) {
@@ -402,5 +429,38 @@ auto intrusive_list<T>::erase(iterator_t it) -> iterator_t {
     }
 
     return iterator_t{ptr->next};
+}
+
+template<class T, class Access>
+const intrusive_list_iterator<T, Access>
+intrusive_list_iterator<T, Access>::operator++(int) {
+    auto ret = *this;
+    ++(*this);
+    return ret;
+}
+
+template<class T, class Access>
+intrusive_list_iterator<T, Access>& intrusive_list_iterator<T, Access>::operator++() {
+    m_curr = m_curr->next;
+    return *this;
+}
+
+template<class T, class Access>
+const intrusive_list_iterator<T, Access>
+intrusive_list_iterator<T, Access>::operator--(int) {
+    auto ret = *this;
+    --(*this);
+    return ret;
+}
+
+template<class T, class Access>
+intrusive_list_iterator<T, Access>& intrusive_list_iterator<T, Access>::operator--() {
+    m_curr = m_curr->prev;
+    return *this;
+}
+
+template<class T, class Access>
+bool intrusive_list_iterator<T, Access>::operator!=(const intrusive_list_iterator& rhs) {
+    return m_curr != rhs.m_curr;
 }
 } // namespace tos

@@ -45,13 +45,13 @@ void main_task() {
         g.set_pin_mode(10_pin, tos::pin_mode::in_pullup);
 
         auto tmr = open(tos::devs::timer<1>);
-        auto alarm = open(tos::devs::alarm, *tmr);
+        tos::alarm alarm(&*tmr);
 
         auto d =
             tos::make_dht(g, [](std::chrono::microseconds us) { _delay_us(us.count()); });
 
         using namespace std::chrono_literals;
-        alarm.sleep_for(2s);
+        tos::this_thread::sleep_for(alarm, 2s);
 
         tos::print(usart, "hi");
 
@@ -65,7 +65,7 @@ void main_task() {
             int retries = 0;
             while (res != tos::dht_res::ok) {
                 // tos::println(usart, int8_t(res));
-                alarm.sleep_for(2s);
+                tos::this_thread::sleep_for(alarm, 2s);
                 if (retries == 5) {
                     break;
                     // err

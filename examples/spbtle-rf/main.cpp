@@ -102,18 +102,18 @@ void ble_task() {
     auto g = tos::open(tos::devs::gpio);
 
     auto timer = open(tos::devs::timer<2>);
-    auto alarm = open(tos::devs::alarm, timer);
+    tos::alarm alarm(&timer);
     auto erased_alarm = tos::erase_alarm(&alarm);
 
-    auto usart = tos::open(tos::devs::usart<0>, tos::uart::default_115200);
+    auto usart = tos::open(tos::devs::usart<1>, tos::uart::default_115200, 23_pin, 22_pin);
     tos::println(usart, "hello");
     using namespace std::chrono_literals;
     tos::println(usart, "yoo");
 
     tos::stm32::exti e;
 
-    tos::stm32::spi s(tos::stm32::detail::spis[2]);
-    s.set_8_bit_mode();
+    tos::stm32::spi s(tos::stm32::detail::spis[2], 42_pin, 43_pin, 44_pin);
+    //s.set_8_bit_mode();
 
     spbtle_rf bl(&s, &e, *erased_alarm, cs_pin, exti_pin, reset);
 

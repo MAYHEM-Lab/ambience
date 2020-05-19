@@ -20,11 +20,11 @@ void main_task() {
     ina219<decltype(&i2c)> ina{twi_addr_t{0x41}, &i2c};
 
     auto tmr = open(devs::timer<1>);
-    auto alarm = open(devs::alarm, tmr);
+    tos::alarm alarm(&tmr);
 
     while (true) {
         using namespace std::chrono_literals;
-        alarm.sleep_for(500ms);
+        tos::this_thread::sleep_for(alarm, 500ms);
         int curr = ina.getCurrent_mA();
         int v = ina.getBusVoltage_V();
 

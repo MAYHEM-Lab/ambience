@@ -1,0 +1,1 @@
+add_library(arch_x86 INTERFACE)

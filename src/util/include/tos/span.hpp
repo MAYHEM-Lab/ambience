@@ -244,7 +244,7 @@ public:
      * @param len length of the slice
      * @return a new span
      */
-    constexpr span slice(size_t begin, size_t len) {
+    constexpr span slice(size_t begin, size_t len) const {
         return {m_base + begin, len};
     }
 
@@ -254,8 +254,18 @@ public:
      * @param begin beginning index of the slice
      * @return a new span
      */
-    constexpr span slice(size_t begin) {
+    constexpr span slice(size_t begin) const {
         return slice(begin, size() - begin);
+    }
+
+    [[nodiscard]]
+    constexpr span pop_back() const {
+        return slice(0, size() - 1);
+    }
+
+    [[nodiscard]]
+    constexpr span pop_front() const {
+        return slice(1);
     }
 
 private:

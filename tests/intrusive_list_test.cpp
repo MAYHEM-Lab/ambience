@@ -3,22 +3,29 @@
 //
 
 #include "doctest.h"
+
 #include <tos/intrusive_list.hpp>
 
-class foo : public tos::list_node<foo>
-{
+namespace tos {
+namespace {
+class foo : public tos::list_node<foo> {
 public:
     int x;
-    foo(int x) : x{x} {}
+    foo(int x)
+        : x{x} {
+    }
 };
 
-TEST_CASE("push_back")
-{
-    using namespace tos;
+struct bar {
+    int x;
+    list_node<bar> list;
+};
+
+TEST_CASE("push_back") {
     intrusive_list<foo> foos;
     REQUIRE(foos.size() == 0);
 
-    foo a { 3 };
+    foo a{3};
 
     foos.push_back(a);
 
@@ -30,13 +37,11 @@ TEST_CASE("push_back")
     REQUIRE(foos.size() == 0);
 }
 
-TEST_CASE("insert")
-{
-    using namespace tos;
+TEST_CASE("insert") {
     intrusive_list<foo> foos;
     REQUIRE(foos.size() == 0);
 
-    foo a { 3 };
+    foo a{3};
 
     foos.insert(foos.begin(), a);
 
@@ -44,7 +49,7 @@ TEST_CASE("insert")
     REQUIRE(&foos.front() == &a);
     REQUIRE(&foos.back() == &a);
 
-    foo b { 4 };
+    foo b{4};
 
     foos.insert(foos.begin(), b);
 
@@ -53,13 +58,11 @@ TEST_CASE("insert")
     REQUIRE(&foos.back() == &a);
 }
 
-TEST_CASE("insert at end")
-{
-    using namespace tos;
+TEST_CASE("insert at end") {
     intrusive_list<foo> foos;
     REQUIRE(foos.size() == 0);
 
-    foo a { 3 };
+    foo a{3};
 
     foos.insert(foos.end(), a);
 
@@ -68,14 +71,12 @@ TEST_CASE("insert at end")
     REQUIRE(&foos.back() == &a);
 }
 
-TEST_CASE("insert in middle")
-{
-    using namespace tos;
+TEST_CASE("insert in middle") {
     intrusive_list<foo> foos;
 
-    foo a { 3 };
-    foo b { 4 };
-    foo c { 5 };
+    foo a{3};
+    foo b{4};
+    foo c{5};
 
     foos.push_back(a);
     foos.push_back(c);
@@ -87,14 +88,12 @@ TEST_CASE("insert in middle")
     REQUIRE(&*(++foos.begin()) == &b);
 }
 
-TEST_CASE("pop back")
-{
-    using namespace tos;
+TEST_CASE("pop back") {
     intrusive_list<foo> foos;
 
-    foo a { 3 };
-    foo b { 4 };
-    foo c { 5 };
+    foo a{3};
+    foo b{4};
+    foo c{5};
 
     foos.push_back(a);
     foos.push_back(b);
@@ -109,10 +108,7 @@ TEST_CASE("pop back")
     REQUIRE(foos.empty());
 }
 
-TEST_CASE("erase")
-{
-    using namespace tos;
-
+TEST_CASE("erase") {
     intrusive_list<foo> foos;
 
     foo a{3};
@@ -121,3 +117,12 @@ TEST_CASE("erase")
 
     REQUIRE(foos.empty());
 }
+
+TEST_CASE("Member lists work") {
+    intrusive_list<bar, through_member<&bar::list>> list;
+    bar b{3};
+    list.push_back(b);
+    REQUIRE_EQ(&b, &list.front());
+}
+} // namespace
+} // namespace tos

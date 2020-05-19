@@ -10,7 +10,6 @@
 #include <tos/utility.hpp>
 
 #include <arch/drivers.hpp>
-#include <tos/version.hpp>
 #include <tos/fixed_fifo.hpp>
 
 #include <lwip/init.h>
@@ -38,12 +37,12 @@ auto udp_task = []{
     auto [w, wconn] = wifi_connect();
 
     tos::udp_endpoint_t ep{
-        .addr = tos::parse_ipv4_address("169.231.9.60"),
-        .port = { 9993 }
+        tos::parse_ipv4_address("169.231.9.60"),
+        { 9993 }
     };
 
     auto timer = tos::open(tos::devs::timer<0>);
-    auto alarm = tos::open(tos::devs::alarm, timer);
+    tos::alarm alarm(&timer);
 
     int i = 0;
     for (;;)
@@ -60,7 +59,7 @@ auto udp_task = []{
         }
 
         using namespace std::chrono_literals;
-        alarm.sleep_for(10ms);
+        tos::this_thread::sleep_for(alarm, 10ms);
     }
 };
 

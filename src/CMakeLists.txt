@@ -1,8 +1,10 @@
 project(tos)
 
 add_subdirectory(arch)
-message(STATUS "TOS_ARCH_${TOS_ARCH_NAME}")
-set(TOS_ARCH_NAME ${TOS_ARCH_NAME} PARENT_SCOPE)
+
+add_subdirectory(platform)
+message(STATUS "TOS_PLATFORM_${TOS_PLATFORM_NAME}")
+set(TOS_PLATFORM_NAME ${TOS_PLATFORM_NAME} PARENT_SCOPE)
 
 add_subdirectory(core)
 add_subdirectory(util)

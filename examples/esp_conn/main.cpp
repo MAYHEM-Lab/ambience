@@ -12,7 +12,7 @@
 #include <tos/print.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/utility.hpp>
-#include <tos/version.hpp>
+#include <tos/build.hpp>
 
 uint8_t buf[512];
 void task() {
@@ -23,23 +23,22 @@ void task() {
 
     tos::println(usart, "\n\n\n\n");
     tos::println(usart, tos::platform::board_name);
-    tos::println(usart, tos::vcs::commit_hash);
+    tos::println(usart, tos::build::commit_hash());
 
     int rd_loop = 0;
     int success = 0;
     int fail = 0;
     int state = 0;
     int i = 0;
-    tos::semaphore s{0};
     auto log_ip_task = [&] {
         auto timer = tos::open(tos::devs::timer<0>);
-        auto alarm = tos::open(tos::devs::alarm, timer);
+        tos::alarm alarm(&timer);
 
         tos::println(usart, "Logger thread running");
-        tos::println(usart, "Logger thread:", tos::impl::cur_thread->get_ctx().buf[0]);
+        tos::println(usart, "Logger thread:", tos::self()->get_processor_state().buf[0]);
 
         while (true) {
-            alarm.sleep_for(1s);
+            tos::this_thread::sleep_for(alarm, 1s);
 
             tos::println(usart, "Main thread:", state, i, success, rd_loop, fail);
         }
@@ -52,7 +51,6 @@ conn_:
     auto res = w.connect("mayhem", "z00mz00m");
     state = 1;
 
-    // tos::println(usart, "connected?", bool(res));
     if (!res)
         goto conn_;
 
@@ -60,13 +58,11 @@ conn_:
 
     wconn.wait_for_dhcp();
 
-    auto addr = force_get(wconn.get_addr());
     state = 2;
 
-    lwip_init();
-
     for (; true; ++i) {
-        auto try_conn = tos::esp82::connect(wconn, tos::parse_ipv4_address("93.184.216.34"), {80});
+        auto try_conn =
+            tos::esp82::connect(wconn, tos::parse_ipv4_address("93.184.216.34"), {80});
         state = 3;
 
         if (!try_conn) {
@@ -102,9 +98,6 @@ conn_:
 
         state = 7;
         ++success;
-
-        // alarm.sleep_for(1s);
-        // tos::println(usart, "done", i, int(system_get_free_heap_size()));
     }
 }
 

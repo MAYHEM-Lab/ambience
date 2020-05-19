@@ -10,6 +10,8 @@
 #include <arch/wlan.hpp>
 #include <common/inet/tcp_ip.hpp>
 #include <common/usart.hpp>
+#include <tos/debug/dynamic_log.hpp>
+#include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/streams.hpp>
@@ -31,10 +33,10 @@ void udp_socket() {
     }
 }
 
-std::unique_ptr<tos::cc32xx::tcp_socket> get_connection() {
-    tos::cc32xx::tcp_listener listener({8080});
-    listener.listen();
-    auto sock = listener.accept();
+tos::intrusive_ptr<tos::cc32xx::tcp_socket> get_connection() {
+    auto listener = tos::make_intrusive<tos::cc32xx::tcp_listener>(tos::port_num_t{8080});
+    listener->listen();
+    auto sock = listener->accept();
     tos::println(uart, "accept returned", bool(sock));
     if (!sock) {
         tos::println(uart, "accept error!");
@@ -68,34 +70,51 @@ public:
 
 void task() {
     using namespace tos::tos_literals;
-    auto pin = 4_pin;
+    auto pin = 5_pin;
     tos::cc32xx::gpio g;
 
-    g.set_pin_mode(5_pin, tos::pin_mode::out);
     g.set_pin_mode(6_pin, tos::pin_mode::out);
     g.set_pin_mode(pin, tos::pin_mode::out);
     g.write(pin, tos::digital::high);
+
+    auto prog_btn = 0_pin;
+    g.set_pin_mode(prog_btn, tos::pin_mode::in_pulldown);
+
+    if (g.read(prog_btn)) {
+        while (true) {
+            g.write(pin, tos::digital::high);
+            for (int i = 0; i < 1'000'000; ++i) asm volatile("nop");
+            g.write(pin, tos::digital::low);
+            for (int i = 0; i < 1'000'000; ++i) asm volatile("nop");
+        }
+    }
 
     tos::cc32xx::uart uart(0);
     auto erased = tos::erase_usart(&uart);
     ::uart = &erased;
     ::log = &erased;
 
+    tos::debug::serial_sink sink{&uart};
+    tos::debug::detail::any_logger log_{&sink};
+    log_.set_log_level(tos::debug::log_level::all);
+    tos::debug::set_default_log(&log_);
+
     tos::println(uart);
 
-    tos::cc32xx::simplelink_wifi wifi(erased);
+    tos::cc32xx::simplelink_wifi wifi;
     wifi.set_event_handler(*new ev_handler);
+    wifi.connect("SSID", "PASS");
 
     tos::cc32xx::timer tim(0);
-    tos::alarm alarm(tim);
+    tos::alarm alarm(&tim);
 
     while (true) {
         using namespace std::chrono_literals;
         g.write(pin, tos::digital::high);
-        // tos::println(uart, "high");
+        tos::println(uart, "high");
         tos::this_thread::sleep_for(alarm, 1000ms);
         g.write(pin, tos::digital::low);
-        // tos::println(uart, "low");
+        tos::println(uart, "low");
         tos::this_thread::sleep_for(alarm, 1000ms);
     }
 }
@@ -120,6 +139,6 @@ void flash_task() {
 }
 
 void tos_main() {
-    tos::launch(tos::alloc_stack, flash_task);
-    // tos::launch(tos::alloc_stack, task);
+    //tos::launch(tos::alloc_stack, flash_task);
+     tos::launch(tos::alloc_stack, task);
 }

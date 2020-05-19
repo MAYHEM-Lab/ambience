@@ -5,6 +5,7 @@
 #include <common/gpio.hpp>
 #include <etl/flat_map.h>
 #include <stm32_hal/ll_exti.hpp>
+#include <tos/debug/panic.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/interrupt.hpp>
 

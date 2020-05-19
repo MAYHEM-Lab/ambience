@@ -106,12 +106,12 @@ private:
     void flush_rx();
     void flush_tx();
 
+    mutable SpiT m_spi;
+    mutable GpioT m_g;
+
     pin_t m_cs_pin;
     pin_t m_ce_pin;
     pin_t m_int_pin;
-
-    mutable GpioT m_g;
-    mutable SpiT m_spi;
 };
 
 namespace regs {

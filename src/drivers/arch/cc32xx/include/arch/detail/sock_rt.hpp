@@ -11,7 +11,6 @@
 #include <tos/mutex.hpp>
 #include <tos/semaphore.hpp>
 
-extern tos::any_usart* log;
 struct SlFdSet_t;
 
 namespace tos::cc32xx {
@@ -37,8 +36,9 @@ public:
 private:
     struct select_sets;
     void handle_select(const SlFdSet_t& rx, const SlFdSet_t& write);
-    [[nodiscard]] select_sets make_select_set() const;
+    [[nodiscard]] select_sets make_select_set();
 
+    recursive_mutex m_protect;
     bool m_request_interruption = false;
     semaphore m_select_sem{0};
 

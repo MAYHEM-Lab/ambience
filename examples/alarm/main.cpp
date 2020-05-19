@@ -15,13 +15,13 @@ void tick_task() {
     auto usart = open(tos::devs::usart<0>, tos::uart::default_9600);
 
     auto tmr = open(tos::devs::timer<1>);
-    auto alarm = open(tos::devs::alarm, *tmr);
+    tos::alarm alarm(&*tmr);
 
     tos::println(*usart, "Hello!");
     while (true) {
         tos::println(*usart, "yo");
         using namespace std::chrono_literals;
-        alarm.sleep_for(1s);
+        tos::this_thread::sleep_for(alarm, 1s);
     }
 }
 

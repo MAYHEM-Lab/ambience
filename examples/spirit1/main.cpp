@@ -400,7 +400,7 @@ void radio_task(bool is_tx) {
     g->set_pin_mode(exti_pin, pin_mode::in_pullup);
 
     auto timer = open(tos::devs::timer<2>);
-    auto alarm = open(tos::devs::alarm, timer);
+    tos::alarm alarm(&timer);
 
     auto usart = tos::open(
         tos::devs::usart<1>, tos::uart::default_9600, usart_rx_pin, usart_tx_pin);
@@ -410,10 +410,10 @@ void radio_task(bool is_tx) {
 
     using namespace std::chrono_literals;
     g->write(sdn_pin, tos::digital::high); // wake up
-    alarm.sleep_for(5ms);
+    tos::this_thread::sleep_for(alarm, 5ms);
 
     g->write(sdn_pin, tos::digital::low); // wake up
-    alarm.sleep_for(10ms);
+    tos::this_thread::sleep_for(alarm, 10ms);
 
     radio_spi = &s;
     gp = &g;
@@ -456,7 +456,7 @@ void radio_task(bool is_tx) {
 
     SpiritIrqClearStatus();
     SpiritIrqDeInit(nullptr);
-    alarm->sleep_for(1s);
+    tos::this_thread::sleep_for(alarm, 1s);
 
     auto ext_handler = [] { interrupt.up_isr(); };
     external_interrupts.attach(
@@ -476,7 +476,7 @@ void radio_task(bool is_tx) {
             auto xIrqStatus = tx();
 
             tos::println(usart, "tx:", bool(xIrqStatus.IRQ_TX_DATA_SENT));
-            alarm->sleep_for(1000ms);
+            tos::this_thread::sleep_for(alarm, 1000ms);
             tos::println(usart, "woke");
         } else {
             auto xIrqStatus = rx();
