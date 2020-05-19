@@ -1,6 +1,8 @@
 set(LWIP_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src/src/include)
 add_subdirectory(src)
 
+target_compile_definitions(lwipcore PUBLIC __ssize_t_defined)
+
 add_library(lwip_support "" include/tos/lwip/udp.hpp include/tos/lwip/utility.hpp include/tos/lwip/common.hpp include/tos/lwip/tcp.hpp)
 target_sources(lwip_support PRIVATE
     support.cpp

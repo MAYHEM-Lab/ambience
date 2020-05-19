@@ -485,6 +485,8 @@ extern unsigned char debug_flags;
 #define LWIP_NETIF_HOSTNAME 1
 #define LWIP_NETIF_LINK_CALLBACK 1
 
+#define __ssize_t_defined
+
 //#define LWIP_PLATFORM_DIAG(x) tos_debug_out(x)
 
 #endif /* LWIP_LWIPOPTS_H */
