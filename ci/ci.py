@@ -142,6 +142,9 @@ def get_pipeline():
     pipeline.append(("CC3220SF", build_config(
         "MinSizeRel", "ti/cc3220sf", False)))
 
+    pipeline.append(("Raspi3", build_config(
+        "MinSizeRel", "raspi/3", False)))
+
     return pipeline
 
 
