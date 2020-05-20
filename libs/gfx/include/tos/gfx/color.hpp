@@ -22,6 +22,12 @@ struct basic_hsv {
     ValueT value;
 };
 
+
+struct monochrome {
+    uint8_t bw;
+};
+
+using mono8 = monochrome;
 using rgb8 = basic_rgb<uint8_t>;
 using hsv8 = basic_hsv<uint16_t, uint8_t, uint8_t>;
 
