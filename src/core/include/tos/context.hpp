@@ -42,7 +42,10 @@ context& default_context();
 
 class overlay_context : public context {
 public:
-    overlay_context(context& new_ctx, context& old_ctx) : m_new{&new_ctx}, m_old{&old_ctx} {}
+    overlay_context(context& new_ctx, context& old_ctx)
+        : m_new{&new_ctx}
+        , m_old{&old_ctx} {
+    }
 
 protected:
     component* get_component_with_id(component_id_t id) override {
