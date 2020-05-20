@@ -33,8 +33,8 @@ constexpr bool operator==(const dimensions& l, const dimensions& r) {
  * Represents a point in 2D space.
  */
 struct point {
-    uint16_t x;
-    uint16_t y;
+    int16_t x;
+    int16_t y;
 };
 
 constexpr bool operator==(const point& l, const point& r) {
@@ -46,7 +46,7 @@ struct rectangle {
     dimensions size;
 
     constexpr point other_corner() const {
-        return point{uint16_t(corner.x + size.width), uint16_t(corner.y + size.height)};
+        return point{int16_t(corner.x + size.width), int16_t(corner.y + size.height)};
     }
 
     constexpr void set_other_corner(const point& other_corner) {

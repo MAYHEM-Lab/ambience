@@ -102,7 +102,7 @@ private:
 };
 
 expected<std::unique_ptr<tcp_socket>, boost::system::error_code>
-connect(ipv4_addr_t addr, port_num_t port) {
+inline connect(ipv4_addr_t addr, port_num_t port) {
     auto sock = std::make_unique<boost::asio::ip::tcp::socket>(get_io());
     using endpoint_type = boost::asio::ip::tcp::acceptor::endpoint_type;
     boost::asio::ip::address_v4 address(

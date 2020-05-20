@@ -95,7 +95,7 @@ private:
     semaphore m_accept_sem{0};
 };
 
-expected<std::unique_ptr<unix_socket>, boost::system::error_code>
+inline expected<std::unique_ptr<unix_socket>, boost::system::error_code>
 connect(const std::string& path) {
     auto sock = std::make_unique<boost::asio::local::stream_protocol::socket>(get_io());
     using endpoint_type = boost::asio::local::stream_protocol::acceptor::endpoint_type;
