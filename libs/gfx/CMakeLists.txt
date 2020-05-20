@@ -20,3 +20,8 @@ if (BUILD_TESTS)
     target_link_libraries(bitmap_test PRIVATE tos_gfx tests_main)
     add_test(NAME bitmap_test COMMAND bitmap_test)
 endif()
+
+include(TosBench)
+add_library(truetype_bench src/truetype_bench.cpp)
+target_link_libraries(truetype_bench PUBLIC ubench tos_gfx tos_gfx_fonts_opensans_regular)
+add_benchmark(truetype_bench)
