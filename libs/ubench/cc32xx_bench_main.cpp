@@ -81,6 +81,7 @@ void bench_main() {
     tos::this_thread::block_forever();
 }
 
+tos::stack_storage<16 * 1024> bench_stack;
 void tos_main() {
-    tos::launch(tos::alloc_stack, bench_main);
+    tos::launch(bench_stack, bench_main);
 }

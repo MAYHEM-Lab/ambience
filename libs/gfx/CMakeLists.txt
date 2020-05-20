@@ -7,12 +7,21 @@ target_sources(tos_gfx PRIVATE
     src/truetype.cpp 
     src/stb_truetype.cpp)
 
+add_library(tos_gfx_fonts_opensans_regular src/font.cpp)
+target_link_libraries(tos_gfx_fonts_opensans_regular PUBLIC tos_util_core)
+target_include_directories(tos_gfx_fonts_opensans_regular PUBLIC include)
+
 if (BUILD_TESTS)
-    add_executable(truetype_test src/truetype_test.cpp src/font.cpp)
-    target_link_libraries(truetype_test PRIVATE tos_gfx tests_main)
+    add_executable(truetype_test src/truetype_test.cpp)
+    target_link_libraries(truetype_test PRIVATE tos_gfx tests_main tos_gfx_fonts_opensans_regular)
     add_test(NAME truetype_test COMMAND truetype_test)
 
     add_executable(bitmap_test src/bitmap_test.cpp)
     target_link_libraries(bitmap_test PRIVATE tos_gfx tests_main)
     add_test(NAME bitmap_test COMMAND bitmap_test)
 endif()
+
+include(TosBench)
+add_library(truetype_bench src/truetype_bench.cpp)
+target_link_libraries(truetype_bench PUBLIC ubench tos_gfx tos_gfx_fonts_opensans_regular)
+add_benchmark(truetype_bench)
