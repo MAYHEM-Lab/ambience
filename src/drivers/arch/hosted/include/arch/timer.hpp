@@ -64,7 +64,7 @@ private:
 };
 } // namespace hosted
 
-hosted::timer open_impl(devs::timer_t<0>) {
+inline hosted::timer open_impl(devs::timer_t<0>) {
     return {};
 }
 } // namespace tos
