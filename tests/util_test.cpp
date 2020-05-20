@@ -6,6 +6,7 @@
 
 #include <tos/fixed_fifo.hpp>
 #include <tos/ring_buf.hpp>
+#include <tos/utility.hpp>
 
 namespace tos {
 namespace {
@@ -68,6 +69,18 @@ TEST_CASE("fifo test") {
     REQUIRE(ff.pop() == 'f');
     REQUIRE(ff.pop() == 'g');
     REQUIRE(ff.pop() == 'h');
+}
+
+TEST_CASE("forget works") {
+    struct fail_if_destructed {
+        ~fail_if_destructed() {
+            REQUIRE(false);
+        }
+    };
+
+    {
+        auto f = forget<fail_if_destructed>();
+    }
 }
 } // namespace
 } // namespace tos

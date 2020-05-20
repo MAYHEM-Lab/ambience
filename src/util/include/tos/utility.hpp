@@ -4,6 +4,7 @@
 #pragma once
 
 #include <chrono>
+#include <new>
 #include <stddef.h>
 #include <stdint.h>
 #include <type_traits>
@@ -59,4 +60,53 @@ template<class... Ts>
 auto make_overload(Ts&&... ts) {
     return overload<std::remove_reference_t<Ts>...>(std::forward<Ts>(ts)...);
 }
+
+/**
+ * This type holds an object of type T, but prevents it's destructor from
+ * being called upon destruction.
+ *
+ * It is useful for function static variables since they will try to call
+ * std::atexit without being forgotten, which may not be available.
+ *
+ * WARNING: If you move-construct or copy-construct the internal object,
+ * standard C++ rules still apply to the object you construct it with.
+ * This means when used like the following:
+ *
+ *     auto f = forget(std::vector{1,2,3});
+ *
+ * The destructor of the vector in `f` won't be called, but the destructor
+ * of the temporary vector will still be called!
+ *
+ * Inspired from rust's mem::forget, but inferior since we don't have
+ * linear types or destructing moves.
+ */
+template<class T>
+struct forget {
+    forget() {
+        new (get_ptr()) T;
+    }
+
+    template<class... Us>
+    forget(Us&&... args) {
+        new (get_ptr()) T(std::forward<Us>(args)...);
+    }
+
+    T& get() {
+        return *std::launder(get_ptr());
+    }
+
+    operator T&() {
+        return get();
+    }
+
+private:
+    T* get_ptr() {
+        return static_cast<T*>(static_cast<void*>(&storage));
+    }
+
+    std::aligned_storage_t<sizeof(T), alignof(T)> storage;
+};
+
+template<class T>
+forget(T&&) -> forget<T>;
 } // namespace tos
