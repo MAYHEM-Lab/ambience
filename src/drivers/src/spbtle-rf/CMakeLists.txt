@@ -51,5 +51,5 @@ add_library(spbtle-rf
 
         spbtle_rf.inl)
 target_include_directories(spbtle-rf PUBLIC ".")
-target_link_libraries(spbtle-rf PUBLIC tos_core tos_ft tos_alarm arch_drivers range-v3)
+target_link_libraries(spbtle-rf PUBLIC tos_core tos_ft tos_alarm arch_drivers)
 target_compile_features(spbtle-rf PUBLIC cxx_std_17)
