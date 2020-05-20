@@ -12,13 +12,14 @@
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/ft.hpp>
 
+tos::stack_storage tests_stack;
 void tos_main() {
     tos::debug::set_default_log(
         new tos::debug::detail::any_logger(new tos::debug::clock_sink_adapter{
             tos::debug::serial_sink(tos::hosted::stderr_adapter{}),
             tos::hosted::clock<std::chrono::system_clock>{}}));
 
-    tos::launch(tos::alloc_stack, [] {
+    tos::launch(tests_stack, [] {
         doctest::Context context;
         try {
             int res = context.run(); // run
