@@ -3,7 +3,15 @@ target_link_libraries(tos_gfx PUBLIC frozen tos::libcxx tos_util_core tos_debug)
 target_compile_features(tos_gfx PUBLIC cxx_std_17)
 tos_install(tos_gfx ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+target_sources(tos_gfx PRIVATE 
+    src/truetype.cpp 
+    src/stb_truetype.cpp)
+
 if (BUILD_TESTS)
+    add_executable(truetype_test src/truetype_test.cpp src/font.cpp)
+    target_link_libraries(truetype_test PRIVATE tos_gfx tests_main)
+    add_test(NAME truetype_test COMMAND truetype_test)
+
     add_executable(bitmap_test src/bitmap_test.cpp)
     target_link_libraries(bitmap_test PRIVATE tos_gfx tests_main)
     add_test(NAME bitmap_test COMMAND bitmap_test)
