@@ -89,15 +89,23 @@ def build_config(build_type, cpu, run_tests, env={}, base=None):
     def bench():
         args = ["./bin/bench_main"]
         print("Running {}".format(args), flush=True)
-        ctest_proc = subprocess.Popen(args, cwd=directory, env=stage_env)
-        res = ctest_proc.wait()
-        return res == 0
+        ctest_proc = subprocess.Popen(args, cwd=directory, env=stage_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = ctest_proc.communicate()
+        print(out.decode("utf-8"))
+        print(err.decode("utf-8"))
+        with open(os.path.join(directory, "benchmarks.txt"), "w") as sizes:
+            sizes.write(out.decode("utf-8"))
+            sizes.write(err.decode("utf-8"))
+        return ctest_proc.returncode == 0
 
     def collect_sizes():
         args = [os.path.join(source_dir, "ci/collect_sizes.sh")]
         print("Running {}".format(args), flush=True)
-        ctest_proc = subprocess.Popen(args, cwd=directory, env=stage_env)
-        res = ctest_proc.wait()
+        ctest_proc = subprocess.Popen(args, cwd=directory, env=stage_env, stdout=subprocess.PIPE)
+        out, err = ctest_proc.communicate()
+        print(out.decode("utf-8"))
+        with open(os.path.join(directory, "sizes.txt"), "w") as sizes:
+            sizes.write(out.decode("utf-8"))
         return True
 
     tasks = [("Create build directory", createBuildDir),
@@ -172,7 +180,7 @@ def execute_pipeline(pipeline):
             write_log_end(3, "Success" if res else "Failed")
         all_tasks = all_tasks and all_steps
         write_log_end(2, "Success" if all_steps else "Failed")
-    write_log_end(1, "Success" if all_steps else "Failed")
+    write_log_end(1, "Success" if all_tasks else "Failed")
 
 
 execute_pipeline(get_pipeline())
