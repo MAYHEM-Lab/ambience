@@ -1,1 +1,2 @@
-add_library(arch_aarch64 INTERFACE)
+add_library(arch_aarch64 aarch64.cpp)
+target_include_directories(arch_aarch64 PUBLIC include)
