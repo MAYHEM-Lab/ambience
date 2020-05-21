@@ -3,6 +3,7 @@
 #include <tos/memory/malloc.hpp>
 #include <tos/utility.hpp>
 #include <type_traits>
+#include <array>
 
 #if defined(TOS_PLATFORM_raspi)
 #include <tos/memory/free_list.hpp>
