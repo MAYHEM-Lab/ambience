@@ -21,7 +21,7 @@ public:
                                                        int text_height,
                                                        basic_bitmap_view<mono8> to) const;
 
-    font(font&&) = default;
+    font(font&&);
     font& operator=(font&&);
 
     ~font();
