@@ -4,7 +4,7 @@
 
 namespace tos::arm {
 inline void breakpoint() {
-    asm volatile ("bkpt 0");
+    asm volatile("bkpt 0");
 }
 
 inline void isb() {
@@ -24,4 +24,8 @@ inline void dmb() {
     asm volatile("dmb");
     tos::detail::memory_barrier();
 }
+
+void nop() {
+    asm volatile("nop");
 }
+} // namespace tos::arm
