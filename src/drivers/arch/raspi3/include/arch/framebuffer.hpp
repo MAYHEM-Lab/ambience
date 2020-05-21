@@ -38,7 +38,7 @@ public:
     }
 
     void set_pixel(int x, int y, bool val) {
-        set_pixel({static_cast<uint16_t>(x), uint16_t(y)}, val);
+        set_pixel({static_cast<int16_t>(x), int16_t(y)}, val);
     }
 
     int get_pitch() const {
