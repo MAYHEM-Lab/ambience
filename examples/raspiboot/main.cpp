@@ -1,16 +1,23 @@
+#include "tos/thread.hpp"
+
 #include <arch/drivers.hpp>
 #include <common/clock.hpp>
 #include <deque>
 #include <tos/debug/log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/ft.hpp>
-#include <tos/gfx/text.hpp>
+#include <tos/gfx/bitmap_io.hpp>
+#include <tos/gfx/color.hpp>
+#include <tos/gfx/fonts/firacode_regular.hpp>
+#include <tos/gfx/fonts/notosans_regular.hpp>
+#include <tos/gfx/fonts/opensans_regular.hpp>
+#include <tos/gfx/fonts/ubuntu_regular.hpp>
+#include <tos/gfx/truetype.hpp>
 #include <tos/memory/bump.hpp>
 #include <tos/print.hpp>
 
-auto font = tos::gfx::basic_font().mirror_horizontal().resize<16, 16>();
-
-void clear(tos::span<uint8_t> buf) {
+template<class T>
+void clear(tos::span<T> buf) {
     std::memset(buf.data(), 0, buf.size());
 }
 
@@ -26,11 +33,14 @@ namespace tos {
 template<class FramebufferT>
 class terminal : public self_pointing<terminal<FramebufferT>> {
 public:
-    explicit terminal(FramebufferT fb)
+    explicit terminal(FramebufferT fb, gfx::font&& font)
         : m_fb{std::move(fb)}
-        , m_max_rows{m_fb->dims().height / 20}
-        , m_max_col{m_fb->dims().width / 16} {
+        , m_line_height{24}
+        , m_max_rows{m_fb->dims().height / m_line_height}
+        , m_max_col{m_fb->dims().width / 16}
+        , m_font{std::move(font)} {
         m_lines.emplace_back();
+        m_line_buf.resize((m_line_height + 1) * m_fb->dims().width);
     }
 
     int write(span<const uint8_t> buf) {
@@ -62,12 +72,29 @@ public:
     }
 
 private:
-    tos::gfx::point line_pos(int line) {
-        return {0, static_cast<uint16_t>(line * 20)};
-    }
-
     void render_line(std::string_view line, int line_number) {
-        tos::gfx::draw_text_line(m_fb, font, line, line_pos(line_number));
+        auto buf = m_fb->get_buffer();
+        tos::gfx::basic_bitmap_view<tos::gfx::rgb8> fbview(
+            {reinterpret_cast<tos::gfx::rgb8*>(buf.data()), buf.size() / 3},
+            m_fb->get_pitch() / 3,
+            m_fb->dims());
+
+        tos::gfx::basic_bitmap_view<tos::gfx::mono8> view(
+            m_line_buf, fbview.stride(), {fbview.dims().width, m_line_height + 1});
+        clear(view.raw_data());
+        auto res = m_font.render_text(line, m_line_height, view);
+
+        fbview =
+            fbview.slice({0, int16_t(m_line_height * line_number)},
+                         {fbview.dims().width,
+                          fbview.dims().height - int16_t(m_line_height * line_number)});
+
+        for (int i = 0; i < res.dims().height; ++i) {
+            for (int j = 0; j < res.dims().width; ++j) {
+                auto col = res.at(i, j);
+                fbview.at(i, j) = tos::gfx::rgb8{col.bw, col.bw, col.bw};
+            }
+        }
     }
 
     void render() {
@@ -114,6 +141,8 @@ private:
 
     FramebufferT m_fb;
 
+    int32_t m_line_height = 24;
+
     bool m_line_dirty = false;
     bool m_screen_dirty = false;
 
@@ -122,8 +151,11 @@ private:
     int32_t m_cur_col = 0;
     int32_t m_max_col = 80;
 
-    int32_t m_cur_row = 0;
     int32_t m_max_rows = 40;
+    int32_t m_cur_row = 0;
+
+    gfx::font m_font;
+    std::vector<gfx::mono8> m_line_buf;
 };
 } // namespace tos
 
@@ -240,66 +272,67 @@ private:
 } // namespace tos::raspi3
 
 namespace debug = tos::debug;
+void raspi_main() {
+    auto uart = tos::open(tos::devs::usart<0>, tos::uart::default_115200);
+    tos::println(uart, "Hello from tos!");
+    auto serial = tos::raspi3::get_board_serial();
+    tos::println(uart, "Serial no:", serial);
+    tos::debug::serial_sink uart_sink(&uart);
+    tos::debug::detail::any_logger uart_log{&uart_sink};
+    ::log = &uart_log;
+    log->set_enabled(true);
+    log->set_log_level(tos::debug::log_level::debug);
+
+    debug::log("Log init complete");
+
+    uint32_t el;
+    asm volatile("mrs %0, CurrentEL" : "=r"(el));
+    debug::log("Execution Level:", int((el >> 2) & 3));
+
+    tos::raspi3::clock_manager clock_man;
+    debug::log("CPU Freq:", clock_man.get_frequency(tos::raspi3::clocks::arm));
+    debug::log("Max CPU Freq:", clock_man.get_max_frequency(tos::raspi3::clocks::arm));
+    clock_man.set_frequency(tos::raspi3::clocks::arm,
+                            clock_man.get_max_frequency(tos::raspi3::clocks::arm));
+    debug::log("CPU Freq:", clock_man.get_frequency(tos::raspi3::clocks::arm));
+
+    tos::raspi3::framebuffer fb({1280, 720});
+
+    tos::raspi3::interrupt_controller ic;
+    tos::raspi3::system_timer timer(ic);
+    tos::clock clock(&timer);
+
+    auto now = clock.now();
+    clear(fb.get_buffer());
+    auto diff = clock.now() - now;
+    tos::debug::info("Cleared screen in", diff);
+
+    // tos::alarm alarm(timer);
+    tos::terminal term(&fb, tos::gfx::font::make(tos::gfx::fonts::firacode_regular));
+    tos::println(term, "Hello from tos");
+    tos::println(term, "Raspberry pi serial no:", serial);
+    tos::launch(tos::alloc_stack, [&] {
+        while (true) {
+            using namespace std::chrono_literals;
+
+            tos::delay(clock, 1s, true);
+            // tos::this_thread::sleep_for(alarm, 1s);
+            tos::println(term, "Tick", timer.get_counter());
+            tos::println(uart, timer.get_counter());
+        }
+    });
+
+    while (true) {
+        uint8_t c;
+        auto buf = uart->read(tos::monospan(c));
+        uart->write(buf);
+        term->write(buf);
+    }
+
+    tos::this_thread::block_forever();
+}
+
 tos::stack_storage<TOS_DEFAULT_STACK_SIZE> stack;
 void tos_main() {
-    tos::launch(stack, [] {
-        auto uart = tos::open(tos::devs::usart<0>, tos::uart::default_115200);
-        tos::println(uart, "Hello from tos!");
-        auto serial = tos::raspi3::get_board_serial();
-        tos::println(uart, "Serial no:", serial);
-        tos::debug::serial_sink uart_sink(&uart);
-        tos::debug::detail::any_logger uart_log{&uart_sink};
-        ::log = &uart_log;
-        log->set_enabled(true);
-        log->set_log_level(tos::debug::log_level::debug);
-
-        debug::log("Log init complete");
-
-        uint32_t el;
-        asm volatile("mrs %0, CurrentEL" : "=r"(el));
-        debug::log("Execution Level:", int((el >> 2) & 3));
-
-        tos::raspi3::clock_manager clock_man;
-        debug::log("CPU Freq:", clock_man.get_frequency(tos::raspi3::clocks::arm));
-        debug::log("Max CPU Freq:",
-                   clock_man.get_max_frequency(tos::raspi3::clocks::arm));
-        clock_man.set_frequency(tos::raspi3::clocks::arm,
-                                clock_man.get_max_frequency(tos::raspi3::clocks::arm));
-        debug::log("CPU Freq:", clock_man.get_frequency(tos::raspi3::clocks::arm));
-
-        tos::raspi3::framebuffer fb({1920, 1080});
-
-        tos::raspi3::interrupt_controller ic;
-        tos::raspi3::system_timer timer(ic);
-        tos::clock clock(&timer);
-
-        auto now = clock.now();
-        clear(fb.get_buffer());
-        auto diff = clock.now() - now;
-        tos::debug::info("Cleared screen in", diff);
-
-        // tos::alarm alarm(timer);
-        tos::terminal term(&fb);
-        tos::println(term, "Hello from tos");
-        tos::println(term, "Raspberry pi serial no:", serial);
-        tos::launch(tos::alloc_stack, [&] {
-            while (true) {
-                using namespace std::chrono_literals;
-
-                tos::delay(clock, 1s, true);
-                // tos::this_thread::sleep_for(alarm, 1s);
-                tos::println(term, "Tick", timer.get_counter());
-                tos::println(uart, timer.get_counter());
-            }
-        });
-
-        while (true) {
-            uint8_t c;
-            auto buf = uart->read(tos::monospan(c));
-            uart->write(buf);
-            term->write(buf);
-        }
-
-        tos::this_thread::block_forever();
-    });
+    tos::launch(stack, raspi_main);
 }
