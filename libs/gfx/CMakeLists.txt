@@ -7,9 +7,28 @@ target_sources(tos_gfx PRIVATE
     src/truetype.cpp 
     src/stb_truetype.cpp)
 
-add_library(tos_gfx_fonts_opensans_regular src/font.cpp)
+add_library(tos_gfx_fonts_opensans_regular src/fonts/opensans_regular.cpp)
 target_link_libraries(tos_gfx_fonts_opensans_regular PUBLIC tos_util_core)
 target_include_directories(tos_gfx_fonts_opensans_regular PUBLIC include)
+
+add_library(tos_gfx_fonts_ubuntu_regular src/fonts/ubuntu_regular.cpp)
+target_link_libraries(tos_gfx_fonts_ubuntu_regular PUBLIC tos_util_core)
+target_include_directories(tos_gfx_fonts_ubuntu_regular PUBLIC include)
+
+add_library(tos_gfx_fonts_firacode_regular src/fonts/firacode_regular.cpp)
+target_link_libraries(tos_gfx_fonts_firacode_regular PUBLIC tos_util_core)
+target_include_directories(tos_gfx_fonts_firacode_regular PUBLIC include)
+
+add_library(tos_gfx_fonts_notosans_regular src/fonts/notosans_regular.cpp)
+target_link_libraries(tos_gfx_fonts_notosans_regular PUBLIC tos_util_core)
+target_include_directories(tos_gfx_fonts_notosans_regular PUBLIC include)
+
+add_library(tos_gfx_fonts INTERFACE)
+target_link_libraries(tos_gfx_fonts INTERFACE
+    tos_gfx_fonts_opensans_regular
+    tos_gfx_fonts_ubuntu_regular
+    tos_gfx_fonts_firacode_regular
+    tos_gfx_fonts_notosans_regular)
 
 if (BUILD_TESTS)
     add_executable(truetype_test src/truetype_test.cpp)
