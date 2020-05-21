@@ -22,6 +22,7 @@ public:
                                                        basic_bitmap_view<mono8> to) const;
 
     font(font&&) = default;
+    font& operator=(font&&);
 
     ~font();
 
