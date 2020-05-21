@@ -69,6 +69,10 @@ public:
         return m_buffer.slice(offset, dims().width);
     }
 
+    span<ColorT> raw_data() {
+        return m_buffer;
+    }
+
 private:
     span<ColorT> m_buffer;
     int m_stride;
