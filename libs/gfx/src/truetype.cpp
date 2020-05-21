@@ -153,4 +153,6 @@ dimensions font::text_dimensions(std::string_view text, int text_height) const {
 
     return {x, max_y};
 }
+
+font& font::operator=(font&&) = default;
 } // namespace tos::gfx
