@@ -48,7 +48,7 @@ add_library(tos_context
         include/tos/components/name.hpp
         include/tos/components/component.hpp
         include/tos/components/allocator.hpp)
-target_link_libraries(tos_context PUBLIC tos_util_core)
+target_link_libraries(tos_context PUBLIC tos_util_core tos_arch_core)
 target_include_directories(tos_context PUBLIC include)
 
 if (BUILD_TESTS)
@@ -81,6 +81,7 @@ target_compile_definitions(tos_build_info PRIVATE TOS_GIT_SHA1=\"${GIT_SHA1}\")
 add_library(tos_arch_core src/stub.cpp)
 target_link_libraries(tos_arch_core PUBLIC ${TOS_PLATFORM_NAME}_core)
 target_link_libraries(tos_arch_core PUBLIC arch_${TOS_ARCH})
+target_compile_definitions(tos_arch_core PUBLIC TOS_PLATFORM_${TOS_PLATFORM_NAME})
 
 add_library(tos_arch include/tos/arch.hpp src/stub.cpp)
 target_link_libraries(tos_arch PUBLIC tos_arch_core ${TOS_PLATFORM_NAME}_impl)
@@ -103,7 +104,6 @@ target_link_libraries(tos_core PUBLIC tos_mem tos_util tos_build_info)
 target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug tos_context)
 target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_arch)
 target_include_directories(tos_core PUBLIC include)
-target_compile_definitions(tos_core PUBLIC TOS_PLATFORM_${TOS_PLATFORM_NAME})
 add_library(tos::core ALIAS tos_core)
 
 add_library(tos_print include/tos/print.hpp src/print.cpp)
