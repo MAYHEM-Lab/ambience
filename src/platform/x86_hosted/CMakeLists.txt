@@ -6,6 +6,7 @@ add_library(x86_hosted_core x86_core.cpp include/tos_arch.hpp)
 target_compile_options(x86_hosted_core PUBLIC "-U_FORTIFY_SOURCE")
 target_compile_features(x86_hosted_core PUBLIC cxx_std_14)
 
+set(Boost_USE_STATIC_LIBS ON)
 # we use boost.asio for asynchronous operations
 find_package(Boost REQUIRED system)
 
