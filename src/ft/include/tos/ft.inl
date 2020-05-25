@@ -7,12 +7,12 @@
 #include <new>
 #include <tos/compiler.hpp>
 #include <tos/debug/panic.hpp>
+#include <tos/ft.hpp>
 #include <tos/interrupt.hpp>
 #include <tos/scheduler.hpp>
 #include <tos/span.hpp>
 #include <tos/stack_storage.hpp>
 #include <tos/tcb.hpp>
-#include <tos/ft.hpp>
 
 namespace tos::this_thread {
 inline thread_id_t get_id() {
@@ -65,8 +65,8 @@ template<bool FreeStack, class FunT, class... Args>
 struct super_tcb final : tcb {
     template<class FunU, class... ArgUs>
     super_tcb(uint16_t stk_sz, FunU&& fun, ArgUs&&... args)
-        : tcb(current_context()),
-        m_tcb_off(stk_sz - sizeof(super_tcb))
+        : tcb(current_context())
+        , m_tcb_off(stk_sz - sizeof(super_tcb))
         , m_fun{std::forward<FunU>(fun)}
         , m_args{std::forward<ArgUs>(args)...} {
     }
@@ -196,8 +196,19 @@ inline exit_reason scheduler::schedule() {
 
         switch (why) {
         case return_codes::saved: {
+            auto prev_ctx = &current_context();
+            auto next_ctx = &m_run_queue.front().get_context();
+
+            if (prev_ctx != next_ctx) {
+                current_context().switch_out(*next_ctx);
+            }
+
             global::cur_thread = &m_run_queue.front();
             m_run_queue.pop_front();
+
+            if (prev_ctx != next_ctx) {
+                current_context().switch_in(*prev_ctx);
+            }
 
             switch_context(self()->get_processor_state(), return_codes::scheduled);
         }
