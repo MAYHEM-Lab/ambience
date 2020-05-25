@@ -41,6 +41,13 @@ struct any_sink {
         add(static_cast<int64_t>(i));
     }
 
+    template<class T = uintptr_t,
+             typename = std::enable_if_t<!std::is_same<T, uint64_t>{} &&
+                                         !std::is_same<T, uint32_t>{}>>
+    void add(uintptr_t i) {
+        add(reinterpret_cast<void*>(i));
+    }
+
     void add(std::chrono::microseconds us) {
         add(static_cast<int64_t>(us.count()));
         add("us");
