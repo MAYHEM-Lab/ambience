@@ -15,8 +15,7 @@ struct port_data : list_node<port_data> {
     explicit port_data(uint16_t port)
         : m_port{port} {
     }
-    semaphore m_packets_len{0};
-    intrusive_list<packet> m_packets;
+    packet_list m_packets;
     uint16_t m_port;
 };
 
@@ -37,7 +36,6 @@ public:
             return;
         }
         m_thread = &launch(alloc_stack, [this] { thread(); });
-        send(0, tos::empty_span<const uint8_t>());
     }
 
     using streamid_t = int;
@@ -47,20 +45,19 @@ public:
         this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(streamid)));
         uint16_t size = span.size();
         this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(size)));
-        this->m_usart->write(span);
+        if (size != 0) {
+            this->m_usart->write(span);
+        }
         uint32_t crc32 = tos::crc32(span);
         this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(crc32)));
     }
 
-    std::unique_ptr<packet> receive(streamid_t streamid) {
+    intrusive_ptr<packet> receive(streamid_t streamid) {
         auto str = find_port(streamid);
         if (!str) {
             return nullptr;
         }
-        str->m_packets_len.down();
-        auto ptr = std::unique_ptr<packet>(&str->m_packets.front());
-        str->m_packets.pop_front();
-        return ptr;
+        return str->m_packets.read_packet();
     }
 
     void open(streamid_t id) {
@@ -86,13 +83,13 @@ public:
     }
 
 private:
-    void append_packet(port_data& stream, packet& p) {
-        stream.m_packets.push_back(p);
-        stream.m_packets_len.up();
+    void append_packet(port_data& stream, intrusive_ptr<packet> p) {
+        stream.m_packets.add_packet(std::move(p));
     }
 
     bool m_stop = false;
     void thread() {
+        send(0, tos::empty_span<const uint8_t>());
         LOG("Serial packets thread running");
         while (!m_stop) {
             auto rd = next_packet();
@@ -115,6 +112,7 @@ private:
                 return tos::unexpected(serial_packet_errors::stream_closed);
             }
             if (tmp != chr) {
+                // LOG_WARN("Failed magic bytes");
                 return tos::unexpected(serial_packet_errors::bad_magic);
             }
         }
@@ -137,7 +135,7 @@ private:
 
         // LOG_TRACE("Size:", size);
 
-        auto p = std::make_unique<packet>(size);
+        auto p = make_intrusive<packet>(size);
         if (!p) {
             LOG_WARN("Could not allocate packet!");
             return tos::unexpected(serial_packet_errors::out_of_memory);
@@ -184,7 +182,7 @@ private:
             return streamid;
         }
 
-        append_packet(*stream, *p.release());
+        append_packet(*stream, std::move(p));
 
         return streamid;
     }
