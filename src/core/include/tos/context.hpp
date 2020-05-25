@@ -132,4 +132,6 @@ component* static_context<Components...>::get_component_with_id(component_id_t i
 #undef CTX_CASE
     return nullptr;
 }
+
+context& current_context();
 } // namespace tos

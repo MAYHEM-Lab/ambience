@@ -13,7 +13,6 @@
 #include <tos/stack_storage.hpp>
 #include <tos/tcb.hpp>
 #include <tos/ft.hpp>
-#include <tos/context.hpp>
 
 namespace tos::this_thread {
 inline thread_id_t get_id() {
@@ -24,11 +23,7 @@ inline thread_id_t get_id() {
 } // namespace tos::this_thread
 
 namespace tos {
-inline context& current_context() {
-    if (!self())
-        return default_context();
-    return self()->get_context();
-}
+context& current_context();
 
 namespace global {
 inline kern::scheduler sched;

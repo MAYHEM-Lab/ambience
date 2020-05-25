@@ -48,7 +48,7 @@ add_library(tos_context
         include/tos/components/name.hpp
         include/tos/components/component.hpp
         include/tos/components/allocator.hpp)
-target_link_libraries(tos_context PUBLIC tos_util_core)
+target_link_libraries(tos_context PUBLIC tos_util_core tos_debug_log)
 target_include_directories(tos_context PUBLIC include)
 
 if (BUILD_TESTS)
