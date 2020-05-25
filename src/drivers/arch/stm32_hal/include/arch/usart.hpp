@@ -65,7 +65,8 @@ public:
     tos::span<uint8_t> read(tos::span<uint8_t> b);
 
     template<class AlarmT>
-    tos::span<uint8_t> read(tos::span<uint8_t> b, AlarmT& alarm, std::chrono::milliseconds to);
+    tos::span<uint8_t>
+    read(tos::span<uint8_t> b, AlarmT& alarm, std::chrono::milliseconds to);
 
     ~usart() {
         NVIC_DisableIRQ(m_def->irq);
@@ -167,7 +168,8 @@ inline usart::usart(const detail::usart_def& x,
         init.Pull = GPIO_NOPULL;
         init.Speed = detail::gpio_speed::highest();
 #if !defined(STM32F1)
-        init.Alternate = detail::afio::get_usart_afio(m_def->usart, rx_pin, tx_pin).second;
+        init.Alternate =
+            detail::afio::get_usart_afio(m_def->usart, rx_pin, tx_pin).second;
 #endif
         HAL_GPIO_Init(tx_pin.port, &init);
     }
