@@ -187,6 +187,7 @@ inline usart::usart(const detail::usart_def& x,
     HAL_NVIC_EnableIRQ(m_def->irq);
 
     tos::kern::busy();
+    HAL_UART_Receive_IT(&m_handle, &m_recv_byte, 1);
 }
 
 template<class AlarmT>
@@ -195,7 +196,6 @@ usart::read(tos::span<uint8_t> b, AlarmT& alarm, std::chrono::milliseconds to) {
     size_t total = 0;
     auto len = b.size();
     auto buf = b.data();
-    tos::kern::busy();
     while (total < len) {
         auto res = rx_s.down(alarm, to);
         if (res == sem_ret::timeout) {
@@ -205,7 +205,6 @@ usart::read(tos::span<uint8_t> b, AlarmT& alarm, std::chrono::milliseconds to) {
         ++buf;
         ++total;
     }
-    tos::kern::unbusy();
     return b.slice(0, total);
 }
 
@@ -213,14 +212,12 @@ inline tos::span<uint8_t> usart::read(tos::span<uint8_t> b) {
     size_t total = 0;
     auto len = b.size();
     auto buf = b.data();
-    tos::kern::busy();
     while (total < len) {
         rx_s.down();
         *buf = rx_buf.pop();
         ++buf;
         ++total;
     }
-    tos::kern::unbusy();
     return b.slice(0, total);
 }
 
