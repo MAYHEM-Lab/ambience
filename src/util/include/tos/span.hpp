@@ -259,13 +259,11 @@ public:
         return slice(begin, size() - begin);
     }
 
-    [[nodiscard]]
-    constexpr span pop_back() const {
+    [[nodiscard]] constexpr span pop_back() const {
         return slice(0, size() - 1);
     }
 
-    [[nodiscard]]
-    constexpr span pop_front() const {
+    [[nodiscard]] constexpr span pop_front() const {
         return slice(1);
     }
 
