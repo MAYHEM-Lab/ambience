@@ -31,3 +31,5 @@
 #define ISR_AVAILABLE [[gnu::section(".isr_text")]]
 
 #define USED __attribute__((used))
+
+#define PACKED [[gnu::packed]]
