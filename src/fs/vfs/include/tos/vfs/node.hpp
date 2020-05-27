@@ -17,7 +17,7 @@ public:
         return m_type;
     }
 
-    [[nodiscard]] node_id_t native_handle() const {
+    [[nodiscard]] node_id_t id() const {
         return m_id;
     }
 
