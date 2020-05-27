@@ -80,7 +80,7 @@ public:
         return m_ptr;
     }
 
-    const T* get() const {
+    T* get() const {
         return m_ptr;
     }
 
@@ -88,7 +88,7 @@ public:
         return get();
     }
 
-    const T* operator->() const {
+    T* operator->() const {
         return get();
     }
 
@@ -96,7 +96,7 @@ public:
         return *get();
     }
 
-    const T& operator*() const {
+    T& operator*() const {
         return *get();
     }
 
