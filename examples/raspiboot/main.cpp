@@ -36,8 +36,8 @@ public:
     explicit terminal(FramebufferT fb, gfx::font&& font)
         : m_fb{std::move(fb)}
         , m_line_height{24}
-        , m_max_rows{m_fb->dims().height / m_line_height}
         , m_max_col{m_fb->dims().width / 16}
+        , m_max_rows{m_fb->dims().height / m_line_height}
         , m_font{std::move(font)} {
         m_lines.emplace_back();
         m_line_buf.resize((m_line_height + 1) * m_fb->dims().width);
@@ -121,7 +121,7 @@ private:
     void new_line() {
         m_lines.emplace_back();
         m_line_dirty = true;
-        if (m_lines.size() > m_max_rows) {
+        if (m_lines.size() > static_cast<size_t>(m_max_rows)) {
             m_lines.pop_front();
             m_screen_dirty = true;
             return;
@@ -130,7 +130,7 @@ private:
     }
 
     void process_char(uint8_t c) {
-        if (m_cur_col == m_lines[m_cur_row].size()) {
+        if (static_cast<size_t>(m_cur_col) == m_lines[m_cur_row].size()) {
             m_lines[m_cur_row].push_back(c);
         } else {
             m_lines[m_cur_row][m_cur_col] = c;

@@ -30,7 +30,7 @@ public:
     }
 
     ColorT& at(int row, int col) {
-        return at({col, row});
+        return at({static_cast<int16_t>(col), static_cast<int16_t>(row)});
     }
 
     const ColorT& at(const point& p) const {
