@@ -8,5 +8,6 @@ target_sources(arch_arm PRIVATE
         include/arch/core.hpp
         stub.cpp
         mpu.cpp
-        core.cpp)
+        core.cpp
+        nvic.cpp)
 target_link_libraries(arch_arm PUBLIC tos_util_core cmsis::core tos_drivers tos_mmio)

@@ -73,6 +73,9 @@ add_library(tos_build_info
         src/build.cpp)
 target_include_directories(tos_build_info PUBLIC include)
 target_link_libraries(tos_build_info PUBLIC tos_util_core)
+target_compile_definitions(tos_build_info PRIVATE TOS_CONFIG_PLATFORM=\"${TOS_PLATFORM_NAME}\")
+target_compile_definitions(tos_build_info PRIVATE TOS_CONFIG_ARCH=\"${TOS_ARCH}\")
+target_compile_definitions(tos_build_info PRIVATE TOS_CONFIG_DRIVERS=\"${TOS_DRIVERS}\")
 
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)

@@ -3,6 +3,7 @@
 #include "sink.hpp"
 
 #include <memory>
+#include <string_view>
 #include <tos/mutex.hpp>
 #include <tos/print.hpp>
 #include <tos/self_pointing.hpp>
@@ -13,12 +14,16 @@ class serial_sink
     : public detail::any_sink
     , public self_pointing<serial_sink<SerialT>> {
 public:
-    explicit serial_sink(SerialT ser)
-        : m_serial(std::move(ser)) {
+    explicit serial_sink(SerialT ser, std::string_view tag = "")
+        : m_serial(std::move(ser))
+        , m_tag{tag} {
     }
 
     bool begin(log_level level) override {
         m_prot->lock();
+        if (!m_tag.empty()) {
+            tos::print(m_serial, "[", m_tag, "] ", tos::no_separator());
+        }
         tos::print(m_serial, "[", level, "] ", tos::no_separator());
         return true;
     }
@@ -56,5 +61,6 @@ public:
 public:
     std::unique_ptr<tos::mutex> m_prot = std::make_unique<tos::mutex>();
     SerialT m_serial;
+    std::string_view m_tag;
 };
 } // namespace tos::debug

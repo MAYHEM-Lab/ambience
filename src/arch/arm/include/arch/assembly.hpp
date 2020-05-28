@@ -25,7 +25,7 @@ inline void dmb() {
     tos::detail::memory_barrier();
 }
 
-void nop() {
+inline void nop() {
     asm volatile("nop");
 }
 } // namespace tos::arm

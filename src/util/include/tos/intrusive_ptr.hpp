@@ -80,7 +80,7 @@ public:
         return m_ptr;
     }
 
-    const T* get() const {
+    T* get() const {
         return m_ptr;
     }
 
@@ -88,7 +88,7 @@ public:
         return get();
     }
 
-    const T* operator->() const {
+    T* operator->() const {
         return get();
     }
 
@@ -96,7 +96,7 @@ public:
         return *get();
     }
 
-    const T& operator*() const {
+    T& operator*() const {
         return *get();
     }
 
@@ -139,8 +139,8 @@ bool operator!=(std::nullptr_t, const intrusive_ptr<T>& right) {
 }
 
 template <class U, class T>
-intrusive_ptr<U> static_pointer_cast(const intrusive_ptr<T>& ptr) {
-    static_assert(std::is_convertible_v<T*, U*>);
+intrusive_ptr<U> static_pointer_cast(intrusive_ptr<T> ptr) {
+    static_assert(std::is_base_of_v<T, U>);
     return intrusive_ptr<U>(static_cast<U*>(ptr.get()));
 }
 

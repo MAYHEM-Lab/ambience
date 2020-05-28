@@ -52,6 +52,14 @@ add_library(serial_mux
         )
 target_link_libraries(serial_mux PUBLIC tos_util_core tos::ft)
 
+add_library(tos_serial_packets
+        include/tos/io/packet.hpp
+        include/tos/io/serial_packets.hpp
+        src/io/packet.cpp
+        src/io/serial_packets.cpp
+        )
+target_link_libraries(tos_serial_packets PUBLIC tos_util_core tos::ft)
+
 if (BUILD_TESTS)
     add_executable(uuid_test src/uuid_test.cpp)
     target_link_libraries(uuid_test PUBLIC tests_main tos_util_core)

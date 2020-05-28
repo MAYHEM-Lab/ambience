@@ -10,6 +10,7 @@
 #if defined(__cpp_lib_string_view)
 #include <string_view>
 #endif
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -258,13 +259,11 @@ public:
         return slice(begin, size() - begin);
     }
 
-    [[nodiscard]]
-    constexpr span pop_back() const {
+    [[nodiscard]] constexpr span pop_back() const {
         return slice(0, size() - 1);
     }
 
-    [[nodiscard]]
-    constexpr span pop_front() const {
+    [[nodiscard]] constexpr span pop_front() const {
         return slice(1);
     }
 
@@ -342,5 +341,12 @@ constexpr bool operator==(tos::span<T> left, span<T> right) {
 template<class T, class U>
 constexpr bool operator!=(tos::span<T> left, span<U> right) {
     return !(left == right);
+}
+
+template<class T, class U>
+span<T> safe_span_copy(span<T> to, span<const U> from) {
+    auto len = std::min(to.size(), from.size());
+    std::copy_n(from.begin(), len, to.begin());
+    return to.slice(0, len);
 }
 } // namespace tos
