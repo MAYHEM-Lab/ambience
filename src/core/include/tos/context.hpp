@@ -15,8 +15,8 @@ struct context : list_node<context> {
 
     virtual component* get_component_with_id(component_id_t) = 0;
 
-    virtual void switch_out(context& to) {}
-    virtual void switch_in(context& from) {}
+    virtual void switch_out(context&) {}
+    virtual void switch_in(context&) {}
 };
 
 template<class... Components>
