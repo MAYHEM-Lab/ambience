@@ -9,8 +9,8 @@
 namespace tos::debug {
 namespace detail {
 detail::any_logger& null_log_instance() {
-    static null_sink null_sink;
-    static detail::any_logger null(&null_sink, log_level::none);
+    static forget<null_sink> null_sink;
+    static detail::any_logger null(&null_sink.get(), log_level::none);
     return null;
 }
 }
