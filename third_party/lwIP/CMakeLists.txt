@@ -1,8 +1,6 @@
 set(LWIP_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src/src/include)
 add_subdirectory(src)
 
-target_compile_definitions(lwipcore PUBLIC __ssize_t_defined)
-
 add_library(lwip_support "" include/tos/lwip/udp.hpp include/tos/lwip/utility.hpp include/tos/lwip/common.hpp include/tos/lwip/tcp.hpp)
 target_sources(lwip_support PRIVATE
     support.cpp
@@ -11,6 +9,10 @@ target_sources(lwip_support PRIVATE
 target_include_directories(lwip_support PUBLIC include)
 target_include_directories(lwip_support PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/src/include)
 target_link_libraries(lwip_support PUBLIC tos::drivers)
+
+if (${TOS_PLATFORM} MATCHES raspi)
+    target_compile_definitions(lwip_support PUBLIC __ssize_t_defined)
+endif()
 
 target_link_libraries(lwipcore PUBLIC lwip_support)
 
