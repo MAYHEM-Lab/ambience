@@ -5,7 +5,6 @@
 using tos::aarch64::page_id_t;
 using tos::aarch64::table_entry;
 
-
 // defined in MAIR register
 static constexpr auto PT_MEM = 0; // normal memory
 static constexpr auto PT_DEV = 1; // device MMIO
@@ -34,11 +33,13 @@ struct pages {
 alignas(4096) pages page;
 
 void mmu_init() {
-    auto& root = page.pgd[0];
+    /**
+     * Sets up identity mapping at the first 1 gigabyte of memory.
+     */
     auto& l2s = page.pud;
     auto& l3s = page.pmd[0];
 
-    root.zero()
+    page.pgd[0].zero()
         .page_num(address_to_page(&l2s))
         .valid(true)
         .page(true)
@@ -82,6 +83,13 @@ void mmu_init() {
             .shareable(tos::aarch64::shareable_values::inner)
             .mair_index(PT_MEM)
             .valid(true);
+
+        /**
+         * We follow the W^X permissions scheme.
+         *
+         * This means that an address is either writeable or executable, but not both at
+         * the same time.
+         */
         if (r < 0x80 || r >= address_to_page(&__data_start)) {
             l3s[r].noexec(true);
         } else {
