@@ -2,14 +2,23 @@ if (${TOS_ARCH} MATCHES avr)
     return()
 endif()
 
-add_library(tos_gfx stub.cpp include include/tos/gfx/dimensions.hpp include/tos/gfx/transformation.hpp include/tos/gfx/paint.hpp include/tos/gfx/color.hpp)
+add_library(tos_gfx
+        stub.cpp
+        include/tos/gfx/dimensions.hpp
+        include/tos/gfx/transformation.hpp
+        include/tos/gfx/paint.hpp
+        include/tos/gfx/color.hpp)
 target_link_libraries(tos_gfx PUBLIC frozen tos::libcxx tos_util_core tos_debug)
 target_compile_features(tos_gfx PUBLIC cxx_std_17)
 tos_install(tos_gfx ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_sources(tos_gfx PRIVATE 
-    src/truetype.cpp 
-    src/stb_truetype.cpp)
+if (NOT ${TOS_PLATFORM} MATCHES esp)
+    message(STATUS "Building TrueType")
+    set(TOS_CONFIG_TRUETYPE ON)
+    target_sources(tos_gfx PRIVATE
+        src/truetype.cpp
+        src/stb_truetype.cpp)
+endif()
 
 add_library(tos_gfx_fonts INTERFACE)
 
@@ -47,7 +56,9 @@ if (BUILD_TESTS)
     add_test(NAME bitmap_test COMMAND bitmap_test)
 endif()
 
-include(TosBench)
-add_library(truetype_bench src/truetype_bench.cpp)
-target_link_libraries(truetype_bench PUBLIC ubench tos_gfx tos_gfx_fonts_opensans_regular)
-add_benchmark(truetype_bench)
+if (TOS_FEATURE_TRUETYPE)
+    include(TosBench)
+    add_library(truetype_bench src/truetype_bench.cpp)
+    target_link_libraries(truetype_bench PUBLIC ubench tos_gfx tos_gfx_fonts_opensans_regular)
+    add_benchmark(truetype_bench)
+endif()
