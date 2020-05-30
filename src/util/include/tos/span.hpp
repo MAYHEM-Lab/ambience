@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <version>
 #include <array>
 #include <cstddef>
 #include <stddef.h>
