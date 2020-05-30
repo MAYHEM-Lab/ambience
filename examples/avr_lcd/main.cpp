@@ -34,7 +34,7 @@ void lcd_main() {
 
         lcd.set_cursor(0, 2);
         tos::print(lcd,
-                   tos::span<const char>(raw_cast<const char>(tos::build::commit_hash()))
+                   tos::span<const char>(tos::build::commit_hash())
                        .slice(0, 7));
 
         lcd.set_cursor(0, 3);

@@ -1,9 +1,10 @@
+#include <array>
 #include <tos/components/allocator.hpp>
 #include <tos/context.hpp>
+#include <tos/debug/dynamic_log.hpp>
 #include <tos/memory/malloc.hpp>
 #include <tos/utility.hpp>
 #include <type_traits>
-#include <array>
 
 #if defined(TOS_PLATFORM_raspi)
 #include <tos/memory/free_list.hpp>
@@ -15,11 +16,14 @@ alignas(16) std::array<uint8_t, 16 * 1024 * 1024> heap_mem;
 namespace tos {
 context& default_context() {
 #if defined(TOS_PLATFORM_raspi)
-    static auto erased_alloc = forget(memory::erase_allocator(memory::free_list{heap_mem}));
+    static auto erased_alloc =
+        forget(memory::erase_allocator(memory::free_list{heap_mem}));
 #else
     static auto erased_alloc = forget(memory::erase_allocator(memory::mallocator{}));
 #endif
-    static auto ctx = forget<static_context<allocator_component>>(erased_alloc.get());
+    static auto ctx =
+        forget<static_context<allocator_component, debug::logger_component>>(
+            erased_alloc.get(), debug::logger_component{});
     return ctx.get();
 }
 } // namespace tos

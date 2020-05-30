@@ -23,7 +23,9 @@ add_library(tos_util_core
     include/tos/functional.hpp
     include/tos/meta/function_traits.hpp
     include/tos/string.hpp
-    src/base64.cpp)
+    src/base64.cpp
+    src/span.cpp
+)
 
 target_compile_features(tos_util_core PUBLIC cxx_std_17)
 target_link_libraries(tos_util_core PUBLIC tos::libcxx tos_memory)

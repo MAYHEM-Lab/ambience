@@ -31,7 +31,11 @@ void relocate_vector_table(vector_table& table) {
 }
 
 int number_of_supported_interrupts() {
+#if __CORTEX_M == 0
+    return 64;
+#else
     return (SCnSCB->ICTR + 1) * 32;
+#endif
 }
 
 span<const nvic_raw_handler_t> vector_table::handlers() const {

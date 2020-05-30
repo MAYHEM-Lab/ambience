@@ -14,6 +14,9 @@ struct context : list_node<context> {
     virtual ~context() = default;
 
     virtual component* get_component_with_id(component_id_t) = 0;
+
+    virtual void switch_out(context&) {}
+    virtual void switch_in(context&) {}
 };
 
 template<class... Components>
@@ -132,4 +135,6 @@ component* static_context<Components...>::get_component_with_id(component_id_t i
 #undef CTX_CASE
     return nullptr;
 }
+
+context& current_context();
 } // namespace tos

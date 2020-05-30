@@ -1,3 +1,7 @@
+if (${TOS_ARCH} MATCHES avr)
+    return()
+endif()
+
 add_library(tos_gfx stub.cpp include include/tos/gfx/dimensions.hpp include/tos/gfx/transformation.hpp include/tos/gfx/paint.hpp include/tos/gfx/color.hpp)
 target_link_libraries(tos_gfx PUBLIC frozen tos::libcxx tos_util_core tos_debug)
 target_compile_features(tos_gfx PUBLIC cxx_std_17)
@@ -7,28 +11,31 @@ target_sources(tos_gfx PRIVATE
     src/truetype.cpp 
     src/stb_truetype.cpp)
 
+add_library(tos_gfx_fonts INTERFACE)
+
 add_library(tos_gfx_fonts_opensans_regular src/fonts/opensans_regular.cpp)
 target_link_libraries(tos_gfx_fonts_opensans_regular PUBLIC tos_util_core)
 target_include_directories(tos_gfx_fonts_opensans_regular PUBLIC include)
+target_link_libraries(tos_gfx_fonts INTERFACE tos_gfx_fonts_opensans_regular)
+set_target_properties(tos_gfx_fonts_opensans_regular PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 add_library(tos_gfx_fonts_ubuntu_regular src/fonts/ubuntu_regular.cpp)
 target_link_libraries(tos_gfx_fonts_ubuntu_regular PUBLIC tos_util_core)
 target_include_directories(tos_gfx_fonts_ubuntu_regular PUBLIC include)
+target_link_libraries(tos_gfx_fonts INTERFACE tos_gfx_fonts_ubuntu_regular)
+set_target_properties(tos_gfx_fonts_ubuntu_regular PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 add_library(tos_gfx_fonts_firacode_regular src/fonts/firacode_regular.cpp)
 target_link_libraries(tos_gfx_fonts_firacode_regular PUBLIC tos_util_core)
 target_include_directories(tos_gfx_fonts_firacode_regular PUBLIC include)
+target_link_libraries(tos_gfx_fonts INTERFACE tos_gfx_fonts_firacode_regular)
+set_target_properties(tos_gfx_fonts_firacode_regular PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 add_library(tos_gfx_fonts_notosans_regular src/fonts/notosans_regular.cpp)
 target_link_libraries(tos_gfx_fonts_notosans_regular PUBLIC tos_util_core)
 target_include_directories(tos_gfx_fonts_notosans_regular PUBLIC include)
-
-add_library(tos_gfx_fonts INTERFACE)
-target_link_libraries(tos_gfx_fonts INTERFACE
-    tos_gfx_fonts_opensans_regular
-    tos_gfx_fonts_ubuntu_regular
-    tos_gfx_fonts_firacode_regular
-    tos_gfx_fonts_notosans_regular)
+target_link_libraries(tos_gfx_fonts INTERFACE tos_gfx_fonts_notosans_regular)
+set_target_properties(tos_gfx_fonts_notosans_regular PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 if (BUILD_TESTS)
     add_executable(truetype_test src/truetype_test.cpp)

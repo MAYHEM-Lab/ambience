@@ -1,3 +1,11 @@
+#include <tos/ft.hpp>
 #include <tos/scheduler.hpp>
 #include <tos/tcb.hpp>
-#include <tos/ft.hpp>
+
+namespace tos {
+tos::context& current_context() {
+    if (!self())
+        return default_context();
+    return self()->get_context();
+}
+} // namespace tos

@@ -1,0 +1,174 @@
+= Contexts
+
+Pretty much every program has some global state. However, this
+state is normally _implicit_ and not in our control. Due to this,
+it is difficult to isolate threads that depend on regular global
+state.
+
+Think of contexts as _reified_ global state: objects that define
+the view of a thread's view into global state. Since they are
+objects, we can create, manipulate, swap or destroy them at runtime,
+luxuries we do not have access to with traditional means.
+
+== What is a context?
+
+A context is a collection of components. A component is a typed
+object. It can be anything. Examples of components are allocators,
+loggers, file system root, memory management information etc.
+
+Each thread belongs to one context. A context may or may not know
+about the threads it has. If the context has a component to track
+it's threads, it can know them.
+
+When a thread performs an operation that requires accessing some
+global state, it should go through a context. For instance, if a
+thread wants to allocate from the _global_ heap, it should use
+the allocator of it's context.
+
+== Context local state
+
+The _current context_ is the context `tos` is executing at any
+given time. When executing in a thread, the current context
+is the thread's context. Otherwise, it is the `default_context`.
+
+For instance, `operator new` is implemented with the following
+code:
+
+[source, cpp]
+----
+void* operator new(size_t size) {
+    if (auto comp = current_context().get_component<allocator_component>();
+        comp) {
+        return comp->allocate(size);
+    }
+    return nullptr;
+}
+----
+
+This implementation transparently translates the seemingly global
+C++ state to context local state. Using this component, you can
+constrain the heap size of a particular thread, or a group of
+threads. The threads in question are not required to cooperate.
+
+== External state
+
+Not all global state can be made to switch automatically by the
+change of a single pointer. This is often the case with state
+shared with the hardware. For instance, the MMU hardware will
+not perform an indirection over our context mechanism, it expects
+a dedicated pointer itself.
+
+Contexts support such cases with the use of dynamic context
+switch events.
+
+During thread scheduling, if the thread to be scheduled has a
+different context than the current thread's context, a _context
+switch_ occurs.
+
+NOTE: A context switch in the traditional sense means the changing
+of the processor state. In `tos`, the traditional mechanism is
+named accordingly, a _state switch_. Context switch means the
+exclusive change of the global state of a context.
+
+Components in the switched to and the switched from
+context can be notified of the switch. At that point, components
+may modify external state to provide their guarantees. For instance,
+a _memory management component_ may set the current page directory
+to itself upon switch.
+
+== The shape of a component
+
+Components themselves are actually plain old types in C++. The
+only real necessity is that they must have a static member that
+contains their _id_:
+
+[source, cpp]
+----
+struct my_component {
+    static constexpr auto id = 0xDEADBEEF;
+};
+----
+
+The ids are allocated to components in an offline manner. Think
+of them as ports in IP. The port 80 is allocated to HTTP. The
+component id 42 is allocated to logger component. As the number
+of components grow, we might need a better scheme, but for now
+it should be fine.
+
+Currently `tos` allows different implementations of contexts. For
+instance, you might have a context of components known at compile
+time, or you might need the ability of adding/removing components.
+
+To support these cases, a context implements getting a component
+by it's id from a virtual function. This means that the signature
+of this function must be fixed. For type safety, we mandate that
+the function returns a pointer to a `component`. It's not a
+polymorphic type or anything, we might as well have used `void*`,
+but using a strong type lets us evolve the protocol in the future.
+
+This means that our component also should publicly inherit from
+`tos::component`, but it has absolutely no cost whatsoever:
+
+[source, cpp]
+----
+struct my_component : tos::component {
+    static constexpr auto id = 0xDEADBEEF;
+};
+----
+
+That's it! You can now have contexts with your component in
+them and query for it.
+
+== Changing a thread's context
+
+You can change the context of a thread by calling `set_context`
+on it:
+
+[source, cpp]
+----
+a_thread.set_context(some_context);
+----
+
+While there are not any active protections against it, you should
+not call `set_context` on `self()` (i.e. the current thread). The
+reason simply being that the context switch events won't be fired
+with such a premature context switch and may bring the system to
+an inconsistent state.
+
+For instance, you can give a thread a complete clean slate with
+the following code:
+
+[source, cpp]
+----
+tos::static_context<> empty_context;
+some_thread.set_context(empty_context);
+----
+
+That thread won't be able to allocate any memory or log anything
+anymore.
+
+== Overlay contexts
+
+While the supporting libraries for contexts are relatively small
+right now, one useful thing is overlay contexts.
+
+An overlay context allows you to essentially _inherit_ from an
+existing context, and allows you to add or replace components
+without the existing context's support.
+
+For instance, you can _overlay_ an allocator on top of a context.
+This allows you to keep all the components in the existing one
+but with a different allocator. Since you don't want to be creating
+contexts from the ground up all the time, you'll use this often:
+
+[source, cpp]
+----
+static_context<allocator_component> new_context{...};
+auto overlaid_context =
+    overlay_context(
+        new_context,
+        existing_context);
+----
+
+With this setup, all the allocations will go to `new_context`,
+while everything else will go to `extisting_context`.
