@@ -18,6 +18,7 @@ Supported and tested targets:
 | ARM    | nRF528240 (cortex m4) |
 | ARM    | CC3235SF (cortex m4) |
 | ARM    | CC3220SF (cortex m4) |
+| AARCH64| BCM2837 (cortex a53) (Raspbery Pi 3) |
 | Xtensa | ESP8266 |
 | x86    | any (runs in userspace) |
 
