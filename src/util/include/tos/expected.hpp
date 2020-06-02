@@ -199,10 +199,22 @@ struct ignore_t {
 static constexpr ignore_t ignore{};
 } // namespace tos
 
-#define EXPECTED_TRY(...)                                                                \
-    ({                                                                                   \
-        auto&& res = (__VA_ARGS__);                                                      \
-        if (!res)                                                                        \
-            return ::tos::unexpected(force_error(res));                                         \
-        force_get(res);                                                                  \
+#define EXPECTED_TRYV(...)                                                               \
+    __extension__({                                                                      \
+        auto&& __res = (__VA_ARGS__);                                                    \
+        if (!__res)                                                                      \
+            return ::tos::unexpected(force_error(__res));                                \
     })
+
+#define EXPECTED_TRY(...)                                                                \
+    __extension__({                                                                      \
+        auto&& __res = (__VA_ARGS__);                                                    \
+        if (!__res)                                                                      \
+            return ::tos::unexpected(force_error(__res));                                \
+        force_get(__res);                                                                \
+    })
+
+#if !defined(TOS_CONFIG_DISABLE_SHORT_TRY)
+#define TRY EXPECTED_TRY
+#define TRYV EXPECTED_TRYV
+#endif
