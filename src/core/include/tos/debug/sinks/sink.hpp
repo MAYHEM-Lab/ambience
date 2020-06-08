@@ -14,6 +14,7 @@ struct any_sink {
     virtual void add(bool b) = 0;
     virtual void add(void* ptr) = 0;
     virtual void add(log_level) = 0;
+    virtual void add(double d) = 0;
 
     void add(int i) {
         add(static_cast<int64_t>(i));
@@ -55,6 +56,10 @@ struct any_sink {
 
     void add(const char* str) {
         add(static_cast<std::string_view>(str));
+    }
+
+    void add(float f) {
+        add(static_cast<double>(f));
     }
 
     virtual void end() = 0;

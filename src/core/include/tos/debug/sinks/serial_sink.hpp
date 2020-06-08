@@ -53,6 +53,10 @@ public:
         tos::print(m_serial, buf, "");
     }
 
+    void add(double d) override {
+        tos::print(m_serial, d, "");
+    }
+
     void end() override {
         tos::println(m_serial);
         m_prot->unlock();

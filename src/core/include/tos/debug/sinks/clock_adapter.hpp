@@ -37,6 +37,9 @@ public:
     void add(log_level level) override {
         m_sink->add(level);
     }
+    void add(double d) override {
+        m_sink->add(d);
+    }
     void end() override {
         m_sink->end();
     }

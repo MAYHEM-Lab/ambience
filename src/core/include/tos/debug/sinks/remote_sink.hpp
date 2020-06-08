@@ -16,6 +16,7 @@ enum class remote_sink_opcodes : uint8_t {
     pointer = 'p',
     loglevel = 'l',
     data = 'd',
+    floating = 'f',
     end = 'E'
 };
 
@@ -70,6 +71,12 @@ public:
         memcpy(buffer, "d", 1);
         memcpy(buffer + 1, buf.data(), buf.size());
         m_serial->send(1, tos::span(buffer).slice(0, 1 + buf.size()));
+    }
+
+    void add(double d) override {
+        memcpy(buffer, "f", 1);
+        memcpy(buffer + 1, &d, sizeof i);
+        m_serial->send(1, tos::span(buffer).slice(0, 1 + sizeof i));
     }
 
     void end() override {
