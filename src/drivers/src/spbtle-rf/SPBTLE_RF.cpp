@@ -4,8 +4,10 @@
 #include <SPBTLE_RF.h>
 #include <tos/mutex.hpp>
 
+namespace tos::spbtle {
 bool isr_enabled = false;
 tos::any_alarm* alarm_ptr;
+} // namespace tos::spbtle
 
 namespace {
 tos::function_ref<void(void*)> HCI_callback{[](void*, void*) {}};
@@ -19,7 +21,7 @@ void exti_handler(void*) {
 void ble_isr() {
     while (true) {
         isr_sem.down();
-        if (!isr_enabled) {
+        if (!tos::spbtle::isr_enabled) {
             isr_sem.up();
             tos::this_thread::yield();
             continue;
@@ -30,6 +32,7 @@ void ble_isr() {
 }
 } // namespace
 
+namespace tos::spbtle {
 spbtle_rf::spbtle_rf(
     SpiT SPIx, ExtiT exti, tos::any_alarm& alarm, PinT cs, PinT spiIRQ, PinT reset)
     : tracked_driver(0)
@@ -39,13 +42,13 @@ spbtle_rf::spbtle_rf(
     , m_cs{cs}
     , m_irq_pin{spiIRQ}
     , m_reset{reset} {
-    ::alarm_ptr = &alarm;
+    alarm_ptr = &alarm;
     begin();
 }
 
 static tos::stack_storage<512> sstorage;
 
-tos::expected<void, spbtle_errors> spbtle_rf::begin() {
+tos::expected<void, errors> spbtle_rf::begin() {
     namespace digital = tos::digital;
 
     tos::launch(sstorage, ble_isr);
@@ -73,6 +76,11 @@ tos::expected<void, spbtle_errors> spbtle_rf::begin() {
     return {};
 }
 
+void attach_HCI_CB(tos::function_ref<void(void*)> callback) {
+    HCI_callback = callback;
+}
+} // namespace tos::spbtle
+
 extern "C" void Hal_Write_Serial(const void* data1,
                                  const void* data2,
                                  int32_t n_bytes1,
@@ -88,36 +96,33 @@ extern "C" void Hal_Write_Serial(const void* data1,
 }
 
 void BlueNRG_RST(void) {
-    spbtle_rf::get(0)->reset();
+    tos::spbtle::spbtle_rf::get(0)->reset();
 }
 
 uint8_t BlueNRG_DataPresent(void) {
-    return spbtle_rf::get(0)->data_present();
+    return tos::spbtle::spbtle_rf::get(0)->data_present();
 }
 
 void BlueNRG_HW_Bootloader(void) {
-    spbtle_rf::get(0)->bootloader();
+    tos::spbtle::spbtle_rf::get(0)->bootloader();
 }
 
 int32_t BlueNRG_SPI_Read_All(uint8_t* buffer, uint8_t buff_size) {
-    return spbtle_rf::get(0)->spi_read({buffer, buff_size});
+    return tos::spbtle::spbtle_rf::get(0)->spi_read({buffer, buff_size});
 }
 
 int32_t
 BlueNRG_SPI_Write(uint8_t* data1, uint8_t* data2, uint8_t Nb_bytes1, uint8_t Nb_bytes2) {
-    return spbtle_rf::get(0)->spi_write({data1, Nb_bytes1}, {data2, Nb_bytes2});
+    return tos::spbtle::spbtle_rf::get(0)->spi_write({data1, Nb_bytes1},
+                                                     {data2, Nb_bytes2});
 }
 
 void Enable_SPI_IRQ(void) {
-    isr_enabled = true;
+    tos::spbtle::isr_enabled = true;
 }
 
 void Disable_SPI_IRQ(void) {
-    isr_enabled = false;
-}
-
-void attach_HCI_CB(tos::function_ref<void(void*)> callback) {
-    HCI_callback = callback;
+    tos::spbtle::isr_enabled = false;
 }
 
 void HCI_Event_CB(void* pckt) {

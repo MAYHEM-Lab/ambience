@@ -25,7 +25,6 @@ extern "C" {
 #include "ble_clock.h"
 #include "ble_status.h"
 
-extern tos::any_alarm* alarm_ptr;
 /**
  * timer
  *

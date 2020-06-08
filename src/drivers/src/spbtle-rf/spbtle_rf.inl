@@ -13,6 +13,7 @@
 #include <common/spi.hpp>
 #include <tos/mutex.hpp>
 
+namespace tos::spbtle {
 inline int spbtle_rf::spi_write(tos::span<const uint8_t> d1,
                                 tos::span<const uint8_t> d2) {
     int32_t result = 0;
@@ -114,11 +115,11 @@ inline void spbtle_rf::bootloader() {
     Enable_SPI_IRQ();
 }
 
-inline tos::expected<tos::spbtle::fw_id, spbtle_errors> spbtle_rf::get_fw_id() const {
+inline tos::expected<tos::spbtle::fw_id, errors> spbtle_rf::get_fw_id() const {
     tos::spbtle::fw_id build_number{};
     auto res = aci_hal_get_fw_build_number(&build_number.build_number);
     if (res) {
-        return tos::unexpected(static_cast<spbtle_errors>(res));
+        return tos::unexpected(static_cast<errors>(res));
     }
     return build_number;
 }
@@ -153,17 +154,17 @@ inline tos::spbtle::gap spbtle_rf::initialize_gap(tos::spbtle::gatt& g,
     return tos::spbtle::gap(g, name);
 }
 
-inline tos::expected<tos::spbtle::gatt, spbtle_errors> spbtle_rf::initialize_gatt() {
+inline tos::expected<tos::spbtle::gatt, errors> spbtle_rf::initialize_gatt() {
     auto res = aci_gatt_init();
     if (res) {
-        return tos::unexpected(spbtle_errors::unknown);
+        return tos::unexpected(errors::unknown);
     }
     return tos::spbtle::gatt{};
 }
 
-
-inline tos::spbtle::advertising::advertising(std::chrono::milliseconds interval,
-                                             std::string_view local_name) {
+inline expected<void, errors>
+tos::spbtle::advertising::start(std::chrono::milliseconds interval,
+                                std::string_view local_name) {
     auto name = char(AD_TYPE_COMPLETE_LOCAL_NAME) + std::string(local_name);
     auto ret = aci_gap_set_discoverable(ADV_IND,
                                         (interval.count() * 1000) / 625,
@@ -174,23 +175,25 @@ inline tos::spbtle::advertising::advertising(std::chrono::milliseconds interval,
                                         name.data(),
                                         0,
                                         nullptr,
-                                        0,
-                                        0);
+                                        0xFFFF,
+                                        0xFFFF);
     if (ret != BLE_STATUS_SUCCESS) {
-        tos::debug::panic("Can't set discoverable");
+        return unexpected(static_cast<errors>(ret));
     }
+    return {};
 }
 
-inline tos::expected<void, spbtle_errors>
-set_public_address(tos::ble::address_t address) {
-    auto ret = aci_hal_write_config_data(CONFIG_DATA_PUBADDR_OFFSET,
-                                         CONFIG_DATA_PUBADDR_LEN,
-                                         address.addr);
-    if (ret != BLE_STATUS_SUCCESS)
-    {
-        return tos::unexpected(spbtle_errors::unknown);
+inline void tos::spbtle::advertising::stop() {
+    aci_gap_set_non_discoverable();
+}
+
+inline tos::expected<void, errors> set_public_address(tos::ble::address_t address) {
+    auto ret = aci_hal_write_config_data(
+        CONFIG_DATA_PUBADDR_OFFSET, CONFIG_DATA_PUBADDR_LEN, address.addr);
+    if (ret != BLE_STATUS_SUCCESS) {
+        return tos::unexpected(errors::unknown);
     }
 
     return {};
 }
-
+} // namespace tos::spbtle
