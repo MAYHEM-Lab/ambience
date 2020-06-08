@@ -4,7 +4,7 @@
 namespace tos {
 namespace {
 TEST_CASE("uuid from_canonical_string works") {
-    auto uuid = tos::uuid_from_canonical_string("00112233-4455-6677-8899-aabbccddeeff");
+    auto uuid = uuid::from_canonical_string("00112233-4455-6677-8899-aabbccddeeff");
     REQUIRE_EQ(0x00, uuid.id_[0]);
     REQUIRE_EQ(0x11, uuid.id_[1]);
     REQUIRE_EQ(0x22, uuid.id_[2]);
