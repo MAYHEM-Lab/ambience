@@ -29,7 +29,6 @@ constexpr auto font = tos::gfx::basic_font().rotate_90_cw().rotate_90_cw().rotat
 
 void lcd_main() {
     using namespace tos::tos_literals;
-    using namespace tos;
     using namespace tos::stm32;
 
     auto g = tos::open(tos::devs::gpio);
@@ -38,19 +37,19 @@ void lcd_main() {
     auto usart_tx_pin = 2_pin;
 
     auto usart =
-        open(devs::usart<2>, tos::uart::default_9600, usart_rx_pin, usart_tx_pin);
+        open(tos::devs::usart<2>, tos::uart::default_9600, usart_rx_pin, usart_tx_pin);
     tos::println(usart, "hello");
 
-    i2c t{ stm32::detail::i2cs[0], 24_pin, 25_pin };
+    i2c t{ tos::stm32::detail::i2cs[0], 24_pin, 25_pin };
     tos::println(usart, "i2c init'd");
 
-    ssd1306 oled{&t, {0x3C}, 128, 64};
+    tos::ssd1306 oled{&t, {0x3C}, 128, 64};
     oled.dim(false);
 
-    auto tmr = open(devs::timer<2>);
+    auto tmr = open(tos::devs::timer<2>);
     tos::alarm alarm(&tmr);
 
-    auto tmr3 = open(devs::timer<3>);
+    auto tmr3 = open(tos::devs::timer<3>);
     tos::clock clk(&tmr3);
 
     std::array<char, 20> buf;
