@@ -1,0 +1,7 @@
+add_lidlc(service_schema service.yaml)
+
+add_executable(service_host service.cpp)
+target_link_libraries(service_host PRIVATE tos_core arch_drivers service_schema tos_dynamic_log)
+
+add_executable(service_device device.cpp)
+target_link_libraries(service_device PRIVATE tos_core arch_drivers service_schema tos_dynamic_log)

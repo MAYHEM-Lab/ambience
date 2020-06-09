@@ -1,0 +1,60 @@
+system_status:
+  type: service
+  procedures:
+    get_commit_hash:
+      returns:
+        - string_view
+      parameters:
+    get_build_id:
+      returns:
+        - string_view
+      parameters:
+    get_arch:
+      returns:
+        - string_view
+      parameters:
+
+log_level:
+  type: enumeration
+  members:
+    - trace
+    - debug
+    - info
+
+logger:
+  type: service
+  procedures:
+    start:
+      returns:
+        - bool
+      parameters:
+        level: log_level
+    finish:
+      returns:
+        - bool
+      parameters:
+    log_int:
+      returns:
+        - bool
+      parameters:
+        val: i64
+    log_float:
+      returns:
+        - bool
+      parameters:
+        val: f64
+    log_bool:
+      returns:
+        - bool
+      parameters:
+        val: bool
+    log_string:
+      returns:
+        - bool
+      parameters:
+        val: string_view
+    log_pointer:
+      returns:
+        - bool
+      parameters:
+        val: u64
