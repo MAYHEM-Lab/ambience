@@ -148,4 +148,26 @@ template <class T, class... ArgTs>
 intrusive_ptr<T> make_intrusive(ArgTs&&... args) {
     return intrusive_ptr<T>(new T(std::forward<ArgTs>(args)...));
 }
+
+template <class T, class RefCntT = int8_t>
+class ref_counted {
+public:
+    friend void intrusive_ref(T* t) {
+        static_cast<ref_counted*>(t)->m_refcnt++;
+    }
+
+    friend void intrusive_unref(T* t) {
+
+        static_cast<ref_counted*>(t)->m_refcnt--;
+        if (static_cast<ref_counted*>(t)->m_refcnt == 0) {
+            T::collect(t);
+        }
+    }
+
+    static void collect(T* channel) {
+        delete channel;
+    }
+private:
+    RefCntT m_refcnt;
+};
 } // namespace tos
