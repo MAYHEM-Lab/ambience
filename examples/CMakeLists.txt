@@ -69,3 +69,5 @@ elseif(${TOS_PLATFORM} MATCHES "cc")
 elseif(${TOS_PLATFORM} MATCHES "raspi")
     add_subdirectory(raspiboot)
 endif()
+
+add_subdirectory(service)
