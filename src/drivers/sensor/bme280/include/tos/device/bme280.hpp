@@ -4,13 +4,12 @@
 
 #pragma once
 
-#include <common/bme280/bme280.h>
 #include <common/driver_base.hpp>
 #include <common/i2c.hpp>
+#include <tos/device/bme280/bme280.h>
 #include <tos/expected.hpp>
 
-namespace tos {
-namespace bme280 {
+namespace tos::device::bme280 {
 enum class read_errors : uint8_t
 {
     device_not_found = 254,
@@ -30,19 +29,19 @@ components operator|(const components& a, const components& b) {
 }
 
 template<class I2CT, class DelayT>
-class bme280
-    : public self_pointing<bme280<I2CT, DelayT>>
+class driver
+    : public self_pointing<driver<I2CT, DelayT>>
     , public non_copyable
     , DelayT {
 public:
-    bme280(twi_addr_t addr, I2CT i2c, DelayT delay)
-        : m_i2c(std::move(i2c))
-        , DelayT(std::move(delay)) {
+    driver(twi_addr_t addr, I2CT i2c, DelayT delay)
+        : DelayT(std::move(delay))
+        , m_i2c(std::move(i2c)) {
         m_dev.dev_id = addr.addr;
         m_dev.intf = BME280_I2C_INTF;
 
         m_dev.delay_ms = [](uint32_t ms, void* user) {
-            auto self = static_cast<bme280*>(user);
+            auto self = static_cast<driver*>(user);
             static_cast<DelayT&> (*self)(std::chrono::milliseconds{ms});
         };
 
@@ -51,12 +50,11 @@ public:
                         uint8_t* reg_data,
                         uint16_t len,
                         void* user) -> int8_t {
-            auto self = static_cast<bme280*>(user);
+            auto self = static_cast<driver*>(user);
             auto t = self->m_i2c->transmit({dev_id}, tos::monospan(reg_addr));
             if (t != twi_tx_res::ok)
                 return 1;
-            auto r = self->m_i2c->receive(
-                {dev_id}, tos::span<uint8_t>(reg_data, len));
+            auto r = self->m_i2c->receive({dev_id}, tos::span<uint8_t>(reg_data, len));
             return r != twi_rx_res::ok;
         };
 
@@ -65,7 +63,7 @@ public:
                          uint8_t* reg_data,
                          uint16_t len,
                          void* user) -> int8_t {
-            auto self = static_cast<bme280*>(user);
+            auto self = static_cast<driver*>(user);
             uint8_t wb[32] = {reg_addr};
             if (len > std::size(wb) - 1)
                 return 1;
@@ -80,7 +78,7 @@ public:
         bme280_init(&m_dev);
     }
 
-    bme280(bme280&& rhs)
+    driver(driver&& rhs)
         : m_dev{rhs.m_dev}
         , m_i2c{std::move(rhs.m_i2c)} {
         m_dev.user = this;
@@ -125,5 +123,4 @@ private:
     I2CT m_i2c;
     bme280_dev m_dev;
 };
-} // namespace bme280
-} // namespace tos
+} // namespace tos::device::bme280

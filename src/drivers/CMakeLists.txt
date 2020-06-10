@@ -94,12 +94,6 @@ add_library(tos_bmp280 include/common/bmp280.hpp src/bmp280.cpp)
 target_link_libraries(tos_bmp280 PUBLIC tos_core tos_i2c)
 tos_install(tos_bmp280 ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(tos_bme280 src/bme280/bme280.c include/common/bme280/bme280.h include/common/bme280/bme280_defs.h include/common/bme280.hpp)
-target_link_libraries(tos_bme280 PUBLIC tos_core tos_i2c)
-tos_install(tos_bme280 ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_compile_features(tos_bme280 PUBLIC cxx_std_14)
-target_compile_definitions(tos_bme280 PUBLIC BME280_FLOAT_ENABLE)
-
 add_library(tos_epd include/common/epd/waveshare/bw29.hpp src/stub.cpp)
 target_link_libraries(tos_epd PUBLIC tos_core tos_spi)
 tos_install(tos_epd ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -130,4 +124,4 @@ if (${TOS_PLATFORM} MATCHES "stm32")
 add_subdirectory(src/spbtle-rf)
 endif()
 
-add_subdirectory(hts221)
+add_subdirectory(sensor)

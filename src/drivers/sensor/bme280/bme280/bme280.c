@@ -48,7 +48,7 @@
 /*! @file bme280.c
  * @brief Sensor driver for BME280 sensor
  */
-#include "common/bme280/bme280.h"
+#include "tos/device/bme280/bme280.h"
 
 /**\name Internal macros */
 /* To identify osr settings selected by user */
