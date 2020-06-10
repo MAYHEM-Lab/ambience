@@ -99,4 +99,11 @@ using i2c_t = dev<struct _i2c_t, N>;
 template<int N>
 static constexpr i2c_t<N> i2c{};
 } // namespace devs
+
+struct any_i2c {
+public:
+    virtual twi_tx_res transmit(i2c::address7, span<const uint8_t>) = 0;
+    virtual twi_rx_res receive(i2c::address7, span<uint8_t>) = 0;
+    virtual ~any_i2c() = 0;
+};
 } // namespace tos
