@@ -3,8 +3,7 @@
 //
 
 #include <arch/drivers.hpp>
-#include <common/bme280.hpp>
-#include <common/bme280/bme280.h>
+#include <tos/device/bme280.hpp>
 #include <tos/expected.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
@@ -24,8 +23,8 @@ void bme_task() {
 
     tos::stm32::i2c t{tos::stm32::detail::i2cs[0], 22_pin, 23_pin};
 
-    using namespace tos::bme280;
-    bme280 b{{BME280_I2C_ADDR_PRIM}, &t, delay};
+    using namespace tos::device::bme280;
+    driver b{{BME280_I2C_ADDR_PRIM}, &t, delay};
     b.set_config();
 
     tos::omemory_stream log(buf);
@@ -41,9 +40,7 @@ void bme_task() {
                              int(comp_data.pressure),
                              int(comp_data.humidity));
             },
-            [&](auto& err) {
-                tos::println(log, "Error!", int(err));
-            });
+            [&](auto& err) { tos::println(log, "Error!", int(err)); });
     }
 }
 
