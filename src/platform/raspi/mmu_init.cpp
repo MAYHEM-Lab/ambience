@@ -121,7 +121,7 @@ void mmu_init() {
         (25LL << 0);     // T0SZ=25, 3 levels (512G)
     asm volatile("msr tcr_el1, %0; isb" : : "r"(r));
 
-    asm volatile("msr ttbr0_el1, %0" : : "r"(reinterpret_cast<uint64_t>(&root)));
+    asm volatile("msr ttbr0_el1, %0" : : "r"(reinterpret_cast<uint64_t>(&page.pgd[0])));
 
     // finally, toggle some bits in system control register to enable page translation
     asm volatile("dsb ish; isb; mrs %0, sctlr_el1" : "=r"(r));
