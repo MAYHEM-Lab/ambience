@@ -18,8 +18,8 @@
 
 #include "gp_timer.h"
 
-namespace tos::spbtle {
-extern tos::any_alarm* alarm_ptr;
+namespace tos::device::spbtle {
+tos::any_alarm* get_alarm();
 }
 
 #ifdef __cplusplus
@@ -221,7 +221,7 @@ int hci_send_req(struct hci_request *r, BOOL async)
   hci_event_pckt *event_pckt;
   hci_uart_pckt *hci_hdr;
   int to = DEFAULT_TIMEOUT;
-  timer t{*tos::spbtle::alarm_ptr};
+  timer t{*tos::device::spbtle::get_alarm()};
 
   tHciDataPacket * hciReadPacket = NULL;
   tListNode hciTempQueue;

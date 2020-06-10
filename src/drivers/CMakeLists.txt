@@ -120,8 +120,5 @@ add_library(tos_inet
         include/common/inet/lwip.hpp)
 tos_install(tos_inet ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-if (${TOS_PLATFORM} MATCHES "stm32")
-add_subdirectory(src/spbtle-rf)
-endif()
-
 add_subdirectory(sensor)
+add_subdirectory(ble)
