@@ -5,14 +5,16 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <type_traits>
 #include <utility>
 
 namespace tos {
 template<class T>
 class intrusive_ptr {
-    template <class U>
+    template<class U>
     friend class intrusive_ptr;
+
 public:
     using element_type = T;
 
@@ -27,19 +29,21 @@ public:
         : m_ptr(nullptr) {
     }
 
-    template <class U, std::enable_if_t<std::is_convertible_v<U*, T*>>* = nullptr>
+    template<class U, std::enable_if_t<std::is_convertible_v<U*, T*>>* = nullptr>
     explicit intrusive_ptr(U* t)
         : m_ptr(t) {
         intrusive_ref(m_ptr);
     }
 
-    template <class U, std::enable_if_t<std::is_convertible_v<U*, T*>>* = nullptr>
-    intrusive_ptr(const intrusive_ptr<U>& rhs) : m_ptr(rhs.m_ptr) {
+    template<class U, std::enable_if_t<std::is_convertible_v<U*, T*>>* = nullptr>
+    intrusive_ptr(const intrusive_ptr<U>& rhs)
+        : m_ptr(rhs.m_ptr) {
         intrusive_ref(m_ptr);
     }
 
-    template <class U, std::enable_if_t<std::is_convertible_v<U*, T*>>* = nullptr>
-    intrusive_ptr(intrusive_ptr<U>&& rhs) : m_ptr(rhs.m_ptr) {
+    template<class U, std::enable_if_t<std::is_convertible_v<U*, T*>>* = nullptr>
+    intrusive_ptr(intrusive_ptr<U>&& rhs)
+        : m_ptr(rhs.m_ptr) {
         rhs.m_ptr = nullptr;
     }
 
@@ -118,38 +122,38 @@ private:
     T* m_ptr;
 };
 
-template <class T>
+template<class T>
 bool operator==(const intrusive_ptr<T>& left, const intrusive_ptr<T>& right) {
     return left.get() == right.get();
 }
 
-template <class T>
+template<class T>
 bool operator!=(const intrusive_ptr<T>& left, const intrusive_ptr<T>& right) {
     return left.get() != right.get();
 }
 
-template <class T>
+template<class T>
 bool operator==(const intrusive_ptr<T>& left, std::nullptr_t) {
     return left.get() == nullptr;
 }
 
-template <class T>
+template<class T>
 bool operator!=(std::nullptr_t, const intrusive_ptr<T>& right) {
     return nullptr != right.get();
 }
 
-template <class U, class T>
+template<class U, class T>
 intrusive_ptr<U> static_pointer_cast(intrusive_ptr<T> ptr) {
     static_assert(std::is_base_of_v<T, U>);
     return intrusive_ptr<U>(static_cast<U*>(ptr.get()));
 }
 
-template <class T, class... ArgTs>
+template<class T, class... ArgTs>
 intrusive_ptr<T> make_intrusive(ArgTs&&... args) {
     return intrusive_ptr<T>(new T(std::forward<ArgTs>(args)...));
 }
 
-template <class T, class RefCntT = int8_t>
+template<class T, class RefCntT = int8_t>
 class ref_counted {
 public:
     friend void intrusive_ref(T* t) {
@@ -167,6 +171,7 @@ public:
     static void collect(T* channel) {
         delete channel;
     }
+
 private:
     RefCntT m_refcnt;
 };
