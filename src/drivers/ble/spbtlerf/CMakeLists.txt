@@ -1,6 +1,8 @@
-if (${TOS_PLATFORM} MATCHES "stm32")
-    add_subdirectory(spbtle-rf)
+if (NOT ${TOS_PLATFORM} MATCHES "stm32")
+    return()
 endif ()
+
+add_subdirectory(spbtle-rf)
 
 add_library(tos_spbtlerf
         include/tos/device/spbtlerf/common.hpp
