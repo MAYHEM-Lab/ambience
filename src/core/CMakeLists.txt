@@ -40,6 +40,11 @@ add_library(tos_debug_log
 target_include_directories(tos_debug_log PUBLIC include)
 target_link_libraries(tos_debug_log PUBLIC tos_util_core tos_print)
 
+add_lidlc(log_schema log.yaml)
+add_library(lidl_log_sink include/tos/debug/sinks/lidl_sink.hpp src/lidl_sink.cpp)
+target_include_directories(tos_debug_log PUBLIC include)
+target_link_libraries(lidl_log_sink PUBLIC tos_debug_log log_schema tos_ft)
+
 add_library(tos_dynamic_log src/dynamic_log.cpp include/tos/debug/dynamic_log.hpp)
 target_link_libraries(tos_dynamic_log PUBLIC tos_debug_log)
 

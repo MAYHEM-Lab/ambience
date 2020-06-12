@@ -1,0 +1,54 @@
+log_level:
+  type: enumeration
+  members:
+    - none
+    - trace
+    - debug
+    - info
+    - log
+    - warning
+    - error
+    - fatal
+
+logger:
+  type: service
+  procedures:
+    start:
+      returns:
+        - bool
+      parameters:
+        level: log_level
+    finish:
+      returns:
+        - bool
+      parameters:
+    log_int:
+      returns:
+        - bool
+      parameters:
+        val: i64
+    log_float:
+      returns:
+        - bool
+      parameters:
+        val: f64
+    log_bool:
+      returns:
+        - bool
+      parameters:
+        val: bool
+    log_string:
+      returns:
+        - bool
+      parameters:
+        val: string_view
+    log_pointer:
+      returns:
+        - bool
+      parameters:
+        val: u64
+    log_log_level:
+      returns:
+        - bool
+      parameters:
+        val: log_level
