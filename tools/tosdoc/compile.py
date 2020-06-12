@@ -5,6 +5,7 @@ import subprocess
 from shutil import copyfile
 import os
 from jinja2 import Template
+from urllib.parse import urlparse
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 pagetemplate = Template(open(os.path.join(script_dir, "templates/page.html.jinja")).read())
@@ -57,6 +58,9 @@ def compile_highlevel(inpath: str, outpath: str, rootdir: str):
         in_dir = os.path.dirname(inpath)
         out_dir = os.path.dirname(outpath)
         for src in assets:
+            parsed = urlparse(src)
+            if (parsed.scheme == 'http' or parsed.scheme == 'https'):
+                continue
             copyfile(os.path.join(in_dir, src), os.path.join(out_dir, src))
         with open(outpath, 'w+') as out:
             out.write(compiled)
