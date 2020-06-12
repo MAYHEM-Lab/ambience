@@ -1,0 +1,31 @@
+= Supported Targets
+
+This page lists the currently supported and tested targets in Tos.
+
+== Targets
+
+. arm
+.. STM32
+... STM32F103   (Cortex M3)
+... STM32F746   (Cortex M7)
+... STM32L475   (Cortex M4)
+... STM32L053   (Cortex M0+)
+.. Nordic
+... nRF52832    (Cortex M4)
+... nRF52840    (Cortex M4)
+.. Texas Instruments
+... cc3220sf    (Cortex M4)
+. x86
+.. User Space
+... Linux
+... macOS
+. aarch64
+.. Broadcom
+... BCM2837     (Cortex A53)
+.... Raspberry Pi 3
+.. User Space
+... Linux
+. xtensa
+.. Esp8266
+. avr
+.. atmega328p
