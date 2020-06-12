@@ -58,7 +58,7 @@ def make_index(parts):
     return ret
 
 
-def make_indices(cur_dir, index):
+def make_indices(build_dir, cur_dir, index):
     def is_dir(key):
         return index[key] != []
 
@@ -67,18 +67,18 @@ def make_indices(cur_dir, index):
 
     for key in index:
         if (is_dir(key)):
-            generated += make_indices(os.path.join(cur_dir, key), index[key])
+            generated += make_indices(build_dir, os.path.join(cur_dir, key), index[key])
             elems.append(key)
             continue
         elems.append(os.path.splitext(key)[0] + ".html")
 
-    with open(os.path.join(cur_dir, "index.html"), "w") as f:
+    with open(os.path.join(build_dir, cur_dir, "index.html"), "w") as f:
         f.write(dirtemplate.render({
-            'name': cur_dir, #os.path.basename(cur_dir),
+            'name': os.path.join("/", cur_dir),
             'elems': elems
         }))
 
-    generated.append(os.path.join(cur_dir, "index.html"))
+    generated.append(os.path.join(build_dir, cur_dir, "index.html"))
 
     return generated
 
@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
     print("Generating index...")
     index = make_index([os.path.relpath(file, root_dir).split(os.path.sep) for file in files])
-    generated = make_indices(build_dir, index)
+    generated = make_indices(build_dir, "", index)
     generated = [os.path.relpath(file, build_dir) for file in generated]
 
     ninja.build(
