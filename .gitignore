@@ -9,3 +9,4 @@ workspace/
 CMakeSettings.json
 .clangd
 compile_commands.json
+**/__pycache__
