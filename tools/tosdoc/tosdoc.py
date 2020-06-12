@@ -16,7 +16,9 @@ pp = pprint.PrettyPrinter(indent=4)
 
 
 def discover_files(root) -> [str]:
-    return glob.glob(os.path.join(root, "**/docs/**/*.adoc"), recursive=True)
+    docdirs = glob.glob(os.path.join(root, "**/docs/**/*.adoc"), recursive=True)
+    readmes = glob.glob(os.path.join(root, "**/Readme.adoc"), recursive=True)
+    return docdirs + readmes
 
 
 def make_compile_command(root):
