@@ -82,8 +82,8 @@ static constexpr spi_t<N> spi{};
 } // namespace devs
 
 struct any_spi : public self_pointing<any_spi> {
-    virtual void write(span<const char>) = 0;
-    virtual void exchange(span<char>, span<const char>) = 0;
+    virtual void write(span<const uint8_t>) = 0;
+    virtual void exchange(span<uint8_t>, span<const uint8_t>) = 0;
     virtual ~any_spi() = default;
 };
 } // namespace tos
