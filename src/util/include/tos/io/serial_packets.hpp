@@ -90,7 +90,7 @@ private:
     bool m_stop = false;
     void thread() {
         send(0, tos::empty_span<const uint8_t>());
-        LOG("Serial packets thread running");
+//        LOG("Serial packets thread running");
         while (!m_stop) {
             auto rd = next_packet();
             if (rd) {
