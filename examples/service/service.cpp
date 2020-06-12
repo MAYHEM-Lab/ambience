@@ -1,9 +1,13 @@
+#include "remote_service.hpp"
+#include "service_handler.hpp"
+
 #include <arch/drivers.hpp>
 #include <service_generated.hpp>
 #include <tos/build.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/debug/sinks/clock_adapter.hpp>
+#include <tos/debug/sinks/lidl_sink.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/ft.hpp>
 #include <tos/io/channel.hpp>
@@ -22,74 +26,9 @@ public:
     }
 };
 
-class log_server : public logger {
-public:
-    explicit log_server(tos::debug::detail::any_sink& sink)
-        : m_sink{&sink} {
-    }
-
-    bool start(const log_level& level) override {
-        tos::debug::log_level lvl;
-        switch (level) {
-        case log_level::trace:
-            lvl = tos::debug::log_level::trace;
-            break;
-        case log_level::debug:
-            lvl = tos::debug::log_level::debug;
-            break;
-        case log_level::info:
-            lvl = tos::debug::log_level::info;
-            break;
-        }
-        return m_sink->begin(lvl);
-    }
-    bool finish() override {
-        m_sink->end();
-        return true;
-    }
-    bool log_int(const int64_t& val) override {
-        m_sink->add(val);
-        return true;
-    }
-    bool log_float(const double& val) override {
-        m_sink->add(val);
-        return true;
-    }
-    bool log_bool(const bool& val) override {
-        m_sink->add(val);
-        return true;
-    }
-    bool log_string(std::string_view val) override {
-        m_sink->add(val);
-        return true;
-    }
-    bool log_pointer(const uint64_t& val) override {
-        m_sink->add(reinterpret_cast<void*>(val));
-        return true;
-    }
-
-private:
-    tos::debug::detail::any_sink* m_sink;
-};
-
-class remote_service {
-public:
-    explicit remote_service(tos::intrusive_ptr<tos::io::any_channel> channel)
-        : m_channel{std::move(channel)} {
-    }
-
-protected:
-    tos::intrusive_ptr<tos::io::packet> send_receive(tos::span<const uint8_t> send_buf) {
-        m_channel->send(send_buf);
-        return m_channel->receive();
-    }
-
-    tos::intrusive_ptr<tos::io::any_channel> m_channel;
-};
-
 class remote_system
     : public system_status
-    , public remote_service {
+    , public lidl::remote_service {
 public:
     using remote_service::remote_service;
 
@@ -149,8 +88,29 @@ void service_main() {
         get_io(), "/dev/ttyACM0", tos::uart::default_115200);
     auto transport = tos::io::serial_packets{std::move(link)};
 
+    tos::launch(tos::alloc_stack, [&] {
+        tos::debug::serial_sink sink(tos::hosted::stderr_adapter{}, "remote");
+        tos::debug::log_server log_server(sink);
+
+        auto rep_handler = make_request_handler<logger>();
+        auto channel = transport.get_channel(4);
+        while (true) {
+            auto packet = channel->receive();
+            std::array<uint8_t, 256> resp_buf;
+            lidl::message_builder build(resp_buf);
+            rep_handler(log_server, lidl::buffer{packet->data()}, build);
+            auto response = build.get_buffer().get_buffer().slice(0, build.size());
+            channel->send(response);
+        }
+    });
+
     remote_system remote_sys{transport.get_channel(3)};
     query_sys(remote_sys);
+
+    tos::this_thread::block_forever();
+}
+
+void service_broker() {
 }
 
 void tos_main() {
