@@ -35,7 +35,8 @@ add_library(tos_debug_log
         include/tos/debug/detail/log_message.hpp
         include/tos/debug/sinks/serial_sink.hpp
         include/tos/debug/sinks/null_sink.hpp
-        include/tos/debug/sinks/sink.hpp include/tos/debug/sinks/clock_adapter.hpp)
+        include/tos/debug/sinks/sink.hpp
+        include/tos/debug/sinks/clock_adapter.hpp)
 target_include_directories(tos_debug_log PUBLIC include)
 target_link_libraries(tos_debug_log PUBLIC tos_util_core tos_print)
 
