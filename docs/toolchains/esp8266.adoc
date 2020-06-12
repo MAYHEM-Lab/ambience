@@ -1,0 +1,9 @@
+= ESP8266 Toolchain
+
+== Setup
+
+. Download the toolchain from https://github.com/earlephilhower/esp-quick-toolchain/releases/tag/3.0.0-gnu10[here]
+. Install it somewhere we can find:
+.. On Linux and macOS, extract it in `/opt/x-tools`
+.. On Windows, extract it in `C:/x-tools`
+. That's it!

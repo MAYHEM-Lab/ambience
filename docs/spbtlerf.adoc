@@ -1,0 +1,10 @@
+= SPBTLE-RF
+
+This document contains information regarding the bluetooth modem
+by ST.
+
+== Relevant Links
+
+. https://www.st.com/en/wireless-transceivers-mcus-and-modules/spbtle-rf.html
+. https://github.com/stm32duino/SPBTLE-RF
+.

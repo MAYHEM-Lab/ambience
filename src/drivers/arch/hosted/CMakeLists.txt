@@ -65,4 +65,3 @@ else()
 endif()
 
 add_library(arch_drivers ALIAS hosted_drivers)
-add_subdirectory(docs)

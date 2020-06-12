@@ -2,14 +2,12 @@ cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libs/tosdoc")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libs/ubench")
 
 include(config/HandleConfig.cmake)
 
 project(tos VERSION 0.1.0)
 
-option(BUILD_DOCS "Build documentation" OFF)
 option(BUILD_TESTS "Build unit tests, only works on hosted x86" OFF)
 option(BUILD_EXAMPLES "Build examples" ON)
 
@@ -31,5 +29,3 @@ if (BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
-
-add_subdirectory(docs)

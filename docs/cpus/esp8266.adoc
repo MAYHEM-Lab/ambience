@@ -1,5 +1,10 @@
 = ESP8266
 
+== Setup
+
+. Install the toolchain
+.. Instructions are here: <<../toolchains/esp8266.adoc#Setup, here>>
+
 == `esptool.py`
 
 Programming the esp8266s are performed over a program supplied

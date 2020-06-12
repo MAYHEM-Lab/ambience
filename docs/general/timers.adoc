@@ -1,4 +1,5 @@
-= Timers, Clocks and Alarms
+= Time keeping in Tos
+<fatih, mfatihbakir@ucsb.edu>
 
 Keeping track of time is an important responsibility of an operating system. This document explains how
 we manage time in tos.

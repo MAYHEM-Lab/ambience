@@ -25,13 +25,16 @@ Install the dependencies:
 ----
 $ sudo apt-get install -y make libtool pkg-config autoconf automake texinfo libusb-1.0
 ----
-or on macos 
+or on macos
+
+[source,sh]
 ----
 $ brew install libtool autoconf automake texinfo libusb 
 ----
 
 Then configure:
 
+[source,sh]
 ----
 $ CFLAGS="-Wno-error" ./configure
 ----
@@ -40,6 +43,7 @@ The `-Wno-error` is needed with new compilers as the openocd source contains a b
 
 Then compile:
 
+[source,sh]
 ----
 $ make -j8
 ----
@@ -56,6 +60,7 @@ There are 2 parts to this debugging thing. First is your _target_, i.e. the chip
 
 Once you have this information you can attach to your target through your interface. For instance:
 
+[source,sh]
 ----
 $ openocd -f interface/stlink.cfg -f target/stm32l0.cfg
 ----
@@ -84,6 +89,7 @@ When you attach to a target with `openocd`, it opens a remote gdb server on the 
 
 The default gdb port is 3333 on openocd. To connect to it, launch up the _correct_ gdb with the correct file for the program running on the device:
 
+[source,sh]
 ----
 $ /opt/x-tools/gcc-arm-none-eabi-8-2018-q4-major/bin/arm-none-eabi-gdb my_firmware
 ----
@@ -106,8 +112,9 @@ As we compile our own version of `openocd`, it's not going to be able to find th
 
 One solution is to give it absolute paths like `/home/foo/openocd/tcl/target/stm32l0.cfg`. That's nice, but it's a mouthful. Also, if that config file includes another file, it'll again be searched in the wrong place or won't be found.
 
-The solution is to give `openocd` a _search path_: 
+The solution is to give `openocd` a _search path_:
 
+[source,sh]
 ----
 $ openocd -s ~/openocd/tcl -f target/stm32l0.cfg -f interface/stlink.cfg
 ----
@@ -116,6 +123,7 @@ $ openocd -s ~/openocd/tcl -f target/stm32l0.cfg -f interface/stlink.cfg
 
 Some boards have both the target and the interface on them. And fortunately, openocd is aware of _some_ of them. If your board is one of the lucky ones, you can just pass a board file:
 
+[source,sh]
 ----
 $ openocd -s ~/openocd/tcl -f board/nordic_nrf52_dk.cfg
 ----

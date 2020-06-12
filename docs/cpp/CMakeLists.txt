@@ -1,1 +1,0 @@
-add_tosdoc(callbacks.adoc)
