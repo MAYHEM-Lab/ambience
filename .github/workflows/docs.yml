@@ -13,18 +13,21 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: FatihBAKIR/checkout@v2
-      
     - name: Install ruby
-      run: apt-get install -y ruby
+      run: sudo apt-get install -y ruby
     
     - name: Install bundle
+      run: sudo gem install bundle
+    
+    - name: Install asciidoctor
       run: bundle install asciidoctor
     
     - name: Install python
-      run: apt-get install -y python3-pip
+      run: sudo apt-get install -y python3-pip
 
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: FatihBAKIR/checkout@v2
+      
     - name: CD workspace
       run: cd $GITHUB_WORKSPACE
 
