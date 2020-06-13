@@ -16,11 +16,8 @@ jobs:
     - name: Install ruby
       run: sudo apt-get install -y ruby
     
-    - name: Install bundle
-      run: sudo gem install bundle
-    
     - name: Install asciidoctor
-      run: bundle install asciidoctor
+      run: sudo gem install asciidoctor
     
     - name: Install python
       run: sudo apt-get install -y python3-pip
