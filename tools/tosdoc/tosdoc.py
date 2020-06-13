@@ -112,7 +112,7 @@ if __name__ == "__main__":
         implicits.append(outpath)
         ninja.build(rule="tosdocc", inputs=[file], outputs=[outpath])
 
-    shutil.rmtree(os.path.join(build_dir, "assets"))
+    shutil.rmtree(os.path.join(build_dir, "assets"), ignore_errors=True)
     shutil.copytree(os.path.join(script_dir, "assets"), os.path.join(build_dir, "assets"))
 
     print("Generating index...")
