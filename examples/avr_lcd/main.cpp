@@ -29,9 +29,6 @@ void lcd_main() {
         lcd.set_cursor(0, 0);
         tos::print(lcd, "Tos");
 
-        lcd.set_cursor(0, 1);
-        tos::print(lcd, tos::platform::arch_name, tos::platform::vendor_name);
-
         lcd.set_cursor(0, 2);
         tos::print(lcd,
                    tos::span<const char>(tos::build::commit_hash())

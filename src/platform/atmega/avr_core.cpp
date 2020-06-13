@@ -6,12 +6,12 @@
 #include <avr/wdt.h>
 
 #include <tos/compiler.hpp>
-#include <tos_arch.hpp>
 #include <cstddef>
+#include <tos/avr/interrupts.hpp>
 
 [[noreturn]] void reset_cpu()
 {
-    tos_disable_interrupts();
+    tos::avr::disable_interrupts();
     wdt_enable(WDTO_15MS);
     while (true){}
 }

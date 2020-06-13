@@ -1,8 +1,8 @@
 #pragma once
 
-#include <arch/cmsis.hpp>
 #include <cstddef>
 #include <cstdint>
+#include <tos/arm/cmsis.hpp>
 #include <tos/span.hpp>
 
 namespace tos::arm {

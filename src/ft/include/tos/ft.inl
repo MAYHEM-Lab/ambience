@@ -152,7 +152,7 @@ TOS_SIZE_OPTIMIZE inline thread_id_t scheduler::start(TaskT& t) {
      * set the stack pointer so the new thread will have an
      * independent execution context
      */
-    tos_set_stack_ptr(reinterpret_cast<char*>(global::cur_thread));
+    arch::set_stack_ptr(reinterpret_cast<char*>(global::cur_thread));
 
     static_cast<TaskT*>(global::cur_thread)->start();
 

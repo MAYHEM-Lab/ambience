@@ -2,7 +2,6 @@
 // Created by fatih on 12/26/19.
 //
 
-#include <arch/assembly.hpp>
 #include <arch/detail/sock_rt.hpp>
 #include <arch/tcp.hpp>
 #include <arch/udp.hpp>

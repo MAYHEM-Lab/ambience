@@ -1,4 +1,4 @@
-#include <arch/core.hpp>
+#include <tos/arm/core.hpp>
 #include <arch/drivers.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/clock_adapter.hpp>

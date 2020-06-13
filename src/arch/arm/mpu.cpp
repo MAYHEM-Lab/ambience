@@ -1,6 +1,6 @@
-#include <arch/cmsis.hpp>
-#include <arch/mpu.hpp>
-#include <arch/nvic.hpp>
+#include <tos/arm/cmsis.hpp>
+#include <tos/arm/mpu.hpp>
+#include <tos/arm/nvic.hpp>
 #include <tos/barrier.hpp>
 
 #if defined(MPU)

@@ -45,7 +45,6 @@ void task() {
     auto usart = open(tos::devs::usart<0>, usconf);
 
     tos::print(usart, "\n\n\n\n\n\n");
-    tos::println(usart, tos::platform::board_name);
 
     tos::esp82::wifi w;
 

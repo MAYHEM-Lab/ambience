@@ -1,1 +1,4 @@
-add_library(arch_xtensa INTERFACE)
+add_library(arch_xtensa
+        arch.cpp)
+target_include_directories(arch_xtensa PUBLIC include)
+target_link_libraries(arch_xtensa PUBLIC tos_util_core)

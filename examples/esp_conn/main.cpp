@@ -22,7 +22,6 @@ void task() {
     auto usart = open(tos::devs::usart<0>, tos::uart::default_115200);
 
     tos::println(usart, "\n\n\n\n");
-    tos::println(usart, tos::platform::board_name);
     tos::println(usart, tos::build::commit_hash());
 
     int rd_loop = 0;

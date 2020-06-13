@@ -16,21 +16,6 @@ extern "C" {
 #include <tos/compiler.hpp>
 
 extern "C" {
-#define xt_rsil(level)                                                                   \
-    (__extension__({                                                                     \
-        uint32_t state;                                                                  \
-        __asm__ __volatile__("rsil %0," #level ";\nesync;" : "=a"(state)::"memory");     \
-        state;                                                                           \
-    }))
-
-void ICACHE_FLASH_ATTR tos_enable_interrupts() {
-    xt_rsil(0);
-}
-
-void ICACHE_FLASH_ATTR tos_disable_interrupts() {
-    xt_rsil(15);
-}
-
 [[noreturn]] void tos_force_reset() {
     // esp sdk should reset
     while (true) {

@@ -7,7 +7,7 @@
 #include "tos/thread.hpp"
 
 #include <arch/drivers.hpp>
-#include <arch/mpu.hpp>
+#include <tos/arm/mpu.hpp>
 #include <optional>
 #include <tos/barrier.hpp>
 #include <tos/debug/dynamic_log.hpp>

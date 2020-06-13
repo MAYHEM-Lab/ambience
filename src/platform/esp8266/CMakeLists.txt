@@ -1,8 +1,8 @@
 project(tos CXX ASM)
 
 set(SDK_ROOT /opt/x-tools/tos-esp-sdk)
-add_library(esp8266_core esp_core.cpp include/tos_arch.hpp include/user_config.h native.s include/lx106_missing.hpp include/tos_platform.hpp)
-target_link_libraries(esp8266_core PUBLIC tos_util_core esp_sdk)
+add_library(esp8266_core esp_core.cpp include/user_config.h native.s include/lx106_missing.hpp)
+target_link_libraries(esp8266_core PUBLIC tos_util_core esp_sdk tos_arch_core)
 tos_install(esp8266_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(esp8266_impl esp_impl.cpp)

@@ -14,7 +14,7 @@ namespace debug {
 template<class LogT>
 NO_INLINE void dump_stack(LogT& log) {
     auto stack_top = tos::this_thread::get_id().id;
-    auto cur_stack = reinterpret_cast<uintptr_t>(tos_get_stack_ptr());
+    auto cur_stack = reinterpret_cast<uintptr_t>(arch::get_stack_ptr());
     auto cur_ptr = reinterpret_cast<uint8_t*>(cur_stack);
     auto size = stack_top - cur_stack;
     auto stack_span = tos::span<const uint8_t>(cur_ptr, size);

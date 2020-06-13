@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <tos/arch.hpp>
 #include <tos/barrier.hpp>
+#include <tos/platform.hpp>
 
 namespace tos {
 namespace global {
@@ -16,7 +17,7 @@ namespace kern {
 inline void disable_interrupts() {
     tos::detail::memory_barrier();
     if (global::disable_depth == 0) {
-        tos_disable_interrupts();
+        platform::disable_interrupts();
     }
     global::disable_depth++;
     tos::detail::memory_barrier();
@@ -32,7 +33,7 @@ inline void enable_interrupts() {
     tos::detail::memory_barrier();
     global::disable_depth--;
     if (global::disable_depth == 0) {
-        tos_enable_interrupts();
+        platform::enable_interrupts();
     }
     tos::detail::memory_barrier();
 }
@@ -47,9 +48,9 @@ inline void enable_interrupts() {
  */
 inline void refresh_interrupts() {
     if (global::disable_depth > 0) {
-        tos_disable_interrupts();
+        platform::disable_interrupts();
     } else {
-        tos_enable_interrupts();
+        platform::enable_interrupts();
     }
 }
 } // namespace kern
