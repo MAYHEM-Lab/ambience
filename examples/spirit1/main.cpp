@@ -4,7 +4,6 @@
 
 #include "common/spi.hpp"
 #include "tos/stack_storage.hpp"
-#include "tos_arch.hpp"
 
 #include <MCU_Interface.h>
 #include <SPIRIT_Config.h>

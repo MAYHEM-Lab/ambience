@@ -1,8 +1,8 @@
-#include "arch/assembly.hpp"
+#include "tos/arm/assembly.hpp"
 #include "tos/debug/assert.hpp"
 
-#include <arch/cmsis.hpp>
-#include <arch/nvic.hpp>
+#include <tos/arm/cmsis.hpp>
+#include <tos/arm/nvic.hpp>
 #include <tos/interrupt.hpp>
 
 namespace tos::arm {

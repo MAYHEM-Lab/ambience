@@ -1,8 +1,8 @@
 project(tos CXX ASM)
 
-add_library(nrf52_core nrf52_core.cpp include/tos_arch.hpp)
+add_library(nrf52_core nrf52_core.cpp)
 tos_install(nrf52_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(nrf52_core PUBLIC tos_util_core nrf5-sdk)
+target_link_libraries(nrf52_core PUBLIC tos_util_core nrf5-sdk tos_arch_core)
 
 add_library(nrf52_impl nrf52_impl.cpp startup.S)
 tos_install(nrf52_impl ${CMAKE_CURRENT_SOURCE_DIR}/include)

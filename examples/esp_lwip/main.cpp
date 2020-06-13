@@ -15,6 +15,7 @@
 #include <tos/print.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/utility.hpp>
+#include <tos/build.hpp>
 
 extern "C" {
 #include <mem.h>
@@ -32,7 +33,6 @@ void task() {
     auto usart = open(tos::devs::usart<0>, usconf);
 
     tos::print(usart, "\n\n\n\n\n\n");
-    tos::println(usart, tos::platform::board_name);
 
     tos::esp82::wifi w;
 conn:
@@ -99,7 +99,7 @@ conn:
                         ep->write(req);
                         tos::println(*ep, "</code><br/>");
                         tos::println(*ep, "<ul>");
-                        tos::println(*ep, "<li>", tos::platform::board_name, "</li>");
+                        tos::println(*ep, "<li>", tos::build::platform(), "</li>");
                         tos::println(
                             *ep, "<li>", int(system_get_free_heap_size()), "</li>");
                         tos::println(*ep, "<li>", int(system_get_time()), "</li>");

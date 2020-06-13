@@ -6,7 +6,6 @@ add_subdirectory(external)
 add_subdirectory(external/${HAL_NAME})
 
 add_library(stm32_hal_core
-        include/tos_arch.hpp
         core.cpp
         include/stm32_hal/dma.hpp
         include/stm32_hal/hal.hpp
@@ -16,7 +15,7 @@ add_library(stm32_hal_core
         include/stm32_hal/usart.hpp
         include/stm32_hal/tim.hpp
         include/stm32_hal/spi.hpp
-        include/stm32_hal/ll_exti.hpp)
+        include/stm32_hal/ll_exti.hpp include/tos/platform.hpp)
 
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/${HAL_NAME}/soc")
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/${HAL_NAME}/drivers/include")

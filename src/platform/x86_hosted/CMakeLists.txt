@@ -1,6 +1,6 @@
 project(tos CXX ASM)
 
-add_library(x86_hosted_core x86_core.cpp include/tos_arch.hpp)
+add_library(x86_hosted_core x86_core.cpp include/tos/platform.hpp)
 # Without this flag, the runtime detects us jumping into the middle of a stack and complains.
 # Crazy, right?
 target_compile_options(x86_hosted_core PUBLIC "-U_FORTIFY_SOURCE")

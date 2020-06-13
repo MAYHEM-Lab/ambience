@@ -5,7 +5,6 @@
 #include <avr/io.h>
 #include <avr/wdt.h>
 
-#include <tos_arch.hpp>
 #include <tos/arch.hpp>
 
 #include <avr/power.h>

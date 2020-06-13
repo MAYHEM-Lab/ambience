@@ -4,7 +4,7 @@
 #include <memory>
 #include <tos/expected.hpp>
 #include <tos/span.hpp>
-#include <tos_arch.hpp>
+#include <tos/platform.hpp>
 
 namespace tos::hosted {
 struct error_code {

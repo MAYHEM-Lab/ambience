@@ -18,7 +18,6 @@ void spi_task() {
     auto usart = open(tos::devs::usart<0>, tos::uart::default_9600);
 
     tos::print(usart, "\n\n\n\n\n\n");
-    tos::println(usart, tos::platform::board_name);
 
     while (true) {
         using namespace std::chrono_literals;

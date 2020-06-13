@@ -4,7 +4,8 @@
 
 #include <cstdlib>
 #include <tos/compiler.hpp>
-#include <tos_arch.hpp>
+#include <tos/arch.hpp>
+#include <nrf.h>
 
 extern "C" {
 [[noreturn]] void tos_force_reset() {

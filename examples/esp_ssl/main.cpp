@@ -17,7 +17,6 @@
 #include <tos/print.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/utility.hpp>
-#include <tos_arch.hpp>
 
 extern "C" {
 uint32_t esp_random();
@@ -182,7 +181,6 @@ void task() {
     auto usart = open(tos::devs::usart<0>, tos::uart::default_115200);
 
     tos::print(usart, "\n\n\n\n\n\n");
-    tos::println(usart, tos::platform::board_name);
 
     tos::esp82::wifi w;
 conn:
