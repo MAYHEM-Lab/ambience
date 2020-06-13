@@ -35,7 +35,7 @@ jobs:
       run: mkdir /tmp/docs
     
     - name: Generate
-      run: python3 ../tools/tosdoc/tosdoc.py $GITHUB_WORKSPACE
+      run: python3 $GITHUB_WORKSPACE/tools/tosdoc/tosdoc.py $GITHUB_WORKSPACE
       working-directory: /tmp/docs
       
     - name: Build
