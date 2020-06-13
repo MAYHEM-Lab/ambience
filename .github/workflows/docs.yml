@@ -38,3 +38,8 @@ jobs:
     - name: Build
       run: ninja
       working-directory: /tmp/docs
+    - name: Upload docs
+      uses: FatihBAKIR/upload-artifact@v2
+      with:
+        name: tosdoc
+        path: /tmp/docs/tosdoc.tar.gz
