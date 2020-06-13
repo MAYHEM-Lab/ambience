@@ -26,7 +26,10 @@ jobs:
     - uses: FatihBAKIR/checkout@v2
       
     - name: CD workspace
-      run: cd $GITHUB_WORKSPACE
+      run: cd tos
+    
+    - name: Install requirements
+      run: pip3 install -r tools/tosdoc/requirements.txt
 
     # Runs a single command using the runners shell
     - name: Create build dir
