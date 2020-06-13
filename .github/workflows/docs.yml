@@ -26,17 +26,18 @@ jobs:
     - uses: FatihBAKIR/checkout@v2
       
     - name: CD workspace
-      run: cd $GITHUB_WORKSPACE/tos
+      run: cd $GITHUB_WORKSPACE
     
     - name: Install requirements
       run: pip3 install -r tools/tosdoc/requirements.txt
 
     # Runs a single command using the runners shell
     - name: Create build dir
-      run: mkdir docs-build && cd docs-build
+      run: mkdir docs-build
     
     - name: Generate
       run: python3 ../tools/tosdoc/tosdoc.py ..
+      working-directory: docs-build
       
     - name: Build
       run: ninja
