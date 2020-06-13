@@ -37,3 +37,4 @@ jobs:
       
     - name: Build
       run: ninja
+      working-directory: /tmp/docs
