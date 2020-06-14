@@ -1,0 +1,38 @@
+= tos Resource Compiler
+
+`resc` is a utility that let's programs package data in the binaries that are accessible as a static {cpp} class.
+
+Resources are defined with `yaml` files such as this one:
+
+[source,yaml]
+----
+resources:
+  - name: boot_message
+    type: string
+    value: Hello world!
+----
+
+When compiled with `resc`, the `boot_message` is available as a `std::string_view` in {cpp}:
+
+[source,cpp]
+----
+LOG(resources::boot_message());
+----
+
+The generated code is completely static and any unused resource will get stripped
+away by the linker.
+
+== Embedding a binary file
+
+Binary files can easily be embedded through the resource compiler:
+
+[source, yaml]
+----
+resources:
+  - name: some_binary
+    type: blob
+    value:
+      from_file: some_binary.bin
+----
+
+`some_binary` will be available as a `tos::span<const uint8_t>`.

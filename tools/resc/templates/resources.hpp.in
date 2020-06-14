@@ -1,0 +1,11 @@
+#pragma once
+
+#include <tos/span.hpp>
+#include <string_view>
+
+namespace {{namespace}} {
+class {{class_name}} {
+public:
+    {{ declarations }}
+};
+} // namespace {{namespace}}

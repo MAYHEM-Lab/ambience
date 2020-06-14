@@ -1,0 +1,5 @@
+std::string_view {{class_name}}::{{obj_name}}() const {
+    [[gnu::section(".rodata.resources.{{class_name}}.{{obj_name}}")]]
+    static constexpr char _priv_data[] = u8R"__({{ string_val }})__";
+    return _priv_data;
+}

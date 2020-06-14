@@ -1,0 +1,5 @@
+tos::span<const uint8_t> {{class_name}}::{{obj_name}}() const {
+    [[gnu::section(".rodata.resources.{{class_name}}.{{obj_name}}")]]
+    static constexpr uint8_t _priv_data[] = { {{initializer}} };
+    return _priv_data;
+}
