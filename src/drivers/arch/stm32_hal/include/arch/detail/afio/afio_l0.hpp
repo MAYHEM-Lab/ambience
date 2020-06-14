@@ -18,16 +18,13 @@ struct afio {
         return std::make_pair(rx ? GPIO_AF0_USART1 : -1, tx ? GPIO_AF0_USART1 : -1);
     }
 
-    static constexpr auto get_spi_afio(int spi,
-                                       const gpio::pin_type& sck,
-                                       std::optional<gpio::pin_type> miso,
-                                       std::optional<gpio::pin_type> mosi) {
-        return std::make_tuple(
-                GPIO_AF0_SPI1,
-                GPIO_AF0_SPI1,
-                GPIO_AF0_SPI1
-        );
+    static constexpr auto
+    get_spi_afio([[maybe_unused]] int spi,
+                 [[maybe_unused]] const gpio::pin_type& sck,
+                 [[maybe_unused]] std::optional<gpio::pin_type> miso,
+                 [[maybe_unused]] std::optional<gpio::pin_type> mosi) {
+        return std::make_tuple(GPIO_AF0_SPI1, GPIO_AF0_SPI1, GPIO_AF0_SPI1);
     }
 };
-} // namespace l4
+} // namespace l0
 } // namespace tos::stm32::detail
