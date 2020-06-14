@@ -7,6 +7,7 @@
 #include <common/gpio.hpp>
 #include <cstdint>
 #include <tos/ft.hpp>
+#include <tos/gfx/dimensions.hpp>
 #include <tos/self_pointing.hpp>
 #include <type_traits>
 #include <utility>
@@ -36,35 +37,35 @@ constexpr auto SET_RAM_Y_ADDRESS_COUNTER = 0x4F;
 constexpr auto TERMINATE_FRAME_READ_WRITE = 0xFF;
 
 static constexpr uint8_t LUTDefault_full[] = {WRITE_LUT_REGISTER, // command
-                                              0x02,
-                                              0x02,
-                                              0x01,
+                                              0x50,
+                                              0xAA,
+                                              0x55,
+                                              0xAA,
                                               0x11,
-                                              0x12,
-                                              0x12,
-                                              0x22,
-                                              0x22,
-                                              0x66,
-                                              0x69,
-                                              0x69,
-                                              0x59,
-                                              0x58,
-                                              0x99,
-                                              0x99,
-                                              0x88,
                                               0x00,
                                               0x00,
                                               0x00,
                                               0x00,
-                                              0xF8,
-                                              0xB4,
-                                              0x13,
-                                              0x51,
-                                              0x35,
-                                              0x51,
-                                              0x51,
-                                              0x19,
-                                              0x01,
+                                              0x00,
+                                              0x00,
+                                              0x00,
+                                              0x00,
+                                              0x00,
+                                              0x00,
+                                              0x00,
+                                              0x00,
+                                              0x00,
+                                              0x00,
+                                              0x00,
+                                              0xFF,
+                                              0xFF,
+                                              0x1F,
+                                              0x00,
+                                              0x00,
+                                              0x00,
+                                              0x00,
+                                              0x00,
+                                              0x00,
                                               0x00};
 
 static constexpr uint8_t LUTDefault_part[] = {WRITE_LUT_REGISTER, // command
@@ -113,12 +114,15 @@ public:
 
     template<class DelayT>
     explicit waveshare_29bw(
-        SpiT spi, PinT cs, PinT dc, PinT reset, PinT busy, DelayT&& delay)
+        SpiT spi, PinT cs, PinT dc, PinT reset, PinT busy, DelayT&& delay, bool partial)
         : m_spi{std::move(spi)}
         , m_cs{cs}
         , m_dc{dc}
         , m_reset{reset}
         , m_busy{busy} {
+        m_g.set_pin_mode(m_cs, tos::pin_mode::out);
+        m_g.write(m_cs, tos::digital::high);
+
         m_g.set_pin_mode(m_dc, tos::pin_mode::out);
         m_g.write(m_dc, tos::digital::high);
 
@@ -127,7 +131,8 @@ public:
 
         m_g.set_pin_mode(m_busy, tos::pin_mode::in);
 
-        initialize(delay);
+        initialize(delay, partial);
+        use_partial_update(partial);
     }
 
     template<class DelayT>
@@ -139,8 +144,98 @@ public:
         delay(200ms);
     }
 
+    void clear_buffer(unsigned char color) {
+        using namespace waveshare_29bw_constants;
+        SetMemoryArea(0, 0, this->width - 1, this->height - 1);
+        SetMemoryPointer(0, 0);
+        SendCommand(WRITE_RAM);
+        /* send the color data */
+        for (int i = 0; i < this->width / 8 * this->height; i++) {
+            SendData(color);
+        }
+    }
+
+    void swap_buffers() {
+        using namespace waveshare_29bw_constants;
+        SendCommand(DISPLAY_UPDATE_CONTROL_2);
+        SendData(0xC4);
+        SendCommand(MASTER_ACTIVATION);
+        SendCommand(TERMINATE_FRAME_READ_WRITE);
+    }
+
+    void wait() {
+        WaitUntilIdle();
+    }
+
+    ~waveshare_29bw() {
+        sleep();
+    }
+
+    void copy_buffer(span<const uint8_t> buffer, gfx::rectangle rect) {
+        using namespace waveshare_29bw_constants;
+        if (buffer.empty() || rect.corner.x < 0 || rect.size.width < 0 ||
+            rect.corner.y < 0 || rect.size.height < 0) {
+            return;
+        }
+
+        int x_end;
+        int y_end;
+
+        /* x point must be the multiple of 8 or the last 3 bits will be ignored */
+        rect.corner.x &= 0xF8;
+        rect.size.width &= 0xF8;
+
+        if (rect.corner.x + rect.size.width >= this->width) {
+            x_end = this->width - 1;
+        } else {
+            x_end = rect.corner.x + rect.size.width - 1;
+        }
+
+        if (rect.corner.y + rect.size.height >= this->height) {
+            y_end = this->height - 1;
+        } else {
+            y_end = rect.corner.y + rect.size.height - 1;
+        }
+
+        SetMemoryArea(rect.corner.x, rect.corner.y, x_end, y_end);
+        SetMemoryPointer(rect.corner.x, rect.corner.y);
+        SendCommand(WRITE_RAM);
+        /* send the image data */
+        for (int j = 0; j < y_end - rect.corner.y + 1; j++) {
+            for (int i = 0; i < (x_end - rect.corner.x + 1) / 8; i++) {
+                SendData(buffer[i + j * (rect.size.width / 8)]);
+            }
+        }
+    }
+
+    gfx::dimensions framebuffer_dims() const {
+        return {width, height};
+    }
+
+    void use_partial_update(bool partial) {
+        using namespace waveshare_29bw_constants;
+        if (!partial) {
+            write_command_copy(LUTDefault_full, sizeof(LUTDefault_full));
+        } else {
+            write_command_copy(LUTDefault_part, sizeof(LUTDefault_part));
+        }
+    }
+
+private:
+    void sleep() {
+        using namespace waveshare_29bw_constants;
+        SendCommand(DEEP_SLEEP_MODE);
+        WaitUntilIdle();
+    }
+
+    void WaitUntilIdle() {
+        while (m_g.read(m_busy)) {
+            tos::this_thread::yield();
+        }
+    }
+
     template<class DelayT>
-    void initialize(DelayT&& delay) {
+    void initialize(DelayT&& delay, bool partial) {
         using namespace waveshare_29bw_constants;
         hard_reset(delay);
         _writeCommand(DRIVER_OUTPUT_CONTROL); // Panel configuration, Gate selection
@@ -161,8 +256,6 @@ public:
         _writeData(0x03);
         _writeCommand(DATA_ENTRY_MODE_SETTING);
         _writeData(0x03); // X increment; Y increment
-        _writeCommandDataPGM(LUTDefault_full, sizeof(LUTDefault_full));
-        //_setPartialRamArea(0, 0, WIDTH, HEIGHT);
     }
 
     void SetMemoryArea(int x_start, int y_start, int x_end, int y_end) {
@@ -189,80 +282,6 @@ public:
         WaitUntilIdle();
     }
 
-    void ClearFrameMemory(unsigned char color) {
-        using namespace waveshare_29bw_constants;
-        SetMemoryArea(0, 0, this->width - 1, this->height - 1);
-        SetMemoryPointer(0, 0);
-        SendCommand(WRITE_RAM);
-        /* send the color data */
-        for (int i = 0; i < this->width / 8 * this->height; i++) {
-            SendData(color);
-        }
-    }
-
-    void refresh_display() {
-        using namespace waveshare_29bw_constants;
-        SendCommand(DISPLAY_UPDATE_CONTROL_2);
-        SendData(0xC4);
-        SendCommand(MASTER_ACTIVATION);
-        SendCommand(TERMINATE_FRAME_READ_WRITE);
-        WaitUntilIdle();
-    }
-
-    void Sleep() {
-        using namespace waveshare_29bw_constants;
-        SendCommand(DEEP_SLEEP_MODE);
-        WaitUntilIdle();
-    }
-
-    ~waveshare_29bw() {
-        Sleep();
-    }
-
-    void SetFrameMemory(
-        span<const uint8_t> buffer, int x, int y, int image_width, int image_height) {
-        using namespace waveshare_29bw_constants;
-        if (buffer.empty() || x < 0 || image_width < 0 || y < 0 || image_height < 0) {
-            return;
-        }
-
-        int x_end;
-        int y_end;
-
-        /* x point must be the multiple of 8 or the last 3 bits will be ignored */
-        x &= 0xF8;
-        image_width &= 0xF8;
-
-        if (x + image_width >= this->width) {
-            x_end = this->width - 1;
-        } else {
-            x_end = x + image_width - 1;
-        }
-
-        if (y + image_height >= this->height) {
-            y_end = this->height - 1;
-        } else {
-            y_end = y + image_height - 1;
-        }
-
-        SetMemoryArea(x, y, x_end, y_end);
-        SetMemoryPointer(x, y);
-        SendCommand(WRITE_RAM);
-        /* send the image data */
-        for (int j = 0; j < y_end - y + 1; j++) {
-            for (int i = 0; i < (x_end - x + 1) / 8; i++) {
-                SendData(buffer[i + j * (image_width / 8)]);
-            }
-        }
-    }
-
-    void WaitUntilIdle() {
-        while (m_g.read(m_busy)) {
-            tos::this_thread::yield();
-        }
-    }
-
-private:
     void SendCommand(unsigned char command) {
         _writeCommand(command);
     }
@@ -301,14 +320,9 @@ private:
         m_g.write(m_cs, tos::digital::high);
     }
 
-    void _writeCommandDataPGM(const uint8_t* pCommandData, uint8_t datalen) {
+    void write_command_copy(const uint8_t* pCommandData, uint8_t datalen) {
         std::vector<uint8_t> buf(pCommandData, pCommandData + datalen);
         _writeCommandData(buf.data(), buf.size());
-    }
-
-    void _writeDataPGM(const uint8_t* data, uint16_t n) {
-        std::vector<uint8_t> buf(data, data + n);
-        _writeData(buf.data(), buf.size());
     }
 
     SpiT m_spi;
