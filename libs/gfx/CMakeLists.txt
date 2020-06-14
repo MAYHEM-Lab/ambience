@@ -6,7 +6,6 @@ add_library(tos_gfx
         stub.cpp
         include/tos/gfx/dimensions.hpp
         include/tos/gfx/transformation.hpp
-        include/tos/gfx/paint.hpp
         include/tos/gfx/color.hpp)
 target_link_libraries(tos_gfx PUBLIC frozen tos::libcxx tos_util_core tos_debug)
 target_compile_features(tos_gfx PUBLIC cxx_std_17)
