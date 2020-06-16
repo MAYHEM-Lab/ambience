@@ -106,7 +106,7 @@ expected<void, errors> epd_main() {
     return {};
 }
 
-tos::stack_storage<512> s;
+tos::stack_storage<1024> s;
 } // namespace
 
 void tos_main() {
