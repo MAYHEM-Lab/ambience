@@ -1,7 +1,8 @@
 #pragma once
 
-#include <tos/span.hpp>
-#include <string_view>
+{% for header in all_headers %}
+#include <{{header}}>
+{% endfor %}
 
 namespace {{namespace}} {
 class {{class_name}} {
