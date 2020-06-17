@@ -6,5 +6,4 @@
 namespace tos::platform {
 using avr::enable_interrupts;
 using avr::disable_interrupts;
-namespace arch = avr;
 }

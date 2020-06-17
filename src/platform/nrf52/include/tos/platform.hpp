@@ -6,5 +6,4 @@
 namespace tos::platform {
 using arm::enable_interrupts;
 using arm::disable_interrupts;
-namespace arch = arm;
 }

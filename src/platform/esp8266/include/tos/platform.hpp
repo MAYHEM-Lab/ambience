@@ -6,7 +6,6 @@
 namespace tos::platform {
 using xtensa::enable_interrupts;
 using xtensa::disable_interrupts;
-namespace arch = xtensa;
 }
 
 namespace tos::esp82 {
