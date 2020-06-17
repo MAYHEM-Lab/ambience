@@ -22,7 +22,7 @@ extern "C" {
 
 void Error_Handler() {
     __BKPT(0);
-    tos_force_reset();
+    tos::platform::force_reset();
 }
 
 namespace tos {
@@ -205,7 +205,7 @@ extern "C" void HardFault_Handler() {
         tried_bkpt = true;
         __BKPT(0);
     } else {
-        tos_force_reset();
+        tos::platform::force_reset();
         TOS_UNREACHABLE();
     }
 }
@@ -224,7 +224,7 @@ int main() {
     while (true) {
         auto res = tos::global::sched.schedule();
         if (res == tos::exit_reason::restart) {
-            tos_force_reset();
+            tos::platform::force_reset();
         }
         if (res == tos::exit_reason::power_down) {
             HAL_SuspendTick();

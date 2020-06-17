@@ -6,4 +6,7 @@
 namespace tos::platform {
 using arm::enable_interrupts;
 using arm::disable_interrupts;
+
+[[noreturn]]
+void force_reset();
 }

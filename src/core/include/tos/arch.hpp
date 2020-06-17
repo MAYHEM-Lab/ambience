@@ -5,10 +5,6 @@
 #pragma once
 
 #include <tos/compiler.hpp>
-
-extern "C" {
-[[noreturn]] void tos_force_reset();
-}
 #include <tos/core/arch.hpp>
 
 namespace tos::arch {

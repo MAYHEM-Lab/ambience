@@ -7,7 +7,9 @@ inline void enable_interrupts() {
 }
 inline void disable_interrupts() {
 }
-namespace arch = x86;
+
+[[noreturn]]
+void force_reset();
 } // namespace tos::platform
 
 #include <boost/asio/io_service.hpp>
