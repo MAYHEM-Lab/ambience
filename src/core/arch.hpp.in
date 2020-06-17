@@ -1,0 +1,11 @@
+#pragma once
+
+/**
+ * Generated automatically, do not modify!
+ */
+
+#include <tos/@TOS_ARCH@/spmanip.hpp>
+
+namespace tos {
+namespace cur_arch = @TOS_ARCH@;
+}
