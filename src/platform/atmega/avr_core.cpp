@@ -32,9 +32,10 @@ void __attribute__((naked, used, section(".init3"))) wdt_init(void)
     MCUSR = 0;
     wdt_disable();
 }
+}
 
-[[noreturn]] void tos_force_reset()
-{
+namespace tos::platform {
+[[noreturn]] void force_reset() {
     reset_cpu();
 }
 }
