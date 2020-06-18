@@ -3,14 +3,14 @@
 //
 
 #include <cstdlib>
-#include <tos/compiler.hpp>
-#include <tos/arch.hpp>
 #include <nrf.h>
+#include <tos/arch.hpp>
+#include <tos/compiler.hpp>
 
-extern "C" {
-[[noreturn]] void tos_force_reset() {
+namespace tos::platform {
+[[noreturn]] void force_reset() {
     __BKPT(0);
     NVIC_SystemReset();
     TOS_UNREACHABLE();
 }
-}
+} // namespace tos::platform

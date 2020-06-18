@@ -50,7 +50,7 @@ extern void tos_main();
     {
         auto res = tos::global::sched.schedule();
         if (res == tos::exit_reason::restart) {
-            tos_force_reset();
+            tos::platform::force_reset();
         }
         if (res == tos::exit_reason::power_down) {
             power_down(SLEEP_MODE_PWR_DOWN);

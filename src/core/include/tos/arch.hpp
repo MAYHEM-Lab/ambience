@@ -5,13 +5,9 @@
 #pragma once
 
 #include <tos/compiler.hpp>
-#include <tos/platform.hpp>
-
-extern "C" {
-[[noreturn]] void tos_force_reset();
-}
+#include <tos/core/arch.hpp>
 
 namespace tos::arch {
-using platform::arch::set_stack_ptr;
-using platform::arch::get_stack_ptr;
+using cur_arch::set_stack_ptr;
+using cur_arch::get_stack_ptr;
 }

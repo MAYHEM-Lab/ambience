@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <tos/arch.hpp>
+#include <tos/platform.hpp>
 #include <tos/debug/log.hpp>
 
 namespace tos {
@@ -27,7 +27,7 @@ namespace debug {
 TOS_NO_OPTIMIZE
 [[noreturn]] inline void panic(const char* err) {
     tos::debug::fatal(err);
-    tos_force_reset();
+    tos::platform::force_reset();
 }
 } // namespace debug
 } // namespace tos

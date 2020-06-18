@@ -67,7 +67,7 @@ add_library(tos_debug
         include/tos/debug/stack_dump.hpp
         include/tos/debug/panic.hpp
         src/debug.cpp)
-target_link_libraries(tos_debug PUBLIC tos_util_core tos_debug_log tos_arch)
+target_link_libraries(tos_debug PUBLIC tos_util_core tos_debug_log tos_platform)
 
 add_library(tos_build_info
         include/tos/build.hpp
@@ -82,17 +82,19 @@ include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 target_compile_definitions(tos_build_info PRIVATE TOS_GIT_SHA1=\"${GIT_SHA1}\")
 
+configure_file(arch.hpp.in include/tos/core/arch.hpp)
+
 add_library(tos_arch_core src/stub.cpp)
-target_link_libraries(tos_arch_core PUBLIC ${TOS_PLATFORM_NAME}_core)
 target_link_libraries(tos_arch_core PUBLIC arch_${TOS_ARCH})
 target_compile_definitions(tos_arch_core PUBLIC TOS_PLATFORM_${TOS_PLATFORM_NAME})
+target_include_directories(tos_arch_core PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/include")
 
-add_library(tos_arch include/tos/arch.hpp src/stub.cpp)
-target_link_libraries(tos_arch PUBLIC tos_arch_core ${TOS_PLATFORM_NAME}_impl)
+add_library(tos_platform include/tos/arch.hpp src/stub.cpp)
+target_link_libraries(tos_platform PUBLIC tos_arch_core ${TOS_PLATFORM_NAME}_impl)
 message(STATUS ${TOS_PLATFORM_NAME}_impl)
 
 add_library(tos_interrupt include/tos/interrupt.hpp src/interrupt.cpp)
-target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core)
+target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core tos_platform)
 
 add_library(tos_core
         include/tos/devices.hpp
@@ -104,9 +106,9 @@ add_library(tos_core
         include/tos/barrier.hpp
         src/tos_init.cpp
         src/device_id.cpp)
-target_link_libraries(tos_core PUBLIC tos_mem tos_util tos_build_info)
+target_link_libraries(tos_core PUBLIC tos_mem tos_util tos_build_info ${TOS_PLATFORM_NAME}_core)
 target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug tos_context)
-target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_arch)
+target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_platform)
 target_include_directories(tos_core PUBLIC include)
 add_library(tos::core ALIAS tos_core)
 
@@ -114,7 +116,7 @@ add_library(tos_print include/tos/print.hpp src/print.cpp)
 target_link_libraries(tos_print PUBLIC tos_util_core tos::libcxx)
 add_library(tos::print ALIAS tos_print)
 
-tos_install(tos_arch ${CMAKE_CURRENT_SOURCE_DIR}/include)
+tos_install(tos_platform ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_arch_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_interrupt ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_core ${CMAKE_CURRENT_SOURCE_DIR}/include)

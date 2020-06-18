@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
+#include <stm32_hal/dma.hpp>
 #include <stm32_hal/tim.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/scheduler.hpp>

@@ -1,9 +1,9 @@
 #include <tos/aarch64/assembly.hpp>
 
-extern "C" {
-void tos_force_reset() {
+namespace tos::platform {
+[[noreturn]] void force_reset() {
     tos::aarch64::breakpoint();
     while (true)
         ;
 }
-}
+} // namespace tos::platform

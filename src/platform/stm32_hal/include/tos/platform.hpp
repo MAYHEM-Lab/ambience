@@ -6,7 +6,9 @@
 namespace tos::platform {
 using arm::disable_interrupts;
 using arm::enable_interrupts;
-namespace arch = arm;
+
+[[noreturn]]
+void force_reset();
 } // namespace tos::platform
 
 #include <stm32_hal/hal.hpp>

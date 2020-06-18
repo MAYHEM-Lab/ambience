@@ -4,7 +4,7 @@ add_library(x86_hosted_core x86_core.cpp include/tos/platform.hpp)
 # Without this flag, the runtime detects us jumping into the middle of a stack and complains.
 # Crazy, right?
 target_compile_options(x86_hosted_core PUBLIC "-U_FORTIFY_SOURCE")
-target_compile_features(x86_hosted_core PUBLIC cxx_std_14)
+target_compile_features(x86_hosted_core PUBLIC cxx_std_17)
 
 set(Boost_USE_STATIC_LIBS ON)
 # we use boost.asio for asynchronous operations

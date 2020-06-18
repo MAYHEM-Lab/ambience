@@ -6,5 +6,7 @@
 namespace tos::platform {
 using aarch64::disable_interrupts;
 using aarch64::enable_interrupts;
-namespace arch = aarch64;
+
+[[noreturn]]
+void force_reset();
 } // namespace tos::platform

@@ -5,11 +5,12 @@
 #include <cstdlib>
 #include <stm32_hal/hal.hpp>
 #include <tos/compiler.hpp>
+#include <tos/platform.hpp>
 
-extern "C" {
-[[noreturn]] void tos_force_reset() {
+namespace tos::platform {
+void force_reset() {
     __BKPT(0);
     NVIC_SystemReset();
     TOS_UNREACHABLE();
 }
-}
+} // namespace tos::platform

@@ -6,7 +6,9 @@
 namespace tos::platform {
 using xtensa::enable_interrupts;
 using xtensa::disable_interrupts;
-namespace arch = xtensa;
+
+[[noreturn]]
+void force_reset();
 }
 
 namespace tos::esp82 {
