@@ -8,6 +8,7 @@
 
 #include <arch/detail/afio.hpp>
 #include <optional>
+#include <stm32_hal/dma.hpp>
 #include <stm32_hal/rcc.hpp>
 #include <stm32_hal/spi.hpp>
 #include <tos/debug/debug.hpp>

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <common/driver_base.hpp>
 #include <common/i2c.hpp>
+#include <stm32_hal/dma.hpp>
 #include <stm32_hal/i2c.hpp>
 #include <stm32_hal/rcc.hpp>
 #include <tos/semaphore.hpp>

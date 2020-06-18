@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <stm32_hal/gpio.hpp>
 #include <stm32_hal/rcc_ex.hpp>
+#include <stm32_hal/rcc.hpp>
 
 namespace tos {
 namespace stm32 {
