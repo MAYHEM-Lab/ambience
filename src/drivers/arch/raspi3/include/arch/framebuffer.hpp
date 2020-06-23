@@ -19,14 +19,7 @@ public:
         return m_physical;
     }
 
-    span<uint8_t> get_buffer() {
-        auto len = m_buffer.size() / 2;
-        if (m_swapped) {
-            return m_buffer.slice(0, len);
-        } else {
-            return m_buffer.slice(len, len);
-        }
-    }
+    span<uint8_t> get_buffer();
 
     void swap_buffers();
 

@@ -86,4 +86,13 @@ void framebuffer::swap_buffers() {
         tos::debug::panic("can't initialize framebuffer");
     }
 }
+
+span<uint8_t> framebuffer::get_buffer() {
+    auto len = m_buffer.size() / 2;
+    if (m_swapped) {
+        return m_buffer.slice(0, len);
+    } else {
+        return m_buffer.slice(len, len);
+    }
+}
 } // namespace tos::raspi3
