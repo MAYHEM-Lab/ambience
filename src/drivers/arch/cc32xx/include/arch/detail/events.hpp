@@ -19,7 +19,9 @@ struct wifi_connected {
                                 size_t(ev.SsidLen)};
     }
 };
-struct wifi_disconnected {};
+struct wifi_disconnected {
+    SlWlanEventDisconnect_t ev;
+};
 struct ip_acquired {
     ipv4_addr_t address;
     ipv4_addr_t gateway;

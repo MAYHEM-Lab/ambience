@@ -114,6 +114,9 @@ void simplelink_wifi::thread() {
                                  // tos::debug::log("Gateway IP:", ev.gateway);
                                  m_ev_handler->handle(ev);
                              },
+                             [&](const wifi_disconnected& ev) {
+                                 LOG("Disconnected:", ev.ev.ReasonCode);
+                             },
                              [&](const auto& ev) {
                                  LOG_WARN("Unhandled event");
                                  m_ev_handler->handle(ev);

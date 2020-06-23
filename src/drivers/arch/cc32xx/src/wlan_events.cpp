@@ -91,7 +91,7 @@ void SimpleLinkWlanEventHandler(SlWlanEvent_t* pWlanEvent) {
             UART_PRINT("Device disconnected from the AP on an ERROR\r\n");
         }
 
-        SignalEvent(APP_EVENT_DISCONNECT);
+        evq.push(tos::cc32xx::wifi_disconnected{pWlanEvent->Data.Disconnect});
     } break;
 
     case SL_WLAN_EVENT_PROVISIONING_PROFILE_ADDED:
