@@ -15,19 +15,12 @@
 #include <tos/gfx/truetype.hpp>
 #include <tos/memory/bump.hpp>
 #include <tos/print.hpp>
+#include <tos/debug/dynamic_log.hpp>
 
 template<class T>
 void clear(tos::span<T> buf) {
     std::memset(buf.data(), 0, buf.size());
 }
-
-tos::debug::detail::any_logger* log;
-
-namespace tos::debug {
-detail::any_logger& default_log() {
-    return *::log;
-}
-} // namespace tos::debug
 
 namespace tos {
 template<class FramebufferT>
@@ -279,9 +272,7 @@ void raspi_main() {
     tos::println(uart, "Serial no:", serial);
     tos::debug::serial_sink uart_sink(&uart);
     tos::debug::detail::any_logger uart_log{&uart_sink};
-    ::log = &uart_log;
-    log->set_enabled(true);
-    log->set_log_level(tos::debug::log_level::debug);
+    tos::debug::set_default_log(&uart_log);
 
     debug::log("Log init complete");
 
