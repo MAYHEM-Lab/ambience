@@ -143,6 +143,11 @@ void simplelink_wifi::connect(std::string_view SSID, std::string_view password) 
     LOG("Connect:", int(res));
 }
 
+void simplelink_wifi::disassociate() {
+    auto res = sl_WlanDisconnect();
+    LOG("Disconnect:", int(res));
+}
+
 void simplelink_wifi::set_power_policy(power_policy policy) {
     int policy_res;
     switch (policy) {

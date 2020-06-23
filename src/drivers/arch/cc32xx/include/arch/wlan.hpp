@@ -40,6 +40,7 @@ public:
     ~simplelink_wifi();
 
     void connect(std::string_view SSID, std::string_view password);
+    void disassociate();
 
     void set_event_handler(iwifi_event_handler& handler) {
         m_ev_handler = &handler;
