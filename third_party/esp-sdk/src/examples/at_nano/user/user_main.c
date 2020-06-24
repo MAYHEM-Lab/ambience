@@ -26,13 +26,21 @@
 #include "at_custom.h"
 #include "user_interface.h"
 
-
-#include "driver/sdio_slv.h"
+#define COMPATIBLE_WITH_16M_512_512
 
 #if ((SPI_FLASH_SIZE_MAP == 0) || (SPI_FLASH_SIZE_MAP == 1))
 #error "The flash map is not supported"
 #elif (SPI_FLASH_SIZE_MAP == 2)
-#error "The flash map is not supported"
+#define SYSTEM_PARTITION_OTA_SIZE                                                       0x78000
+#define SYSTEM_PARTITION_OTA_2_ADDR                                                     0x81000
+#define SYSTEM_PARTITION_RF_CAL_ADDR                                            0xfb000
+#define SYSTEM_PARTITION_PHY_DATA_ADDR                                          0xfc000
+#define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR                          0xfd000
+#define SYSTEM_PARTITION_AT_PARAMETER_ADDR                                      0x7d000
+#define SYSTEM_PARTITION_SSL_CLIENT_CERT_PRIVKEY_ADDR           0x7c000
+#define SYSTEM_PARTITION_SSL_CLIENT_CA_ADDR                                     0x7b000
+#define SYSTEM_PARTITION_WPA2_ENTERPRISE_CERT_PRIVKEY_ADDR      0x7a000
+#define SYSTEM_PARTITION_WPA2_ENTERPRISE_CA_ADDR                        0x79000
 #elif (SPI_FLASH_SIZE_MAP == 3)
 #error "The flash map is not supported"
 #elif (SPI_FLASH_SIZE_MAP == 4)
@@ -63,19 +71,13 @@
 #error "The flash map is not supported"
 #endif
 
-
-#ifdef SDIO_DEBUG
-static os_timer_t at_spi_check;
-uint32 sum_len = 0;
-extern void ICACHE_FLASH_ATTR at_spi_check_cb(void *arg);
+#ifdef CONFIG_ENABLE_IRAM_MEMORY
+uint32 user_iram_memory_is_enabled(void)
+{
+    return CONFIG_ENABLE_IRAM_MEMORY;
+}
 #endif
 
-uint32 at_fake_uart_rx(uint8* data,uint32 length);
-typedef void (*at_fake_uart_tx_func_type)(const uint8*data,uint32 length);
-bool at_fake_uart_enable(bool enable,at_fake_uart_tx_func_type at_fake_uart_tx_func);
-
-typedef void (*at_custom_uart_rx_buffer_fetch_cb_type)(void);
-void at_register_uart_rx_buffer_fetch_cb(at_custom_uart_rx_buffer_fetch_cb_type rx_buffer_fetch_cb);
 // test :AT+TEST=1,"abc"<,3>
 void ICACHE_FLASH_ATTR
 at_setupCmdTest(uint8_t id, char *pPara)
@@ -157,7 +159,7 @@ at_funcationType at_custom_cmd[] = {
 #endif
 };
 
-static const partition_item_t at_partition_table[] = {
+static const partition_item_t at_partition_table[] = { // 8M 512+512
     { SYSTEM_PARTITION_BOOTLOADER, 						0x0, 												0x1000},
     { SYSTEM_PARTITION_OTA_1,   						0x1000, 											SYSTEM_PARTITION_OTA_SIZE},
     { SYSTEM_PARTITION_OTA_2,   						SYSTEM_PARTITION_OTA_2_ADDR, 						SYSTEM_PARTITION_OTA_SIZE},
@@ -173,44 +175,46 @@ static const partition_item_t at_partition_table[] = {
 #endif
 };
 
-void ICACHE_FLASH_ATTR user_pre_init(void)
-{
-    if(!system_partition_table_regist(at_partition_table, sizeof(at_partition_table)/sizeof(at_partition_table[0]),SPI_FLASH_SIZE_MAP)) {
-		os_printf("system_partition_table_regist fail\r\n");
-	}
-}
-
-#ifdef CONFIG_ENABLE_IRAM_MEMORY
-uint32 user_iram_memory_is_enabled(void)
-{
-    return CONFIG_ENABLE_IRAM_MEMORY;
-}
+#ifdef COMPATIBLE_WITH_16M_512_512
+static const partition_item_t at_partition_table2[] = { // 16M 512+512
+    { SYSTEM_PARTITION_BOOTLOADER, 						0x0, 												0x1000},
+    { SYSTEM_PARTITION_OTA_1,   						0x1000, 											SYSTEM_PARTITION_OTA_SIZE},
+    { SYSTEM_PARTITION_OTA_2,   						SYSTEM_PARTITION_OTA_2_ADDR, 						SYSTEM_PARTITION_OTA_SIZE},
+    { SYSTEM_PARTITION_RF_CAL,  						0x1fb000, 						0x1000},
+    { SYSTEM_PARTITION_PHY_DATA, 						0x1fc000, 					0x1000},
+    { SYSTEM_PARTITION_SYSTEM_PARAMETER, 				        0x1fd000, 			0x3000},
+    { SYSTEM_PARTITION_AT_PARAMETER, 					SYSTEM_PARTITION_AT_PARAMETER_ADDR, 				0x3000},
+    { SYSTEM_PARTITION_SSL_CLIENT_CERT_PRIVKEY, 		SYSTEM_PARTITION_SSL_CLIENT_CERT_PRIVKEY_ADDR, 		0x1000},
+    { SYSTEM_PARTITION_SSL_CLIENT_CA, 					SYSTEM_PARTITION_SSL_CLIENT_CA_ADDR, 				0x1000},
+#ifdef CONFIG_AT_WPA2_ENTERPRISE_COMMAND_ENABLE
+    { SYSTEM_PARTITION_WPA2_ENTERPRISE_CERT_PRIVKEY, 	SYSTEM_PARTITION_WPA2_ENTERPRISE_CERT_PRIVKEY_ADDR,	0x1000},
+    { SYSTEM_PARTITION_WPA2_ENTERPRISE_CA, 				SYSTEM_PARTITION_WPA2_ENTERPRISE_CA_ADDR, 			0x1000},
+#endif
+};
 #endif
 
-void ICACHE_FLASH_ATTR at_sdio_response(const uint8*data,uint32 length)
+void ICACHE_FLASH_ATTR user_pre_init(void)
 {
-	if((data == NULL) || (length == 0)) {
-		return;
-	}
+    const partition_item_t* partition_table = at_partition_table;
+    uint32 partition_table_size = sizeof(at_partition_table)/sizeof(at_partition_table[0]);
 
-	sdio_load_data(data,length);
+#ifdef COMPATIBLE_WITH_16M_512_512    
+    if (system_get_flash_size_map() == FLASH_SIZE_16M_MAP_512_512) {
+        partition_table = at_partition_table2;
+        partition_table_size = sizeof(at_partition_table2)/sizeof(at_partition_table2[0]);
+    }
+#endif
+    if(!system_partition_table_regist(partition_table, partition_table_size,SPI_FLASH_SIZE_MAP)) {
+		os_printf("system_partition_table_regist fail\r\n");
+    }
 }
 
-uint32 sdio_recv_data_callback(uint8* data,uint32 len)
-{
-	return at_fake_uart_rx(data,len);
-}
-
-extern void at_custom_uart_rx_buffer_fetch_cb(void);
-sint8 ICACHE_FLASH_ATTR espconn_tcp_set_wnd(uint8 num);
-void ICACHE_FLASH_ATTR user_init(void)
+void ICACHE_FLASH_ATTR
+user_init(void)
 {
     char buf[128] = {0};
     at_customLinkMax = 5;
-	sdio_slave_init();
-	sdio_register_recv_cb(sdio_recv_data_callback);
     at_init();
-	at_register_uart_rx_buffer_fetch_cb(at_custom_uart_rx_buffer_fetch_cb);
 #ifdef ESP_AT_FW_VERSION
     if ((ESP_AT_FW_VERSION != NULL) && (os_strlen(ESP_AT_FW_VERSION) < 64)) {
         os_sprintf(buf,"compile time:"__DATE__" "__TIME__"\r\n"ESP_AT_FW_VERSION);
@@ -221,22 +225,12 @@ void ICACHE_FLASH_ATTR user_init(void)
     os_sprintf(buf,"compile time:"__DATE__" "__TIME__);
 #endif
     at_set_custom_info(buf);
-	at_fake_uart_enable(TRUE,at_sdio_response);
-	
+    at_port_print_irom_str("\r\nready\r\n");
     at_cmd_array_regist(&at_custom_cmd[0], sizeof(at_custom_cmd)/sizeof(at_custom_cmd[0]));
 #ifdef CONFIG_AT_SMARTCONFIG_COMMAND_ENABLE
     at_cmd_enable_smartconfig();
 #endif
 #ifdef CONFIG_AT_WPA2_ENTERPRISE_COMMAND_ENABLE
     at_cmd_enable_wpa2_enterprise();
-#endif
-	espconn_tcp_set_wnd(4);
-	at_port_print_irom_str("\r\nready\r\n");
-
-#ifdef SDIO_DEBUG
-	os_timer_disarm(&at_spi_check);
-	os_timer_setfn(&at_spi_check, (os_timer_func_t *)at_spi_check_cb, NULL);
-	os_timer_arm(&at_spi_check, 1000, 1);
-	os_printf("\r\ntimer start\r\n");
 #endif
 }
