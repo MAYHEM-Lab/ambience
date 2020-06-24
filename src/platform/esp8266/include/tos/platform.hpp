@@ -12,5 +12,6 @@ void force_reset();
 }
 
 namespace tos::esp82 {
-static constexpr auto main_task_prio = 0;
-}
+inline constexpr auto main_task_prio = 0;
+uint32_t get_clock_speed();
+} // namespace tos::esp82
