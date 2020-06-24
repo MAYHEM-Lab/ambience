@@ -1,3 +1,6 @@
+$lidlmeta:
+  name: tos::services
+
 system_status:
   type: service
   procedures:

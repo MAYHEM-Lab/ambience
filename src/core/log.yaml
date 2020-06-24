@@ -1,3 +1,6 @@
+$lidlmeta:
+  name: tos::services
+
 log_level:
   type: enumeration
   members:

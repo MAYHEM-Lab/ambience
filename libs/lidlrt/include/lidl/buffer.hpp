@@ -52,6 +52,12 @@ private:
 };
 
 template<class T>
+const T& get_root(tos::span<const uint8_t> buf) {
+    auto loc = buf.end() - sizeof(T);
+    return *reinterpret_cast<const T*>(loc);
+}
+
+template<class T>
 T& get_root(buffer buf) {
     auto loc = buf.m_buffer.end() - sizeof(T);
     return *reinterpret_cast<T*>(loc);

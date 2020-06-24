@@ -46,6 +46,10 @@ public:
         return {m_ptr, size()};
     }
 
+    explicit operator span<const uint8_t>() const {
+        return data();
+    }
+
     ~packet() {
         if (util::is_flag_set(flags(), packet_flags::owning)) {
             delete[] m_ptr;

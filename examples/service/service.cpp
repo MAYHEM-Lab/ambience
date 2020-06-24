@@ -13,7 +13,7 @@
 #include <tos/io/channel.hpp>
 #include <tos/io/serial_packets.hpp>
 
-class sys_server : public system_status {
+class sys_server : public tos::services::system_status {
 public:
     std::string_view get_commit_hash(lidl::message_builder& response_builder) override {
         return tos::build::commit_hash();
@@ -27,7 +27,7 @@ public:
 };
 
 class remote_system
-    : public system_status
+    : public tos::services::system_status
     , public lidl::remote_service {
 public:
     using remote_service::remote_service;
@@ -35,11 +35,13 @@ public:
     std::string_view get_commit_hash(lidl::message_builder& response_builder) override {
         std::array<uint8_t, 128> buffer;
         lidl::message_builder mb{buffer};
-        lidl::create<call_union>(mb, system_status_get_commit_hash_params{});
+        lidl::create<call_union>(mb,
+                                 tos::services::system_status_get_commit_hash_params{});
         auto packet = mb.get_buffer().get_buffer().slice(0, mb.size());
-        auto response = send_receive(packet);
-        auto& res = lidl::get_root<return_union>(lidl::buffer(response->data()))
-                        .get_commit_hash();
+        auto&& response = send_receive(packet);
+        auto& res =
+            lidl::get_root<return_union>(tos::span<const uint8_t>(*response))
+                .get_commit_hash();
         auto& str_res = lidl::create_string(response_builder, res.ret0());
         return str_res;
     }
@@ -47,7 +49,7 @@ public:
     std::string_view get_build_id(lidl::message_builder& response_builder) override {
         std::array<uint8_t, 128> buffer;
         lidl::message_builder mb{buffer};
-        lidl::create<call_union>(mb, system_status_get_build_id_params{});
+        lidl::create<call_union>(mb, tos::services::system_status_get_build_id_params{});
         auto packet = mb.get_buffer().get_buffer().slice(0, mb.size());
         auto response = send_receive(packet);
         auto& res =
@@ -59,7 +61,7 @@ public:
     std::string_view get_arch(lidl::message_builder& response_builder) override {
         std::array<uint8_t, 128> buffer;
         lidl::message_builder mb{buffer};
-        lidl::create<call_union>(mb, system_status_get_arch_params{});
+        lidl::create<call_union>(mb, tos::services::system_status_get_arch_params{});
         auto packet = mb.get_buffer().get_buffer().slice(0, mb.size());
         auto response = send_receive(packet);
         auto& res =
@@ -69,7 +71,7 @@ public:
     }
 };
 
-void query_sys(system_status& server) {
+void query_sys(tos::services::system_status& server) {
     LOG("Service name:", server.name());
     std::array<uint8_t, 128> resp_buf;
     lidl::message_builder mb(resp_buf);
@@ -92,7 +94,7 @@ void service_main() {
         tos::debug::serial_sink sink(tos::hosted::stderr_adapter{}, "remote");
         tos::debug::log_server log_server(sink);
 
-        auto rep_handler = make_request_handler<logger>();
+        auto rep_handler = make_request_handler<tos::services::logger>();
         auto channel = transport.get_channel(4);
         while (true) {
             auto packet = channel->receive();

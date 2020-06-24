@@ -3,51 +3,51 @@
 
 namespace tos::debug {
 namespace {
-log_level convert(::log_level level) {
+log_level convert(services::log_level level) {
     switch (level) {
-    case ::log_level::none:
+    case services::log_level::none:
         return log_level::none;
-    case ::log_level::trace:
-        return tos::debug::log_level::trace;
-    case ::log_level::debug:
-        return tos::debug::log_level::debug;
-    case ::log_level::info:
-        return tos::debug::log_level::info;
-    case ::log_level::log:
-        return tos::debug::log_level::log;
-    case ::log_level::warning:
-        return tos::debug::log_level::warning;
-    case ::log_level::error:
-        return tos::debug::log_level::error;
-    case ::log_level::fatal:
-        return tos::debug::log_level::fatal;
+    case services::log_level::trace:
+        return log_level::trace;
+    case services::log_level::debug:
+        return log_level::debug;
+    case services::log_level::info:
+        return log_level::info;
+    case services::log_level::log:
+        return log_level::log;
+    case services::log_level::warning:
+        return log_level::warning;
+    case services::log_level::error:
+        return log_level::error;
+    case services::log_level::fatal:
+        return log_level::fatal;
     }
     TOS_UNREACHABLE();
 }
 
-::log_level convert_back(log_level level) {
+services::log_level convert_back(log_level level) {
     switch (level) {
     case log_level::none:
-        return ::log_level::none;
+        return services::log_level::none;
     case log_level::fatal:
-        return ::log_level::fatal;
+        return services::log_level::fatal;
     case log_level::error:
-        return ::log_level::error;
+        return services::log_level::error;
     case log_level::warning:
-        return ::log_level::warning;
+        return services::log_level::warning;
     case log_level::log:
-        return ::log_level::log;
+        return services::log_level::log;
     case log_level::debug:
-        return ::log_level::debug;
+        return services::log_level::debug;
     case log_level::info:
-        return ::log_level::info;
+        return services::log_level::info;
     case log_level::trace:
-        return ::log_level::trace;
+        return services::log_level::trace;
     }
     TOS_UNREACHABLE();
 }
 }
-bool log_server::start(const ::log_level& level) {
+bool log_server::start(const services::log_level& level) {
     return m_sink->begin(convert(level));
 }
 
@@ -80,7 +80,7 @@ bool log_server::log_float(const double& val) {
     m_sink->add(val);
     return true;
 }
-bool log_server::log_log_level(const ::log_level& val) {
+bool log_server::log_log_level(const services::log_level& val) {
     m_sink->add(convert(val));
     return true;
 }
