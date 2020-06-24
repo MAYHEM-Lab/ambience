@@ -31,6 +31,18 @@ using mono8 = monochrome;
 using rgb8 = basic_rgb<uint8_t>;
 using hsv8 = basic_hsv<uint16_t, uint8_t, uint8_t>;
 
+struct rgba8 {
+    uint8_t red, green, blue, alpha;
+};
+
+template <class To, class Src>
+To lossy_convert(const Src& color);
+
+template <>
+inline rgb8 lossy_convert(const rgba8& color) {
+    return {color.red, color.green, color.blue};
+}
+
 template<class RedT, class GreenT, class BlueT, class RatioT>
 basic_rgb<RedT, GreenT, BlueT> lerp(const basic_rgb<RedT, GreenT, BlueT>& from,
                                     const basic_rgb<RedT, GreenT, BlueT>& to,
@@ -42,8 +54,23 @@ basic_rgb<RedT, GreenT, BlueT> lerp(const basic_rgb<RedT, GreenT, BlueT>& from,
     };
 }
 
-template <class StreamT, class RedT, class GreenT, class BlueT>
+template<class StreamT, class RedT, class GreenT, class BlueT>
 void print(StreamT& stream, const basic_rgb<RedT, GreenT, BlueT>& color) {
-    tos::print(stream, "rgb{", int(color.red), ',', int(color.green), ',', int(color.blue), "}");
+    tos::print(
+        stream, "rgb{", int(color.red), ',', int(color.green), ',', int(color.blue), "}");
+}
+
+template<class StreamT>
+void print(StreamT& stream, const rgba8& color) {
+    tos::print(stream,
+               "rgba{",
+               int(color.red),
+               ',',
+               int(color.green),
+               ',',
+               int(color.blue),
+               ",",
+               int(color.alpha),
+               "}");
 }
 } // namespace tos::gfx
