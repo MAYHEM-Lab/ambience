@@ -1,4 +1,4 @@
 add_library(arch_xtensa
-        arch.cpp)
+        arch.cpp include/tos/xtensa/assembly.hpp)
 target_include_directories(arch_xtensa PUBLIC include)
 target_link_libraries(arch_xtensa PUBLIC tos_util_core)
