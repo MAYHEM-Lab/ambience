@@ -17,6 +17,7 @@ struct member_info<RetT (T::*)(), ConstRetT (T::*)() const> {
         , function{fn}
         , const_function{cfn} {
     }
+    using type = RetT;
     const char* name;
     RetT (T::*function)();
     ConstRetT (T::*const_function)() const;
