@@ -1,0 +1,36 @@
+$lidlmeta:
+  name: tos::gfx2
+
+point:
+  type: structure
+  members:
+    x: i16
+    y: i16
+
+size:
+  type: structure
+  members:
+    width: i16
+    height: i16
+
+line:
+  type: structure
+  members:
+    p0: point
+    p1: point
+
+rectangle:
+  type: structure
+  members:
+    corner: point
+    dims: size
+
+binary_color:
+  type: structure
+  members:
+    col: bool
+
+color:
+  type: union
+  variants:
+    binary: binary_color
