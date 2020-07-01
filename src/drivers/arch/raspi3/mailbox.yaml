@@ -1,3 +1,6 @@
+$lidlmeta:
+  name: tos::raspi3
+
 mailbox_channels:
   type: enumeration
   members:
