@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <tos/self_pointing.hpp>
 #include <tos/span.hpp>
 
 namespace tos::gfx {
@@ -71,7 +72,9 @@ private:
 };
 
 template<class StorageT>
-class basic_canvas : private StorageT, public self_pointing<basic_canvas<StorageT>> {
+class basic_canvas
+    : private StorageT
+    , public self_pointing<basic_canvas<StorageT>> {
     using StorageT::buffer;
 
 public:
