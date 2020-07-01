@@ -1,3 +1,4 @@
+include(lidlc)
 add_lidlc(mailbox_proto mailbox.yaml)
 
 add_library(raspi3_usart include/arch/usart.hpp src/usart.cpp)
