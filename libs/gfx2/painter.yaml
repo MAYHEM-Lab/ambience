@@ -1,0 +1,52 @@
+$lidlmeta:
+  name: tos::services
+  imports:
+    - ./gfx
+
+style:
+  type: structure
+  members:
+    color: tos::gfx2.color
+
+painter:
+  type: service
+  procedures:
+    set_style:
+      returns:
+        - i8
+      parameters:
+        s: style
+    get_dimensions:
+      returns:
+        - tos::gfx2.size
+      parameters: []
+    draw_point:
+      returns:
+        - i8
+      parameters:
+        p: tos::gfx2.point
+    draw_line:
+      returns:
+        - i8
+      parameters:
+        l: tos::gfx2.line
+    draw_rect:
+      returns:
+        - i8
+      parameters:
+        rect: tos::gfx2.rectangle
+        radius: i8
+        fill: bool
+    draw_circle:
+      returns:
+        - i8
+      parameters:
+        center: tos::gfx2.point
+        radius: i8
+        fill: bool
+    draw_text:
+      returns:
+        - i8
+      parameters:
+        text: string_view
+        p: tos::gfx2.point
