@@ -1,16 +1,15 @@
-FROM ubuntu:18.04
+FROM ubuntu:18.04 AS Setup
 
-RUN apt-get update && apt-get install -y --no-install-recommends git g++-8 ninja-build wget ca-certificates libboost-all-dev unzip libssl-dev
+RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates unzip libssl-dev
 
 WORKDIR /src
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.16.1/cmake-3.16.1.tar.gz
-RUN tar xf cmake-3.16.1.tar.gz
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3-Linux-x86_64.tar.gz
+RUN tar xf cmake-3.17.3-Linux-x86_64.tar.gz
 
-WORKDIR /src/cmake-3.16.1
-RUN CC=gcc-8 CXX=g++-8 ./configure
-RUN CC=gcc-8 CXX=g++-8 make -j12 && make install
+RUN mv cmake-3.17.3-Linux-x86_64 /opt/cmake
 
 RUN mkdir -p /opt/x-tools
+RUN mkdir -p /opt/bin
 
 WORKDIR /src
 RUN wget https://blog.zakkemble.net/download/avr-gcc-10.1.0-x64-linux.tar.bz2
@@ -26,6 +25,7 @@ RUN tar xf gcc-arm-none-eabi-10-2020-q2-preview-x86_64-linux.tar.bz2
 RUN mv gcc-arm-none-eabi-10-2020-q2-preview /opt/x-tools
 
 RUN wget https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/clang+llvm-10.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+RUN apt-get install -y xz-utils
 RUN tar xf clang+llvm-10.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
 RUN mv clang+llvm-10.0.0-x86_64-linux-gnu-ubuntu-18.04 /opt/llvm-10
 
@@ -33,19 +33,19 @@ RUN wget https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/bin
 RUN tar xf gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf.tar.xz
 RUN mv gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf /opt/x-tools
 
-RUN rm -rf /src/*
+RUN wget https://cs.ucsb.edu/~bakir/lidlc
+RUN chmod +x lidlc
+RUN mv lidlc /opt/bin/
 
-RUN useradd builder -m -d /home/builder -s /bin/bash --uid 1000
-RUN chown builder:builder /src
-RUN chown builder:builder -R /opt/x-tools/
+FROM ubuntu:18.04
 
+RUN apt-get update && apt-get install -y --no-install-recommends git g++-8 ninja-build libboost-all-dev
 RUN apt-get install -y ssh python3-pip
 RUN apt-get install -y distcc
 RUN apt-get install -y ccache
-#COPY ccache.conf /etc/
+
+COPY --from=Setup /opt/ /opt/
 
 ENV PATH=$PATH:/opt/llvm-10/bin
-
-RUN wget https://cs.ucsb.edu/~bakir/lidlc
-RUN chmod +x lidlc
-RUN mv lidlc /usr/local/bin/
+ENV PATH=$PATH:/opt/cmake/bin
+ENV PATH=$PATH:/opt/bin
