@@ -2,12 +2,13 @@
 #include <tos/gfx/text.hpp>
 #include <tos/gfx2/bit_painter.hpp>
 #include <tos/gfx2/utility.hpp>
+#include <tos/gfx2/color_convert.hpp>
 
 namespace tos::gfx2 {
 bit_painter::bit_painter(tos::span<uint8_t> buffer, const size& dims)
     : m_fb{buffer}
     , m_dims{dims}
-    , m_style(binary_color{true}) {
+    , m_col(binary_color{true}) {
 }
 
 int8_t
@@ -161,5 +162,12 @@ void bit_painter::draw_circle_quarter(const point& center,
         center, radius, fill, [this](const tos::gfx2::point& pt) {
           this->draw_point(pt);
         });
+}
+
+int8_t bit_painter::set_style(const services::style& s) {
+    m_col = visit([](auto& col) {
+        return color_convert<binary_color>(col);
+    }, s.color());
+    return 0;
 }
 } // namespace tos::gfx2

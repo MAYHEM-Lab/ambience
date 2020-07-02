@@ -35,17 +35,14 @@ public:
                      const int8_t& radius,
                      const bool& fill) override;
 
-    int8_t set_style(const tos::services::style& s) override {
-        m_style = s;
-        return 0;
-    }
+    int8_t set_style(const tos::services::style& s) override;
 
     tos::gfx2::size get_dimensions() override {
         return m_dims;
     }
 
     void fill() {
-        auto fbyte = m_style.color().binary().col() ? 0xFF : 0;
+        auto fbyte = m_col.col() ? 0xFF : 0;
         fill_byte(fbyte);
     }
 
@@ -93,7 +90,7 @@ private:
 
     void draw(const bit_loc& loc) {
         auto byte = read_byte(loc.byte_num);
-        if (m_style.color().binary().col()) {
+        if (m_col.col()) {
             byte |= 1 << loc.bit_pos;
         } else {
             byte &= ~(1 << loc.bit_pos);
@@ -109,6 +106,6 @@ private:
 
     tos::span<uint8_t> m_fb;
     tos::gfx2::size m_dims;
-    tos::services::style m_style;
+    tos::gfx2::binary_color m_col;
 };
 } // namespace tos::gfx2
