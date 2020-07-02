@@ -12,6 +12,7 @@
 #include <arch/ble/common.hpp>
 #include <nrf_sdh.h>
 #include <string_view>
+#include <tos/debug/assert.hpp>
 #include <tos/expected.hpp>
 #include <tos/ft.hpp>
 
@@ -37,6 +38,7 @@ public:
     ble_version_t get_version() const {
         ble_version_t vers;
         auto res = sd_ble_version_get(&vers);
+        Assert(res == NRF_SUCCESS);
         return vers;
     }
 
