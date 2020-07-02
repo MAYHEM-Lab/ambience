@@ -30,7 +30,21 @@ binary_color:
   members:
     col: bool
 
+rgb8:
+  type: structure
+  members:
+    red: u8
+    green: u8
+    blue: u8
+
+mono8:
+  type: structure
+  members:
+    col: u8
+
 color:
   type: union
   variants:
     binary: binary_color
+    rgb: rgb8
+    mono: mono8
