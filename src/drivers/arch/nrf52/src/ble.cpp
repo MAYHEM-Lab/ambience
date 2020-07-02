@@ -5,29 +5,27 @@
 #include <arch/ble.hpp>
 #include <nrf_ble_gatt/nrf_ble_gatt.h>
 
-using namespace tos::nrf52;
-
-static nrf_sdh_soc_evt_observer_t tos_soc_observer
-    __attribute__((section(".sdh_soc_observers1")))
-    __attribute__((used)){[](uint32_t ev, void* ctx) {
-                              auto events = (nrf_events_t*)ctx;
-                              events->on_soc_evt(ev);
-                          },
-                          &nrf_events};
-
-static nrf_sdh_ble_evt_observer_t tos_ble_observer
-    __attribute__((section(".sdh_ble_observers1")))
-    __attribute__((used)){[](ble_evt_t const* ev, void* ctx) {
-                              auto events = (nrf_events_t*)ctx;
-                              events->on_ble_evt(ev);
-                          },
-                          &nrf_events};
-
 namespace tos::nrf52 {
 nrf_events_t nrf_events;
-}
 
-static void ble_evt_handler(ble_evt_t const* p_ble_evt, void*) {
+namespace {
+__attribute__((section(".sdh_soc_observers1"))) __attribute__((used))
+nrf_sdh_soc_evt_observer_t tos_soc_observer{[](uint32_t ev, void* ctx) {
+                                                auto events =
+                                                    static_cast<nrf_events_t*>(ctx);
+                                                events->on_soc_evt(ev);
+                                            },
+                                            &nrf_events};
+
+__attribute__((section(".sdh_ble_observers1"))) __attribute__((used))
+nrf_sdh_ble_evt_observer_t tos_ble_observer{[](ble_evt_t const* ev, void* ctx) {
+                                                auto events =
+                                                    static_cast<nrf_events_t*>(ctx);
+                                                events->on_ble_evt(ev);
+                                            },
+                                            &nrf_events};
+
+void ble_low_level_evt_handler(ble_evt_t const* p_ble_evt, void*) {
     uint32_t err_code;
 
     switch (p_ble_evt->header.evt_id) {
@@ -76,6 +74,7 @@ static void ble_evt_handler(ble_evt_t const* p_ble_evt, void*) {
     }
 }
 
-static nrf_sdh_ble_evt_observer_t m_ble_observer
-    __attribute__((section(".sdh_ble_observers3")))
-    __attribute__((used)) = {ble_evt_handler, nullptr};
+__attribute__((section(".sdh_ble_observers3"))) __attribute__((used))
+nrf_sdh_ble_evt_observer_t m_ble_observer = {ble_low_level_evt_handler, nullptr};
+} // namespace
+} // namespace tos::nrf52
