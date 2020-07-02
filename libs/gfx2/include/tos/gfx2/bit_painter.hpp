@@ -60,7 +60,8 @@ public:
 
     int8_t draw_text(std::string_view text, const tos::gfx2::point& p) override;
 
-    void flush() {
+    int8_t flush() override {
+        return 0;
     }
 
 private:

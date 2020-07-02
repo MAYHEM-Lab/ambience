@@ -50,3 +50,7 @@ painter:
       parameters:
         text: string_view
         p: tos::gfx2.point
+    flush:
+      returns:
+        - i8
+      parameters: []
