@@ -10,33 +10,28 @@ WORKDIR /src/cmake-3.16.1
 RUN CC=gcc-8 CXX=g++-8 ./configure
 RUN CC=gcc-8 CXX=g++-8 make -j12 && make install
 
-WORKDIR /src
-RUN wget https://github.com/google/flatbuffers/archive/521e255ad9656a213971b30ba1beeec395b2e27e.tar.gz
-RUN tar xf 521e255ad9656a213971b30ba1beeec395b2e27e.tar.gz
-RUN mkdir -p /src/flatbuffers-521e255ad9656a213971b30ba1beeec395b2e27e/build
-
-WORKDIR /src/flatbuffers-521e255ad9656a213971b30ba1beeec395b2e27e/build
-RUN CC=gcc-8 CXX=g++-8 cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
-RUN ninja && ninja install
-
 RUN mkdir -p /opt/x-tools
 
 WORKDIR /src
-RUN wget https://blog.zakkemble.net/download/avr-gcc-9.2.0-x64-linux.tar.bz2
-RUN tar xf avr-gcc-9.2.0-x64-linux.tar.bz2
-RUN mv avr-gcc-9.2.0-x64-linux /opt/x-tools/
+RUN wget https://blog.zakkemble.net/download/avr-gcc-10.1.0-x64-linux.tar.bz2
+RUN tar xf avr-gcc-10.1.0-x64-linux.tar.bz2
+RUN mv avr-gcc-10.1.0-x64-linux /opt/x-tools/
 
-RUN wget https://github.com/earlephilhower/esp-quick-toolchain/releases/download/3.0.0-gnu5/x86_64-linux-gnu.xtensa-lx106-elf-a5c9861.1575819473.tar.gz
-RUN tar xf x86_64-linux-gnu.xtensa-lx106-elf-a5c9861.1575819473.tar.gz
+RUN wget https://github.com/earlephilhower/esp-quick-toolchain/releases/download/3.0.0-gnu11/x86_64-linux-gnu.xtensa-lx106-elf-38230f5.1589926099.tar.gz
+RUN tar xf x86_64-linux-gnu.xtensa-lx106-elf-38230f5.1589926099.tar.gz
 RUN mv xtensa-lx106-elf /opt/x-tools
 
-RUN wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-x86_64-linux.tar.bz2
-RUN tar xf gcc-arm-none-eabi-9-2019-q4-major-x86_64-linux.tar.bz2
-RUN mv gcc-arm-none-eabi-9-2019-q4-major /opt/x-tools
+RUN wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/10-2020q2/gcc-arm-none-eabi-10-2020-q2-preview-x86_64-linux.tar.bz2
+RUN tar xf gcc-arm-none-eabi-10-2020-q2-preview-x86_64-linux.tar.bz2
+RUN mv gcc-arm-none-eabi-10-2020-q2-preview /opt/x-tools
 
 RUN wget https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/clang+llvm-10.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
 RUN tar xf clang+llvm-10.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
 RUN mv clang+llvm-10.0.0-x86_64-linux-gnu-ubuntu-18.04 /opt/llvm-10
+
+RUN wget https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf.tar.xz
+RUN tar xf gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf.tar.xz
+RUN mv gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf /opt/x-tools
 
 RUN rm -rf /src/*
 
@@ -50,3 +45,7 @@ RUN apt-get install -y ccache
 #COPY ccache.conf /etc/
 
 ENV PATH=$PATH:/opt/llvm-10/bin
+
+RUN wget https://cs.ucsb.edu/~bakir/lidlc
+RUN chmod +x lidlc
+RUN mv lidlc /usr/local/bin/
