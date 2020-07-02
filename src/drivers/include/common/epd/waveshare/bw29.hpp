@@ -131,7 +131,7 @@ public:
 
         m_g.set_pin_mode(m_busy, tos::pin_mode::in);
 
-        initialize(delay, partial);
+        initialize(delay);
         use_partial_update(partial);
     }
 
@@ -235,7 +235,7 @@ private:
     }
 
     template<class DelayT>
-    void initialize(DelayT&& delay, bool partial) {
+    void initialize(DelayT&& delay) {
         using namespace waveshare_29bw_constants;
         hard_reset(delay);
         _writeCommand(DRIVER_OUTPUT_CONTROL); // Panel configuration, Gate selection
