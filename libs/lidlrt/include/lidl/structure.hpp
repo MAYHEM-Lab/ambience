@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <tuple>
 #include <type_traits>
 
@@ -25,14 +26,14 @@ struct member_info<RetT (T::*)(), ConstRetT (T::*)() const> {
 
 template<class T, class RetT, class ConstRetT>
 member_info(const char* name, RetT (T::*fn)(), ConstRetT (T::*cfn)() const)
-    ->member_info<RetT (T::*)(), ConstRetT (T::*)() const>;
+    -> member_info<RetT (T::*)(), ConstRetT (T::*)() const>;
 
 template<class T>
 struct struct_traits;
 } // namespace lidl
 
 namespace lidl {
-template<size_t I,
+template<std::size_t I,
          class T,
          std::enable_if_t<(lidl::struct_traits<T>::arity > I)>* = nullptr>
 const auto& get(const lidl::struct_base<T>& str) {
@@ -40,7 +41,7 @@ const auto& get(const lidl::struct_base<T>& str) {
     return (elem.*(std::get<I>(lidl::struct_traits<T>::members).const_function))();
 }
 
-template<size_t I,
+template<std::size_t I,
          class T,
          std::enable_if_t<(lidl::struct_traits<T>::arity > I)>* = nullptr>
 auto& get(lidl::struct_base<T>& str) {

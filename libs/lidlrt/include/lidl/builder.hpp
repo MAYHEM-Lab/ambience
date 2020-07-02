@@ -13,7 +13,7 @@ public:
     }
 
     uint16_t size() const {
-        return m_cur_ptr - m_buffer.data();
+        return static_cast<uint16_t>(m_cur_ptr - m_buffer.data());
     }
 
     buffer get_buffer() const {

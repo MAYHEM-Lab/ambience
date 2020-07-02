@@ -57,7 +57,7 @@ inline string& create_string(message_builder& builder, int len) {
 }
 
 inline string& create_string(message_builder& builder, std::string_view sv) {
-    auto& str = create_string(builder, sv.size());
+    auto& str = create_string(builder, static_cast<int>(sv.size()));
     std::copy(sv.begin(), sv.end(), const_cast<char*>(str.string_view().data()));
     return str;
 }

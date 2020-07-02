@@ -90,6 +90,48 @@ private:
     } m_unsafe;
 };
 
+template<class T>
+class ptr_iterator {
+public:
+    using value_type = T;
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = T;
+    using pointer = T*;
+    using reference = T&;
+
+    ptr_iterator(const ptr<T>* cur)
+        : m_cur{cur} {
+    }
+
+    const T& operator*() {
+        return m_cur->unsafe().get();
+    }
+
+    ptr_iterator& operator++() {
+        ++m_cur;
+        return *this;
+    }
+
+    ptr_iterator operator++(int) {
+        auto copy = *this;
+        ++(*this);
+        return copy;
+    }
+
+private:
+    friend bool operator==(const ptr_iterator<T>& it,
+                           const ptr_iterator<T>& other_it) {
+        return it.m_cur == other_it.m_cur;
+    }
+
+    friend bool operator!=(const ptr_iterator<T>& it,
+                           const ptr_iterator<T>& other_it) {
+        return it.m_cur != other_it.m_cur;
+    }
+
+    const ptr<T>* m_cur;
+};
+
 static_assert(sizeof(ptr<int>) == 2);
 static_assert(alignof(ptr<int>) == 2);
 } // namespace lidl

@@ -4,6 +4,8 @@
 #include <type_traits>
 
 namespace lidl {
+template <class T>
+class ptr;
 template <class T> struct union_base;
 
 template <class T>

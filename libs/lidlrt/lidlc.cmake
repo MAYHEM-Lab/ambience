@@ -1,7 +1,6 @@
-
 find_program(LIDLC_BIN
         NAMES lidlc
-        HINTS /home/fatih/lidl/cmake-build-debug/src/tools ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/bin ${CMAKE_BINARY_DIR}/src/tools ${CMAKE_BINARY_DIR}/Debug)
+        HINTS /home/fatih/lidl/cmake-build-debug/src/tools ${CMAKE_BINARY_DIR}/bin ${CMAKE_BINARY_DIR}/src/tools ${CMAKE_BINARY_DIR}/src/tools/Debug)
 
 find_program(CLANG_FORMAT_BIN
         NAMES clang-format-8)

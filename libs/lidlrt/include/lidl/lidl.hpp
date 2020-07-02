@@ -22,3 +22,16 @@
 #ifndef LIDL_UNION_ASSERT
 #define LIDL_UNION_ASSERT LIDL_ASSERT
 #endif
+
+#ifndef LIDL_UNREACHABLE
+#ifdef TOS
+#include <tos/compiler.hpp>
+#define LIDL_UNREACHABLE() TOS_UNREACHABLE()
+#else
+#if defined(__GNUC__) && !defined(__clang__)
+#define LIDL_UNREACHABLE() __builtin_unreachable()
+#else
+#define LIDL_UNREACHABLE() LIDL_ASSERT(false)
+#endif
+#endif
+#endif
