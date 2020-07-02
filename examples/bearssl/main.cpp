@@ -14,7 +14,6 @@
 #include <common/usart.hpp>
 #include <tos/print.hpp>
 #include <common/inet/tcp_stream.hpp>
-#include <caps/emsha_signer.hpp>
 #include "monotonic_clock.hpp"
 
 extern "C" void optimistic_yield(uint32_t){
@@ -141,11 +140,11 @@ void handle_sock(StreamT& p, UsartT& usart)
 //    br_rsa_i15_pkcs1_sign(nullptr, (const unsigned char*)hash.buf, 32, &RSA, sign_buf);
 //}
 
-static unsigned char sign_buf[512];
-auto sign(caps::emsha::hash_t hash)
-{
-    return br_ecdsa_i15_sign_raw(br_ec_get_default(), &br_sha256_vtable, hash.buf, &EC, sign_buf);
-}
+//static unsigned char sign_buf[512];
+//auto sign(caps::emsha::hash_t hash)
+//{
+//    return br_ecdsa_i15_sign_raw(br_ec_get_default(), &br_sha256_vtable, hash.buf, &EC, sign_buf);
+//}
 
 //auto ctx_ptr = std::make_unique<br_pkey_decoder_context>();
 //auto get_pubkey()
@@ -163,12 +162,12 @@ auto sign(caps::emsha::hash_t hash)
 char kbuf[128];
 br_ec_public_key k;
 
-auto verify(caps::emsha::hash_t hash)
-{
-    auto r = br_ecdsa_i15_vrfy_raw(br_ec_get_default(),
-                                   (unsigned char*)hash.buf, 32, &k, sign_buf, 64);
-    return r == 1;
-}
+//auto verify(caps::emsha::hash_t hash)
+//{
+//    auto r = br_ecdsa_i15_vrfy_raw(br_ec_get_default(),
+//                                   (unsigned char*)hash.buf, 32, &k, sign_buf, 64);
+//    return r == 1;
+//}
 //auto verify()
 //{
 //    caps::emsha::hash_t h;
