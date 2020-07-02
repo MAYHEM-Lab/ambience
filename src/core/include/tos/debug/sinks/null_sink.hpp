@@ -20,7 +20,7 @@ public:
     }
     void add(span<const uint8_t>) override {
     }
-    void add(double d) override {
+    void add(double) override {
     }
     void end() override {
     }
