@@ -4,10 +4,12 @@
 
 #pragma once
 
-#include <tos/platform.hpp>
 #include <tos/debug/log.hpp>
 
 namespace tos {
+namespace platform {
+[[noreturn]] void force_reset();
+}
 namespace debug {
 /**
  * This function is used to signal a non-recoverable fault in
@@ -24,8 +26,7 @@ namespace debug {
  *
  * @tparam ErrorTagType type for an explanation for the crash
  */
-TOS_NO_OPTIMIZE
-[[noreturn]] inline void panic(const char* err) {
+TOS_NO_OPTIMIZE [[noreturn]] inline void panic(const char* err) {
     tos::debug::fatal(err);
     tos::platform::force_reset();
 }
