@@ -1,0 +1,1 @@
+#include <tos/gfx2/buffer_painter.hpp>

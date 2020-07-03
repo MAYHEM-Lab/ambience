@@ -9,10 +9,12 @@ add_library(
   include/tos/gfx2.hpp
   include/tos/gfx2/painter.hpp
   include/tos/gfx2/bit_painter.hpp
-  bit_painter.cpp
+  src/bit_painter.cpp
   include/tos/gfx2/utility.hpp
   include/tos/gfx2/color_convert.hpp
   src/color_convert.cpp
+  include/tos/gfx2/buffer_painter.hpp
+  src/buffer_painter.cpp
 )
 
 target_link_libraries(tos_gfx2 PUBLIC tos_util_core)
