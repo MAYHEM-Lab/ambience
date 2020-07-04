@@ -6,14 +6,17 @@
 #include <tos/io/packet.hpp>
 #include <tos/span.hpp>
 
-namespace lidl {
-class remote_service {
+class packet_transport {
 public:
-    explicit remote_service(tos::intrusive_ptr<tos::io::any_channel> channel)
+    explicit packet_transport(tos::intrusive_ptr<tos::io::any_channel> channel)
         : m_channel{std::move(channel)} {
     }
 
 protected:
+    std::vector<uint8_t> get_buffer() {
+        return std::vector<uint8_t>(256);
+    }
+
     tos::intrusive_ptr<tos::io::packet> send_receive(tos::span<const uint8_t> send_buf) {
         m_channel->send(send_buf);
         return m_channel->receive();
@@ -21,4 +24,15 @@ protected:
 
     tos::intrusive_ptr<tos::io::any_channel> m_channel;
 };
-} // namespace lidl
+
+namespace tos {
+inline tos::span<uint8_t> data(intrusive_ptr<io::packet>& packet) {
+    return packet->data();
+}
+}
+
+namespace std {
+inline tos::span<uint8_t> data(vector<uint8_t>& v) {
+    return v;
+}
+}

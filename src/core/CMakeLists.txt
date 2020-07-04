@@ -40,6 +40,8 @@ add_library(tos_debug_log
 target_include_directories(tos_debug_log PUBLIC include)
 target_link_libraries(tos_debug_log PUBLIC tos_util_core tos_print)
 
+include(lidlc)
+
 add_lidlc(log_schema log.yaml)
 add_library(lidl_log_sink include/tos/debug/sinks/lidl_sink.hpp src/lidl_sink.cpp)
 target_include_directories(tos_debug_log PUBLIC include)

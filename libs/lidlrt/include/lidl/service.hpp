@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include <lidl/builder.hpp>
 #include <lidl/meta.hpp>
 #include <lidl/status.hpp>
 #include <string_view>
 #include <tuple>
-#include <lidl/builder.hpp>
 
 namespace lidl {
 template<class T>
@@ -28,21 +28,22 @@ struct procedure_traits<RetType (Type::*const)(ArgTypes...)> {
     using param_types = meta::list<ArgTypes...>;
 
     static constexpr bool takes_response_builder() {
-        return (... || std::is_same_v<std::remove_reference_t<ArgTypes>, message_builder>);
+        return (... ||
+                std::is_same_v<std::remove_reference_t<ArgTypes>, message_builder>);
     }
 };
 
 template<class Type, class RetType, class... ArgTypes>
-struct procedure_traits<RetType (Type::*)(ArgTypes...)> : procedure_traits<RetType (Type::*const)(ArgTypes...)> {
-};
+struct procedure_traits<RetType (Type::*)(ArgTypes...)>
+    : procedure_traits<RetType (Type::*const)(ArgTypes...)> {};
 
-template <class ServiceT>
+template<class ServiceT>
 class service_call_union;
 
-template <class ServiceT>
+template<class ServiceT>
 class service_return_union;
 
-template <class T>
+template<class T>
 class rpc_param_traits;
 
 class service_base {
@@ -51,7 +52,7 @@ public:
     virtual std::string_view name() const = 0;
 };
 
-template <class ServiceT>
+template<class ServiceT>
 class service : public service_base {
 public:
     std::string_view name() const override {
@@ -62,6 +63,8 @@ public:
     using return_union = service_return_union<ServiceT>;
 };
 
-template <class T>
-tos::span<uint8_t> data(T&);
+
+template<class T>
+tos::span<uint8_t> data(T& t);
+
 } // namespace lidl

@@ -26,50 +26,7 @@ public:
     }
 };
 
-class remote_system
-    : public tos::services::system_status
-    , public lidl::remote_service {
-public:
-    using remote_service::remote_service;
-
-    std::string_view get_commit_hash(lidl::message_builder& response_builder) override {
-        std::array<uint8_t, 128> buffer;
-        lidl::message_builder mb{buffer};
-        lidl::create<call_union>(mb,
-                                 tos::services::system_status_get_commit_hash_params{});
-        auto packet = mb.get_buffer().get_buffer().slice(0, mb.size());
-        auto&& response = send_receive(packet);
-        auto& res =
-            lidl::get_root<return_union>(tos::span<const uint8_t>(*response))
-                .get_commit_hash();
-        auto& str_res = lidl::create_string(response_builder, res.ret0());
-        return str_res;
-    }
-
-    std::string_view get_build_id(lidl::message_builder& response_builder) override {
-        std::array<uint8_t, 128> buffer;
-        lidl::message_builder mb{buffer};
-        lidl::create<call_union>(mb, tos::services::system_status_get_build_id_params{});
-        auto packet = mb.get_buffer().get_buffer().slice(0, mb.size());
-        auto response = send_receive(packet);
-        auto& res =
-            lidl::get_root<return_union>(lidl::buffer(response->data())).get_build_id();
-        auto& str_res = lidl::create_string(response_builder, res.ret0());
-        return str_res;
-    }
-
-    std::string_view get_arch(lidl::message_builder& response_builder) override {
-        std::array<uint8_t, 128> buffer;
-        lidl::message_builder mb{buffer};
-        lidl::create<call_union>(mb, tos::services::system_status_get_arch_params{});
-        auto packet = mb.get_buffer().get_buffer().slice(0, mb.size());
-        auto response = send_receive(packet);
-        auto& res =
-            lidl::get_root<return_union>(lidl::buffer(response->data())).get_arch();
-        auto& str_res = lidl::create_string(response_builder, res.ret0());
-        return str_res;
-    }
-};
+using generated_remote_system = tos::services::remote_system_status<packet_transport>;
 
 void query_sys(tos::services::system_status& server) {
     LOG("Service name:", server.name());
@@ -106,13 +63,10 @@ void service_main() {
         }
     });
 
-    remote_system remote_sys{transport.get_channel(3)};
+    generated_remote_system remote_sys{transport.get_channel(3)};
     query_sys(remote_sys);
 
     tos::this_thread::block_forever();
-}
-
-void service_broker() {
 }
 
 void tos_main() {
