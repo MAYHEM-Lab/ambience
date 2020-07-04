@@ -61,4 +61,7 @@ public:
     using call_union = service_call_union<ServiceT>;
     using return_union = service_return_union<ServiceT>;
 };
+
+template <class T>
+tos::span<uint8_t> data(T&);
 } // namespace lidl
