@@ -3,6 +3,12 @@ $lidlmeta:
   imports:
     - ./gfx
 
+rotation:
+  type: enumeration
+  members:
+    - vertical
+    - horizontal
+
 style:
   type: structure
   members:
