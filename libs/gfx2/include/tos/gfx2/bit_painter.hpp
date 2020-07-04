@@ -13,7 +13,7 @@ public:
     int8_t draw_circle(const tos::gfx2::point& center,
                        const int8_t& radius,
                        const bool& fill) override {
-        draw_circle_quarter<tos::gfx2::circle_quarters::all>(center, radius, fill);
+        this->draw_circle_quarter<tos::gfx2::circle_quarters::all>(center, radius, fill);
         return 0;
     }
 
@@ -26,6 +26,10 @@ public:
     }
 
     int8_t draw_point(const tos::gfx2::point& p) override {
+        if (p.x() < 0 || p.y() < 0 || p.x() >= m_dims.width() ||
+            p.y() >= m_dims.height()) {
+            return 0;
+        }
         auto loc = bit_location(p);
         draw(loc);
         return 0;
@@ -50,11 +54,6 @@ public:
         std::fill(m_fb.begin(), m_fb.end(), fbyte);
     }
 
-    void draw(const tos::gfx2::point& p) {
-        auto loc = bit_location(p);
-        draw(loc);
-    }
-
     int8_t draw_text(std::string_view text, const tos::gfx2::point& p) override;
 
     int8_t flush() override {
@@ -63,9 +62,13 @@ public:
 
 private:
     template<tos::gfx2::circle_quarters quarters>
-    void draw_circle_quarter(const tos::gfx2::point& center,
-                             const int8_t& radius,
-                             const bool& fill);
+    void
+    draw_circle_quarter(const point& center, const int8_t& radius, const bool& fill) {
+        tos::gfx2::draw_circle_quarter<quarters>(
+            center, radius, fill, [this](const tos::gfx2::point& pt) {
+                this->draw_point(pt);
+            });
+    }
 
     template<class FontT>
     void draw_text_line(std::string_view str, const FontT& font, tos::gfx2::point p);

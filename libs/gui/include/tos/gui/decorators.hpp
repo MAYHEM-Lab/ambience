@@ -39,8 +39,7 @@ struct bordered {
 
         tos::services::style s(tos::gfx2::binary_color{false});
         painter.set_style(s);
-        painter.draw_rect(
-            {at.corner(), {at.dims().width() - 1, at.dims().height() - 1}}, 0, false);
+        painter.draw_rect(at, 0, false);
     }
 };
 
@@ -61,9 +60,7 @@ struct round_bordered {
 
         tos::services::style s(tos::gfx2::binary_color{false});
         painter.set_style(s);
-        painter.draw_rect({at.corner(), {at.dims().width() - 1, at.dims().height() - 1}},
-                          radius,
-                          false);
+        painter.draw_rect(at, radius, false);
     }
 };
 

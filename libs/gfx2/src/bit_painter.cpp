@@ -1,8 +1,8 @@
 #include <tos/debug/log.hpp>
 #include <tos/gfx/text.hpp>
 #include <tos/gfx2/bit_painter.hpp>
-#include <tos/gfx2/utility.hpp>
 #include <tos/gfx2/color_convert.hpp>
+#include <tos/gfx2/utility.hpp>
 
 namespace tos::gfx2 {
 bit_painter::bit_painter(tos::span<uint8_t> buffer, const size& dims)
@@ -13,36 +13,28 @@ bit_painter::bit_painter(tos::span<uint8_t> buffer, const size& dims)
 
 int8_t
 bit_painter::draw_rect(const rectangle& rect, const int8_t& radius, const bool& fill) {
+    auto draw_point = [this](const tos::gfx2::point& pt) { this->draw_point(pt); };
+
     if (fill) {
-        if (rect.corner() == tos::gfx2::point{0, 0} && rect.dims() == get_dimensions() &&
-            radius == 0) {
-            this->fill();
-            return 0;
-        }
         if (radius == 0) {
+            if (rect.corner() == tos::gfx2::point{0, 0} &&
+                rect.dims() == get_dimensions()) {
+                this->fill();
+                return 0;
+            }
             for (int16_t row = rect.corner().y(); row <= other_corner(rect).y(); ++row) {
                 for (int16_t col = rect.corner().x(); col <= other_corner(rect).x();
                      ++col) {
-                    draw(tos::gfx2::point{col, row});
+                    draw_point(tos::gfx2::point{col, row});
                 }
             }
             return 0;
         }
 
-        // rounded corners without fill
+        // rounded corners with fill
         auto lines = tos::gfx2::lines(rect);
-        auto top_right =
-            tos::gfx2::point{lines[2].p1().x() - radius, lines[2].p1().y() + radius};
-        auto bot_right =
-            tos::gfx2::point{lines[1].p1().x() - radius, lines[1].p1().y() - radius};
-        auto top_left =
-            tos::gfx2::point{lines[3].p1().x() + radius, lines[3].p1().y() + radius};
-        auto bot_left =
-            tos::gfx2::point{lines[0].p1().x() + radius, lines[0].p1().y() - radius};
-        draw_circle_quarter<tos::gfx2::circle_quarters::first>(top_right, radius, true);
-        draw_circle_quarter<tos::gfx2::circle_quarters::fourth>(bot_right, radius, true);
-        draw_circle_quarter<tos::gfx2::circle_quarters::second>(top_left, radius, true);
-        draw_circle_quarter<tos::gfx2::circle_quarters::third>(bot_left, radius, true);
+
+        draw_rounder_rectangle_corners(lines, radius, fill, draw_point);
 
         auto big_rect = tos::gfx2::rectangle{
             {lines[3].p1().x() + radius, lines[3].p1().y()},
@@ -54,9 +46,9 @@ bit_painter::draw_rect(const rectangle& rect, const int8_t& radius, const bool& 
                                  {radius, rect.dims().height() - 2 * radius}};
         draw_rect(left_rect, 0, fill);
 
-        auto right_rect =
-            tos::gfx2::rectangle{{lines[2].p1().x() - radius, lines[2].p1().y() + radius},
-                                 {radius, rect.dims().height() - 2 * radius}};
+        auto right_rect = tos::gfx2::rectangle{
+            {lines[2].p1().x() - radius + 1, lines[2].p1().y() + radius},
+            {radius, rect.dims().height() - 2 * radius}};
         draw_rect(right_rect, 0, fill);
 
         return 0;
@@ -71,24 +63,13 @@ bit_painter::draw_rect(const rectangle& rect, const int8_t& radius, const bool& 
 
     // rounded corners without fill
     auto lines = tos::gfx2::lines(rect);
-    auto top_right =
-        tos::gfx2::point{lines[2].p1().x() - radius, lines[2].p1().y() + radius};
-    auto bot_right =
-        tos::gfx2::point{lines[1].p1().x() - radius, lines[1].p1().y() - radius};
-    auto top_left =
-        tos::gfx2::point{lines[3].p1().x() + radius, lines[3].p1().y() + radius};
-    auto bot_left =
-        tos::gfx2::point{lines[0].p1().x() + radius, lines[0].p1().y() - radius};
-
-    draw_circle_quarter<tos::gfx2::circle_quarters::first>(top_right, radius, false);
-    draw_circle_quarter<tos::gfx2::circle_quarters::fourth>(bot_right, radius, false);
-    draw_circle_quarter<tos::gfx2::circle_quarters::second>(top_left, radius, false);
-    draw_circle_quarter<tos::gfx2::circle_quarters::third>(bot_left, radius, false);
+    draw_rounder_rectangle_corners(lines, radius, fill, draw_point);
 
     for (auto& line : lines) {
         auto shorter_line = shorten(line, radius);
         draw_line(shorter_line);
     }
+
     return 0;
 }
 
@@ -154,20 +135,8 @@ void bit_painter::draw_line(const point& p0, const point& p1) {
     }
 }
 
-template<tos::gfx2::circle_quarters quarters>
-void bit_painter::draw_circle_quarter(const point& center,
-                                      const int8_t& radius,
-                                      const bool& fill) {
-    tos::gfx2::draw_circle_quarter<quarters>(
-        center, radius, fill, [this](const tos::gfx2::point& pt) {
-          this->draw_point(pt);
-        });
-}
-
 int8_t bit_painter::set_style(const services::style& s) {
-    m_col = visit([](auto& col) {
-        return color_convert<binary_color>(col);
-    }, s.color());
+    m_col = visit([](auto& col) { return color_convert<binary_color>(col); }, s.color());
     return 0;
 }
 } // namespace tos::gfx2

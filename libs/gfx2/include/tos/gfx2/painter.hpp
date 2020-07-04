@@ -1,8 +1,8 @@
 #pragma once
 
+#include <painter_generated.hpp>
 #include <tos/flags.hpp>
 #include <tos/gfx2.hpp>
-#include <painter_generated.hpp>
 
 namespace tos::gfx2 {
 enum class circle_quarters
@@ -16,9 +16,10 @@ enum class circle_quarters
 
 template<circle_quarters quarters, class PointDrawer>
 void draw_circle_quarter(const point& center,
-                         const int8_t& radius,
+                         const int8_t& org_radius,
                          const bool& fill,
                          const PointDrawer& draw_point) {
+    auto radius = org_radius - 1;
     auto& [x0, y0] = center;
     int x = radius;
     int y = 0;
@@ -91,5 +92,29 @@ void draw_circle_quarter(const point& center,
             xChange += 2;
         }
     }
+}
+
+template<class PointDrawer>
+void draw_rounder_rectangle_corners(const std::array<line, 4>& lines,
+                                    int8_t radius,
+                                    bool fill,
+                                    const PointDrawer& draw_point) {
+    auto top_right =
+        tos::gfx2::point{lines[2].p1().x() - radius + 1, lines[2].p1().y() + radius - 1};
+    auto bot_right =
+        tos::gfx2::point{lines[1].p1().x() - radius + 1, lines[1].p1().y() - radius + 1};
+    auto top_left =
+        tos::gfx2::point{lines[3].p1().x() + radius - 1, lines[3].p1().y() + radius - 1};
+    auto bot_left =
+        tos::gfx2::point{lines[0].p1().x() + radius - 1, lines[0].p1().y() - radius + 1};
+
+    draw_circle_quarter<tos::gfx2::circle_quarters::first>(
+        top_right, radius, fill, draw_point);
+    draw_circle_quarter<tos::gfx2::circle_quarters::fourth>(
+        bot_right, radius, fill, draw_point);
+    draw_circle_quarter<tos::gfx2::circle_quarters::second>(
+        top_left, radius, fill, draw_point);
+    draw_circle_quarter<tos::gfx2::circle_quarters::third>(
+        bot_left, radius, fill, draw_point);
 }
 } // namespace tos::gfx2

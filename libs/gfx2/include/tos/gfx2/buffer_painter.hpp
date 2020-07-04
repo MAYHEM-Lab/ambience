@@ -43,13 +43,15 @@ public:
 
     int8_t
     draw_rect(const rectangle& rect, const int8_t& radius, const bool& fill) override {
+        auto draw_point = [this](const tos::gfx2::point& pt) { this->draw_point(pt); };
+
         if (fill) {
-            if (rect.corner() == tos::gfx2::point{0, 0} &&
-                rect.dims() == get_dimensions() && radius == 0) {
-                this->fill();
-                return 0;
-            }
             if (radius == 0) {
+                if (rect.corner() == tos::gfx2::point{0, 0} &&
+                    rect.dims() == get_dimensions()) {
+                    this->fill();
+                    return 0;
+                }
                 for (int16_t row = rect.corner().y(); row <= other_corner(rect).y();
                      ++row) {
                     for (int16_t col = rect.corner().x(); col <= other_corner(rect).x();
@@ -60,24 +62,10 @@ public:
                 return 0;
             }
 
-            // rounded corners without fill
+            // rounded corners with fill
             auto lines = tos::gfx2::lines(rect);
-            auto top_right =
-                tos::gfx2::point{lines[2].p1().x() - radius, lines[2].p1().y() + radius};
-            auto bot_right =
-                tos::gfx2::point{lines[1].p1().x() - radius, lines[1].p1().y() - radius};
-            auto top_left =
-                tos::gfx2::point{lines[3].p1().x() + radius, lines[3].p1().y() + radius};
-            auto bot_left =
-                tos::gfx2::point{lines[0].p1().x() + radius, lines[0].p1().y() - radius};
-            draw_circle_quarter<tos::gfx2::circle_quarters::first>(
-                top_right, radius, true);
-            draw_circle_quarter<tos::gfx2::circle_quarters::fourth>(
-                bot_right, radius, true);
-            draw_circle_quarter<tos::gfx2::circle_quarters::second>(
-                top_left, radius, true);
-            draw_circle_quarter<tos::gfx2::circle_quarters::third>(
-                bot_left, radius, true);
+
+            draw_rounder_rectangle_corners(lines, radius, fill, draw_point);
 
             auto big_rect = tos::gfx2::rectangle{
                 {lines[3].p1().x() + radius, lines[3].p1().y()},
@@ -90,7 +78,7 @@ public:
             draw_rect(left_rect, 0, fill);
 
             auto right_rect = tos::gfx2::rectangle{
-                {lines[2].p1().x() - radius, lines[2].p1().y() + radius},
+                {lines[2].p1().x() - radius + 1, lines[2].p1().y() + radius},
                 {radius, rect.dims().height() - 2 * radius}};
             draw_rect(right_rect, 0, fill);
 
@@ -105,21 +93,14 @@ public:
         }
 
         // rounded corners without fill
-        auto lines = gfx2::lines(rect);
-        auto top_right = point{lines[2].p1().x() - radius, lines[2].p1().y() + radius};
-        auto bot_right = point{lines[1].p1().x() - radius, lines[1].p1().y() - radius};
-        auto top_left = point{lines[3].p1().x() + radius, lines[3].p1().y() + radius};
-        auto bot_left = point{lines[0].p1().x() + radius, lines[0].p1().y() - radius};
-
-        draw_circle_quarter<circle_quarters::first>(top_right, radius, false);
-        draw_circle_quarter<circle_quarters::fourth>(bot_right, radius, false);
-        draw_circle_quarter<circle_quarters::second>(top_left, radius, false);
-        draw_circle_quarter<circle_quarters::third>(bot_left, radius, false);
+        auto lines = tos::gfx2::lines(rect);
+        draw_rounder_rectangle_corners(lines, radius, fill, draw_point);
 
         for (auto& line : lines) {
             auto shorter_line = shorten(line, radius);
             draw_line(shorter_line);
         }
+
         return 0;
     }
 
