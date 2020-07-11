@@ -66,14 +66,18 @@ public:
 
         bordered{box{}}.draw(painter, at);
 
-        padding{horizontal_ruler{}, 10, 10, 0, 0}.draw(
-            painter,
-            {{0, at.dims().height() / 2}, {at.dims().width(), at.dims().height() / 2}});
+//        padding{horizontal_ruler{}, 10, 10, 0, 0}.draw(
+//            painter,
+//            {{0, at.dims().height() / 2}, {at.dims().width(), at.dims().height() / 2}});
 
-        rbox{{}, 10}.draw(painter, {{10, 10}, {40, 30}});
+        padding{vertical_ruler{}, 0, 0, 10, 10}.draw(
+            painter,
+            {{at.dims().width() / 2, 0}, {at.dims().width() / 2, at.dims().height()}});
+
+//        rbox{{}, 10}.draw(painter, {{10, 10}, {40, 30}});
 
         align_center_middle{round_bordered{4, padding{label("hello"), 4, 4, 4, 4}}}.draw(
-            painter, {at.corner(), {at.dims().width(), at.dims().height() / 2}});
+            painter, {at.corner(), {at.dims().width() / 2, at.dims().height()}});
     }
 };
 
@@ -135,6 +139,7 @@ expected<void, errors> epd_main() {
     auto fb = std::vector<uint8_t>(sz.area() / 8); // 1bpp
 
     auto painter = tos::gfx2::bit_painter{fb, {sz.width, sz.height}};
+    painter.set_orientation(tos::services::rotation::horizontal);
 
     epd_ui ui;
     first = clk.now();
