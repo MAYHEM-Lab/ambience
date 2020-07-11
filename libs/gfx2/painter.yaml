@@ -60,3 +60,8 @@ painter:
       returns:
         - i8
       parameters: []
+    set_orientation:
+      returns:
+        - bool
+      parameters:
+        orientation: rotation

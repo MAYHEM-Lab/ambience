@@ -16,7 +16,7 @@ public:
         this->draw_circle_quarter<tos::gfx2::circle_quarters::all>(center, radius, fill);
         return 0;
     }
-
+    bool set_orientation(const tos::services::rotation& orientation) override;
     void draw_line(const tos::gfx2::point& p0, const tos::gfx2::point& p1);
 
     int8_t draw_line(const tos::gfx2::line& l) override {
@@ -25,11 +25,13 @@ public:
         return 0;
     }
 
-    int8_t draw_point(const tos::gfx2::point& p) override {
-        if (p.x() < 0 || p.y() < 0 || p.x() >= m_dims.width() ||
-            p.y() >= m_dims.height()) {
+    int8_t draw_point(const tos::gfx2::point& org_p) override {
+        auto p = translate_point(org_p);
+        if (p.x() < 0 || p.y() < 0 || p.x() >= m_physical_dims.width() ||
+            p.y() >= m_physical_dims.height()) {
             return 0;
         }
+
         auto loc = bit_location(p);
         draw(loc);
         return 0;
@@ -42,7 +44,7 @@ public:
     int8_t set_style(const tos::services::style& s) override;
 
     tos::gfx2::size get_dimensions() override {
-        return m_dims;
+        return m_virtual_dims;
     }
 
     void fill() {
@@ -87,7 +89,7 @@ private:
     }
 
     [[nodiscard]] bit_loc bit_location(const tos::gfx2::point& p) const {
-        auto absolute_bit_pos = p.y() * m_dims.width() + p.x();
+        auto absolute_bit_pos = p.y() * m_physical_dims.width() + p.x();
         return bit_location(absolute_bit_pos);
     }
 
@@ -107,8 +109,19 @@ private:
         return {byte_num, 7 - bit_pos};
     }
 
+    gfx2::point translate_point(point p) {
+        if (m_rotation == services::rotation::horizontal) {
+            auto temp_y = p.y();
+            p.y() = p.x();
+            p.x() = m_physical_dims.width() - 1 - temp_y;
+        }
+        return p;
+    }
+
+    services::rotation m_rotation = services::rotation::vertical;
     tos::span<uint8_t> m_fb;
-    tos::gfx2::size m_dims;
+    tos::gfx2::size m_physical_dims;
+    tos::gfx2::size m_virtual_dims;
     tos::gfx2::binary_color m_col;
 };
 } // namespace tos::gfx2

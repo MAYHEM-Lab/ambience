@@ -7,7 +7,8 @@
 namespace tos::gfx2 {
 bit_painter::bit_painter(tos::span<uint8_t> buffer, const size& dims)
     : m_fb{buffer}
-    , m_dims{dims}
+    , m_physical_dims{dims}
+    , m_virtual_dims{dims}
     , m_col(binary_color{true}) {
 }
 
@@ -107,7 +108,11 @@ void bit_painter::draw_text_line(std::string_view str,
     }
 }
 
-void bit_painter::draw_line(const point& p0, const point& p1) {
+void bit_painter::draw_line(const point& org_p0, const point& org_p1) {
+
+    auto p0 = translate_point(org_p0);
+    auto p1 = translate_point(org_p1);
+
     int dx = p1.x() - p0.x();
     int dy = p1.y() - p0.y();
 
@@ -115,7 +120,7 @@ void bit_painter::draw_line(const point& p0, const point& p1) {
     int dShort = abs(dy);
 
     int offsetLong = dx > 0 ? 1 : -1;
-    int offsetShort = dy > 0 ? m_dims.width() : -m_dims.width();
+    int offsetShort = dy > 0 ? m_physical_dims.width() : -m_physical_dims.width();
 
     if (dLong < dShort) {
         using std::swap;
@@ -124,7 +129,7 @@ void bit_painter::draw_line(const point& p0, const point& p1) {
     }
 
     int error = dLong / 2;
-    int index = p0.y() * m_dims.width() + p0.x();
+    int index = p0.y() * m_physical_dims.width() + p0.x();
     const int offset[] = {offsetLong, offsetLong + offsetShort};
     const int abs_d[] = {dShort, dShort - dLong};
     for (int i = 0; i <= dLong; ++i) {
@@ -139,4 +144,22 @@ int8_t bit_painter::set_style(const services::style& s) {
     m_col = visit([](auto& col) { return color_convert<binary_color>(col); }, s.color());
     return 0;
 }
+
+bool bit_painter::set_orientation(const tos::services::rotation& orientation) {
+    m_rotation = orientation;
+
+    if (m_rotation == services::rotation::horizontal)
+    {
+        m_virtual_dims.width() = m_physical_dims.height();
+        m_virtual_dims.height() = m_physical_dims.width();
+        return true;
+    }
+    if (m_rotation == services::rotation::vertical)
+    {
+        m_virtual_dims = m_physical_dims;
+        return true;
+    }
+    return false;
+}
+
 } // namespace tos::gfx2

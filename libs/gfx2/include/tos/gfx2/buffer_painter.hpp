@@ -119,6 +119,11 @@ public:
         return 0;
     }
 
+    bool set_orientation(const tos::services::rotation& orientation) override {
+        // TODO(goksuguvendiren): Implement this.
+        return false;
+    }
+
 private:
     void draw(int index) {
         m_fb[index] = m_col;
