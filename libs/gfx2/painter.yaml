@@ -56,6 +56,14 @@ painter:
       parameters:
         text: string_view
         p: tos::gfx2.point
+    draw_bitmap:
+      returns:
+        - bool
+      parameters:
+        color_type: tos::gfx2.colors
+        buffer: string_view
+        image_rect: tos::gfx2.rectangle
+        screen_rect: tos::gfx2.rectangle
     flush:
       returns:
         - i8

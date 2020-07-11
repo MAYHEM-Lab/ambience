@@ -162,4 +162,11 @@ bool bit_painter::set_orientation(const tos::services::rotation& orientation) {
     return false;
 }
 
+bool bit_painter::draw_bitmap(const tos::gfx2::colors& color_type,
+                              std::string_view buffer,
+                              const tos::gfx2::rectangle& image_rect,
+                              const tos::gfx2::rectangle& screen_rect) {
+    return false;
+}
+
 } // namespace tos::gfx2
