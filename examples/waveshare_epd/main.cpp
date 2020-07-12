@@ -98,12 +98,21 @@ expected<void, errors> epd_main() {
         }
     };
 #elif defined(TOS_PLATFORM_nrf52)
+#if false
     auto mosi_pin = 2_pin;
     auto clk_pin = 3_pin;
     auto busy_pin = 29_pin;
     auto reset_pin = 28_pin;
     auto dc_pin = 5_pin;
     auto cs_pin = 4_pin;
+#else
+    auto mosi_pin = 42_pin;
+    auto clk_pin = 43_pin;
+    auto cs_pin = 44_pin;
+    auto dc_pin = 45_pin;
+    auto reset_pin = 46_pin;
+    auto busy_pin = 47_pin;
+#endif
     auto spi = tos::nrf52::spi(clk_pin, std::nullopt, mosi_pin);
 
     auto delay = [](std::chrono::microseconds us) { nrfx_coredep_delay_us(us.count()); };
