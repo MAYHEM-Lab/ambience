@@ -30,6 +30,6 @@
 
 #define ISR_AVAILABLE [[gnu::section(".isr_text")]]
 
-#define USED __attribute__((used))
+#define USED [[gnu::used]]
 
 #define PACKED [[gnu::packed]]
