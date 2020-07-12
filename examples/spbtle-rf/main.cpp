@@ -19,10 +19,10 @@ tos::intrusive_ptr<tos::device::spbtle::gatt_service> add_gatt_service() {
     static constexpr auto uuid =
         tos::uuid::from_canonical_string("025CA236-F196-23A4-304D-E8663F339E08");
 
-    static constexpr auto uuid1 =
+    static constexpr auto writeable_uuid =
         tos::uuid::from_canonical_string("025CA236-F196-23A4-304D-E8663F339E09");
 
-    static constexpr auto uuid2 =
+    static constexpr auto readable_uuid =
         tos::uuid::from_canonical_string("025CA236-F196-23A4-304D-E8663F339E0A");
 
     auto service = tos::device::spbtle::gatt_service::create(uuid, 6, true);
@@ -32,8 +32,8 @@ tos::intrusive_ptr<tos::device::spbtle::gatt_service> add_gatt_service() {
     }
 
     auto writeable_char = force_get(service)->add_characteristic(
-        uuid1,
-        tos::util::set_flag(tos::ble::characteristic_properties::write_without_response,
+        writeable_uuid,
+        tos::util::set_flag(tos::ble::characteristic_properties::write_with_response,
                             tos::ble::characteristic_properties::read),
         255);
 
@@ -43,7 +43,7 @@ tos::intrusive_ptr<tos::device::spbtle::gatt_service> add_gatt_service() {
     }
 
     auto readable_char = force_get(service)->add_characteristic(
-        uuid2,
+        readable_uuid,
         tos::util::set_flag(
             tos::util::set_flag(tos::ble::characteristic_properties::read,
                                 tos::ble::characteristic_properties::notify),
@@ -118,16 +118,22 @@ void ble_task() {
     auto gap = bl->initialize_gap(force_get(gatt), "Tos BLE");
     LOG("gap init'd");
 
+    auto serv = add_gatt_service();
+    auto& writeable = const_cast<tos::device::spbtle::gatt_characteristic&>(
+        serv->characteristics().front());
+    auto& readable = const_cast<tos::device::spbtle::gatt_characteristic&>(
+        serv->characteristics().back());
+
+    auto write_cb = [](int, tos::span<const uint8_t> data) {
+        LOG("Received data:", data);
+    };
+
+    writeable.set_modify_callback(
+        tos::function_ref<void(int, tos::span<const uint8_t>)>(write_cb));
+
     tos::device::spbtle::advertising adv;
     adv.start(1s, "Tos BLE");
     LOG("disc started");
-
-    auto serv = add_gatt_service();
-    auto& writeable =
-        const_cast<tos::device::spbtle::gatt_characteristic&>(serv->characteristics().front());
-    auto& readable =
-        const_cast<tos::device::spbtle::gatt_characteristic&>(serv->characteristics().back());
-//    ev_handler.register_service(*serv);
 
     uint8_t buf[64];
     while (true) {
