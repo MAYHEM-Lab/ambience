@@ -1,0 +1,45 @@
+x86_64:
+  macos:
+    xtensa:
+      - url: https://github.com/earlephilhower/esp-quick-toolchain/releases/download/3.0.0-gnu12/x86_64-apple-darwin14.xtensa-lx106-elf-0474ae9.200706.tar.gz
+        method: tar
+    arm:
+      - url: https://developer.arm.com/-/media/Files/downloads/gnu-rm/10-2020q2/gcc-arm-none-eabi-10-2020-q2-preview-mac.tar.bz2
+        method: tar
+  windows:
+    avr:
+      - url: https://blog.zakkemble.net/download/avr-gcc-10.1.0-x64-windows.zip
+        method: zip
+    arm:
+      - url: https://developer.arm.com/-/media/Files/downloads/gnu-rm/10-2020q2/gcc-arm-none-eabi-10-2020-q2-preview-win32.zip
+        method: zip
+    aarch64:
+      - url: https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-mingw-w64-i686-aarch64-none-elf.tar.xz
+        method: tar
+    xtensa:
+      - url: https://github.com/earlephilhower/esp-quick-toolchain/releases/download/3.0.0-gnu12/x86_64-w64-mingw32.xtensa-lx106-elf-0474ae9.200706.zip
+        method: zip
+  linux:
+    avr:
+      - url: https://blog.zakkemble.net/download/avr-gcc-10.1.0-x64-linux.tar.bz2
+        method: tar
+    arm:
+      - url: https://developer.arm.com/-/media/Files/downloads/gnu-rm/10-2020q2/gcc-arm-none-eabi-10-2020-q2-preview-x86_64-linux.tar.bz2
+        method: tar
+    aarch64:
+      - url: https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf.tar.xz
+        method: tar
+    xtensa:
+      - url: https://github.com/earlephilhower/esp-quick-toolchain/releases/download/3.0.0-gnu12/x86_64-linux-gnu.xtensa-lx106-elf-0474ae9.200706.tar.gz
+        method: tar
+aarch64:
+  linux:
+    xtensa:
+      - url: https://github.com/earlephilhower/esp-quick-toolchain/releases/download/3.0.0-gnu12/aarch64-linux-gnu.xtensa-lx106-elf-0474ae9.200706.tar.gz
+        method: tar
+    aarch64:
+      - url: https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-aarch64-aarch64-none-elf.tar.xz
+        method: tar
+    arm:
+      - url: https://developer.arm.com/-/media/Files/downloads/gnu-rm/10-2020q2/gcc-arm-none-eabi-10-2020-q2-preview-aarch64-linux.tar.bz2
+        method: tar
