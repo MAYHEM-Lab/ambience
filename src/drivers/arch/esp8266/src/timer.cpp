@@ -3,15 +3,14 @@
 //
 
 #include <arch/timer.hpp>
-#include <tos/arch.hpp>
+#include <tos/platform.hpp>
 
 extern "C" {
 #include <osapi.h>
 #include <user_interface.h>
 }
 
-namespace tos {
-namespace esp82 {
+namespace tos::esp82 {
 ICACHE_FLASH_ATTR
 timer::timer()
     : m_cb(
@@ -23,7 +22,9 @@ void ICACHE_FLASH_ATTR timer::set_callback(const tos::function_ref<void()>& cb) 
     m_cb = cb;
 }
 
-void timer::set_frequency(uint16_t hertz) { m_freq = hertz; }
+void timer::set_frequency(uint16_t hertz) {
+    m_freq = hertz;
+}
 
 void timer::enable() {
     os_timer_setfn(
@@ -38,6 +39,7 @@ void timer::enable() {
     os_timer_arm_us(&m_timer, 1'000'000 / m_freq, true);
 }
 
-void timer::disable() { os_timer_disarm(&m_timer); }
-} // namespace esp82
-} // namespace tos
+void timer::disable() {
+    os_timer_disarm(&m_timer);
+}
+} // namespace tos::esp82
