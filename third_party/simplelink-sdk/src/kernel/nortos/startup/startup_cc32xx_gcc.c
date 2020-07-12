@@ -157,7 +157,7 @@ extern uint32_t __data_load__, __data_start__, __data_end__;
 //
 //*****************************************************************************
 //
-void localProgramStart(void)
+void __attribute__((used)) localProgramStart(void)
 {
     uint32_t * bs;
     uint32_t * be;
