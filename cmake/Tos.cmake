@@ -46,6 +46,11 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 
     set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions -fno-exceptions -fno-rtti -fno-unwind-tables")
 
+    if (ENABLE_LTO)
+        set(TOS_GCC_FLAGS "${TOS_GCC_FLAGS} -flto")
+        set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -flto -Wl,-flto")
+    endif()
+
     set(TOS_FLAGS "${TOS_FLAGS} ${TOS_GCC_FLAGS}")
     set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,--gc-sections")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
