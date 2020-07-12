@@ -1,4 +1,5 @@
 #include <bluenrg_gatt_aci.h>
+#include <tos/device/spbtlerf/adapter.hpp>
 #include <tos/device/spbtlerf/gatt.hpp>
 #include <tos/flags.hpp>
 
@@ -40,6 +41,8 @@ void gatt_characteristic::receive_modify(int connection,
         "(",
         actual_attr,
         ")");
+
+    m_on_modify(connection, data);
 }
 
 expected<intrusive_ptr<gatt_service>, errors>
@@ -57,6 +60,9 @@ gatt_service::create(const uuid& uuid, int max_chars, bool primary) {
 
     auto res = make_intrusive<gatt_service>();
     res->m_service_handle = serv_handle;
+
+    adapter::instance()->service_created(*res);
+
     return res;
 }
 
@@ -70,6 +76,10 @@ expected<gatt_characteristic*, errors> gatt_service::add_characteristic(
         if (util::is_flag_set(props,
                               ble::characteristic_properties::write_without_response)) {
             res |= CHAR_PROP_WRITE_WITHOUT_RESP;
+        }
+        if (util::is_flag_set(props,
+                              ble::characteristic_properties::write_with_response)) {
+            res |= CHAR_PROP_WRITE;
         }
         if (util::is_flag_set(props, ble::characteristic_properties::notify)) {
             res |= CHAR_PROP_NOTIFY;

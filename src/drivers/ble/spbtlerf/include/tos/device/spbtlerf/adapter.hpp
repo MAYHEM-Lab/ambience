@@ -9,6 +9,7 @@
 #include <arch/drivers.hpp>
 #include <tos/mutex.hpp>
 #include <tos/device/spbtlerf/events.hpp>
+#include <common/ble/address.hpp>
 
 namespace tos::device::spbtle {
 struct adapter_config {
@@ -71,6 +72,9 @@ public:
     gap initialize_gap(gatt&, std::string_view name);
 
     tos::expected<fw_id, errors> get_fw_id() const;
+    tos::expected<ble::address_t, errors> get_mac_address() const;
+
+    tos::expected<void, errors> set_public_address(const ble::address_t& address);
 
     /**
      * Due to the design of the ST provided driver, we can have only 1 instance of the
@@ -87,6 +91,9 @@ public:
     int cb_spi_read(tos::span<uint8_t> buf);
     void cb_spi_enable_irq();
     void cb_spi_disable_irq();
+
+    void service_created(gatt_service& serv);
+    void service_destroyed(gatt_service& serv);
 
     tos::any_alarm* cb_alarm() {
         return m_config.alarm;

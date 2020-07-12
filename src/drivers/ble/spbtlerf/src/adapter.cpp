@@ -195,6 +195,20 @@ void adapter::begin() {
     cb_reset();
 }
 
+tos::expected<void, errors> adapter::set_public_address(const ble::address_t& address) {
+    auto ret = aci_hal_write_config_data(
+        CONFIG_DATA_PUBADDR_OFFSET, CONFIG_DATA_PUBADDR_LEN, address.addr);
+    if (ret != BLE_STATUS_SUCCESS) {
+        return tos::unexpected(errors::unknown);
+    }
+
+    return {};
+}
+
+tos::expected<ble::address_t, errors> adapter::get_mac_address() const {
+    return tos::unexpected(errors::unknown);
+}
+
 tos::expected<fw_id, errors> adapter::get_fw_id() const {
     fw_id build_number{};
     auto res = aci_hal_get_fw_build_number(&build_number.build_number);
@@ -266,13 +280,11 @@ void advertising::stop() {
     aci_gap_set_non_discoverable();
 }
 
-tos::expected<void, errors> set_public_address(ble::address_t address) {
-    auto ret = aci_hal_write_config_data(
-        CONFIG_DATA_PUBADDR_OFFSET, CONFIG_DATA_PUBADDR_LEN, address.addr);
-    if (ret != BLE_STATUS_SUCCESS) {
-        return tos::unexpected(errors::unknown);
-    }
+void adapter::service_created(gatt_service& serv) {
+    m_event_handler.register_service(serv);
+}
 
-    return {};
+void adapter::service_destroyed(gatt_service& serv) {
+    m_event_handler.remove_service(serv);
 }
 } // namespace tos::device::spbtle

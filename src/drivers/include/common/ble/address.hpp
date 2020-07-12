@@ -6,23 +6,15 @@
 
 #include <tos/print.hpp>
 
-namespace tos
-{
-namespace ble
-{
-struct address_t
-{
+namespace tos::ble {
+struct address_t {
     uint8_t addr[6];
 };
 
-template <class StreamT>
-void print(StreamT& to, const address_t& addr)
-{
-    for (auto p : addr.addr)
-    {
+template<class StreamT>
+void print(StreamT& to, const address_t& addr) {
+    for (auto p : addr.addr) {
         print(to, size_t(p), "");
     }
 }
-} // namespace ble
-
-} //namespace tos
+} // namespace tos::ble

@@ -5,6 +5,7 @@
 #include <tos/debug/log.hpp>
 #include <tos/device/spbtlerf/common.hpp>
 #include <tos/expected.hpp>
+#include <tos/function_ref.hpp>
 #include <tos/intrusive_list.hpp>
 #include <tos/intrusive_ptr.hpp>
 #include <tos/span.hpp>
@@ -29,13 +30,21 @@ public:
 
     void receive_modify(int connection, span<const uint8_t> data, int actual_attr);
 
+    void set_modify_callback(tos::function_ref<void(int, span<const uint8_t>)> cb) {
+        m_on_modify = cb;
+    }
+
 private:
     intrusive_ptr<gatt_service> m_service;
     uint16_t m_characteristic_handle;
     int m_len;
+    tos::function_ref<void(int, span<const uint8_t>)> m_on_modify{
+        [](int, span<const uint8_t>, void*) {}};
 };
 
-class gatt_service : public list_node<gatt_service>, public ref_counted<gatt_service> {
+class gatt_service
+    : public list_node<gatt_service>
+    , public ref_counted<gatt_service> {
 public:
     gatt_service() = default;
 
