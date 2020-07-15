@@ -23,9 +23,12 @@ struct afio {
                  [[maybe_unused]] const gpio::pin_type& sck,
                  [[maybe_unused]] std::optional<gpio::pin_type> miso,
                  [[maybe_unused]] std::optional<gpio::pin_type> mosi) {
+
+#ifdef SPI3_BASE
         if (spi == SPI3_BASE) {
             return std::make_tuple(GPIO_AF6_SPI3, GPIO_AF6_SPI3, GPIO_AF6_SPI3);
         }
+#endif
         return std::make_tuple(GPIO_AF5_SPI1, GPIO_AF5_SPI1, GPIO_AF5_SPI1);
     }
 };
