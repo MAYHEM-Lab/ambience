@@ -1,5 +1,5 @@
-from git import Repo
-import git
+#from git import Repo
+#import git
 import os
 import subprocess
 import sys
@@ -43,7 +43,7 @@ def prepare_repo_by_existing(path):
     pass
 
 
-def build_config(build_type, cpu, run_tests, env={}, base=None):
+def build_config(build_type, cpu, run_tests, env={}, base=None, enable_lto=False):
     directory = ""
     if base is None:
         directory = os.path.join(root_dir, "{}/{}".format(cpu, build_type))
@@ -66,6 +66,8 @@ def build_config(build_type, cpu, run_tests, env={}, base=None):
         args.append("-DCMAKE_C_COMPILER_LAUNCHER=ccache")
         if run_tests:
             args.append("-DBUILD_TESTS=ON")
+        if enable_lto:
+            args.append("-DENABLE_LTO=ON")
         args.append(source_dir)
         print("Running {}".format(args), flush=True)
         cmake_proc = subprocess.Popen(args, cwd=directory, env=stage_env)
