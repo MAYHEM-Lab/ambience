@@ -1,0 +1,1 @@
+add_subdirectory(stm32f7_sdram)
