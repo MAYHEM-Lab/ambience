@@ -122,5 +122,6 @@ tos_install(tos_inet ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_subdirectory(sensor)
 add_subdirectory(ble)
+add_subdirectory(display)
 add_subdirectory(dma)
 add_subdirectory(memory)
