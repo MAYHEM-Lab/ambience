@@ -64,12 +64,15 @@ void SystemClock_Config() {
     RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
     RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
     RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK) {
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_6) != HAL_OK) {
         Error_Handler();
     }
 
     tos::stm32::apb1_clock = 54'000'000;
     tos::stm32::ahb_clock = 108'000'000;
+
+    SCB_EnableICache();
+    SCB_EnableDCache();
 }
 #elif defined(STM32L0)
 void SystemClock_Config() {
