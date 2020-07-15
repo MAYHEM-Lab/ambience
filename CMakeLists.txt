@@ -11,7 +11,7 @@ project(tos VERSION 0.1.0)
 
 option(BUILD_TESTS "Build unit tests, only works on hosted x86" OFF)
 option(BUILD_EXAMPLES "Build examples" ON)
-option(ENABLE_LTO "Enable Link Time Optimizations" ON)
+option(ENABLE_LTO "Enable Link Time Optimizations" OFF)
 
 include(Tos)
 
