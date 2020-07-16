@@ -9,7 +9,7 @@ There are many forks of openocd.
 
 This mirror works well for all our STM32 and NRF52 targets:
 
-https://github.com/ntfreak/openocd
+https://github.com/zephyrproject-rtos/openocd
 
 For TI targets, use this:
 
@@ -30,6 +30,13 @@ or on macos
 [source,sh]
 ----
 $ brew install libtool autoconf automake texinfo libusb 
+----
+
+Generate the configuration script: (don't ask why....)
+
+[source,sh]
+----
+$ ./bootstrap
 ----
 
 Then configure:
