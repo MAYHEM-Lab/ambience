@@ -20,6 +20,11 @@ struct stm32l4_disco {
     static constexpr int tx_pin = 22;
     static constexpr int rx_pin = 23;
 };
+struct stm32l4_nucleo {
+    static constexpr int led_pin = 29;
+    static constexpr int tx_pin = 22;
+    static constexpr int rx_pin = 23;
+};
 }
 
 constexpr auto board = boards::stm32f7_disco{};
