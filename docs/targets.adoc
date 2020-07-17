@@ -9,6 +9,7 @@ This page lists the currently supported and tested targets in Tos.
 ... STM32F103   (Cortex M3)
 ... STM32F746   (Cortex M7)
 ... STM32L475   (Cortex M4)
+... STM32L412   (Cortex M4)
 ... STM32L053   (Cortex M0+)
 .. Nordic
 ... nRF52832    (Cortex M4)
