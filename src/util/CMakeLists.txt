@@ -25,7 +25,8 @@ add_library(tos_util_core
     include/tos/string.hpp
     src/base64.cpp
     src/span.cpp
-)
+    include/tos/math/saturated.hpp
+    src/math/saturated.cpp)
 
 target_compile_features(tos_util_core PUBLIC cxx_std_17)
 target_link_libraries(tos_util_core PUBLIC tos::libcxx tos_memory)
@@ -94,4 +95,8 @@ if (BUILD_TESTS)
     add_executable(base64_test src/base64_test.cpp)
     target_link_libraries(base64_test PUBLIC tests_main tos_util_core)
     add_test(NAME base64_test COMMAND base64_test)
+
+    add_executable(saturated_test src/math/saturated_test.cpp)
+    target_link_libraries(saturated_test PUBLIC tests_main tos_util_core)
+    add_test(NAME saturated_test COMMAND saturated_test)
 endif()
