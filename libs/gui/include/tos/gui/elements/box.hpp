@@ -4,6 +4,10 @@
 
 namespace tos::gui::elements {
 struct box : public element {
-    void draw(tos::services::painter& painter, const tos::gfx2::rectangle& at);
+    view_limits limits(const draw_context&) const {
+        return { {0, 0}, {full_extent, full_extent} };
+    }
+
+    void draw(const draw_context& ctx);
 };
 } // namespace tos::gui::elements

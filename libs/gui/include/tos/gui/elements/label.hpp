@@ -9,11 +9,11 @@ public:
         : m_str{std::move(str)} {
     }
 
-    tos::gfx2::size size() const {
-        return {m_str.size() * 8, 8};
+    view_limits limits(const draw_context& ctx) const {
+        return { {m_str.size() * 8, 8}, {m_str.size() * 8, 8} };
     }
 
-    void draw(tos::services::painter& painter, const tos::gfx2::rectangle& at);
+    void draw(const draw_context& ctx);
 
 private:
     std::string m_str;

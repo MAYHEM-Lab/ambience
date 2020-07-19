@@ -1,9 +1,9 @@
 #include <tos/gui/elements/rbox.hpp>
 
 namespace tos::gui::elements {
-void rbox::draw(tos::services::painter& painter, const tos::gfx2::rectangle& at) {
-    tos::services::style fill_style(tos::gfx2::binary_color{false});
-    painter.set_style(fill_style);
-    painter.draw_rect(at, radius, true);
+void rbox::draw(const draw_context& ctx) {
+    tos::services::style fill_style(ctx.theme->bg_color);
+    ctx.painter->set_style(fill_style);
+    ctx.painter->draw_rect(ctx.bounds, radius, true);
 }
 }

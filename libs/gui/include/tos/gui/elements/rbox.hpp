@@ -5,6 +5,11 @@
 namespace tos::gui::elements {
 struct rbox : public element {
     int radius;
-    void draw(tos::services::painter& painter, const tos::gfx2::rectangle& at);
+
+    void draw(const draw_context& ctx);
+
+    view_limits limits(const draw_context&) const {
+        return { {0, 0}, {full_extent, full_extent} };
+    }
 };
 } // namespace tos::gui::elements

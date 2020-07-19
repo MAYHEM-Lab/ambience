@@ -1,9 +1,9 @@
 #include <tos/gui/elements/box.hpp>
 
 namespace tos::gui::elements {
-void box::draw(services::painter& painter, const gfx2::rectangle& at) {
-    tos::services::style fill_style(tos::gfx2::rgb8{255, 255, 255});
-    painter.set_style(fill_style);
-    painter.draw_rect(at, 0, true);
+void box::draw(const draw_context& ctx) {
+    tos::services::style fill_style(ctx.theme->bg_color);
+    ctx.painter->set_style(fill_style);
+    ctx.painter->draw_rect(ctx.bounds, 0, true);
 }
 } // namespace tos::gui::elements
