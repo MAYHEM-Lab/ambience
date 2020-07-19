@@ -61,7 +61,11 @@ painter:
         - bool
       parameters:
         color_type: tos::gfx2.colors
-        buffer: string_view
+        buffer:
+          name: span
+          parameters:
+            - u8
+        stride: i16
         image_rect: tos::gfx2.rectangle
         screen_rect: tos::gfx2.rectangle
     flush:

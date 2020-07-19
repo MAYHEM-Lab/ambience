@@ -120,7 +120,8 @@ public:
     }
 
     bool draw_bitmap(const tos::gfx2::colors& color_type,
-                     std::string_view buffer,
+                     tos::span<uint8_t> buffer,
+                     const int16_t& stride,
                      const tos::gfx2::rectangle& image_rect,
                      const tos::gfx2::rectangle& screen_rect) override {
         // TODO(goksuguvendiren): Implement this.

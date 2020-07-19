@@ -163,9 +163,57 @@ bool bit_painter::set_orientation(const tos::services::rotation& orientation) {
 }
 
 bool bit_painter::draw_bitmap(const tos::gfx2::colors& color_type,
-                              std::string_view buffer,
+                              tos::span<uint8_t> buffer,
+                              const int16_t& stride,
                               const tos::gfx2::rectangle& image_rect,
                               const tos::gfx2::rectangle& screen_rect) {
+    // assumes the color type is binary for now.
+
+//     type conversion done here
+    auto get_pixel = [&](int row, int col)
+    {
+        switch (color_type)
+        {
+        case tos::gfx2::colors::mono8:
+        {
+            auto base = reinterpret_cast<const tos::gfx2::mono8*>(buffer.data());
+            auto color = base[row * stride + col];
+
+            return color_convert<binary_color>(color);
+        }
+        case tos::gfx2::colors::rgb8:
+        {
+            auto base = reinterpret_cast<const tos::gfx2::rgb8*>(buffer.data());
+            auto color = base[row * stride + col];
+
+            return color_convert<binary_color>(color);
+        }
+        case tos::gfx2::colors::binary_color:
+        {
+            auto base = reinterpret_cast<const tos::gfx2::binary_color*>(buffer.data());
+            auto color = base[row * stride + col];
+
+            return color;
+        }
+        }
+        TOS_UNREACHABLE();
+    };
+
+    auto vert_scale = (float)image_rect.dims().height() / (float)screen_rect.dims().height();
+    auto horz_scale = (float)image_rect.dims().width() / (float)screen_rect.dims().width();
+
+    for (int i = 0; i < screen_rect.dims().height(); ++i)
+    {
+        for (int j = 0; j < screen_rect.dims().width(); ++j)
+        {
+            auto image_color = get_pixel(i * vert_scale, j * horz_scale);
+
+            auto dest_point = tos::gfx2::point(j + screen_rect.corner().x(), i + screen_rect.corner().y());
+            auto bit_loc = bit_location(dest_point);
+            draw(bit_loc, image_color);
+        }
+    }
+
     return false;
 }
 

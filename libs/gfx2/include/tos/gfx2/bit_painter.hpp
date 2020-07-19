@@ -63,7 +63,8 @@ public:
     }
 
     bool draw_bitmap(const tos::gfx2::colors& color_type,
-                     std::string_view buffer,
+                     tos::span<uint8_t> buffer,
+                     const int16_t& stride,
                      const tos::gfx2::rectangle& image_rect,
                      const tos::gfx2::rectangle& screen_rect) override;
     
@@ -98,14 +99,18 @@ private:
         return bit_location(absolute_bit_pos);
     }
 
-    void draw(const bit_loc& loc) {
+    void draw(const bit_loc& loc, const gfx2::binary_color& col) {
         auto byte = read_byte(loc.byte_num);
-        if (m_col.col()) {
+        if (col.col()) {
             byte |= 1 << loc.bit_pos;
         } else {
             byte &= ~(1 << loc.bit_pos);
         }
         write_byte(loc.byte_num, byte);
+    }
+
+    void draw(const bit_loc& loc) {
+        draw(loc, m_col);
     }
 
     [[nodiscard]] constexpr bit_loc bit_location(int bitpos) const {
