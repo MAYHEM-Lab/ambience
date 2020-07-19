@@ -67,6 +67,21 @@ void do_exti_isr()
 
 extern "C"
 {
+void EXTI0_IRQHandler() {
+    do_exti_isr<GPIO_PIN_0>();
+}
+void EXTI1_IRQHandler() {
+    do_exti_isr<GPIO_PIN_1>();
+}
+void EXTI2_IRQHandler() {
+    do_exti_isr<GPIO_PIN_2>();
+}
+void EXTI3_IRQHandler() {
+    do_exti_isr<GPIO_PIN_3>();
+}
+void EXTI4_IRQHandler() {
+    do_exti_isr<GPIO_PIN_4>();
+}
 void EXTI9_5_IRQHandler()
 {
     do_exti_isr<GPIO_PIN_5>();
@@ -74,6 +89,15 @@ void EXTI9_5_IRQHandler()
     do_exti_isr<GPIO_PIN_7>();
     do_exti_isr<GPIO_PIN_8>();
     do_exti_isr<GPIO_PIN_9>();
+}
+void EXTI15_10_IRQHandler()
+{
+    do_exti_isr<GPIO_PIN_10>();
+    do_exti_isr<GPIO_PIN_11>();
+    do_exti_isr<GPIO_PIN_12>();
+    do_exti_isr<GPIO_PIN_13>();
+    do_exti_isr<GPIO_PIN_14>();
+    do_exti_isr<GPIO_PIN_15>();
 }
 }
 #endif
