@@ -60,24 +60,30 @@ void comm_thread() {
 
 class epd_ui {
 public:
-    void draw(tos::services::painter& painter, const tos::gfx2::rectangle& at) {
+    void draw(const tos::gui::draw_context& ctx) {
         using namespace tos::gui::elements;
         using namespace tos::gui::decorators;
 
-        bordered{box{}}.draw(painter, at);
+        bordered{box{}}.draw(ctx);
 
-//        padding{horizontal_ruler{}, 10, 10, 0, 0}.draw(
-//            painter,
-//            {{0, at.dims().height() / 2}, {at.dims().width(), at.dims().height() / 2}});
+        auto ruler_ctx = ctx;
+        ruler_ctx.bounds.corner().x() = ctx.bounds.dims().width() / 2;
+        ruler_ctx.bounds.corner().y() = 0;
+        ruler_ctx.bounds.dims().width() /= 2;
 
-        padding{vertical_ruler{}, 0, 0, 10, 10}.draw(
-            painter,
-            {{at.dims().width() / 2, 0}, {at.dims().width() / 2, at.dims().height()}});
+        margin{vertical_ruler{}, 0, 0, 10, 10}.draw(ruler_ctx);
 
-//        rbox{{}, 10}.draw(painter, {{10, 10}, {40, 30}});
+        auto qr_ctx = ctx;
+        qr_ctx.bounds.dims().width() /= 2;
 
-        align_center_middle{round_bordered{4, padding{label("hello"), 4, 4, 4, 4}}}.draw(
-            painter, {at.corner(), {at.dims().width() / 2, at.dims().height()}});
+        align_center_middle(fixed_size(placeholder{}, tos::gfx2::size{96, 96})).draw(qr_ctx);
+
+        auto label_ctx = ctx;
+        label_ctx.bounds.dims().width() /= 2;
+        label_ctx.bounds.corner().x() += qr_ctx.bounds.dims().width();
+
+        align_center_middle(margin{label("hello"), 4, 4, 4, 4})
+            .draw(label_ctx);
     }
 };
 
@@ -152,7 +158,17 @@ expected<void, errors> epd_main() {
 
     epd_ui ui;
     first = clk.now();
-    ui.draw(painter, {{0, 0}, painter.get_dimensions()});
+
+    tos::gui::basic_theme theme{
+        .fg_color = tos::gfx2::binary_color{false},
+        .line_color = tos::gfx2::binary_color{false},
+        .bg_color = tos::gfx2::binary_color{true},
+    };
+
+    tos::gui::draw_context ctx{
+        &painter, {{0, 0}, {0, 0}}, &theme, {{0, 0}, painter.get_dimensions()}};
+
+    ui.draw(ctx);
     painter.flush();
     diff = clk.now() - first;
     LOG("Paint took",
