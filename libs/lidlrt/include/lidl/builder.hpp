@@ -16,9 +16,9 @@ public:
         return static_cast<uint16_t>(m_cur_ptr - m_buffer.data());
     }
 
-    buffer get_buffer() const {
+    tos::span<const uint8_t> get_buffer() const {
         auto whole = m_buffer;
-        return buffer{whole.slice(0, size_t(size()))};
+        return whole.slice(0, size_t(size()));
     }
 
     uint8_t* allocate(size_t size, size_t align) {
