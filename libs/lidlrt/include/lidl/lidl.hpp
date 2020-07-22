@@ -8,6 +8,7 @@
 #include "structure.hpp"
 #include "union.hpp"
 #include "vector.hpp"
+#include <lidl/find_extent.hpp>
 
 #ifndef LIDL_ASSERT
 #ifdef TOS
