@@ -1,5 +1,4 @@
 #include "remote_service.hpp"
-#include "service_handler.hpp"
 
 #include <arch/drivers.hpp>
 #include <log_generated.hpp>
