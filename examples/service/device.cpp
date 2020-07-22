@@ -25,52 +25,40 @@ public:
     }
 };
 
-template<class ServiceT>
-class registered_service;
-
-class registered_service_base : public tos::list_node<registered_service_base> {
+class registered_service_base {
 public:
-    std::string name;
+    lidl::service_base* service;
+    lidl::procedure_runner_t call;
 
-    template<class ServiceT>
-    registered_service<ServiceT>& as() {
-        return *static_cast<registered_service<ServiceT>*>(this);
+    void invoke(tos::span<const uint8_t> data, lidl::message_builder& builder) {
+        call(*service, data, builder);
     }
-};
-
-template<class ServiceT>
-class registered_service : public registered_service_base {
-public:
-    ServiceT service;
 };
 
 class service_registry {
 public:
     template<class ServT>
-    ServT* get_service(std::string_view name) {
-        auto ptr = get_service_base(name);
-        if (!ptr) {
-            return nullptr;
-        }
-        return &ptr->as<ServT>().service;
+    void register_service(lidl::service_base& service) {
+        m_services.push_back({&service, lidl::make_procedure_runner<ServT>()});
     }
 
-    void register_service(registered_service_base& service) {
-        m_services.push_back(service);
+    std::vector<registered_service_base> m_services;
+};
+
+struct registry_discovery : tos::services::discovery {
+    service_registry* registry;
+    int16_t service_count() override {
+        return registry->m_services.size();
     }
 
-private:
-    registered_service_base* get_service_base(std::string_view name) const {
-        auto it = std::find_if(m_services.begin(), m_services.end(), [&name](auto& srv) {
-            return srv.name == name;
-        });
-        if (it == m_services.end()) {
-            return nullptr;
-        }
-        return &*it;
+    const lidl::vector<tos::services::service_info>&
+    services(lidl::message_builder& response_builder) override {
+        auto& res =
+            lidl::create_vector_sized<tos::services::service_info>(response_builder, 2);
+        res.span()[0] = tos::services::service_info{1, 42, 65};
+        res.span()[1] = tos::services::service_info{3, 145, 412345};
+        return res;
     }
-
-    tos::intrusive_list<registered_service_base> m_services;
 };
 
 void service_task() {
@@ -79,9 +67,16 @@ void service_task() {
     auto link = tos::open(tos::devs::usart<1>, tos::uart::default_115200, 23_pin, 22_pin);
     auto transport = tos::io::serial_packets{&link};
 
-    registered_service<sys_server> server;
+    auto channel1 = transport.get_channel(1);
+
     service_registry services;
-    services.register_service(server);
+
+    registry_discovery disc;
+    disc.registry = &services;
+    services.register_service<tos::services::discovery>(disc);
+
+    sys_server server;
+    services.register_service<tos::services::system_status>(server);
 
     tos::launch(tos::alloc_stack, [&] {
         generated_remote_logger log(transport.get_channel(4));
@@ -93,14 +88,24 @@ void service_task() {
         LOG("Hello world!");
     });
 
-    auto rep_handler = make_request_handler<tos::services::system_status>();
+    tos::launch(tos::alloc_stack, [&] {
+        while (true) {
+            auto packet = channel1->receive();
+            std::array<uint8_t, 256> resp_buf;
+            lidl::message_builder build(resp_buf);
+            services.m_services[0].invoke(packet->data(), build);
+            auto response = build.get_buffer().slice(0, build.size());
+            channel1->send(response);
+        }
+    });
+ 
     auto channel = transport.get_channel(3);
     while (true) {
         auto packet = channel->receive();
         std::array<uint8_t, 256> resp_buf;
         lidl::message_builder build(resp_buf);
-        rep_handler(server.service, lidl::buffer{packet->data()}, build);
-        auto response = build.get_buffer().get_buffer().slice(0, build.size());
+        services.m_services[1].invoke(packet->data(), build);
+        auto response = build.get_buffer().slice(0, build.size());
         channel->send(response);
     }
 }

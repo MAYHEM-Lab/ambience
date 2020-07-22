@@ -26,6 +26,7 @@ public:
 };
 
 using generated_remote_system = tos::services::remote_system_status<packet_transport>;
+using discovery = tos::services::remote_discovery<packet_transport>;
 
 void query_sys(tos::services::system_status& server) {
     LOG("Service name:", server.name());
@@ -50,19 +51,30 @@ void service_main() {
         tos::debug::serial_sink sink(tos::hosted::stderr_adapter{}, "remote");
         tos::debug::log_server log_server(sink);
 
-        auto rep_handler = make_request_handler<tos::services::logger>();
+        auto rep_handler = lidl::make_procedure_runner<tos::services::logger>();
         auto channel = transport.get_channel(4);
         while (true) {
             auto packet = channel->receive();
             std::array<uint8_t, 256> resp_buf;
             lidl::message_builder build(resp_buf);
-            rep_handler(log_server, lidl::buffer{packet->data()}, build);
-            auto response = build.get_buffer().get_buffer().slice(0, build.size());
+            rep_handler(log_server, packet->data(), build);
+            auto response = build.get_buffer().slice(0, build.size());
             channel->send(response);
         }
     });
 
     generated_remote_system remote_sys{transport.get_channel(3)};
+    discovery remote_disc{transport.get_channel(1)};
+
+    LOG("Service count:", remote_disc.service_count());
+
+    std::array<uint8_t, 128> resp;
+    lidl::message_builder mb(resp);
+
+    for (auto& serv : remote_disc.services(mb)) {
+        LOG(serv.port(), serv.module_hash(), serv.service_hash());
+    }
+
     query_sys(remote_sys);
 
     tos::this_thread::block_forever();
