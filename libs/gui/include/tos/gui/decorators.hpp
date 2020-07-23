@@ -166,7 +166,6 @@ private:
 
         auto y_diff = (ctx.bounds.dims().height() - elem_height) / 2;
 
-        LOG(ctx.bounds.dims().width(), base_limits.min.width(), base_limits.max.width());
         return gfx2::rectangle{
             {ctx.bounds.corner().x(), ctx.bounds.corner().y() + y_diff},
             {ctx.bounds.dims().width(), elem_height}};
