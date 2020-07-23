@@ -76,7 +76,7 @@ bit_painter::draw_rect(const rectangle& rect, const int8_t& radius, const bool& 
 
 int8_t bit_painter::draw_text(std::string_view text, const point& p) {
     static constexpr auto font = tos::gfx::basic_font().mirror_horizontal();
-    LOG("Drawing text", text);
+//    LOG("Drawing text", text);
     draw_text_line(text, font, p);
     return 0;
 }
@@ -85,7 +85,7 @@ template<class FontT>
 void bit_painter::draw_text_line(std::string_view str,
                                  const FontT& font,
                                  tos::gfx2::point p) {
-    LOG("Drawing text line", str);
+//    LOG("Drawing text line", str);
     for (char c : str) {
         if (c == 0)
             return;
