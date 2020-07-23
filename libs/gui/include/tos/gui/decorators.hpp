@@ -59,7 +59,7 @@ struct round_bordered {
     int radius;
     Base base;
 
-    view_limits limits(const draw_context& ctx) {
+    view_limits limits(const draw_context& ctx) const {
         return base.limits(ctx);
     }
 
@@ -82,7 +82,7 @@ struct fixed_size {
         , m_lims{sz, sz} {
     }
 
-    view_limits limits(const draw_context& ctx) {
+    view_limits limits(const draw_context& ctx) const {
         return m_lims;
     }
 
