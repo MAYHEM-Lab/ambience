@@ -32,9 +32,13 @@ public:
             return 0;
         }
 
-        auto loc = bit_location(p);
-        draw(loc);
+        draw_point_fast(p);
         return 0;
+    }
+
+    void draw_point_fast(const tos::gfx2::point& translated_checked_point) {
+        auto loc = bit_location(translated_checked_point);
+        draw(loc);
     }
 
     int8_t draw_rect(const tos::gfx2::rectangle& rect,
