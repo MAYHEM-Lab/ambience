@@ -2,6 +2,7 @@
 #include <common/epd/waveshare/bw29.hpp>
 #include <tos/arm/assembly.hpp>
 #include <tos/ft.hpp>
+#include <tos/gui/elements/extra/qrcode.hpp>
 
 #undef SCB
 #undef DWT
@@ -67,24 +68,16 @@ public:
         bordered{box{}}.draw(ctx);
 
         auto ruler_ctx = ctx;
-        ruler_ctx.bounds.corner().x() = ctx.bounds.dims().width() / 2;
-        ruler_ctx.bounds.corner().y() = 0;
         ruler_ctx.bounds.dims().width() /= 2;
+        ruler_ctx.bounds.corner().x() = ruler_ctx.bounds.dims().width();
 
         margin{vertical_ruler{}, 0, 0, 10, 10}.draw(ruler_ctx);
-
-        uint8_t checkerboard_data[] = {1, 0, 1, 0, 0, 1, 0, 1, 1, 0,
-                                       1, 0, 0, 1, 0, 1, 1, 0, 1, 0};
-
-        tos::gfx2::bitmap checkerboard(
-            tos::gfx2::colors::binary_color, checkerboard_data, {4, 4});
 
         auto qr_ctx = ctx;
         qr_ctx.bounds.dims().width() /= 2;
 
         align_center_middle(
-            bordered{margin{
-                fixed_size(image(checkerboard), tos::gfx2::size{96, 96}), 4, 4, 4, 4}})
+            fixed_size(qrcode_element("hello"), tos::gfx2::size{112, 112}))
             .draw(qr_ctx);
 
         auto label_ctx = ctx;
