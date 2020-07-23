@@ -52,12 +52,12 @@ static const bool true = 1;
 #define MODE_BYTE           2
 
 
-// Error Correction Code Levels
-#define ECC_LOW            0
-#define ECC_MEDIUM         1
-#define ECC_QUARTILE       2
-#define ECC_HIGH           3
-
+enum qrcode_error_correction {
+    ECC_LOW,
+    ECC_MEDIUM,
+    ECC_QUARTILE,
+    ECC_HIGH
+};
 
 // If set to non-zero, this library can ONLY produce QR codes at that version
 // This saves a lot of dynamic memory, as the codeword tables are skipped
