@@ -15,6 +15,8 @@ add_library(
   src/color_convert.cpp
   include/tos/gfx2/buffer_painter.hpp
   src/buffer_painter.cpp
+  include/tos/gfx2/bitmap.hpp
+  src/bitmap.cpp
 )
 
 target_link_libraries(tos_gfx2 PUBLIC tos_util_core)
