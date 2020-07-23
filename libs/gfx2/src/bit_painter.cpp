@@ -208,7 +208,8 @@ bool bit_painter::draw_bitmap(const tos::gfx2::colors& color_type,
         {
             auto image_color = get_pixel(i * vert_scale, j * horz_scale);
 
-            auto dest_point = tos::gfx2::point(j + screen_rect.corner().x(), i + screen_rect.corner().y());
+            auto dest_point = translate_point(tos::gfx2::point(
+                j + screen_rect.corner().x(), i + screen_rect.corner().y()));
             auto bit_loc = bit_location(dest_point);
             draw(bit_loc, image_color);
         }
