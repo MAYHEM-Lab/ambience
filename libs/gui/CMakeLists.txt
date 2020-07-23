@@ -17,6 +17,8 @@ add_library(
   include/tos/gui/size.hpp
   src/size.cpp
   include/tos/gui/elements/placeholder.hpp
+  include/tos/gui/elements/image.hpp
+  src/elements/image.cpp
 )
 target_include_directories(tos_gui PUBLIC include)
 target_link_libraries(tos_gui PUBLIC tos_gfx2)
