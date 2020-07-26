@@ -46,8 +46,8 @@ tos::intrusive_ptr<tos::device::spbtle::gatt_service> add_gatt_service() {
         readable_uuid,
         tos::util::set_flag(
             tos::util::set_flag(tos::ble::characteristic_properties::read,
-                                tos::ble::characteristic_properties::notify),
-            tos::ble::characteristic_properties::write_without_response),
+                                tos::ble::characteristic_properties::indicate),
+            tos::ble::characteristic_properties::write_with_response),
         255);
 
     if (!readable_char) {

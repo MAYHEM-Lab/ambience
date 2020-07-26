@@ -84,6 +84,9 @@ expected<gatt_characteristic*, errors> gatt_service::add_characteristic(
         if (util::is_flag_set(props, ble::characteristic_properties::notify)) {
             res |= CHAR_PROP_NOTIFY;
         }
+        if (util::is_flag_set(props, ble::characteristic_properties::indicate)) {
+            res |= CHAR_PROP_INDICATE;
+        }
         return res;
     };
 

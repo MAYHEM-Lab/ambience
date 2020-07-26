@@ -26,10 +26,19 @@ struct evt_handler_impl {
         }
     }
 
+    // Handles the confirmation of an indication from the client.
+    void handle(const evt_gatt_server_confirmation& evt) {
+        //TODO(fatih): how do we deliver this to the service that wrote the update?
+        LOG("Received confirmation from", evt.conn_handle);
+    }
+
     void handle(const evt_blue_aci& evt) {
         switch (evt.ecode) {
         case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED:
             handle(*reinterpret_cast<const evt_gatt_attr_modified_IDB05A1*>(evt.data));
+            break;
+        case EVT_BLUE_GATT_SERVER_CONFIRMATION_EVENT:
+            handle(*reinterpret_cast<const evt_gatt_server_confirmation*>(evt.data));
             break;
         default:
             LOG("Unhandled vendor event:", evt.ecode);
