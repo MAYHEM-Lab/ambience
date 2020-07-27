@@ -30,6 +30,11 @@ struct evt_handler_impl {
     void handle(const evt_gatt_server_confirmation& evt) {
         //TODO(fatih): how do we deliver this to the service that wrote the update?
         LOG("Received confirmation from", evt.conn_handle);
+        for (auto& serv : m_services) {
+            for (auto& attr : serv.characteristics()) {
+                attr.on_indicate_response(evt.conn_handle);
+            }
+        }
     }
 
     void handle(const evt_blue_aci& evt) {
@@ -51,6 +56,11 @@ struct evt_handler_impl {
 
     void handle(const evt_disconn_complete& evt) {
         LOG("Disconnected", int(evt.handle), int(evt.status), int(evt.reason));
+        for (auto& serv : m_services) {
+            for (auto& attr : serv.characteristics()) {
+                attr.on_disconnect(evt.handle);
+            }
+        }
     }
 
     void handle(const evt_le_connection_complete& evt) {

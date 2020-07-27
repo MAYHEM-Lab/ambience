@@ -8,13 +8,15 @@
 #include <tos/function_ref.hpp>
 #include <tos/intrusive_list.hpp>
 #include <tos/intrusive_ptr.hpp>
+#include <tos/mutex.hpp>
+#include <tos/semaphore.hpp>
 #include <tos/span.hpp>
 #include <tos/uuid.hpp>
 
 namespace tos::device::spbtle {
 class gatt_characteristic : public list_node<gatt_characteristic> {
 public:
-    gatt_characteristic(gatt_service& service, uint16_t handle, int len);
+    gatt_characteristic(gatt_service& service, uint16_t handle, int len, bool indicate);
 
     expected<void, errors> update_value(span<const uint8_t> data);
 
@@ -29,6 +31,8 @@ public:
     span<uint8_t> read_value(span<uint8_t> buf) const;
 
     void receive_modify(int connection, span<const uint8_t> data, int actual_attr);
+    void on_indicate_response(int connection);
+    void on_disconnect(int connection);
 
     void set_modify_callback(tos::function_ref<void(int, span<const uint8_t>)> cb) {
         m_on_modify = cb;
@@ -40,6 +44,16 @@ private:
     int m_len;
     tos::function_ref<void(int, span<const uint8_t>)> m_on_modify{
         [](int, span<const uint8_t>, void*) {}};
+
+    struct indicate_data {
+        mutex protect;
+        semaphore wait{0};
+
+        // This should be a set, preferably from ETL.
+        std::vector<uint16_t> enabled_connections;
+    };
+
+    std::unique_ptr<indicate_data> m_indication;
 };
 
 class gatt_service

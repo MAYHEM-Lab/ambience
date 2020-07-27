@@ -4,18 +4,34 @@
 #include <tos/flags.hpp>
 
 namespace tos::device::spbtle {
-gatt_characteristic::gatt_characteristic(gatt_service& service, uint16_t handle, int len)
+gatt_characteristic::gatt_characteristic(gatt_service& service,
+                                         uint16_t handle,
+                                         int len,
+                                         bool indicate)
     : m_service(&service)
     , m_characteristic_handle(handle)
     , m_len(len) {
+    if (indicate) {
+        m_indication = std::make_unique<indicate_data>();
+    }
 }
 
 expected<void, errors> gatt_characteristic::update_value(span<const uint8_t> data) {
     auto ret = aci_gatt_update_char_value(
         m_service->native_handle(), m_characteristic_handle, 0, data.size(), data.data());
+
     if (ret == BLE_STATUS_SUCCESS) {
+        if (m_indication) {
+            lock_guard lg{m_indication->protect};
+            LOG("Should wait for indicate response here.");
+            for (auto conn : m_indication->enabled_connections) {
+                LOG(conn);
+                m_indication->wait.down();
+            }
+        }
         return {};
     }
+
     return unexpected(static_cast<errors>(ret));
 }
 
@@ -42,7 +58,50 @@ void gatt_characteristic::receive_modify(int connection,
         actual_attr,
         ")");
 
+    if (actual_attr == native_handle() + 2) {
+        switch (data[0]) {
+        case 0x00:
+            if (m_indication) {
+                m_indication->enabled_connections.erase(
+                    std::remove(m_indication->enabled_connections.begin(),
+                                m_indication->enabled_connections.end(),
+                                connection));
+            }
+            LOG("Disabled indications/notifications");
+            break;
+        case 0x01:
+            LOG("Enabled notifications");
+            break;
+        case 0x02: {
+            // Enabled indications
+            LOG("Enabled indications");
+            if (!m_indication) {
+                LOG_WARN("Connection tried to enable indications on a characteristic "
+                         "without indications");
+                break;
+            }
+            lock_guard lg{m_indication->protect};
+            m_indication->enabled_connections.push_back(connection);
+        } break;
+        }
+    }
+
     m_on_modify(connection, data);
+}
+
+void gatt_characteristic::on_indicate_response(int connection) {
+    if (!m_indication) {
+        return;
+    }
+    m_indication->wait.up();
+}
+
+void gatt_characteristic::on_disconnect(int connection) {
+    lock_guard lg{m_indication->protect};
+    m_indication->enabled_connections.erase(
+        std::remove(m_indication->enabled_connections.begin(),
+                    m_indication->enabled_connections.end(),
+                    connection));
 }
 
 expected<intrusive_ptr<gatt_service>, errors>
@@ -109,7 +168,11 @@ expected<gatt_characteristic*, errors> gatt_service::add_characteristic(
     auto res = new gatt_characteristic(
         *this,
         char_handle,
-        util::is_flag_set(props, ble::characteristic_properties::notify) ? 3 : 2);
+        util::is_flag_set(props, ble::characteristic_properties::notify) ||
+                util::is_flag_set(props, ble::characteristic_properties::indicate)
+            ? 3
+            : 2,
+        util::is_flag_set(props, ble::characteristic_properties::indicate));
 
     m_characteristics.push_back(*res);
 
