@@ -1,4 +1,4 @@
-if (NOT ${HAL_NAME} MATCHES "stm32f7")
+if (NOT "${HAL_NAME}" MATCHES "stm32f7")
     return()
 endif()
 
