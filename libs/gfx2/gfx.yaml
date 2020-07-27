@@ -19,12 +19,16 @@ line:
     p0: point
     p1: point
 
+# This type represents an axis aligned rectangle.
 rectangle:
   type: structure
   members:
-    corner: point
+    corner: point # Stores the top left corner of the rectangle.
     dims: size
 
+# This color represents a binary color. Since lidl does not support any sub-byte data representation yet, binary colors
+# are stored as booleans, and occupying a byte each. This means that vectors of binary_colors are not very efficient
+# as of yet.
 binary_color:
   type: structure
   members:

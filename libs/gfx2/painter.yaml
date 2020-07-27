@@ -3,11 +3,12 @@ $lidlmeta:
   imports:
     - ./gfx
 
+# This enumeration represents the possible rotations of a display.
 rotation:
   type: enumeration
   members:
-    - vertical
-    - horizontal
+    - vertical    # 0 degrees
+    - horizontal  # 90 degrees counter clockwise
 
 style:
   type: structure
@@ -18,8 +19,7 @@ painter:
   type: service
   procedures:
     set_style:
-      returns:
-        - i8
+      returns: ["i8"]
       parameters:
         s: style
     get_dimensions:
@@ -27,8 +27,7 @@ painter:
         - tos::gfx2.size
       parameters: []
     draw_point:
-      returns:
-        - i8
+      returns: ["i8"]
       parameters:
         p: tos::gfx2.point
     draw_line:
@@ -68,10 +67,15 @@ painter:
         stride: i16
         image_rect: tos::gfx2.rectangle
         screen_rect: tos::gfx2.rectangle
+    # Flushes any buffers within the painter. Before calling this function, the contents of the output of this painter
+    # may be incomplete.
     flush:
       returns:
         - i8
       parameters: []
+    # Sets the orientation of the painter.
+    # This causes future coordinates to be translated to the physical coordinates. For instance, coordinate (3, 4) will
+    # correspond to (w - 3, 4) when rotated 90 degrees.
     set_orientation:
       returns:
         - bool
