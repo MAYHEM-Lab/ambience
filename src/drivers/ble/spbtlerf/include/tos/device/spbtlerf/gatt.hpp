@@ -18,7 +18,23 @@ class gatt_characteristic : public list_node<gatt_characteristic> {
 public:
     gatt_characteristic(gatt_service& service, uint16_t handle, int len, bool indicate);
 
+    // Updates the value of this characteristic.
+    // Will block if there are any connections that enabled indications until all
+    // indication responses are received.
     expected<void, errors> update_value(span<const uint8_t> data);
+
+    // Reads the current value of the characteristic.
+    span<uint8_t> read_value(span<uint8_t> buf) const;
+
+    void set_modify_callback(tos::function_ref<void(int, span<const uint8_t>)> cb) {
+        m_on_modify = cb;
+    }
+
+    // The following functions are called by the events subsystem and are considered
+    // private, do not call them!
+    void receive_modify(int connection, span<const uint8_t> data, int actual_attr);
+    void on_indicate_response(int connection);
+    void on_disconnect(int connection);
 
     uint16_t native_handle() const {
         return m_characteristic_handle;
@@ -28,20 +44,13 @@ public:
         return m_len;
     }
 
-    span<uint8_t> read_value(span<uint8_t> buf) const;
-
-    void receive_modify(int connection, span<const uint8_t> data, int actual_attr);
-    void on_indicate_response(int connection);
-    void on_disconnect(int connection);
-
-    void set_modify_callback(tos::function_ref<void(int, span<const uint8_t>)> cb) {
-        m_on_modify = cb;
-    }
-
 private:
     intrusive_ptr<gatt_service> m_service;
     uint16_t m_characteristic_handle;
+    // Data length of the characteristic.
     int m_len;
+
+    // This function will be called when a client modifies this characteristic.
     tos::function_ref<void(int, span<const uint8_t>)> m_on_modify{
         [](int, span<const uint8_t>, void*) {}};
 
