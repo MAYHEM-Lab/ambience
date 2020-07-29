@@ -31,7 +31,17 @@ BraceWrapping:
 IncludeBlocks: Regroup
 SortIncludes: true
 
-#SpaceAfterLogicalNot: false
+IncludeCategories:
+  - Regex: '^(tos|common)/'
+    Priority: 1
+    SortPriority: 1
+  - Regex: '^(arch)/'
+    Priority: 2
+    SortPriority: 2
+  - Regex:           '.*'
+    Priority:        1
+    SortPriority:    0
+SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeInheritanceColon: true
@@ -41,6 +51,12 @@ SpaceBeforeCpp11BracedList: false
 
 AllowShortLoopsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: None
-#AllowShortLambdasOnASingleLine: true
+AllowShortLambdasOnASingleLine: true
 
 AlwaysBreakTemplateDeclarations: Yes
+
+AlignConsecutiveMacros: true
+AlignEscapedNewlines: true
+Standard: c++17
+
+ReflowComments: true
