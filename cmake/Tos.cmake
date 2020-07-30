@@ -52,7 +52,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     endif()
 
     set(TOS_FLAGS "${TOS_FLAGS} ${TOS_GCC_FLAGS}")
-    set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,--gc-sections")
+    set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,--gc-sections -Wl,--build-id")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(STATUS "Using Clang")
     set(TOS_FLAGS "${TOS_FLAGS} -D__ELF__ -fdiagnostics-color")

@@ -27,6 +27,7 @@ add_library(
   src/span.cpp
   include/tos/math/saturated.hpp
   src/math/saturated.cpp
+  include/tos/gnu_build_id.hpp
 )
 
 target_compile_features(tos_util_core PUBLIC cxx_std_17)
