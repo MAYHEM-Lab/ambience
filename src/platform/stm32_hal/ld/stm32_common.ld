@@ -34,6 +34,12 @@ SECTIONS
     _etext = .;        /* define a global symbols at end of code */
   } >FLASH
 
+  .gnu_build_id :
+  {
+    PROVIDE(build_id = .);
+    *(.note.gnu.build-id)
+  } > FLASH
+
   /* Constant data goes into FLASH */
   .rodata :
   {

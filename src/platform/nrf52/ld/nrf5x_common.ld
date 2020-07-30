@@ -33,6 +33,13 @@ SECTIONS
         KEEP(*(.eh_frame*))
 
     } > FLASH
+
+  .gnu_build_id :
+  {
+    PROVIDE(build_id = .);
+    *(.note.gnu.build-id)
+  } > FLASH
+
     .mem_section_dummy_rom :
       {
       }
