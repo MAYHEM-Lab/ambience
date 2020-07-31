@@ -4,7 +4,11 @@
 
 #pragma once
 
+#if defined(WIN32)
+#include <boost/asio/windows/stream_handle.hpp>
+#else
 #include <boost/asio/posix/stream_descriptor.hpp>
+#endif
 #include <common/driver_base.hpp>
 #include <common/tty.hpp>
 #include <common/usart.hpp>
@@ -31,7 +35,11 @@ public:
     span<uint8_t> read(span<uint8_t> buf);
 
 private:
+#if defined(WIN32)
+    boost::asio::windows::stream_handle m_input;
+#else
     boost::asio::posix::stream_descriptor m_input;
+#endif
 };
 } // namespace hosted
 

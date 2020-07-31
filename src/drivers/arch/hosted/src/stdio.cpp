@@ -8,7 +8,12 @@
 
 namespace tos::hosted {
 stdio::stdio()
-    : m_input{get_io(), ::dup(STDIN_FILENO)} {
+#if defined(WIN32)
+    : m_input{get_io(), GetStdHandle(STD_INPUT_HANDLE)}
+#else
+    : m_input{get_io(), ::dup(STDIN_FILENO)}
+#endif
+{
 }
 
 int stdio::write(span<const uint8_t> buf) {
