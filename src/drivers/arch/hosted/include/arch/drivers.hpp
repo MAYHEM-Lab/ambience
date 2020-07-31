@@ -10,5 +10,8 @@
 #include "tcp.hpp"
 #include "timer.hpp"
 #include "udp.hpp"
-#include "unix_socket.hpp"
 #include "usart.hpp"
+
+#if !defined(WIN32)
+#include "unix_socket.hpp"
+#endif
