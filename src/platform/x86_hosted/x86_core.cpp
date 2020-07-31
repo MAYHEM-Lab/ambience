@@ -8,7 +8,9 @@
 
 namespace tos::platform {
 void force_reset() {
+#if defined(SIGTRAP)
     raise(SIGTRAP);
+#endif
     exit(1);
 }
 }
