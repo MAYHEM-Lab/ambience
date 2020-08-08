@@ -127,30 +127,32 @@ gatt_service::create(const uuid& uuid, int max_chars, bool primary) {
     return res;
 }
 
+namespace {
+auto translate_props = [](ble::characteristic_properties props) {
+  int res = 0;
+  if (util::is_flag_set(props, ble::characteristic_properties::read)) {
+      res |= CHAR_PROP_READ;
+  }
+  if (util::is_flag_set(props,
+                        ble::characteristic_properties::write_without_response)) {
+      res |= CHAR_PROP_WRITE_WITHOUT_RESP;
+  }
+  if (util::is_flag_set(props,
+                        ble::characteristic_properties::write_with_response)) {
+      res |= CHAR_PROP_WRITE;
+  }
+  if (util::is_flag_set(props, ble::characteristic_properties::notify)) {
+      res |= CHAR_PROP_NOTIFY;
+  }
+  if (util::is_flag_set(props, ble::characteristic_properties::indicate)) {
+      res |= CHAR_PROP_INDICATE;
+  }
+  return res;
+};
+}
+
 expected<gatt_characteristic*, errors> gatt_service::add_characteristic(
     const uuid& uuid, ble::characteristic_properties props, int len) {
-    auto translate_props = [](ble::characteristic_properties props) {
-        int res = 0;
-        if (util::is_flag_set(props, ble::characteristic_properties::read)) {
-            res |= CHAR_PROP_READ;
-        }
-        if (util::is_flag_set(props,
-                              ble::characteristic_properties::write_without_response)) {
-            res |= CHAR_PROP_WRITE_WITHOUT_RESP;
-        }
-        if (util::is_flag_set(props,
-                              ble::characteristic_properties::write_with_response)) {
-            res |= CHAR_PROP_WRITE;
-        }
-        if (util::is_flag_set(props, ble::characteristic_properties::notify)) {
-            res |= CHAR_PROP_NOTIFY;
-        }
-        if (util::is_flag_set(props, ble::characteristic_properties::indicate)) {
-            res |= CHAR_PROP_INDICATE;
-        }
-        return res;
-    };
-
     uint16_t char_handle;
     auto ret = aci_gatt_add_char(m_service_handle,
                                  UUID_TYPE_128,
@@ -174,6 +176,38 @@ expected<gatt_characteristic*, errors> gatt_service::add_characteristic(
                 util::is_flag_set(props, ble::characteristic_properties::indicate)
             ? 3
             : 2,
+        util::is_flag_set(props, ble::characteristic_properties::indicate));
+
+    m_characteristics.push_back(*res);
+
+    return res;
+}
+
+expected<gatt_characteristic*, errors> gatt_service::add_characteristic(
+    uint16_t short_uuid, ble::characteristic_properties props, int len) {
+    uint16_t char_handle;
+    auto ret = aci_gatt_add_char(m_service_handle,
+                                 UUID_TYPE_16,
+                                 reinterpret_cast<const uint8_t*>(&short_uuid),
+                                 len,
+                                 translate_props(props),
+                                 ATTR_PERMISSION_NONE,
+                                 GATT_NOTIFY_ATTRIBUTE_WRITE,
+                                 16,
+                                 true,
+                                 &char_handle);
+
+    if (ret != BLE_STATUS_SUCCESS) {
+        return unexpected(static_cast<errors>(ret));
+    }
+
+    auto res = new gatt_characteristic(
+        *this,
+        char_handle,
+        util::is_flag_set(props, ble::characteristic_properties::notify) ||
+        util::is_flag_set(props, ble::characteristic_properties::indicate)
+        ? 3
+        : 2,
         util::is_flag_set(props, ble::characteristic_properties::indicate));
 
     m_characteristics.push_back(*res);

@@ -77,6 +77,9 @@ public:
     expected<gatt_characteristic*, errors>
     add_characteristic(const uuid& uuid, ble::characteristic_properties props, int len);
 
+    expected<gatt_characteristic*, errors>
+    add_characteristic(uint16_t short_uuid, ble::characteristic_properties props, int len);
+
     uint16_t native_handle() const {
         return m_service_handle;
     }
