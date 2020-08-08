@@ -1,11 +1,62 @@
+extern "C" {
 #include "bluenrg_aci.h"
 #include "bluenrg_gap.h"
-#include "stm32_bluenrg_ble.h"
+#include <hci.h>
+}
 
-#include <ble_status.h>
+#include <bluenrg_interface.hpp>
 #include <common/ble/address.hpp>
 #include <common/spi.hpp>
 #include <tos/device/spbtlerf/adapter.hpp>
+
+namespace tos::device::spbtle {
+namespace {
+class interface_impl : public bluenrg_interface {
+public:
+    int32_t BlueNRG_SPI_Read_All(uint8_t* buffer, uint8_t buff_size) override {
+        return adapter::instance()->cb_spi_read({buffer, buff_size});
+    }
+    int32_t BlueNRG_SPI_Write(uint8_t* data1,
+                              uint8_t* data2,
+                              uint8_t Nb_bytes1,
+                              uint8_t Nb_bytes2) override {
+        return adapter::instance()->cb_spi_write({data1, Nb_bytes1},
+                                                 {data2, Nb_bytes2});
+    }
+
+    void Hal_Write_Serial(const void* data1,
+                          const void* data2,
+                          int32_t n_bytes1,
+                          int32_t n_bytes2) override {
+        while (true) {
+            auto res =
+                BlueNRG_SPI_Write((uint8_t*)data1, (uint8_t*)data2, n_bytes1, n_bytes2);
+            if (res == 0) {
+                break;
+            }
+            tos::this_thread::yield();
+        }
+    }
+    void Disable_SPI_IRQ() override {
+        tos::device::spbtle::adapter::instance()->cb_spi_disable_irq();
+
+    }
+    void Enable_SPI_IRQ() override {
+        tos::device::spbtle::adapter::instance()->cb_spi_enable_irq();
+    }
+    uint8_t BlueNRG_DataPresent() override {
+        return adapter::instance()->cb_data_present();
+    }
+    tos::any_alarm* get_alarm() override {
+        return adapter::instance()->cb_alarm();
+    }
+    void HCI_Event_CB(void* pckt) override {
+        adapter::instance()->cb_hci_event_call(pckt);
+    }
+};
+interface_impl _if;
+}
+}
 
 namespace tos::device::spbtle {
 void adapter::cb_reset() {
@@ -26,7 +77,7 @@ void adapter::cb_bootloader() {
     m_config.gpio->set_pin_mode(m_config.m_irq_pin, tos::pin_mode::out);
     m_config.gpio->write(m_config.m_irq_pin, tos::digital::high);
 
-    BlueNRG_RST();
+    cb_reset();
     cb_spi_enable_irq();
 }
 
@@ -190,7 +241,7 @@ void adapter::begin() {
     m_config.gpio->write(m_config.reset_pin, digital::low);
 
     /* Initialize the BlueNRG HCI */
-    HCI_Init();
+    HCI_Init(_if);
 
     cb_reset();
 }

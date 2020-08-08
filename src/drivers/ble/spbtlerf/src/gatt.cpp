@@ -1,4 +1,6 @@
+extern "C" {
 #include <bluenrg_gatt_aci.h>
+}
 #include <tos/device/spbtlerf/adapter.hpp>
 #include <tos/device/spbtlerf/gatt.hpp>
 #include <tos/flags.hpp>
