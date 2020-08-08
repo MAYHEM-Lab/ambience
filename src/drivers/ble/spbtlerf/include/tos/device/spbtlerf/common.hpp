@@ -10,6 +10,7 @@ struct fw_id {
 enum class errors
 {
     unknown,
+    command_disallowed = 12,
     timeout = 0xFF
 };
 
