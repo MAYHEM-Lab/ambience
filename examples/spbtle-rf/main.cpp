@@ -139,7 +139,10 @@ void ble_task() {
     while (true) {
         received.down();
         readable.update_value(echo);
-        if (!adv.start(1s, "Tos BLE")) {
+        if (auto res = adv.start(1s, "Tos BLE"); !res) {
+            LOG_ERROR("Can't start advertising", int(force_error(res)));
+        } else {
+            LOG("Advertising");
         }
     }
 
