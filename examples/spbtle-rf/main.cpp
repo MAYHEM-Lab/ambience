@@ -6,6 +6,10 @@
 
 #include <arch/drivers.hpp>
 #include <common/ble/gatt.hpp>
+#include <lidl/service.hpp>
+#include <service_generated.hpp>
+#include <tos/arm/assembly.hpp>
+#include <tos/components/allocator.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/device/spbtlerf/adapter.hpp>
@@ -14,9 +18,6 @@
 #include <tos/intrusive_ptr.hpp>
 #include <tos/print.hpp>
 #include <tos/uuid.hpp>
-#include <service_generated.hpp>
-#include <lidl/service.hpp>
-#include <tos/arm/assembly.hpp>
 
 class calc_impl : public tos::examples::calculator {
     int32_t multiply(const int32_t& a, const int32_t& b) override {
@@ -174,6 +175,7 @@ void ble_task() {
         lidl::message_builder mb(buf);
         runner(calc, echo, mb);
         readable.update_value(mb.get_buffer());
+        LOG(tos::current_context().get_component<tos::allocator_component>()->allocator->in_use().value());
     }
 
     tos::this_thread::block_forever();
