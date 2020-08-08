@@ -33,8 +33,7 @@ tos::intrusive_ptr<tos::device::spbtle::gatt_service> add_gatt_service() {
 
     auto writeable_char = force_get(service)->add_characteristic(
         writeable_uuid,
-        tos::util::set_flag(tos::ble::characteristic_properties::write_with_response,
-                            tos::ble::characteristic_properties::read),
+        tos::ble::characteristic_properties::write_with_response,
         255);
 
     if (!writeable_char) {
@@ -44,9 +43,7 @@ tos::intrusive_ptr<tos::device::spbtle::gatt_service> add_gatt_service() {
 
     auto readable_char = force_get(service)->add_characteristic(
         readable_uuid,
-        tos::util::set_flag(
-            tos::util::set_flag(tos::ble::characteristic_properties::read,
-                                tos::ble::characteristic_properties::indicate),
+        tos::util::set_flag(tos::ble::characteristic_properties::indicate,
             tos::ble::characteristic_properties::write_with_response),
         255);
 
