@@ -53,7 +53,7 @@ void hci_write(const void* data1, const void* data2, uint8_t n_bytes1, uint8_t n
     PRINTF("\n");
 #endif
 
-    interface->Hal_Write_Serial(data1, data2, n_bytes1, n_bytes2);
+    interface->write(data1, data2, n_bytes1, n_bytes2);
 }
 
 BOOL HCI_Queue_Empty(void) {
@@ -98,7 +98,7 @@ void hci_send_cmd(uint16_t ogf, uint16_t ocf, uint8_t plen, void* param) {
 static void free_event_list(void) {
     tHciDataPacket* pckt;
 
-    interface->Disable_SPI_IRQ();
+    interface->disable_irq();
 
     constexpr auto HCI_READ_PACKET_NUM_MAX = 5;
 
@@ -110,7 +110,7 @@ static void free_event_list(void) {
         HCI_Isr();
     }
 
-    interface->Enable_SPI_IRQ();
+    interface->enable_irq();
 }
 
 static void move_list(tListNode* dest_list, tListNode* src_list) {
@@ -144,14 +144,13 @@ void HCI_Isr() {
     tHciDataPacket* hciReadPacket = nullptr;
     uint8_t data_len;
 
-    while (interface->BlueNRG_DataPresent()) {
+    while (interface->data_present()) {
         if (list_is_empty(&hciReadPktPool) == FALSE) {
 
             /* enqueueing a packet for read */
             list_remove_head(&hciReadPktPool, (tListNode**)&hciReadPacket);
 
-            data_len =
-                interface->BlueNRG_SPI_Read_All(hciReadPacket->dataBuff, HCI_READ_PACKET_SIZE);
+            data_len = interface->read(hciReadPacket->dataBuff, HCI_READ_PACKET_SIZE);
             if (data_len > 0) {
                 hciReadPacket->data_len = data_len;
                 if (HCI_verify(hciReadPacket) == 0)
@@ -174,21 +173,21 @@ void HCI_Isr() {
 void HCI_Process(void) {
     tHciDataPacket* hciReadPacket = NULL;
 
-    interface->Disable_SPI_IRQ();
+    interface->disable_irq();
     uint8_t list_empty = list_is_empty(&hciReadPktRxQueue);
     /* process any pending events read */
     while (list_empty == FALSE) {
         list_remove_head(&hciReadPktRxQueue, (tListNode**)&hciReadPacket);
-        interface->Enable_SPI_IRQ();
-        interface->HCI_Event_CB(hciReadPacket->dataBuff);
-        interface->Disable_SPI_IRQ();
+        interface->enable_irq();
+        interface->event_cb(hciReadPacket->dataBuff);
+        interface->disable_irq();
         list_insert_tail(&hciReadPktPool, (tListNode*)hciReadPacket);
         list_empty = list_is_empty(&hciReadPktRxQueue);
     }
     /* Explicit call to HCI_Isr(), since it cannot be called by ISR if IRQ is kept high by
     BlueNRG. */
     HCI_Isr();
-    interface->Enable_SPI_IRQ();
+    interface->enable_irq();
 }
 
 int hci_send_req(struct hci_request* r, BOOL async) {
@@ -236,7 +235,7 @@ int hci_send_req(struct hci_request* r, BOOL async) {
         }
 
         /* Extract packet from HCI event queue. */
-        interface->Disable_SPI_IRQ();
+        interface->disable_irq();
         list_remove_head(&hciReadPktRxQueue, (tListNode**)&hciReadPacket);
 
         hci_hdr = (hci_uart_pckt*)hciReadPacket->dataBuff;
@@ -317,7 +316,7 @@ int hci_send_req(struct hci_request* r, BOOL async) {
 
         HCI_Isr();
 
-        interface->Enable_SPI_IRQ();
+        interface->enable_irq();
     }
 
 failed:
@@ -325,7 +324,7 @@ failed:
         list_insert_head(&hciReadPktPool, (tListNode*)hciReadPacket);
     }
     move_list(&hciReadPktRxQueue, &hciTempQueue);
-    interface->Enable_SPI_IRQ();
+    interface->enable_irq();
     return -1;
 
 done:
@@ -333,7 +332,7 @@ done:
     list_insert_head(&hciReadPktPool, (tListNode*)hciReadPacket);
     move_list(&hciReadPktRxQueue, &hciTempQueue);
 
-    interface->Enable_SPI_IRQ();
+    interface->enable_irq();
     return 0;
 }
 }

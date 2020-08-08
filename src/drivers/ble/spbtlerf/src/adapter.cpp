@@ -13,18 +13,19 @@ namespace tos::device::spbtle {
 namespace {
 class interface_impl : public bluenrg_interface {
 public:
-    int32_t BlueNRG_SPI_Read_All(uint8_t* buffer, uint8_t buff_size) override {
+    int32_t read(uint8_t* buffer, uint8_t buff_size) override {
         return adapter::instance()->cb_spi_read({buffer, buff_size});
     }
+
     int32_t BlueNRG_SPI_Write(uint8_t* data1,
                               uint8_t* data2,
                               uint8_t Nb_bytes1,
-                              uint8_t Nb_bytes2) override {
+                              uint8_t Nb_bytes2) {
         return adapter::instance()->cb_spi_write({data1, Nb_bytes1},
                                                  {data2, Nb_bytes2});
     }
 
-    void Hal_Write_Serial(const void* data1,
+    void write(const void* data1,
                           const void* data2,
                           int32_t n_bytes1,
                           int32_t n_bytes2) override {
@@ -37,20 +38,24 @@ public:
             tos::this_thread::yield();
         }
     }
-    void Disable_SPI_IRQ() override {
-        tos::device::spbtle::adapter::instance()->cb_spi_disable_irq();
 
+    void disable_irq() override {
+        tos::device::spbtle::adapter::instance()->cb_spi_disable_irq();
     }
-    void Enable_SPI_IRQ() override {
+
+    void enable_irq() override {
         tos::device::spbtle::adapter::instance()->cb_spi_enable_irq();
     }
-    uint8_t BlueNRG_DataPresent() override {
+
+    uint8_t data_present() override {
         return adapter::instance()->cb_data_present();
     }
+
     tos::any_alarm* get_alarm() override {
         return adapter::instance()->cb_alarm();
     }
-    void HCI_Event_CB(void* pckt) override {
+
+    void event_cb(void* pckt) override {
         adapter::instance()->cb_hci_event_call(pckt);
     }
 };
