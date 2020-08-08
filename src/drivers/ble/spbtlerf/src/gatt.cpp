@@ -99,6 +99,9 @@ void gatt_characteristic::on_indicate_response(int connection) {
 }
 
 void gatt_characteristic::on_disconnect(int connection) {
+    if (!m_indication) {
+        return;
+    }
     lock_guard lg{m_indication->protect};
     m_indication->enabled_connections.erase(
         std::remove(m_indication->enabled_connections.begin(),
