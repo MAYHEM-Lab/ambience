@@ -1,0 +1,12 @@
+$lidlmeta:
+  name: tos::examples
+
+calculator:
+  type: service
+  procedures:
+    multiply:
+      returns:
+        - i32
+      parameters:
+        a: i32
+        b: i32
