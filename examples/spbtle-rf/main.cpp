@@ -131,19 +131,27 @@ void ble_task() {
 
     writeable.set_modify_callback(
         tos::function_ref<void(int, tos::span<const uint8_t>)>(write_cb));
-
     tos::device::spbtle::advertising adv;
-    adv.start(1s, "Tos BLE");
+
+    auto on_disc = [&](int conn) {
+        LOG("Disconnected:", conn);
+        tos::launch(tos::alloc_stack, [&]{
+      if (auto res = adv.start(100ms, "Tos BLE"); !res) {
+          LOG_ERROR("Can't start advertising", int(force_error(res)));
+      } else {
+          LOG("Advertising");
+      }
+        });
+    };
+    bl->on_disconnect(tos::function_ref<void(int)>(on_disc));
+
+    adv.start(100ms, "Tos BLE");
     LOG("disc started");
 
     while (true) {
         received.down();
-        readable.update_value(echo);
-        if (auto res = adv.start(1s, "Tos BLE"); !res) {
-            LOG_ERROR("Can't start advertising", int(force_error(res)));
-        } else {
-            LOG("Advertising");
-        }
+        auto x = 2 * atoi(reinterpret_cast<const char*>(echo.data()));
+        readable.update_value(tos::raw_cast(tos::itoa(x)));
     }
 
     tos::this_thread::block_forever();
