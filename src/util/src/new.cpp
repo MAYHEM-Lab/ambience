@@ -70,7 +70,7 @@ void* operator new[](size_t sz) {
     return nullptr;
 }
 
-void* operator new(size_t sz, const std::nothrow_t&) {
+void* operator new(size_t sz, const std::nothrow_t&) noexcept {
     if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
         auto res = alloc->allocator->allocate(sz);
         if (res == nullptr) {
@@ -82,7 +82,7 @@ void* operator new(size_t sz, const std::nothrow_t&) {
     return nullptr;
 }
 
-void* operator new[](size_t sz, const std::nothrow_t&) {
+void* operator new[](size_t sz, const std::nothrow_t&) noexcept {
     if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
         auto res = alloc->allocator->allocate(sz);
         if (res == nullptr) {
