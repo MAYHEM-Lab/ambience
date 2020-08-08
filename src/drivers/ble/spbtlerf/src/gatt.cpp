@@ -132,25 +132,24 @@ gatt_service::create(const uuid& uuid, int max_chars, bool primary) {
 
 namespace {
 auto translate_props = [](ble::characteristic_properties props) {
-  int res = 0;
-  if (util::is_flag_set(props, ble::characteristic_properties::read)) {
-      res |= CHAR_PROP_READ;
-  }
-  if (util::is_flag_set(props,
-                        ble::characteristic_properties::write_without_response)) {
-      res |= CHAR_PROP_WRITE_WITHOUT_RESP;
-  }
-  if (util::is_flag_set(props,
-                        ble::characteristic_properties::write_with_response)) {
-      res |= CHAR_PROP_WRITE;
-  }
-  if (util::is_flag_set(props, ble::characteristic_properties::notify)) {
-      res |= CHAR_PROP_NOTIFY;
-  }
-  if (util::is_flag_set(props, ble::characteristic_properties::indicate)) {
-      res |= CHAR_PROP_INDICATE;
-  }
-  return res;
+    int res = 0;
+    if (util::is_flag_set(props, ble::characteristic_properties::read)) {
+        res |= CHAR_PROP_READ;
+    }
+    if (util::is_flag_set(props,
+                          ble::characteristic_properties::write_without_response)) {
+        res |= CHAR_PROP_WRITE_WITHOUT_RESP;
+    }
+    if (util::is_flag_set(props, ble::characteristic_properties::write_with_response)) {
+        res |= CHAR_PROP_WRITE;
+    }
+    if (util::is_flag_set(props, ble::characteristic_properties::notify)) {
+        res |= CHAR_PROP_NOTIFY;
+    }
+    if (util::is_flag_set(props, ble::characteristic_properties::indicate)) {
+        res |= CHAR_PROP_INDICATE;
+    }
+    return res;
 };
 }
 
@@ -208,9 +207,9 @@ expected<gatt_characteristic*, errors> gatt_service::add_characteristic(
         *this,
         char_handle,
         util::is_flag_set(props, ble::characteristic_properties::notify) ||
-        util::is_flag_set(props, ble::characteristic_properties::indicate)
-        ? 3
-        : 2,
+                util::is_flag_set(props, ble::characteristic_properties::indicate)
+            ? 3
+            : 2,
         util::is_flag_set(props, ble::characteristic_properties::indicate));
 
     m_characteristics.push_back(*res);
