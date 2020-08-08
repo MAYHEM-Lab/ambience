@@ -6,6 +6,8 @@
 namespace tos::device::spbtle {
 struct evt_handler_impl {
     intrusive_list<gatt_service> m_services;
+    function_ref<void(int)> m_on_connect{[](int, void*){}};
+    function_ref<void(int)> m_on_disconnect{[](int, void*){}};
 
     void handle(const evt_gatt_attr_modified_IDB05A1& evt) {
         bool handled = false;
@@ -61,10 +63,12 @@ struct evt_handler_impl {
                 attr.on_disconnect(evt.handle);
             }
         }
+        m_on_disconnect(evt.handle);
     }
 
     void handle(const evt_le_connection_complete& evt) {
         LOG("Connected", int(evt.handle), int(evt.status));
+        m_on_connect(evt.handle);
     }
 
     void handle(const evt_le_connection_update_complete& evt) {
@@ -132,6 +136,13 @@ void hci_evt_handler::register_service(gatt_service& serv) {
 void hci_evt_handler::remove_service(gatt_service& serv) {
     m_impl->m_services.erase(m_impl->m_services.unsafe_find(serv));
     intrusive_unref(&serv);
+}
+
+void hci_evt_handler::set_connection_callback(function_ref<void(int)> cb) {
+    m_impl->m_on_connect = cb;
+}
+void hci_evt_handler::set_disconnection_callback(function_ref<void(int)> cb) {
+    m_impl->m_on_disconnect = cb;
 }
 hci_evt_handler::~hci_evt_handler() = default;
 } // namespace tos::device::spbtle

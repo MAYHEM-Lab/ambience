@@ -19,6 +19,9 @@ public:
     void register_service(gatt_service& serv);
 
     void remove_service(gatt_service& serv);
+
+    void set_connection_callback(function_ref<void(int)> cb);
+    void set_disconnection_callback(function_ref<void(int)> cb);
 private:
     std::unique_ptr<evt_handler_impl> m_impl;
 };

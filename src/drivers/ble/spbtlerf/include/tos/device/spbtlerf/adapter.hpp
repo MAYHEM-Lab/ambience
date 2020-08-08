@@ -76,6 +76,14 @@ public:
 
     tos::expected<void, errors> set_public_address(const ble::address_t& address);
 
+    void on_connect(function_ref<void(int)> cb) {
+        m_event_handler.set_connection_callback(cb);
+    }
+
+    void on_disconnect(function_ref<void(int)> cb) {
+        m_event_handler.set_disconnection_callback(cb);
+    }
+
     /**
      * Due to the design of the ST provided driver, we can have only 1 instance of the
      * driver.
@@ -100,7 +108,6 @@ public:
     }
 
     ~adapter();
-
 private:
 
     void begin();
