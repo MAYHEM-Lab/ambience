@@ -14,6 +14,14 @@
 #include <tos/intrusive_ptr.hpp>
 #include <tos/print.hpp>
 #include <tos/uuid.hpp>
+#include <service_generated.hpp>
+#include <lidl/service.hpp>
+
+class calc_impl : public tos::examples::calculator {
+    int32_t multiply(const int32_t& a, const int32_t& b) override {
+        return a * b;
+    }
+};
 
 tos::intrusive_ptr<tos::device::spbtle::gatt_service> add_gatt_service() {
     static constexpr auto uuid =
@@ -148,10 +156,15 @@ void ble_task() {
     adv.start(100ms, "Tos BLE");
     LOG("disc started");
 
+    calc_impl calc;
+    auto runner = lidl::make_procedure_runner<tos::examples::calculator>();
+
     while (true) {
         received.down();
-        auto x = 2 * atoi(reinterpret_cast<const char*>(echo.data()));
-        readable.update_value(tos::raw_cast(tos::itoa(x)));
+        std::array<uint8_t, 128> buf;
+        lidl::message_builder mb(buf);
+        runner(calc, echo, mb);
+        readable.update_value(mb.get_buffer());
     }
 
     tos::this_thread::block_forever();
