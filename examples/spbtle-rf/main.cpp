@@ -124,7 +124,11 @@ void ble_task() {
     auto& readable = const_cast<tos::device::spbtle::gatt_characteristic&>(
         serv->characteristics().back());
 
-    auto write_cb = [](int, tos::span<const uint8_t> data) {
+    std::vector<uint8_t> echo;
+    tos::semaphore received{0};
+    auto write_cb = [&](int, tos::span<const uint8_t> data) {
+        echo = std::vector<uint8_t>(data.begin(), data.end());
+        received.up();
         LOG("Received data:", data);
     };
 
@@ -135,23 +139,9 @@ void ble_task() {
     adv.start(1s, "Tos BLE");
     LOG("disc started");
 
-    uint8_t buf[64];
     while (true) {
-        tos::this_thread::sleep_for(alarm, 1s);
-
-        auto ret = readable.update_value(tos::raw_cast(tos::span("Hello")));
-        if (!ret) {
-            LOG("Error while updating characteristic.\n");
-        }
-
-        tos::this_thread::sleep_for(alarm, 1s);
-
-        ret = readable.update_value(tos::raw_cast(tos::span("World")));
-
-        if (!ret) {
-            LOG("Error while updating characteristic.\n");
-        }
-
+        received.down();
+        readable.update_value(echo);
         if (!adv.start(1s, "Tos BLE")) {
         }
     }
