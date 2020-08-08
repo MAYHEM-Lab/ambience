@@ -16,6 +16,7 @@
 #include <tos/uuid.hpp>
 #include <service_generated.hpp>
 #include <lidl/service.hpp>
+#include <tos/arm/assembly.hpp>
 
 class calc_impl : public tos::examples::calculator {
     int32_t multiply(const int32_t& a, const int32_t& b) override {
@@ -62,6 +63,14 @@ tos::intrusive_ptr<tos::device::spbtle::gatt_service> add_gatt_service() {
 
     LOG("Registered");
     return force_get(service);
+}
+
+namespace tos {
+void out_of_memory_handler() {
+    while (true) {
+        tos::arm::nop();
+    }
+}
 }
 
 void ble_task() {
