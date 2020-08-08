@@ -14,6 +14,9 @@ public:
 
     void* allocate(size_t size);
     void free(void* ptr);
+    std::optional<size_t> in_use() const {
+        return m_used;
+    }
 
     [[nodiscard]]
     size_t available_memory() const {
