@@ -119,19 +119,9 @@ void print(CharOstreamT& ostr, double x) {
     }
 }
 
-
-template<class CharOstreamT,
-         class U = uintptr_t,
-         class = std::enable_if_t<!std::is_same_v<U, uint64_t>>>
-void print(CharOstreamT& ostr, uintptr_t ptr) {
-    // print(ostr, '0');
-    // print(ostr, 'x');
-    print(ostr, itoa(ptr, 16));
-}
-
 template<class CharOstreamT>
 void print(CharOstreamT& ostr, void* p) {
-    print(ostr, reinterpret_cast<uintptr_t>(p));
+    print(ostr, itoa(reinterpret_cast<uintptr_t>(p), 16));
 }
 
 template<class CharOstreamT>
@@ -146,6 +136,11 @@ void print(CharOstreamT& ostr, uint64_t p) {
 
 template<class CharOstreamT>
 void print(CharOstreamT& ostr, int64_t p) {
+    print(ostr, itoa(p, 10));
+}
+
+template<class CharOstreamT>
+void print(CharOstreamT& ostr, size_t p) {
     print(ostr, itoa(p, 10));
 }
 
