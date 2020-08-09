@@ -24,12 +24,16 @@ expected<void, errors> gatt_characteristic::update_value(span<const uint8_t> dat
 
     if (ret == BLE_STATUS_SUCCESS) {
         if (m_indication) {
-            lock_guard lg{m_indication->protect};
-            LOG("Should wait for indicate response here.");
-            for (auto conn : m_indication->enabled_connections) {
-                LOG(conn);
+            int client_count;
+            {
+                lock_guard lg{m_indication->protect};
+                client_count = m_indication->enabled_connections.size();
+            }
+            LOG("Should wait for indicate response here.", client_count);
+            for (int i = 0; i < client_count; ++i) {
                 m_indication->wait.down();
             }
+            LOG("Got all responses.");
         }
         return {};
     }
@@ -83,7 +87,11 @@ void gatt_characteristic::receive_modify(int connection,
                 break;
             }
             lock_guard lg{m_indication->protect};
-            m_indication->enabled_connections.push_back(connection);
+            if (std::find(m_indication->enabled_connections.begin(),
+                          m_indication->enabled_connections.end(),
+                          connection) == m_indication->enabled_connections.end()) {
+                m_indication->enabled_connections.push_back(connection);
+            }
         } break;
         }
     }
@@ -107,6 +115,7 @@ void gatt_characteristic::on_disconnect(int connection) {
         std::remove(m_indication->enabled_connections.begin(),
                     m_indication->enabled_connections.end(),
                     connection));
+    m_indication->wait.up();
 }
 
 expected<intrusive_ptr<gatt_service>, errors>
