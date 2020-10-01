@@ -1,10 +1,11 @@
 #pragma once
 
 #include <cstdint>
-#include <tos/gfx/dimensions.hpp>
-#include <tos/span.hpp>
-#include <tos/self_pointing.hpp>
 #include <tos/debug/log.hpp>
+#include <tos/gfx/dimensions.hpp>
+#include <tos/self_pointing.hpp>
+#include <tos/span.hpp>
+
 
 namespace tos::raspi3 {
 class framebuffer : public self_pointing<framebuffer> {
@@ -23,7 +24,7 @@ public:
 
     void swap_buffers();
 
-    void set_pixel(gfx::point pt, bool val) {
+    void set_pixel(const gfx::point& pt, bool val) {
         auto pos = (pt.y * m_physical.width + pt.x) * 3;
         get_buffer()[pos] = val ? 255 : 0;
         get_buffer()[pos + 1] = val ? 255 : 0;
@@ -55,4 +56,4 @@ private:
     span<uint8_t> m_buffer{nullptr};
     bool m_swapped = false;
 };
-}
+} // namespace tos::raspi3

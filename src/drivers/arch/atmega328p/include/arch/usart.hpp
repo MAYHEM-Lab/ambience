@@ -7,7 +7,6 @@
 #include <cstdint>
 #include <cstddef>
 #include <tos/devices.hpp>
-#include <tos/char_stream.hpp>
 #include <common/usart.hpp>
 #include <common/tty.hpp>
 #include <tos/span.hpp>

@@ -8,4 +8,4 @@
 
 namespace tos {
 namespace cur_arch = @TOS_ARCH@;
-}
+} // namespace tos

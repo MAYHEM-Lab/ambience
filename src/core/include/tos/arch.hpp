@@ -8,6 +8,6 @@
 #include <tos/core/arch.hpp>
 
 namespace tos::arch {
-using cur_arch::set_stack_ptr;
 using cur_arch::get_stack_ptr;
-}
+using cur_arch::set_stack_ptr;
+} // namespace tos::arch
