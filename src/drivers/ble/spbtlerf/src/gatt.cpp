@@ -111,11 +111,13 @@ void gatt_characteristic::on_disconnect(int connection) {
         return;
     }
     lock_guard lg{m_indication->protect};
-    m_indication->enabled_connections.erase(
-        std::remove(m_indication->enabled_connections.begin(),
-                    m_indication->enabled_connections.end(),
-                    connection));
-    m_indication->wait.up();
+    auto it = std::find(m_indication->enabled_connections.begin(),
+                        m_indication->enabled_connections.end(),
+                        connection);
+    if (it != m_indication->enabled_connections.end()) {
+        m_indication->enabled_connections.erase(it);
+        m_indication->wait.up();
+    }
 }
 
 expected<intrusive_ptr<gatt_service>, errors>
