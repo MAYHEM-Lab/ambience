@@ -14,7 +14,7 @@ endif()
 if (TOS_CPU)
     include(cpu/${TOS_CPU})
 elseif()
-    message(FATAL_ERROR "can't determine CPU!")
+    message(FATAL_ERROR "TOS_CPU is not set!")
 endif()
 
 if (TOS_TOOLCHAIN)
