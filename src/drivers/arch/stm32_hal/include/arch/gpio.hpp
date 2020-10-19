@@ -194,13 +194,17 @@ inline void gpio::set_pin_mode(const gpio::pin_type& pin, pin_mode::in_pulldown_
     init.Speed = detail::gpio_speed::medium();
     HAL_GPIO_Init(pin.port, &init);
 }
-} // namespace tos::stm32
 
-namespace tos::tos_literals {
-inline stm32::pin_t operator""_pin(unsigned long long pin) {
+inline pin_t instantiate_pin(int pin) {
     auto port_index = pin / 16;
     auto pin_index = pin % 16;
     uint16_t p = 1 << pin_index;
     return {stm32::ports[port_index], p};
+}
+} // namespace tos::stm32
+
+namespace tos::tos_literals {
+inline stm32::pin_t operator""_pin(unsigned long long pin) {
+    return stm32::instantiate_pin(pin);
 }
 } // namespace tos::tos_literals
