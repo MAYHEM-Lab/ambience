@@ -9,11 +9,14 @@
 
 #include <queue>
 #include <tos/arm/core.hpp>
+#include <tos/board.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/gfx2/bit_painter.hpp>
 #include <tos/gui/decorators.hpp>
 #include <tos/gui/elements.hpp>
+
+using bs = tos::bsp::board_spec;
 
 struct cyccnt_clock {
 public:
@@ -46,7 +49,7 @@ using errors = mpark::variant<mpark::monostate>;
 void comm_thread() {
     using namespace tos::tos_literals;
 #ifdef TOS_PLATFORM_stm32_hal
-    auto link = tos::open(tos::devs::usart<1>, tos::uart::default_115200, 23_pin, 22_pin);
+    auto link = bs::default_com::open();
 #elif defined(TOS_PLATFORM_nrf52)
     auto link = open(tos::devs::usart<0>, tos::uart::default_115200, 8_pin, 6_pin);
 #endif
@@ -92,11 +95,13 @@ expected<void, errors> epd_main() {
     using namespace tos::tos_literals;
 
 #ifdef TOS_PLATFORM_stm32_hal
-    auto spi = tos::stm32::spi(tos::stm32::detail::spis[0], 5_pin, std::nullopt, 7_pin);
-    auto busy_pin = 3_pin;   // D4
-    auto reset_pin = 20_pin; // D5
-    auto dc_pin = 17_pin;    // D6
-    auto cs_pin = 4_pin;     // D7
+    auto spi = bs::epd::spi_dev::open();
+
+    namespace stm32 = tos::stm32;
+    auto busy_pin = stm32::instantiate_pin(bs::epd::busy_pin);
+    auto reset_pin = stm32::instantiate_pin(bs::epd::reset_pin);
+    auto dc_pin = stm32::instantiate_pin(bs::epd::dc_pin);
+    auto cs_pin = stm32::instantiate_pin(bs::epd::cs_pin);
 
     auto delay = [](std::chrono::microseconds us) {
         uint32_t end = (us.count() * (tos::stm32::ahb_clock / 1'000'000)) / 13.3;
