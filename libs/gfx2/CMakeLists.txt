@@ -1,3 +1,7 @@
+if (NOT TARGET tos_gfx)
+    return()
+endif()
+
 include(lidlc)
 
 add_lidlc(painter_schema painter.yaml)

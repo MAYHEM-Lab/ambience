@@ -1,3 +1,7 @@
+if (NOT TARGET tos_gfx2)
+    return()
+endif()
+
 add_library(
   tos_gui
   src/gui.cpp
