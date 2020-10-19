@@ -18,12 +18,12 @@ loggers, file system root, memory management information etc.
 
 Each thread belongs to one context. A context may or may not know
 about the threads it has. If the context has a component to track
-it's threads, it can know them.
+its threads, it can know them.
 
 When a thread performs an operation that requires accessing some
 global state, it should go through a context. For instance, if a
 thread wants to allocate from the _global_ heap, it should use
-the allocator of it's context.
+the allocator of its context.
 
 == Context local state
 
