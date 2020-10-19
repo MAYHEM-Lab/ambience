@@ -1,20 +1,16 @@
 #include <arch/drivers.hpp>
 #include <common/epd/waveshare/bw29.hpp>
-#include <tos/arm/assembly.hpp>
-#include <tos/ft.hpp>
-#include <tos/gui/elements/extra/qrcode.hpp>
-
-#undef SCB
-#undef DWT
-
 #include <queue>
+#include <tos/arm/assembly.hpp>
 #include <tos/arm/core.hpp>
 #include <tos/board.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
+#include <tos/ft.hpp>
 #include <tos/gfx2/bit_painter.hpp>
 #include <tos/gui/decorators.hpp>
 #include <tos/gui/elements.hpp>
+#include <tos/gui/elements/extra/qrcode.hpp>
 
 using bs = tos::bsp::board_spec;
 

@@ -1,5 +1,13 @@
 #pragma once
 
+#if defined(SCB)
+#undef SCB
+#endif
+
+#if defined(DWT)
+#undef DWT
+#endif
+
 #include <tos/mmio/reg.hpp>
 
 namespace tos::arm {
