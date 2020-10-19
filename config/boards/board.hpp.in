@@ -1,0 +1,7 @@
+// Automatically generated header. Do not modify!
+
+#include <@TOS_BOARD@/board.hpp>
+
+namespace tos::bsp {
+using board_spec = @TOS_BOARD@_spec;
+} // namespace tos::bsp
