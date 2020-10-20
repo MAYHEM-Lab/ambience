@@ -7,7 +7,8 @@
 namespace tos::stm32::l4 {
 enum class rtc_errors {
     clock_error,
-    init_error
+    init_error,
+    calib_error
 };
 class rtc {
 public:

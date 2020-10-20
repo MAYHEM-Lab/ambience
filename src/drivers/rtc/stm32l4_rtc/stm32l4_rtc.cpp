@@ -1,5 +1,6 @@
 #include <stm32_hal/rcc.hpp>
 #include <stm32_hal/rcc_ex.hpp>
+#include <stm32l4xx_hal_pwr.h>
 #include <tos/debug/log.hpp>
 #include <tos/periph/stm32l4_rtc.hpp>
 
@@ -14,7 +15,9 @@ expected<rtc, rtc_errors> rtc::open() {
         return unexpected(rtc_errors::clock_error);
     }
 
+    HAL_PWR_EnableBkUpAccess();
     __HAL_RCC_RTC_ENABLE();
+    __HAL_RCC_RTCAPB_CLK_ENABLE();
 
     res.m_rtc = {};
 
@@ -33,12 +36,22 @@ expected<rtc, rtc_errors> rtc::open() {
         return unexpected(rtc_errors::init_error);
     }
 
+    if (HAL_RTCEx_SetLowPowerCalib(&res.m_rtc, RTC_LPCAL_SET) != HAL_OK)
+    {
+        return unexpected(rtc_errors::calib_error);
+    }
+
     return res;
 }
 
 void rtc::set_wakeup_timer(std::chrono::milliseconds ms) {
+#if defined(STM32L412xx)
+    auto res = HAL_RTCEx_SetWakeUpTimer_IT(
+        &m_rtc, ms.count() * 2, RTC_WAKEUPCLOCK_RTCCLK_DIV16, 0);
+#elif
     auto res =
         HAL_RTCEx_SetWakeUpTimer_IT(&m_rtc, ms.count() * 2, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
+#endif
     if (res != HAL_OK) {
         LOG_ERROR("Failed:", res);
     }
