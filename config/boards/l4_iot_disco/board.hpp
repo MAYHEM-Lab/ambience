@@ -60,5 +60,23 @@ struct l4_iot_disco_spec {
         static constexpr auto cs_pin = 61;
         static constexpr auto reset_pin = 8;
     };
+
+    struct i2c2 {
+        static constexpr auto tag = devs::i2c<2>;
+        static constexpr auto scl_pin = 26;
+        static constexpr auto sda_pin = 27;
+
+        static auto open() {
+            return tos::open(tag,
+                             tos::i2c_type::master,
+                             stm32::instantiate_pin(scl_pin),
+                             stm32::instantiate_pin(sda_pin));
+        }
+    };
+
+    struct hts221 {
+        using i2c_dev = i2c2;
+        static constexpr auto address = 0x5F;
+    };
 };
 } // namespace tos::bsp
