@@ -1,5 +1,6 @@
 add_subdirectory(l4_iot_disco)
 add_subdirectory(iot_epd)
+add_subdirectory(toblerone)
 
 if (TOS_BOARD)
     add_library(tos_board board.cpp)
