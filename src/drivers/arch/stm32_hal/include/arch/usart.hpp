@@ -58,8 +58,6 @@ public:
                    gpio::pin_type rx,
                    gpio::pin_type tx);
 
-    future<int> write_async(tos::span<const uint8_t> buf);
-
     int write(tos::span<const uint8_t> buf);
 
     tos::span<uint8_t> read(tos::span<uint8_t> b);
@@ -80,10 +78,6 @@ public:
     }
 
     void tx_done_isr() {
-        if (m_async) {
-            m_async->tx_promise.set(0);
-            return;
-        }
         tx_s.up_isr();
     }
 
@@ -102,12 +96,6 @@ private:
     tos::basic_fixed_fifo<uint8_t, 32, tos::ring_buf> rx_buf;
     tos::semaphore rx_s{0};
     tos::semaphore tx_s{0};
-
-    struct async_state {
-        tos::promise<int> tx_promise;
-    };
-
-    std::optional<async_state> m_async;
 
     uint8_t m_recv_byte;
     UART_HandleTypeDef m_handle;
@@ -235,17 +223,5 @@ inline int usart::write(tos::span<const uint8_t> buf) {
     tx_s.down();
     tos::kern::unbusy();
     return buf.size();
-}
-
-inline future<int> usart::write_async(tos::span<const uint8_t> buf) {
-    m_async.emplace();
-    if (buf.empty())
-        return {};
-    auto res =
-        HAL_UART_Transmit_IT(&m_handle, const_cast<uint8_t*>(buf.data()), buf.size());
-    if (res != HAL_OK) {
-        return {};
-    }
-    return m_async->tx_promise.get_future();
 }
 } // namespace tos::stm32
