@@ -88,6 +88,10 @@ template<int N>
 using usart_t = dev<struct _usart_t, N>;
 template<int N>
 static constexpr usart_t<N> usart{};
+template<int N>
+using lpuart_t = dev<struct _lpuart_t, N>;
+template<int N>
+static constexpr lpuart_t<N> lpuart{};
 } // namespace devs
 
 /**

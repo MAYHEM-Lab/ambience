@@ -6,7 +6,6 @@
 
 #include "detail/afio.hpp"
 #include "gpio.hpp"
-
 #include <common/driver_base.hpp>
 #include <common/usart.hpp>
 #include <optional>
@@ -40,6 +39,12 @@ inline const usart_def usarts[] = {
      [] { __HAL_RCC_USART3_CLK_ENABLE(); },
      [] { __HAL_RCC_USART3_CLK_DISABLE(); }},
 #endif
+#if defined(LPUART1)
+    {LPUART1_BASE,
+     LPUART1_IRQn,
+     [] { __HAL_RCC_LPUART1_CLK_ENABLE(); },
+     [] { __HAL_RCC_LPUART1_CLK_DISABLE(); }},
+#endif
 };
 } // namespace detail
 
@@ -67,6 +72,7 @@ public:
     read(tos::span<uint8_t> b, AlarmT& alarm, std::chrono::milliseconds to);
 
     ~usart() {
+        HAL_UART_Abort(&m_handle);
         NVIC_DisableIRQ(m_def->irq);
         HAL_UART_DeInit(&m_handle);
         m_def->rcc_dis();
@@ -122,6 +128,13 @@ inline stm32::usart open_impl(tos::devs::usart_t<3>,
                               stm32::gpio::pin_type rx,
                               stm32::gpio::pin_type tx) {
     return stm32::usart{stm32::detail::usarts[2], std::move(constraints), rx, tx};
+}
+
+inline stm32::usart open_impl(tos::devs::lpuart_t<1>,
+                              stm32::usart_constraint&& constraints,
+                              stm32::gpio::pin_type rx,
+                              stm32::gpio::pin_type tx) {
+    return stm32::usart{stm32::detail::usarts[3], std::move(constraints), rx, tx};
 }
 } // namespace tos
 
