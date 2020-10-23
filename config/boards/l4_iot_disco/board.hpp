@@ -78,5 +78,11 @@ struct l4_iot_disco_spec {
         using i2c_dev = i2c2;
         static constexpr auto address = 0x5F;
     };
+
+    struct flash {
+        static auto open() {
+            return stm32::flash{};
+        }
+    };
 };
 } // namespace tos::bsp
