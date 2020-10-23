@@ -16,7 +16,10 @@ add_library(tos_ft
         include/tos/types.hpp
         src/tcb.cpp
         include/tos/components/threads.hpp
-        src/components/threads.cpp)
+        src/components/threads.cpp
+        include/tos/job.hpp
+        src/job.cpp
+)
 
 target_link_libraries(tos_ft PUBLIC tos_util_core)
 target_link_libraries(tos_ft PUBLIC tos_interrupt)
