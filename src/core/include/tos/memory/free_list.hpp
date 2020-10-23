@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <tos/intrusive_list.hpp>
 #include <tos/span.hpp>
+#include <optional>
 
 namespace tos::memory {
 struct free_header;
