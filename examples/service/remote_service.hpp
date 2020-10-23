@@ -5,6 +5,7 @@
 #include <tos/io/channel.hpp>
 #include <tos/io/packet.hpp>
 #include <tos/span.hpp>
+#include <lidl/service.hpp>
 
 class packet_transport {
 public:
@@ -26,13 +27,13 @@ protected:
 };
 
 namespace tos {
-inline tos::span<uint8_t> data(intrusive_ptr<io::packet>& packet) {
+inline tos::span<uint8_t> as_span(intrusive_ptr<io::packet>& packet) {
     return packet->data();
 }
 }
 
 namespace std {
-inline tos::span<uint8_t> data(vector<uint8_t>& v) {
+inline tos::span<uint8_t> as_span(vector<uint8_t>& v) {
     return v;
 }
 }
