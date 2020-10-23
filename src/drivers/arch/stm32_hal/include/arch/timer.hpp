@@ -10,8 +10,11 @@
 #include <iterator>
 #include <memory>
 #include <stm32_hal/dma.hpp>
+#include <stm32_hal/hal.hpp>
+#include <stm32_hal/rcc.hpp>
 #include <stm32_hal/tim.hpp>
 #include <tos/function_ref.hpp>
+#include <tos/platform.hpp>
 #include <tos/scheduler.hpp>
 #include <tos/track_ptr.hpp>
 
@@ -60,7 +63,9 @@ public:
      * Sets the function to be called on every tick of the timer.
      * @param fun function to be called on every tick.
      */
-    void set_callback(tos::function_ref<void()> fun) { m_fun = fun; }
+    void set_callback(tos::function_ref<void()> fun) {
+        m_fun = fun;
+    }
 
     /**
      * Gets the current value of the counter of the timer.
@@ -79,9 +84,13 @@ public:
     void enable();
     void disable();
 
-    auto native_handle() { return &m_handle; }
+    auto native_handle() {
+        return &m_handle;
+    }
 
-    void run_callback() { m_fun(); }
+    void run_callback() {
+        m_fun();
+    }
 
 private:
     TIM_HandleTypeDef m_handle;
