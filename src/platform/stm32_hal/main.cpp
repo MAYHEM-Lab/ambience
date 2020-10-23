@@ -1,7 +1,6 @@
 #include <stm32_hal/flash.hpp>
 #include <stm32_hal/rcc.hpp>
 #include <tos/compiler.hpp>
-#include <tos/ft.hpp>
 #include <tos/scheduler.hpp>
 
 extern "C" {

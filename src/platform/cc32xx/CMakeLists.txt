@@ -14,7 +14,7 @@ target_compile_features(cc32xx_core PUBLIC cxx_std_17)
 
 add_library(cc32xx_impl "")
 target_sources(cc32xx_impl PRIVATE impl.cpp)
-target_link_libraries(cc32xx_impl PUBLIC tos_ft cc32xx_core)
+target_link_libraries(cc32xx_impl PUBLIC tos_interrupt tos_jobs cc32xx_core)
 target_include_directories(cc32xx_impl PUBLIC include)
 
 set_target_properties(cc32xx_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cc3220sf.ld)

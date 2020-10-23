@@ -35,7 +35,7 @@ add_library(stm32_hal_impl
         external/${HAL_NAME}/startup/${LOWER_CPU_NAME}.s
 )
 target_link_libraries(stm32_hal_impl PUBLIC stm32_hal_core)
-target_link_libraries(stm32_hal_impl PUBLIC tos_ft)
+target_link_libraries(stm32_hal_impl PUBLIC tos_jobs)
 set_target_properties(stm32_hal_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ld/${TOS_LD_FILE})
 target_link_libraries(stm32_hal_impl PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}/ld")
 target_link_libraries(stm32_hal_impl PUBLIC "-T${TOS_LD_FILE}")

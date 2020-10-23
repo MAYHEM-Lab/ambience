@@ -16,7 +16,7 @@ extern "C" {
 #include <lwip/timers.h>
 #include <tos/compiler.hpp>
 #include <tos/debug/debug.hpp>
-#include <tos/ft.hpp>
+#include <tos/scheduler.hpp>
 #include <tos/interrupt.hpp>
 
 #if ((SPI_FLASH_SIZE_MAP == 0) || (SPI_FLASH_SIZE_MAP == 1))

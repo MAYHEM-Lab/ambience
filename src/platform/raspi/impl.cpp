@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <tos/ft.hpp>
+#include <tos/scheduler.hpp>
 
 extern void tos_main();
 

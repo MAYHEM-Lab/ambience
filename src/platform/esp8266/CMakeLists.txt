@@ -11,14 +11,14 @@ target_compile_features(esp8266_impl PUBLIC cxx_std_14)
 target_link_libraries(esp8266_impl PUBLIC "-uuser_init -uespconn_init -ulwip_init")
 target_link_libraries(esp8266_impl PUBLIC "-Tlinker.ld")
 target_link_libraries(esp8266_impl PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(esp8266_impl PUBLIC tos_ft lwip c esp_adapters esp_sdk)
+target_link_libraries(esp8266_impl PUBLIC tos_interrupt tos_jobs lwip c esp_adapters esp_sdk)
 target_compile_definitions(esp8266_impl PUBLIC LWIP_OPEN_SRC LWIP_RAW ESP8266 WITH_PGM_READ_HELPER)
 target_compile_definitions(esp8266_impl PRIVATE SPI_FLASH_SIZE_MAP=4)
 
 target_compile_options(esp8266_impl PUBLIC -Wno-literal-suffix)
 
 add_library(esp_adapters esp_adapters.cpp)
-target_link_libraries(esp_adapters PUBLIC tos_core tos_ft)
+target_link_libraries(esp_adapters PUBLIC tos_core tos_jobs)
 target_link_libraries(esp_adapters PUBLIC "-Wl,--undefined=malloc -Wl,--undefined=free -Wl,--undefined=isxdigit")
 tos_install(esp_adapters)
 

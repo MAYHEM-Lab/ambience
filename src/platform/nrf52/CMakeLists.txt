@@ -11,7 +11,7 @@ target_compile_features(nrf52_impl PUBLIC cxx_std_17)
 
 target_compile_definitions(nrf52_impl PUBLIC __HEAP_SIZE=8097 __STACK_SIZE=2048)
 
-target_link_libraries(nrf52_impl PUBLIC tos_core)
+target_link_libraries(nrf52_impl PUBLIC tos_scheduler)
 target_link_libraries(nrf52_impl PUBLIC "--specs=nano.specs -lc -lnosys -lm")
 
 target_link_libraries(nrf52_impl PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}/ld")

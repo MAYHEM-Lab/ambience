@@ -2,14 +2,9 @@
 // Created by Mehmet Fatih BAKIR on 01/06/2018.
 //
 
-#include "tos/tcb.hpp"
-
 #include <app_util_platform.h>
 #include <nrf.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <tos/ft.hpp>
+#include <tos/scheduler.hpp>
 #include <tos/interrupt.hpp>
 #include <nrf_pwr_mgmt.h>
 

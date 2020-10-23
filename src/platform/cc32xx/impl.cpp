@@ -5,7 +5,7 @@
 
 #include "tos/interrupt.hpp"
 
-#include <tos/ft.hpp>
+#include <tos/scheduler.hpp>
 
 enum IRQn_Type
 {

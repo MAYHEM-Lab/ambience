@@ -10,10 +10,11 @@
 #include <avr/power.h>
 #include <avr/sleep.h>
 #include <tos/compiler.hpp>
-#include <tos/ft.hpp>
-#include <tos/semaphore.hpp>
+#include <tos/scheduler.hpp>
 #include <tos/delay.hpp>
 #include <util/delay.h>
+#include <tos/platform.hpp>
+#include <tos/interrupt.hpp>
 
 namespace tos
 {
