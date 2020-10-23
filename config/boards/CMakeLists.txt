@@ -1,5 +1,6 @@
 add_subdirectory(l4_iot_disco)
 add_subdirectory(iot_epd)
+add_subdirectory(nucleo_l412)
 add_subdirectory(toblerone)
 
 if (TOS_BOARD)
