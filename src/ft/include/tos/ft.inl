@@ -48,10 +48,6 @@ inline thread_id_t get_id() {
 namespace tos {
 context& current_context();
 
-namespace global {
-inline kern::scheduler sched;
-} // namespace global
-
 namespace this_thread {
 inline void yield() {
     tos::int_guard ig;
@@ -180,60 +176,6 @@ TOS_SIZE_OPTIMIZE thread_id_t start(TaskT& t) {
     static_cast<TaskT*>(self())->start();
 
     TOS_UNREACHABLE();
-}
-
-inline void busy() {
-    global::sched.busy++;
-}
-
-inline void unbusy() {
-    global::sched.busy--;
-}
-
-inline exit_reason scheduler::schedule() {
-    if (global::thread_state.num_threads == 0) {
-        // no thread left, potentially a bug
-        return exit_reason::restart;
-    }
-
-    /**
-     * We must disable interrupts before we look at the run_queue and sc.busy.
-     * An interrupt might occur between the former and the latter and we can
-     * power down even though there's something to run.
-     */
-    tos::int_guard ig;
-    if (m_run_queue.empty()) {
-        /**
-         * there's no thread to run right now
-         */
-
-        if (busy > 0) {
-            return exit_reason::idle;
-        }
-
-        return exit_reason::power_down;
-    }
-
-    auto next_ctx = &m_run_queue.front().get_context();
-
-    if (m_prev_context != next_ctx) {
-        m_prev_context->switch_out(*next_ctx);
-    }
-
-    auto& front = m_run_queue.front();
-    m_run_queue.pop_front();
-
-    if (m_prev_context != next_ctx) {
-        next_ctx->switch_in(*m_prev_context);
-    }
-
-    front();
-
-    return exit_reason::yield;
-}
-
-inline void make_runnable(job& t) {
-    global::sched.make_runnable(t);
 }
 } // namespace kern
 

@@ -6,7 +6,6 @@ add_library(tos_ft
         include/tos/tcb.hpp
         include/tos/mutex.hpp
         include/tos/semaphore.hpp
-        include/tos/scheduler.hpp
         include/tos/waitable.hpp
         include/tos/event.hpp
         src/ft.cpp
@@ -17,8 +16,6 @@ add_library(tos_ft
         src/tcb.cpp
         include/tos/components/threads.hpp
         src/components/threads.cpp
-        include/tos/job.hpp
-        src/job.cpp
 )
 
 target_link_libraries(tos_ft PUBLIC tos_util_core)

@@ -103,6 +103,9 @@ message(STATUS ${TOS_PLATFORM_NAME}_impl)
 add_library(tos_interrupt include/tos/interrupt.hpp src/interrupt.cpp)
 target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core tos_platform)
 
+add_library(tos_jobs include/tos/scheduler.hpp include/tos/job.hpp src/job.cpp src/scheduler.cpp)
+target_link_libraries(tos_jobs PUBLIC tos_util_core tos_context)
+
 add_library(tos_core
         include/tos/devices.hpp
         include/tos/char_stream.hpp
@@ -115,7 +118,7 @@ add_library(tos_core
         src/device_id.cpp)
 target_link_libraries(tos_core PUBLIC tos_mem tos_util tos_build_info ${TOS_PLATFORM_NAME}_core)
 target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug tos_context)
-target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_platform)
+target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_platform tos_jobs)
 target_include_directories(tos_core PUBLIC include)
 add_library(tos::core ALIAS tos_core)
 

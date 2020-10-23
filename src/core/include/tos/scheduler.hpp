@@ -1,13 +1,11 @@
 #pragma once
 
-#include <tos/job.hpp>
 #include <setjmp.h>
 #include <stdint.h>
 #include <tos/interrupt.hpp>
-#include <tos/tcb.hpp>
+#include <tos/job.hpp>
 
 namespace tos {
-
 /**
  * This enumeration denotes why the scheduler returned
  */
@@ -47,16 +45,6 @@ namespace kern {
 void make_runnable(job& t);
 
 /**
- * Gives control of the CPU back to the scheduler, suspending
- * the current thread.
- *
- * If the interrupts are not disabled when this function
- * is called, the behaviour is undefined
- */
-void suspend_self(const no_interrupts&);
-// pre-condition: interrupts must be disabled
-
-/**
  * Keeps the CPU from going into deep sleep. Must be used
  * before blocking on something that doesn't emit a wake up
  * capable interrupt.
@@ -76,8 +64,7 @@ void unbusy();
 } // namespace tos
 
 
-namespace tos {
-namespace kern {
+namespace tos::kern {
 class scheduler {
 public:
     /**
@@ -103,9 +90,13 @@ public:
     uint8_t busy = 0;
 
 private:
-
     context* m_prev_context = &default_context();
     intrusive_list<job> m_run_queue;
 };
-} // namespace kern
+} // namespace tos::kern
+
+namespace tos {
+namespace global {
+inline kern::scheduler sched;
+} // namespace global
 } // namespace tos
