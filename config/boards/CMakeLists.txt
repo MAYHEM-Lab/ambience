@@ -4,7 +4,7 @@ add_subdirectory(toblerone)
 
 if (TOS_BOARD)
     add_library(tos_board board.cpp)
-    target_include_directories(tos_board PUBLIC ${CMAKE_CURRENT_LIST_DIR}/boards)
+    target_include_directories(tos_board PUBLIC ".")
     target_include_directories(tos_board PUBLIC ${CMAKE_BINARY_DIR}/gen/include)
     target_link_libraries(tos_board PUBLIC "${TOS_BOARD}_board")
     target_compile_features(tos_board PUBLIC cxx_std_17)
