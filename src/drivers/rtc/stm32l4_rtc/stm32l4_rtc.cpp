@@ -17,7 +17,10 @@ expected<rtc, rtc_errors> rtc::open() {
 
     HAL_PWR_EnableBkUpAccess();
     __HAL_RCC_RTC_ENABLE();
+
+#if defined(STM32L412xx)
     __HAL_RCC_RTCAPB_CLK_ENABLE();
+#endif
 
     res.m_rtc = {};
 
@@ -36,10 +39,12 @@ expected<rtc, rtc_errors> rtc::open() {
         return unexpected(rtc_errors::init_error);
     }
 
+#if defined(STM32L412xx)
     if (HAL_RTCEx_SetLowPowerCalib(&res.m_rtc, RTC_LPCAL_SET) != HAL_OK)
     {
         return unexpected(rtc_errors::calib_error);
     }
+#endif
 
     return res;
 }
@@ -48,7 +53,7 @@ void rtc::set_wakeup_timer(std::chrono::milliseconds ms) {
 #if defined(STM32L412xx)
     auto res = HAL_RTCEx_SetWakeUpTimer_IT(
         &m_rtc, ms.count() * 2, RTC_WAKEUPCLOCK_RTCCLK_DIV16, 0);
-#elif
+#else
     auto res =
         HAL_RTCEx_SetWakeUpTimer_IT(&m_rtc, ms.count() * 2, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
 #endif
