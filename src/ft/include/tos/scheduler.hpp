@@ -81,9 +81,6 @@ namespace tos {
 namespace kern {
 class scheduler {
 public:
-    template<class TaskT>
-    thread_id_t start(TaskT&);
-
     /**
      * This function schedules _one_ thread execution and returns.
      *
