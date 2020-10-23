@@ -49,6 +49,11 @@ public:
         return HAL_GPIO_ReadPin(pin.port, pin.pin);
     }
 
+    void close(const pin_type& pin) {
+        set_pin_mode(pin, pin_mode::in);
+        HAL_GPIO_DeInit(pin.port, pin.pin);
+    }
+
 private:
 };
 } // namespace stm32
