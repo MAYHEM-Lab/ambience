@@ -2,6 +2,8 @@
 #include <stm32_hal/rcc.hpp>
 #include <tos/compiler.hpp>
 #include <tos/scheduler.hpp>
+#include <tos/platform.hpp>
+#include <tos/interrupt.hpp>
 
 extern "C" {
 void* __dso_handle;
