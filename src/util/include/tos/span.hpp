@@ -296,11 +296,6 @@ constexpr span<T> monospan(T& t) {
     return span<T>(&t, 1);
 }
 
-template<class U, class T>
-span<U> spanify(T&& t) {
-    return span<U>(std::forward<T>(t));
-}
-
 /**
  * Given a span of type U, creates a view on that span where the type is the given
  * raw type.
