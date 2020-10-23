@@ -2,7 +2,6 @@
 
 #include <setjmp.h>
 #include <stdint.h>
-#include <tos/interrupt.hpp>
 #include <tos/job.hpp>
 
 namespace tos {

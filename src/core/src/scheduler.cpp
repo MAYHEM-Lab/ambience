@@ -1,4 +1,5 @@
 #include <tos/scheduler.hpp>
+#include <tos/interrupt.hpp>
 
 namespace tos::kern{
 void busy() {

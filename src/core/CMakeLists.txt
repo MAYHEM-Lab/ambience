@@ -105,6 +105,7 @@ target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core tos_platf
 
 add_library(tos_jobs include/tos/scheduler.hpp include/tos/job.hpp src/job.cpp src/scheduler.cpp)
 target_link_libraries(tos_jobs PUBLIC tos_util_core tos_context)
+target_link_libraries(tos_jobs PRIVATE tos_interrupt)
 
 add_library(tos_core
         include/tos/devices.hpp
