@@ -1,31 +1,49 @@
 #include <tos/tcb.hpp>
 #include <tos/components/threads.hpp>
+#include <tos/ft.hpp>
 
 namespace tos::kern {
-void tcb::set_context(context& ctx) {
-    if (auto threads = m_context->get_component<threads_component>(); threads) {
-        threads->thread_dissociated(*this);
-    }
-    m_context = &ctx;
-    if (auto threads = m_context->get_component<threads_component>(); threads) {
-        threads->thread_adopted(*this);
-    }
-}
-
-context& tcb::get_context() {
-    return *m_context;
-}
-
-tcb::tcb(context& ctx_ptr)
-    : m_context{&ctx_ptr} {
-    if (auto threads = m_context->get_component<threads_component>(); threads) {
+tcb::tcb(context& ctx)
+    : job(ctx)  {
+    if (auto threads = get_context().get_component<threads_component>(); threads) {
         threads->thread_created(*this);
     }
 }
 
 tcb::~tcb() {
-    if (auto threads = m_context->get_component<threads_component>(); threads) {
+    if (auto threads = get_context().get_component<threads_component>(); threads) {
         threads->thread_exited(*this);
+    }
+}
+
+void tcb::operator()() {
+    auto save_res = save_ctx(global::thread_state.backup_state);
+
+    switch (save_res) {
+    case return_codes::saved:
+        global::thread_state.current_thread = this;
+        switch_context(*m_ctx, return_codes::scheduled);
+    case return_codes::yield:
+    case return_codes::suspend:
+        break;
+    case return_codes::do_exit:
+        // TODO(#34): Potentially a use-after-free. See the issue.
+        std::destroy_at(this);
+        break;
+    case return_codes::scheduled:
+        tos::debug::panic("Should not happen");
+    }
+
+    global::thread_state.current_thread = nullptr;
+}
+
+void tcb::on_set_context(context& new_ctx) {
+    if (auto threads = get_context().get_component<threads_component>(); threads) {
+        threads->thread_dissociated(*this);
+    }
+
+    if (auto threads = new_ctx.get_component<threads_component>(); threads) {
+        threads->thread_adopted(*this);
     }
 }
 }

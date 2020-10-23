@@ -14,21 +14,6 @@
 #include <tos/types.hpp>
 
 namespace tos {
-namespace global {
-inline kern::tcb* cur_thread;
-} // namespace impl
-
-/**
- * Returns a pointer to the currently running thread.
- *
- * Returns `nullptr` if there's no active thread at the moment.
- *
- * @return pointer to the current thread
- */
-inline kern::tcb* self() {
-    return global::cur_thread;
-}
-
 /**
  * If this object is passed to a tos::launch call, tos will allocate a
  * default sized stack for the thread

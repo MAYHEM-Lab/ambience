@@ -7,7 +7,7 @@
 
 namespace tos {
 struct waitable {
-    using waiter_handle = intrusive_list<kern::tcb>::iterator_t;
+    using waiter_handle = intrusive_list<job>::iterator_t;
 
     /**
      * Makes the current thread yield and block on this
@@ -47,10 +47,10 @@ struct waitable {
      * @param t task to place in this waitable
      * @return handle to the task
      */
-    waiter_handle add(kern::tcb& t);
+    waiter_handle add(job& t);
 
-    kern::tcb& remove(waiter_handle handle);
-    kern::tcb& remove(kern::tcb& t);
+    job& remove(waiter_handle handle);
+    job& remove(job& t);
 
     /**
      * Number of tasks in this waitable
@@ -66,7 +66,7 @@ struct waitable {
     }
 
 private:
-    intrusive_list<kern::tcb> m_waiters;
+    intrusive_list<job> m_waiters;
 };
 } // namespace tos
 
@@ -79,17 +79,17 @@ inline void waitable::wait(const int_guard& ni) {
     kern::suspend_self(ni);
 }
 
-inline auto waitable::add(kern::tcb& t) -> waiter_handle {
+inline auto waitable::add(job& t) -> waiter_handle {
     return m_waiters.push_back(t);
 }
 
-inline kern::tcb& waitable::remove(waitable::waiter_handle handle) {
+inline job& waitable::remove(waitable::waiter_handle handle) {
     auto& ret = *handle;
     m_waiters.erase(handle);
     return ret;
 }
 
-inline kern::tcb& waitable::remove(kern::tcb& t) {
+inline job& waitable::remove(job& t) {
     return remove(std::find_if(
         m_waiters.begin(), m_waiters.end(), [&t](auto& tcb) { return &t == &tcb; }));
 }
@@ -105,7 +105,7 @@ inline void waitable::signal_one() {
         return;
     auto& front = m_waiters.front();
     m_waiters.pop_front();
-    make_runnable(front);
+    kern::make_runnable(front);
 }
 
 inline void waitable::signal_n(size_t n) {

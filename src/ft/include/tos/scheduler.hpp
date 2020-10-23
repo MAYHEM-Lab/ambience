@@ -1,7 +1,6 @@
 #pragma once
 
-#include "thread.hpp"
-
+#include <tos/job.hpp>
 #include <setjmp.h>
 #include <stdint.h>
 #include <tos/interrupt.hpp>
@@ -45,7 +44,7 @@ namespace kern {
  * Places the given thread back into the runnable list
  * @param t thread to make runnable
  */
-void make_runnable(struct tcb& t);
+void make_runnable(job& t);
 
 /**
  * Gives control of the CPU back to the scheduler, suspending
@@ -97,17 +96,16 @@ public:
      */
     exit_reason schedule();
 
-    void make_runnable(tcb& task) {
+    void make_runnable(job& task) {
         m_run_queue.push_back(task);
     }
 
-    processor_state main_context{};
     uint8_t busy = 0;
 
 private:
-    int8_t num_threads = 0;
 
-    intrusive_list<tcb> m_run_queue;
+    context* m_prev_context = &default_context();
+    intrusive_list<job> m_run_queue;
 };
 } // namespace kern
 } // namespace tos

@@ -177,7 +177,7 @@ sem_ret semaphore_base<CountT>::down(AlarmT& alarm,
         ret_val = sem_ret::timeout;
         auto& t = m_wait.remove(wait_handle);
         ++m_count;
-        make_runnable(t);
+        kern::make_runnable(t);
     };
     sleeper s{uint16_t(ms.count()), tos::function_ref<void()>(timeout)};
     auto handle = alarm.set_alarm(s);

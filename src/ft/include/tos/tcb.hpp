@@ -8,6 +8,7 @@
 #include <tos/intrusive_list.hpp>
 #include <tos/utility.hpp>
 #include <utility>
+#include <tos/job.hpp>
 
 namespace tos::kern {
 struct processor_state;
@@ -19,8 +20,8 @@ struct processor_state;
  * extend this class to implement required functionality such
  * as starting threads or passing arguments.
  */
-struct alignas(alignof(std::max_align_t)) tcb : public list_node<tcb> {
-    explicit tcb(context& ctx_ptr);
+struct alignas(alignof(std::max_align_t)) tcb : public job {
+    explicit tcb(context& ctx);
     /**
      * Returns a reference to the context of the task.
      *
@@ -44,12 +45,13 @@ struct alignas(alignof(std::max_align_t)) tcb : public list_node<tcb> {
      */
     virtual ~tcb() = 0;
 
-    void set_context(context& ctx);
-    context& get_context();
+    tos::list_node<tcb> m_siblings;
 
-    list_node<tcb> m_siblings;
+protected:
+    void on_set_context(context& new_ctx) override;
+public:
+    void operator()() override;
 private:
-    context* m_context;
     processor_state* m_ctx;
 };
 } // namespace tos::kern
