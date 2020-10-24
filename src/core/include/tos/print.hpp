@@ -139,7 +139,9 @@ void print(CharOstreamT& ostr, int64_t p) {
     print(ostr, itoa(p, 10));
 }
 
-template<class CharOstreamT>
+template<class CharOstreamT,
+         class U = size_t,
+         std::enable_if_t<!std::is_same_v<U, uint64_t>>* = nullptr>
 void print(CharOstreamT& ostr, size_t p) {
     print(ostr, itoa(p, 10));
 }
