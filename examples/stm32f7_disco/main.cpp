@@ -29,10 +29,6 @@ tos::span<uint16_t> sdram_span() {
     return {(uint16_t*)SDRAM_BANK_ADDR, (uint16_t*)SDRAM_BANK_ADDR + 480*272};
 }
 
-extern tos::span<const uint32_t> framedata;
-
-uint16_t data[480*272];
-
 void blink_task() {
     using namespace tos;
     using namespace tos_literals;
@@ -87,9 +83,9 @@ void blink_task() {
 
     while (true) {
         using namespace std::chrono_literals;
-        dma2d.fill_rect(sdram_span().data(), 0xFF0000FF, 480, 272);
+        dma2d.fill_rect(ram_span.data(), 0xFF0000FF, 480, 272);
         tos::this_thread::sleep_for(alarm, 1000ms);
-        dma2d.fill_rect(sdram_span().data(), 0xFFFF0000, 480, 272);
+        dma2d.fill_rect(ram_span.data(), 0xFFFF0000, 480, 272);
         tos::this_thread::sleep_for(alarm, 1000ms);
         tos::println(usart, "tick");
 //        dma2d.fill_rect(sdram_span().data(), 0xF00F, 480, 272);
