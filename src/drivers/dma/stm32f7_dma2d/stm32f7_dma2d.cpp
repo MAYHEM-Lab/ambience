@@ -52,6 +52,22 @@ void dma2d::fill_rect(void* data,
                       const gfx2::color& col,
                       const gfx2::rectangle& r) {
     native_handle()->Instance->OOR = stride - r.dims().width();
-    auto rgb = gfx2::color_convert<gfx2::rgb8>(col);
+
+    auto rgb = visit([](auto& col) { return gfx2::color_convert<gfx2::rgb8>(col); }, col);
+
+    auto color_word = uint32_t(0xFF'00'00'00) | uint32_t(rgb.red()) << 16 |
+                      uint32_t(rgb.green()) << 8 | uint32_t(rgb.blue()) << 0;
+
+    auto ptr = reinterpret_cast<uint16_t*>(data);
+    ptr += r.corner().y() * stride;
+    ptr += r.corner().x();
+
+    HAL_DMA2D_Start_IT(native_handle(),
+                       color_word,
+                       reinterpret_cast<uintptr_t>(ptr),
+                       r.dims().width(),
+                       r.dims().height());
+
+    m_sem.down();
 }
 } // namespace tos::stm32::f7
