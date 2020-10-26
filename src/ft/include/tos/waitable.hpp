@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tos/debug/assert.hpp>
 #include <tos/debug/debug.hpp>
 #include <tos/ft.hpp>
 #include <tos/interrupt.hpp>
@@ -72,9 +73,7 @@ private:
 
 namespace tos {
 inline void waitable::wait(const int_guard& ni) {
-    if (self() == nullptr) {
-        debug::panic("wait called from non thread ctx!");
-    }
+    Assert(self() && "wait must be called from a thread!");
     add(*self());
     kern::suspend_self(ni);
 }
