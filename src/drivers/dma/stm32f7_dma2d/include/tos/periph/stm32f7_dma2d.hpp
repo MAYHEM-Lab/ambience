@@ -1,16 +1,21 @@
 #pragma once
 
+#include "gfx_generated.hpp"
 #include <common/driver_base.hpp>
 #include <cstdint>
 #include <stm32f7xx_hal_conf.h>
 #include <stm32f7xx_hal_dma2d.h>
+#include <tos/gfx2.hpp>
 #include <tos/semaphore.hpp>
+
 
 namespace tos::stm32::f7 {
 class dma2d : public tracked_driver<dma2d, 1> {
 public:
     dma2d();
 
+    void
+    fill_rect(void* data, int stride, const gfx2::color& col, const gfx2::rectangle& r);
     void fill_rect(void* data, uint32_t color, int width, int height);
 
     void irq();
