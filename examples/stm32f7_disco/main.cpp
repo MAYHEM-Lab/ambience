@@ -63,9 +63,18 @@ void blink_task() {
 
     while (true) {
         using namespace std::chrono_literals;
-        dma2d.fill_rect(ram_span.data(), 0xFF0000FF, 480, 272);
+        dma2d.fill_rect(
+            ram_span.data(),
+            480,
+            tos::gfx2::rgb8{255, 0, 128},
+            tos::gfx2::rectangle{tos::gfx2::point{100, 100}, tos::gfx2::size{100, 100}});
         tos::this_thread::sleep_for(alarm, 330ms);
-        dma2d.fill_rect(ram_span.data(), 0xFFFF0000, 480, 272);
+
+        dma2d.fill_rect(
+            ram_span.data(),
+            480,
+            tos::gfx2::rgb8{128, 255, 128},
+            tos::gfx2::rectangle{tos::gfx2::point{100, 100}, tos::gfx2::size{100, 100}});
         tos::this_thread::sleep_for(alarm, 330ms);
     }
 }
