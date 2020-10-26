@@ -10,3 +10,4 @@ CMakeSettings.json
 .clangd
 compile_commands.json
 **/__pycache__
+.cache
