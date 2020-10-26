@@ -2,6 +2,7 @@ add_subdirectory(l4_iot_disco)
 add_subdirectory(iot_epd)
 add_subdirectory(nucleo_l412)
 add_subdirectory(toblerone)
+add_subdirectory(stm32f7_disco)
 
 if (TOS_BOARD)
     add_library(tos_board board.cpp)
