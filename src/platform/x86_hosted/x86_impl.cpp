@@ -6,7 +6,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <string.h>
-#include <tos/ft.hpp>
+#include <tos/scheduler.hpp>
 #include <tos/interrupt.hpp>
 
 namespace asio = boost::asio;

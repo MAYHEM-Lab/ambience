@@ -13,7 +13,7 @@ find_package(Boost REQUIRED system)
 add_library(x86_hosted_impl x86_impl.cpp)
 target_link_libraries(x86_hosted_impl PUBLIC x86_hosted_core)
 target_link_libraries(x86_hosted_impl PUBLIC Boost::boost Boost::system pthread tos_interrupt)
-target_link_libraries(x86_hosted_impl PUBLIC tos_ft)
+target_link_libraries(x86_hosted_impl PUBLIC tos_jobs)
 
 tos_install(x86_hosted_impl ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(x86_hosted_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
