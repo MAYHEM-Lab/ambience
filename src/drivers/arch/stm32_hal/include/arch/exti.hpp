@@ -88,6 +88,22 @@ public:
         it->second();
     }
 
+    ~l0_exti() {
+#if defined(STM32L0)
+        HAL_NVIC_DisableIRQ(EXTI0_1_IRQn);
+        HAL_NVIC_DisableIRQ(EXTI2_3_IRQn);
+        HAL_NVIC_DisableIRQ(EXTI4_15_IRQn);
+#elif defined(STM32L4)
+        HAL_NVIC_DisableIRQ(EXTI0_IRQn);
+        HAL_NVIC_DisableIRQ(EXTI1_IRQn);
+        HAL_NVIC_DisableIRQ(EXTI2_IRQn);
+        HAL_NVIC_DisableIRQ(EXTI3_IRQn);
+        HAL_NVIC_DisableIRQ(EXTI4_IRQn);
+        HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+        HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
+#endif
+    }
+
 private:
     etl::flat_map<uint16_t, function_ref<void()>, 16> m_handlers;
 };
