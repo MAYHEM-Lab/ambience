@@ -55,6 +55,9 @@ add_library(
 )
 target_link_libraries(tos_serial_packets PUBLIC tos_util_core tos::ft)
 
+add_library(tos_cancellation_token include/tos/cancellation_token.hpp src/cancellation_token.cpp)
+target_link_libraries(tos_cancellation_token PUBLIC tos_util_core)
+
 if(BUILD_TESTS)
   add_executable(uuid_test src/uuid_test.cpp)
   target_link_libraries(uuid_test PUBLIC tests_main tos_util_core)
@@ -91,4 +94,8 @@ if(BUILD_TESTS)
   add_executable(saturated_test src/math/saturated_test.cpp)
   target_link_libraries(saturated_test PUBLIC tests_main tos_util_core)
   add_test(NAME saturated_test COMMAND saturated_test)
+
+  add_executable(cancellation_token_test src/cancellation_token_test.cpp)
+  target_link_libraries(cancellation_token_test PUBLIC tests_main tos_cancellation_token)
+  add_test(NAME cancellation_token_test COMMAND cancellation_token_test)
 endif()
