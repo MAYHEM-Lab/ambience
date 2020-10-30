@@ -3,8 +3,10 @@
 #include <chrono>
 #include <common/alarm.hpp>
 #include <tos/barrier.hpp>
-#include <tos/waitable.hpp>
+#include <tos/cancellation_token.hpp>
 #include <tos/compiler.hpp>
+#include <tos/function_ref.hpp>
+#include <tos/waitable.hpp>
 
 namespace tos {
 enum class sem_ret
@@ -17,7 +19,9 @@ enum class sem_ret
     /**
      * Semaphore down timed out
      */
-    timeout
+    timeout,
+
+    cancelled
 };
 
 /**
@@ -29,6 +33,7 @@ enum class sem_ret
 template<class CountT>
 class semaphore_base : public non_copy_movable {
     static_assert(std::is_signed_v<CountT>, "Underlying semaphore types must be signed!");
+
 public:
     /**
      * Increments the shared counter and wakes up
@@ -60,6 +65,8 @@ public:
      * as it would block indefinitely
      */
     void down() && = delete;
+
+    sem_ret down(cancellation_token& cancel) noexcept;
 
     /**
      * Decrements the shared counter and blocks for up
@@ -146,7 +153,7 @@ inline void semaphore_base<CountT>::up() noexcept {
 }
 
 template<class CountT>
-    inline void semaphore_base<CountT>::down() & noexcept {
+inline void semaphore_base<CountT>::down() & noexcept {
     detail::memory_barrier();
     tos::int_guard ig;
     --m_count;
@@ -157,45 +164,46 @@ template<class CountT>
 }
 
 template<class CountT>
+sem_ret semaphore_base<CountT>::down(cancellation_token& cancel) noexcept {
+    sem_ret res = sem_ret::normal;
+    detail::memory_barrier();
+    tos::int_guard ig;
+    --m_count;
+    if (m_count < 0) {
+        auto wait_res = m_wait.wait(ig, cancel);
+        if (wait_res) {
+            res = sem_ret::cancelled;
+        }
+    }
+    detail::memory_barrier();
+    return res;
+}
+
+template<class CountT>
 template<class AlarmT>
 sem_ret semaphore_base<CountT>::down(AlarmT& alarm,
                                      std::chrono::milliseconds ms) noexcept {
-    detail::memory_barrier();
-    tos::int_guard ig;
+    cancellation_token token = cancellation_token::system().nest();
 
-    auto ret_val = sem_ret::normal;
-
-    --m_count;
-    if (m_count >= 0) {
-        return ret_val;
-    }
-
-    auto wait_handle = m_wait.add(*self());
-
-    auto timeout = [&] {
-        // this executes in ISR context
-        ret_val = sem_ret::timeout;
-        auto& t = m_wait.remove(wait_handle);
-        ++m_count;
-        kern::make_runnable(t);
-    };
-    sleeper s{uint16_t(ms.count()), tos::function_ref<void()>(timeout)};
+    sleeper s{uint16_t(ms.count()), make_canceller(token)};
     auto handle = alarm.set_alarm(s);
 
-    kern::suspend_self(ig);
+    auto ret_val = down(token);
 
-    if (ret_val != sem_ret::timeout) {
+    if (ret_val == sem_ret::normal) {
         alarm.cancel(handle);
     }
 
-    detail::memory_barrier();
     return ret_val;
 }
 
 template<class CountT>
-ISR_AVAILABLE
-inline void semaphore_base<CountT>::up_isr() noexcept {
+ISR_AVAILABLE inline void semaphore_base<CountT>::up_isr() noexcept {
     ++m_count;
     m_wait.signal_one();
+}
+
+inline tos::function_ref<void()> make_semaphore_upper(semaphore& sem) {
+    return mem_function_ref<&semaphore::up>(sem);
 }
 } // namespace tos
