@@ -251,6 +251,10 @@ void adapter::begin() {
     cb_reset();
 }
 
+void adapter::power_off() {
+    m_config.gpio->write(m_config.reset_pin, digital::low);
+}
+
 tos::expected<void, errors> adapter::set_public_address(const ble::address_t& address) {
     auto ret = aci_hal_write_config_data(
         CONFIG_DATA_PUBADDR_OFFSET, CONFIG_DATA_PUBADDR_LEN, address.addr);
