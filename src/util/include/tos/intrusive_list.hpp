@@ -96,6 +96,9 @@ public:
 
 private:
     friend class intrusive_list<T, Access>;
+    template<class ElemT>
+    friend intrusive_list_iterator<ElemT, through_base>
+    ad_hoc_list_iter(list_node<ElemT>& elem);
     explicit intrusive_list_iterator(list_node<T>* p)
         : m_curr(p) {
     }
@@ -293,7 +296,30 @@ public:
     iterator_t unsafe_find(T& t) const {
         return iterator_t{&Access::template access<T>(t)};
     }
+
+    template<class ElemT>
+    friend intrusive_list<ElemT> ad_hoc_list(list_node<ElemT>& elem);
 };
+
+template<class ElemT>
+intrusive_list<ElemT> ad_hoc_list(list_node<ElemT>& elem) {
+    list_node<ElemT>*head, *tail;
+    for (head = &elem; head->prev; head = head->prev)
+        ;
+    for (tail = &elem; tail->next; tail = tail->next)
+        ;
+
+    intrusive_list<ElemT> res;
+    res.m_head = head;
+    res.m_tail = tail;
+
+    return res;
+}
+
+template<class ElemT>
+intrusive_list_iterator<ElemT, through_base> ad_hoc_list_iter(list_node<ElemT>& elem) {
+    return intrusive_list_iterator<ElemT, through_base>(&elem);
+}
 } // namespace tos
 
 // Implementations
