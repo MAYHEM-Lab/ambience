@@ -98,12 +98,6 @@ void adapter::cb_spi_disable_irq() {
     m_irq_enabled = false;
 }
 
-adapter::~adapter() {
-    m_config.exti->detach(m_config.m_irq_pin);
-    m_config.gpio->write(m_config.reset_pin, tos::digital::low);
-    m_irq_enabled = false;
-}
-
 int adapter::cb_spi_write(tos::span<const uint8_t> d1, tos::span<const uint8_t> d2) {
     int32_t result = 0;
 
@@ -253,6 +247,12 @@ void adapter::begin() {
 
 void adapter::power_off() {
     m_config.gpio->write(m_config.reset_pin, digital::low);
+}
+
+adapter::~adapter() {
+    m_config.exti->detach(m_config.m_irq_pin);
+    power_off();
+    m_irq_enabled = false;
 }
 
 tos::expected<void, errors> adapter::set_public_address(const ble::address_t& address) {
