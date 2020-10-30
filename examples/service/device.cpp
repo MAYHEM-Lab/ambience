@@ -1,14 +1,44 @@
 #include "remote_service.hpp"
-
 #include <arch/drivers.hpp>
 #include <log_generated.hpp>
+#include <map>
 #include <service_generated.hpp>
 #include <tos/build.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/lidl_sink.hpp>
 #include <tos/devices.hpp>
 #include <tos/ft.hpp>
-#include <tos/io/serial_packets.hpp>
+#include <tos/io/serial_backend.hpp>
+
+template<class SerialT>
+class serial_channel : public tos::io::any_channel {
+public:
+    serial_channel(tos::io::serial_backend<SerialT>& backend, int stream)
+        : m_backend{&backend}
+        , m_stream_id{stream} {
+    }
+
+    void send(tos::span<const uint8_t> span) override {
+        m_backend->send(m_stream_id, span);
+    }
+
+    tos::intrusive_ptr<tos::io::packet> receive() override {
+        m_wait.down();
+        return std::move(m_packet);
+    }
+
+    void receive(tos::intrusive_ptr<tos::io::packet> packet) {
+        m_packet = std::move(packet);
+        m_wait.up();
+    }
+
+private:
+    tos::io::serial_backend<SerialT>* m_backend;
+    int m_stream_id;
+
+    tos::intrusive_ptr<tos::io::packet> m_packet;
+    tos::semaphore m_wait{0};
+};
 
 using generated_remote_logger = tos::services::remote_logger<packet_transport>;
 
@@ -65,9 +95,6 @@ void service_task() {
     using namespace tos::tos_literals;
 
     auto link = tos::open(tos::devs::usart<1>, tos::uart::default_115200, 23_pin, 22_pin);
-    auto transport = tos::io::serial_packets{&link};
-
-    auto channel1 = transport.get_channel(1);
 
     service_registry services;
 
@@ -78,36 +105,47 @@ void service_task() {
     sys_server server;
     services.register_service<tos::services::system_status>(server);
 
-    tos::launch(tos::alloc_stack, [&] {
-        generated_remote_logger log(transport.get_channel(4));
-        tos::debug::lidl_sink sink(log);
-        tos::debug::detail::any_logger logger(&sink);
-        logger.set_log_level(tos::debug::log_level::log);
-        tos::debug::set_default_log(&logger);
+    tos::io::serial_backend transport(&link);
+    auto log_channel =
+        tos::make_intrusive<serial_channel<decltype(transport)::serial_type>>(transport,
+                                                                              4);
 
-        LOG("Hello world!");
+    generated_remote_logger log(log_channel);
+    tos::debug::lidl_sink sink(log);
+    tos::debug::detail::any_logger logger(&sink);
+    logger.set_log_level(tos::debug::log_level::log);
+    tos::debug::set_default_log(&logger);
+
+    tos::launch(tos::alloc_stack, [&] {
+        tos::io::poll_packets(transport,
+                              tos::cancellation_token::system(),
+                              [&](int stream, tos::intrusive_ptr<tos::io::packet>&& p) {
+                                  if (stream == 4) {
+                                      log_channel->receive(std::move(p));
+                                      return;
+                                  }
+
+                                  std::array<uint8_t, 256> resp_buf;
+                                  lidl::message_builder build(resp_buf);
+
+                                  switch (stream) {
+                                  case 1:
+                                      services.m_services[0].invoke(as_span(*p), build);
+                                      break;
+                                  case 3:
+                                      services.m_services[1].invoke(as_span(*p), build);
+                                      break;
+                                  default:
+                                      return;
+                                  }
+
+                                  auto response =
+                                      build.get_buffer().slice(0, build.size());
+                                  transport.send(stream, response);
+                              });
     });
 
-    tos::launch(tos::alloc_stack, [&] {
-        while (true) {
-            auto packet = channel1->receive();
-            std::array<uint8_t, 256> resp_buf;
-            lidl::message_builder build(resp_buf);
-            services.m_services[0].invoke(packet->data(), build);
-            auto response = build.get_buffer().slice(0, build.size());
-            channel1->send(response);
-        }
-    });
- 
-    auto channel = transport.get_channel(3);
-    while (true) {
-        auto packet = channel->receive();
-        std::array<uint8_t, 256> resp_buf;
-        lidl::message_builder build(resp_buf);
-        services.m_services[1].invoke(packet->data(), build);
-        auto response = build.get_buffer().slice(0, build.size());
-        channel->send(response);
-    }
+    LOG("Hello world!");
 }
 
 void tos_main() {
