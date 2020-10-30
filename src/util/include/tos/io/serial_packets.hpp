@@ -46,14 +46,14 @@ public:
     void send(streamid_t streamid, tos::span<const uint8_t> span) {
         tos::lock_guard g{m_write_prot};
         this->m_usart->write(magic_numbers);
-        this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(streamid)));
+        this->m_usart->write(raw_cast(tos::monospan(streamid)));
         uint16_t size = span.size();
-        this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(size)));
+        this->m_usart->write(raw_cast(tos::monospan(size)));
         if (size != 0) {
             this->m_usart->write(span);
         }
         uint32_t crc32 = tos::crc32(span);
-        this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(crc32)));
+        this->m_usart->write(raw_cast(tos::monospan(crc32)));
     }
 
     intrusive_ptr<packet> receive(streamid_t streamid) {
@@ -94,6 +94,7 @@ private:
     }
 
     bool m_stop = false;
+
     void thread() {
         send(0, tos::empty_span<const uint8_t>());
 //        LOG("Serial packets thread running");
