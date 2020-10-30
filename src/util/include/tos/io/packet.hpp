@@ -77,6 +77,10 @@ private:
     uint8_t m_refcnt = 0;
 };
 
+inline span<uint8_t> as_span(packet& p) {
+    return p.data();
+}
+
 class packet_list {
 public:
     void add_packet(intrusive_ptr<packet> packet) {
