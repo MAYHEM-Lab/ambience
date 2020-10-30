@@ -243,7 +243,7 @@ void adapter::begin() {
 
     // Configure Reset pin
     m_config.gpio->set_pin_mode(m_config.reset_pin, tos::pin_mode::out);
-    m_config.gpio->write(m_config.reset_pin, digital::low);
+    m_config.gpio->write(m_config.reset_pin, digital::high);
 
     /* Initialize the BlueNRG HCI */
     HCI_Init(_if);
