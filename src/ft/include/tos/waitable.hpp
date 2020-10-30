@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tos/cancellation_token.hpp>
 #include <tos/debug/assert.hpp>
 #include <tos/debug/debug.hpp>
 #include <tos/ft.hpp>
@@ -22,6 +23,8 @@ struct waitable {
      * context, the behaviour is undefined.
      */
     void wait(const int_guard&);
+
+    bool wait(const int_guard&, cancellation_token& cancel);
 
     /**
      * Wakes all of the threads that are waiting on
@@ -76,6 +79,24 @@ inline void waitable::wait(const int_guard& ni) {
     Assert(self() && "wait must be called from a thread!");
     add(*self());
     kern::suspend_self(ni);
+}
+
+inline bool waitable::wait(const int_guard& ig, cancellation_token& cancel) {
+    bool res = false;
+
+    auto wait_handle = add(*self());
+
+    auto cancel_cb = [&] {
+        res = true;
+        auto& t = remove(wait_handle);
+        kern::make_runnable(t);
+    };
+
+    cancel.set_cancel_callback(tos::function_ref<void()>(cancel_cb));
+
+    kern::suspend_self(ig);
+
+    return res;
 }
 
 inline auto waitable::add(job& t) -> waiter_handle {
