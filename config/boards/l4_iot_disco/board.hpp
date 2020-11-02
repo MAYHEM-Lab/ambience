@@ -19,7 +19,7 @@ struct l4_iot_disco_spec {
         static auto open() {
             return tos::open(tag,
                              std::move(conf),
-                             stm32::instantiate_pin(tx_pin),
+                             stm32::instantiate_pin(rx_pin),
                              stm32::instantiate_pin(tx_pin));
         }
     };
