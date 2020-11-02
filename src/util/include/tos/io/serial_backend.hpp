@@ -1,12 +1,13 @@
 #pragma once
 
+#include <tos/cancellation_token.hpp>
 #include <tos/crc32.hpp>
 #include <tos/expected.hpp>
+#include <tos/io/channel.hpp>
 #include <tos/io/packet.hpp>
 #include <tos/mutex.hpp>
 #include <tos/span.hpp>
 #include <utility>
-#include <tos/cancellation_token.hpp>
 
 namespace tos::io {
 enum class serial_backend_errors
@@ -21,7 +22,9 @@ template<class StreamT>
 class serial_backend {
 public:
     using serial_type = StreamT;
-    explicit serial_backend(StreamT stream) : m_stream{std::move(stream)} {}
+    explicit serial_backend(StreamT stream)
+        : m_stream{std::move(stream)} {
+    }
 
     using streamid_t = int;
     void send(streamid_t streamid, span<const uint8_t> span) {
@@ -54,14 +57,14 @@ public:
 
         streamid_t streamid;
         auto read_res = m_stream->read(raw_cast<uint8_t>(monospan(streamid)),
-                                      std::forward<ReadArgs>(read_args)...);
+                                       std::forward<ReadArgs>(read_args)...);
         if (read_res.empty()) {
             return tos::unexpected(serial_backend_errors::stream_closed);
         }
 
         uint16_t size;
         read_res = m_stream->read(raw_cast<uint8_t>(monospan(size)),
-                                 std::forward<ReadArgs>(read_args)...);
+                                  std::forward<ReadArgs>(read_args)...);
         if (read_res.empty()) {
             return tos::unexpected(serial_backend_errors::stream_closed);
         }
@@ -83,7 +86,7 @@ public:
 
         uint32_t wire_crc;
         read_res = m_stream->read(raw_cast<uint8_t>(monospan(wire_crc)),
-                                 std::forward<ReadArgs>(read_args)...);
+                                  std::forward<ReadArgs>(read_args)...);
         if (read_res.empty()) {
             // Did not get to read the whole CRC, drop packet
             return tos::unexpected(serial_backend_errors::stream_closed);
@@ -104,8 +107,10 @@ private:
     StreamT m_stream;
 };
 
-template <class SerialT, class PacketHandlerT>
-void poll_packets(serial_backend<SerialT>& transport, cancellation_token& cancel, PacketHandlerT&& handler) {
+template<class SerialT, class PacketHandlerT>
+void poll_packets(serial_backend<SerialT>& transport,
+                  cancellation_token& cancel,
+                  PacketHandlerT&& handler) {
     while (!cancel.is_cancelled()) {
         auto res = transport.receive_one();
         if (!res) {
