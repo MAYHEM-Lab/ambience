@@ -56,7 +56,7 @@ add_library(tos_serial_packets include/tos/io/serial_packets.hpp src/io/serial_p
 target_link_libraries(tos_serial_packets PUBLIC tos_util_core tos::ft tos_packets)
 
 add_library(tos_serial_backend include/tos/io/serial_backend.hpp src/serial_backend.cpp)
-target_link_libraries(tos_serial_backend PUBLIC tos_util_core tos::ft)
+target_link_libraries(tos_serial_backend PUBLIC tos_util_core tos::ft tos_packets)
 
 add_library(tos_packet_transport include/tos/io/packet_transport.hpp src/io/packet_transport.cpp)
 target_link_libraries(tos_packet_transport PUBLIC tos_util_core tos_packets)
