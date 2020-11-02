@@ -114,6 +114,8 @@ void service_task() {
     });
 
     LOG("Hello world!");
+
+    tos::this_thread::block_forever();
 }
 
 void tos_main() {
