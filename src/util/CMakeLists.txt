@@ -58,6 +58,9 @@ target_link_libraries(tos_serial_packets PUBLIC tos_util_core tos::ft)
 add_library(tos_serial_backend include/tos/io/serial_backend.hpp src/serial_backend.cpp)
 target_link_libraries(tos_serial_backend PUBLIC tos_util_core tos::ft)
 
+add_library(tos_packet_transport include/tos/io/packet_transport.hpp src/io/packet_transport.cpp)
+target_link_libraries(tos_packet_transport PUBLIC tos_util_core tos_packets)
+
 add_library(tos_cancellation_token include/tos/cancellation_token.hpp src/cancellation_token.cpp)
 target_link_libraries(tos_cancellation_token PUBLIC tos_util_core)
 

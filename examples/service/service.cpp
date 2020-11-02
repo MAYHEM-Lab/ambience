@@ -1,5 +1,3 @@
-#include "remote_service.hpp"
-
 #include <arch/drivers.hpp>
 #include <service_generated.hpp>
 #include <tos/build.hpp>
@@ -10,6 +8,7 @@
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/ft.hpp>
 #include <tos/io/channel.hpp>
+#include <tos/io/packet_transport.hpp>
 #include <tos/io/serial_packets.hpp>
 
 class sys_server : public tos::services::system_status {
@@ -25,8 +24,9 @@ public:
     }
 };
 
-using generated_remote_system = tos::services::remote_system_status<packet_transport>;
-using discovery = tos::services::remote_discovery<packet_transport>;
+using generated_remote_system =
+    tos::services::remote_system_status<tos::io::packet_transport>;
+using discovery = tos::services::remote_discovery<tos::io::packet_transport>;
 
 void query_sys(tos::services::system_status& server) {
     LOG("Service name:", server.name());

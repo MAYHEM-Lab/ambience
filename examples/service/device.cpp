@@ -1,4 +1,3 @@
-#include "remote_service.hpp"
 #include <arch/drivers.hpp>
 #include <log_generated.hpp>
 #include <map>
@@ -9,9 +8,9 @@
 #include <tos/devices.hpp>
 #include <tos/ft.hpp>
 #include <tos/io/serial_backend.hpp>
+#include <tos/io/packet_transport.hpp>
 
-
-using generated_remote_logger = tos::services::remote_logger<packet_transport>;
+using generated_remote_logger = tos::services::remote_logger<tos::io::packet_transport>;
 
 class sys_server : public tos::services::system_status {
 public:
