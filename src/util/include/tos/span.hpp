@@ -345,3 +345,9 @@ span<T> safe_span_copy(span<T> to, span<const U> from) {
     return to.slice(0, len);
 }
 } // namespace tos
+
+namespace std {
+inline tos::span<uint8_t> as_span(vector<uint8_t>& v) {
+    return v;
+}
+}
