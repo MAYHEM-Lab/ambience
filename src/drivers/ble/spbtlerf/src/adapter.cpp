@@ -245,6 +245,11 @@ void adapter::begin() {
     cb_reset();
 }
 
+bool adapter::enter_standby() {
+    auto res = aci_hal_device_standby();
+    return res == BLE_STATUS_SUCCESS;
+}
+
 void adapter::power_off() {
     m_config.gpio->write(m_config.reset_pin, digital::low);
 }
