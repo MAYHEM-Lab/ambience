@@ -123,4 +123,40 @@ void poll_packets(serial_backend<SerialT>& transport, cancellation_token& cancel
         handler(stream, std::move(p));
     }
 }
+
+template<class SerialT>
+class serial_channel : public any_channel {
+public:
+    serial_channel(serial_backend<SerialT>& backend, int stream)
+        : m_backend{&backend}
+        , m_stream_id{stream} {
+    }
+
+    void send(span<const uint8_t> span) override {
+        m_backend->send(m_stream_id, span);
+    }
+
+    tos::intrusive_ptr<packet> receive() override {
+        m_wait.down();
+        return std::move(m_packet);
+    }
+
+    void receive(intrusive_ptr<packet> packet) {
+        m_packet = std::move(packet);
+        m_wait.up();
+    }
+
+private:
+    serial_backend<SerialT>* m_backend;
+    int m_stream_id;
+
+    intrusive_ptr<packet> m_packet;
+    semaphore m_wait{0};
+};
+
+template<class SerialT>
+intrusive_ptr<serial_channel<SerialT>> make_channel(serial_backend<SerialT>& serial,
+                                                    int stream_id) {
+    return make_intrusive<serial_channel<SerialT>>(serial, stream_id);
+}
 } // namespace tos::io

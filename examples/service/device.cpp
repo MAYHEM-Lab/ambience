@@ -10,35 +10,6 @@
 #include <tos/ft.hpp>
 #include <tos/io/serial_backend.hpp>
 
-template<class SerialT>
-class serial_channel : public tos::io::any_channel {
-public:
-    serial_channel(tos::io::serial_backend<SerialT>& backend, int stream)
-        : m_backend{&backend}
-        , m_stream_id{stream} {
-    }
-
-    void send(tos::span<const uint8_t> span) override {
-        m_backend->send(m_stream_id, span);
-    }
-
-    tos::intrusive_ptr<tos::io::packet> receive() override {
-        m_wait.down();
-        return std::move(m_packet);
-    }
-
-    void receive(tos::intrusive_ptr<tos::io::packet> packet) {
-        m_packet = std::move(packet);
-        m_wait.up();
-    }
-
-private:
-    tos::io::serial_backend<SerialT>* m_backend;
-    int m_stream_id;
-
-    tos::intrusive_ptr<tos::io::packet> m_packet;
-    tos::semaphore m_wait{0};
-};
 
 using generated_remote_logger = tos::services::remote_logger<packet_transport>;
 
@@ -106,9 +77,7 @@ void service_task() {
     services.register_service<tos::services::system_status>(server);
 
     tos::io::serial_backend transport(&link);
-    auto log_channel =
-        tos::make_intrusive<serial_channel<decltype(transport)::serial_type>>(transport,
-                                                                              4);
+    auto log_channel = tos::io::make_channel(transport, 4);
 
     generated_remote_logger log(log_channel);
     tos::debug::lidl_sink sink(log);
