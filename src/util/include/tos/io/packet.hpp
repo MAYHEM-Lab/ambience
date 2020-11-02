@@ -81,6 +81,10 @@ inline span<uint8_t> as_span(packet& p) {
     return p.data();
 }
 
+inline span<uint8_t> as_span(intrusive_ptr<io::packet>& packet) {
+    return as_span(*packet);
+}
+
 class packet_list {
 public:
     void add_packet(intrusive_ptr<packet> packet) {
