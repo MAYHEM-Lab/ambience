@@ -13,7 +13,8 @@ block_storage:
         - i32
       paramters: []
     erase:
-      returns: ~
+      returns:
+        - bool
       parameters:
         block_idx: i32
     write:

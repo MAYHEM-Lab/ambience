@@ -1,15 +1,22 @@
 #include <arch/flash.hpp>
+#include <storage_generated.hpp>
 #include <tos/board.hpp>
 #include <tos/debug/dynamic_log.hpp>
+#include <tos/debug/sinks/lidl_sink.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/ft.hpp>
-#include <storage_generated.hpp>
+#include <tos/io/packet_transport.hpp>
+#include <tos/io/serial_backend.hpp>
 
 using bs = tos::bsp::board_spec;
 
-template <class FlashT>
+template<class FlashT>
 class flash_storage : public tos::services::block_storage {
 public:
+    explicit flash_storage(FlashT flash)
+        : m_flash{std::move(flash)} {
+    }
+
     int32_t get_block_size() override {
         return m_flash->sector_size_bytes();
     }
@@ -19,7 +26,7 @@ public:
     }
 
     bool erase(const int32_t& block_idx) override {
-        auto res = m_flash->erase(block_idx);
+        [[maybe_unused]] auto res = m_flash->erase(block_idx);
         return bool(res);
     }
 
@@ -46,34 +53,54 @@ public:
     }
 
 private:
-
     FlashT m_flash;
 };
 
 void storage_main() {
     auto com = bs::default_com::open();
 
-    tos::debug::serial_sink sink{&com};
-    tos::debug::detail::any_logger log_{&sink};
-    log_.set_log_level(tos::debug::log_level::all);
-    tos::debug::set_default_log(&log_);
+    tos::io::serial_backend transport(&com);
+    auto log_channel = tos::io::make_channel(transport, 4);
 
-    LOG("Hello");
+    auto flash = bs::flash::open();
+    flash_storage flash_service(&flash);
+    auto runner = lidl::make_procedure_runner<tos::services::block_storage>();
 
-    auto f = bs::flash::open();
+    tos::launch(tos::alloc_stack, [&] {
+        tos::io::poll_packets(transport,
+                              tos::cancellation_token::system(),
+                              [&](int stream, tos::intrusive_ptr<tos::io::packet>&& p) {
+                                  if (stream == 4) {
+                                      log_channel->receive(std::move(p));
+                                      return;
+                                  }
 
-    std::array<uint8_t, 8> buf;
-    if (!f.read(100, buf, 0)) {
-        LOG_ERROR("Read failed!");
-    }
+                                  std::array<uint8_t, 256> resp_buf;
+                                  lidl::message_builder build(resp_buf);
 
-    LOG(buf);
+                                  switch (stream) {
+                                  case 5:
+                                      runner(flash_service, as_span(*p), build);
+                                      break;
+                                  default:
+                                      return;
+                                  }
 
-    f.erase(100);
-    uint8_t data[8] = {"hello"};
-    if (!f.write(100, data, 0)) {
-        LOG_ERROR("Write failed!");
-    }
+                                  auto response =
+                                      build.get_buffer().slice(0, build.size());
+                                  transport.send(stream, response);
+                              });
+    });
+
+    using generated_remote_logger =
+        tos::services::remote_logger<tos::io::packet_transport>;
+    generated_remote_logger log(log_channel);
+    tos::debug::lidl_sink sink(log);
+    tos::debug::detail::any_logger logger(&sink);
+    logger.set_log_level(tos::debug::log_level::log);
+    tos::debug::set_default_log(&logger);
+
+    LOG("Hello world");
 
     tos::this_thread::block_forever();
 }
