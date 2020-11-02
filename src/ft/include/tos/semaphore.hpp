@@ -192,9 +192,10 @@ sem_ret semaphore_base<CountT>::down(AlarmT& alarm,
 
     if (ret_val == sem_ret::normal) {
         alarm.cancel(handle);
+        return ret_val;
     }
 
-    return ret_val;
+    return sem_ret::timeout;
 }
 
 template<class CountT>
