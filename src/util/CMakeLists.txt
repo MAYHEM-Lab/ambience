@@ -49,11 +49,11 @@ tos_install(tos_util_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_library(serial_mux include/tos/io/serial_multiplexer.hpp src/io/serial_multiplexer.cpp)
 target_link_libraries(serial_mux PUBLIC tos_util_core tos::ft)
 
-add_library(
-  tos_serial_packets include/tos/io/packet.hpp include/tos/io/serial_packets.hpp src/io/packet.cpp
-                     src/io/serial_packets.cpp
-)
-target_link_libraries(tos_serial_packets PUBLIC tos_util_core tos::ft)
+add_library(tos_packets include/tos/io/packet.hpp src/io/packet.cpp)
+target_link_libraries(tos_packets PUBLIC tos_util_core)
+
+add_library(tos_serial_packets include/tos/io/serial_packets.hpp src/io/serial_packets.cpp)
+target_link_libraries(tos_serial_packets PUBLIC tos_util_core tos::ft tos_packets)
 
 add_library(tos_serial_backend include/tos/io/serial_backend.hpp src/serial_backend.cpp)
 target_link_libraries(tos_serial_backend PUBLIC tos_util_core tos::ft)
