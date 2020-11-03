@@ -1,5 +1,5 @@
-#include <tos/scheduler.hpp>
 #include <tos/interrupt.hpp>
+#include <tos/scheduler.hpp>
 
 namespace tos::global {
 kern::scheduler sched;
@@ -14,10 +14,10 @@ void unbusy() {
 }
 
 exit_reason scheduler::schedule() {
-//    if (global::thread_state.num_threads == 0) {
-//        // no thread left, potentially a bug
-//        return exit_reason::restart;
-//    }
+    //    if (global::thread_state.num_threads == 0) {
+    //        // no thread left, potentially a bug
+    //        return exit_reason::restart;
+    //    }
 
     /**
      * We must disable interrupts before we look at the run_queue and sc.busy.
@@ -58,4 +58,4 @@ exit_reason scheduler::schedule() {
 void make_runnable(job& t) {
     global::sched.make_runnable(t);
 }
-}
+} // namespace tos::kern
