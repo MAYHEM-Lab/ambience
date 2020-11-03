@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <stdint.h>
@@ -40,19 +41,10 @@ inline tos::span<const char> itoa(int64_t i, int base = 10) {
     if (isneg)
         intbuf[j++] = '-';
 
-    auto len = j;
     intbuf[j] = '\0';
-    j--;
-    i = 0;
-    while (i < j) {
-        isneg = intbuf[i];
-        intbuf[i] = intbuf[j];
-        intbuf[j] = isneg;
-        i++;
-        j--;
-    }
+    std::reverse(intbuf, intbuf + j);
 
-    return {intbuf, size_t(len)};
+    return {intbuf, size_t(j)};
 }
 } // namespace tos
 
