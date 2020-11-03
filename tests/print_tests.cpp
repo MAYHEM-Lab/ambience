@@ -21,6 +21,13 @@ TEST_CASE("itoa test") {
     REQUIRE_EQ(itoa_res.size(), 2);
     REQUIRE_EQ(itoa_res[0], '-');
     REQUIRE_EQ(itoa_res[1], '1');
+
+    for (int i = -10'000; i <= 10'000; ++i) {
+        auto our_itoa = tos::itoa(i);
+        auto std_itoa = std::to_string(i);
+        std::string conv = std::string(our_itoa.begin(), our_itoa.end());
+        REQUIRE_EQ(std_itoa, conv);
+    }
 }
 
 TEST_CASE("print test") {
