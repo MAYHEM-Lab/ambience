@@ -296,42 +296,6 @@ NMI_Handler:
 
     .weak   HardFault_Handler
     .type   HardFault_Handler, %function
-HardFault_Handler:
-    BKPT 0
-    b       .
-    .size   HardFault_Handler, . - HardFault_Handler
-
-
-    .weak   MemoryManagement_Handler
-    .type   MemoryManagement_Handler, %function
-MemoryManagement_Handler:
-    b       .
-    .size   MemoryManagement_Handler, . - MemoryManagement_Handler
-
-
-    .weak   BusFault_Handler
-    .type   BusFault_Handler, %function
-BusFault_Handler:
-    b       .
-    .size   BusFault_Handler, . - BusFault_Handler
-
-
-    .weak   UsageFault_Handler
-    .type   UsageFault_Handler, %function
-UsageFault_Handler:
-    b       .
-    .size   UsageFault_Handler, . - UsageFault_Handler
-
-
-    .weak   SVC_Handler
-    .type   SVC_Handler, %function
-SVC_Handler:
-    b       .
-    .size   SVC_Handler, . - SVC_Handler
-
-
-    .weak   DebugMon_Handler
-    .type   DebugMon_Handler, %function
 DebugMon_Handler:
     b       .
     .size   DebugMon_Handler, . - DebugMon_Handler

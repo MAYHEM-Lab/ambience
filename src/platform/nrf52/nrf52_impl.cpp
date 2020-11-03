@@ -4,9 +4,10 @@
 
 #include <app_util_platform.h>
 #include <nrf.h>
-#include <tos/scheduler.hpp>
-#include <tos/interrupt.hpp>
 #include <nrf_pwr_mgmt.h>
+#include <tos/arm/exception.hpp>
+#include <tos/interrupt.hpp>
+#include <tos/scheduler.hpp>
 
 #ifdef SOFTDEVICE_PRESENT
 #include "nrf_sdh.h"
@@ -15,10 +16,34 @@
 
 void tos_main();
 
+extern "C" void HardFault_Handler() {
+    tos::arm::exception::hard_fault();
+}
+
+extern "C" void UsageFault_Handler() {
+    tos::arm::exception::usage_fault();
+}
+
+extern "C" void MemoryManagement_Handler() {
+    tos::arm::exception::mem_fault();
+}
+
+extern "C" void BusFault_Handler() {
+    tos::arm::exception::hard_fault();
+}
+
+extern "C" [[gnu::weak]] void SVC_Handler() {
+}
+
 int main() {
     tos::kern::enable_interrupts();
 
     nrf_pwr_mgmt_init();
+
+    NVIC_EnableIRQ(UsageFault_IRQn);
+    NVIC_SetPriority(UsageFault_IRQn, 0);
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk;
+
     tos_main();
 
     while (true) {
