@@ -4,6 +4,7 @@
 #include <tos/scheduler.hpp>
 #include <tos/platform.hpp>
 #include <tos/interrupt.hpp>
+#include <tos/arm/exception.hpp>
 
 extern "C" {
 void* __dso_handle;
@@ -286,17 +287,16 @@ void SystemClock_Config() {
 }
 #endif
 
-namespace {
-bool tried_bkpt = false;
-}
 extern "C" void HardFault_Handler() {
-    if (!tried_bkpt) {
-        tried_bkpt = true;
-        __BKPT(0);
-    } else {
-        tos::platform::force_reset();
-        TOS_UNREACHABLE();
-    }
+    tos::arm::exception::hard_fault();
+}
+
+extern "C" void UsageFault_Handler() {
+    tos::arm::exception::usage_fault();
+}
+
+extern "C" void MemFault_Handler() {
+    tos::arm::exception::mem_fault();
 }
 
 int main() {
@@ -307,6 +307,9 @@ int main() {
     // Interrupts are already enabled:
     tos::kern::enable_interrupts();
     // tos::kern::detail::disable_depth--;
+    HAL_NVIC_EnableIRQ(UsageFault_IRQn);
+    HAL_NVIC_SetPriority(UsageFault_IRQn, 0, 0);
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk;
 
     tos_main();
 
