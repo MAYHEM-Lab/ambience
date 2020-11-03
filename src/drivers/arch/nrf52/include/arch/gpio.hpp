@@ -129,5 +129,10 @@ inline void gpio::init() {
     NRF_P1->OUTSET = UINT32_MAX;
 #endif
 }
+
+inline pin_t instantiate_pin(int pin) {
+    using namespace tos::tos_literals;
+    return operator""_pin(pin);
+}
 } // namespace nrf52
 } // namespace tos
