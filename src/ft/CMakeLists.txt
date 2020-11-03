@@ -16,6 +16,7 @@ add_library(tos_ft
         src/tcb.cpp
         include/tos/components/threads.hpp
         src/components/threads.cpp
+        include/tos/suspended_launch.hpp
 )
 
 target_link_libraries(tos_ft PUBLIC tos_util_core)
