@@ -1,4 +1,4 @@
-add_library(arch_arm "" include/tos/arm/spmanip.hpp include/tos/arm/interrupts.hpp)
+add_library(arch_arm "" include/tos/arm/spmanip.hpp include/tos/arm/interrupts.hpp include/tos/arm/exception.hpp exception.cpp)
 target_include_directories(arch_arm PUBLIC include)
 target_sources(arch_arm PRIVATE
         include/tos/arm/cmsis.hpp
