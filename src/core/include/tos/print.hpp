@@ -19,17 +19,20 @@ static constexpr char lookup[] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 }
 
-inline tos::span<const char> itoa(int64_t i, int base = 10) {
+using itoa_input_t = int64_t;
+
+inline tos::span<const char> itoa(itoa_input_t i, int base = 10) {
     static char intbuf[std::numeric_limits<decltype(i)>::digits10 + 1];
 
-    int64_t j = 0, isneg = 0;
+    itoa_input_t j = 0;
+    bool isneg = false;
 
     if (i == 0) {
         return tos::span<const char>("0").slice(0, 1);
     }
 
     if (i < 0) {
-        isneg = 1;
+        isneg = true;
         i = -i;
     }
 
@@ -38,8 +41,9 @@ inline tos::span<const char> itoa(int64_t i, int base = 10) {
         i /= base;
     }
 
-    if (isneg)
+    if (isneg) {
         intbuf[j++] = '-';
+    }
 
     intbuf[j] = '\0';
     std::reverse(intbuf, intbuf + j);
