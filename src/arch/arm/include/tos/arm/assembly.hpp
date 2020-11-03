@@ -7,6 +7,10 @@ inline void breakpoint() {
     asm volatile("bkpt 0");
 }
 
+inline void svc1() {
+    asm volatile("svc 1");
+}
+
 inline void svc127() {
     asm volatile("svc 127");
 }
