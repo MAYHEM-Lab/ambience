@@ -1,7 +1,10 @@
 #include <tos/scheduler.hpp>
 #include <tos/interrupt.hpp>
 
-namespace tos::kern{
+namespace tos::global {
+kern::scheduler sched;
+}
+namespace tos::kern {
 void busy() {
     global::sched.busy++;
 }

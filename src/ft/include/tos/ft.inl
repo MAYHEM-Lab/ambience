@@ -22,7 +22,7 @@ struct threading_state {
 };
 
 namespace global {
-inline threading_state thread_state;
+extern threading_state thread_state;
 }
 
 /**

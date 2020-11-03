@@ -96,6 +96,6 @@ private:
 
 namespace tos {
 namespace global {
-inline kern::scheduler sched;
+extern kern::scheduler sched;
 } // namespace global
 } // namespace tos
