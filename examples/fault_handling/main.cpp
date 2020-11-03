@@ -50,7 +50,7 @@ public:
         // The stack up until this point allows us to escape from an interrupt handler.
         // We'll keep that in m_stack and switch to m_tmp_stack to perform the
         // context switch and block_forever.
-        tos::cur_arch::set_stack_ptr(reinterpret_cast<char*>(&m_tmp_stack));
+        tos::arch::set_stack_ptr(reinterpret_cast<char*>(&m_tmp_stack));
         if (m_isr_state == state::first) {
             // if we just saved the context, no need to return anywhere, we'll stay here
             tos::this_thread::block_forever();
@@ -125,14 +125,14 @@ public:
     template<class T>
     void operator()(const T& t) {
         m_inst = this;
-        HAL_NVIC_EnableIRQ(SVCall_IRQn);
-        HAL_NVIC_SetPriority(SVCall_IRQn, 0, 0);
+        NVIC_EnableIRQ(SVCall_IRQn);
+        NVIC_SetPriority(SVCall_IRQn, 0);
 
         m_handler = tos::function_ref<void()>(t);
 
-        tos::arm::svc127();
+        tos::arm::svc1();
 
-        HAL_NVIC_DisableIRQ(SVCall_IRQn);
+        NVIC_DisableIRQ(SVCall_IRQn);
     }
 
     static svc_on_demand_interrupt* instance() {
