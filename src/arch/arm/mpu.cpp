@@ -88,8 +88,7 @@ tos::expected<void, mpu_errors> mpu::set_region(int region_id,
     const auto size_field = nearest_power_of_two(region.size) - 1;
 
     uint8_t permissions = 0;
-    if (util::is_flag_set(perms, permissions::read) &&
-        util::is_flag_set(perms, permissions::write)) {
+    if (util::is_flag_set(perms, permissions::read_write)) {
         permissions = 0b011;
     } else if (util::is_flag_set(perms, permissions::read)) {
         permissions = 0b110;
