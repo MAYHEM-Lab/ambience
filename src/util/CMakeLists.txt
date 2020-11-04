@@ -28,6 +28,7 @@ add_library(
   include/tos/math/saturated.hpp
   src/math/saturated.cpp
   include/tos/gnu_build_id.hpp
+  include/tos/math/nearest_power_of_two.hpp
 )
 
 target_compile_features(tos_util_core PUBLIC cxx_std_17)
@@ -100,6 +101,10 @@ if(BUILD_TESTS)
   add_executable(saturated_test src/math/saturated_test.cpp)
   target_link_libraries(saturated_test PUBLIC tests_main tos_util_core)
   add_test(NAME saturated_test COMMAND saturated_test)
+
+  add_executable(math_test src/math/math_test.cpp)
+  target_link_libraries(math_test PUBLIC tests_main tos_util_core)
+  add_test(NAME math_test COMMAND math_test)
 
   add_executable(serial_backend_test src/serial_backend_test.cpp)
   target_link_libraries(serial_backend_test PUBLIC tests_main tos_serial_backend)
