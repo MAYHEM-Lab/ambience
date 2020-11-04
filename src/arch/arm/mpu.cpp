@@ -3,6 +3,7 @@
 #include <tos/arm/nvic.hpp>
 #include <tos/barrier.hpp>
 #include <tos/flags.hpp>
+#include <tos/math/nearest_power_of_two.hpp>
 
 #if defined(MPU)
 namespace tos::arm {
@@ -77,22 +78,10 @@ tos::expected<void, mpu_errors> mpu::set_region(int region_id,
                                                 const tos::memory_region& region,
                                                 permissions perms,
                                                 bool shareable) {
-    constexpr uint32_t mask = 64 - 1;
-
-    // the base address is aligned to 64 bytes!
-    const uint32_t tmp_rbar =
-        ((region.base + mask) & ~mask) | MPU_RBAR_VALID_Msk | region_id;
-
-    auto nearest_power_of_two = [](uint32_t size) {
-        int i = 0;
-        uint32_t accum = 1;
-        for (; accum < size; ++i, accum <<= 1)
-            ;
-        return i;
-    };
+    const uint32_t tmp_rbar = region.base | MPU_RBAR_VALID_Msk | region_id;
 
     // Actual size is computed as 2^(size field + 1)
-    const auto size_field = nearest_power_of_two(region.size) - 1;
+    const auto size_field = math::nearest_power_of_two(region.size) - 1;
 
     uint8_t permissions = 0;
     if (util::is_flag_set(perms, permissions::read_write)) {
