@@ -57,7 +57,12 @@ public:
         m_callback = callback;
     }
 
+    void enable();
+    void disable();
+
     void isr();
+
+    ~mpu();
 
 private:
     function_ref<void()> m_callback{[](void*) { arm::breakpoint(); }};

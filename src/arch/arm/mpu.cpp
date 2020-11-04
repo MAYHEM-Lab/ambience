@@ -14,6 +14,13 @@ void nvic_set_priority(IRQn_Type irq, int preempt, int sub) {
 } // namespace
 mpu::mpu()
     : tracked_driver(0) {
+}
+
+mpu::~mpu() {
+    disable();
+}
+
+void mpu::enable() {
     // Enable MPU and let privileged mode access everything
     MPU->CTRL = MPU_CTRL_ENABLE_Msk | MPU_CTRL_PRIVDEFENA_Msk;
 
@@ -25,6 +32,11 @@ mpu::mpu()
     nvic_set_priority(MemoryManagement_IRQn, 0, 0);
     NVIC_EnableIRQ(MemoryManagement_IRQn);
 #endif
+}
+void mpu::disable() {
+    MPU->CTRL = 0;
+    SCB->SHCSR &= ~SCB_SHCSR_MEMFAULTENA_Msk;
+    NVIC_DisableIRQ(MemoryManagement_IRQn);
 }
 
 size_t mpu::min_region_size() const {
