@@ -2,6 +2,7 @@
 #include <tos/arm/mpu.hpp>
 #include <tos/arm/nvic.hpp>
 #include <tos/barrier.hpp>
+#include <tos/flags.hpp>
 
 #if defined(MPU)
 extern "C" void MemManage_Handler() {
