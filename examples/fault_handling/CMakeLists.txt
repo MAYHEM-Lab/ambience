@@ -1,2 +1,2 @@
 add_executable(fault_demo main.cpp)
-target_link_libraries(fault_demo PRIVATE tos_board tos_core tos_dynamic_log)
+target_link_libraries(fault_demo PRIVATE tos_board tos_core tos_dynamic_log tos_interrupt_trampoline)
