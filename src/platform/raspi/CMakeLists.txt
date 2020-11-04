@@ -6,7 +6,7 @@ target_compile_features(raspi_core PUBLIC cxx_std_17)
 target_link_libraries(raspi_core PUBLIC cmsis::core tos_arch_core)
 target_compile_definitions(raspi_core PUBLIC __PROGRAM_START=_start)
 
-add_library(raspi_impl impl.cpp boot.S newlib_stubs.cpp mmu_init.cpp)
+add_library(raspi_impl impl.cpp boot.S exceptions.S newlib_stubs.cpp mmu_init.cpp)
 target_include_directories(raspi_impl PUBLIC include)
 target_link_libraries(raspi_impl PUBLIC raspi_core tos_jobs raspi3_drivers)
 target_link_libraries(raspi_impl PUBLIC "-T${CMAKE_CURRENT_SOURCE_DIR}/linker.ld")
