@@ -81,7 +81,7 @@ mpu::set_region(int region_id, const tos::memory_region& region, permissions per
         util::is_flag_set(perms, permissions::write)) {
         permissions = 0b011;
     } else if (util::is_flag_set(perms, permissions::read)) {
-        permissions = 0b101;
+        permissions = 0b110;
     } else if (util::is_flag_set(perms, permissions::write)) {
         return unexpected(mpu_errors::bad_permissions);
     }
