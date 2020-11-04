@@ -11,14 +11,13 @@
 
 volatile int* ptr = reinterpret_cast<int*>(0xFFFFFFFF);
 
-static constexpr uint16_t instr[] = {0b1101'1110'1111'1111};
 int illegal_instruction_execution() {
-    auto bad_instruction = (int (*)())instr;
-    return bad_instruction();
+    asm volatile("udf 255");
+    return 42;
 }
 
 volatile int* nptr;
-alignas(32) tos::stack_storage store;
+alignas(1024) tos::stack_storage store;
 void fault_main() {
     tos::this_thread::yield();
     tos::arm::breakpoint();
@@ -75,10 +74,12 @@ void monitor_task() {
     const tos::kern::tcb* fault_thread;
     const tos::arm::exception::fault_variant* fault_ptr;
     auto fault_handler = [&](const tos::arm::exception::fault_variant& fault) {
+        tos::arm::set_control(0);
+        tos::arm::isb();
+
         ret_addr = __builtin_return_address(0);
         fault_thread = tos::self();
         fault_ptr = &fault;
-        tos::arm::set_control(0);
         trampoline->switch_to(self_task);
         return true;
     };
@@ -95,13 +96,13 @@ void monitor_task() {
                        {reinterpret_cast<uintptr_t>(&store), sizeof(store)},
                        tos::permissions::read_write);
         mpu.set_region(
-            1, {0x8000000, 1024 * 1024}, tos::permissions::read_execute, false);
+            1, {0x800'00'00, 0x10'00'00}, tos::permissions::read_execute, false);
 
         LOG("MPU setup complete, allowing stack & flash access");
 
         LOG("Switching to unprivileged mode");
-        tos::arm::dmb();
         tos::arm::set_control(1);
+        tos::arm::isb();
 
         fault_main();
     });
