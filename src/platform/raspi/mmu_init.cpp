@@ -11,18 +11,6 @@ static constexpr auto PT_DEV = 1; // device MMIO
 
 extern uint8_t __data_start;
 
-constexpr uintptr_t page_to_address(page_id_t id, size_t page_size = 4096) {
-    return id * page_size;
-}
-
-constexpr page_id_t address_to_page(uintptr_t ptr, size_t page_size = 4096) {
-    return ptr / page_size;
-}
-
-page_id_t address_to_page(const volatile void* ptr) {
-    return address_to_page(reinterpret_cast<uintptr_t>(ptr));
-}
-
 using table = std::array<table_entry, 512>;
 
 struct pages {
@@ -39,8 +27,9 @@ void mmu_init() {
     auto& l2s = page.pud;
     auto& l3s = page.pmd[0];
 
-    page.pgd[0].zero()
-        .page_num(address_to_page(&l2s))
+    page.pgd[0]
+        .zero()
+        .page_num(tos::aarch64::address_to_page(&l2s))
         .valid(true)
         .page(true)
         .accessed(true)
@@ -52,12 +41,12 @@ void mmu_init() {
     for (page_id_t page = 1; page < 512; page++) {
         l2s[page]
             .zero()
-            .page_num(address_to_page(page << 21))
+            .page_num(tos::aarch64::address_to_page(page << 21))
             .page(false)
             .accessed(true)
             .noexec(true)
             .valid(true);
-        if (page >= address_to_page(bcm2837::IO_BASE) >> 9) {
+        if (page >= tos::aarch64::address_to_page(bcm2837::IO_BASE) >> 9) {
             l2s[page].shareable(tos::aarch64::shareable_values::outer).mair_index(PT_DEV);
         } else {
             l2s[page].shareable(tos::aarch64::shareable_values::inner).mair_index(PT_MEM);
@@ -90,7 +79,7 @@ void mmu_init() {
          * This means that an address is either writeable or executable, but not both at
          * the same time.
          */
-        if (r < 0x80 || r >= address_to_page(&__data_start)) {
+        if (r < 0x80 || r >= tos::aarch64::address_to_page(&__data_start)) {
             l3s[r].noexec(true);
         } else {
             l3s[r].readonly(true);

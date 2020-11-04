@@ -1,9 +1,22 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace tos::aarch64 {
 using page_id_t = uint32_t;
+
+constexpr uintptr_t page_to_address(page_id_t id, size_t page_size = 4096) {
+    return id * page_size;
+}
+
+constexpr page_id_t address_to_page(uintptr_t ptr, size_t page_size = 4096) {
+    return ptr / page_size;
+}
+
+inline page_id_t address_to_page(const volatile void* ptr) {
+    return address_to_page(reinterpret_cast<uintptr_t>(ptr));
+}
 
 template<uint64_t Pos, uint64_t Len, class Type = uint64_t>
 struct bitfield {
