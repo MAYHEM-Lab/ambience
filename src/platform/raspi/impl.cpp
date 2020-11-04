@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <tos/interrupt.hpp>
 #include <tos/scheduler.hpp>
 
 extern void tos_main();
