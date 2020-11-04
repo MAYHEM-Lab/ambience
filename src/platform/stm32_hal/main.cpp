@@ -295,7 +295,7 @@ extern "C" void UsageFault_Handler() {
     tos::arm::exception::usage_fault();
 }
 
-extern "C" void MemFault_Handler() {
+extern "C" void MemManage_Handler() {
     tos::arm::exception::mem_fault();
 }
 
