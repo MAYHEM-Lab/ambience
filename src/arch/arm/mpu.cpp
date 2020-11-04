@@ -57,8 +57,10 @@ std::optional<tos::memory_region> mpu::get_region(int region_id) {
     return tos::memory_region{/*.base =*/base, /*.size =*/size};
 }
 
-tos::expected<void, mpu_errors>
-mpu::set_region(int region_id, const tos::memory_region& region, permissions perms) {
+tos::expected<void, mpu_errors> mpu::set_region(int region_id,
+                                                const tos::memory_region& region,
+                                                permissions perms,
+                                                bool shareable) {
     constexpr uint32_t mask = 64 - 1;
 
     // the base address is aligned to 64 bytes!
@@ -87,9 +89,9 @@ mpu::set_region(int region_id, const tos::memory_region& region, permissions per
     }
 
     RASR_reg_t rasr{};
-    rasr.cacheable = 1;
-    rasr.bufferable = 0;
-    rasr.shareable = 1;
+    rasr.cacheable = true;
+    rasr.bufferable = false;
+    rasr.shareable = shareable;
     rasr.execute_never = !util::is_flag_set(perms, permissions::execute);
     rasr.type_extension = 0;
     rasr.access_permissions = permissions;

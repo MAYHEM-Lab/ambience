@@ -50,7 +50,8 @@ public:
     std::optional<tos::memory_region> get_region(int region_id);
     tos::expected<void, mpu_errors> set_region(int region_id,
                                                const tos::memory_region& region,
-                                               permissions perms);
+                                               permissions perms,
+                                               bool shareable = true);
 
     void set_callback(function_ref<void()> callback) {
         m_callback = callback;
