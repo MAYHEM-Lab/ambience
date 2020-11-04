@@ -42,19 +42,48 @@ fault_variant analyze_usage_fault(const stack_frame_t& frame) {
 template<class VisitorT>
 auto analyze_memfault(const stack_frame_t& frame, VisitorT&& visitor) {
     auto cfsr = SCB->CFSR;
+    auto mmfar = SCB->MMFAR;
     SCB->CFSR |= SCB->CFSR;
 
-    if (SCB->CFSR & SCB_CFSR_MMARVALID_Msk) {
-        return visitor(memory_fault{.instr_address = frame.return_address,
-                                    .data_address = SCB->MMFAR});
+    if (cfsr & SCB_CFSR_MMARVALID_Msk) {
+        return visitor(
+            memory_fault{.instr_address = frame.return_address, .data_address = mmfar});
     }
 
-    return visitor(unknown_fault{});
+    return visitor(unknown_fault{
+        .instr_address = frame.return_address
+    });
 }
 
 fault_variant analyze_memfault(const stack_frame_t& frame) {
     return analyze_memfault(frame,
                             [](const auto& fault) { return fault_variant(fault); });
+}
+
+template<class VisitorT>
+auto analyze_bus_fault(const stack_frame_t& frame, VisitorT&& visitor) {
+    auto cfsr = SCB->CFSR;
+    auto bfar = SCB->BFAR;
+    SCB->CFSR |= SCB->CFSR;
+
+    if (cfsr & SCB_CFSR_BFARVALID_Msk) {
+        return visitor(bus_fault_t{.instr_address = frame.return_address,
+                                   .fault_address = bfar,
+                                   .precise = (cfsr & SCB_CFSR_PRECISERR_Msk) == 0});
+    }
+
+    return visitor(unknown_fault{});
+}
+fault_variant analyze_bus_fault(const stack_frame_t& frame) {
+    return analyze_bus_fault(frame,
+                             [](const auto& fault) { return fault_variant(fault); });
+}
+
+void break_if_attached() {
+//    return;
+    if (CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) {
+        breakpoint();
+    }
 }
 
 extern "C" {
@@ -63,6 +92,7 @@ extern "C" {
     tos::debug::do_not_optimize(&forced);
 
     auto fault = analyze_usage_fault(*frame);
+    break_if_attached();
 
     auto fault_from_isr = (frame->xpsr & IPSR_ISR_Msk) != 0;
 
@@ -75,8 +105,17 @@ extern "C" {
     }
 }
 
+[[gnu::used]] void bus_fault_handler(stack_frame_t* frame) {
+    auto fault = analyze_bus_fault(*frame);
+    break_if_attached();
+    if (!fault_handler(fault)) {
+        breakpoint();
+    }
+}
+
 [[gnu::used]] void mem_fault_handler(stack_frame_t* frame) {
     auto fault = analyze_memfault(*frame);
+    break_if_attached();
     if (!fault_handler(fault)) {
         breakpoint();
     }
@@ -85,6 +124,7 @@ extern "C" {
 [[gnu::used]] void usage_fault_handler(stack_frame_t* frame) {
     auto fault = analyze_usage_fault(*frame);
     tos::debug::do_not_optimize(&fault);
+    break_if_attached();
     if (!fault_handler(fault)) {
         breakpoint();
     }
@@ -110,6 +150,14 @@ void set_general_fault_handler(tos::function_ref<bool(const fault_variant&)> han
                    "mrseq r0, msp \n"
                    "mrsne r0, psp \n"
                    "b mem_fault_handler \n");
+}
+
+[[gnu::naked]] void bus_fault() {
+    __asm volatile("tst lr, #4 \n"
+                   "ite eq \n"
+                   "mrseq r0, msp \n"
+                   "mrsne r0, psp \n"
+                   "b bus_fault_handler \n");
 }
 
 [[gnu::naked]] void usage_fault() {
