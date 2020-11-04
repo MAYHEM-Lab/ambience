@@ -5,10 +5,6 @@
 #include <tos/flags.hpp>
 
 #if defined(MPU)
-extern "C" void MemManage_Handler() {
-    tos::arm::mpu::get(0)->isr();
-}
-
 namespace tos::arm {
 namespace {
 void nvic_set_priority(IRQn_Type irq, int preempt, int sub) {
