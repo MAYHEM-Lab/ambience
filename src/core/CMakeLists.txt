@@ -123,6 +123,10 @@ target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_pla
 target_include_directories(tos_core PUBLIC include)
 add_library(tos::core ALIAS tos_core)
 
+add_library(tos_interrupt_trampoline include/tos/interrupt_trampoline.hpp src/interrupt_trampoline.cpp)
+target_include_directories(tos_interrupt_trampoline PUBLIC include)
+target_link_libraries(tos_interrupt_trampoline PUBLIC tos_ft tos_util_core)
+
 add_library(tos_print include/tos/print.hpp src/print.cpp)
 target_link_libraries(tos_print PUBLIC tos_util_core tos::libcxx)
 add_library(tos::print ALIAS tos_print)
