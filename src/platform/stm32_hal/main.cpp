@@ -299,6 +299,10 @@ extern "C" void MemManage_Handler() {
     tos::arm::exception::mem_fault();
 }
 
+extern "C" void BusFault_Handler() {
+    tos::arm::exception::bus_fault();
+}
+
 int main() {
     HAL_Init();
     SystemClock_Config();
@@ -310,6 +314,10 @@ int main() {
     HAL_NVIC_EnableIRQ(UsageFault_IRQn);
     HAL_NVIC_SetPriority(UsageFault_IRQn, 0, 0);
     SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk;
+
+    HAL_NVIC_EnableIRQ(BusFault_IRQn);
+    HAL_NVIC_SetPriority(BusFault_IRQn, 0, 0);
+    SCB->SHCSR |= SCB_SHCSR_BUSFAULTENA_Msk;
 
     tos_main();
 
