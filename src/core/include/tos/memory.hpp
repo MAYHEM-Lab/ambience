@@ -39,12 +39,4 @@ enum class permissions : uint8_t {
     execute = 4,
     all = 7
 };
-
-namespace flag {
-template <class T, std::enable_if_t<std::is_enum_v<T>>* = nullptr>
-bool is_set(T elem, T val) {
-    using cast_t = std::underlying_type_t<T>;
-    return static_cast<cast_t>(elem) & static_cast<cast_t>(val);
-}
-}
 } // namespace tos

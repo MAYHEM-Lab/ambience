@@ -77,20 +77,20 @@ mpu::set_region(int region_id, const tos::memory_region& region, permissions per
     const auto size_field = nearest_power_of_two(region.size) - 1;
 
     uint8_t permissions = 0;
-    if (flag::is_set(perms, permissions::read) &&
-        flag::is_set(perms, permissions::write)) {
+    if (util::is_flag_set(perms, permissions::read) &&
+        util::is_flag_set(perms, permissions::write)) {
         permissions = 0b011;
-    } else if (flag::is_set(perms, permissions::read)) {
+    } else if (util::is_flag_set(perms, permissions::read)) {
         permissions = 0b101;
-    } else if (flag::is_set(perms, permissions::write)) {
+    } else if (util::is_flag_set(perms, permissions::write)) {
         return unexpected(mpu_errors::bad_permissions);
     }
 
     RASR_reg_t rasr{};
-    rasr.execute_never = !flag::is_set(perms, permissions::execute);
     rasr.cacheable = 1;
     rasr.bufferable = 0;
     rasr.shareable = 1;
+    rasr.execute_never = !util::is_flag_set(perms, permissions::execute);
     rasr.type_extension = 0;
     rasr.access_permissions = permissions;
     rasr.subregion_disable = 0;
