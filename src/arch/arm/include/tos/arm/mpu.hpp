@@ -60,6 +60,9 @@ public:
     void enable();
     void disable();
 
+    void enable_default_privileged_access();
+    void disable_default_privileged_access();
+
     void isr();
 
     ~mpu();

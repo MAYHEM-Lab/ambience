@@ -39,6 +39,13 @@ void mpu::disable() {
     NVIC_DisableIRQ(MemoryManagement_IRQn);
 }
 
+void mpu::enable_default_privileged_access() {
+    MPU->CTRL |= MPU_CTRL_PRIVDEFENA_Msk;
+}
+void mpu::disable_default_privileged_access() {
+    MPU->CTRL &= ~MPU_CTRL_PRIVDEFENA_Msk;
+}
+
 size_t mpu::min_region_size() const {
     MPU->RBAR = 0xffffffe0;
     tos::detail::memory_barrier();
