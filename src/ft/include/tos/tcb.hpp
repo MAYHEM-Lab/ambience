@@ -6,9 +6,9 @@
 #include <tos/arch.hpp>
 #include <tos/context.hpp>
 #include <tos/intrusive_list.hpp>
+#include <tos/job.hpp>
 #include <tos/utility.hpp>
 #include <utility>
-#include <tos/job.hpp>
 
 namespace tos::kern {
 struct processor_state;
@@ -49,8 +49,10 @@ struct alignas(alignof(std::max_align_t)) tcb : public job {
 
 protected:
     void on_set_context(context& new_ctx) override;
+
 public:
     void operator()() override;
+
 private:
     processor_state* m_ctx;
 };
@@ -85,8 +87,7 @@ struct processor_state {
 
 [[noreturn]] inline void switch_context(kern::processor_state& j, return_codes rc) {
     longjmp(j.buf, static_cast<int>(rc));
-
-    __builtin_unreachable();
+    TOS_UNREACHABLE();
 }
 } // namespace kern
 void swap_context(kern::tcb& current, kern::tcb& to);

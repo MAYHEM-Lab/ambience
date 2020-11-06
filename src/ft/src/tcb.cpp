@@ -1,10 +1,10 @@
-#include <tos/tcb.hpp>
 #include <tos/components/threads.hpp>
 #include <tos/ft.hpp>
+#include <tos/tcb.hpp>
 
 namespace tos::kern {
 tcb::tcb(context& ctx)
-    : job(ctx)  {
+    : job(ctx) {
     if (auto threads = get_context().get_component<threads_component>(); threads) {
         threads->thread_created(*this);
     }
