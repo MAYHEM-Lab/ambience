@@ -47,3 +47,12 @@ void tcb::on_set_context(context& new_ctx) {
     }
 }
 }
+namespace tos {
+void swap_context(tos::kern::tcb& current, tos::kern::tcb& to) {
+    kern::processor_state context;
+    if (save_context(current, context) == return_codes::saved) {
+        global::thread_state.current_thread = &to;
+        kern::switch_context(to.get_processor_state(), return_codes::scheduled);
+    }
+}
+} // namespace tos

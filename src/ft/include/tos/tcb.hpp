@@ -89,17 +89,9 @@ struct processor_state {
     __builtin_unreachable();
 }
 } // namespace kern
+void swap_context(kern::tcb& current, kern::tcb& to);
 } // namespace tos
 
 #define save_ctx(ctx) (::tos::return_codes) setjmp((ctx).buf)
 
 #define save_context(tcb, ctx) (tcb).set_processor_state((ctx)), save_ctx(ctx)
-
-namespace tos {
-inline void swap_context(kern::tcb& current, kern::tcb& to) {
-    kern::processor_state context;
-    if (save_context(current, context) == return_codes::saved) {
-        kern::switch_context(to.get_processor_state(), return_codes::scheduled);
-    }
-}
-} // namespace tos
