@@ -1,7 +1,8 @@
 #include <arch/mailbox.hpp>
 #include <arch/usart.hpp>
+#include <tos/soc/bcm2837.hpp>
 
-using namespace bcm2837;
+using namespace tos::bcm2837;
 namespace tos::raspi3 {
 namespace {
 void delay(int32_t count) {

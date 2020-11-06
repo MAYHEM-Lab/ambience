@@ -1,8 +1,8 @@
 #include "tos/thread.hpp"
-
 #include <arch/drivers.hpp>
 #include <common/clock.hpp>
 #include <deque>
+#include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/ft.hpp>
@@ -14,8 +14,8 @@
 #include <tos/gfx/fonts/ubuntu_regular.hpp>
 #include <tos/gfx/truetype.hpp>
 #include <tos/memory/bump.hpp>
+#include <tos/periph/bcm2837_clock.hpp>
 #include <tos/print.hpp>
-#include <tos/debug/dynamic_log.hpp>
 
 template<class T>
 void clear(tos::span<T> buf) {
@@ -152,118 +152,6 @@ private:
 };
 } // namespace tos
 
-namespace tos::raspi3 {
-enum class clocks
-{
-    reserved,
-    emmc,
-    uart,
-    arm,
-    core,
-    v3d,
-    h264,
-    isp,
-    sdram,
-    pixel,
-    pwm,
-    hevc,
-    emmc2,
-    m2mc,
-    pixel_bvb
-};
-
-enum class clock_tags
-{
-    get_clock_rate = 0x00030002,
-    get_max_clock_rate = 0x00030004,
-    set_clock_rate = 0x00038002
-};
-
-class clock_manager {
-public:
-    uint32_t get_max_frequency(clocks clock) {
-        property_channel props;
-
-        property_channel_tags_builder builder;
-        auto buf = builder
-                       .add(static_cast<uint32_t>(clock_tags::get_max_clock_rate),
-                            {static_cast<uint32_t>(clock), 0})
-                       .end();
-
-        auto res = props.transaction(buf);
-        if (!res) {
-            // noo
-            tos::debug::panic("can't initialize framebuffer");
-        }
-
-        if (buf[1] == 0) {
-            tos::debug::panic("bad response");
-        }
-
-        auto code = buf[1] - 0x80000000;
-        if (code != 0) {
-            tos::debug::panic("error");
-        }
-
-        return buf[6];
-    }
-
-    uint32_t get_frequency(clocks clock) {
-        property_channel props;
-
-        property_channel_tags_builder builder;
-        auto buf = builder
-                       .add(static_cast<uint32_t>(clock_tags::get_clock_rate),
-                            {static_cast<uint32_t>(clock), 0})
-                       .end();
-
-        auto res = props.transaction(buf);
-        if (!res) {
-            // noo
-            tos::debug::panic("can't initialize framebuffer");
-        }
-
-        if (buf[1] == 0) {
-            tos::debug::panic("bad response");
-        }
-
-        auto code = buf[1] - 0x80000000;
-        if (code != 0) {
-            tos::debug::panic("error");
-        }
-
-        return buf[6];
-    }
-
-    void set_frequency(clocks clock, uint32_t hertz) {
-        property_channel props;
-
-        property_channel_tags_builder builder;
-        auto buf = builder
-                       .add(static_cast<uint32_t>(clock_tags::set_clock_rate),
-                            {static_cast<uint32_t>(clock), hertz, 0})
-                       .end();
-
-        auto res = props.transaction(buf);
-        if (!res) {
-            // noo
-            tos::debug::panic("can't initialize framebuffer");
-        }
-
-        if (buf[1] == 0) {
-            tos::debug::panic("bad response");
-        }
-
-        auto code = buf[1] - 0x80000000;
-        if (code != 0) {
-            tos::debug::panic("error");
-        }
-    }
-
-private:
-};
-} // namespace tos::raspi3
-
 namespace debug = tos::debug;
 void raspi_main() {
     auto uart = tos::open(tos::devs::usart<0>, tos::uart::default_115200);
@@ -280,12 +168,12 @@ void raspi_main() {
     asm volatile("mrs %0, CurrentEL" : "=r"(el));
     debug::log("Execution Level:", int((el >> 2) & 3));
 
-    tos::raspi3::clock_manager clock_man;
-    debug::log("CPU Freq:", clock_man.get_frequency(tos::raspi3::clocks::arm));
-    debug::log("Max CPU Freq:", clock_man.get_max_frequency(tos::raspi3::clocks::arm));
-    clock_man.set_frequency(tos::raspi3::clocks::arm,
-                            clock_man.get_max_frequency(tos::raspi3::clocks::arm));
-    debug::log("CPU Freq:", clock_man.get_frequency(tos::raspi3::clocks::arm));
+    tos::periph::clock_manager clock_man;
+    debug::log("CPU Freq:", clock_man.get_frequency(tos::bcm283x::clocks::arm));
+    debug::log("Max CPU Freq:", clock_man.get_max_frequency(tos::bcm283x::clocks::arm));
+    clock_man.set_frequency(tos::bcm283x::clocks::arm,
+                            clock_man.get_max_frequency(tos::bcm283x::clocks::arm));
+    debug::log("CPU Freq:", clock_man.get_frequency(tos::bcm283x::clocks::arm));
 
     tos::raspi3::framebuffer fb({1280, 720});
 

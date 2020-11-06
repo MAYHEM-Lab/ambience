@@ -1,4 +1,4 @@
-#include <arch/detail/bcm2837.hpp>
+#include <tos/soc/bcm2837.hpp>
 #include <arch/interrupts.hpp>
 #include <tos/aarch64/interrupts.hpp>
 

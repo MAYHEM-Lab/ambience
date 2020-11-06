@@ -1,0 +1,3 @@
+add_library(bcm2837_clock bcm2837_clock.cpp include/tos/periph/bcm2837_clock.hpp)
+target_link_libraries(bcm2837_clock PUBLIC tos_drivers soc_bcm283x raspi3_messagebox)
+target_include_directories(bcm2837_clock PUBLIC include)

@@ -1,5 +1,5 @@
 #include <tos/aarch64/mmu.hpp>
-#include <arch/detail/bcm2837.hpp>
+#include <tos/soc/bcm2837.hpp>
 #include <array>
 
 using tos::aarch64::page_id_t;
@@ -46,7 +46,7 @@ void mmu_init() {
             .accessed(true)
             .noexec(true)
             .valid(true);
-        if (page >= tos::aarch64::address_to_page(bcm2837::IO_BASE) >> 9) {
+        if (page >= tos::aarch64::address_to_page(tos::bcm2837::IO_BASE) >> 9) {
             l2s[page].shareable(tos::aarch64::shareable_values::outer).mair_index(PT_DEV);
         } else {
             l2s[page].shareable(tos::aarch64::shareable_values::inner).mair_index(PT_MEM);

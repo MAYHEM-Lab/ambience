@@ -122,6 +122,7 @@ target_include_directories(tos_inet PUBLIC include)
 
 add_subdirectory(sensor)
 add_subdirectory(ble)
+add_subdirectory(clock)
 add_subdirectory(display)
 add_subdirectory(dma)
 add_subdirectory(memory)
