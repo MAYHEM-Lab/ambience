@@ -1,4 +1,4 @@
-add_library(arch_arm "" include/tos/arm/spmanip.hpp include/tos/arm/interrupts.hpp include/tos/arm/exception.hpp exception.cpp)
+add_library(arch_arm "")
 target_include_directories(arch_arm PUBLIC include)
 target_sources(arch_arm PRIVATE
         include/tos/arm/cmsis.hpp
@@ -6,8 +6,14 @@ target_sources(arch_arm PRIVATE
         include/tos/arm/nvic.hpp
         include/tos/arm/mpu.hpp
         include/tos/arm/core.hpp
+        include/tos/arm/spmanip.hpp
+        include/tos/arm/interrupts.hpp
+        include/tos/arm/exception.hpp
+        include/tos/arm/components.hpp
         stub.cpp
         mpu.cpp
         core.cpp
-        nvic.cpp)
+        nvic.cpp
+        exception.cpp
+)
 target_link_libraries(arch_arm PUBLIC tos_util_core cmsis::core tos_drivers tos_mmio)

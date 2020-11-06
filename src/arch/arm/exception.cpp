@@ -39,9 +39,7 @@ auto analyze_memfault(const stack_frame_t& frame, VisitorT&& visitor) {
             memory_fault{.instr_address = frame.return_address, .data_address = mmfar});
     }
 
-    return visitor(unknown_fault{
-        .instr_address = frame.return_address
-    });
+    return visitor(unknown_fault{.instr_address = frame.return_address});
 }
 
 fault_variant analyze_memfault(const stack_frame_t& frame) {
