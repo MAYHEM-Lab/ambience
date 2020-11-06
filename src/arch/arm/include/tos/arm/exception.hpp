@@ -5,6 +5,17 @@
 #include <variant>
 
 namespace tos::arm::exception {
+struct [[gnu::packed]] stack_frame_t {
+    uint32_t r0;
+    uint32_t r1;
+    uint32_t r2;
+    uint32_t r3;
+    uint32_t r12;
+    uint32_t lr;
+    uint32_t return_address;
+    uint32_t xpsr;
+};
+
 struct unknown_fault {
     uintptr_t instr_address = 0;
 };
