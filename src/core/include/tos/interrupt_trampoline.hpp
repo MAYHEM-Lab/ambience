@@ -1,10 +1,10 @@
 #pragma once
 
-#include <tos/utility.hpp>
-#include <tos/function_ref.hpp>
 #include <tos/arch.hpp>
-#include <tos/thread.hpp>
+#include <tos/function_ref.hpp>
 #include <tos/suspended_launch.hpp>
+#include <tos/thread.hpp>
+#include <tos/utility.hpp>
 
 namespace tos {
 /**
@@ -29,7 +29,7 @@ public:
      */
     template<class InISR>
     void operator()(InISR& in_isr) {
-        in_isr(tos::mem_function_ref<&interrupt_trampoline::on_svc>(*this));
+        in_isr([this] (auto&&...) { this->on_svc(); });
         // The stack up until this point allows us to escape from an interrupt handler.
         // We'll keep that in m_stack and switch to m_tmp_stack to perform the
         // context switch and block_forever.
@@ -42,6 +42,7 @@ public:
         // context, we can safely switch to the requested thread.
         // The thread context that was interrupted will safely stay in a semi-interrupt
         // context.
+        tos::global::thread_state.current_thread = m_target;
         tos::kern::switch_context(m_target->get_processor_state(),
                                   tos::return_codes::scheduled);
     }
@@ -102,4 +103,4 @@ auto make_interrupt_trampoline(InISR& isr) {
     trampoline->setup(isr);
     return trampoline;
 }
-}
+} // namespace tos
