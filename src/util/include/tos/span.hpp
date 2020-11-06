@@ -344,6 +344,11 @@ span<T> safe_span_copy(span<T> to, span<const U> from) {
     std::copy_n(from.begin(), len, to.begin());
     return to.slice(0, len);
 }
+
+template <class T>
+span<T> as_span(span<T> s) {
+    return s;
+}
 } // namespace tos
 
 namespace std {
