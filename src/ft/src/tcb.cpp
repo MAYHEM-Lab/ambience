@@ -46,7 +46,23 @@ void tcb::on_set_context(context& new_ctx) {
         threads->thread_adopted(*this);
     }
 }
+
+void thread_exit() {
+    kern::disable_interrupts();
+
+    // no need to save the current context, we'll exit
+
+    switch_context(global::thread_state.backup_state, return_codes::do_exit);
 }
+
+void suspend_self(const no_interrupts&) {
+    kern::processor_state ctx;
+    if (save_context(*self(), ctx) == return_codes::saved) {
+        switch_context(global::thread_state.backup_state, return_codes::suspend);
+    }
+}
+} // namespace tos::kern
+
 namespace tos {
 void swap_context(tos::kern::tcb& current, tos::kern::tcb& to) {
     kern::processor_state context;
@@ -56,3 +72,19 @@ void swap_context(tos::kern::tcb& current, tos::kern::tcb& to) {
     }
 }
 } // namespace tos
+
+namespace tos::this_thread {
+void block_forever() {
+    kern::disable_interrupts();
+    switch_context(global::thread_state.backup_state, return_codes::suspend);
+}
+
+void yield() {
+    tos::int_guard ig;
+    kern::processor_state ctx;
+    if (save_context(*self(), ctx) == return_codes::saved) {
+        kern::make_runnable(*self());
+        switch_context(global::thread_state.backup_state, return_codes::yield);
+    }
+}
+} // namespace tos::this_thread

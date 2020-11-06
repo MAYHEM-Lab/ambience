@@ -48,37 +48,9 @@ inline thread_id_t get_id() {
 namespace tos {
 context& current_context();
 
-namespace this_thread {
-inline void yield() {
-    tos::int_guard ig;
-    kern::processor_state ctx;
-    if (save_context(*self(), ctx) == return_codes::saved) {
-        kern::make_runnable(*self());
-        switch_context(global::thread_state.backup_state, return_codes::yield);
-    }
-}
-
-inline void block_forever() {
-    kern::disable_interrupts();
-    switch_context(global::thread_state.backup_state, return_codes::suspend);
-}
-} // namespace this_thread
-
 namespace kern {
-[[noreturn]] inline void thread_exit() {
-    kern::disable_interrupts();
-
-    // no need to save the current context, we'll exit
-
-    switch_context(global::thread_state.backup_state, return_codes::do_exit);
-}
-
-inline void suspend_self(const no_interrupts&) {
-    kern::processor_state ctx;
-    if (save_context(*self(), ctx) == return_codes::saved) {
-        switch_context(global::thread_state.backup_state, return_codes::suspend);
-    }
-}
+[[noreturn]] void thread_exit();
+void suspend_self(const no_interrupts&);
 
 template<bool FreeStack, class FunT, class... Args>
 struct super_tcb final : tcb {
