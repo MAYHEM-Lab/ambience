@@ -45,10 +45,15 @@ using fault_variant = std::variant<unknown_fault,
                                    memory_fault,
                                    bus_fault_t>;
 
-void set_general_fault_handler(tos::function_ref<bool(const fault_variant&)> handler);
+using fault_handler_t = tos::function_ref<bool(const fault_variant&)>;
+using svc_handler_t = tos::function_ref<void(int, stack_frame_t&)>;
+
+fault_handler_t set_general_fault_handler(fault_handler_t handler);
+svc_handler_t set_svc_handler(svc_handler_t handler);
 
 void hard_fault();
 void mem_fault();
 void bus_fault();
 void usage_fault();
+void out_svc_handler();
 } // namespace tos::arm::exception

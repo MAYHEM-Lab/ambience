@@ -8,6 +8,8 @@ namespace tos::arm::exception {
 namespace {
 tos::function_ref<bool(const fault_variant&)> fault_handler{
     [](const fault_variant&, void*) { return false; }};
+tos::function_ref<void(int, stack_frame_t&)> svc_handler{
+    [](int, stack_frame_t&, void*) {}};
 
 template<class VisitorT>
 auto analyze_usage_fault(const stack_frame_t& frame, VisitorT&& visitor) {
@@ -67,7 +69,7 @@ fault_variant analyze_bus_fault(const stack_frame_t& frame) {
 }
 
 void break_if_attached() {
-//    return;
+    return;
     if (CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) {
         breakpoint();
     }
@@ -116,11 +118,23 @@ extern "C" {
         breakpoint();
     }
 }
+
+[[gnu::used]] void in_svc_handler(stack_frame_t* frame) {
+    auto addr = reinterpret_cast<const uint16_t*>(frame->return_address - 2);
+    auto svc_num = *addr & 0xFF;
+    svc_handler(svc_num, *frame);
+}
 }
 } // namespace
 
-void set_general_fault_handler(tos::function_ref<bool(const fault_variant&)> handler) {
-    fault_handler = handler;
+fault_handler_t set_general_fault_handler(fault_handler_t handler) {
+    std::swap(fault_handler, handler);
+    return handler;
+}
+
+svc_handler_t set_svc_handler(svc_handler_t handler) {
+    std::swap(svc_handler, handler);
+    return handler;
 }
 
 [[gnu::naked]] void hard_fault() {
@@ -153,5 +167,13 @@ void set_general_fault_handler(tos::function_ref<bool(const fault_variant&)> han
                    "mrseq r0, msp \n"
                    "mrsne r0, psp \n"
                    "b usage_fault_handler \n");
+}
+
+[[gnu::naked]] void out_svc_handler() {
+    __asm volatile("tst lr, #4 \n"
+                   "ite eq \n"
+                   "mrseq r0, msp \n"
+                   "mrsne r0, psp \n"
+                   "b in_svc_handler \n");
 }
 } // namespace tos::arm::exception

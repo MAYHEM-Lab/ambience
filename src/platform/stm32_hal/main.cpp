@@ -303,6 +303,10 @@ extern "C" void BusFault_Handler() {
     tos::arm::exception::bus_fault();
 }
 
+extern "C" void SVC_Handler() {
+    tos::arm::exception::out_svc_handler();
+}
+
 int main() {
     HAL_Init();
     SystemClock_Config();
