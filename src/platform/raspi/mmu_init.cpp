@@ -1,6 +1,7 @@
 #include <tos/aarch64/mmu.hpp>
 #include <tos/soc/bcm2837.hpp>
 #include <array>
+#include <tos/stack_storage.hpp>
 
 using tos::aarch64::page_id_t;
 using tos::aarch64::table_entry;
@@ -19,6 +20,10 @@ struct pages {
 };
 
 alignas(4096) pages page;
+
+extern "C" {
+alignas(4096) tos::stack_storage _el1_stack;
+}
 
 void mmu_init() {
     /**

@@ -95,15 +95,13 @@ _start:
     ldr     x2, =_vectors
     msr     vbar_el1, x2
 
-    mov     x2, #0x40000
+    ldr     x2, =_el1_stack
+    add     x2, x2, TOS_DEFAULT_STACK_SIZE
     msr     sp_el1, x2
 
     eret
 
-5:  ldr     x1, =_start
-    mov     sp, x1
-
-    // clear bss
+5:  // clear bss
     ldr     x1, =__bss_start
     ldr     w2, =__bss_size
 3:  cbz     w2, 4f
