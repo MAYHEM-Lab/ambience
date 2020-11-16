@@ -62,6 +62,18 @@ public:
         return *this;
     }
 
+    [[nodiscard]] constexpr bool allow_user() const {
+        return (m_entry & AllowUser::Mask) == AllowUser::Mask;
+    }
+
+    constexpr table_entry& allow_user(bool b) {
+        auto tmp = m_entry;
+        tmp &= ~AllowUser::Mask;
+        tmp |= (uint64_t(b) << AllowUser::Position) & AllowUser::Mask;
+        m_entry = tmp;
+        return *this;
+    }
+
     [[nodiscard]] constexpr bool readonly() const {
         return (m_entry & ReadOnly::Mask) == ReadOnly::Mask;
     }
