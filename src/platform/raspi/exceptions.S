@@ -17,10 +17,26 @@
     stp	x24, x25, [sp, #16 * 12]
     stp	x26, x27, [sp, #16 * 13]
     stp	x28, x29, [sp, #16 * 14]
-    str	x30, [sp, #16 * 15]
+
+    # These 3 registers are part of the exception handling state of AArch64.
+    # Since we can take an exception from Thread A and return from an exception in Thread B,
+    # without maintaining this global state in the stack, we would end up in the wrong place.
+    mrs x21, sp_el0
+    mrs x22, elr_el1
+    mrs x23, spsr_el1
+
+	stp	x30, x21, [sp, #16 * 15]
+	stp	x22, x23, [sp, #16 * 16]
 .endm
 
 .macro	kernel_exit
+	ldp	x22, x23, [sp, #16 * 16]
+	ldp	x30, x21, [sp, #16 * 15]
+
+	msr	sp_el0, x21
+    msr	elr_el1, x22
+    msr	spsr_el1, x23
+
     ldp	x0, x1, [sp, #16 * 0]
     ldp	x2, x3, [sp, #16 * 1]
     ldp	x4, x5, [sp, #16 * 2]
@@ -36,62 +52,87 @@
     ldp	x24, x25, [sp, #16 * 12]
     ldp	x26, x27, [sp, #16 * 13]
     ldp	x28, x29, [sp, #16 * 14]
-    ldr	x30, [sp, #16 * 15]
     add	sp, sp, #S_FRAME_SIZE
 .endm
 
-.extern exc_handler
+.extern sync_handler
+.extern irq_handler
+.extern fiq_handler
+.extern serror_handler
+
 .section ".text.vectors"
+
+.extern _irq_count
+.extern _irq_exit_count
+_inc_atomic:
+    ldaxr   w8, [x0]
+    add     w8, w8, #1
+    stlxr   w9, w8, [x0]
+    cbnz    w9, _inc_atomic
+    ret
+
+_inc_normal:
+    ldr     w8, [x0]
+    add     w8, w8, #1
+    str     w8, [x0]
+    ret
+
 _handlers:
-_sync_vec:
-    // synchronous
+_el0_sync_vec:
     .align  7
     kernel_entry
-    mov     x0, #0
-    mrs     x1, esr_el1
-    mrs     x2, elr_el1
-    mrs     x3, spsr_el1
-    mrs     x4, far_el1
-    bl      exc_handler
+    mov     x0, 0
+    mov     x1, sp
+    bl      sync_handler
     kernel_exit
     eret
 
-_irq_vec:
+_el0_irq_vec:
     // IRQ
     .align  7
     kernel_entry
-    mov     x0, #1
-    mrs     x1, esr_el1
-    mrs     x2, elr_el1
-    mrs     x3, spsr_el1
-    mrs     x4, far_el1
-    bl      exc_handler
+    mov     x0, 0
+    bl      irq_handler
     kernel_exit
     eret
 
-_fiq_vec:
+_el1_sync_vec:
+    .align  7
+    kernel_entry
+    mov     x0, 1
+    mov     x1, sp
+    bl      sync_handler
+    kernel_exit
+    eret
+
+_el1_irq_vec:
+    // IRQ
+    .align  7
+    kernel_entry
+    ldr     x0, =_irq_count
+    bl      _inc_normal
+    mov     x0, 1
+    bl      irq_handler
+    ldr     x0, =_irq_exit_count
+    bl      _inc_normal
+    kernel_exit
+    eret
+
+_el1_fiq_vec:
     // FIQ
     .align  7
     kernel_entry
-    mov     x0, #2
-    mrs     x1, esr_el1
-    mrs     x2, elr_el1
-    mrs     x3, spsr_el1
-    mrs     x4, far_el1
-    bl      exc_handler
+    mov     x0, 1
+    bl      fiq_handler
     kernel_exit
     eret
 
-_serror_vec:
+_el1_serror_vec:
     // SError
     .align  7
     kernel_entry
-    mov     x0, #3
-    mrs     x1, esr_el1
-    mrs     x2, elr_el1
-    mrs     x3, spsr_el1
-    mrs     x4, far_el1
-    bl      exc_handler
+    mov     x0, 1
+    bl      serror_handler
     kernel_exit
     eret
 
@@ -101,32 +142,48 @@ _serror_vec:
 _vectors:
     // synchronous
     .align  7
-    b _sync_vec
+    b _el1_sync_vec
 
     // IRQ
     .align  7
-    b _irq_vec
+    b _el1_irq_vec
 
     // FIQ
     .align  7
-    b _fiq_vec
+    b _el1_fiq_vec
 
     // SError
     .align  7
-    b _serror_vec
+    b _el1_serror_vec
 
     // synchronous
     .align  7
-    b _sync_vec
+    b _el1_sync_vec
 
     // IRQ
     .align  7
-    b _irq_vec
+    b _el1_irq_vec
 
     // FIQ
     .align  7
-    b _fiq_vec
+    b _el1_fiq_vec
 
     // SError
     .align  7
-    b _serror_vec
+    b _el1_serror_vec
+
+    // synchronous
+    .align  7
+    b _el0_sync_vec
+
+    // IRQ
+    .align  7
+    b _el0_irq_vec
+
+    // FIQ
+    .align  7
+    b _el1_fiq_vec
+
+    // SError
+    .align  7
+    b _el1_serror_vec
