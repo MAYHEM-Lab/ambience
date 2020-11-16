@@ -71,12 +71,18 @@ if (BUILD_TESTS)
     add_test(NAME context_tests COMMAND context_tests)
 endif()
 
+add_library(tos_debug_core
+        include/tos/debug/assert.hpp
+        src/debug/core_assert.cpp)
+target_link_libraries(tos_debug_core PUBLIC tos_util_core tos_platform)
+target_include_directories(tos_debug_core PUBLIC include)
+
 add_library(tos_debug
         include/tos/debug/debug.hpp
         include/tos/debug/stack_dump.hpp
         include/tos/debug/panic.hpp
         src/debug.cpp)
-target_link_libraries(tos_debug PUBLIC tos_util_core tos_debug_log tos_platform tos_ft)
+target_link_libraries(tos_debug PUBLIC tos_debug_core tos_util_core tos_debug_log tos_platform tos_ft)
 
 add_library(tos_build_info
         include/tos/build.hpp
