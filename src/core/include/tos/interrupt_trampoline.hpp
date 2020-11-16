@@ -51,13 +51,14 @@ public:
     void setup(InISR& in_isr) {
         auto& t = tos::suspended_launch(m_stack, std::ref(*this), in_isr);
         LOG("About to swap to trampoline setup");
+        tos::int_guard ig;
         tos::kern::make_runnable(*tos::self());
-        tos::swap_context(*tos::self(), t);
+        tos::swap_context(*tos::self(), t, ig);
     }
 
     void switch_to(tos::kern::tcb& target) {
         m_target = &target;
-        tos::swap_context(*tos::self(), m_isr_tcb);
+        tos::swap_context(*tos::self(), m_isr_tcb, tos::int_ctx{});
     }
 
 private:
