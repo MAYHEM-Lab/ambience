@@ -109,7 +109,7 @@ target_link_libraries(tos_platform PUBLIC tos_arch_core ${TOS_PLATFORM_NAME}_imp
 message(STATUS ${TOS_PLATFORM_NAME}_impl)
 
 add_library(tos_interrupt include/tos/interrupt.hpp src/interrupt.cpp)
-target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core tos_platform)
+target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core tos_platform tos_debug_core)
 
 add_library(tos_jobs include/tos/scheduler.hpp include/tos/job.hpp src/job.cpp src/scheduler.cpp)
 target_link_libraries(tos_jobs PUBLIC tos_util_core tos_context)

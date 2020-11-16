@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <tos/arch.hpp>
 #include <tos/barrier.hpp>
+#include <tos/debug/assert.hpp>
 #include <tos/platform.hpp>
 
 namespace tos {
@@ -31,6 +32,7 @@ inline void disable_interrupts() {
  */
 inline void enable_interrupts() {
     tos::detail::memory_barrier();
+    Assert(global::disable_depth > 0);
     global::disable_depth--;
     if (global::disable_depth == 0) {
         platform::enable_interrupts();
