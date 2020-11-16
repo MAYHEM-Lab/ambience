@@ -78,7 +78,6 @@ void sync_handler([[maybe_unused]] uint64_t from, stack_frame_t* frame) {
         while (true);
         break;
     }
-    while (true);
 }
 } // namespace tos::aarch64::exception
 
