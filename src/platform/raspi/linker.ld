@@ -25,14 +25,13 @@ SECTIONS
         *(.rodata.*)
         *(.rodata)
     }
-    . = ALIGN(4096); /* align to page size */
-    __rodata_end = .;
-
     .gnu_build_id :
     {
-    PROVIDE(build_id = .);
-    *(.note.gnu.build-id)
+        PROVIDE(build_id = .);
+        *(.note.gnu.build-id)
     }
+    . = ALIGN(4096); /* align to page size */
+    __rodata_end = .;
 
     __data_start = .;
     .data :
