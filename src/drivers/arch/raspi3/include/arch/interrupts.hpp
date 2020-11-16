@@ -27,10 +27,7 @@ public:
         m_irq_lists[static_cast<int>(channel)].push_back(handler);
     }
 
-    void synchronous(uint64_t esr, uint64_t elr, uint64_t spsr, uint64_t far);
-    void irq(uint64_t esr, uint64_t elr, uint64_t spsr, uint64_t far);
-    void fiq(uint64_t esr, uint64_t elr, uint64_t spsr, uint64_t far);
-    void serror(uint64_t esr, uint64_t elr, uint64_t spsr, uint64_t far);
+    void irq();
 
 private:
     std::unordered_map<int, intrusive_list<irq_handler>> m_irq_lists;
