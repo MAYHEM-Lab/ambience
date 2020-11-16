@@ -64,7 +64,7 @@ void suspend_self(const no_interrupts&) {
 } // namespace tos::kern
 
 namespace tos {
-void swap_context(tos::kern::tcb& current, tos::kern::tcb& to) {
+void swap_context(tos::kern::tcb& current, tos::kern::tcb& to, const no_interrupts&) {
     kern::processor_state context;
     if (save_context(current, context) == return_codes::saved) {
         global::thread_state.current_thread = &to;

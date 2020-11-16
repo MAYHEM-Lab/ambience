@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <tos/arch.hpp>
 #include <tos/context.hpp>
+#include <tos/interrupt.hpp>
 #include <tos/intrusive_list.hpp>
 #include <tos/job.hpp>
 #include <tos/utility.hpp>
@@ -90,7 +91,7 @@ struct processor_state {
     TOS_UNREACHABLE();
 }
 } // namespace kern
-void swap_context(kern::tcb& current, kern::tcb& to);
+void swap_context(kern::tcb& current, kern::tcb& to, const no_interrupts&);
 } // namespace tos
 
 #define save_ctx(ctx) (::tos::return_codes) setjmp((ctx).buf)

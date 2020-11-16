@@ -66,7 +66,7 @@ void monitor_task() {
         fault_thread = tos::self();
         fault_ptr = &fault;
         if (in_interrupt) {
-            tos::swap_context(*tos::self(), self_task);
+            tos::swap_context(*tos::self(), self_task, tos::int_ctx{});
             return true;
         }
         trampoline->switch_to(self_task);
@@ -91,7 +91,7 @@ void monitor_task() {
         svc_num = svc;
         svc_frame = &frame;
         if (in_interrupt) {
-            tos::swap_context(*tos::self(), self_task);
+            tos::swap_context(*tos::self(), self_task, tos::int_ctx{});
             return;
         }
         trampoline->switch_to(self_task);
@@ -135,7 +135,7 @@ void monitor_task() {
             in_interrupt = true;
             odi([&](auto&&...) {
                 pre_sched();
-                tos::swap_context(*tos::self(), front);
+                tos::swap_context(*tos::self(), front, tos::int_ctx{});
             });
             in_interrupt = false;
         } else {
