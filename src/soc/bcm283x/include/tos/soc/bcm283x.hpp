@@ -52,6 +52,12 @@ struct messagebox_control_block {
     }
 };
 
+enum class irq_channels : uint64_t {
+    system_timer = 1,
+    system_timer_3 = 3,
+    uart = 57
+};
+
 struct interrupt_controller_control_block {
     uint8_t __pad__[0x200];
     uint32_t irq_basic_pending;

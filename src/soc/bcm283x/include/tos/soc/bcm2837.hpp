@@ -6,6 +6,7 @@ namespace tos::bcm2837 {
 using namespace tos::bcm283x;
 
 constexpr auto IO_BASE = 0x3F000000;
+constexpr auto IO_END = 0x3FFFFFFF;
 
 constexpr auto GPU_IO_BASE = 0x7E000000;
 constexpr auto GPU_MEM_BASE = 0xC0000000;
