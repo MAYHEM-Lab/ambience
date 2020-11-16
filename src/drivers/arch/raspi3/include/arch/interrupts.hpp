@@ -6,6 +6,7 @@
 #include <tos/function_ref.hpp>
 #include <tos/intrusive_list.hpp>
 #include <unordered_map>
+#include <tos/soc/bcm283x.hpp>
 
 namespace tos::raspi3 {
 struct irq_handler : list_node<irq_handler> {
@@ -22,8 +23,8 @@ public:
         : tracked_driver(0) {
     }
 
-    void register_handler(int channel, irq_handler& handler) {
-        m_irq_lists[channel].push_back(handler);
+    void register_handler(bcm283x::irq_channels channel, irq_handler& handler) {
+        m_irq_lists[static_cast<int>(channel)].push_back(handler);
     }
 
     void synchronous(uint64_t esr, uint64_t elr, uint64_t spsr, uint64_t far);
