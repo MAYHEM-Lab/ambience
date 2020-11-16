@@ -9,11 +9,13 @@
 
 namespace tos {
 /**
- * This type represents a contiguous region in memory.
+ * This type represents a contiguous region in a memory.
+ * The memory in which the addresses in the range may not be addressable directly by the
+ * current processor, hence uintptr_t rather than void*.
  */
-struct memory_region {
+struct memory_range {
     std::uintptr_t base;
-    std::uint32_t size;
+    std::ptrdiff_t size;
 
     [[nodiscard]] std::uintptr_t end() const {
         return base + size;
@@ -27,8 +29,12 @@ struct memory_region {
  * @param small memory region to see if it's contained by the other one
  * @return whether the big region contains the small region
  */
-constexpr bool contains(const memory_region& big, const memory_region& small) {
-    return big.base <= small.base && big.base + big.size >= small.base + small.size;
+constexpr bool contains(const memory_range& big, const memory_range& small) {
+    return big.base <= small.base && big.end() >= small.end();
+}
+
+constexpr bool contains(const memory_range& range, uintptr_t addr) {
+    return range.base <= addr && range.end() >= addr;
 }
 
 enum class permissions : uint8_t
@@ -41,4 +47,17 @@ enum class permissions : uint8_t
     read_execute = 5,
     all = 7
 };
+
+struct segment {
+    memory_range range;
+    permissions perms;
+};
+
+namespace default_segments {
+memory_range image();
+memory_range data();
+memory_range text();
+memory_range rodata();
+memory_range bss();
+} // namespace default_segments
 } // namespace tos

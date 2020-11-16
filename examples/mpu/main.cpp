@@ -101,7 +101,7 @@ void mpu_task() {
     //    LOG("Accessing nullptr!");
     //    *ptr = 42;
 
-    memory_region end_of_stack{reinterpret_cast<uintptr_t>(&stack), 32};
+    memory_range end_of_stack{reinterpret_cast<uintptr_t>(&stack), 32};
     LOG("Marking [",
         (void*)end_of_stack.base,
         ",",

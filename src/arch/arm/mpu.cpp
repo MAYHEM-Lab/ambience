@@ -59,7 +59,7 @@ size_t mpu::num_supported_regions() const {
     return (type_reg & MPU_TYPE_DREGION_Msk) >> MPU_TYPE_DREGION_Pos;
 }
 
-std::optional<tos::memory_region> mpu::get_region(int region_id) {
+std::optional<tos::memory_range> mpu::get_region(int region_id) {
     MPU->RNR = region_id;
 
     dmb();
@@ -69,13 +69,13 @@ std::optional<tos::memory_region> mpu::get_region(int region_id) {
     }
 
     uintptr_t base = MPU->RBAR;
-    uint32_t size = 1 << (((MPU->RASR & MPU_RASR_SIZE_Msk) >> MPU_RASR_SIZE_Pos) + 1);
+    ptrdiff_t size = 1 << (((MPU->RASR & MPU_RASR_SIZE_Msk) >> MPU_RASR_SIZE_Pos) + 1);
 
-    return tos::memory_region{/*.base =*/base, /*.size =*/size};
+    return tos::memory_range{/*.base =*/base, /*.size =*/size};
 }
 
 tos::expected<void, mpu_errors> mpu::set_region(int region_id,
-                                                const tos::memory_region& region,
+                                                const tos::memory_range& region,
                                                 permissions perms,
                                                 bool shareable) {
     const uint32_t tmp_rbar = region.base | MPU_RBAR_VALID_Msk | region_id;

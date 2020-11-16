@@ -1,6 +1,8 @@
 include(CMakeRC)
 
 add_library(tos_mem include/tos/memory.hpp src/memory.cpp)
+target_link_libraries(tos_mem PUBLIC tos_util_core)
+target_include_directories(tos_mem PUBLIC include)
 
 add_library(tos_memory
         include/tos/memory/buddy.hpp
