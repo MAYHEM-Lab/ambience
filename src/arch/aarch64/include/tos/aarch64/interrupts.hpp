@@ -12,11 +12,11 @@ enum class exception_type {
 
 ALWAYS_INLINE
 void enable_interrupts() {
-    __asm__ __volatile__("msr daifclr, #2" ::: "memory");
+    __asm__ __volatile__("msr daifclr, #15" ::: "memory");
 }
 
 ALWAYS_INLINE
 void disable_interrupts() {
-    __asm__ __volatile__("msr daifset, #2" ::: "memory");
+    __asm__ __volatile__("msr daifset, #15" ::: "memory");
 }
 } // namespace tos::aarch64
