@@ -13,7 +13,7 @@ void unbusy() {
     global::sched.busy--;
 }
 
-exit_reason scheduler::schedule() {
+exit_reason scheduler::schedule(const tos::int_guard&) {
     //    if (global::thread_state.num_threads == 0) {
     //        // no thread left, potentially a bug
     //        return exit_reason::restart;
@@ -24,7 +24,7 @@ exit_reason scheduler::schedule() {
      * An interrupt might occur between the former and the latter and we can
      * power down even though there's something to run.
      */
-    tos::int_guard ig;
+
     if (m_run_queue.empty()) {
         /**
          * there's no thread to run right now

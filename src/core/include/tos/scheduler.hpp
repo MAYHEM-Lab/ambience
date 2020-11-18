@@ -1,7 +1,8 @@
 #pragma once
 
-#include <setjmp.h>
-#include <stdint.h>
+#include <csetjmp>
+#include <cstdint>
+#include <tos/interrupt.hpp>
 #include <tos/job.hpp>
 
 namespace tos {
@@ -80,7 +81,7 @@ public:
      *
      * @return exit reason
      */
-    exit_reason schedule();
+    exit_reason schedule(const tos::int_guard&);
 
     void make_runnable(job& task) {
         m_run_queue.push_back(task);
