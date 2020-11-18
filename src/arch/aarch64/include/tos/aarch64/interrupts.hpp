@@ -10,6 +10,12 @@ enum class exception_type {
     system_error
 };
 
+inline bool interrupts_disabled() {
+    uint64_t daif;
+    asm volatile ("mrs %0, daif" : "=r" (daif));
+    return daif != 0;
+}
+
 ALWAYS_INLINE
 void enable_interrupts() {
     asm volatile("msr daifclr, #15" ::: "memory");
