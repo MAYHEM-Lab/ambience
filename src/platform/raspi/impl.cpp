@@ -28,17 +28,22 @@ void kernel_main() {
     tos_main();
 
     while (true) {
-        auto res = tos::global::sched.schedule();
-        if (res == tos::exit_reason::restart) {
-        }
+        {
+            tos::int_guard ig;
+            auto res = tos::global::sched.schedule(ig);
+            if (res == tos::exit_reason::restart) {
+            }
 
-        if (res == tos::exit_reason::power_down) {
-            tos::aarch64::wfi();
-        }
-        if (res == tos::exit_reason::idle) {
-            tos::aarch64::wfi();
-        }
-        if (res == tos::exit_reason::yield) {
+            if (res == tos::exit_reason::power_down) {
+                tos::aarch64::dsb();
+                tos::aarch64::wfi();
+            }
+            if (res == tos::exit_reason::idle) {
+                tos::aarch64::dsb();
+                tos::aarch64::wfi();
+            }
+            if (res == tos::exit_reason::yield) {
+            }
         }
     }
 }
