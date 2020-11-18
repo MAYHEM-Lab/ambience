@@ -48,7 +48,7 @@ inline bool operator!=(const ipv4_addr_t& a, const ipv4_addr_t& b) {
  * ipv4_addr_t object corresponding to the given address.
  * @param addr the address string
  */
-inline ipv4_addr_t parse_ipv4_address(tos::span<const char> addr);
+inline constexpr ipv4_addr_t parse_ipv4_address(tos::span<const char> addr);
 
 struct udp_endpoint_t {
     ipv4_addr_t addr;
@@ -79,7 +79,7 @@ void print(StreamT& stream, const ipv4_addr_t& addr) {
 } // namespace tos
 
 namespace tos {
-inline int atoi(tos::span<const char> chars) {
+inline constexpr int atoi(tos::span<const char> chars) {
     int res = 0;
     for (auto p = chars.begin(); p != chars.end() && *p != 0; ++p) {
         res = res * 10 + *p - '0';
@@ -87,8 +87,8 @@ inline int atoi(tos::span<const char> chars) {
     return res;
 }
 
-inline ipv4_addr_t parse_ipv4_address(tos::span<const char> addr) {
-    ipv4_addr_t res;
+inline constexpr ipv4_addr_t parse_ipv4_address(tos::span<const char> addr) {
+    ipv4_addr_t res{};
 
     auto it = addr.begin();
     auto end = it;
