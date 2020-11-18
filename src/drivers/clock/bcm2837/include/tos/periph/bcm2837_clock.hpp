@@ -1,7 +1,7 @@
 #pragma once
 
-#include <tos/debug/panic.hpp>
 #include <arch/mailbox.hpp>
+#include <tos/debug/panic.hpp>
 
 namespace tos::periph {
 class clock_manager {
@@ -10,10 +10,11 @@ public:
         raspi3::property_channel props;
 
         raspi3::property_channel_tags_builder builder;
-        auto buf = builder
-            .add(static_cast<uint32_t>(bcm283x::clock_tags::get_max_clock_rate),
-                 {static_cast<uint32_t>(clock), 0})
-            .end();
+        auto buf =
+            builder
+                .add(static_cast<uint32_t>(bcm283x::clock_tags::get_max_clock_rate),
+                     {static_cast<uint32_t>(clock), 0})
+                .end();
 
         auto res = props.transaction(buf);
         Assert(res && "Property transaction failed");
@@ -31,9 +32,9 @@ public:
 
         raspi3::property_channel_tags_builder builder;
         auto buf = builder
-            .add(static_cast<uint32_t>(bcm283x::clock_tags::get_clock_rate),
-                 {static_cast<uint32_t>(clock), 0})
-            .end();
+                       .add(static_cast<uint32_t>(bcm283x::clock_tags::get_clock_rate),
+                            {static_cast<uint32_t>(clock), 0})
+                       .end();
 
         auto res = props.transaction(buf);
         if (!res) {
@@ -58,9 +59,9 @@ public:
 
         raspi3::property_channel_tags_builder builder;
         auto buf = builder
-            .add(static_cast<uint32_t>(bcm283x::clock_tags::set_clock_rate),
-                 {static_cast<uint32_t>(clock), hertz, 0})
-            .end();
+                       .add(static_cast<uint32_t>(bcm283x::clock_tags::set_clock_rate),
+                            {static_cast<uint32_t>(clock), hertz, 0})
+                       .end();
 
         auto res = props.transaction(buf);
         if (!res) {
@@ -80,4 +81,4 @@ public:
 
 private:
 };
-}
+} // namespace tos::periph
