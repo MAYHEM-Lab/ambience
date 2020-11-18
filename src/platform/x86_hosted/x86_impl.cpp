@@ -6,8 +6,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <string.h>
-#include <tos/scheduler.hpp>
 #include <tos/interrupt.hpp>
+#include <tos/scheduler.hpp>
 
 namespace asio = boost::asio;
 
@@ -33,11 +33,11 @@ USED int main() {
     tos::kern::enable_interrupts();
 
     tos_main();
-    tos::global::sched.schedule();
+    tos::global::sched.schedule(tos::int_guard{});
     io.run_one();
 
     while (true) {
-        auto res = tos::global::sched.schedule();
+        auto res = tos::global::sched.schedule(tos::int_guard{});
         if (io.stopped()) {
             io.reset();
         }
