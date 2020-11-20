@@ -47,11 +47,11 @@ services::log_level convert_back(log_level level) {
     TOS_UNREACHABLE();
 }
 }
-bool log_server::start(const services::log_level& level) {
+bool log_server::start(services::log_level level) {
     return m_sink->begin(convert(level));
 }
 
-bool log_server::log_pointer(const uint64_t& val) {
+bool log_server::log_pointer(uint64_t val) {
     m_sink->add(reinterpret_cast<void*>(val));
     return true;
 }
@@ -61,12 +61,12 @@ bool log_server::finish() {
     return true;
 }
 
-bool log_server::log_int(const int64_t& val) {
+bool log_server::log_int(int64_t val) {
     m_sink->add(val);
     return true;
 }
 
-bool log_server::log_bool(const bool& val) {
+bool log_server::log_bool(bool val) {
     m_sink->add(val);
     return true;
 }
@@ -76,11 +76,11 @@ bool log_server::log_string(std::string_view val) {
     return true;
 }
 
-bool log_server::log_float(const double& val) {
+bool log_server::log_float(double val) {
     m_sink->add(val);
     return true;
 }
-bool log_server::log_log_level(const services::log_level& val) {
+bool log_server::log_log_level(services::log_level val) {
     m_sink->add(convert(val));
     return true;
 }

@@ -11,14 +11,14 @@ public:
         : m_sink{&sink} {
     }
 
-    bool start(const services::log_level& level) override;
+    bool start(services::log_level level) override;
     bool finish() override;
-    bool log_int(const int64_t& val) override;
-    bool log_float(const double& val) override;
-    bool log_bool(const bool& val) override;
+    bool log_int(int64_t val) override;
+    bool log_float(double val) override;
+    bool log_bool(bool val) override;
     bool log_string(std::string_view val) override;
-    bool log_pointer(const uint64_t& val) override;
-    bool log_log_level(const services::log_level& val) override;
+    bool log_pointer(uint64_t val) override;
+    bool log_log_level(services::log_level val) override;
 
 private:
     tos::debug::detail::any_sink* m_sink;
