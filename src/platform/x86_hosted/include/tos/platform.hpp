@@ -3,6 +3,9 @@
 #include <tos/x86/spmanip.hpp>
 
 namespace tos::platform {
+inline bool interrupts_disabled() {
+    return true;
+}
 inline void enable_interrupts() {
 }
 inline void disable_interrupts() {
