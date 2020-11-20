@@ -1,10 +1,10 @@
 #include <stm32_hal/flash.hpp>
 #include <stm32_hal/rcc.hpp>
-#include <tos/compiler.hpp>
-#include <tos/scheduler.hpp>
-#include <tos/platform.hpp>
-#include <tos/interrupt.hpp>
 #include <tos/arm/exception.hpp>
+#include <tos/compiler.hpp>
+#include <tos/interrupt.hpp>
+#include <tos/platform.hpp>
+#include <tos/scheduler.hpp>
 
 extern "C" {
 void* __dso_handle;
@@ -242,12 +242,11 @@ void SystemClock_Config() {
             ;
     }
 
-    RCC_OscInitStruct.OscillatorType =  RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_LSE;
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_LSE;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
     RCC_OscInitStruct.LSIState = RCC_LSI_ON;
     RCC_OscInitStruct.LSEState = RCC_LSE_OFF;
-    if(HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-    {
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
         Error_Handler();
     }
 
@@ -326,25 +325,28 @@ int main() {
     tos_main();
 
     while (true) {
-        auto res = tos::global::sched.schedule();
-        if (res == tos::exit_reason::restart) {
-            tos::platform::force_reset();
-        }
-        if (res == tos::exit_reason::power_down) {
-            HAL_SuspendTick();
-            HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-            HAL_ResumeTick();
+        {
+            tos::int_guard ig;
+            auto res = tos::global::sched.schedule(ig);
+            if (res == tos::exit_reason::restart) {
+                tos::platform::force_reset();
+            }
+            if (res == tos::exit_reason::power_down) {
+                HAL_SuspendTick();
+                HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+                HAL_ResumeTick();
 
-            NVIC_EnableIRQ(SysTick_IRQn);
-            SystemClock_Config();
-            NVIC_DisableIRQ(SysTick_IRQn);
-            //__WFI();
-        }
-        if (res == tos::exit_reason::idle) {
-            __WFI();
-        }
-        if (res == tos::exit_reason::yield) {
-            // Do nothing
+                NVIC_EnableIRQ(SysTick_IRQn);
+                SystemClock_Config();
+                NVIC_DisableIRQ(SysTick_IRQn);
+                //__WFI();
+            }
+            if (res == tos::exit_reason::idle) {
+                __WFI();
+            }
+            if (res == tos::exit_reason::yield) {
+                // Do nothing
+            }
         }
     }
 }

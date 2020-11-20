@@ -49,14 +49,17 @@ extern void tos_main();
 
     while (true)
     {
-        auto res = tos::global::sched.schedule();
-        if (res == tos::exit_reason::restart) {
-            tos::platform::force_reset();
+        {
+            tos::int_guard ig;
+            auto res = tos::global::sched.schedule(ig);
+            if (res == tos::exit_reason::restart) {
+                tos::platform::force_reset();
+            }
+            if (res == tos::exit_reason::power_down) {
+                power_down(SLEEP_MODE_PWR_DOWN);
+            }
+            if (res == tos::exit_reason::idle) power_down(SLEEP_MODE_IDLE);
         }
-        if (res == tos::exit_reason::power_down) {
-            power_down(SLEEP_MODE_PWR_DOWN);
-        }
-        if (res == tos::exit_reason::idle) power_down(SLEEP_MODE_IDLE);
     }
 
     __builtin_unreachable();

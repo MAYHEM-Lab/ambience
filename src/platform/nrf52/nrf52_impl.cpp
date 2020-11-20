@@ -47,19 +47,22 @@ int main() {
     tos_main();
 
     while (true) {
-        auto res = tos::global::sched.schedule();
-        if (res == tos::exit_reason::restart)
-            NVIC_SystemReset(); // reboot();
-        if (res == tos::exit_reason::power_down || res == tos::exit_reason::idle) {
-            if (nrf_sdh_is_enabled()) {
-                ret_code_t ret_code = sd_app_evt_wait();
-                ASSERT((ret_code == NRF_SUCCESS) ||
-                       (ret_code == NRF_ERROR_SOFTDEVICE_NOT_ENABLED));
-                UNUSED_VARIABLE(ret_code);
-            } else {
-                __WFE();
-                __SEV();
-                __WFE();
+        {
+            tos::int_guard ig;
+            auto res = tos::global::sched.schedule(ig);
+            if (res == tos::exit_reason::restart)
+                NVIC_SystemReset(); // reboot();
+            if (res == tos::exit_reason::power_down || res == tos::exit_reason::idle) {
+                if (nrf_sdh_is_enabled()) {
+                    ret_code_t ret_code = sd_app_evt_wait();
+                    ASSERT((ret_code == NRF_SUCCESS) ||
+                           (ret_code == NRF_ERROR_SOFTDEVICE_NOT_ENABLED));
+                    UNUSED_VARIABLE(ret_code);
+                } else {
+                    __WFE();
+                    __SEV();
+                    __WFE();
+                }
             }
         }
     }

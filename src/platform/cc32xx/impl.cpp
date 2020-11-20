@@ -4,7 +4,6 @@
 
 
 #include "tos/interrupt.hpp"
-
 #include <tos/scheduler.hpp>
 
 enum IRQn_Type
@@ -74,17 +73,20 @@ int main() {
 
     GPIO_init();
     while (true) {
-        GPIO_write(4, 1);
-        auto res = tos::global::sched.schedule();
-        if (res == tos::exit_reason::restart) {
-            tos::platform::force_reset();
-        }
-        if (res == tos::exit_reason::power_down || res == tos::exit_reason::idle) {
-            GPIO_write(4, 0);
-            Power_idleFunc();
-        }
-        if (res == tos::exit_reason::yield) {
-            // Do nothing
+        {
+            tos::int_guard ig;
+            GPIO_write(4, 1);
+            auto res = tos::global::sched.schedule(ig);
+            if (res == tos::exit_reason::restart) {
+                tos::platform::force_reset();
+            }
+            if (res == tos::exit_reason::power_down || res == tos::exit_reason::idle) {
+                GPIO_write(4, 0);
+                Power_idleFunc();
+            }
+            if (res == tos::exit_reason::yield) {
+                // Do nothing
+            }
         }
     }
 }
