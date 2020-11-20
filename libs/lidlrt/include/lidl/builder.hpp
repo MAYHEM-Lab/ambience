@@ -21,6 +21,11 @@ public:
         return whole.slice(0, size_t(size()));
     }
 
+    tos::span<uint8_t> get_buffer() {
+        auto whole = m_buffer;
+        return whole.slice(0, size_t(size()));
+    }
+
     uint8_t* allocate(size_t size, size_t align) {
         while ((this->size() % align) != 0) {
             m_cur_ptr++;
