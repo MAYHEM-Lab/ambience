@@ -18,7 +18,6 @@ REGION_ALIAS("REGION_ARM_EXIDX", FLASH);
 REGION_ALIAS("REGION_ARM_EXTAB", FLASH);
 
 SECTIONS {
-
     .dbghdr : ALIGN (2048) {
         KEEP (*(.dbghdr))
     } > REGION_HDR
@@ -58,6 +57,12 @@ SECTIONS {
         *(.rodata)
         *(.rodata*)
     } > REGION_TEXT AT> REGION_TEXT
+
+      .gnu_build_id :
+      {
+        PROVIDE(build_id = .);
+        *(.note.gnu.build-id)
+      } > REGION_TEXT AT> REGION_TEXT
 
     .data : ALIGN (4) {
         __data_load__ = LOADADDR (.data);
