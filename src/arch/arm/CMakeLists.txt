@@ -9,7 +9,6 @@ target_sources(arch_arm PRIVATE
         include/tos/arm/spmanip.hpp
         include/tos/arm/interrupts.hpp
         include/tos/arm/exception.hpp
-        include/tos/arm/components.hpp
         stub.cpp
         mpu.cpp
         core.cpp
