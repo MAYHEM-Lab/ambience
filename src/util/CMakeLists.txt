@@ -51,7 +51,7 @@ add_library(serial_mux include/tos/io/serial_multiplexer.hpp src/io/serial_multi
 target_link_libraries(serial_mux PUBLIC tos_util_core tos::ft)
 
 add_library(tos_packets include/tos/io/packet.hpp src/io/packet.cpp)
-target_link_libraries(tos_packets PUBLIC tos_util_core)
+target_link_libraries(tos_packets PUBLIC tos_util_core tos::ft)
 
 add_library(tos_serial_packets include/tos/io/serial_packets.hpp src/io/serial_packets.cpp)
 target_link_libraries(tos_serial_packets PUBLIC tos_util_core tos::ft tos_packets)
