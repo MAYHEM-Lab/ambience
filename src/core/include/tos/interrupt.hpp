@@ -13,12 +13,18 @@
 namespace tos {
 namespace global {
 extern int8_t disable_depth;
-}
+extern bool should_enable;
+} // namespace global
 namespace kern {
 inline void disable_interrupts() {
     tos::detail::memory_barrier();
     if (global::disable_depth == 0) {
-        platform::disable_interrupts();
+        if (platform::interrupts_disabled()) {
+            global::should_enable = false;
+        } else {
+            platform::disable_interrupts();
+            global::should_enable = true;
+        }
     }
     global::disable_depth++;
     tos::detail::memory_barrier();
@@ -35,7 +41,10 @@ inline void enable_interrupts() {
     Assert(global::disable_depth > 0);
     global::disable_depth--;
     if (global::disable_depth == 0) {
-        platform::enable_interrupts();
+        if (global::should_enable) {
+            global::should_enable = false;
+            platform::enable_interrupts();
+        }
     }
     tos::detail::memory_barrier();
 }
