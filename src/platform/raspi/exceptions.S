@@ -79,7 +79,6 @@ _inc_normal:
 
 _handlers:
 _el0_sync_vec:
-    .align  7
     kernel_entry
     mov     x0, 0
     mov     x1, sp
@@ -88,8 +87,6 @@ _el0_sync_vec:
     eret
 
 _el0_irq_vec:
-    // IRQ
-    .align  7
     kernel_entry
     mov     x0, 0
     bl      irq_handler
@@ -97,7 +94,6 @@ _el0_irq_vec:
     eret
 
 _el1_sync_vec:
-    .align  7
     kernel_entry
     mov     x0, 1
     mov     x1, sp
@@ -106,8 +102,6 @@ _el1_sync_vec:
     eret
 
 _el1_irq_vec:
-    // IRQ
-    .align  7
     kernel_entry
     ldr     x0, =_irq_count
     bl      _inc_normal
@@ -119,8 +113,6 @@ _el1_irq_vec:
     eret
 
 _el1_fiq_vec:
-    // FIQ
-    .align  7
     kernel_entry
     mov     x0, 1
     bl      fiq_handler
@@ -128,14 +120,11 @@ _el1_fiq_vec:
     eret
 
 _el1_serror_vec:
-    // SError
-    .align  7
     kernel_entry
     mov     x0, 1
     bl      serror_handler
     kernel_exit
     eret
-
 
 .global _vectors
 .align 11
