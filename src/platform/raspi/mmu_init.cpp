@@ -138,15 +138,14 @@ void mmu_init() {
     r |= 0xC00800;     // set mandatory reserved bits
     r &= ~((1 << 25) | // clear EE, little endian translation tables
            (1 << 24) | // clear E0E
-           (1 << 19) | // clear WXN
            (1 << 12) | // clear I, no instruction cache
            (1 << 2) |  // clear C, no cache at all
            0);
     //    r |= 1 << 1;  // set A
     //    r |= 1 << 4;  // set SA0
     //    r |= 1 << 3;  // set SA
-    //    r |= 1 << 19; // set WXN
-    r |= 1 << 0; // set M, enable MMU
+    r |= 1 << 19; // set WXN
+    r |= 1 << 0;  // set M, enable MMU
 
     tos::aarch64::set_sctlr_el1(r);
     tos::aarch64::isb();
