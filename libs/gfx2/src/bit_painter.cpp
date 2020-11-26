@@ -13,7 +13,7 @@ bit_painter::bit_painter(tos::span<uint8_t> buffer, const size& dims)
 }
 
 int8_t
-bit_painter::draw_rect(const rectangle& rect, const int8_t& radius, const bool& fill) {
+bit_painter::draw_rect(const rectangle& rect, int8_t radius, bool fill) {
     auto draw_point = [this](const tos::gfx2::point& pt) { this->draw_point(pt); };
 
     if (fill) {
@@ -147,7 +147,7 @@ int8_t bit_painter::set_style(const services::style& s) {
     return 0;
 }
 
-bool bit_painter::set_orientation(const tos::services::rotation& orientation) {
+bool bit_painter::set_orientation(tos::services::rotation orientation) {
     m_rotation = orientation;
 
     if (m_rotation == services::rotation::horizontal) {
@@ -162,9 +162,9 @@ bool bit_painter::set_orientation(const tos::services::rotation& orientation) {
     return false;
 }
 
-bool bit_painter::draw_bitmap(const tos::gfx2::colors& color_type,
+bool bit_painter::draw_bitmap(tos::gfx2::colors color_type,
                               tos::span<uint8_t> buffer,
-                              const int16_t& stride,
+                              int16_t stride,
                               const tos::gfx2::rectangle& image_rect,
                               const tos::gfx2::rectangle& screen_rect) {
     // assumes the color type is binary for now.
