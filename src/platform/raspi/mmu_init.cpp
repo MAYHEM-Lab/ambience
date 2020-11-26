@@ -26,6 +26,18 @@ alignas(4096) tos::stack_storage _el1_stack;
 }
 
 void mmu_init() {
+    using namespace tos::aarch64;
+    auto io_region = tos::memory_range{tos::bcm2837::IO_BASE,
+                                       tos::bcm2837::IO_END - tos::bcm2837::IO_BASE};
+
+    tos::memory_range ranges[] = {
+        io_region,
+        tos::default_segments::data(),
+        tos::default_segments::text(),
+        tos::default_segments::rodata(),
+        tos::default_segments::bss(),
+    };
+
     /**
      * Sets up identity mapping at the first 1 gigabyte of memory.
      */
@@ -44,12 +56,6 @@ void mmu_init() {
 
     // identity L2 2M blocks
 
-    auto io_region = tos::memory_range{tos::bcm2837::IO_BASE,
-                                       tos::bcm2837::IO_END - tos::bcm2837::IO_BASE};
-
-    //    auto stack_region =
-    //        tos::memory_range{reinterpret_cast<uintptr_t>(&_stack), sizeof _stack};
-
     l2s[0]
         .zero()
         .page_num(address_to_page(&l3s[0]))
@@ -67,13 +73,18 @@ void mmu_init() {
             .page(false)
             .accessed(true)
             .allow_user(true)
-            .noexec(true)
-            .valid(true);
+            .noexec(true);
 
-        if (page >= tos::aarch64::address_to_page(tos::bcm2837::IO_BASE) >> 9) {
+        if (contains(io_region, page << 21)) {
             l2s[page].shareable(tos::aarch64::shareable_values::outer).mair_index(PT_DEV);
         } else {
             l2s[page].shareable(tos::aarch64::shareable_values::inner).mair_index(PT_MEM);
+        }
+
+        if (std::any_of(std::begin(ranges), std::end(ranges), [page](auto& range) {
+                return contains(range, page << 21);
+            })) {
+            l2s[page].valid(true);
         }
     }
     // identity L3
@@ -83,10 +94,8 @@ void mmu_init() {
             .page_num(r)
             .page(true)
             .accessed(true)
-            .allow_user(true)
             .shareable(tos::aarch64::shareable_values::inner)
-            .mair_index(PT_MEM)
-            .valid(true);
+            .mair_index(PT_MEM);
 
         /**
          * We follow the W^X permissions scheme.
@@ -98,7 +107,13 @@ void mmu_init() {
         if (!contains(tos::default_segments::text(), tos::aarch64::page_to_address(r))) {
             l3s[r].noexec(true);
         } else {
-            l3s[r].readonly(true);
+            l3s[r].readonly(true).allow_user(true);
+        }
+
+        if (std::any_of(std::begin(ranges), std::end(ranges), [r](auto& range) {
+                return contains(range, tos::aarch64::page_to_address(r));
+            })) {
+            l3s[r].valid(true);
         }
     }
 
