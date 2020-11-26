@@ -142,7 +142,6 @@ void mmu_init() {
     tos::aarch64::isb();
 
     tos::aarch64::set_ttbr0_el1(&page);
-    tos::aarch64::set_ttbr1_el1(&page);
 
     // finally, toggle some bits in system control register to enable page translation
 
