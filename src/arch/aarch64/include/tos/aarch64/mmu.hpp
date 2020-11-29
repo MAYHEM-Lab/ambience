@@ -1,7 +1,10 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
+#include <tos/memory.hpp>
+#include <tos/expected.hpp>
 
 namespace tos::aarch64 {
 using page_id_t = uint32_t;
@@ -177,4 +180,71 @@ private:
     uint64_t m_entry;
 };
 static_assert(sizeof(table_entry) == 8);
+
+struct alignas(4096) translation_table {
+    std::array<table_entry, 512> entries;
+
+    table_entry& operator[](int id) {
+        return entries[id];
+    }
+};
+
+translation_table& get_current_translation_table();
+translation_table& set_current_translation_table(translation_table& table);
+
+inline void tlb_invalidate_all() {
+    dsb();
+    asm volatile("tlbi VMALLE1IS");
+    dsb();
+    isb();
+}
+
+enum class mmu_errors {
+
+};
+
+enum class memory_types {
+    normal,
+    device
+};
+
+struct vm_page_attributes {
+    permissions perms;
+    memory_types mem_type;
+    bool user_access;
+};
+
+struct vm_page_t {
+    // This VM page maps the addresses
+    // [page_num * page_size_in_bytes, (page_num + 1) * page_size_in_bytes).
+    uint32_t page_num;
+    uint32_t page_size_in_bytes;
+
+    uintptr_t base_address() const {
+        return page_num * page_size_in_bytes;
+    }
+
+    uintptr_t end_address() const {
+        return (page_num + 1) * page_size_in_bytes;
+    }
+};
+
+expected<void, mmu_errors> allocate_page(translation_table& root, const vm_page_t& page);
+
+
+struct physical_memory {
+    memory_types type;
+
+    // The segment base must be aligned to 4K or 2M
+    // We don't yet support 1G pages
+    segment phys_seg;
+};
+
+class address_space {
+public:
+
+
+private:
+    std::unique_ptr<translation_table> m_root;
+};
 }
