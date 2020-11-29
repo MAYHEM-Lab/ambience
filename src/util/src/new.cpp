@@ -117,3 +117,25 @@ void* operator new[](size_t sz, const std::nothrow_t&) noexcept {
     tos::out_of_memory_handler();
     return nullptr;
 }
+
+extern "C" {
+void* _malloc_r(struct _reent *, size_t sz) {
+    return new char[sz];
+}
+
+void* malloc(size_t sz) {
+    return new char[sz];
+}
+
+void* realloc(void*, size_t) {
+    return nullptr;
+}
+
+void* calloc(size_t sz, size_t cnt) {
+    return new char[sz * cnt]{};
+}
+
+void free(void* ptr) {
+    delete[] static_cast<char*>(ptr);
+}
+}
