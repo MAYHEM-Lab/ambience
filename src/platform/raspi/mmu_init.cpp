@@ -89,13 +89,20 @@ void mmu_init() {
     }
     // identity L3
     for (int r = 0; r < 512; r++) {
+        if (!std::any_of(std::begin(ranges), std::end(ranges), [r](auto& range) {
+          return contains(range, tos::aarch64::page_to_address(r));
+        })) {
+            continue;
+        }
+
         l3s[r]
             .zero()
             .page_num(r)
             .page(true)
             .accessed(true)
             .shareable(tos::aarch64::shareable_values::inner)
-            .mair_index(PT_MEM);
+            .mair_index(PT_MEM)
+            .valid(true);
 
         /**
          * We follow the W^X permissions scheme.
@@ -108,12 +115,6 @@ void mmu_init() {
             l3s[r].noexec(true);
         } else {
             l3s[r].readonly(true).allow_user(true);
-        }
-
-        if (std::any_of(std::begin(ranges), std::end(ranges), [r](auto& range) {
-                return contains(range, tos::aarch64::page_to_address(r));
-            })) {
-            l3s[r].valid(true);
         }
     }
 
