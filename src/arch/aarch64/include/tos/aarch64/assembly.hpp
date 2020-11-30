@@ -167,4 +167,10 @@ inline void svc1() {
 inline void wfi() {
     asm volatile ("wfi");
 }
+
+// This intrinsic is used to invoke the semihosting host. See the semihosting docs for
+// more details.
+inline void hlt_0xf000() {
+    asm volatile("hlt #0xF000");
+}
 } // namespace tos::aarch64
