@@ -28,9 +28,9 @@ public:
 class registered_service_base {
 public:
     lidl::service_base* service;
-    lidl::procedure_runner_t call;
+    lidl::erased_procedure_runner_t call;
 
-    void invoke(tos::span<const uint8_t> data, lidl::message_builder& builder) {
+    void invoke(tos::span<uint8_t> data, lidl::message_builder& builder) {
         call(*service, data, builder);
     }
 };
@@ -39,7 +39,7 @@ class service_registry {
 public:
     template<class ServT>
     void register_service(lidl::service_base& service) {
-        m_services.push_back({&service, lidl::make_procedure_runner<ServT>()});
+        m_services.push_back({&service, lidl::make_erased_procedure_runner<ServT>()});
     }
 
     std::vector<registered_service_base> m_services;
