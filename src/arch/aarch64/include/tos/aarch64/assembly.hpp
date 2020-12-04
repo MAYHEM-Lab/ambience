@@ -173,4 +173,46 @@ inline void wfi() {
 inline void hlt_0xf000() {
     asm volatile("hlt #0xF000");
 }
+
+inline uint64_t get_cntpct_el0() {
+    uint64_t r;
+    asm volatile("mrs %0, cntpct_el0" : "=r"(r));
+    return r;
+}
+
+inline uint64_t get_cntfrq_el0() {
+    uint64_t r;
+    asm volatile("mrs %0, cntfrq_el0" : "=r"(r));
+    return r;
+}
+
+inline uint64_t get_cntp_ctl_el0() {
+    uint64_t r;
+    asm volatile("mrs %0, cntp_ctl_el0" : "=r"(r));
+    return r;
+}
+
+inline void set_cntp_ctl_el0(uint64_t val) {
+    asm volatile("msr cntp_ctl_el0, %0" : : "r"(val));
+}
+
+inline uint64_t get_cntp_cval_el0() {
+    uint64_t r;
+    asm volatile("mrs %0, cntp_cval_el0" : "=r"(r));
+    return r;
+}
+
+inline void set_cntp_cval_el0(uint64_t val) {
+    asm volatile("msr cntp_cval_el0, %0" : : "r"(val));
+}
+
+inline uint64_t get_cntp_tval_el0() {
+    uint64_t r;
+    asm volatile("mrs %0, cntp_tval_el0" : "=r"(r));
+    return r;
+}
+
+inline void set_cntp_tval_el0(uint64_t val) {
+    asm volatile("msr cntp_tval_el0, %0" : : "r"(val));
+}
 } // namespace tos::aarch64
