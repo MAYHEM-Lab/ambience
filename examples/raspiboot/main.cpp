@@ -65,9 +65,6 @@ void el0_fn() {
 alignas(4096) tos::stack_storage el0_stack;
 
 void switch_to_el0() {
-    LOG("Switching to user space...");
-    LOG("Depth:", int(tos::global::disable_depth));
-
     uint64_t spsr_el1 = 0;
     tos::aarch64::set_spsr_el1(spsr_el1);
     tos::aarch64::set_elr_el1(reinterpret_cast<uintptr_t>(&el0_fn));
@@ -522,28 +519,57 @@ void raspi_main() {
         trampoline->switch_to(self);
     };
 
-    tos::aarch64::exception::set_svc_handler(
-        tos::aarch64::exception::svc_handler_t(svc_handler_));
+    auto post_svc_handler = [&](int svnum,
+                                tos::aarch64::exception::stack_frame_t& frame) {
+        tos::swap_context(*tos::self(), self, tos::int_ctx{});
+    };
+
+    struct user_context : tos::static_context<> {
+        tos::aarch64::exception::svc_handler_t m_svc_handler;
+        std::optional<tos::aarch64::exception::fault_variant> m_fault;
+        tos::kern::tcb* m_scheduler;
+
+        user_context(tos::aarch64::exception::svc_handler_t svc_handler,
+                     tos::kern::tcb& scheduler)
+            : m_svc_handler(svc_handler)
+            , m_scheduler(&scheduler) {
+        }
+
+        void switch_in() override {
+            m_old_fault_handler = tos::aarch64::exception::set_fault_handler(
+                tos::mem_function_ref<&user_context::fault>(*this));
+            m_old_svc_handler = tos::aarch64::exception::set_svc_handler(m_svc_handler);
+        }
+
+        void switch_out() override {
+            tos::aarch64::exception::set_fault_handler(m_old_fault_handler);
+            tos::aarch64::exception::set_svc_handler(m_old_svc_handler);
+        }
+
+        void fault(const tos::aarch64::exception::fault_variant& fault,
+                   tos::aarch64::exception::stack_frame_t& frame) {
+            m_fault = fault;
+            tos::swap_context(*tos::self(), *m_scheduler, tos::int_ctx{});
+        }
+
+    private:
+        tos::aarch64::exception::svc_handler_t m_old_svc_handler{[](auto...) {}};
+        tos::aarch64::exception::fault_handler_t m_old_fault_handler{[](auto...) {}};
+    };
+
+    user_context user_ctx{tos::aarch64::exception::svc_handler_t(svc_handler_), self};
 
     auto table = std::make_unique<tos::aarch64::translation_table>();
     auto& tsk = tos::launch(tos::alloc_stack, [&] { switch_to_el0(); });
+    tsk.set_context(user_ctx);
+
     tos::kern::suspend_self(tos::int_guard{});
     LOG("User-kernel switch works!");
     tos::aarch64::exception::set_svc_handler(
         tos::aarch64::exception::svc_handler_t([](auto...) {}));
     runnable.push_back(tsk);
 
-    auto post_svc_handler = [&](int svnum,
-                                tos::aarch64::exception::stack_frame_t& frame) {
-        tos::swap_context(*tos::self(), self, tos::int_ctx{});
-    };
-
-    std::optional<tos::aarch64::exception::fault_variant> f;
-    auto fault_handler = [&](const tos::aarch64::exception::fault_variant& fault,
-                             tos::aarch64::exception::stack_frame_t& frame) {
-        f = fault;
-        tos::swap_context(*tos::self(), self, tos::int_ctx{});
-    };
+    user_ctx.m_svc_handler = tos::aarch64::exception::svc_handler_t(post_svc_handler);
 
     while (true) {
         if (!runnable.empty()) {
@@ -551,32 +577,31 @@ void raspi_main() {
             auto& front = static_cast<tos::kern::tcb&>(runnable.front());
             runnable.pop_front();
             odi([&](auto&&...) {
-                tos::aarch64::exception::set_fault_handler(
-                    tos::aarch64::exception::fault_handler_t(fault_handler));
-                tos::aarch64::exception::set_svc_handler(
-                    tos::aarch64::exception::svc_handler_t(post_svc_handler));
-                //                auto& old =
-                //                tos::aarch64::set_current_translation_table(*table);
+                self.get_context().switch_out();
+                front.get_context().switch_in();
                 tos::swap_context(*tos::self(), front, tos::int_ctx{});
-                //                tos::aarch64::set_current_translation_table(old);
+                front.get_context().switch_out();
+                self.get_context().switch_in();
             });
 
-            tos::aarch64::exception::set_svc_handler(
-                tos::aarch64::exception::svc_handler_t([](auto...) {}));
-
-            if (f) {
+            if (user_ctx.m_fault) {
                 using namespace tos::aarch64::exception;
                 LOG_ERROR("User space had a fault!");
                 std::visit(tos::make_overload(
                                [](const data_abort& data_fault) {
-                                    LOG_ERROR("Data fault on", (void*)data_fault.data_addr);
-                                    LOG_ERROR("With ISS", (void*)data_fault.iss);
-                                    LOG_ERROR("At", (void*)data_fault.return_address);
+                                   LOG_ERROR("Data fault on",
+                                             (void*)data_fault.data_addr);
+                                   LOG_ERROR("With ISS", (void*)data_fault.iss);
+                                   if (data_fault.data_addr <= 64) {
+                                       LOG_ERROR("(Null Pointer Access)");
+                                   }
+                                   LOG_ERROR("At", (void*)data_fault.return_address);
                                },
                                [](const auto& unknown) {
-                                 LOG_ERROR("Unknown fault");
-                                 LOG_ERROR("At", (void*)unknown.return_address);}),
-                           *f);
+                                   LOG_ERROR("Unknown fault");
+                                   LOG_ERROR("At", (void*)unknown.return_address);
+                               }),
+                           *user_ctx.m_fault);
             } else {
                 runnable.push_back(front);
             }
