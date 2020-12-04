@@ -1,5 +1,6 @@
 #include <arch/interrupts.hpp>
 #include <tos/aarch64/assembly.hpp>
+#include <tos/aarch64/semihosting.hpp>
 #include <tos/soc/bcm2837.hpp>
 #include <tos/stack_storage.hpp>
 
@@ -25,38 +26,47 @@ void interrupt_controller::irq() {
             break;
         }
         if ((bcm2837::INTERRUPT_CONTROLLER->irq_pending_1 & (1UL << i)) == (1UL << i)) {
-            bool handled = false;
-            for (auto& handler : m_irq_lists.find(i)->second) {
-                if (handler.function()) {
-                    handled = true;
-                    break;
-                }
-            }
-            if (!handled) {
-                tos::aarch64::udf();
-                // error
-                tos::debug::panic("Unhandled IRQ!");
-            }
+            do_irq(i);
         }
     }
+
     for (uint_fast32_t i = 0; i < 32; ++i) {
         if (bcm2837::INTERRUPT_CONTROLLER->irq_pending_2 == 0) {
             break;
         }
         if ((bcm2837::INTERRUPT_CONTROLLER->irq_pending_2 & (1UL << i)) == (1UL << i)) {
-            bool handled = false;
-            for (auto& handler : m_irq_lists.find(i + 32)->second) {
-                if (handler.function()) {
-                    handled = true;
-                    break;
-                }
-            }
-            if (!handled) {
-                tos::aarch64::udf();
-                // error
-                tos::debug::panic("Unhandled IRQ!");
-            }
+            do_irq(i + 32);
         }
     }
+
+    if (bcm2837::ARM_CORE->core0_irq_source & 0b10) {
+        do_irq(static_cast<int>(bcm283x::irq_channels::generic_timer));
+    }
+}
+
+void interrupt_controller::do_irq(int channel) {
+    if (!try_irq(channel)) {
+        aarch64::semihosting::write0("Unhandled IRQ ");
+        aarch64::semihosting::write0(itoa(channel).data());
+        aarch64::semihosting::write0("!\n");
+        while (true)
+            ;
+    }
+}
+
+bool interrupt_controller::try_irq(int channel) {
+    auto iter = m_irq_lists.find(channel);
+    if (iter == m_irq_lists.end()) {
+        return false;
+    }
+    bool handled = false;
+
+    for (auto& handler : iter->second) {
+        if (handler.function()) {
+            handled = true;
+            break;
+        }
+    }
+    return handled;
 }
 } // namespace tos::raspi3

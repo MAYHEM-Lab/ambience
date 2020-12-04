@@ -30,6 +30,9 @@ public:
     void irq();
 
 private:
+    void do_irq(int channel);
+    bool try_irq(int channel);
+
     std::unordered_map<int, intrusive_list<irq_handler>> m_irq_lists;
 };
 } // namespace tos::raspi3
