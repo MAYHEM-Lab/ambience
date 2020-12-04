@@ -15,7 +15,7 @@ static constexpr auto PT_MEM = 0; // normal memory
 static constexpr auto PT_DEV = 1; // device MMIO
 
 struct pages {
-    table pgd{}, pud{};
+    table pgd{}, pud{}, pud2{};
     std::array<table, 4> pmd{};
 };
 
@@ -29,9 +29,12 @@ void mmu_init() {
     using namespace tos::aarch64;
     auto io_region = tos::memory_range{tos::bcm2837::IO_BASE,
                                        tos::bcm2837::IO_END - tos::bcm2837::IO_BASE};
+    auto arm_core_region = tos::memory_range{
+        tos::bcm2837::ARM_CTL_ADDRESS, tos::bcm2837::ARM_CTL_END - tos::bcm2837::ARM_CTL_ADDRESS};
 
     tos::memory_range ranges[] = {
         io_region,
+        arm_core_region,
         tos::default_segments::data(),
         tos::default_segments::text(),
         tos::default_segments::rodata(),
@@ -54,6 +57,41 @@ void mmu_init() {
         .shareable(tos::aarch64::shareable_values::inner)
         .mair_index(PT_MEM);
 
+    page.pgd[1]
+        .zero()
+        .page_num(tos::aarch64::address_to_page(&page.pud2))
+        .valid(true)
+        .page(true)
+        .accessed(true)
+        .allow_user(true)
+        .shareable(tos::aarch64::shareable_values::inner)
+        .mair_index(PT_MEM);
+
+    {
+        auto& pud2 = page.pud2;
+
+        auto page = 512;
+        pud2[0]
+            .zero()
+            .page_num(tos::aarch64::address_to_page(page << 21))
+            .page(false)
+            .accessed(true)
+            .allow_user(true)
+            .noexec(true);
+
+        if (contains(io_region, page << 21) || contains(arm_core_region, page << 21)) {
+            pud2[0].shareable(tos::aarch64::shareable_values::outer).mair_index(PT_DEV);
+        } else {
+            pud2[0].shareable(tos::aarch64::shareable_values::inner).mair_index(PT_MEM);
+        }
+
+        if (std::any_of(std::begin(ranges), std::end(ranges), [page](auto& range) {
+          return contains(range, page << 21);
+        })) {
+            pud2[0].valid(true);
+        }
+    }
+
     // identity L2 2M blocks
 
     l2s[0]
@@ -75,7 +113,7 @@ void mmu_init() {
             .allow_user(true)
             .noexec(true);
 
-        if (contains(io_region, page << 21)) {
+        if (contains(io_region, page << 21) || contains(arm_core_region, page << 21)) {
             l2s[page].shareable(tos::aarch64::shareable_values::outer).mair_index(PT_DEV);
         } else {
             l2s[page].shareable(tos::aarch64::shareable_values::inner).mair_index(PT_MEM);
@@ -90,8 +128,8 @@ void mmu_init() {
     // identity L3
     for (int r = 0; r < 512; r++) {
         if (!std::any_of(std::begin(ranges), std::end(ranges), [r](auto& range) {
-          return contains(range, tos::aarch64::page_to_address(r));
-        })) {
+                return contains(range, tos::aarch64::page_to_address(r));
+            })) {
             continue;
         }
 
