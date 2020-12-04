@@ -5,15 +5,18 @@
 namespace tos::bcm2837 {
 using namespace tos::bcm283x;
 
-constexpr auto IO_BASE = 0x3F000000;
-constexpr auto IO_END = 0x3FFFFFFF;
+constexpr auto IO_BASE = 0x3F00'0000;
+constexpr auto IO_END = 0x3FFF'FFFF;
 
-constexpr auto GPU_IO_BASE = 0x7E000000;
-constexpr auto GPU_MEM_BASE = 0xC0000000;
+constexpr auto ARM_CTL_ADDRESS = 0x4000'0000;
+constexpr auto ARM_CTL_END = 0x4000'0100;
+
+constexpr auto GPU_IO_BASE = 0x7E00'0000;
+constexpr auto GPU_MEM_BASE = 0xC000'0000;
 
 // Convert ARM address to GPU bus address
 constexpr auto gpu_bus_address(uintptr_t addr) {
-    return ((addr) & ~0xC0000000) | GPU_MEM_BASE;
+    return ((addr) & ~0xC000'0000) | GPU_MEM_BASE;
 }
 
 constexpr auto INTERRUPT_CONTROLLER_OFFSET = 0xB000;
@@ -48,4 +51,6 @@ inline auto VIDEOCORE_MBOX =
     reinterpret_cast<volatile messagebox_control_block*>(VIDEOCORE_MBOX_ADDRESS);
 inline auto EMMC = reinterpret_cast<volatile emmc_control_block*>(EMMC_ADDRESS);
 inline auto SDHOST = reinterpret_cast<volatile sdhost_control_block*>(SDHOST_ADDRESS);
-}
+inline auto ARM_CORE =
+    reinterpret_cast<volatile arm_core_control_block*>(ARM_CTL_ADDRESS);
+} // namespace tos::bcm2837
