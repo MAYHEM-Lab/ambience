@@ -348,6 +348,93 @@ tos::any_clock* clk;
 tos::any_alarm* alarm;
 } // namespace global
 
+namespace tos::aarch64 {
+/*
+ * This class implements the timer functionality of the arm generic timer.
+ *
+ * Since this is at the core level, how its interrupts are handled depends on the
+ * platform, and therefore, this class is meant to be used in the driver implementation
+ * of a platform rather than being directly used.
+ *
+ * There exists 1 of these timers per core, and they are not memory mapped. This means
+ * that these timers cannot be shared across cores.
+ */
+class generic_timer {
+public:
+    static uint64_t get_counter() {
+        return get_cntpct_el0();
+    }
+
+    static uint64_t get_frequency() {
+        return get_cntfrq_el0();
+    }
+
+    static void set_timeout(uint32_t ticks) {
+        set_cntp_tval_el0(ticks);
+    }
+
+    static void enable() {
+        set_cntp_ctl_el0(1);
+    }
+
+    static void disable() {
+        set_cntp_ctl_el0(0);
+    }
+};
+} // namespace tos::aarch64
+
+namespace tos::raspi3 {
+class generic_timer : public self_pointing<generic_timer> {
+public:
+    generic_timer(interrupt_controller& ic, int core_num)
+        : m_handler(mem_function_ref<&generic_timer::irq>(*this))
+        , m_core{core_num} {
+        ic.register_handler(bcm283x::irq_channels::generic_timer, m_handler);
+    }
+
+    void enable();
+    void disable();
+
+    void set_frequency(uint16_t hz);
+    void set_callback(function_ref<void()> fn) {
+        m_fn = fn;
+    }
+
+private:
+    bool irq();
+
+    irq_handler m_handler;
+    int m_core;
+    uint64_t m_period;
+    function_ref<void()> m_fn{[](auto...) {}};
+};
+} // namespace tos::raspi3
+
+namespace tos::raspi3 {
+void generic_timer::set_frequency(uint16_t hz) {
+    m_period = aarch64::generic_timer::get_frequency() / hz;
+}
+
+void generic_timer::enable() {
+    // Enable the SVC generic timer interrupt.
+    bcm2837::ARM_CORE->core0_timers_irq_control = 2;
+    bcm2837::INTERRUPT_CONTROLLER->enable_basic_irq = 1;
+    aarch64::generic_timer::set_timeout(m_period);
+    aarch64::generic_timer::enable();
+}
+
+void generic_timer::disable() {
+    aarch64::generic_timer::disable();
+    bcm2837::INTERRUPT_CONTROLLER->disable_basic_irq = 1;
+}
+
+bool generic_timer::irq() {
+    m_fn();
+    aarch64::generic_timer::set_timeout(m_period);
+    return true;
+}
+} // namespace tos::raspi3
+
 tos::kern::tcb* task;
 tos::raspi3::uart0* uart_ptr;
 tos::stack_storage thread_stack;
@@ -380,6 +467,19 @@ void raspi_main() {
     clock_man.set_frequency(tos::bcm283x::clocks::arm,
                             clock_man.get_max_frequency(tos::bcm283x::clocks::arm));
     LOG("CPU Freq:", clock_man.get_frequency(tos::bcm283x::clocks::arm));
+
+    tos::raspi3::generic_timer gentim(ic, 0);
+    LOG("Generic timer initialized");
+    tos::alarm gentimalarm(&gentim);
+    LOG("Alarm initialized");
+
+    tos::launch(tos::alloc_stack, [&] {
+        using namespace std::chrono_literals;
+        while (true) {
+            tos::this_thread::sleep_for(gentimalarm, 1s);
+            LOG("Tick!");
+        }
+    });
 
     tos::raspi3::system_timer timer(ic);
 
