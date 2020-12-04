@@ -40,16 +40,17 @@ exit_reason scheduler::schedule(const tos::int_guard&) {
     auto next_ctx = &m_run_queue.front().get_context();
 
     if (m_prev_context != next_ctx) {
-        m_prev_context->switch_out(*next_ctx);
+        m_prev_context->switch_out();
     }
 
     auto& front = m_run_queue.front();
     m_run_queue.pop_front();
 
     if (m_prev_context != next_ctx) {
-        next_ctx->switch_in(*m_prev_context);
+        next_ctx->switch_in();
     }
 
+    m_prev_context = next_ctx;
     front();
 
     return exit_reason::yield;
