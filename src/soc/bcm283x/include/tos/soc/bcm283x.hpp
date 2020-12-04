@@ -53,7 +53,8 @@ struct messagebox_control_block {
     }
 };
 
-enum class irq_channels : uint64_t {
+enum class irq_channels : int64_t {
+    generic_timer = -1,
     system_timer = 1,
     system_timer_3 = 3,
     usb = 9,
