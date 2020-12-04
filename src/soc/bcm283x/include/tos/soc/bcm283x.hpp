@@ -79,6 +79,45 @@ struct interrupt_controller_control_block {
     uint32_t disable_basic_irq;
 };
 
+struct arm_core_control_block {
+    uint32_t control_register;
+    uint8_t __pad__[4];
+    uint32_t core_timer_prescaler;
+    uint32_t gpu_irq_routing;
+    uint32_t pmu_irq_set;
+    uint32_t pmu_irq_clear;
+    uint8_t __pad2__[4];
+    uint32_t core_timer_lo;
+    uint32_t core_timer_hi;
+    uint32_t local_irq_routing;
+    uint32_t local_irq_routing2;
+    uint32_t axi_outstanding_counters;
+    uint32_t axi_outstanding_irq;
+    uint32_t local_timer_control;
+    uint32_t local_timer_write_flags;
+    uint8_t __pad3__[4];
+    uint32_t core0_timers_irq_control;
+    uint32_t core1_timers_irq_control;
+    uint32_t core2_timers_irq_control;
+    uint32_t core3_timers_irq_control;
+    uint32_t core0_mailbox_irq_control;
+    uint32_t core1_mailbox_irq_control;
+    uint32_t core2_mailbox_irq_control;
+    uint32_t core3_mailbox_irq_control;
+    uint32_t core0_irq_source;
+    uint32_t core1_irq_source;
+    uint32_t core2_irq_source;
+    uint32_t core3_irq_source;
+    uint32_t core0_fiq_source;
+    uint32_t core1_fiq_source;
+    uint32_t core2_fiq_source;
+    uint32_t core3_fiq_source;
+};
+
+static_assert(offsetof(arm_core_control_block, core0_timers_irq_control) == 0x40);
+static_assert(offsetof(arm_core_control_block, core0_irq_source) == 0x60);
+static_assert(offsetof(arm_core_control_block, core3_fiq_source) == 0x7c);
+
 struct system_timer_control_block {
     uint32_t control_status;
     uint32_t counter_lo;
