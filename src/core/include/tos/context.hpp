@@ -60,6 +60,14 @@ protected:
     }
 
 public:
+    void switch_out() override {
+        m_new->switch_out();
+    }
+    void switch_in() override {
+        m_new->switch_in();
+    }
+
+public:
     context& get_new() {
         return *m_new;
     }
