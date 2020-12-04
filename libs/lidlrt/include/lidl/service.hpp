@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstring>
 #include <lidl/builder.hpp>
 #include <lidl/meta.hpp>
 #include <lidl/status.hpp>
@@ -29,7 +30,7 @@ struct procedure_traits<RetType (Type::*const)(ArgTypes...)> {
 
     static constexpr bool takes_response_builder() {
         return (... ||
-                std::is_same_v<std::remove_reference_t<ArgTypes>, message_builder>);
+            std::is_same_v<std::remove_reference_t<ArgTypes>, message_builder>);
     }
 };
 
@@ -48,19 +49,7 @@ class rpc_param_traits;
 
 class service_base {
 public:
-    virtual ~service_base()               = default;
-    virtual std::string_view name() const = 0;
-};
-
-template<class ServiceT>
-class service : public service_base {
-public:
-    std::string_view name() const override {
-        return service_descriptor<ServiceT>::name;
-    }
-
-    using call_union   = service_call_union<ServiceT>;
-    using return_union = service_return_union<ServiceT>;
+    virtual ~service_base() = default;
 };
 
 template<class T>
@@ -78,15 +67,22 @@ struct get_result_type_impl<
 };
 } // namespace meta
 
-using procedure_runner_t = void (*)(service_base&,
-                                    tos::span<const uint8_t>,
-                                    lidl::message_builder&);
+template<class ServiceT>
+using typed_procedure_runner_t = void (*)(ServiceT&,
+                                          tos::span<uint8_t>,
+                                          lidl::message_builder&);
+
+using erased_procedure_runner_t = typed_procedure_runner_t<service_base>;
+
+template<class>
+class print;
 
 namespace detail {
-template<class ServiceT>
-void request_handler(service_base& base_service,
-                     tos::span<const uint8_t> buffer,
+template<class ServiceT, class BaseServT = ServiceT>
+void request_handler(BaseServT& base_service,
+                     tos::span<uint8_t> buffer,
                      lidl::message_builder& response) {
+    static_assert(std::is_base_of_v<BaseServT, ServiceT>);
     auto& service = static_cast<ServiceT&>(base_service);
 
     /**
@@ -99,86 +95,91 @@ void request_handler(service_base& base_service,
     // this information to decode lidl messages into actual calls to services.
     using descriptor = service_descriptor<ServiceT>;
 
-    using params_union  = typename ServiceT::call_union;
-    using results_union = typename ServiceT::return_union;
+    using params_union  = typename descriptor::params_union;
+    using results_union = typename descriptor::results_union;
 
     using all_params =
-        typename meta::get_result_type_impl<decltype(descriptor::procedures)>::params;
+    typename meta::get_result_type_impl<decltype(descriptor::procedures)>::params;
     using all_results =
-        typename meta::get_result_type_impl<decltype(descriptor::procedures)>::results;
+    typename meta::get_result_type_impl<decltype(descriptor::procedures)>::results;
 
     visit(
-        [&](const auto& call_params) -> decltype(auto) {
+        [&](auto& call_params) -> decltype(auto) {
+          constexpr auto idx = meta::tuple_index_of<
+              std::remove_const_t<std::remove_reference_t<decltype(call_params)>>,
+              all_params>::value;
+          using result_type = std::remove_const_t<std::remove_reference_t<decltype(
+          std::get<idx>(std::declval<all_results>()))>>;
+
+          /**
+           * This ugly thing is where the final magic happens.
+           *
+           * The apply call will pass each member of the parameters of the call to
+           * this function.
+           *
+           * Inside, we have a bunch of cases:
+           *
+           * 1. Does the procedure take a message builder or not?
+           *
+           *    Procedures that do not return a _reference type_ (types that contain
+           *    pointers) do not need a message builder since their result will be
+           *    self contained.
+           *
+           * 2. Is the return value a view type?
+           *
+           *    Procedures that return a view type need special care. The special
+           *    care is basically that we copy whatever it returns to the response
+           *    buffer.
+           *
+           *    If not, we return whatever the procedure returned directly.
+           *
+           */
+          auto make_service_call = [&service, &response](auto&&... args) -> void {
             constexpr auto proc = rpc_param_traits<std::remove_const_t<
                 std::remove_reference_t<decltype(call_params)>>>::params_for;
-            using proc_traits   = procedure_traits<decltype(proc)>;
-            constexpr auto idx  = meta::tuple_index_of<
-                std::remove_const_t<std::remove_reference_t<decltype(call_params)>>,
-                all_params>::value;
-            using result_type = std::remove_const_t<std::remove_reference_t<decltype(
-                std::get<idx>(std::declval<all_results>()))>>;
 
-            /**
-             * This ugly thing is where the final magic happens.
-             *
-             * The apply call will pass each member of the parameters of the call to
-             * this function.
-             *
-             * Inside, we have a bunch of cases:
-             *
-             * 1. Does the procedure take a message builder or not?
-             *
-             *    Procedures that do not return a _reference type_ (types that contain
-             *    pointers) do not need a message builder since their result will be
-             *    self contained.
-             *
-             * 2. Is the return value a view type?
-             *
-             *    Procedures that return a view type need special care. The special
-             *    care is basically that we copy whatever it returns to the response
-             *    buffer.
-             *
-             *    If not, we return whatever the procedure returned directly.
-             *
-             */
-            auto make_service_call = [&service, &response](const auto&... args) -> void {
-                constexpr auto proc = rpc_param_traits<std::remove_const_t<
-                    std::remove_reference_t<decltype(call_params)>>>::params_for;
+            using proc_traits = procedure_traits<decltype(proc)>;
+            if constexpr (!proc_traits::takes_response_builder()) {
+                auto res = (service.*(proc))(args...);
+                create<results_union>(response, result_type(res));
+            } else {
+                const auto& res = (service.*(proc))(args..., response);
+                if constexpr (std::is_same_v<meta::remove_cref<decltype(res)>,
+                    std::string_view>) {
+                    /**
+                     * The procedure returned a view.
+                     *
+                     * We need to see if the returned view is already in the
+                     * response buffer. If it is not, we will copy it.
+                     *
+                     * Issue #6.
+                     */
 
-                if constexpr (!proc_traits::takes_response_builder()) {
-                    auto res = (service.*(proc))(args...);
-                    create<results_union>(response, result_type(res));
+                    auto& str     = create_string(response, res);
+                    const auto& r = create<result_type>(response, str);
+                    create<results_union>(response, r);
+                } else if constexpr (std::is_same_v<meta::remove_cref<decltype(res)>,
+                    tos::span<uint8_t>>) {
                 } else {
-                    const auto& res = (service.*(proc))(args..., response);
-                    if constexpr (std::is_same_v<meta::remove_cref<decltype(res)>,
-                                                 std::string_view>) {
-                        /**
-                         * The procedure returned a view.
-                         *
-                         * We need to see if the returned view is already in the
-                         * response buffer. If it is not, we will copy it.
-                         *
-                         * Issue #6.
-                         */
-
-                        auto& str     = create_string(response, res);
-                        const auto& r = create<result_type>(response, str);
-                        create<results_union>(response, r);
-                    } else {
-                        const auto& r = lidl::create<result_type>(response, res);
-                        create<results_union>(response, r);
-                    }
+                    const auto& r = lidl::create<result_type>(response, res);
+                    create<results_union>(response, r);
                 }
-            };
+            }
+          };
 
-            apply(make_service_call, call_params);
+          apply(make_service_call, call_params);
         },
         get_root<params_union>(buffer));
 }
 } // namespace detail
 
-template <class ServiceT>
-procedure_runner_t make_procedure_runner() {
-    return &detail::request_handler<ServiceT>;
+template<class ServiceT, class BaseServiceT = ServiceT>
+typed_procedure_runner_t<BaseServiceT> make_procedure_runner() {
+    return &detail::request_handler<ServiceT, BaseServiceT>;
+}
+
+template<class ServiceT>
+erased_procedure_runner_t make_erased_procedure_runner() {
+    return &detail::request_handler<ServiceT, service_base>;
 }
 } // namespace lidl
