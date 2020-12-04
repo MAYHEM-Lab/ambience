@@ -7,6 +7,10 @@
 namespace tos::aarch64 {
 class semihosting {
 public:
+    static constexpr bool unavailable() {
+        return false;
+    }
+
     static uint64_t clock() {
         return perform_call(0x10, 0);
     }
