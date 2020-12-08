@@ -90,7 +90,7 @@ target_sources(lwipcore PRIVATE
 )
 target_include_directories(lwipcore PUBLIC src/src/include)
 
-add_library(lwip_support "" include/tos/lwip/udp.hpp include/tos/lwip/utility.hpp include/tos/lwip/common.hpp include/tos/lwip/tcp.hpp)
+add_library(lwip_support "" include/tos/lwip/udp.hpp include/tos/lwip/utility.hpp include/tos/lwip/common.hpp include/tos/lwip/tcp.hpp include/tos/lwip/if_adapter.hpp)
 target_sources(lwip_support PRIVATE
     support.cpp
     include/lwipopts.h

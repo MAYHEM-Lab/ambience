@@ -1,6 +1,7 @@
 #include <common/clock.hpp>
 #include <lwip/init.h>
 #include <tos/lwip/common.hpp>
+#include <tos/lwip/if_adapter.hpp>
 
 extern "C" {
 unsigned char debug_flags;
