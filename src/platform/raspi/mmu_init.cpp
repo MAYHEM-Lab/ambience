@@ -29,8 +29,9 @@ void mmu_init() {
     using namespace tos::aarch64;
     auto io_region = tos::memory_range{tos::bcm2837::IO_BASE,
                                        tos::bcm2837::IO_END - tos::bcm2837::IO_BASE};
-    auto arm_core_region = tos::memory_range{
-        tos::bcm2837::ARM_CTL_ADDRESS, tos::bcm2837::ARM_CTL_END - tos::bcm2837::ARM_CTL_ADDRESS};
+    auto arm_core_region =
+        tos::memory_range{tos::bcm2837::ARM_CTL_ADDRESS,
+                          tos::bcm2837::ARM_CTL_END - tos::bcm2837::ARM_CTL_ADDRESS};
 
     tos::memory_range ranges[] = {
         io_region,
@@ -86,8 +87,8 @@ void mmu_init() {
         }
 
         if (std::any_of(std::begin(ranges), std::end(ranges), [page](auto& range) {
-          return contains(range, page << 21);
-        })) {
+                return contains(range, page << 21);
+            })) {
             pud2[0].valid(true);
         }
     }
@@ -114,7 +115,10 @@ void mmu_init() {
             .noexec(true);
 
         if (contains(io_region, page << 21) || contains(arm_core_region, page << 21)) {
-            l2s[page].shareable(tos::aarch64::shareable_values::outer).mair_index(PT_DEV);
+            l2s[page]
+                .shareable(tos::aarch64::shareable_values::outer)
+                .mair_index(PT_DEV)
+                .allow_user(false);
         } else {
             l2s[page].shareable(tos::aarch64::shareable_values::inner).mair_index(PT_MEM);
         }
@@ -150,7 +154,7 @@ void mmu_init() {
          */
 
         if (!contains(tos::default_segments::text(), tos::aarch64::page_to_address(r))) {
-            l3s[r].noexec(true);
+            l3s[r].noexec(true).allow_user(true);
         } else {
             l3s[r].readonly(true).allow_user(true);
         }
