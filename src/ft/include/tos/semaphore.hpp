@@ -147,7 +147,7 @@ namespace tos {
 template<class CountT>
 inline void semaphore_base<CountT>::up() noexcept {
     detail::memory_barrier();
-    tos::int_guard ig;
+    tos::int_guard ig(__builtin_return_address(0));
     up_isr();
     detail::memory_barrier();
 }
@@ -155,7 +155,7 @@ inline void semaphore_base<CountT>::up() noexcept {
 template<class CountT>
 inline void semaphore_base<CountT>::down() & noexcept {
     detail::memory_barrier();
-    tos::int_guard ig;
+    tos::int_guard ig(__builtin_return_address(0));
     --m_count;
     if (m_count < 0) {
         m_wait.wait(ig);
@@ -167,7 +167,7 @@ template<class CountT>
 sem_ret semaphore_base<CountT>::down(cancellation_token& cancel) noexcept {
     sem_ret res = sem_ret::normal;
     detail::memory_barrier();
-    tos::int_guard ig;
+    tos::int_guard ig(__builtin_return_address(0));
     --m_count;
     if (m_count < 0) {
         auto wait_res = m_wait.wait(ig, cancel);
