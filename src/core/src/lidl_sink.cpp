@@ -87,9 +87,9 @@ bool log_server::log_log_level(services::log_level val) {
 
 bool lidl_sink::begin(log_level level) {
     auto res = m_logger->start(convert_back(level));
-    if (res) {
-        m_prot.lock();
-    }
+//    if (res) {
+//        m_prot.lock();
+//    }
     return res;
 }
 
@@ -123,6 +123,6 @@ void lidl_sink::add(double d) {
 
 void lidl_sink::end() {
     m_logger->finish();
-    m_prot.unlock();
+//    m_prot.unlock();
 }
 } // namespace tos::debug
