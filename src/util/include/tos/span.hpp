@@ -355,4 +355,9 @@ namespace std {
 inline tos::span<uint8_t> as_span(vector<uint8_t>& v) {
     return v;
 }
+
+template <size_t N>
+inline tos::span<uint8_t> as_span(array<uint8_t, N>& a) {
+    return a;
+}
 }
