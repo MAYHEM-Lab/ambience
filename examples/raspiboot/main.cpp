@@ -1,31 +1,23 @@
 #include <arch/drivers.hpp>
 #include <common/clock.hpp>
 #include <common/inet/tcp_ip.hpp>
-#include <tos/aarch64/assembly.hpp>
+#include <lidl/service.hpp>
+#include <lwip/init.h>
+#include <map>
 #include <tos/aarch64/exception.hpp>
 #include <tos/aarch64/mmu.hpp>
+#include <tos/aarch64/semihosting.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/log.hpp>
+#include <tos/debug/sinks/lidl_sink.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/ft.hpp>
 #include <tos/interrupt_trampoline.hpp>
+#include <tos/lwip/if_adapter.hpp>
+#include <tos/lwip/udp.hpp>
 #include <tos/periph/bcm2837_clock.hpp>
 #include <tos/print.hpp>
 #include <tos/soc/bcm2837.hpp>
-
-using u8 = uint8_t;
-using u16 = uint16_t;
-using u32 = uint32_t;
-
-#include <lwip/etharp.h>
-#include <lwip/init.h>
-#include <lwip/tcp.h>
-#include <numeric>
-#include <tos/lwip/common.hpp>
-#include <tos/lwip/tcp.hpp>
-#include <tos/lwip/udp.hpp>
-#include <tos/lwip/utility.hpp>
-#include <uspi.h>
 #include <uspi/devicenameservice.h>
 #include <uspi/dwhcidevice.h>
 #include <uspi/smsc951x.h>
@@ -53,12 +45,53 @@ void dump_tables() {
     return x * fib(x - 1) * fib(x - 2);
 }
 
-void el0_fn() {
-    volatile int* p = nullptr;
+int64_t
+lidlcall(int64_t channel, uint8_t* buf, int64_t len, uint8_t* res_buf, int64_t res_len) {
+    asm("mov x0, %[channel]\n"
+        "mov x1, %[buf]\n"
+        "mov x2, %[len]\n"
+        "mov x3, %[res_buf]\n"
+        "mov x4, %[res_len]\n"
+        :
+        : [channel] "r"(channel),
+          [buf] "r"(buf),
+          [len] "r"(len),
+          [res_buf] "r"(res_buf),
+          [res_len] "r"(res_len)
+        : "x0", "x1", "x2", "x3", "x4");
     tos::aarch64::svc1();
+    int64_t result;
+    asm volatile("mov %[result], x0" : [result] "=r"(result) : : "x0");
+    return result;
+}
+
+std::array<uint8_t, 256> reqbuf;
+std::array<uint8_t, 256> resbuf;
+void el0_fn() {
+    tos::aarch64::svc1();
+
+    struct svc_transport {
+        tos::span<uint8_t> get_buffer() {
+            return reqbuf;
+        }
+
+        tos::span<uint8_t> send_receive(tos::span<uint8_t> buf) {
+            auto len = lidlcall(1, buf.data(), buf.size(), resbuf.data(), resbuf.size());
+            if (len <= 0) {
+                return buf.slice(0, 0);
+            }
+            return tos::span(resbuf).slice(0, len);
+        }
+    };
+
+    auto remote = tos::services::remote_logger<svc_transport>();
+    tos::debug::lidl_sink snk(remote);
+    tos::debug::detail::any_logger log(&snk);
+    log.set_log_level(tos::debug::log_level::all);
+    log.error("hello from user space");
+
     while (true) {
-        tos::aarch64::svc1();
-        *p = 42;
+        log.info("Tick from user space");
     }
 }
 
@@ -159,127 +192,6 @@ public:
 private:
     TSMSC951xDevice* m_ptr;
 };
-
-namespace tos::lwip {
-template<class DeviceT>
-class basic_interface {
-public:
-    basic_interface(DeviceT&& dev,
-                    const ipv4_addr_t& addr,
-                    const ipv4_addr_t& mask,
-                    const ipv4_addr_t& gw)
-        : m_tap(std::move(dev)) {
-        auto lwip_addr = convert_address(addr);
-        auto lwip_mask = convert_address(mask);
-        auto lwip_gw = convert_address(gw);
-        netif_add(&m_if,
-                  &lwip_addr,
-                  &lwip_mask,
-                  &lwip_gw,
-                  this,
-                  &basic_interface::init,
-                  netif_input);
-    }
-
-    void up() {
-        netif_set_link_up(&m_if);
-        netif_set_up(&m_if);
-    }
-
-    void down() {
-        netif_set_down(&m_if);
-        netif_set_link_down(&m_if);
-    }
-
-    ~basic_interface() {
-        down();
-        netif_remove(&m_if);
-    }
-
-private:
-    netif m_if;
-    DeviceT m_tap;
-
-    err_t init() {
-        m_if.hostname = "tos";
-        m_if.flags |= NETIF_FLAG_ETHARP | NETIF_FLAG_BROADCAST;
-        m_if.linkoutput = &basic_interface::link_output;
-        m_if.output = etharp_output;
-        m_if.name[1] = m_if.name[0] = 'm';
-        m_if.num = 0;
-        m_if.mtu = 1500;
-        m_if.hwaddr_len = 6;
-        m_if.link_callback = &basic_interface::link_callback;
-        m_if.status_callback = &basic_interface::status_callback;
-        std::iota(std::begin(m_if.hwaddr), std::end(m_if.hwaddr), 1);
-        launch(alloc_stack, [this] { read_thread(); });
-        return ERR_OK;
-    }
-
-    void read_thread() {
-        auto& tok = tos::cancellation_token::system();
-        while (!tok.is_cancelled()) {
-            std::vector<uint8_t> buf(1500);
-            auto recvd = m_tap->read(buf);
-            if (recvd.empty()) {
-                continue;
-            }
-            LOG_TRACE("Received", recvd.size(), "bytes");
-            auto p =
-                pbuf_alloc(pbuf_layer::PBUF_LINK, recvd.size(), pbuf_type::PBUF_POOL);
-            std::copy(recvd.begin(), recvd.end(), static_cast<uint8_t*>(p->payload));
-            m_if.input(p, &m_if);
-        }
-    }
-
-    err_t link_output(pbuf* p) {
-        LOG_TRACE("link_output", p->len, "bytes");
-        // pbuf_ref(p);
-        // return m_if.input(p, &m_if);
-        auto written = m_tap->write({static_cast<const uint8_t*>(p->payload), p->len});
-        LOG_TRACE("Written", written, "bytes");
-        return ERR_OK;
-    }
-
-    err_t output(pbuf* p, const ip4_addr_t* ipaddr) {
-        LOG_TRACE("output", p->len, "bytes");
-        // pbuf_ref(p);
-        // return m_if.input(p, &m_if);
-        return ERR_OK;
-    }
-
-    void link_callback() {
-    }
-
-    void status_callback() {
-    }
-
-private:
-    static err_t init(struct netif* netif) {
-        return static_cast<basic_interface*>(netif->state)->init();
-    }
-
-    static err_t link_output(struct netif* netif, struct pbuf* p) {
-        return static_cast<basic_interface*>(netif->state)->link_output(p);
-    }
-
-    static err_t output(struct netif* netif, struct pbuf* p, const ip4_addr_t* ipaddr) {
-        return static_cast<basic_interface*>(netif->state)->output(p, ipaddr);
-    }
-
-    static void link_callback(struct netif* netif) {
-        static_cast<basic_interface*>(netif->state)->link_callback();
-    }
-
-    static void status_callback(struct netif* netif) {
-        static_cast<basic_interface*>(netif->state)->status_callback();
-    }
-
-    friend void set_default(basic_interface& interface) {
-        netif_set_default(&interface.m_if);
-    }
-};
-} // namespace tos::lwip
 
 static const char FromSample[] = "sample";
 tos::kern::tcb* usb_task_ptr;
@@ -432,6 +344,65 @@ bool generic_timer::irq() {
 }
 } // namespace tos::raspi3
 
+enum class service_errors
+{
+    not_found,
+    not_supported,
+};
+
+class any_service_host {
+public:
+    // Essentially a list of channels
+    // Channels are self identifying
+    // Dynamic service registration depends on the actual implementation
+
+    virtual auto register_service(lidl::erased_procedure_runner_t runner,
+                                  std::unique_ptr<lidl::service_base> serv)
+        -> tos::expected<int, service_errors> = 0;
+
+    virtual auto unregister_service(int channel_id)
+        -> tos::expected<void, service_errors> = 0;
+
+    virtual auto get_service(int channel_id)
+        -> tos::expected<std::pair<lidl::service_base*, lidl::erased_procedure_runner_t>,
+                         service_errors> = 0;
+
+    virtual ~any_service_host() = default;
+};
+
+class dynamic_service_host : public any_service_host {
+public:
+    auto register_service(lidl::erased_procedure_runner_t runner,
+                          std::unique_ptr<lidl::service_base> serv)
+        -> tos::expected<int, service_errors> override {
+        auto id = m_next_id++;
+        m_services.emplace(id, std::make_pair(std::move(serv), runner));
+        return id;
+    }
+
+    auto unregister_service(int channel_id)
+        -> tos::expected<void, service_errors> override {
+        return tos::unexpected(service_errors::not_supported);
+    }
+
+    auto get_service(int channel_id)
+        -> tos::expected<std::pair<lidl::service_base*, lidl::erased_procedure_runner_t>,
+                         service_errors> override {
+        auto it = m_services.find(channel_id);
+        if (it == m_services.end()) {
+            return tos::unexpected(service_errors::not_found);
+        }
+        return std::make_pair(it->second.first.get(), it->second.second);
+    }
+
+private:
+    int m_next_id = 1;
+    std::map<
+        int,
+        std::pair<std::unique_ptr<lidl::service_base>, lidl::erased_procedure_runner_t>>
+        m_services;
+};
+
 tos::kern::tcb* task;
 tos::raspi3::uart0* uart_ptr;
 tos::stack_storage thread_stack;
@@ -447,6 +418,37 @@ void raspi_main() {
     tos::debug::serial_sink uart_sink(&uart);
     tos::debug::detail::any_logger uart_log{&uart_sink};
     tos::debug::set_default_log(&uart_log);
+
+    auto sink_service = std::make_unique<tos::debug::log_server>(uart_sink);
+    auto run = lidl::make_procedure_runner<tos::services::logger>();
+
+    std::array<uint8_t, 16> req{00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x06,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00};
+
+    std::array<uint8_t, 256> resp{};
+    lidl::message_builder mb{resp};
+    run(*sink_service, req, mb);
+    sink_service->log_string("helloo");
+    sink_service->finish();
+
+    dynamic_service_host serv_host;
+    serv_host.register_service(
+        lidl::make_erased_procedure_runner<tos::services::logger>(),
+        std::move(sink_service));
 
     LOG("Log init complete");
 
@@ -514,13 +516,17 @@ void raspi_main() {
 
     tos::intrusive_list<tos::job> runnable;
 
-    auto svc_handler_ = [&](int svnum, tos::aarch64::exception::stack_frame_t&) {
+    auto svc_handler_ = [&](int svnum, tos::cur_arch::exception::stack_frame_t&) {
         tos::kern::disable_interrupts();
         trampoline->switch_to(self);
     };
 
+    int num;
+    tos::cur_arch::exception::stack_frame_t* svframe = nullptr;
     auto post_svc_handler = [&](int svnum,
-                                tos::aarch64::exception::stack_frame_t& frame) {
+                                tos::cur_arch::exception::stack_frame_t& frame) {
+        num = svnum;
+        svframe = &frame;
         tos::swap_context(*tos::self(), self, tos::int_ctx{});
     };
 
@@ -559,7 +565,6 @@ void raspi_main() {
 
     user_context user_ctx{tos::aarch64::exception::svc_handler_t(svc_handler_), self};
 
-    auto table = std::make_unique<tos::aarch64::translation_table>();
     auto& tsk = tos::launch(tos::alloc_stack, [&] { switch_to_el0(); });
     tsk.set_context(user_ctx);
 
@@ -573,7 +578,7 @@ void raspi_main() {
 
     while (true) {
         if (!runnable.empty()) {
-            LOG("Will sched");
+//            LOG("Will sched");
             auto& front = static_cast<tos::kern::tcb&>(runnable.front());
             runnable.pop_front();
             odi([&](auto&&...) {
@@ -602,7 +607,38 @@ void raspi_main() {
                                    LOG_ERROR("At", (void*)unknown.return_address);
                                }),
                            *user_ctx.m_fault);
+            } else if (svframe) {
+                for (auto& reg : svframe->gpr) {
+//                    LOG((void*)reg);
+                }
+
+                int channel = svframe->gpr[0];
+                auto ptr = reinterpret_cast<uint8_t*>(svframe->gpr[1]);
+                auto len = svframe->gpr[2];
+                auto res_ptr = reinterpret_cast<uint8_t*>(svframe->gpr[3]);
+                auto res_len = svframe->gpr[2];
+                tos::span<uint8_t> reqmem{ptr, len};
+                tos::span<uint8_t> resmem{res_ptr, res_len};
+
+//                LOG("Got call on channel", channel);
+
+                auto s = serv_host.get_service(channel);
+                if (!s) {
+                    LOG_WARN("Channel does not exist", channel);
+                    svframe->gpr[0] = -1;
+                } else {
+                    auto [serv, runner] = force_get(s);
+
+//                    LOG("Buffer:", reqmem);
+                    lidl::message_builder mb(resmem);
+                    runner(*serv, reqmem, mb);
+                    svframe->gpr[0] = mb.size();
+                }
+
+                runnable.push_back(front);
+                svframe = nullptr;
             } else {
+                LOG_WARN("No svc frame!");
                 runnable.push_back(front);
             }
         }
