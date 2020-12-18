@@ -3,8 +3,9 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <tos/memory.hpp>
 #include <tos/expected.hpp>
+#include <tos/function_ref.hpp>
+#include <tos/memory.hpp>
 
 namespace tos::aarch64 {
 using page_id_t = uint32_t;
@@ -149,8 +150,7 @@ public:
         return *this;
     }
 
-    [[nodiscard]]
-    constexpr uint8_t mair_index() const {
+    [[nodiscard]] constexpr uint8_t mair_index() const {
         return (m_entry & MAIRIdx::Mask) >> MAIRIdx::Position;
     }
 
@@ -171,8 +171,7 @@ public:
         return m_entry;
     }
 
-    [[nodiscard]]
-    constexpr const uint64_t& raw() const {
+    [[nodiscard]] constexpr const uint64_t& raw() const {
         return m_entry;
     }
 
@@ -181,12 +180,47 @@ private:
 };
 static_assert(sizeof(table_entry) == 8);
 
-struct alignas(4096) translation_table {
-    std::array<table_entry, 512> entries;
 
+struct translation_table;
+inline translation_table& table_at(table_entry& entry) {
+    return *reinterpret_cast<translation_table*>(page_to_address(entry.page_num()));
+}
+
+inline const translation_table& table_at(const table_entry& entry) {
+    return *reinterpret_cast<const translation_table*>(page_to_address(entry.page_num()));
+}
+
+struct alignas(4096) translation_table {
     table_entry& operator[](int id) {
         return entries[id];
     }
+
+    const table_entry& operator[](int id) const {
+        return entries[id];
+    }
+
+    const translation_table& table_at(int id) const {
+        return aarch64::table_at((*this)[id]);
+    }
+
+    translation_table& table_at(int id) {
+        return aarch64::table_at((*this)[id]);
+    }
+
+    size_t size() const {
+        return entries.size();
+    }
+
+    auto begin() {
+        return entries.begin();
+    }
+
+    auto end() {
+        return entries.end();
+    }
+
+private:
+    std::array<table_entry, 512> entries;
 };
 
 translation_table& get_current_translation_table();
@@ -199,13 +233,12 @@ inline void tlb_invalidate_all() {
     isb();
 }
 
-enum class mmu_errors {
-
-};
-
-enum class memory_types {
-    normal,
-    device
+enum class mmu_errors
+{
+    page_alloc_fail,
+    already_allocated,
+    not_allocated,
+    bad_perms,
 };
 
 struct vm_page_attributes {
@@ -214,37 +247,47 @@ struct vm_page_attributes {
     bool user_access;
 };
 
-struct vm_page_t {
-    // This VM page maps the addresses
-    // [page_num * page_size_in_bytes, (page_num + 1) * page_size_in_bytes).
-    uint32_t page_num;
-    uint32_t page_size_in_bytes;
+expected<void, mmu_errors> allocate_region(translation_table& root,
+                                           const segment& virt_seg,
+                                           user_accessible allow_user,
+                                           physical_page_allocator* palloc);
 
-    uintptr_t base_address() const {
-        return page_num * page_size_in_bytes;
-    }
+expected<void, mmu_errors> mark_resident(translation_table& root,
+                                         const segment& virt_seg,
+                                         memory_types type,
+                                         void* phys_addr);
 
-    uintptr_t end_address() const {
-        return (page_num + 1) * page_size_in_bytes;
-    }
-};
+expected<void, mmu_errors> mark_nonresident(translation_table& root,
+                                            const segment& virt_seg);
 
-expected<void, mmu_errors> allocate_page(translation_table& root, const vm_page_t& page);
+expected<const table_entry*, mmu_errors> entry_for_address(const translation_table& root,
+                                                           uintptr_t virt_addr);
 
+expected<translation_table*, mmu_errors>
+recursive_table_clone(const translation_table& existing, physical_page_allocator& palloc);
 
-struct physical_memory {
-    memory_types type;
+permissions translate_permissions(const table_entry& entry);
 
-    // The segment base must be aligned to 4K or 2M
-    // We don't yet support 1G pages
-    segment phys_seg;
-};
+void traverse_table_entries(
+    translation_table& table,
+    function_ref<void(memory_range vrange, table_entry& entry)> fn);
 
-class address_space {
-public:
+template<class FnT>
+void traverse_table_entries(translation_table& table, FnT&& fn) {
+    traverse_table_entries(
+        table, function_ref<void(memory_range, table_entry &)>(fn));
+}
 
+class address_space final : public vm_backend {
 
 private:
-    std::unique_ptr<translation_table> m_root;
+    // Sets up the addresses in the given mapping to be valid within this address space.
+    // However, the pages won't have a physical backing yet, nor will they be resident.
+    // They will be allocated at the first fault by the backing object.
+    expected<void, mmu_errors> allocate_region(const mapping& map);
+
+    // Stores the root level translation table.
+    // With 4K page granule, this corresponds to ~512G memory.
+    translation_table m_root;
 };
-}
+} // namespace tos::aarch64
