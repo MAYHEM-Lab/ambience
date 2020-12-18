@@ -109,4 +109,18 @@ private:
 
 template<class T>
 forget(T&&) -> forget<T>;
+
+constexpr uint64_t align_nearest_down_pow2(uint64_t val, uint64_t alignment) {
+    return val & ~(alignment - 1);
+}
+
+constexpr uint64_t align_nearest_up_pow2(uint64_t val, uint64_t alignment) {
+    return (val + alignment - 1) & ~(alignment - 1);
+}
+
+static_assert(align_nearest_down_pow2(4095, 4096) == 0);
+static_assert(align_nearest_down_pow2(4096, 4096) == 4096);
+
+static_assert(align_nearest_up_pow2(4095, 4096) == 4096);
+static_assert(align_nearest_up_pow2(4096, 4096) == 4096);
 } // namespace tos
