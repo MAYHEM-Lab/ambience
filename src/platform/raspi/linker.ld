@@ -1,5 +1,5 @@
 ENTRY(_start)
- 
+
 SECTIONS
 {
     /* Starts at LOADER_ADDR. */
@@ -24,6 +24,7 @@ SECTIONS
         PROVIDE(end_ctors = .);
         *(.rodata.*)
         *(.rodata)
+        *(.gcc_except_table.*)
     }
     .gnu_build_id :
     {
