@@ -116,5 +116,7 @@ public:
     int_guard(int_guard&&) = delete;
 };
 
-struct int_ctx : no_interrupts {};
+struct int_ctx : no_interrupts {
+    int_ctx() = default;
+};
 } // namespace tos
