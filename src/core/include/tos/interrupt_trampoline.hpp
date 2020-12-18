@@ -29,36 +29,40 @@ public:
      */
     template<class InISR>
     void operator()(InISR& in_isr) {
-        in_isr([this] (auto&&...) { this->on_svc(); });
+        kern::disable_interrupts();
+        in_isr([this](auto&&...) { on_svc(); });
         // The stack up until this point allows us to escape from an interrupt handler.
         // We'll keep that in m_stack and switch to m_tmp_stack to perform the
         // context switch and block_forever.
-        tos::arch::set_stack_ptr(reinterpret_cast<char*>(&m_tmp_stack));
+        arch::set_stack_ptr(reinterpret_cast<char*>(&m_tmp_stack));
         if (m_isr_state == state::first) {
-            // if we just saved the context, no need to return anywhere, we'll stay here
-            tos::this_thread::block_forever();
+            // We just saved the context, no need to return anywhere, we'll stay here
+            this_thread::block_forever();
         }
         // At this point, we successfully escaped from an interrupt context to thread
         // context, we can safely switch to the requested thread.
         // The thread context that was interrupted will safely stay in a semi-interrupt
         // context.
-        tos::global::thread_state.current_thread = m_target;
-        tos::kern::switch_context(m_target->get_processor_state(),
-                                  tos::return_codes::scheduled);
+        global::thread_state.current_thread = m_target;
+        kern::disable_interrupts();
+        global::should_enable = true;
+        kern::switch_context(m_target->get_processor_state(),
+                             tos::return_codes::scheduled);
     }
 
     template<class InISR>
     void setup(InISR& in_isr) {
-        auto& t = tos::suspended_launch(m_stack, std::ref(*this), in_isr);
+        auto& t = suspended_launch(m_stack, std::ref(*this), in_isr);
         LOG("About to swap to trampoline setup");
-        tos::int_guard ig;
-        tos::kern::make_runnable(*tos::self());
-        tos::swap_context(*tos::self(), t, ig);
+        int_guard ig;
+        kern::make_runnable(*self());
+        swap_context(*self(), t, ig);
+        kern::enable_interrupts();
     }
 
     void switch_to(tos::kern::tcb& target) {
         m_target = &target;
-        tos::swap_context(*tos::self(), m_isr_tcb, tos::int_ctx{});
+        swap_context(*self(), m_isr_tcb, int_ctx{});
     }
 
 private:
@@ -93,9 +97,9 @@ private:
     // Upon executing the trampoline, we'll return to this thread.
     tos::kern::tcb* m_target;
     // This stack maintains the interrupt return code
-    tos::stack_storage<378> m_stack;
+    tos::stack_storage<4096> m_stack;
     // This stack is used to execute block_forever and switch_context calls.
-    tos::stack_storage<128> m_tmp_stack;
+    tos::stack_storage<2048> m_tmp_stack;
 };
 
 template<class InISR>
