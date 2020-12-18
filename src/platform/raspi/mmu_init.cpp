@@ -71,7 +71,7 @@ void mmu_init() {
     {
         auto& pud2 = page.pud2;
 
-        auto page = 512;
+        auto page = 512; // 512th 2M page, so @1GB
         pud2[0]
             .zero()
             .page_num(tos::aarch64::address_to_page(page << 21))
@@ -128,6 +128,10 @@ void mmu_init() {
             })) {
             l2s[page].valid(true);
         }
+
+        if (contains(tos::default_segments::rodata(), page << 21)) {
+            l2s[page].readonly(true).noexec(true);
+        }
     }
     // identity L3
     for (int r = 0; r < 512; r++) {
@@ -157,6 +161,10 @@ void mmu_init() {
             l3s[r].noexec(true).allow_user(true);
         } else {
             l3s[r].readonly(true).allow_user(true);
+        }
+
+        if (contains(tos::default_segments::rodata(), tos::aarch64::page_to_address(r))) {
+            l3s[r].readonly(true).noexec(true);
         }
     }
 
