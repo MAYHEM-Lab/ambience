@@ -1,3 +1,4 @@
+#include <alarm_generated.hpp>
 #include <arch/drivers.hpp>
 #include <common/clock.hpp>
 #include <common/inet/tcp_ip.hpp>
@@ -11,10 +12,12 @@
 #include <tos/debug/log.hpp>
 #include <tos/debug/sinks/lidl_sink.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
+#include <tos/flags.hpp>
 #include <tos/ft.hpp>
 #include <tos/interrupt_trampoline.hpp>
 #include <tos/lwip/if_adapter.hpp>
 #include <tos/lwip/udp.hpp>
+#include <tos/mem_stream.hpp>
 #include <tos/periph/bcm2837_clock.hpp>
 #include <tos/print.hpp>
 #include <tos/soc/bcm2837.hpp>
@@ -23,19 +26,21 @@
 #include <uspi/smsc951x.h>
 #include <uspios.h>
 
-void dump_tables() {
-    auto& level0_table = tos::aarch64::get_current_translation_table();
-
-    LOG("Level0 table at", (void*)tos::aarch64::address_to_page(&level0_table));
-
-    for (int i = 0; i < level0_table.entries.size(); ++i) {
-        auto& entry = level0_table[i];
-        if (entry.valid()) {
-            LOG("Valid entry at", i);
-            LOG("Num: ", (void*)entry.page_num());
-            LOG("Leaf?", !entry.page());
-        }
-    }
+void dump_table(tos::aarch64::translation_table& table) {
+    tos::aarch64::traverse_table_entries(
+        table, [](tos::memory_range range, tos::aarch64::table_entry& entry) {
+            LOG("VirtAddress:", "[", (void*)(range.base), ",", (void*)(range.end()), ")");
+            LOG("PhysAddress:", (void*)tos::aarch64::page_to_address(entry.page_num()));
+            char perm_string[4] = "R__";
+            auto perms = tos::aarch64::translate_permissions(entry);
+            if (tos::util::is_flag_set(perms, tos::permissions::write)) {
+                perm_string[1] = 'W';
+            }
+            if (tos::util::is_flag_set(perms, tos::permissions::execute)) {
+                perm_string[2] = 'X';
+            }
+            LOG("Perms:", perm_string, "User:", entry.allow_user());
+        });
 }
 
 [[gnu::noinline]] int fib(int x) {
@@ -47,57 +52,78 @@ void dump_tables() {
 
 int64_t
 lidlcall(int64_t channel, uint8_t* buf, int64_t len, uint8_t* res_buf, int64_t res_len) {
-    asm("mov x0, %[channel]\n"
-        "mov x1, %[buf]\n"
-        "mov x2, %[len]\n"
-        "mov x3, %[res_buf]\n"
-        "mov x4, %[res_len]\n"
-        :
-        : [channel] "r"(channel),
-          [buf] "r"(buf),
-          [len] "r"(len),
-          [res_buf] "r"(res_buf),
-          [res_len] "r"(res_len)
-        : "x0", "x1", "x2", "x3", "x4");
+    asm volatile("mov x0, %[channel]\n"
+                 "mov x1, %[buf]\n"
+                 "mov x2, %[len]\n"
+                 "mov x3, %[res_buf]\n"
+                 "mov x4, %[res_len]\n"
+                 :
+                 : [channel] "r"(channel),
+                   [buf] "r"(buf),
+                   [len] "r"(len),
+                   [res_buf] "r"(res_buf),
+                   [res_len] "r"(res_len)
+                 : "x0", "x1", "x2", "x3", "x4");
     tos::aarch64::svc1();
     int64_t result;
     asm volatile("mov %[result], x0" : [result] "=r"(result) : : "x0");
     return result;
 }
 
-std::array<uint8_t, 256> reqbuf;
-std::array<uint8_t, 256> resbuf;
+template<int ChannelId>
+struct svc_transport {
+    std::array<uint8_t, 256> reqbuf;
+    std::array<uint8_t, 256> resbuf;
+
+    tos::span<uint8_t> get_buffer() {
+        return reqbuf;
+    }
+
+    tos::span<uint8_t> send_receive(tos::span<uint8_t> buf) {
+        auto len =
+            lidlcall(ChannelId, buf.data(), buf.size(), resbuf.data(), resbuf.size());
+        if (len <= 0) {
+            return buf.slice(0, 0);
+        }
+        return tos::span(resbuf).slice(0, len);
+    }
+};
+
 void el0_fn() {
     tos::aarch64::svc1();
 
-    struct svc_transport {
-        tos::span<uint8_t> get_buffer() {
-            return reqbuf;
-        }
-
-        tos::span<uint8_t> send_receive(tos::span<uint8_t> buf) {
-            auto len = lidlcall(1, buf.data(), buf.size(), resbuf.data(), resbuf.size());
-            if (len <= 0) {
-                return buf.slice(0, 0);
-            }
-            return tos::span(resbuf).slice(0, len);
-        }
-    };
-
-    auto remote = tos::services::remote_logger<svc_transport>();
+    auto remote = tos::services::remote_logger<svc_transport<1>>();
     tos::debug::lidl_sink snk(remote);
     tos::debug::detail::any_logger log(&snk);
     log.set_log_level(tos::debug::log_level::all);
     log.error("hello from user space");
 
+    auto current = tos::services::remote_current<svc_transport<3>>();
+    log.info(current.get_thread_handle().id());
+
+    /*auto our_addr_space = current.get_address_space();
+
+    auto vm = tos::services::remote_virtual_memory<svc_transport<2>>();
+
+    std::array<uint8_t, 128> buf;
+    lidl::message_builder builder(buf);
+    auto& regs = vm.get_regions(our_addr_space, builder);
+
+    for (auto& reg : regs) {
+        log.info(
+            "Region [", reg.begin(), ",", reg.end(), ") with perms ", reg.permissions());
+    }*/
+
+    int i = 0;
     while (true) {
-        log.info("Tick from user space");
+        log.info("Tick from user space", ++i);
     }
 }
 
 alignas(4096) tos::stack_storage el0_stack;
 
 void switch_to_el0() {
+    tos::platform::disable_interrupts();
     uint64_t spsr_el1 = 0;
     tos::aarch64::set_spsr_el1(spsr_el1);
     tos::aarch64::set_elr_el1(reinterpret_cast<uintptr_t>(&el0_fn));
@@ -403,6 +429,24 @@ private:
         m_services;
 };
 
+class semihosting_output : public tos::self_pointing<semihosting_output> {
+public:
+    int write(tos::span<const uint8_t> data) {
+        auto res = data.size();
+        while (!data.empty()) {
+            auto len = std::min(data.size(), m_buf.size() - 1);
+            auto it = std::copy_n(data.begin(), len, m_buf.begin());
+            *it = 0;
+            tos::aarch64::semihosting::write0(m_buf.data());
+            data = data.slice(len);
+        }
+        return res;
+    }
+
+private:
+    std::array<char, 128> m_buf;
+};
+
 tos::kern::tcb* task;
 tos::raspi3::uart0* uart_ptr;
 tos::stack_storage thread_stack;
@@ -415,35 +459,12 @@ void raspi_main() {
     auto uart = tos::open(tos::devs::usart<0>, tos::uart::default_115200, ic);
     uart_ptr = &uart;
     uart.sync_write(tos::raw_cast(tos::span("Hello")));
-    tos::debug::serial_sink uart_sink(&uart);
+    semihosting_output out;
+    tos::debug::serial_sink uart_sink(&out);
     tos::debug::detail::any_logger uart_log{&uart_sink};
     tos::debug::set_default_log(&uart_log);
 
     auto sink_service = std::make_unique<tos::debug::log_server>(uart_sink);
-    auto run = lidl::make_procedure_runner<tos::services::logger>();
-
-    std::array<uint8_t, 16> req{00,
-                                0x00,
-                                0x00,
-                                0x00,
-                                0x00,
-                                0x00,
-                                0x00,
-                                0x00,
-                                0x06,
-                                0x00,
-                                0x00,
-                                0x00,
-                                0x00,
-                                0x00,
-                                0x00,
-                                0x00};
-
-    std::array<uint8_t, 256> resp{};
-    lidl::message_builder mb{resp};
-    run(*sink_service, req, mb);
-    sink_service->log_string("helloo");
-    sink_service->finish();
 
     dynamic_service_host serv_host;
     serv_host.register_service(
@@ -472,31 +493,19 @@ void raspi_main() {
     tos::alarm gentimalarm(&gentim);
     LOG("Alarm initialized");
 
-    tos::launch(tos::alloc_stack, [&] {
-        using namespace std::chrono_literals;
-        while (true) {
-            tos::this_thread::sleep_for(gentimalarm, 1s);
-            LOG("Tick!");
-        }
-    });
-
     tos::raspi3::system_timer timer(ic);
 
     tos::alarm alarm(&timer);
     auto erased = tos::erase_alarm(&alarm);
     global::alarm = erased.get();
 
-    tos::launch(tos::alloc_stack, usb_task);
-
-    using namespace std::chrono_literals;
-
-    dump_tables();
-
-    auto& self = *tos::self();
-    svc_on_demand_interrupt odi;
-    auto trampoline = tos::make_interrupt_trampoline(odi);
-
-    LOG("Trampoline setup complete");
+    tos::launch(tos::alloc_stack, [&] {
+        using namespace std::chrono_literals;
+        while (true) {
+            tos::this_thread::sleep_for(gentimalarm, 10ms);
+            LOG("Tick!");
+        }
+    });
 
     tos::launch(thread_stack, [&] {
         using namespace std::chrono_literals;
@@ -505,6 +514,100 @@ void raspi_main() {
             LOG("Tick");
         }
     });
+
+    tos::launch(tos::alloc_stack, usb_task);
+
+    using namespace std::chrono_literals;
+
+    auto& level0_table = tos::aarch64::get_current_translation_table();
+
+    dump_table(level0_table);
+
+    auto op_res = tos::aarch64::allocate_region(
+        level0_table,
+        tos::segment{{4096, 4096 * 5}, tos::permissions::read_write},
+        tos::user_accessible::no,
+        nullptr);
+    if (!op_res) {
+        LOG_ERROR("Could not allocate ...");
+    }
+
+    op_res = tos::aarch64::mark_resident(
+        level0_table,
+        tos::segment{{4096, 4096 * 5}, tos::permissions::read_write},
+        tos::memory_types::normal,
+        (void*)4096);
+    if (!op_res) {
+        LOG_ERROR("Could not mark resident ...");
+    }
+
+    tos::aarch64::tlb_invalidate_all();
+
+    LOG("Ready");
+
+    auto palloc = new (reinterpret_cast<void*>(4096)) tos::physical_page_allocator(1024);
+
+    {
+        tos::raspi3::property_channel_tags_builder builder;
+        auto buf = builder.add(0x10005, {0, 0}).end();
+        tos::raspi3::property_channel property;
+        if (!property.transaction(buf)) {
+            tos::debug::panic("Can't get ARM Memory");
+        }
+
+        LOG("ARM Base:", (void*)buf[0]);
+        LOG("Len:", (void*)buf[1]);
+    }
+
+    {
+        tos::raspi3::property_channel_tags_builder builder;
+        auto buf = builder.add(0x10006, {0, 0}).end();
+        tos::raspi3::property_channel property;
+        if (!property.transaction(buf)) {
+            tos::debug::panic("Can't get VC Memory");
+        }
+
+        LOG("VC Base:", (void*)buf[0]);
+        LOG("Len:", (void*)buf[1]);
+    }
+
+    palloc->mark_unavailable({0, 4096});
+    auto p = palloc->allocate(1);
+
+    LOG("Allocated:", p.get());
+    LOG("Address of page:", palloc->address_of(*p));
+
+    op_res = tos::aarch64::allocate_region(
+        level0_table,
+        tos::segment{{(uintptr_t)palloc->address_of(*p), 4096},
+                     tos::permissions::read_write},
+        tos::user_accessible::no,
+        nullptr);
+    if (!op_res) {
+        LOG_ERROR("Could not allocate ...");
+    }
+
+    op_res = tos::aarch64::mark_resident(
+        level0_table,
+        tos::segment{{(uintptr_t)palloc->address_of(*p), 4096},
+                     tos::permissions::read_write},
+        tos::memory_types::normal,
+        palloc->address_of(*p));
+    if (!op_res) {
+        LOG_ERROR("Could not mark resident ...");
+    }
+
+    tos::aarch64::tlb_invalidate_all();
+
+    (*(int*)palloc->address_of(*p)) = 42;
+
+    dump_table(level0_table);
+
+    auto& self = *tos::self();
+    svc_on_demand_interrupt odi;
+    auto trampoline = tos::make_interrupt_trampoline(odi);
+
+    LOG("Trampoline setup complete");
 
     tos::launch(tos::alloc_stack, [&] {
         while (true) {
@@ -517,7 +620,6 @@ void raspi_main() {
     tos::intrusive_list<tos::job> runnable;
 
     auto svc_handler_ = [&](int svnum, tos::cur_arch::exception::stack_frame_t&) {
-        tos::kern::disable_interrupts();
         trampoline->switch_to(self);
     };
 
@@ -530,10 +632,30 @@ void raspi_main() {
         tos::swap_context(*tos::self(), self, tos::int_ctx{});
     };
 
+    struct current_impl : tos::services::current {
+        tos::services::handle<tos::services::address_space> get_address_space() override {
+            return {-1};
+        }
+
+        tos::services::handle<tos::services::thread> get_thread_handle() override {
+            return {42};
+        }
+    };
+
+    serv_host.register_service(
+        lidl::make_erased_procedure_runner<tos::services::current>(),
+        std::make_unique<current_impl>());
+
+    serv_host.register_service(
+        lidl::make_erased_procedure_runner<tos::services::current>(),
+        std::make_unique<current_impl>());
+
     struct user_context : tos::static_context<> {
         tos::aarch64::exception::svc_handler_t m_svc_handler;
         std::optional<tos::aarch64::exception::fault_variant> m_fault;
         tos::kern::tcb* m_scheduler;
+        tos::aarch64::translation_table* m_trans_table;
+        tos::aarch64::translation_table* m_old;
 
         user_context(tos::aarch64::exception::svc_handler_t svc_handler,
                      tos::kern::tcb& scheduler)
@@ -545,9 +667,11 @@ void raspi_main() {
             m_old_fault_handler = tos::aarch64::exception::set_fault_handler(
                 tos::mem_function_ref<&user_context::fault>(*this));
             m_old_svc_handler = tos::aarch64::exception::set_svc_handler(m_svc_handler);
+            m_old = &tos::aarch64::set_current_translation_table(*m_trans_table);
         }
 
         void switch_out() override {
+            tos::aarch64::set_current_translation_table(*m_old);
             tos::aarch64::exception::set_fault_handler(m_old_fault_handler);
             tos::aarch64::exception::set_svc_handler(m_old_svc_handler);
         }
@@ -565,11 +689,49 @@ void raspi_main() {
 
     user_context user_ctx{tos::aarch64::exception::svc_handler_t(svc_handler_), self};
 
+    LOG("Allocating page table for user space");
+    auto mem = tos::aarch64::recursive_table_clone(level0_table, *palloc);
+    if (!mem) {
+        LOG_ERROR("Could not create page table for user space");
+        return;
+    }
+    user_ctx.m_trans_table = force_get(mem);
+    tos::aarch64::traverse_table_entries(
+        *user_ctx.m_trans_table,
+        [](const tos::memory_range& range, tos::aarch64::table_entry& entry) {
+            auto perms = tos::aarch64::translate_permissions(entry);
+            if (tos::util::is_flag_set(perms, tos::permissions::write)) {
+                LOG("Making [",
+                    (void*)range.base,
+                    ",",
+                    (void*)range.end(),
+                    "] inaccessible");
+                entry.allow_user(false);
+            }
+            if (tos::contains(range, reinterpret_cast<uintptr_t>(&el0_stack)) ||
+                tos::contains(
+                    range, reinterpret_cast<uintptr_t>(&el0_stack) + sizeof(el0_stack) - 1) ||
+                tos::contains(
+                    range, reinterpret_cast<uintptr_t>(&el0_stack) + sizeof(el0_stack))) {
+                LOG("Allowing access to stack [",
+                    (void*)range.base,
+                    ",",
+                    (void*)range.end(),
+                    "]");
+                entry.allow_user(true);
+            }
+        });
+    dump_table(*user_ctx.m_trans_table);
+
     auto& tsk = tos::launch(tos::alloc_stack, [&] { switch_to_el0(); });
     tsk.set_context(user_ctx);
 
     tos::kern::suspend_self(tos::int_guard{});
+
     LOG("User-kernel switch works!");
+    tsk.get_context().switch_out();
+    self.get_context().switch_in();
+
     tos::aarch64::exception::set_svc_handler(
         tos::aarch64::exception::svc_handler_t([](auto...) {}));
     runnable.push_back(tsk);
@@ -578,7 +740,6 @@ void raspi_main() {
 
     while (true) {
         if (!runnable.empty()) {
-//            LOG("Will sched");
             auto& front = static_cast<tos::kern::tcb&>(runnable.front());
             runnable.pop_front();
             odi([&](auto&&...) {
@@ -609,7 +770,7 @@ void raspi_main() {
                            *user_ctx.m_fault);
             } else if (svframe) {
                 for (auto& reg : svframe->gpr) {
-//                    LOG((void*)reg);
+                    //                    LOG((void*)reg);
                 }
 
                 int channel = svframe->gpr[0];
@@ -620,7 +781,7 @@ void raspi_main() {
                 tos::span<uint8_t> reqmem{ptr, len};
                 tos::span<uint8_t> resmem{res_ptr, res_len};
 
-//                LOG("Got call on channel", channel);
+                //                LOG("Got call on channel", channel);
 
                 auto s = serv_host.get_service(channel);
                 if (!s) {
@@ -629,7 +790,7 @@ void raspi_main() {
                 } else {
                     auto [serv, runner] = force_get(s);
 
-//                    LOG("Buffer:", reqmem);
+                    //                    LOG("Buffer:", reqmem);
                     lidl::message_builder mb(resmem);
                     runner(*serv, reqmem, mb);
                     svframe->gpr[0] = mb.size();
