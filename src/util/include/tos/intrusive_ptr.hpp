@@ -172,6 +172,10 @@ public:
         delete channel;
     }
 
+    RefCntT reference_count() const {
+        return m_refcnt;
+    }
+
 private:
     RefCntT m_refcnt;
 };
