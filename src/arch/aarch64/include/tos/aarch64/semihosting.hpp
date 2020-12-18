@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <tos/aarch64/assembly.hpp>
+#include <tos/compiler.hpp>
 #include <tos/span.hpp>
 
 namespace tos::aarch64 {
@@ -25,6 +26,12 @@ public:
 
     static void write0(const char* data) {
         perform_call(0x04, reinterpret_cast<uint64_t>(data));
+    }
+
+    [[noreturn]] static void exit(uint64_t code) {
+        uint64_t args[2] = {0x20026, code};
+        perform_call(0x18, reinterpret_cast<uint64_t>(&args));
+        TOS_UNREACHABLE();
     }
 
 private:
