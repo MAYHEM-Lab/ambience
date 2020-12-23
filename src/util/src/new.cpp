@@ -46,6 +46,11 @@ void operator delete[](void* pt, size_t) {
     }
 }
 
+void operator delete(void* pt, std::align_val_t) {
+}
+void operator delete[](void* pt, std::align_val_t) {
+}
+
 void* operator new(size_t sz, std::align_val_t align) {
     if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
         auto res = alloc->allocator->allocate(sz);
