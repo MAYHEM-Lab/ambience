@@ -88,7 +88,7 @@ private:
         return ERR_OK;
     }
 
-    err_t output(pbuf* p, const ip4_addr_t* ipaddr) {
+    err_t output(pbuf* p, [[maybe_unused]] const ip4_addr_t* ipaddr) {
         LOG_TRACE("output", p->len, "bytes");
         // pbuf_ref(p);
         // return m_if.input(p, &m_if);
