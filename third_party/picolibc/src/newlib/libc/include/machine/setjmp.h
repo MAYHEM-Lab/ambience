@@ -399,6 +399,20 @@ _BEGIN_STD_C
 #endif
 #endif
 
+#ifdef __XTENSA__
+#if __XTENSA_WINDOWED_ABI__
+
+#define _JBLEN		17
+
+#else
+
+// CALL0 ABI
+/* a[0-1], a[12-15] */
+#define _JBLEN		6
+
+#endif
+#endif
+
 #ifdef _JBLEN
 #ifdef _JBTYPE
 typedef	_JBTYPE jmp_buf[_JBLEN];

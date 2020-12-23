@@ -3,4 +3,4 @@
 #define REENTRANT_SYSCALLS_PROVIDED 1
 #define __SINGLE_THREAD__
 #define HAVE_ASSERT_FUNC
-#define TINY_STDIO 
+//#define TINY_STDIO
