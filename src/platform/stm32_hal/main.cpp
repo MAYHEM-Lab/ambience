@@ -306,7 +306,14 @@ extern "C" void SVC_Handler() {
     tos::arm::exception::out_svc_handler();
 }
 
-int main() {
+extern "C" {
+extern void (*start_ctors[])();
+extern void (*end_ctors[])();
+}
+
+extern "C" int main() {
+    std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
+
     HAL_Init();
     SystemClock_Config();
     // NVIC_DisableIRQ(SysTick_IRQn);

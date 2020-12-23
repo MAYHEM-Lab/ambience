@@ -64,10 +64,12 @@ SECTIONS
   } >FLASH
   .init_array :
   {
+    PROVIDE_HIDDEN (start_ctors = .);
     PROVIDE_HIDDEN (__init_array_start = .);
     KEEP (*(SORT(.init_array.*)))
     KEEP (*(.init_array*))
     PROVIDE_HIDDEN (__init_array_end = .);
+    PROVIDE_HIDDEN (end_ctors = .);
   } >FLASH
   .fini_array :
   {

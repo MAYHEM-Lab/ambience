@@ -92,8 +92,6 @@ LoopFillZerobss:
 
 /* Call the clock system intitialization function.*/
     bl  SystemInit
-/* Call static constructors */
-  bl __libc_init_array
 /* Call the application's entry point.*/
   //bl  main
   // Calling the crt0 'cold-start' entry point. There __libc_init_array is called
