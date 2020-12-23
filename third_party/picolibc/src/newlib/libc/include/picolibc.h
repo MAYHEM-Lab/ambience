@@ -1,0 +1,6 @@
+#define _WANT_REENT_SMALL 1
+#define _NANO_MALLOC 1
+#define REENTRANT_SYSCALLS_PROVIDED 1
+#define __SINGLE_THREAD__
+#define HAVE_ASSERT_FUNC
+#define TINY_STDIO 
