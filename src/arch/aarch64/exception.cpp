@@ -1,5 +1,7 @@
 #include <tos/aarch64/assembly.hpp>
 #include <tos/aarch64/exception.hpp>
+#include <tos/aarch64/mmu.hpp>
+#include <tos/aarch64/semihosting.hpp>
 #include <tos/debug/debug.hpp>
 #include <tos/debug/log.hpp>
 
@@ -11,7 +13,37 @@ int64_t _irq_exit_count;
 namespace tos::aarch64::exception {
 namespace {
 svc_handler_t _svc_handler{[](int, stack_frame_t&, void*) {}};
-fault_handler_t _fault_handler{[](const fault_variant&, stack_frame_t&, void*) {}};
+fault_handler_t _fault_handler{[](const fault_variant& fault, stack_frame_t&, void*) {
+    tos::aarch64::semihosting::write0("Unhandled fault!\n");
+    visit(make_overload(
+              [](const data_abort& abort) {
+                  tos::aarch64::semihosting::write0("Data abort!\n");
+                  tos::aarch64::semihosting::write0(
+                      tos::itoa(abort.data_addr, 16).data());
+                  tos::aarch64::semihosting::write0("\n");
+                  tos::aarch64::semihosting::write0(
+                      tos::itoa(abort.return_address, 16).data());
+                  tos::aarch64::semihosting::write0("\n");
+
+                  auto& pt = get_current_translation_table();
+                  auto entry_res = entry_for_address(pt, abort.data_addr);
+                  if (!entry_res) {
+                      switch (force_error(entry_res)) {
+                      case mmu_errors::not_allocated:
+                          tos::aarch64::semihosting::write0(
+                              "Address not allocated in virtual memory\n");
+                      }
+                      return;
+                  }
+                  auto entry = force_get(entry_res);
+                  if (!entry->valid()) {
+                      tos::aarch64::semihosting::write0("Address not resident\n");
+                  }
+              },
+              [](const auto&) { tos::aarch64::semihosting::write0("Unknown fault!\n"); }),
+          fault);
+    tos::aarch64::semihosting::exit(1);
+}};
 } // namespace
 
 svc_handler_t set_svc_handler(svc_handler_t handler) {
@@ -34,7 +66,11 @@ data_abort analyze_data_abort(uint64_t esr, stack_frame_t* frame) {
 
     if (!isv) {
         return data_abort{
-            {}, far, {}, {}, ISS,
+            {},
+            far,
+            {},
+            {},
+            ISS,
         };
     }
 
