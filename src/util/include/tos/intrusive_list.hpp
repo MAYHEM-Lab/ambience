@@ -88,9 +88,9 @@ public:
     const intrusive_list_iterator operator--(int);
     intrusive_list_iterator& operator--();
 
-    bool operator!=(const intrusive_list_iterator&);
+    bool operator!=(const intrusive_list_iterator&) const;
 
-    bool operator==(const intrusive_list_iterator& rhs) {
+    bool operator==(const intrusive_list_iterator& rhs) const {
         return !(*this != rhs);
     }
 
@@ -486,7 +486,8 @@ intrusive_list_iterator<T, Access>& intrusive_list_iterator<T, Access>::operator
 }
 
 template<class T, class Access>
-bool intrusive_list_iterator<T, Access>::operator!=(const intrusive_list_iterator& rhs) {
+bool intrusive_list_iterator<T, Access>::operator!=(
+    const intrusive_list_iterator& rhs) const {
     return m_curr != rhs.m_curr;
 }
 } // namespace tos
