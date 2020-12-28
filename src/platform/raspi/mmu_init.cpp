@@ -132,6 +132,10 @@ void mmu_init() {
         if (contains(tos::default_segments::rodata(), page << 21)) {
             l2s[page].readonly(true).noexec(true);
         }
+
+        if (contains(tos::default_segments::bss(), page << 21)) {
+            l2s[page].noexec(true);
+        }
     }
     // identity L3
     for (int r = 0; r < 512; r++) {
@@ -165,6 +169,10 @@ void mmu_init() {
 
         if (contains(tos::default_segments::rodata(), tos::aarch64::page_to_address(r))) {
             l3s[r].readonly(true).noexec(true);
+        }
+
+        if (contains(tos::default_segments::bss(), tos::aarch64::page_to_address(r))) {
+            l3s[r].noexec(true);
         }
     }
 
