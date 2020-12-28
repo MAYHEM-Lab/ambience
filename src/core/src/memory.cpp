@@ -70,7 +70,7 @@ physical_memory_backing::create_mapping(const segment& vm_segment,
 }
 
 physical_page_allocator::physical_page_allocator(size_t num_pages)
-    : m_num_pages{num_pages} {
+    : m_num_pages{num_pages}, m_remaining{num_pages} {
     for (auto& page : get_table()) {
         new (&page) physical_page();
     }
@@ -85,6 +85,7 @@ intrusive_ptr<physical_page> physical_page_allocator::allocate(int count, int al
         return nullptr;
     for (auto& page : get_table()) {
         if (page.free()) {
+            m_remaining -= 1;
             return intrusive_ptr<physical_page> (&page);
         }
     }
@@ -102,7 +103,10 @@ int physical_page_allocator::page_num(const physical_page& page) const {
 void physical_page_allocator::mark_unavailable(const memory_range& len) {
     auto begin_num = align_nearest_down_pow2(len.base, 4096) / 4096;
     auto end_num = align_nearest_up_pow2(len.end(), 4096) / 4096;
+    begin_num = std::min(m_num_pages, begin_num);
+    end_num = std::min(m_num_pages, end_num);
     for (int i = begin_num; i < end_num; ++i) {
+        m_remaining -= 1;
         intrusive_ref(&get_table()[i]);
     }
 }

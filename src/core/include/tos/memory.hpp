@@ -95,6 +95,15 @@ public:
     physical_page* info(int32_t page_num);
     physical_page* info(void* ptr);
 
+
+    static constexpr size_t size_for_pages(size_t num_pages) {
+        return sizeof(physical_page_allocator) + num_pages * sizeof(physical_page);
+    }
+
+    size_t remaining_page_count() const {
+        return m_remaining;
+    }
+
 private:
     span<physical_page> get_table() {
         return {m_table, m_num_pages};
@@ -103,6 +112,8 @@ private:
     span<const physical_page> get_table() const {
         return {m_table, m_num_pages};
     }
+
+    size_t m_remaining;
 
     size_t m_num_pages;
     physical_page m_table[];
@@ -127,7 +138,8 @@ enum class memory_types
     device = 2
 };
 
-enum class user_accessible {
+enum class user_accessible
+{
     no,
     yes
 };
