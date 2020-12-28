@@ -547,6 +547,17 @@ void raspi_main() {
 
     auto palloc = new (reinterpret_cast<void*>(4096)) tos::physical_page_allocator(1024);
 
+
+    tos::aarch64::traverse_table_entries(
+        level0_table, [&](tos::memory_range range, tos::aarch64::table_entry& entry) {
+          LOG("Making [",
+              (void*)range.base,
+              ",",
+              (void*)range.end(),
+              "] unavailable");
+
+          palloc->mark_unavailable(range);
+        });
     {
         tos::raspi3::property_channel_tags_builder builder;
         auto buf = builder.add(0x10005, {0, 0}).end();
