@@ -33,6 +33,7 @@ add_library(
 
 target_compile_features(tos_util_core PUBLIC cxx_std_17)
 target_link_libraries(tos_util_core PUBLIC tos::libcxx tos_memory)
+target_compile_definitions(tos_util_core PUBLIC TOS_DEFAULT_STACK_SIZE=${TOS_DEF_STACK})
 
 add_library(
   tos_util src/stub.cpp src/expected.cpp include/tos/expected.hpp src/new.cpp include/tos/fixed_fifo.hpp
