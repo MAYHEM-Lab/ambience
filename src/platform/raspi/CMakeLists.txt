@@ -10,6 +10,5 @@ add_library(raspi_impl impl.cpp boot.S exceptions.S newlib_stubs.cpp mmu_init.cp
 target_include_directories(raspi_impl PUBLIC include)
 target_link_libraries(raspi_impl PUBLIC raspi_core tos_jobs raspi3_drivers)
 target_link_libraries(raspi_impl PUBLIC "-T${CMAKE_CURRENT_SOURCE_DIR}/linker.ld")
-target_link_options(raspi_impl PUBLIC -ffreestanding -nostdlib)
-target_link_libraries(raspi_impl PUBLIC "-Wl,--start-group -lgcc -lm -lc -lg -lstdc++ -lsupc++ -Wl,--end-group -Wl,--undefined=_read")
+#target_link_libraries(raspi_impl PUBLIC "-Wl,--start-group -lgcc -lm -lc -lg -lstdc++ -lsupc++ -Wl,--end-group -Wl,--undefined=_read")
 set_target_properties(raspi_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)
