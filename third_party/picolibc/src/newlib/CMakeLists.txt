@@ -17,6 +17,7 @@ message(STATUS "${LIMITS_DIR}")
 add_library(picolibc "")
 target_compile_options(picolibc PUBLIC -I${FLOAT_DIR})
 target_compile_options(picolibc PUBLIC -I${LIMITS_DIR})
+target_compile_options(picolibc PUBLIC -Wno-macro-redefined)
 
 target_compile_options(picolibc PUBLIC -nostdlib -nostdinc)
 target_compile_options(picolibc PRIVATE -fno-builtin)
