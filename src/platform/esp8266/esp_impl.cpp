@@ -10,7 +10,7 @@ extern "C" {
 
 #include <mem.h>
 #include <user_interface.h>
-#include <xtensa/config/core-isa.h>
+#include <machine/core-isa.h>
 }
 
 #include <lwip/timers.h>
