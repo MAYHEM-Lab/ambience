@@ -1,7 +1,9 @@
-#include <tos/scheduler.hpp>
-#include <string_view>
 #include <algorithm>
+#include <string_view>
+#include <tos/scheduler.hpp>
 #include <tos/span.hpp>
+#include <tos/stack_storage.hpp>
+#include <tos/x86_64/idt.hpp>
 
 extern void tos_main();
 
@@ -109,12 +111,37 @@ private:
 };
 } // namespace tos::x86
 
+namespace {
+using namespace tos::x86_64;
+
+[[gnu::interrupt]]
+void breakpoint_handler(interrupt_stack_frame_t* stack_frame) {
+
+}
+
+interrupt_descriptor_table idt;
+
+tos::expected<void, idt_error> idt_setup() {
+    idt.breakpoint = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(breakpoint_handler));
+
+    asm volatile("lidt %0": : "m"(idt));
+    return {};
+}
+
+tos::stack_storage<4096 * 8> main_stack{};
+}
+
 extern "C" {
 extern void (*start_ctors[])(void);
 extern void (*end_ctors[])(void);
 
+
 [[gnu::section(".text.entry")]]
 int _start() {
+//    set_stack_ptr(reinterpret_cast<char*>(&main_stack));
+//    idt_setup();
+//    return 1;
+
     tos::x86::text_vga vga;
     vga.clear();
     return 3;
