@@ -1,6 +1,11 @@
 project(tos)
 
-add_subdirectory(arch/${TOS_DRIVERS})
+if (DEFINED TOS_DRIVERS)
+    add_subdirectory(arch/${TOS_DRIVERS})
+else()
+    message(WARN "No driver specified!")
+endif()
+
 
 add_library(tos_drivers include/common/driver_base.hpp src/stub.cpp)
 target_link_libraries(tos_drivers PUBLIC tos_util_core tos_arch_core tos_ft tos_debug)
