@@ -1,9 +1,14 @@
 #include <algorithm>
+#include <cmath>
 #include <string_view>
+#include <tos/print.hpp>
 #include <tos/scheduler.hpp>
+#include <tos/self_pointing.hpp>
 #include <tos/span.hpp>
 #include <tos/stack_storage.hpp>
+#include <tos/x86_64/assembly.hpp>
 #include <tos/x86_64/idt.hpp>
+#include <tos/memory.hpp>
 
 extern void tos_main();
 
@@ -114,37 +119,226 @@ private:
 namespace {
 using namespace tos::x86_64;
 
-[[gnu::interrupt]]
-void breakpoint_handler(interrupt_stack_frame_t* stack_frame) {
-
+[[gnu::interrupt]] void breakpoint_handler(interrupt_stack_frame_t* stack_frame) {
 }
 
 interrupt_descriptor_table idt;
 
-tos::expected<void, idt_error> idt_setup() {
-    idt.breakpoint = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(breakpoint_handler));
+struct [[gnu::packed]] {
+    uint16_t limits;
+    uint64_t base;
+} idt_thing;
 
-    asm volatile("lidt %0": : "m"(idt));
+
+tos::expected<void, idt_error> idt_setup() {
+    idt.breakpoint =
+        EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(breakpoint_handler));
+
+    idt_thing.base = reinterpret_cast<uint64_t>(&idt);
+    idt_thing.limits = sizeof idt;
+    asm volatile("lidt %0" : : "m"(idt_thing));
     return {};
 }
 
 tos::stack_storage<4096 * 8> main_stack{};
+} // namespace
+
+namespace tos::x86_64 {
+struct port {
+    constexpr port(uint16_t port_addr)
+        : m_port{port_addr} {
+    }
+
+    void outb(uint8_t b) {
+        asm volatile("outb %0, %1" : : "a"(b), "Nd"(m_port));
+    }
+
+    inline uint8_t inb() {
+        uint8_t ret;
+        asm volatile("inb %1, %0" : "=a"(ret) : "Nd"(m_port));
+        return ret;
+    }
+
+    void outw(uint16_t w) {
+        asm volatile("outw %0, %1" : : "a"(w), "Nd"(m_port));
+    }
+
+    void outl(uint32_t l) {
+        asm volatile("outl %0, %1" : : "a"(l), "Nd"(m_port));
+    }
+
+private:
+    uint16_t m_port;
+};
+
+struct uart_16550 : tos::self_pointing<uart_16550> {
+public:
+    static expected<uart_16550, nullptr_t> open(uint16_t base_port = 0x3F8) {
+        auto res = uart_16550();
+        res.m_base_port = base_port;
+        res.int_en().outb(0);
+        res.line_ctrl().outb(0x80); // Enable DLAB, maps 0 and 1 registers to divisor
+
+        res.div_lo().outb(3); // 38400 baud
+        res.div_hi().outb(0);
+
+        res.line_ctrl().outb(0x03);  // 8 bits, no parity, one stop bit
+        res.fifo_ctrl().outb(0xc7);  // Enable FIFO, clear them, with 14-byte threshold
+        res.modem_ctrl().outb(0x0b); // IRQs enabled, RTS/DSR set
+
+        res.modem_ctrl().outb(0x1e);
+
+        res.data().outb(0xf6);
+
+        if (res.data().inb() != 0xf6) {
+            return unexpected(nullptr);
+        }
+
+        res.modem_ctrl().outb(0x0f);
+
+        return res;
+    }
+
+    void write(uint8_t byte) {
+        data().outb(byte);
+    }
+
+    int write(span<const uint8_t> data) {
+        for (auto c : data) {
+            this->data().outb(c);
+        }
+        return data.size();
+    }
+
+private:
+    port data() const {
+        return {m_base_port};
+    }
+    port int_en() const {
+        return port(m_base_port + 1);
+    }
+
+    port div_lo() const {
+        return port(m_base_port);
+    }
+
+    port div_hi() const {
+        return port(m_base_port + 1);
+    }
+
+    port fifo_ctrl() const {
+        return port(m_base_port + 2);
+    }
+    port line_ctrl() const {
+        return port(m_base_port + 3);
+    }
+    port modem_ctrl() const {
+        return port(m_base_port + 4);
+    }
+    port line_sts() const {
+        return port(m_base_port + 5);
+    }
+
+    uint16_t m_base_port;
+};
+} // namespace tos::x86_64
+
+namespace {
+NO_INLINE
+void enable_avx() {
+    using namespace tos::x86_64;
+
+    auto cr4 = read_cr4();
+    cr4 |= (1 << 14);
+    write_cr4(cr4);
 }
+
+NO_INLINE
+void enable_xsave() {
+    using namespace tos::x86_64;
+
+    auto cr4 = read_cr4();
+    cr4 |= (1 << 18);
+    write_cr4(cr4);
+
+    auto r0 = xgetbv(0);
+    //    r0 |= 0x3;
+    //    xsetbv(0, r0);
+}
+
+NO_INLINE
+void enable_fpu() {
+    using namespace tos::x86_64;
+
+    auto cr0 = read_cr0();
+    cr0 |= (1 << 1);
+    cr0 &= ~(1 << 2);
+    cr0 &= ~(1 << 3); // Task switched, without this, we would get an exception at first
+    // the first FPU usage
+    cr0 |= (1 << 5);
+    write_cr0(cr0);
+
+    asm volatile("finit");
+}
+
+NO_INLINE
+void enable_sse() {
+    /*
+        clear the CR0.EM bit (bit 2) [ CR0 &= ~(1 << 2) ]
+        set the CR0.MP bit (bit 1) [ CR0 |= (1 << 1) ]
+        set the CR4.OSFXSR bit (bit 9) [ CR4 |= (1 << 9) ]
+        set the CR4.OSXMMEXCPT bit (bit 10) [ CR4 |= (1 << 10) ]
+     */
+    using namespace tos::x86_64;
+
+    auto cr4 = read_cr4();
+    cr4 |= (1 << 9) | (1 << 10);
+    write_cr4(cr4);
+}
+} // namespace
+
 
 extern "C" {
 extern void (*start_ctors[])(void);
 extern void (*end_ctors[])(void);
 
+[[noreturn]] [[gnu::section(".text.entry")]] int _start() {
+    set_stack_ptr(reinterpret_cast<char*>(&main_stack));
+    //    return 1;
 
-[[gnu::section(".text.entry")]]
-int _start() {
-//    set_stack_ptr(reinterpret_cast<char*>(&main_stack));
-//    idt_setup();
-//    return 1;
+    auto serial_res = uart_16550::open();
+    if (!serial_res) {
+        while (true)
+            ;
+    }
+
+    auto& serial = force_get(serial_res);
+    tos::println(serial, "foo");
+    //    serial->write(raw_cast(tos::span<const char>("fo"o")));
+    //    serial->write(raw_cast(tos::span<const char>("\n\r")));
 
     tos::x86::text_vga vga;
     vga.clear();
-    return 3;
+    vga.write("Yolo from x64\n\r");
+
+    tos::println(serial, "Enabling FPU");
+    enable_fpu();
+    tos::println(serial, "FPU Enabled");
+
+    tos::println(serial, "Enabling SSE");
+    enable_sse();
+    tos::println(serial, "SSE Enabled");
+
+    auto bss = tos::default_segments::bss();
+    auto bss_start = reinterpret_cast<char*>(bss.base);
+    auto bss_end = reinterpret_cast<char*>(bss.end());
+
+    std::fill(bss_start, bss_end, 0);
+    tos::println(serial, "BSS Zeroed");
+
+    tos::println(serial, "Setting up IDT");
+    idt_setup();
+    tos::println(serial, "IDT Set up");
 
     vga.write("Booted\n\r");
     std::for_each(start_ctors, end_ctors, [](auto x) { x(); });

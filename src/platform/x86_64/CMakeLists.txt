@@ -9,5 +9,5 @@ target_include_directories(x86_64_core PUBLIC include)
 
 add_library(x86_64_impl impl.cpp)
 target_link_libraries(x86_64_impl PUBLIC "-T${CMAKE_CURRENT_SOURCE_DIR}/linker.ld")
-target_link_libraries(x86_64_impl PUBLIC x86_64_core tos_jobs tos::libcxx tos_util_core)
+target_link_libraries(x86_64_impl PUBLIC x86_64_core tos_jobs tos::libcxx tos_util_core tos_print)
 target_compile_options(x86_64_impl PRIVATE -mno-mmx -mno-sse -mno-sse2)

@@ -10,6 +10,12 @@ SECTIONS
         KEEP(*(.text.entry))
         *(.text*)
         *(.text.*)
+        . = ALIGN(4096);
+    }
+
+   .rodata : AT(ADDR(.rodata) - KERNEL_VMA)
+   {
+        _rodata = .;
         *(.rodata*)
         *(.rodata.*)
         start_ctors = .;
@@ -17,7 +23,7 @@ SECTIONS
         *(.ctors.*)
         end_ctors = .;
         . = ALIGN(4096);
-    }
+   }
 
    .data : AT(ADDR(.data) - KERNEL_VMA)
    {
@@ -27,13 +33,7 @@ SECTIONS
         . = ALIGN(4096);
    }
 
-   .eh_frame : AT(ADDR(.eh_frame) - KERNEL_VMA)
-   {
-       _ehframe = .;
-       *(.eh_frame)
-        . = ALIGN(4096);
-   }
-
+   __bss_start = .;
    .bss : AT(ADDR(.bss) - KERNEL_VMA)
    {
        _bss = .;
@@ -48,6 +48,7 @@ SECTIONS
         *(COMMON)
        . = ALIGN(4096);
    }
+   __bss_end = .;
 
    _end = .;
 
