@@ -16,6 +16,11 @@ function(default_include_dirs)
 
     foreach (PATH ${DIR_LIST})
         string(STRIP ${PATH} PATH)
+        if (${PATH} MATCHES "c\\+\\+")
+            # If a default include dir includes c++ in it, it's likely the standard C++ library headers and they are often
+            # just consist of #include_next <...>, which we do not want at all so filter them out.
+            continue()
+        endif()
         list(APPEND FINAL_DIR_LIST ${PATH})
     endforeach()
 
