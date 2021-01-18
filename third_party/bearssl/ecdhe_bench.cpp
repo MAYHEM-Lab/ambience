@@ -9,7 +9,7 @@ extern "C" {
 #include <tos/ubench/state.hpp>
 
 namespace {
-void BM_DHE(tos::bench::any_state& state) {
+void BM_BRSSL_DHE(tos::bench::any_state& state) {
     uint8_t base[] = {2};
 
     uint8_t exp[] = {1, 2, 3, 4, 1, 2, 3, 4};
@@ -63,7 +63,29 @@ void BM_DHE(tos::bench::any_state& state) {
     }
 }
 
-void BM_ECDHE(tos::bench::any_state& state) {
+void BM_BRSSL_HMAC_SHA256(tos::bench::any_state& state) {
+    auto& hash = br_sha256_vtable;
+
+    uint8_t key[] = "sekret";
+
+
+    for (auto _ : state) {
+        br_hmac_key_context key_ctx;
+        br_hmac_key_init(&key_ctx, &hash, key, sizeof key);
+
+        br_hmac_context hmac_ctx;
+        br_hmac_init(&hmac_ctx, &key_ctx, 0);
+        char buf[] = "hello world";
+
+        br_hmac_update(&hmac_ctx, buf, sizeof buf);
+
+        uint8_t res[32];
+        br_hmac_out(&hmac_ctx, res);
+        tos::debug::do_not_optimize(res);
+    }
+}
+
+void BM_BRSSL_ECDHE(tos::bench::any_state& state) {
     uint8_t exp[] = {1, 2, 3, 4, 1, 2, 3, 4};
     uint8_t exp2[] = {4, 3, 2, 1, 4, 3, 2, 1};
     auto& ec = br_ec_c25519_m31;
@@ -76,7 +98,7 @@ void BM_ECDHE(tos::bench::any_state& state) {
     }
 }
 
-void BM_ECDSA(tos::bench::any_state& state) {
+void BM_BRSSL_ECDSA(tos::bench::any_state& state) {
     auto& ec = br_ec_p256_m31;
 
     unsigned char key[32] = {1, 2, 3, 4};
@@ -97,7 +119,8 @@ void BM_ECDSA(tos::bench::any_state& state) {
     }
 }
 
-//BENCHMARK(BM_DHE);
-BENCHMARK(BM_ECDHE);
-BENCHMARK(BM_ECDSA);
+//BENCHMARK(BM_BRSSL_DHE);
+BENCHMARK(BM_BRSSL_HMAC_SHA256);
+BENCHMARK(BM_BRSSL_ECDHE);
+BENCHMARK(BM_BRSSL_ECDSA);
 } // namespace
