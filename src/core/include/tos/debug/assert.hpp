@@ -9,3 +9,5 @@ namespace tos::debug {
      ::tos::debug::default_assert_handler("Assertion failed " #x))
 #define Expects(x) Assert(x)
 #define Ensures(x) Assert(x)
+
+#define AssertEq(expected, x) Assert(expected == x);
