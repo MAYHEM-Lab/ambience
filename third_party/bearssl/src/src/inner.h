@@ -498,7 +498,7 @@ br_enc16le(void *dst, unsigned x)
 #else
 	unsigned char *buf;
 
-	buf = dst;
+	buf = (unsigned char*)dst;
 	buf[0] = (unsigned char)x;
 	buf[1] = (unsigned char)(x >> 8);
 #endif
@@ -512,7 +512,7 @@ br_enc16be(void *dst, unsigned x)
 #else
 	unsigned char *buf;
 
-	buf = dst;
+	buf = (unsigned char*)dst;
 	buf[0] = (unsigned char)(x >> 8);
 	buf[1] = (unsigned char)x;
 #endif
@@ -526,7 +526,7 @@ br_dec16le(const void *src)
 #else
 	const unsigned char *buf;
 
-	buf = src;
+	buf =  (const unsigned char*)src;
 	return (unsigned)buf[0] | ((unsigned)buf[1] << 8);
 #endif
 }
@@ -539,7 +539,7 @@ br_dec16be(const void *src)
 #else
 	const unsigned char *buf;
 
-	buf = src;
+	buf = (const unsigned char*)src;
 	return ((unsigned)buf[0] << 8) | (unsigned)buf[1];
 #endif
 }
@@ -552,7 +552,7 @@ br_enc32le(void *dst, uint32_t x)
 #else
 	unsigned char *buf;
 
-	buf = dst;
+	buf = (unsigned char*)dst;
 	buf[0] = (unsigned char)x;
 	buf[1] = (unsigned char)(x >> 8);
 	buf[2] = (unsigned char)(x >> 16);
@@ -568,7 +568,7 @@ br_enc32be(void *dst, uint32_t x)
 #else
 	unsigned char *buf;
 
-	buf = dst;
+	buf = (unsigned char*)dst;
 	buf[0] = (unsigned char)(x >> 24);
 	buf[1] = (unsigned char)(x >> 16);
 	buf[2] = (unsigned char)(x >> 8);
@@ -584,7 +584,7 @@ br_dec32le(const void *src)
 #else
 	const unsigned char *buf;
 
-	buf = src;
+	buf = (const unsigned char*)src;
 	return (uint32_t)buf[0]
 		| ((uint32_t)buf[1] << 8)
 		| ((uint32_t)buf[2] << 16)
@@ -600,7 +600,7 @@ br_dec32be(const void *src)
 #else
 	const unsigned char *buf;
 
-	buf = src;
+	buf = (const unsigned char*)src;
 	return ((uint32_t)buf[0] << 24)
 		| ((uint32_t)buf[1] << 16)
 		| ((uint32_t)buf[2] << 8)
@@ -616,7 +616,7 @@ br_enc64le(void *dst, uint64_t x)
 #else
 	unsigned char *buf;
 
-	buf = dst;
+	buf = (unsigned char*)dst;
 	br_enc32le(buf, (uint32_t)x);
 	br_enc32le(buf + 4, (uint32_t)(x >> 32));
 #endif
@@ -630,7 +630,7 @@ br_enc64be(void *dst, uint64_t x)
 #else
 	unsigned char *buf;
 
-	buf = dst;
+	buf = (unsigned char*)dst;
 	br_enc32be(buf, (uint32_t)(x >> 32));
 	br_enc32be(buf + 4, (uint32_t)x);
 #endif
@@ -644,7 +644,7 @@ br_dec64le(const void *src)
 #else
 	const unsigned char *buf;
 
-	buf = src;
+	buf = (const unsigned char*)src;
 	return (uint64_t)br_dec32le(buf)
 		| ((uint64_t)br_dec32le(buf + 4) << 32);
 #endif
@@ -658,7 +658,7 @@ br_dec64be(const void *src)
 #else
 	const unsigned char *buf;
 
-	buf = src;
+	buf = (const unsigned char*)src;
 	return ((uint64_t)br_dec32be(buf) << 32)
 		| (uint64_t)br_dec32be(buf + 4);
 #endif
