@@ -124,3 +124,8 @@ if (${NRF52_SOFTDEV} MATCHES "S132")
 endif ()
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/mbr/headers)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/common)
+
+
+add_library(cc310_benchmark cc310_benchmark.cpp)
+target_link_libraries(cc310_benchmark PUBLIC nrf_cc310 ubench arch_drivers)
+add_benchmark(cc310_benchmark)
