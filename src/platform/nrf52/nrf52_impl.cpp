@@ -33,6 +33,7 @@ extern "C" void BusFault_Handler() {
 }
 
 extern "C" [[gnu::weak]] void SVC_Handler() {
+    tos::arm::exception::out_svc_handler();
 }
 
 int main() {
@@ -43,6 +44,12 @@ int main() {
     NVIC_EnableIRQ(UsageFault_IRQn);
     NVIC_SetPriority(UsageFault_IRQn, 0);
     SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk;
+
+    NVIC_EnableIRQ(BusFault_IRQn);
+    NVIC_SetPriority(BusFault_IRQn, 0);
+    SCB->SHCSR |= SCB_SHCSR_BUSFAULTENA_Msk;
+
+    SCB->SCR |= SCB_SCR_SEVONPEND_Msk;
 
     tos_main();
 
