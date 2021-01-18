@@ -327,12 +327,6 @@ Default_Handler:
     .set    \handler, Default_Handler
     .endm
 
-    .weak   CryptoCell_Handler
-    .type   CryptoCell_Handler, %function
-CryptoCell_Handler:
-    b       .
-    .size   CryptoCell_Handler, . - CryptoCell_Handler
-
     IRQ  POWER_CLOCK_IRQHandler
     IRQ  RADIO_IRQHandler
     IRQ  UARTE0_UART0_IRQHandler
