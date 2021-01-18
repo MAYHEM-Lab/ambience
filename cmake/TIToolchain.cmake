@@ -1,5 +1,9 @@
 include(ArmToolchain)
 
+set(CMAKE_ASM_COMPILER_TARGET "armv7-none-eabi")
+set(CMAKE_CXX_COMPILER_TARGET "armv7-none-eabi")
+set(CMAKE_C_COMPILER_TARGET "armv7-none-eabi")
+
 set(TOS_EXTRA_FLAGS "-mcpu=${TOS_CPU_ARCH} -march=armv7e-m -mthumb -fno-builtin -fshort-enums -g3 -Dgcc -DNORTOS_SUPPORT")
 set(TOS_EXTRA_FLAGS "${TOS_EXTRA_FLAGS} -nostartfiles -mabi=aapcs ${COMPILE_FLAGS} -eresetISR -DDeviceFamily_CC3220")
 
