@@ -36,9 +36,7 @@ void BM_CC310_AES_CTR(bench::any_state& state) {
     constexpr uint8_t key[16] = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd'};
     constexpr uint8_t iv[16] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
-    LOG("Initializing");
     auto encrypt = force_get(tos::nrf52::cc310::aes_ctr::make(key, iv));
-    LOG("Initialized");
     for (auto _ : state) {
         for (int i = 0; i < 4; ++i) {
             auto res = encrypt.encrypt_block(tos::span(data).slice(i * 16, 16));
