@@ -69,15 +69,12 @@ aes_ctr::aes_ctr(span<const uint8_t> key, span<const uint8_t> iv) {
     }
     switch (key.size()) {
     case 128 / 8:
-        LOG_TRACE("Using AES-128");
         m_params.aes.keySize = CryptoCC32XX_AesKeySize::CryptoCC32XX_AES_KEY_SIZE_128BIT;
         break;
     case 192 / 8:
-        LOG_TRACE("Using AES-192");
         m_params.aes.keySize = CryptoCC32XX_AesKeySize::CryptoCC32XX_AES_KEY_SIZE_192BIT;
         break;
     case 256 / 8:
-        LOG_TRACE("Using AES-256");
         m_params.aes.keySize = CryptoCC32XX_AesKeySize::CryptoCC32XX_AES_KEY_SIZE_256BIT;
         break;
     default:

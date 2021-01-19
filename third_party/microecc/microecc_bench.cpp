@@ -90,7 +90,6 @@ void BM_UECC_ECDSA_Sign(tos::bench::any_state& state) {
             uECC_sign(private1, hash.data(), hash.size(), signature, curve);
         tos::debug::do_not_optimize(signature);
     }
-    LOG("Bye");
 }
 
 BENCHMARK(BM_EMSHA_HMAC);
