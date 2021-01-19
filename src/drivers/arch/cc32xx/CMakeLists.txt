@@ -66,3 +66,8 @@ target_link_libraries(cc32xx_drivers
         )
 
 add_library(arch_drivers ALIAS cc32xx_drivers)
+
+add_library(cc32xx_crpyto_bench cc32xx_crpyto_bench.cpp)
+target_link_libraries(cc32xx_crpyto_bench PUBLIC cc32xx_drivers ubench)
+add_benchmark(cc32xx_crpyto_bench)
+set_target_properties(cc32xx_crpyto_bench PROPERTIES CXX_EXTENSIONS OFF)
