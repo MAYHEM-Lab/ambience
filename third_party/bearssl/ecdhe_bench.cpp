@@ -3,6 +3,7 @@ extern "C" {
 }
 
 #include <bearssl_ec.h>
+#include <bearssl_block.h>
 #include <tos/debug/debug.hpp>
 #include <tos/memory/free_list.hpp>
 #include <tos/ubench/bench.hpp>
@@ -119,8 +120,28 @@ void BM_BRSSL_ECDSA(tos::bench::any_state& state) {
     }
 }
 
+void BM_BRSSL_AES_CTR(tos::bench::any_state& state) {
+    uint8_t data[64] = "foobar";
+
+    constexpr uint8_t key[16] = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd'};
+    uint8_t iv[16] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+
+    br_aes_ct_ctr_keys keys;
+    br_aes_ct_ctr_init(&keys, key, sizeof key);
+
+    for (auto _ : state) {
+        uint32_t cc = 0x12345678;
+        for (int i = 0; i < 4; ++i) {
+            auto d = tos::span(data).slice(i * 16, 16);
+            cc = br_aes_ct_ctr_run(&keys, iv, cc, d.data(), d.size());
+            tos::debug::do_not_optimize(data);
+        }
+    }
+}
+
 //BENCHMARK(BM_BRSSL_DHE);
 BENCHMARK(BM_BRSSL_HMAC_SHA256);
 BENCHMARK(BM_BRSSL_ECDHE);
 BENCHMARK(BM_BRSSL_ECDSA);
+BENCHMARK(BM_BRSSL_AES_CTR);
 } // namespace
