@@ -66,9 +66,6 @@ void BM_CC310_ECDHE(bench::any_state& state) {
                          17, 18, 19, 20, 21, 22, 1, 24, 25, 26, 27, 28, 29, 30, 31, 32};
 
     auto gen_res = CRYS_ECMONT_SeedKeyPair(pub, &pubsz, priva, &privasz, privb, sizeof privb, &tmp);
-    LOG(gen_res, tos::span(pub).slice(0, pubsz), pubsz);
-    auto res = CRYS_ECMONT_ScalarmultBase(pub2, &pub2sz, priva, sizeof priva, &tmp);
-    LOG(res, tos::span(pub2).slice(0, pub2sz));
 
     for (auto _ : state) {
         auto res = CRYS_ECMONT_ScalarmultBase(pub2, &pub2sz, priva, sizeof priva, &tmp);
