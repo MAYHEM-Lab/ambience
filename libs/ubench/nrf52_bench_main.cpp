@@ -1,11 +1,11 @@
 #include <arch/drivers.hpp>
+#include <tos/arm/core.hpp>
+#include <tos/board.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/clock_adapter.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/ft.hpp>
 #include <tos/ubench/bench.hpp>
-#include <tos/board.hpp>
-#include <tos/arm/core.hpp>
 
 int ftbl[33] = {0,    1,    1,    2,    2,    4,    5,     8,     11,    16,    22,
                 32,   45,   64,   90,   128,  181,  256,   362,   512,   724,   1024,
@@ -67,15 +67,21 @@ void bench_main() {
     // auto clock = tos::erase_clock(cyccnt_clock());
     auto clock = tos::erase_clock(&clk);
 
+    using namespace tos::tos_literals;
+    tos::nrf52::gpio g;
+    auto power_pin = 43_pin;
+    g->set_pin_mode(power_pin, tos::pin_mode::out);
+    g->write(power_pin, tos::digital::low);
+
     tos::bench::any_bench benchmark(&clock);
     auto bench_and_print = [&](const auto& name, const auto& fn) {
-      tos::debug::log("Running", name);
-      // g->write(power_pin, tos::digital::high);
-      auto [dur, iters, sums, squares] = benchmark.do_benchmark(fn);
-      auto mean = sums / iters;
-      auto stdev = fisqrt(squares / iters - mean * mean);
-      // g->write(power_pin, tos::digital::low);
-      tos::debug::log(name, ":", dur.count(), iters, int(stdev), sums, squares);
+        tos::debug::log("Running", name);
+        g->write(power_pin, tos::digital::high);
+        auto [dur, iters, sums, squares] = benchmark.do_benchmark(fn);
+        auto mean = sums / iters;
+        auto stdev = fisqrt(squares / iters - mean * mean);
+        g->write(power_pin, tos::digital::low);
+        tos::debug::log(name, ":", dur.count(), iters, int(stdev), sums, squares);
     };
 
     tos::bench::run_global_benchmarks(bench_and_print);
