@@ -92,6 +92,31 @@ void BM_UECC_ECDSA_Sign(tos::bench::any_state& state) {
     }
 }
 
+void BM_UECC_ECDSA_Verify(tos::bench::any_state& state) {
+    auto curve = uECC_secp256r1();
+
+    uint8_t private1[32];
+
+    uint8_t public1[64];
+
+    auto res = uECC_make_key(public1, private1, curve);
+
+    caps::emsha::hasher hasher;
+    char buf[] = "hello world";
+
+    auto hash = hasher(tos::raw_cast<uint8_t>(tos::span(buf)));
+    uint8_t signature[64];
+    auto sign_res =
+        uECC_sign(private1, hash.data(), hash.size(), signature, curve);
+
+    for (auto _ : state) {
+        auto verify_res =
+            uECC_verify(public1, hash.data(), hash.size(), signature, curve);
+        tos::debug::do_not_optimize(&verify_res);
+    }
+}
+
 BENCHMARK(BM_EMSHA_HMAC);
 BENCHMARK(BM_UECC_ECDSA_Sign);
+BENCHMARK(BM_UECC_ECDSA_Verify);
 }
