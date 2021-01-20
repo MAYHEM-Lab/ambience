@@ -99,7 +99,8 @@ void BM_BRSSL_ECDHE(tos::bench::any_state& state) {
     }
 }
 
-void BM_BRSSL_ECDSA(tos::bench::any_state& state) {
+unsigned char sig[64];
+void BM_BRSSL_ECDSA_V(tos::bench::any_state& state) {
     auto& ec = br_ec_p256_m31;
 
     unsigned char key[32] = {1, 2, 3, 4};
@@ -109,13 +110,52 @@ void BM_BRSSL_ECDSA(tos::bench::any_state& state) {
     pk.x = key;
     pk.xlen = 32;
 
-    auto& hash = br_sha256_vtable;
+    unsigned char pubkey[64];
+    br_ec_public_key pubk;
+    br_ec_compute_pub(&ec, &pubk, pubkey, &pk);
+
+    auto& hash_class = br_sha256_vtable;
 
     unsigned char x[32] = {3, 4, 5, 6};
 
+    br_sha256_context ctx;
+    br_sha256_init(&ctx);
+    br_sha256_update(&ctx, x, 32);
+
+    unsigned char hash[32];
+    br_sha256_out(&ctx, hash);
+
     for (auto _ : state) {
-        unsigned char sig[32];
-        br_ecdsa_i31_sign_raw(&ec, &hash, x, &pk, sig);
+        auto ver_res = br_ecdsa_i31_vrfy_raw(&ec, hash, 32, &pubk, sig, 64);
+        LOG(bool(ver_res));
+        tos::debug::do_not_optimize(sig);
+    }
+}
+
+void BM_BRSSL_ECDSA_S(tos::bench::any_state& state) {
+    auto& ec = br_ec_p256_m31;
+
+    unsigned char key[32] = {1, 2, 3, 4};
+
+    br_ec_private_key pk;
+    pk.curve = BR_EC_secp256r1;
+    pk.x = key;
+    pk.xlen = 32;
+
+    auto& hash_class = br_sha256_vtable;
+
+    unsigned char x[32] = {3, 4, 5, 6};
+
+    br_sha256_context ctx;
+    br_sha256_init(&ctx);
+    br_sha256_update(&ctx, x, 32);
+
+    unsigned char hash[32];
+    br_sha256_out(&ctx, hash);
+
+    for (auto _ : state) {
+        auto len = br_ecdsa_i31_sign_raw(&ec, &hash_class, hash, &pk, sig);
+        LOG(len);
         tos::debug::do_not_optimize(sig);
     }
 }
@@ -142,6 +182,7 @@ void BM_BRSSL_AES_CTR(tos::bench::any_state& state) {
 //BENCHMARK(BM_BRSSL_DHE);
 BENCHMARK(BM_BRSSL_HMAC_SHA256);
 BENCHMARK(BM_BRSSL_ECDHE);
-BENCHMARK(BM_BRSSL_ECDSA);
+BENCHMARK(BM_BRSSL_ECDSA_S);
+BENCHMARK(BM_BRSSL_ECDSA_V);
 BENCHMARK(BM_BRSSL_AES_CTR);
 } // namespace
