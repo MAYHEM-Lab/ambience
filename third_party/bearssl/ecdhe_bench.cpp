@@ -114,8 +114,6 @@ void BM_BRSSL_ECDSA_V(tos::bench::any_state& state) {
     br_ec_public_key pubk;
     br_ec_compute_pub(&ec, &pubk, pubkey, &pk);
 
-    auto& hash_class = br_sha256_vtable;
-
     unsigned char x[32] = {3, 4, 5, 6};
 
     br_sha256_context ctx;
@@ -126,6 +124,7 @@ void BM_BRSSL_ECDSA_V(tos::bench::any_state& state) {
     br_sha256_out(&ctx, hash);
 
     for (auto _ : state) {
+        LOG(tos::span(hash), tos::span(sig));
         auto ver_res = br_ecdsa_i31_vrfy_raw(&ec, hash, 32, &pubk, sig, 64);
         LOG(bool(ver_res));
         tos::debug::do_not_optimize(sig);
@@ -155,6 +154,7 @@ void BM_BRSSL_ECDSA_S(tos::bench::any_state& state) {
 
     for (auto _ : state) {
         auto len = br_ecdsa_i31_sign_raw(&ec, &hash_class, hash, &pk, sig);
+        LOG(tos::span(hash), tos::span(sig));
         LOG(len);
         tos::debug::do_not_optimize(sig);
     }
