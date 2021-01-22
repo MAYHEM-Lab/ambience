@@ -2,8 +2,8 @@
 
 #include <array>
 #include <cstdint>
-#include <lidl/ptr.hpp>
-#include <lidl/traits.hpp>
+#include <lidlrt/ptr.hpp>
+#include <lidlrt/traits.hpp>
 
 namespace lidl {
 template<class T,

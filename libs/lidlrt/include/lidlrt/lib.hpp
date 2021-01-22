@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lidl/structure.hpp>
+#include <lidlrt/structure.hpp>
 #include <type_traits>
 #include <utility>
 #include <functional>

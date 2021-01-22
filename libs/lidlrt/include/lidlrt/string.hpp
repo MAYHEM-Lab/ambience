@@ -2,9 +2,9 @@
 
 #include "ptr.hpp"
 
-#include <lidl/buffer.hpp>
-#include <lidl/builder.hpp>
-#include <lidl/traits.hpp>
+#include <lidlrt/buffer.hpp>
+#include <lidlrt/builder.hpp>
+#include <lidlrt/traits.hpp>
 #include <string_view>
 
 namespace lidl {
@@ -18,7 +18,7 @@ public:
     string(string&&)      = delete;
 
 //    [[nodiscard]] std::string_view string_view() const {
-//        auto& raw = m_ptr.unsafe().get();
+//        auto& raw = m_cur_pos.unsafe().get();
 //        return raw.string_view();
 //    }
 
@@ -43,6 +43,9 @@ private:
 inline bool operator==(const string& left, const string& right) {
     return left.string_view() == right.string_view();
 }
+
+static_assert(sizeof(string) == 2);
+static_assert(alignof(string) == 2);
 
 template<>
 struct is_reference_type<string> : std::true_type {};

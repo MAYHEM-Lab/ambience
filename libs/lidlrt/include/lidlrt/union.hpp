@@ -1,7 +1,7 @@
 #pragma once
 
-#include <lidl/meta.hpp>
-#include <lidl/traits.hpp>
+#include <lidlrt/meta.hpp>
+#include <lidlrt/traits.hpp>
 
 namespace lidl {
 template<class T>

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <algorithm>
-#include <lidl/buffer.hpp>
-#include <lidl/ptr.hpp>
+#include <lidlrt/buffer.hpp>
+#include <lidlrt/ptr.hpp>
 
 namespace lidl {
 struct message_builder {

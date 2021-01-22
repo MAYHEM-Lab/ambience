@@ -1,7 +1,7 @@
 #pragma once
 
-#include <lidl/string.hpp>
-#include <lidl/vector.hpp>
+#include <lidlrt/string.hpp>
+#include <lidlrt/vector.hpp>
 
 namespace lidl::meta::detail {
 inline tos::span<const uint8_t> bounding_span(tos::span<const uint8_t> a) {

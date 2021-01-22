@@ -1,5 +1,5 @@
 #pragma once
-#include <lidl/traits.hpp>
+#include <lidlrt/traits.hpp>
 
 namespace lidl {
 template<class T, bool IsTReference = is_ptr<T>{} || is_reference_type<T>{}>
@@ -50,7 +50,7 @@ public:
 
     [[nodiscard]] size_t size() const {
         return m_len;
-        //        return m_ptr.get_offset() / sizeof(T);
+        //        return m_cur_pos.get_offset() / sizeof(T);
     }
 
 private:
