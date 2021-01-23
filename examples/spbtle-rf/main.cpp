@@ -7,7 +7,7 @@
 #include <arch/drivers.hpp>
 #include <common/ble/gatt.hpp>
 #include <tos/board.hpp>
-#include <lidl/service.hpp>
+#include <lidlrt/service.hpp>
 #include <service_generated.hpp>
 #include <tos/arm/assembly.hpp>
 #include <tos/components/allocator.hpp>

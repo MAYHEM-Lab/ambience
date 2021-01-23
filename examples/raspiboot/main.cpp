@@ -2,7 +2,7 @@
 #include <arch/drivers.hpp>
 #include <common/clock.hpp>
 #include <common/inet/tcp_ip.hpp>
-#include <lidl/service.hpp>
+#include <lidlrt/service.hpp>
 #include <lwip/init.h>
 #include <map>
 #include <tos/aarch64/exception.hpp>
