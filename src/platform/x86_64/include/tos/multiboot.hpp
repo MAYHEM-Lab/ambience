@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <tos/print.hpp>
 
 namespace tos::multiboot {
 enum class header_flags : uint32_t
@@ -151,6 +152,16 @@ struct info_t {
         };
     };
 };
+
+template<class OutStr>
+void print(OutStr& str, const info_t& info) {
+    using tos::print;
+    print(str,
+          (void*)&info,
+          (void*)info.flags,
+          (void*)info.mem_lower,
+          (void*)info.mem_upper);
+}
 
 inline const info_t* load_info;
 } // namespace tos::multiboot

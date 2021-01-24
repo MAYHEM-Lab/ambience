@@ -40,6 +40,11 @@ public:
         m_raw_entry = (m_raw_entry & ~page_base_mask) | (base & page_base_mask);
     }
 
+    page_entry& zero() {
+        m_raw_entry = 0;
+        return *this;
+    }
+
 private:
     uint64_t m_raw_entry;
 

@@ -4,6 +4,8 @@
 #include <tos/i386/assembly.hpp>
 #include <tos/i386/mmu.hpp>
 #include <tos/multiboot.hpp>
+#include <tos/print.hpp>
+#include <tos/self_pointing.hpp>
 #include <tos/span.hpp>
 
 extern "C" {
@@ -31,7 +33,7 @@ enum class text_vga_color : uint8_t
     white = 15,
 };
 
-class text_vga {
+class text_vga : public tos::self_pointing<text_vga> {
 public:
     static constexpr size_t width = 80;
     static constexpr size_t heigth = 25;
@@ -119,17 +121,17 @@ alignas(4096) std::array<tos::i386::page_entry, 512> p2_table;
 
 extern "C" {
 void set_up_page_tables() {
-    p4_table[0].present(true);
+    p4_table[0].zero().present(true);
     p4_table[0].writeable(true);
     p4_table[0].page_base(reinterpret_cast<uintptr_t>(&p3_table));
 
-    p3_table[0].present(true);
+    p3_table[0].zero().present(true);
     p3_table[0].writeable(true);
     p3_table[0].page_base(reinterpret_cast<uintptr_t>(&p2_table));
 
     // 1G identity mapped
     for (int i = 0; i < 512; ++i) {
-        p2_table[i].page_base(i * (1 << 21));
+        p2_table[i].zero().page_base(i * (1 << 21));
         p2_table[i].present(true);
         p2_table[i].writeable(true);
         p2_table[i].huge_page(true);
@@ -181,17 +183,20 @@ struct [[gnu::packed]] {
 
 [[noreturn]] [[gnu::used]] void init(uint32_t signature,
                                      const tos::multiboot::info_t* info) {
-    std::for_each(start_ctors, end_ctors, [](auto x) { x(); });
     tos::x86::text_vga vga;
+    if (signature == 0x2BADB002) {
+        tos::multiboot::load_info = info;
+        vga.write("Loaded from multiboot\n\r");
+        tos::println(vga, *info);
+    }
+    std::for_each(start_ctors, end_ctors, [](auto x) { x(); });
     vga.write("Hello\n\r");
     set_up_page_tables();
 
     enable_paging();
     vga.write("Switched to long mode\n\r");
-    if (signature == 0x2BADB002) {
-        tos::multiboot::load_info = info;
-        vga.write("Loaded from multiboot\n\r");
-    }
+
+    while (true);
 
     vga.write("Setting up GDT\n\r");
     setup_gdt();
@@ -209,7 +214,6 @@ struct [[gnu::packed]] {
     //    enable_avx();
     //    vga.write("Enabled AVX\n\r");
 
-
     if (reinterpret_cast<uint64_t>(&program) != 4096) {
         // hmm
         vga.write("Bad program position!\n\r");
@@ -222,6 +226,7 @@ struct [[gnu::packed]] {
     auto entry = reinterpret_cast<entry_t>(&program[0]);
 
     asm volatile("lgdt %0" : : "m"(gdt));
+    asm volatile("mov %0, %%edi": : "r"(info));
     asm volatile("jmp $0x8,$0x1000");
     auto res = entry();
     TOS_UNREACHABLE();

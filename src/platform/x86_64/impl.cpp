@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <cmath>
 #include <string_view>
+#include <tos/memory.hpp>
+#include <tos/multiboot.hpp>
 #include <tos/print.hpp>
 #include <tos/scheduler.hpp>
 #include <tos/self_pointing.hpp>
@@ -8,7 +10,6 @@
 #include <tos/stack_storage.hpp>
 #include <tos/x86_64/assembly.hpp>
 #include <tos/x86_64/idt.hpp>
-#include <tos/memory.hpp>
 
 extern void tos_main();
 
@@ -297,14 +298,13 @@ void enable_sse() {
 }
 } // namespace
 
-
 extern "C" {
 extern void (*start_ctors[])(void);
 extern void (*end_ctors[])(void);
 
-[[noreturn]] [[gnu::section(".text.entry")]] int _start() {
+[[noreturn]] [[gnu::section(".text.entry")]] int
+_start(const tos::multiboot::info_t* info) {
     set_stack_ptr(reinterpret_cast<char*>(&main_stack));
-    //    return 1;
 
     auto serial_res = uart_16550::open();
     if (!serial_res) {
@@ -321,6 +321,14 @@ extern void (*end_ctors[])(void);
     vga.clear();
     vga.write("Yolo from x64\n\r");
 
+    tos::println(serial, (void*)info);
+    tos::println(serial, (void*)info->flags);
+    tos::println(serial, info->drives_length);
+    tos::println(serial, (void*)info->cmdline);
+    tos::println(serial, strnlen(info->cmdline, 100));
+    tos::println(serial, (void*)info->boot_loader_name);
+    tos::println(serial, strnlen(info->boot_loader_name, 100));
+
     tos::println(serial, "Enabling FPU");
     enable_fpu();
     tos::println(serial, "FPU Enabled");
@@ -333,7 +341,13 @@ extern void (*end_ctors[])(void);
     auto bss_start = reinterpret_cast<char*>(bss.base);
     auto bss_end = reinterpret_cast<char*>(bss.end());
 
-    std::fill(bss_start, bss_end, 0);
+    tos::println(serial, "Zeroing BSS", (void*)bss_start, (void*)bss_end);
+    for (auto it = bss_start; it != bss_end; ++it) {
+//        tos::println(serial, "write", (void*)it);
+        *it = 0;
+    }
+
+    //    std::fill(bss_start, bss_end, 0);
     tos::println(serial, "BSS Zeroed");
 
     tos::println(serial, "Setting up IDT");

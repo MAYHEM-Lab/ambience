@@ -4,10 +4,13 @@ SECTIONS
 {
     . = KERNEL_VMA;
 
+    .boot : {
+        KEEP(*(.multiboot))
+    }
+
     _code = .;
     .text : AT(ADDR(.text) - KERNEL_VMA)
     {
-        KEEP(*(.multiboot))
         *(.text*)
         *(.text.*)
         *(.rodata*)
@@ -17,12 +20,13 @@ SECTIONS
         *(.ctors.*)
         end_ctors = .;
         . = ALIGN(4096);
+       *(.to_load)
     }
+    . = ALIGN(4096 * 64);
 
    _data = .;
    .data : AT(ADDR(.data) - KERNEL_VMA)
    {
-        *(.to_load)
         *(.data*)
         *(.data.*)
         . = ALIGN(4096);
