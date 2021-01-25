@@ -120,7 +120,7 @@ private:
     }
 
     friend void up_many_isr(semaphore_base& s, CountT n) {
-        s.m_count += n;
+        s.m_count = s.m_count + n;
         s.m_wait.signal_n(n);
     }
 
@@ -156,7 +156,7 @@ template<class CountT>
 inline void semaphore_base<CountT>::down() & noexcept {
     detail::memory_barrier();
     tos::int_guard ig(__builtin_return_address(0));
-    --m_count;
+    m_count = m_count - 1;
     if (m_count < 0) {
         m_wait.wait(ig);
     }
@@ -200,7 +200,7 @@ sem_ret semaphore_base<CountT>::down(AlarmT& alarm,
 
 template<class CountT>
 ISR_AVAILABLE inline void semaphore_base<CountT>::up_isr() noexcept {
-    ++m_count;
+    m_count = m_count + 1;
     m_wait.signal_one();
 }
 
