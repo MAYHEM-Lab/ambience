@@ -29,8 +29,10 @@
 void dump_table(tos::aarch64::translation_table& table) {
     tos::aarch64::traverse_table_entries(
         table, [](tos::memory_range range, tos::aarch64::table_entry& entry) {
-            LOG("VirtAddress:", "[", (void*)(range.base), ",", (void*)(range.end()), ")");
-            LOG("PhysAddress:", (void*)tos::aarch64::page_to_address(entry.page_num()));
+            LOG_TRACE(
+                "VirtAddress:", "[", (void*)(range.base), ",", (void*)(range.end()), ")");
+            LOG_TRACE("PhysAddress:",
+                      (void*)tos::aarch64::page_to_address(entry.page_num()));
             char perm_string[4] = "R__";
             auto perms = tos::aarch64::translate_permissions(entry);
             if (tos::util::is_flag_set(perms, tos::permissions::write)) {
@@ -39,7 +41,7 @@ void dump_table(tos::aarch64::translation_table& table) {
             if (tos::util::is_flag_set(perms, tos::permissions::execute)) {
                 perm_string[2] = 'X';
             }
-            LOG("Perms:", perm_string, "User:", entry.allow_user());
+            LOG_TRACE("Perms:", perm_string, "User:", entry.allow_user());
         });
 }
 
@@ -70,6 +72,30 @@ lidlcall(int64_t channel, uint8_t* buf, int64_t len, uint8_t* res_buf, int64_t r
     return result;
 }
 
+
+int64_t zcpcall(int64_t channel, int proc_num, const void* args, void* ret) {
+    asm volatile(
+        "mov x0, %[channel]\n"
+        "mov x1, %[proc_num]\n"
+        "mov x2, %[args]\n"
+        "mov x3, %[ret]\n"
+        :
+        :
+        [channel] "r"(channel), [proc_num] "r"(proc_num), [args] "r"(args), [ret] "r"(ret)
+        : "x0", "x1", "x2", "x3");
+    tos::aarch64::svc2();
+    int64_t result;
+    asm volatile("mov %[result], x0" : [result] "=r"(result) : : "x0");
+    return result;
+}
+
+template<int ChannelId>
+struct zerocopy_svc_transport {
+    bool execute(int proc_num, const void* args, void* ret) {
+        return zcpcall(ChannelId, proc_num, args, ret);
+    }
+};
+
 template<int ChannelId>
 struct svc_transport {
     std::array<uint8_t, 256> reqbuf;
@@ -89,17 +115,68 @@ struct svc_transport {
     }
 };
 
+template<class>
+struct convert_types;
+
+template<class... Ts>
+struct convert_types<lidl::meta::list<Ts...>> {
+    using type = lidl::meta::list<decltype(&std::declval<Ts&>())...>;
+    using tuple_type = std::tuple<decltype(&std::declval<Ts&>())...>;
+};
+
+using zerocopy_fn_t = void (*)(lidl::service_base&, const void*, void*);
+
+template<class ServiceT, int ProcId>
+constexpr auto zerocopy_translator() -> zerocopy_fn_t {
+    return [](lidl::service_base& serv_base, const void* args, void* ret) {
+        auto& serv = static_cast<ServiceT&>(serv_base);
+        using ServDesc = lidl::service_descriptor<ServiceT>;
+        constexpr auto& proc_desc = std::get<ProcId>(ServDesc::procedures);
+        using ProcTraits = lidl::procedure_traits<decltype(proc_desc.function)>;
+        using ArgsTupleType =
+            typename convert_types<typename ProcTraits::param_types>::tuple_type;
+        using RetType = typename ProcTraits::return_type;
+
+        auto do_call = [&serv, ret](auto*... vals) {
+            //            LOG(*vals...);
+            constexpr auto& fn = proc_desc.function;
+            new (ret) RetType((serv.*fn)(*vals...));
+        };
+
+        auto& args_tuple = *static_cast<const ArgsTupleType*>(args);
+        std::apply(do_call, args_tuple);
+    };
+}
+
+template<class ServiceT, size_t... Is>
+constexpr zerocopy_fn_t vt[] = {zerocopy_translator<ServiceT, Is>()...};
+
+template<class ServiceT, size_t... Is>
+constexpr tos::span<const zerocopy_fn_t>
+do_make_zerocopy_vtable(std::index_sequence<Is...>) {
+    return tos::span<const zerocopy_fn_t>(vt<ServiceT, Is...>);
+}
+
+template<class ServiceT>
+constexpr tos::span<const zerocopy_fn_t> make_zerocopy_vtable() {
+    using ServDesc = lidl::service_descriptor<ServiceT>;
+    return do_make_zerocopy_vtable<ServiceT>(
+        std::make_index_sequence<std::tuple_size_v<decltype(ServDesc::procedures)>>{});
+}
+
+auto x = zerocopy_translator<tos::services::current, 1>();
+
 void el0_fn() {
     tos::aarch64::svc1();
 
-    auto remote = tos::services::remote_logger<svc_transport<1>>();
+    auto remote = tos::services::zerocopy_logger<zerocopy_svc_transport<1>>();
     tos::debug::lidl_sink snk(remote);
     tos::debug::detail::any_logger log(&snk);
     log.set_log_level(tos::debug::log_level::all);
     log.error("hello from user space");
 
-    auto current = tos::services::remote_current<svc_transport<3>>();
-    log.info(current.get_thread_handle().id());
+    auto current = tos::services::zerocopy_current<zerocopy_svc_transport<3>>();
+    log.info(current.get_thread_handle(1, "yo").id());
 
     /*auto our_addr_space = current.get_address_space();
 
@@ -376,57 +453,45 @@ enum class service_errors
     not_supported,
 };
 
-class any_service_host {
-public:
-    // Essentially a list of channels
-    // Channels are self identifying
-    // Dynamic service registration depends on the actual implementation
-
-    virtual auto register_service(lidl::erased_procedure_runner_t runner,
-                                  std::unique_ptr<lidl::service_base> serv)
-        -> tos::expected<int, service_errors> = 0;
-
-    virtual auto unregister_service(int channel_id)
-        -> tos::expected<void, service_errors> = 0;
-
-    virtual auto get_service(int channel_id)
-        -> tos::expected<std::pair<lidl::service_base*, lidl::erased_procedure_runner_t>,
-                         service_errors> = 0;
-
-    virtual ~any_service_host() = default;
+struct rt_dynamism {
+    lidl::erased_procedure_runner_t msg_runner;
+    tos::span<const zerocopy_fn_t> zerocopy_vtable;
 };
 
-class dynamic_service_host : public any_service_host {
+class dynamic_service_host {
 public:
-    auto register_service(lidl::erased_procedure_runner_t runner,
-                          std::unique_ptr<lidl::service_base> serv)
-        -> tos::expected<int, service_errors> override {
+    template<class BaseServT>
+    auto register_service(std::unique_ptr<std::common_type_t<BaseServT>>&& serv) {
+        return register_service(
+            rt_dynamism{lidl::make_erased_procedure_runner<BaseServT>(),
+                        make_zerocopy_vtable<BaseServT>()},
+            std::move(serv));
+    }
+
+    auto unregister_service(int channel_id) -> tos::expected<void, service_errors> {
+        return tos::unexpected(service_errors::not_supported);
+    }
+
+    auto get_service(int channel_id)
+        -> tos::expected<std::pair<lidl::service_base*, const rt_dynamism*>,
+                         service_errors> {
+        auto it = m_services.find(channel_id);
+        if (it == m_services.end()) {
+            return tos::unexpected(service_errors::not_found);
+        }
+        return std::make_pair(it->second.first.get(), &it->second.second);
+    }
+
+private:
+    auto register_service(rt_dynamism&& runner, std::unique_ptr<lidl::service_base> serv)
+        -> tos::expected<int, service_errors> {
         auto id = m_next_id++;
         m_services.emplace(id, std::make_pair(std::move(serv), runner));
         return id;
     }
 
-    auto unregister_service(int channel_id)
-        -> tos::expected<void, service_errors> override {
-        return tos::unexpected(service_errors::not_supported);
-    }
-
-    auto get_service(int channel_id)
-        -> tos::expected<std::pair<lidl::service_base*, lidl::erased_procedure_runner_t>,
-                         service_errors> override {
-        auto it = m_services.find(channel_id);
-        if (it == m_services.end()) {
-            return tos::unexpected(service_errors::not_found);
-        }
-        return std::make_pair(it->second.first.get(), it->second.second);
-    }
-
-private:
     int m_next_id = 1;
-    std::map<
-        int,
-        std::pair<std::unique_ptr<lidl::service_base>, lidl::erased_procedure_runner_t>>
-        m_services;
+    std::map<int, std::pair<std::unique_ptr<lidl::service_base>, rt_dynamism>> m_services;
 };
 
 class semihosting_output : public tos::self_pointing<semihosting_output> {
@@ -460,16 +525,15 @@ void raspi_main() {
     uart_ptr = &uart;
     uart.sync_write(tos::raw_cast(tos::span("Hello")));
     semihosting_output out;
-    tos::debug::serial_sink uart_sink(&out);
+    tos::debug::serial_sink uart_sink(&uart);
     tos::debug::detail::any_logger uart_log{&uart_sink};
+    uart_log.set_log_level(tos::debug::log_level::log);
     tos::debug::set_default_log(&uart_log);
 
     auto sink_service = std::make_unique<tos::debug::log_server>(uart_sink);
 
     dynamic_service_host serv_host;
-    serv_host.register_service(
-        lidl::make_erased_procedure_runner<tos::services::logger>(),
-        std::move(sink_service));
+    serv_host.register_service<tos::services::logger>(std::move(sink_service));
 
     LOG("Log init complete");
 
@@ -547,16 +611,12 @@ void raspi_main() {
 
     auto palloc = new (reinterpret_cast<void*>(4096)) tos::physical_page_allocator(1024);
 
-
     tos::aarch64::traverse_table_entries(
         level0_table, [&](tos::memory_range range, tos::aarch64::table_entry& entry) {
-          LOG("Making [",
-              (void*)range.base,
-              ",",
-              (void*)range.end(),
-              "] unavailable");
+            LOG_TRACE(
+                "Making [", (void*)range.base, ",", (void*)range.end(), "] unavailable");
 
-          palloc->mark_unavailable(range);
+            palloc->mark_unavailable(range);
         });
     {
         tos::raspi3::property_channel_tags_builder builder;
@@ -648,18 +708,14 @@ void raspi_main() {
             return {-1};
         }
 
-        tos::services::handle<tos::services::thread> get_thread_handle() override {
+        tos::services::handle<tos::services::thread>
+        get_thread_handle(const int32_t&, std::string_view) override {
             return {42};
         }
     };
 
-    serv_host.register_service(
-        lidl::make_erased_procedure_runner<tos::services::current>(),
-        std::make_unique<current_impl>());
-
-    serv_host.register_service(
-        lidl::make_erased_procedure_runner<tos::services::current>(),
-        std::make_unique<current_impl>());
+    serv_host.register_service<tos::services::current>(std::make_unique<current_impl>());
+    serv_host.register_service<tos::services::current>(std::make_unique<current_impl>());
 
     struct user_context : tos::static_context<> {
         tos::aarch64::exception::svc_handler_t m_svc_handler;
@@ -712,23 +768,24 @@ void raspi_main() {
         [](const tos::memory_range& range, tos::aarch64::table_entry& entry) {
             auto perms = tos::aarch64::translate_permissions(entry);
             if (tos::util::is_flag_set(perms, tos::permissions::write)) {
-                LOG("Making [",
-                    (void*)range.base,
-                    ",",
-                    (void*)range.end(),
-                    "] inaccessible");
+                LOG_TRACE("Making [",
+                          (void*)range.base,
+                          ",",
+                          (void*)range.end(),
+                          "] inaccessible");
                 entry.allow_user(false);
             }
             if (tos::contains(range, reinterpret_cast<uintptr_t>(&el0_stack)) ||
-                tos::contains(
-                    range, reinterpret_cast<uintptr_t>(&el0_stack) + sizeof(el0_stack) - 1) ||
+                tos::contains(range,
+                              reinterpret_cast<uintptr_t>(&el0_stack) +
+                                  sizeof(el0_stack) - 1) ||
                 tos::contains(
                     range, reinterpret_cast<uintptr_t>(&el0_stack) + sizeof(el0_stack))) {
-                LOG("Allowing access to stack [",
-                    (void*)range.base,
-                    ",",
-                    (void*)range.end(),
-                    "]");
+                LOG_TRACE("Allowing access to stack [",
+                          (void*)range.base,
+                          ",",
+                          (void*)range.end(),
+                          "]");
                 entry.allow_user(true);
             }
         });
@@ -780,19 +837,7 @@ void raspi_main() {
                                }),
                            *user_ctx.m_fault);
             } else if (svframe) {
-                for (auto& reg : svframe->gpr) {
-                    //                    LOG((void*)reg);
-                }
-
                 int channel = svframe->gpr[0];
-                auto ptr = reinterpret_cast<uint8_t*>(svframe->gpr[1]);
-                auto len = svframe->gpr[2];
-                auto res_ptr = reinterpret_cast<uint8_t*>(svframe->gpr[3]);
-                auto res_len = svframe->gpr[2];
-                tos::span<uint8_t> reqmem{ptr, len};
-                tos::span<uint8_t> resmem{res_ptr, res_len};
-
-                //                LOG("Got call on channel", channel);
 
                 auto s = serv_host.get_service(channel);
                 if (!s) {
@@ -801,10 +846,34 @@ void raspi_main() {
                 } else {
                     auto [serv, runner] = force_get(s);
 
-                    //                    LOG("Buffer:", reqmem);
-                    lidl::message_builder mb(resmem);
-                    runner(*serv, reqmem, mb);
-                    svframe->gpr[0] = mb.size();
+                    if (num == 1) {
+                        auto ptr = reinterpret_cast<uint8_t*>(svframe->gpr[1]);
+                        auto len = svframe->gpr[2];
+                        auto res_ptr = reinterpret_cast<uint8_t*>(svframe->gpr[3]);
+                        auto res_len = svframe->gpr[2];
+                        tos::span<uint8_t> reqmem{ptr, len};
+                        tos::span<uint8_t> resmem{res_ptr, res_len};
+
+                        lidl::message_builder mb(resmem);
+                        runner->msg_runner(*serv, reqmem, mb);
+                        svframe->gpr[0] = mb.size();
+                    } else if (num == 2) {
+                        int proc_num = svframe->gpr[1];
+                        auto args_tuple_ptr = reinterpret_cast<void*>(svframe->gpr[2]);
+                        auto res_ptr = reinterpret_cast<void*>(svframe->gpr[3]);
+
+//                        LOG("Got a zerocopy call");
+//                        LOG(channel, proc_num, args_tuple_ptr, res_ptr);
+
+                        if (proc_num >= runner->zerocopy_vtable.size()) {
+                            LOG("Bad procedure!");
+                            svframe->gpr[0] = -1;
+                        } else {
+                            auto fn = runner->zerocopy_vtable[proc_num];
+                            fn(*serv, args_tuple_ptr, res_ptr);
+                            svframe->gpr[0] = 0;
+                        }
+                    }
                 }
 
                 runnable.push_back(front);

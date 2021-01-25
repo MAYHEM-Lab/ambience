@@ -67,7 +67,9 @@ current:
         - name: handle
           parameters:
             - thread
-      parameters: []
+      parameters:
+        x: i32
+        y: string_view
 
 kernel:
   type: service

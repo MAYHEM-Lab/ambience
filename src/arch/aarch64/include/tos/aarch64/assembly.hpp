@@ -164,6 +164,10 @@ inline void svc1() {
     asm volatile ("svc #1");
 }
 
+inline void svc2() {
+    asm volatile ("svc #2");
+}
+
 inline void wfi() {
     asm volatile ("wfi");
 }
