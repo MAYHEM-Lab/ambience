@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <tos/intrusive_list.hpp>
 #include <tos/intrusive_ptr.hpp>
 #include <tos/span.hpp>
@@ -39,6 +40,18 @@ constexpr bool contains(const memory_range& big, const memory_range& small) {
 
 constexpr bool contains(const memory_range& range, uintptr_t addr) {
     return range.base <= addr && addr < range.end();
+}
+
+constexpr std::optional<memory_range> intersection(const memory_range& a,
+                                                   const memory_range& b) {
+    memory_range res{};
+    res.base = std::max(a.base, b.base);
+    auto end = std::min(a.end(), b.end());
+    if (end <= res.base) {
+        return {};
+    }
+    res.size = end - res.base;
+    return res;
 }
 
 enum class permissions : uint8_t
