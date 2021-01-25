@@ -16,7 +16,7 @@ extern int8_t disable_depth;
 extern bool should_enable;
 } // namespace global
 namespace kern {
-inline void do_disable_interrupts(void* ret_addr) {
+inline void do_disable_interrupts([[maybe_unused]] void* ret_addr) {
     tos::detail::memory_barrier();
     if (global::disable_depth == 0) {
         if (platform::interrupts_disabled()) {
@@ -36,7 +36,7 @@ inline void do_disable_interrupts(void* ret_addr) {
  *
  * Must be matched by a previous `disable_interrupts` call.
  */
-inline void do_enable_interrupts(void *ret_addr) {
+inline void do_enable_interrupts([[maybe_unused]] void *ret_addr) {
     tos::detail::memory_barrier();
     Assert(global::disable_depth > 0);
     global::disable_depth--;
