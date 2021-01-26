@@ -13,6 +13,34 @@
 
 extern void tos_main();
 
+namespace tos::x86_64 {
+struct port {
+    constexpr port(uint16_t port_addr)
+        : m_port{port_addr} {
+    }
+
+    void outb(uint8_t b) {
+        asm volatile("outb %0, %1" : : "a"(b), "Nd"(m_port));
+    }
+
+    inline uint8_t inb() {
+        uint8_t ret;
+        asm volatile("inb %1, %0" : "=a"(ret) : "Nd"(m_port));
+        return ret;
+    }
+
+    void outw(uint16_t w) {
+        asm volatile("outw %0, %1" : : "a"(w), "Nd"(m_port));
+    }
+
+    void outl(uint32_t l) {
+        asm volatile("outl %0, %1" : : "a"(l), "Nd"(m_port));
+    }
+
+private:
+    uint16_t m_port;
+};
+} // namespace tos::x86_64
 namespace tos::x86 {
 enum class text_vga_color : uint8_t
 {
@@ -121,6 +149,18 @@ namespace {
 using namespace tos::x86_64;
 
 [[gnu::interrupt]] void breakpoint_handler(interrupt_stack_frame_t* stack_frame) {
+    while (true)
+        ;
+}
+
+[[gnu::interrupt]] void double_fault_handler(interrupt_stack_frame_t* stack_frame,
+                                             unsigned long int err) {
+    while (true)
+        ;
+}
+
+[[gnu::interrupt]] void irq0_handler(interrupt_stack_frame_t* frame) {
+    port(0x20).outb(0x20);
 }
 
 interrupt_descriptor_table idt;
@@ -130,13 +170,39 @@ struct [[gnu::packed]] {
     uint64_t base;
 } idt_thing;
 
+struct [[gnu::packed]] {
+    uint16_t sz;
+    uint64_t ptr;
+} gdt_thing;
 
 tos::expected<void, idt_error> idt_setup() {
+    idt.debug = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(breakpoint_handler));
     idt.breakpoint =
         EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(breakpoint_handler));
-
+    idt.double_fault =
+        EXPECTED_TRY(idt_entry<exception_handler_t>::create(double_fault_handler));
+    idt.invalid_opcode =
+        EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(breakpoint_handler));
+    idt.page_fault =
+        EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(breakpoint_handler));
+    idt.general_protection_fault =
+        EXPECTED_TRY(idt_entry<exception_handler_t>::create(double_fault_handler));
+    idt.rest[12] = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(irq0_handler));
+    idt.rest[13] = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(irq0_handler));
+    
+    port(0x20).outb(0x11);
+    port(0xA0).outb(0x11);
+    port(0x21).outb(0x20);
+    port(0xA1).outb(40);
+    port(0x21).outb(0x04);
+    port(0xA1).outb(0x02);
+    port(0x21).outb(0x01);
+    port(0xA1).outb(0x01);
+    port(0x21).outb(0x0);
+    port(0xA1).outb(0x0);
+    
     idt_thing.base = reinterpret_cast<uint64_t>(&idt);
-    idt_thing.limits = sizeof idt;
+    idt_thing.limits = sizeof idt - 1;
     asm volatile("lidt %0" : : "m"(idt_thing));
     return {};
 }
@@ -145,33 +211,6 @@ tos::stack_storage<4096 * 8> main_stack{};
 } // namespace
 
 namespace tos::x86_64 {
-struct port {
-    constexpr port(uint16_t port_addr)
-        : m_port{port_addr} {
-    }
-
-    void outb(uint8_t b) {
-        asm volatile("outb %0, %1" : : "a"(b), "Nd"(m_port));
-    }
-
-    inline uint8_t inb() {
-        uint8_t ret;
-        asm volatile("inb %1, %0" : "=a"(ret) : "Nd"(m_port));
-        return ret;
-    }
-
-    void outw(uint16_t w) {
-        asm volatile("outw %0, %1" : : "a"(w), "Nd"(m_port));
-    }
-
-    void outl(uint32_t l) {
-        asm volatile("outl %0, %1" : : "a"(l), "Nd"(m_port));
-    }
-
-private:
-    uint16_t m_port;
-};
-
 struct uart_16550 : tos::self_pointing<uart_16550> {
 public:
     static expected<uart_16550, nullptr_t> open(uint16_t base_port = 0x3F8) {
@@ -302,9 +341,21 @@ extern "C" {
 extern void (*start_ctors[])(void);
 extern void (*end_ctors[])(void);
 
-[[noreturn]] [[gnu::section(".text.entry")]] int
+[[noreturn]] void _post_start(const tos::multiboot::info_t* info);
+
+[[noreturn]] [[gnu::section(".text.entry")]] void
 _start(const tos::multiboot::info_t* info) {
-    set_stack_ptr(reinterpret_cast<char*>(&main_stack));
+    set_stack_ptr(reinterpret_cast<char*>(&main_stack) + sizeof main_stack);
+    _post_start(info);
+}
+
+[[noreturn]] void _post_start(const tos::multiboot::info_t* info) {
+
+    asm volatile("mov %0, %%ds" : : "r"(0x10));
+    asm volatile("mov %0, %%es" : : "r"(0x10));
+    asm volatile("mov %0, %%fs" : : "r"(0x10));
+    asm volatile("mov %0, %%gs" : : "r"(0x10));
+    asm volatile("mov %0, %%ss" : : "r"(0x10));
 
     auto serial_res = uart_16550::open();
     if (!serial_res) {
@@ -324,10 +375,8 @@ _start(const tos::multiboot::info_t* info) {
     tos::println(serial, (void*)info);
     tos::println(serial, (void*)info->flags);
     tos::println(serial, info->drives_length);
-    tos::println(serial, (void*)info->cmdline);
-    tos::println(serial, strnlen(info->cmdline, 100));
-    tos::println(serial, (void*)info->boot_loader_name);
-    tos::println(serial, strnlen(info->boot_loader_name, 100));
+    tos::println(serial, "Bootloader:", (const char*)info->boot_loader_name);
+    tos::println(serial, "Command line:", (const char*)info->cmdline);
 
     tos::println(serial, "Enabling FPU");
     enable_fpu();
@@ -341,13 +390,17 @@ _start(const tos::multiboot::info_t* info) {
     auto bss_start = reinterpret_cast<char*>(bss.base);
     auto bss_end = reinterpret_cast<char*>(bss.end());
 
+    auto stack_region =
+        tos::memory_range{reinterpret_cast<uintptr_t>(&main_stack), sizeof main_stack};
+
     tos::println(serial, "Zeroing BSS", (void*)bss_start, (void*)bss_end);
     for (auto it = bss_start; it != bss_end; ++it) {
-//        tos::println(serial, "write", (void*)it);
+        if (tos::contains(stack_region, reinterpret_cast<uintptr_t>(it))) {
+            continue;
+        }
         *it = 0;
     }
 
-    //    std::fill(bss_start, bss_end, 0);
     tos::println(serial, "BSS Zeroed");
 
     tos::println(serial, "Setting up IDT");
@@ -355,13 +408,18 @@ _start(const tos::multiboot::info_t* info) {
     tos::println(serial, "IDT Set up");
 
     vga.write("Booted\n\r");
+    tos::println(serial, (void*)start_ctors, (void*)end_ctors);
     std::for_each(start_ctors, end_ctors, [](auto x) { x(); });
+    tos::println(serial, "Constructors ran", (int)tos::global::disable_depth);
+
+    tos::kern::enable_interrupts();
 
     tos_main();
 
     while (true) {
         {
             tos::int_guard ig;
+
             auto res = tos::global::sched.schedule(ig);
             if (res == tos::exit_reason::restart) {
             }
@@ -374,7 +432,5 @@ _start(const tos::multiboot::info_t* info) {
             }
         }
     }
-
-    return 42;
 }
 }
