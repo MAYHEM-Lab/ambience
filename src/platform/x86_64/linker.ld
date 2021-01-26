@@ -19,6 +19,8 @@ SECTIONS
         *(.rodata*)
         *(.rodata.*)
         start_ctors = .;
+        *(.init_array*)
+        *(.init_array.*)
         *(.ctors*)
         *(.ctors.*)
         end_ctors = .;
