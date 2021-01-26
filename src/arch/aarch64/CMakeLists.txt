@@ -11,4 +11,4 @@ add_library(arch_aarch64
 )
 target_include_directories(arch_aarch64 PUBLIC include)
 target_compile_features(arch_aarch64 PUBLIC cxx_std_20)
-target_link_libraries(arch_aarch64 PUBLIC tos_util_core tos_util)
+target_link_libraries(arch_aarch64 PUBLIC tos_util_core tos_util tos::libcxx)
