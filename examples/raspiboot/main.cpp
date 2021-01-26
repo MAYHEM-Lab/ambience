@@ -52,6 +52,7 @@ void dump_table(tos::aarch64::translation_table& table) {
     return x * fib(x - 1) * fib(x - 2);
 }
 
+NO_INLINE
 int64_t
 lidlcall(int64_t channel, uint8_t* buf, int64_t len, uint8_t* res_buf, int64_t res_len) {
     asm volatile("mov x0, %[channel]\n"
@@ -71,7 +72,6 @@ lidlcall(int64_t channel, uint8_t* buf, int64_t len, uint8_t* res_buf, int64_t r
     asm volatile("mov %[result], x0" : [result] "=r"(result) : : "x0");
     return result;
 }
-
 
 int64_t zcpcall(int64_t channel, int proc_num, const void* args, void* ret) {
     asm volatile(
@@ -96,10 +96,10 @@ struct zerocopy_svc_transport {
     }
 };
 
-template<int ChannelId>
+template<int ChannelId, size_t ResSize>
 struct svc_transport {
     std::array<uint8_t, 256> reqbuf;
-    std::array<uint8_t, 256> resbuf;
+    std::array<uint8_t, ResSize> resbuf;
 
     tos::span<uint8_t> get_buffer() {
         return reqbuf;
@@ -111,7 +111,7 @@ struct svc_transport {
         if (len <= 0) {
             return buf.slice(0, 0);
         }
-        return tos::span(resbuf).slice(0, len);
+        return tos::span<uint8_t>(resbuf).slice(0, len);
     }
 };
 
@@ -136,11 +136,20 @@ constexpr auto zerocopy_translator() -> zerocopy_fn_t {
         using ArgsTupleType =
             typename convert_types<typename ProcTraits::param_types>::tuple_type;
         using RetType = typename ProcTraits::return_type;
+        static constexpr bool is_ref = std::is_reference_v<RetType>;
+        using ActualRetType = std::conditional_t<is_ref,
+              std::add_pointer_t<std::remove_reference_t<RetType>>,
+              RetType>;
 
         auto do_call = [&serv, ret](auto*... vals) {
             //            LOG(*vals...);
             constexpr auto& fn = proc_desc.function;
-            new (ret) RetType((serv.*fn)(*vals...));
+            if constexpr (is_ref) {
+                auto& res = (serv.*fn)(*vals...);
+                new (ret) ActualRetType(&res);
+            } else {
+                new (ret) ActualRetType((serv.*fn)(*vals...));
+            }
         };
 
         auto& args_tuple = *static_cast<const ArgsTupleType*>(args);
@@ -178,18 +187,23 @@ void el0_fn() {
     auto current = tos::services::zerocopy_current<zerocopy_svc_transport<3>>();
     log.info(current.get_thread_handle(1, "yo").id());
 
-    /*auto our_addr_space = current.get_address_space();
+    auto our_addr_space = current.get_address_space();
 
-    auto vm = tos::services::remote_virtual_memory<svc_transport<2>>();
+    auto vm = tos::services::zerocopy_virtual_memory<zerocopy_svc_transport<4>>();
 
-    std::array<uint8_t, 128> buf;
+    std::array<uint8_t, 4096 * 4> buf;
     lidl::message_builder builder(buf);
+    log.info("Builder at", (void*)&builder);
+
     auto& regs = vm.get_regions(our_addr_space, builder);
+    log.info("Response at", (void*)&regs);
+
+    log.info("Have", regs.size(),"regions");
 
     for (auto& reg : regs) {
         log.info(
-            "Region [", reg.begin(), ",", reg.end(), ") with perms ", reg.permissions());
-    }*/
+            "Region [", (void*)reg.begin(), ",", (void*)reg.end(), ") with perms ", reg.permissions());
+    }
 
     int i = 0;
     while (true) {
@@ -197,7 +211,7 @@ void el0_fn() {
     }
 }
 
-alignas(4096) tos::stack_storage el0_stack;
+alignas(4096) tos::stack_storage<TOS_DEFAULT_STACK_SIZE * 2> el0_stack;
 
 void switch_to_el0() {
     tos::platform::disable_interrupts();
@@ -323,8 +337,6 @@ tos::expected<void, usb_errors> usb_task() {
 
     LOG("Link is up!");
 
-    auto ip = tos::parse_ipv4_address("192.168.0.250");
-    tos::mac_addr_t addr{{0xDE, 0xAD, 0xBE, 0xEF, 0x66, 0xFF}};
     LOG("Initialize lwip");
     lwip_init();
     tos::lwip::basic_interface interface(eth.get(),
@@ -535,7 +547,11 @@ void raspi_main() {
     dynamic_service_host serv_host;
     serv_host.register_service<tos::services::logger>(std::move(sink_service));
 
+    uart.sync_write(tos::raw_cast(tos::span("Sync writes work")));
+    uart.sync_write(tos::raw_cast(tos::span("Async writes don't work")));
+    uart.sync_write(tos::raw_cast(tos::span("Async writes don't work")));
     LOG("Log init complete");
+    uart.sync_write(tos::raw_cast(tos::span("wtf?")));
 
     LOG("Hello from tos");
 
@@ -766,6 +782,18 @@ void raspi_main() {
     tos::aarch64::traverse_table_entries(
         *user_ctx.m_trans_table,
         [](const tos::memory_range& range, tos::aarch64::table_entry& entry) {
+            if (tos::intersection(
+                    range,
+                    tos::memory_range{reinterpret_cast<uintptr_t>(&el0_stack),
+                                      sizeof(el0_stack)})) {
+                LOG("Allowing access to stack [",
+                    (void*)range.base,
+                    ",",
+                    (void*)range.end(),
+                    "]");
+                entry.allow_user(true);
+                return;
+            }
             auto perms = tos::aarch64::translate_permissions(entry);
             if (tos::util::is_flag_set(perms, tos::permissions::write)) {
                 LOG_TRACE("Making [",
@@ -791,6 +819,46 @@ void raspi_main() {
         });
     dump_table(*user_ctx.m_trans_table);
 
+    struct vmem : tos::services::virtual_memory {
+        tos::aarch64::translation_table* table;
+        vmem(tos::aarch64::translation_table& tbl)
+            : table(&tbl) {
+        }
+
+        const lidl::vector<tos::services::memory_region>&
+        get_regions(const tos::services::handle<tos::services::address_space>& vm,
+                    lidl::message_builder& response_builder) override {
+            LOG("Builder at", (void*)&response_builder);
+            int len = 0;
+            tos::aarch64::traverse_table_entries(
+                *table,
+                [&](const tos::memory_range& range, tos::aarch64::table_entry& entry) {
+                    ++len;
+                });
+            LOG("There are", len, "entries");
+            auto& res = lidl::create_vector_sized<tos::services::memory_region>(
+                response_builder, len);
+            int i = 0;
+            tos::aarch64::traverse_table_entries(
+                *table,
+                [&](const tos::memory_range& range, tos::aarch64::table_entry& entry) {
+                    res.span()[i++] = tos::services::memory_region(
+                        range.base,
+                        range.end(),
+                        tos::services::handle<tos::services::memory_object>{1},
+                        static_cast<int8_t>(tos::aarch64::translate_permissions(entry)));
+                });
+            LOG("Response at", (void*)&res);
+            return res;
+        }
+        bool map(const tos::services::memory_region& mem_obj) override {
+            return false;
+        }
+    };
+
+    serv_host.register_service<tos::services::virtual_memory>(
+        std::make_unique<vmem>(*user_ctx.m_trans_table));
+
     auto& tsk = tos::launch(tos::alloc_stack, [&] { switch_to_el0(); });
     tsk.set_context(user_ctx);
 
@@ -811,11 +879,13 @@ void raspi_main() {
             auto& front = static_cast<tos::kern::tcb&>(runnable.front());
             runnable.pop_front();
             odi([&](auto&&...) {
+                tos::aarch64::semihosting::write0("Switching to user space\n");
                 self.get_context().switch_out();
                 front.get_context().switch_in();
                 tos::swap_context(*tos::self(), front, tos::int_ctx{});
                 front.get_context().switch_out();
                 self.get_context().switch_in();
+                tos::aarch64::semihosting::write0("Back from user space\n");
             });
 
             if (user_ctx.m_fault) {
@@ -850,7 +920,7 @@ void raspi_main() {
                         auto ptr = reinterpret_cast<uint8_t*>(svframe->gpr[1]);
                         auto len = svframe->gpr[2];
                         auto res_ptr = reinterpret_cast<uint8_t*>(svframe->gpr[3]);
-                        auto res_len = svframe->gpr[2];
+                        auto res_len = svframe->gpr[4];
                         tos::span<uint8_t> reqmem{ptr, len};
                         tos::span<uint8_t> resmem{res_ptr, res_len};
 
