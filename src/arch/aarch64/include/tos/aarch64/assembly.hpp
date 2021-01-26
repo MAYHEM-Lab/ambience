@@ -26,8 +26,8 @@ inline void dsb() {
 
 // https://developer.arm.com/docs/ddi0595/d/aarch64-system-registers/currentel
 inline uint32_t get_execution_level() {
-    uint32_t el;
-    asm volatile("mrs %0, CurrentEL" : "=r"(el));
+    uint64_t el;
+    asm volatile("mrs %x0, CurrentEL" : "=r"(el));
     return (el >> 2) & 0b11;
 }
 
