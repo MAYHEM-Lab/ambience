@@ -163,7 +163,16 @@ extern uint8_t program[];
 
 extern "C" {
 
-uint64_t gdt_data[3];
+struct [[gnu::packed]] gdt_entry {
+    uint16_t limit_low;
+    uint16_t base_low;
+    uint8_t base_mid;
+    uint8_t access;
+    uint8_t opts_limit_mid;
+    uint8_t base_hi;
+};
+
+gdt_entry gdt_entry_data[3];
 
 struct [[gnu::packed]] {
     uint16_t sz;
@@ -171,14 +180,37 @@ struct [[gnu::packed]] {
 } gdt;
 
 [[gnu::noinline]] void setup_gdt() {
-    memset(&gdt_data, 0, sizeof(gdt_data));
+    memset(&gdt_entry_data, 0, sizeof(gdt_entry_data));
 
-    gdt_data[0] = 0x0000000000000000;
-    gdt_data[1] = 0x00209A0000000000;
-    gdt_data[2] = 0x0000920000000000;
+    gdt_entry_data[0] = {
+        .limit_low = 0xffff,
+        .base_low = 0,
+        .base_mid = 0,
+        .access = 0,
+        .opts_limit_mid = 1,
+        .base_hi = 0
+    };
 
-    gdt.sz = sizeof(gdt_data) - 1;
-    gdt.ptr = reinterpret_cast<uint32_t>(&gdt_data);
+    gdt_entry_data[1] = {
+        .limit_low = 0,
+        .base_low = 0,
+        .base_mid = 0,
+        .access = 0x9a,
+        .opts_limit_mid = 0b10101111,
+        .base_hi = 0
+    };
+
+    gdt_entry_data[2] = {
+        .limit_low = 0,
+        .base_low = 0,
+        .base_mid = 0,
+        .access = 0x92,
+        .opts_limit_mid = 0,
+        .base_hi = 0
+    };
+
+    gdt.sz = sizeof gdt_entry_data - 1;
+    gdt.ptr = reinterpret_cast<uint32_t>(&gdt_entry_data);
 }
 
 [[noreturn]] [[gnu::used]] void init(uint32_t signature,
@@ -190,32 +222,17 @@ struct [[gnu::packed]] {
         tos::println(vga, *info);
     }
     std::for_each(start_ctors, end_ctors, [](auto x) { x(); });
-    vga.write("Hello\n\r");
+    vga.write("Hello world\n\r");
     set_up_page_tables();
 
     enable_paging();
     vga.write("Switched to long mode\n\r");
 
-    while (true);
-
     vga.write("Setting up GDT\n\r");
     setup_gdt();
     vga.write("Set up GDT\n\r");
 
-    //    enable_fpu();
-    //    vga.write("Enabled FPU\n\r");
-    //
-    //    enable_sse();
-    //    vga.write("Enabled SSE\n\r");
-    //
-    //    enable_xsave();
-    //    vga.write("Enabled XSAVE\n\r");
-    //
-    //    enable_avx();
-    //    vga.write("Enabled AVX\n\r");
-
     if (reinterpret_cast<uint64_t>(&program) != 4096) {
-        // hmm
         vga.write("Bad program position!\n\r");
     }
     vga.write("Init done\n\r");
@@ -228,10 +245,6 @@ struct [[gnu::packed]] {
     asm volatile("lgdt %0" : : "m"(gdt));
     asm volatile("mov %0, %%edi": : "r"(info));
     asm volatile("jmp $0x8,$0x1000");
-    auto res = entry();
     TOS_UNREACHABLE();
-    char buf[] = "0\n\r";
-    buf[0] += res;
-    vga.write(buf);
 }
 }
