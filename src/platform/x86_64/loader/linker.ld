@@ -4,13 +4,10 @@ SECTIONS
 {
     . = KERNEL_VMA;
 
-    .boot : {
-        KEEP(*(.multiboot))
-    }
-
     _code = .;
     .text : AT(ADDR(.text) - KERNEL_VMA)
     {
+        KEEP(*(.multiboot))
         *(.text*)
         *(.text.*)
         *(.rodata*)
