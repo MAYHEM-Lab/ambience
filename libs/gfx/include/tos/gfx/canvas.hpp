@@ -17,6 +17,8 @@ namespace tos::gfx {
 template<size_t W, size_t H>
 class static_canvas_storage {
 protected:
+    constexpr static_canvas_storage() = default;
+
     constexpr tos::span<uint8_t> buffer() {
         return m_buf;
     }
