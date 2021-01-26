@@ -25,5 +25,5 @@ add_library(
 
 target_link_libraries(tos_gfx2 PUBLIC tos_util_core)
 target_link_libraries(tos_gfx2 PUBLIC painter_schema gfx_schema)
-target_link_libraries(tos_gfx2 PRIVATE tos_gfx)
+target_link_libraries(tos_gfx2 PRIVATE tos_gfx tos::libcxx)
 target_include_directories(tos_gfx2 PUBLIC include)
