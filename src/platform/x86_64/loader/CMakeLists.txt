@@ -19,7 +19,7 @@ add_custom_target(i386-loader-program
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/program.data)
 
 find_program(MKRESCUE_BIN grub-mkrescue)
-if (MKRESCUE_BIN MATCHES "Not")
+if (MKRESCUE_BIN MATCHES "NOTFOUND")
     message(WARNING "grub-mkrescue was not found, will not generate a bootable ISO")
 else()
     message(STATUS "Found grub-mkrescue(${MKRESCUE_BIN}), will generate a bootable ISO")
