@@ -94,7 +94,7 @@ struct info_t {
     uint32_t boot_device;
 
     // Kernel command line.
-    const char* cmdline;
+    uint32_t cmdline;
 
     // Boot-Module list.
     uint32_t mods_count;
@@ -117,7 +117,7 @@ struct info_t {
     uint32_t config_table;
 
     // Boot Loader Name.
-    const char* boot_loader_name;
+    uint32_t boot_loader_name;
 
     // APM table.
     const apm_table_t* apm_table;
