@@ -1,11 +1,11 @@
 #include <arch/drivers.hpp>
 #include <common/clock.hpp>
+#include <numeric>
 #include <tos/debug/assert.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/function_ref.hpp>
-#include <uspios.h>
 #include <tos/soc/bcm2837.hpp>
-#include <numeric>
+#include <uspios.h>
 
 namespace global {
 extern tos::raspi3::interrupt_controller* ic;
@@ -26,7 +26,7 @@ void delay(uint64_t count) {
 tos::function_ref<void()> usb_handler{[](void*) {}};
 
 tos::raspi3::irq_handler usb_irq_handler{tos::function_ref<bool()>([](void*) {
-    ++_usb_irq_count;
+    _usb_irq_count = _usb_irq_count + 1;
     usb_handler();
     return true;
 })};
@@ -38,9 +38,8 @@ struct timer {
     void* pParam;
     void* pContext;
 
-    unsigned m_handle;
-
     std::unique_ptr<tos::sleeper> m_sleeper;
+    unsigned m_handle;
 
     timer(unsigned ticks, unsigned handle)
         : m_sleeper(std::make_unique<tos::sleeper>(
@@ -103,7 +102,9 @@ void CancelKernelTimer(unsigned hTimer) {
     timers.erase(it);
 }
 
-void ConnectInterrupt(unsigned nIRQ, TInterruptHandler* pHandler, void* pParam) {
+void ConnectInterrupt([[maybe_unused]] unsigned nIRQ,
+                      TInterruptHandler* pHandler,
+                      void* pParam) {
     usb_handler = {pHandler, pParam};
     global::ic->register_handler(tos::bcm283x::irq_channels::usb, usb_irq_handler);
     tos::bcm2837::INTERRUPT_CONTROLLER->enable_irq_1 = 1 << 9;
@@ -126,28 +127,30 @@ int GetMACAddress(unsigned char Buffer[6]) {
     return 1;
 }
 
-void LogWrite(const char* pSource, // short name of module
-              unsigned Severity,   // see above
-              const char* pMessage,
+void LogWrite([[maybe_unused]] const char* pSource, // short name of module
+              [[maybe_unused]] unsigned Severity,   // see above
+              [[maybe_unused]] const char* pMessage,
               ...) {
-//    LOG("LOG", pMessage);
+    //    LOG("LOG", pMessage);
 }
 
-void uspi_assertion_failed(const char* pExpr, const char* pFile, unsigned nLine) {
+void uspi_assertion_failed(const char* pExpr,
+                           [[maybe_unused]] const char* pFile,
+                           [[maybe_unused]] unsigned nLine) {
     tos::debug::default_assert_handler(pExpr);
 }
 
-void DebugHexdump(const void* pBuffer, unsigned nBufLen, const char* pSource /* = 0 */) {
-//    LOG("Called hex dump");
+void DebugHexdump([[maybe_unused]] const void* pBuffer,
+                  [[maybe_unused]] unsigned nBufLen,
+                  [[maybe_unused]] const char* pSource /* = 0 */) {
+    //    LOG("Called hex dump");
 }
 
-void uspi_EnterCritical (void)
-{
+void uspi_EnterCritical(void) {
     tos::kern::disable_interrupts();
 }
 
-void uspi_LeaveCritical (void)
-{
+void uspi_LeaveCritical(void) {
     tos::kern::enable_interrupts();
 }
 }
