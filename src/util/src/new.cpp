@@ -125,11 +125,11 @@ void* operator new[](size_t sz, const std::nothrow_t&) noexcept {
 
 extern "C" {
 void* _malloc_r(struct _reent *, size_t sz) {
-    return new char[sz];
+    return new (std::nothrow) char[sz];
 }
 
 void* malloc(size_t sz) {
-    return new char[sz];
+    return new (std::nothrow) char[sz];
 }
 
 void* realloc(void*, size_t) {
