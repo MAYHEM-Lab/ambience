@@ -32,6 +32,10 @@ fault_handler_t _fault_handler{[](const fault_variant& fault, stack_frame_t&, vo
                       case mmu_errors::not_allocated:
                           tos::aarch64::semihosting::write0(
                               "Address not allocated in virtual memory\n");
+                      default:
+                          tos::aarch64::semihosting::write0(
+                              "Unknown\n");
+                          break;
                       }
                       return;
                   }
@@ -92,6 +96,7 @@ fault_variant analyze_fault(stack_frame_t* frame) {
     switch (static_cast<exception_classes>(EC)) {
     case exception_classes::undefined:
         return undefined_instruction{};
+    case exception_classes::SVC32:
     case exception_classes::SVC64: {
         // The LR stores the instruction to return to. So the SVC instruction is the one
         // before it. Thankfully, ARM ISA is sane and we can get the previous instruction
