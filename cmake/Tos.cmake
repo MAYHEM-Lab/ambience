@@ -36,7 +36,8 @@ endfunction()
 
 set(TOS_FLAGS "-Wall -Wextra -Wpedantic \
      -ffunction-sections -fdata-sections -ffreestanding -g -pedantic \
-     -Wno-unknown-pragmas")
+     -Wno-unknown-pragmas -Wno-nested-anon-types -Wno-gnu-anonymous-struct -Wno-c99-extensions -Wno-unused-parameter \
+     -Wno-new-returns-null -Wno-nonnull -Wno-mismatched-tags -Wno-zero-length-array")
 
 message(STATUS "${CMAKE_CXX_COMPILER_ID}")
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
