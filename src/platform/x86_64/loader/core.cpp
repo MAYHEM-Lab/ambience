@@ -121,6 +121,10 @@ alignas(4096) std::array<tos::i386::page_entry, 512> p2_table;
 
 extern "C" {
 void set_up_page_tables() {
+    memset(&p4_table, 0, sizeof p4_table);
+    memset(&p3_table, 0, sizeof p3_table);
+    memset(&p2_table, 0, sizeof p2_table);
+
     p4_table[0].zero().present(true);
     p4_table[0].writeable(true);
     p4_table[0].page_base(reinterpret_cast<uintptr_t>(&p3_table));
