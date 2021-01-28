@@ -73,7 +73,7 @@ int uart0::write(tos::span<const uint8_t> buf) {
     {
         int_guard ig;
         m_sendbuf = buf.pop_front();
-        UART0->IMSC |= 1 << 5;
+        UART0->IMSC = UART0->IMSC | 1 << 5;
         UART0->DR = buf.front();
     }
 
@@ -117,7 +117,7 @@ bool uart0::irq() {
         ++m_stats.send_irq_count;
 
         if (m_sendbuf.empty()) {
-            UART0->IMSC &= ~(1 << 5);
+            UART0->IMSC = UART0->IMSC & ~(1 << 5);
             m_sem.up_isr();
         } else {
             UART0->DR = m_sendbuf.front();
