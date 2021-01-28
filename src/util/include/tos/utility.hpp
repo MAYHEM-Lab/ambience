@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include <array>
 #include <chrono>
 #include <new>
 #include <stddef.h>
@@ -109,6 +110,20 @@ private:
 
 template<class T>
 forget(T&&) -> forget<T>;
+
+template<class T, size_t N>
+constexpr std::array<T, N - 1> pop_front(const std::array<T, N>& arr) {
+    std::array<T, N - 1> res{};
+    std::copy(arr.begin() + 1, arr.end(), res.begin());
+    return res;
+}
+
+template<class T, size_t N>
+constexpr std::array<T, N - 1> pop_back(const std::array<T, N>& arr) {
+    std::array<T, N - 1> res{};
+    std::copy(arr.begin(), arr.end() - 1, res.begin());
+    return res;
+}
 
 constexpr uint64_t align_nearest_down_pow2(uint64_t val, uint64_t alignment) {
     return val & ~(alignment - 1);
