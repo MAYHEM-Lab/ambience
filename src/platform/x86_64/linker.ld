@@ -5,7 +5,7 @@ SECTIONS
     . = KERNEL_VMA;
 
     _code = .;
-    .text : AT(ADDR(.text) - KERNEL_VMA)
+    .text :
     {
         KEEP(*(.text.entry))
         *(.text*)
@@ -13,7 +13,7 @@ SECTIONS
         . = ALIGN(4096);
     }
 
-   .rodata : AT(ADDR(.rodata) - KERNEL_VMA)
+   .rodata :
    {
         _rodata = .;
         *(.rodata*)
@@ -27,7 +27,7 @@ SECTIONS
         . = ALIGN(4096);
    }
 
-   .data : AT(ADDR(.data) - KERNEL_VMA)
+   .data :
    {
         _data = .;
         *(.data*)
@@ -36,7 +36,7 @@ SECTIONS
    }
 
    __bss_start = .;
-   .bss : AT(ADDR(.bss) - KERNEL_VMA)
+   .bss :
    {
        _bss = .;
        *(.bss*)
@@ -48,9 +48,11 @@ SECTIONS
         */
 
         *(COMMON)
+        __bss_end = .;
+       *(.nozero*);
+       *(.nozero.*);
        . = ALIGN(4096);
    }
-   __bss_end = .;
 
    _end = .;
 
