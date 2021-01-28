@@ -220,7 +220,7 @@ namespace tl {
 /// \exclude
     namespace detail {
         template<typename E>
-        [[noreturn]] TL_EXPECTED_11_CONSTEXPR void throw_exception(E &&e) {
+        [[noreturn]] TL_EXPECTED_11_CONSTEXPR void throw_exception([[maybe_unused]] E &&e) {
 #ifdef TL_EXPECTED_EXCEPTIONS_ENABLED
             throw std::forward<E>(e);
 #else
