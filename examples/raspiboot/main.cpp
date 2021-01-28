@@ -73,7 +73,7 @@ lidlcall(int64_t channel, uint8_t* buf, int64_t len, uint8_t* res_buf, int64_t r
     return result;
 }
 
-int64_t zcpcall(int64_t channel, int proc_num, const void* args, void* ret) {
+int64_t zcpcall(int64_t channel, int64_t proc_num, const void* args, void* ret) {
     asm volatile(
         "mov x0, %[channel]\n"
         "mov x1, %[proc_num]\n"
@@ -137,9 +137,10 @@ constexpr auto zerocopy_translator() -> zerocopy_fn_t {
             typename convert_types<typename ProcTraits::param_types>::tuple_type;
         using RetType = typename ProcTraits::return_type;
         static constexpr bool is_ref = std::is_reference_v<RetType>;
-        using ActualRetType = std::conditional_t<is_ref,
-              std::add_pointer_t<std::remove_reference_t<RetType>>,
-              RetType>;
+        using ActualRetType =
+            std::conditional_t<is_ref,
+                               std::add_pointer_t<std::remove_reference_t<RetType>>,
+                               RetType>;
 
         auto do_call = [&serv, ret](auto*... vals) {
             //            LOG(*vals...);
@@ -198,11 +199,15 @@ void el0_fn() {
     auto& regs = vm.get_regions(our_addr_space, builder);
     log.info("Response at", (void*)&regs);
 
-    log.info("Have", regs.size(),"regions");
+    log.info("Have", regs.size(), "regions");
 
     for (auto& reg : regs) {
-        log.info(
-            "Region [", (void*)reg.begin(), ",", (void*)reg.end(), ") with perms ", reg.permissions());
+        log.info("Region [",
+                 (void*)reg.begin(),
+                 ",",
+                 (void*)reg.end(),
+                 ") with perms ",
+                 reg.permissions());
     }
 
     int i = 0;
@@ -310,7 +315,6 @@ private:
     TSMSC951xDevice* m_ptr;
 };
 
-static const char FromSample[] = "sample";
 tos::kern::tcb* usb_task_ptr;
 tos::expected<void, usb_errors> usb_task() {
     usb_task_ptr = tos::self();
@@ -533,10 +537,11 @@ void raspi_main() {
     tos::raspi3::interrupt_controller ic;
     global::ic = &ic;
 
-    auto uart = tos::open(tos::devs::usart<0>, tos::uart::default_115200, ic);
+    [[maybe_unused]] auto uart =
+        tos::open(tos::devs::usart<0>, tos::uart::default_115200, ic);
     uart_ptr = &uart;
     uart.sync_write(tos::raw_cast(tos::span("Hello")));
-    semihosting_output out;
+    [[maybe_unused]] semihosting_output out;
     tos::debug::serial_sink uart_sink(&uart);
     tos::debug::detail::any_logger uart_log{&uart_sink};
     uart_log.set_log_level(tos::debug::log_level::log);
@@ -551,7 +556,6 @@ void raspi_main() {
     uart.sync_write(tos::raw_cast(tos::span("Async writes don't work")));
     uart.sync_write(tos::raw_cast(tos::span("Async writes don't work")));
     LOG("Log init complete");
-    uart.sync_write(tos::raw_cast(tos::span("wtf?")));
 
     LOG("Hello from tos");
 
@@ -642,8 +646,8 @@ void raspi_main() {
             tos::debug::panic("Can't get ARM Memory");
         }
 
-        LOG("ARM Base:", (void*)buf[0]);
-        LOG("Len:", (void*)buf[1]);
+        LOG("ARM Base:", (void*)static_cast<uintptr_t>(buf[0]));
+        LOG("Len:", (void*)static_cast<uintptr_t>(buf[1]));
     }
 
     {
@@ -654,8 +658,8 @@ void raspi_main() {
             tos::debug::panic("Can't get VC Memory");
         }
 
-        LOG("VC Base:", (void*)buf[0]);
-        LOG("Len:", (void*)buf[1]);
+        LOG("VC Base:", (void*)static_cast<uintptr_t>(buf[0]));
+        LOG("Len:", (void*)static_cast<uintptr_t>(buf[1]));
     }
 
     palloc->mark_unavailable({0, 4096});
@@ -932,10 +936,12 @@ void raspi_main() {
                         auto args_tuple_ptr = reinterpret_cast<void*>(svframe->gpr[2]);
                         auto res_ptr = reinterpret_cast<void*>(svframe->gpr[3]);
 
-//                        LOG("Got a zerocopy call");
-//                        LOG(channel, proc_num, args_tuple_ptr, res_ptr);
+                        //                        LOG("Got a zerocopy call");
+                        //                        LOG(channel, proc_num, args_tuple_ptr,
+                        //                        res_ptr);
 
-                        if (proc_num >= runner->zerocopy_vtable.size()) {
+                        if (static_cast<size_t>(proc_num) >=
+                            runner->zerocopy_vtable.size()) {
                             LOG("Bad procedure!");
                             svframe->gpr[0] = -1;
                         } else {
