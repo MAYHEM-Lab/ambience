@@ -104,7 +104,7 @@ target_compile_definitions(tos_libcxx PUBLIC TOS)
 target_compile_definitions(tos_libcxx PUBLIC TOS_PLATFORM_${TOS_PLATFORM_NAME})
 
 target_compile_features(tos_libcxx PUBLIC cxx_std_17)
-tos_install(tos_libcxx ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(tos_libcxx PUBLIC include)
 target_link_libraries(tos_libcxx PUBLIC picolibc)
 endif()
 

@@ -277,6 +277,7 @@ struct initial_string<wstring>
 
 typedef int (*wide_printf)(wchar_t* __restrict, size_t, const wchar_t*__restrict, ...);
 
+[[maybe_unused]]
 inline
 wide_printf
 get_swprintf()
