@@ -20,7 +20,7 @@ target_compile_options(picolibc PUBLIC -I${LIMITS_DIR})
 target_compile_options(picolibc PUBLIC -Wno-macro-redefined)
 
 target_compile_options(picolibc PUBLIC -nostdlib -nostdinc)
-target_compile_options(picolibc PRIVATE -fno-builtin)
+target_compile_options(picolibc PRIVATE -fno-builtin -Wno-sign-compare -Wno-int-conversion -Wno-implicit-function-declaration -Wno-visibility)
 
 target_compile_definitions(picolibc PRIVATE HAVE_ALIAS_ATTRIBUTE)
 

@@ -39,3 +39,4 @@ target_sources(uspi PRIVATE
 )
 target_compile_definitions(uspi PUBLIC AARCH64=1)
 target_link_libraries(uspi PRIVATE tos_ft)
+target_compile_options(uspi PRIVATE -Wno-zero-length-array -Wno-unknown-attributes -Wno-unused-variable -Wno-sign-compare -Wno-deprecated-volatile -Wno-invalid-source-encoding)
