@@ -124,7 +124,10 @@ add_library(tos_core
         include/tos/delay.hpp
         include/tos/barrier.hpp
         src/tos_init.cpp
-        src/device_id.cpp)
+        src/device_id.cpp
+        src/paging.cpp
+        src/paging/physical_page_allocator.cpp
+)
 target_link_libraries(tos_core PUBLIC tos_mem tos_util tos_build_info ${TOS_PLATFORM_NAME}_core)
 target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug tos_context)
 target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_platform tos_jobs)

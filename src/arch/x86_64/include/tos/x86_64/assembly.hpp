@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cpuid.h>
+
 namespace tos::x86_64 {
 inline void breakpoint() {
     asm volatile("int3");
@@ -35,13 +37,13 @@ inline void write_cr0(uint32_t reg) {
     __asm__ __volatile__("mov %0, %%cr0" : : "r"(uint64_t(reg)) : "memory");
 }
 
-inline uint32_t read_cr3() {
-    uint32_t r;
+inline uint64_t read_cr3() {
+    uint64_t r;
     __asm__ __volatile__("mov %%cr3, %0" : "=r"(r) : : "memory");
     return r;
 }
 
-inline void write_cr3(uint32_t reg) {
+inline void write_cr3(uint64_t reg) {
     __asm__ __volatile__("mov %0, %%cr3" : : "r"(reg) : "memory");
 }
 

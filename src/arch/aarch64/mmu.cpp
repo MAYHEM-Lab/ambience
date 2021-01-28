@@ -4,6 +4,7 @@
 #include <tos/aarch64/semihosting.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/flags.hpp>
+#include <tos/paging.hpp>
 #include <tos/span.hpp>
 
 namespace tos::aarch64 {
@@ -31,64 +32,6 @@ namespace {
 static constexpr auto PT_MEM = 0; // normal memory
 static constexpr auto PT_DEV = 1; // device MMIO
 
-constexpr uint64_t bitmask(int len) {
-    uint64_t res = 0;
-    for (int i = 0; i < len; ++i) {
-        res <<= 1;
-        res |= 1;
-    }
-    return res;
-}
-
-template<size_t N>
-constexpr auto compute_level_bit_begins(const std::array<int, N>& level_bits) {
-    std::array<int, N> inv_bits = level_bits;
-    std::reverse(inv_bits.begin(), inv_bits.end());
-
-    std::array<int, N + 1> shifted_bits = {0};
-    std::copy(inv_bits.begin(), inv_bits.end(), shifted_bits.begin() + 1);
-
-    std::array<int, N> total_bits{};
-    std::partial_sum(shifted_bits.begin(), shifted_bits.end() - 1, total_bits.begin());
-
-    std::reverse(total_bits.begin(), total_bits.end());
-
-    return total_bits;
-}
-
-template<size_t N>
-constexpr auto compute_level_bit_sums(const std::array<int, N>& level_bits) {
-    std::array<int, N> inv_bits = level_bits;
-    std::reverse(inv_bits.begin(), inv_bits.end());
-
-    std::array<int, N> total_bits{};
-    std::partial_sum(inv_bits.begin(), inv_bits.end(), total_bits.begin());
-
-    std::reverse(total_bits.begin(), total_bits.end());
-
-    return total_bits;
-}
-
-template<size_t N>
-constexpr auto compute_level_masks(const std::array<int, N>& level_bits) {
-    std::array<int, N> inv_bits = level_bits;
-    std::reverse(inv_bits.begin(), inv_bits.end());
-
-    std::array<int, N> total_bits{};
-    std::partial_sum(inv_bits.begin(), inv_bits.end(), total_bits.begin());
-
-    std::array<uint64_t, N> level_masks{};
-    level_masks[0] = bitmask(total_bits[0]);
-
-    for (int i = 1; i < level_masks.size(); ++i) {
-        level_masks[i] = bitmask(total_bits[i]) ^ bitmask(total_bits[i - 1]);
-    }
-
-    std::reverse(level_masks.begin(), level_masks.end());
-
-    return level_masks;
-}
-
 constexpr std::array<int, 4> level_bits = {9, 9, 9, 12};
 
 constexpr auto level_masks = compute_level_masks(level_bits);
@@ -108,24 +51,10 @@ static_assert(index_on_table(0, 1024 * 1024 * 1024 - 1) == 0);
 static_assert(index_on_table(0, 1024 * 1024 * 1024) == 1);
 static_assert(index_on_table(0, 1024 * 1024 * 1024 + 1) == 1);
 
-template<class T, size_t N>
-constexpr std::array<T, N - 1> pop_front(const std::array<T, N>& arr) {
-    std::array<T, N - 1> res{};
-    std::copy(arr.begin() + 1, arr.end(), res.begin());
-    return res;
-}
-
-template<class T, size_t N>
-constexpr std::array<T, N - 1> pop_back(const std::array<T, N>& arr) {
-    std::array<T, N - 1> res{};
-    std::copy(arr.begin(), arr.end() - 1, res.begin());
-    return res;
-}
-
 constexpr std::array<int, std::size(level_bits) - 1>
 pt_path_for_addr(uint64_t virt_addr) {
     std::array<int, 3> path;
-    for (int i = 0; i < path.size(); ++i) {
+    for (size_t i = 0; i < path.size(); ++i) {
         path[i] = index_on_table(i, virt_addr);
     }
     return path;
@@ -136,12 +65,11 @@ static_assert(pt_path_for_addr(1) == std::array<int, 3>{0, 0, 0});
 static_assert(pt_path_for_addr(4096) == std::array<int, 3>{0, 0, 1});
 
 template<size_t N>
-[[gnu::optimize("O0")]] expected<void, mmu_errors>
-recursive_allocate(translation_table& root,
-                   permissions perms,
-                   user_accessible allow_user,
-                   const std::array<int, N>& path,
-                   physical_page_allocator* palloc) {
+expected<void, mmu_errors> recursive_allocate(translation_table& root,
+                                              permissions perms,
+                                              user_accessible allow_user,
+                                              const std::array<int, N>& path,
+                                              physical_page_allocator* palloc) {
     if constexpr (N == 1) {
         if (root[path[0]].valid()) {
             return unexpected(mmu_errors::already_allocated);
@@ -190,11 +118,10 @@ recursive_allocate(translation_table& root,
 }
 } // namespace
 
-[[gnu::optimize("O0")]] expected<void, mmu_errors>
-allocate_region(translation_table& root,
-                const segment& virt_seg,
-                user_accessible allow_user,
-                physical_page_allocator* palloc) {
+expected<void, mmu_errors> allocate_region(translation_table& root,
+                                           const segment& virt_seg,
+                                           user_accessible allow_user,
+                                           physical_page_allocator* palloc) {
     for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
          addr += 4096) {
         auto path = pt_path_for_addr(addr);
@@ -205,17 +132,17 @@ allocate_region(translation_table& root,
     return {};
 }
 
-[[gnu::optimize("O0")]] expected<void, mmu_errors> mark_resident(translation_table& root,
-                                                                 const segment& virt_seg,
-                                                                 memory_types type,
-                                                                 void* phys_addr) {
+expected<void, mmu_errors> mark_resident(translation_table& root,
+                                         const segment& virt_seg,
+                                         memory_types type,
+                                         void* phys_addr) {
     for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
          addr += 4096, phys_addr = (char*)phys_addr + 4096) {
         auto path = pt_path_for_addr(addr);
 
         translation_table* table = &root;
         // The last index takes us to the actual page, we'll set that now.
-        for (int i = 0; i < path.size() - 1; ++i) {
+        for (size_t i = 0; i < path.size() - 1; ++i) {
             table = &table->table_at(path[i]);
         }
 
@@ -242,7 +169,7 @@ expected<void, mmu_errors> mark_nonresident(translation_table& root,
 
         translation_table* table = &root;
         // The last index takes us to the actual page, we'll set that now.
-        for (int i = 0; i < path.size() - 1; ++i) {
+        for (size_t i = 0; i < path.size() - 1; ++i) {
             table = &table->table_at(path[i]);
         }
 
@@ -258,7 +185,7 @@ expected<const table_entry*, mmu_errors> entry_for_address(const translation_tab
 
     const translation_table* table = &root;
     // The last index takes us to the actual page, we'll set that now.
-    for (int i = 0; i < path.size() - 1; ++i) {
+    for (size_t i = 0; i < path.size() - 1; ++i) {
         if (!(*table)[i].valid()) {
             return unexpected(mmu_errors::not_allocated);
         }
@@ -332,7 +259,7 @@ void do_traverse_table_entries(int level,
                                uintptr_t begin,
                                translation_table& table,
                                function_ref<void(memory_range, table_entry&)> fn) {
-    for (int i = 0; i < table.size(); ++i) {
+    for (size_t i = 0; i < table.size(); ++i) {
         auto& entry = table[i];
 
         if (!entry.valid()) {

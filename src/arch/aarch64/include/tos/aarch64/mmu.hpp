@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <tos/expected.hpp>
 #include <tos/function_ref.hpp>
-#include <tos/memory.hpp>
+#include <tos/paging.hpp>
 
 namespace tos::aarch64 {
 using page_id_t = uint32_t;
@@ -274,20 +274,6 @@ void traverse_table_entries(
 
 template<class FnT>
 void traverse_table_entries(translation_table& table, FnT&& fn) {
-    traverse_table_entries(
-        table, function_ref<void(memory_range, table_entry &)>(fn));
+    traverse_table_entries(table, function_ref<void(memory_range, table_entry&)>(fn));
 }
-
-class address_space final : public vm_backend {
-
-private:
-    // Sets up the addresses in the given mapping to be valid within this address space.
-    // However, the pages won't have a physical backing yet, nor will they be resident.
-    // They will be allocated at the first fault by the backing object.
-    expected<void, mmu_errors> allocate_region(const mapping& map);
-
-    // Stores the root level translation table.
-    // With 4K page granule, this corresponds to ~512G memory.
-    translation_table m_root;
-};
 } // namespace tos::aarch64
