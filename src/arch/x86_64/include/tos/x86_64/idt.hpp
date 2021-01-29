@@ -57,4 +57,31 @@ struct [[gnu::packed]] interrupt_descriptor_table {
 };
 
 static_assert(sizeof(interrupt_descriptor_table) == 256 * 16);
+
+interrupt_descriptor_table default_idt();
 } // namespace tos::x86_64
+
+extern "C" {
+void _div_by_zero_handler();
+void _debug_handler();
+void _nmi_handler();
+void _breakpoint_handler();
+void _overflow_handler();
+void _out_of_bounds_handler();
+void _invalid_opcode_handler();
+void _device_not_available_handler();
+void _double_fault_handler();
+void _invalid_tss_handler();
+void _coprocessor_seg_overrun_handler();
+void _segment_not_present_handler();
+void _stack_segment_fault_handler();
+void _general_protection_fault_handler();
+void _page_fault_handler();
+void _x87_fpu_fault_handler();
+void _alignment_check_handler();
+void _machine_check_handler();
+void _simd_fpu_fault_handler();
+void _virt_handler();
+void _security_exception_handler();
+void _irq0_handler();
+}

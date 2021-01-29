@@ -12,6 +12,7 @@
 #include <tos/x86_64/idt.hpp>
 #include <tos/x86_64/mmu.hpp>
 #include <tos/x86_64/port.hpp>
+#include <tos/x86_64/gdt.hpp>
 
 extern void tos_main();
 
@@ -19,35 +20,12 @@ namespace {
 using namespace tos::x86_64;
 
 extern "C" {
-void _div_by_zero_handler();
-void _debug_handler();
-void _nmi_handler();
-void _breakpoint_handler();
-void _overflow_handler();
-void _out_of_bounds_handler();
-void _invalid_opcode_handler();
-void _device_not_available_handler();
-void _double_fault_handler();
-void _invalid_tss_handler();
-void _coprocessor_seg_overrun_handler();
-void _segment_not_present_handler();
-void _stack_segment_fault_handler();
-void _general_protection_fault_handler();
-void _page_fault_handler();
-void _x87_fpu_fault_handler();
-void _alignment_check_handler();
-void _machine_check_handler();
-void _simd_fpu_fault_handler();
-void _virt_handler();
-void _security_exception_handler();
-void _irq0_handler();
-
 void irq0_handler(exception_frame* f) {
     port(0x20).outb(0x20);
 }
 }
 
-interrupt_descriptor_table idt;
+auto idt = default_idt();
 
 struct [[gnu::packed]] {
     uint16_t limits;
@@ -55,30 +33,6 @@ struct [[gnu::packed]] {
 } idt_thing;
 
 tos::expected<void, idt_error> idt_setup() {
-    idt.div_by_zero = idt_entry::create(_div_by_zero_handler);
-    idt.debug = idt_entry::create(_debug_handler);
-    idt.nmi = idt_entry::create(_nmi_handler);
-    idt.breakpoint = idt_entry::create(_breakpoint_handler);
-    idt.overflow = idt_entry::create(_overflow_handler);
-    idt.out_of_bounds = idt_entry::create(_out_of_bounds_handler);
-    idt.invalid_opcode = idt_entry::create(_invalid_opcode_handler);
-    idt.device_not_available = idt_entry::create(_device_not_available_handler);
-    idt.double_fault = idt_entry::create(_double_fault_handler);
-    idt.invalid_tss = idt_entry::create(_invalid_tss_handler);
-    idt.coprocessor_seg_overrun = idt_entry::create(_coprocessor_seg_overrun_handler);
-    idt.segment_not_present = idt_entry::create(_segment_not_present_handler);
-    idt.stack_segment_fault = idt_entry::create(_stack_segment_fault_handler);
-    idt.general_protection_fault = idt_entry::create(_general_protection_fault_handler);
-    idt.page_fault = idt_entry::create(_page_fault_handler);
-    idt.x87_fpu_fault = idt_entry::create(_x87_fpu_fault_handler);
-    idt.alignment_check = idt_entry::create(_alignment_check_handler);
-    idt.machine_check = idt_entry::create(_machine_check_handler);
-    idt.simd_fpu_fault = idt_entry::create(_simd_fpu_fault_handler);
-    idt.virt = idt_entry::create(_virt_handler);
-    idt.security_exception = idt_entry::create(_security_exception_handler);
-
-    idt.rest[11] = idt_entry::create(_irq0_handler);
-
     port(0x20).outb(0x11);
     port(0xA0).outb(0x11);
     port(0x21).outb(0x20);
@@ -129,15 +83,6 @@ void enable_sse() {
     cr4 |= (1 << 9) | (1 << 10);
     write_cr4(cr4);
 }
-
-struct [[gnu::packed]] gdt_entry {
-    uint16_t limit_low;
-    uint16_t base_low;
-    uint8_t base_mid;
-    uint8_t access;
-    uint8_t opts_limit_mid;
-    uint8_t base_hi;
-};
 
 [[gnu::section(".nozero")]] gdt_entry gdt_entry_data[3];
 
@@ -221,6 +166,7 @@ extern void (*end_ctors[])(void);
 _start(const tos::multiboot::info_t* info) {
     set_stack_ptr(reinterpret_cast<char*>(&main_stack) + sizeof main_stack);
     _prestart(info);
+    TOS_UNREACHABLE();
 }
 
 [[noreturn]] void _prestart([[maybe_unused]] const tos::multiboot::info_t* info) {
