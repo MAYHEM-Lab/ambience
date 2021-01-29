@@ -24,9 +24,36 @@ breakpoint_handler([[maybe_unused]] interrupt_stack_frame_t* stack_frame) {
         ;
 }
 
+extern "C" {
+void _page_fault(interrupt_stack_frame_t*);
+}
+
+struct [[gnu::packed]] exception_frame {
+    uint64_t gpr[15];
+    uint64_t error_code;
+    uint64_t rip;
+    uint64_t cs;
+    uint64_t rflags;
+    uint64_t rsp;
+    uint64_t ss;
+};
+
+extern "C" {
+void pagefault_handler(exception_frame* frame) {
+    LOG("Page fault!",
+        (void*)frame,
+        (void*)frame->error_code,
+        (void*)frame->rip,
+        (void*)read_cr2());
+    while (true)
+        ;
+}
+}
+
 [[gnu::interrupt]] void
 double_fault_handler([[maybe_unused]] interrupt_stack_frame_t* stack_frame,
                      [[maybe_unused]] unsigned long int err) {
+    LOG("Double fault at", (void*)stack_frame->instr_ptr);
     while (true)
         ;
 }
@@ -50,12 +77,11 @@ tos::expected<void, idt_error> idt_setup() {
         EXPECTED_TRY(idt_entry<exception_handler_t>::create(double_fault_handler));
     idt.invalid_opcode =
         EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(breakpoint_handler));
-    idt.page_fault =
-        EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(breakpoint_handler));
     idt.general_protection_fault =
         EXPECTED_TRY(idt_entry<exception_handler_t>::create(double_fault_handler));
+    idt.page_fault = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(_page_fault));
+    idt.rest[11] = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(irq0_handler));
     idt.rest[12] = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(irq0_handler));
-    idt.rest[13] = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(irq0_handler));
 
     port(0x20).outb(0x11);
     port(0xA0).outb(0x11);

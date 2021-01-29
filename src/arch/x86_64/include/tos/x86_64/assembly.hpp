@@ -37,6 +37,12 @@ inline void write_cr0(uint32_t reg) {
     __asm__ __volatile__("mov %0, %%cr0" : : "r"(uint64_t(reg)) : "memory");
 }
 
+inline uint64_t read_cr2() {
+    uint64_t r;
+    __asm__ __volatile__("mov %%cr2, %0" : "=r"(r) : : "memory");
+    return r;
+}
+
 inline uint64_t read_cr3() {
     uint64_t r;
     __asm__ __volatile__("mov %%cr3, %0" : "=r"(r) : : "memory");
