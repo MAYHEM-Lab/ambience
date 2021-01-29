@@ -6,22 +6,22 @@
 #include <tos/peripheral/vga_text.hpp>
 #include <tos/x86_64/mmu.hpp>
 
-void dump_table(tos::x86_64::translation_table& table) {
-    tos::x86_64::traverse_table_entries(
-        table, [](tos::memory_range range, tos::x86_64::table_entry& entry) {
-          LOG_TRACE(
-              "VirtAddress:", "[", (void*)(range.base), ",", (void*)(range.end()), ")");
-          LOG_TRACE("PhysAddress:",
-                    (void*)tos::x86_64::page_to_address(entry.page_num()));
-          char perm_string[4] = "R__";
-          auto perms = tos::x86_64::translate_permissions(entry);
-          if (tos::util::is_flag_set(perms, tos::permissions::write)) {
-              perm_string[1] = 'W';
-          }
-          if (tos::util::is_flag_set(perms, tos::permissions::execute)) {
-              perm_string[2] = 'X';
-          }
-          LOG_TRACE("Perms:", perm_string, "User:", entry.allow_user());
+void dump_table(tos::cur_arch::translation_table& table) {
+    tos::cur_arch::traverse_table_entries(
+        table, [](tos::memory_range range, tos::cur_arch::table_entry& entry) {
+            LOG_TRACE(
+                "VirtAddress:", "[", (void*)(range.base), ",", (void*)(range.end()), ")");
+            LOG_TRACE("PhysAddress:",
+                      (void*)tos::cur_arch::page_to_address(entry.page_num()));
+            char perm_string[4] = "R__";
+            auto perms = tos::cur_arch::translate_permissions(entry);
+            if (tos::util::is_flag_set(perms, tos::permissions::write)) {
+                perm_string[1] = 'W';
+            }
+            if (tos::util::is_flag_set(perms, tos::permissions::execute)) {
+                perm_string[2] = 'X';
+            }
+            LOG_TRACE("Perms:", perm_string, "User:", entry.allow_user());
         });
 }
 
@@ -58,11 +58,21 @@ void thread() {
     auto& level0_table = tos::x86_64::get_current_translation_table();
 
     dump_table(level0_table);
+//
+//    for (uintptr_t i = 0; i < 0x40000000; ++i) {
+//        auto ptr = (volatile char*)i;
+//        LOG((void*)i, *ptr);
+//    }
 
-    for (uintptr_t i = 0; i < 0x40000000; ++i) {
-        auto ptr = (volatile char*)i;
-        LOG((void*)i, *ptr);
-    }
+    tos::cur_arch::breakpoint();
+
+    LOG("Accessing mapped region");
+    *((volatile char*)0x40000000 - 1) = 42;
+
+    LOG("Accessing unmapped region");
+    *((volatile char*)0x40000000) = 42;
+
+    LOG("Done");
 
     while (true) {
         tos::this_thread::yield();
