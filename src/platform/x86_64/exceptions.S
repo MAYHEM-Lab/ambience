@@ -1,4 +1,7 @@
-.macro save_gpr
+.macro save_gpr ec:req
+.ifeq \ec
+    push %rax
+.endif
     push %rax
     push %rbx
     push %rcx
@@ -16,7 +19,7 @@
     push %r15
 .endm
 
-.macro load_gpr
+.macro load_gpr ec:req
     pop %r15
     pop %r14
     pop %r13
@@ -32,15 +35,50 @@
     pop %rcx
     pop %rbx
     pop %rax
+.ifeq \ec
+    pop %rax
+.endif
 .endm
 
-.extern pagefault_handler
-.global _page_fault
-_page_fault:
-    save_gpr
-    mov %rsp, %rdi
-    call pagefault_handler
-    load_gpr
-    iretq
+.macro make_isr actual_handler:req number:req ec:req
+    .global _\actual_handler
+    _\actual_handler:
+        save_gpr \ec
+        mov %rsp, %rdi
+        mov $\number, %rsi
+        call \actual_handler
+        load_gpr \ec
+        iretq
+.endm
+
+.macro make_irq number:req
+    make_isr irq\number\()_handler, (32 + \number), 0
+.endm
+
+make_isr div_by_zero_handler, 0, 0
+make_isr debug_handler, 1, 0
+make_isr nmi_handler, 2, 0
+make_isr breakpoint_handler, 3, 0
+make_isr overflow_handler, 4, 0
+make_isr out_of_bounds_handler, 5, 0
+make_isr invalid_opcode_handler, 6, 0
+make_isr device_not_available_handler, 7, 0
+make_isr double_fault_handler, 8, 1
+make_isr coprocessor_seg_overrun_handler, 9, 0
+make_isr invalid_tss_handler, 10, 1
+make_isr segment_not_present_handler, 11, 1
+make_isr stack_segment_fault_handler, 12, 1
+make_isr general_protection_fault_handler, 13, 1
+make_isr page_fault_handler, 14, 1
+make_isr x87_fpu_fault_handler, 15, 0
+make_isr alignment_check_handler, 16, 1
+make_isr machine_check_handler, 17, 1
+make_isr simd_fpu_fault_handler, 18, 0
+make_isr virt_handler, 19, 0
+make_isr security_exception_handler, 20, 0
+
+make_irq 0
+#make_irq 1
+
 
 

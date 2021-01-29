@@ -18,48 +18,33 @@ extern void tos_main();
 namespace {
 using namespace tos::x86_64;
 
-[[gnu::interrupt]] void
-breakpoint_handler([[maybe_unused]] interrupt_stack_frame_t* stack_frame) {
-    while (true)
-        ;
-}
-
 extern "C" {
-void _page_fault(interrupt_stack_frame_t*);
-}
+void _div_by_zero_handler();
+void _debug_handler();
+void _nmi_handler();
+void _breakpoint_handler();
+void _overflow_handler();
+void _out_of_bounds_handler();
+void _invalid_opcode_handler();
+void _device_not_available_handler();
+void _double_fault_handler();
+void _invalid_tss_handler();
+void _coprocessor_seg_overrun_handler();
+void _segment_not_present_handler();
+void _stack_segment_fault_handler();
+void _general_protection_fault_handler();
+void _page_fault_handler();
+void _x87_fpu_fault_handler();
+void _alignment_check_handler();
+void _machine_check_handler();
+void _simd_fpu_fault_handler();
+void _virt_handler();
+void _security_exception_handler();
+void _irq0_handler();
 
-struct [[gnu::packed]] exception_frame {
-    uint64_t gpr[15];
-    uint64_t error_code;
-    uint64_t rip;
-    uint64_t cs;
-    uint64_t rflags;
-    uint64_t rsp;
-    uint64_t ss;
-};
-
-extern "C" {
-void pagefault_handler(exception_frame* frame) {
-    LOG("Page fault!",
-        (void*)frame,
-        (void*)frame->error_code,
-        (void*)frame->rip,
-        (void*)read_cr2());
-    while (true)
-        ;
-}
-}
-
-[[gnu::interrupt]] void
-double_fault_handler([[maybe_unused]] interrupt_stack_frame_t* stack_frame,
-                     [[maybe_unused]] unsigned long int err) {
-    LOG("Double fault at", (void*)stack_frame->instr_ptr);
-    while (true)
-        ;
-}
-
-[[gnu::interrupt]] void irq0_handler([[maybe_unused]] interrupt_stack_frame_t* frame) {
+void irq0_handler(exception_frame* f) {
     port(0x20).outb(0x20);
+}
 }
 
 interrupt_descriptor_table idt;
@@ -70,18 +55,29 @@ struct [[gnu::packed]] {
 } idt_thing;
 
 tos::expected<void, idt_error> idt_setup() {
-    idt.debug = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(breakpoint_handler));
-    idt.breakpoint =
-        EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(breakpoint_handler));
-    idt.double_fault =
-        EXPECTED_TRY(idt_entry<exception_handler_t>::create(double_fault_handler));
-    idt.invalid_opcode =
-        EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(breakpoint_handler));
-    idt.general_protection_fault =
-        EXPECTED_TRY(idt_entry<exception_handler_t>::create(double_fault_handler));
-    idt.page_fault = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(_page_fault));
-    idt.rest[11] = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(irq0_handler));
-    idt.rest[12] = EXPECTED_TRY(idt_entry<interrupt_handler_t>::create(irq0_handler));
+    idt.div_by_zero = idt_entry::create(_div_by_zero_handler);
+    idt.debug = idt_entry::create(_debug_handler);
+    idt.nmi = idt_entry::create(_nmi_handler);
+    idt.breakpoint = idt_entry::create(_breakpoint_handler);
+    idt.overflow = idt_entry::create(_overflow_handler);
+    idt.out_of_bounds = idt_entry::create(_out_of_bounds_handler);
+    idt.invalid_opcode = idt_entry::create(_invalid_opcode_handler);
+    idt.device_not_available = idt_entry::create(_device_not_available_handler);
+    idt.double_fault = idt_entry::create(_double_fault_handler);
+    idt.invalid_tss = idt_entry::create(_invalid_tss_handler);
+    idt.coprocessor_seg_overrun = idt_entry::create(_coprocessor_seg_overrun_handler);
+    idt.segment_not_present = idt_entry::create(_segment_not_present_handler);
+    idt.stack_segment_fault = idt_entry::create(_stack_segment_fault_handler);
+    idt.general_protection_fault = idt_entry::create(_general_protection_fault_handler);
+    idt.page_fault = idt_entry::create(_page_fault_handler);
+    idt.x87_fpu_fault = idt_entry::create(_x87_fpu_fault_handler);
+    idt.alignment_check = idt_entry::create(_alignment_check_handler);
+    idt.machine_check = idt_entry::create(_machine_check_handler);
+    idt.simd_fpu_fault = idt_entry::create(_simd_fpu_fault_handler);
+    idt.virt = idt_entry::create(_virt_handler);
+    idt.security_exception = idt_entry::create(_security_exception_handler);
+
+    idt.rest[11] = idt_entry::create(_irq0_handler);
 
     port(0x20).outb(0x11);
     port(0xA0).outb(0x11);
