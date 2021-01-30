@@ -52,6 +52,7 @@ void device_not_available_handler([[maybe_unused]] exception_frame* frame,
 }
 void double_fault_handler([[maybe_unused]] exception_frame* frame,
                           [[maybe_unused]] uint64_t num) {
+    LOG("Double fault!");
     while (true)
         ;
 }
@@ -77,6 +78,7 @@ void stack_segment_fault_handler([[maybe_unused]] exception_frame* frame,
 }
 void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
                                       [[maybe_unused]] uint64_t num) {
+    LOG("GPF!", (int)num, (void*)frame->error_code, (void*)frame->rip);
     while (true)
         ;
 }
