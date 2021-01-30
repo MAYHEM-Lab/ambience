@@ -41,13 +41,16 @@
 .endm
 
 .macro make_isr actual_handler:req number:req ec:req
+    .extern \actual_handler
     .global _\actual_handler
     _\actual_handler:
+        cli
         save_gpr \ec
         mov %rsp, %rdi
         mov $\number, %rsi
         call \actual_handler
         load_gpr \ec
+        sti
         iretq
 .endm
 
@@ -78,7 +81,7 @@ make_isr virt_handler, 19, 0
 make_isr security_exception_handler, 20, 0
 
 make_irq 0
-#make_irq 1
+make_irq 1
 
 
 

@@ -2,7 +2,7 @@
 
 namespace tos::x86_64 {
 interrupt_descriptor_table default_idt() {
-    interrupt_descriptor_table idt;
+    interrupt_descriptor_table idt{};
     idt.div_by_zero = idt_entry::create(_div_by_zero_handler);
     idt.debug = idt_entry::create(_debug_handler);
     idt.nmi = idt_entry::create(_nmi_handler);
@@ -26,6 +26,7 @@ interrupt_descriptor_table default_idt() {
     idt.security_exception = idt_entry::create(_security_exception_handler);
 
     idt.rest[11] = idt_entry::create(_irq0_handler);
+    idt.rest[12] = idt_entry::create(_irq1_handler);
     return idt;
 }
 }
