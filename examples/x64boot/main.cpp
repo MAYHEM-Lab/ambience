@@ -161,6 +161,10 @@ public:
         return detail::config_read_dword(m_bus, m_slot, m_func, 0x24);
     }
 
+    std::array<uint32_t, 6> bars() const {
+        return {bar0(), bar1(), bar2(), bar3(), bar4(), bar5()};
+    }
+
     std::optional<capability> capabilities_root() const {
         if (has_capabilities()) {
             return capability{
@@ -207,6 +211,13 @@ uint32_t capability::read_long(uint8_t offset) const {
 }
 } // namespace tos::x86_64::pci
 
+extern "C" {
+void abort() {
+    LOG_ERROR("Abort called");
+    while (true);
+}
+}
+
 namespace tos::virtio {
 enum pci_capability_type
 {
@@ -215,6 +226,75 @@ enum pci_capability_type
     isr = 3,
     device = 4,
     pci = 5
+};
+
+class dev {
+public:
+    explicit dev(x86_64::pci::device&& pci_dev)
+        : m_pci_dev{std::move(pci_dev)} {
+        for (auto cap = m_pci_dev.capabilities_root(); cap; cap = cap->next()) {
+            LOG((void*)cap->vendor(), (void*)cap->next()->m_offset, (void*)cap->len());
+
+            if (cap->vendor() == 0x9) {
+                handle_capability(*cap);
+            }
+        }
+        initialize();
+    }
+
+    void initialize() {
+        auto common_bar = m_pci_dev.bars()[m_pci->bar];
+        auto bar_base = common_bar & 0xFFFFFFFC;
+        LOG("Bar base", (void*)bar_base);
+        auto status_port = x86_64::port(bar_base + 0x12);
+        status_port.outb(0x1);
+        status_port.outb(0x3);
+
+        auto dev_features_port = x86_64::port(bar_base + 0x0);
+        auto features = dev_features_port.inl();
+        LOG("Features:", (void*)features);
+
+        auto driver_features_port = x86_64::port(bar_base + 0x4);
+        driver_features_port.outl(features);
+
+        status_port.outb(0x11);
+    }
+
+private:
+    struct capability_data {
+        pci_capability_type type;
+        uint8_t bar;
+        uint32_t offset;
+        uint32_t length;
+    };
+
+    void handle_capability(x86_64::pci::capability& cap) {
+        // Virtio vendor capability
+        LOG("Type:",
+            (void*)cap.read_byte(3),
+            "BAR:",
+            (void*)cap.read_byte(4),
+            "Offset:",
+            (void*)cap.read_long(8),
+            "Length:",
+            (void*)cap.read_long(12));
+
+        capability_data data;
+        data.type = static_cast<pci_capability_type>(cap.read_byte(3));
+        data.bar = cap.read_byte(4);
+        data.offset = cap.read_long(8);
+        data.length = cap.read_long(12);
+        m_capabilities.emplace_back(data);
+
+        if (data.type == pci_capability_type::pci) {
+            m_pci = &m_capabilities.back();
+        }
+    }
+
+    capability_data* m_common;
+    capability_data* m_pci;
+    std::vector<capability_data> m_capabilities;
+    x86_64::pci::device m_pci_dev;
 };
 } // namespace tos::virtio
 
@@ -252,10 +332,6 @@ void thread() {
         for (int j = 0; j < 32; ++j) {
             auto vendor_id = tos::x86_64::pci::get_vendor(i, j, 0);
             if (vendor_id != 0xFFFF) {
-                if (vendor_id == 0x1AF4) {
-                    LOG("Virtio device");
-                }
-
                 auto dev = tos::x86_64::pci::device(i, j, 0);
 
                 LOG("PCI Device at",
@@ -268,33 +344,19 @@ void thread() {
                     (void*)tos::x86_64::pci::get_subclass(i, j, 0),
                     (void*)tos::x86_64::pci::get_subsys_id(i, j, 0),
                     (void*)dev.status(),
-                    "BAR0", (void*)dev.bar0(),
-                    "BAR1", (void*)dev.bar1(),
-                    "BAR4", (void*)dev.bar4(),
-                    "BAR5", (void*)dev.bar5(),
+                    "BAR0",
+                    (void*)dev.bar0(),
+                    "BAR1",
+                    (void*)dev.bar1(),
+                    "BAR4",
+                    (void*)dev.bar4(),
+                    "BAR5",
+                    (void*)dev.bar5(),
                     dev.has_capabilities());
 
-                if (dev.has_capabilities()) {
-                    auto cap = dev.capabilities_root();
-                    while (cap) {
-                        LOG((void*)cap->vendor(),
-                            (void*)cap->next()->m_offset,
-                            (void*)cap->len());
-
-                        if (vendor_id == 0x1AF4 && cap->vendor() == 0x9) {
-                            // Virtio vendor capability
-                            LOG("Type:",
-                                (void*)cap->read_byte(3),
-                                "BAR:",
-                                (void*)cap->read_byte(4),
-                                "Offset:",
-                                (void*)cap->read_long(8),
-                                "Length:",
-                                (void*)cap->read_long(12));
-                        }
-
-                        cap = cap->next();
-                    }
+                if (vendor_id == 0x1AF4) {
+                    LOG("Virtio device");
+                    new tos::virtio::dev(std::move(dev));
                 }
             }
         }
