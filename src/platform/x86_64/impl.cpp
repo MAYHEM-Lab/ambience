@@ -9,10 +9,10 @@
 #include <tos/span.hpp>
 #include <tos/stack_storage.hpp>
 #include <tos/x86_64/assembly.hpp>
+#include <tos/x86_64/gdt.hpp>
 #include <tos/x86_64/idt.hpp>
 #include <tos/x86_64/mmu.hpp>
 #include <tos/x86_64/port.hpp>
-#include <tos/x86_64/gdt.hpp>
 
 extern void tos_main();
 
@@ -127,6 +127,7 @@ extern "C" {
     4096) std::array<tos::x86_64::table_entry, 512> p3_table;
 [[gnu::section(".nozero")]] alignas(
     4096) std::array<tos::x86_64::table_entry, 512> p2_table;
+[[gnu::section(".nozero")]] translation_table p1_tables[2];
 }
 
 extern "C" {
@@ -141,15 +142,21 @@ void set_up_page_tables() {
     p3_table[0].zero().valid(true).writeable(true).page_num(
         reinterpret_cast<uintptr_t>(&p2_table));
 
-    // 1G identity mapped
-    for (int i = 0; i < 512; ++i) {
+    for (int i = 0; i < 2; ++i) {
         p2_table[i]
             .zero()
-            .page_num(i * (1 << 21))
+            .page_num(reinterpret_cast<uintptr_t>(&p1_tables[i]))
             .valid(true)
-            .writeable(true)
-            .huge_page(true);
+            .writeable(true);
     }
+
+    for (int i = 0; i < 2; ++i) {
+        auto& table = p1_tables[i];
+        for (int j = 0; j < 512; ++j) {
+            table[j].zero().valid(true).writeable(true).page_num((i * 512 + j) << 12);
+        }
+    }
+
     tos::x86_64::write_cr3(reinterpret_cast<uint64_t>(&p4_table));
 }
 }

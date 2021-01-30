@@ -15,7 +15,7 @@ alignas(16) std::array<uint8_t, 16 * 1024 * 1024> heap_mem;
 #include <tos/memory/free_list.hpp>
 namespace {
 [[gnu::section(".nozero")]]
-alignas(16) std::array<uint8_t, 1 * 1024 * 1024> heap_mem;
+alignas(16) std::array<uint8_t, 128 * 1024> heap_mem;
 }
 #elif defined(TOS_PLATFORM_stm32_hal)
 extern "C" {

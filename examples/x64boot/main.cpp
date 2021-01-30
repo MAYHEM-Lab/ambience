@@ -67,10 +67,10 @@ void thread() {
     tos::cur_arch::breakpoint();
 
     LOG("Accessing mapped region");
-    *((volatile char*)0x40000000 - 1) = 42;
+    *((volatile char*)0x400000 - 1) = 42;
 
     LOG("Accessing unmapped region");
-    *((volatile char*)0x40000000) = 42;
+    *((volatile char*)0x400000) = 42;
 
     LOG("Done");
 
