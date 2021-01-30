@@ -228,6 +228,13 @@ enum pci_capability_type
     pci = 5
 };
 
+struct queue_descriptor {
+    uint64_t addr{};
+    uint32_t len{};
+    uint16_t id{};
+    uint16_t flags{};
+};
+
 class dev {
 public:
     explicit dev(x86_64::pci::device&& pci_dev)
