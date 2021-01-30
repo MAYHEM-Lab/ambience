@@ -25,6 +25,199 @@ void dump_table(tos::cur_arch::translation_table& table) {
         });
 }
 
+namespace tos::pci {
+enum classes
+{
+    unclassified = 0,
+    storage = 1,
+    network = 2,
+    display = 3,
+    multimedia = 4,
+    memory = 5
+};
+}
+
+namespace tos::x86_64::pci {
+namespace detail {
+constexpr port address_port{0xcf8};
+constexpr port data_port{0xcfc};
+
+uint32_t config_read_raw(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
+    auto lbus = static_cast<uint32_t>(bus);
+    auto lslot = static_cast<uint32_t>(slot);
+    auto lfunc = static_cast<uint32_t>(func);
+
+    auto address = lbus << 16 | lslot << 11 | lfunc << 8 | (offset & 0xfc) | 0x80000000;
+    address_port.outl(address);
+
+    auto data = data_port.inl();
+    return data;
+}
+
+uint32_t config_read_dword(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
+    auto data = config_read_raw(bus, slot, func, offset);
+    return data;
+}
+
+uint16_t config_read_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
+    auto data = config_read_raw(bus, slot, func, offset);
+    return (data >> ((offset & 2) * 8)) & 0xffff;
+}
+
+uint8_t config_read_byte(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
+    auto data = config_read_raw(bus, slot, func, offset);
+    return (data >> ((offset & 3) * 8)) & 0xff;
+}
+} // namespace detail
+
+uint16_t get_vendor(uint8_t bus, uint8_t slot, uint8_t func) {
+    return detail::config_read_word(bus, slot, func, 0);
+}
+
+uint16_t get_dev_id(uint8_t bus, uint8_t slot, uint8_t func) {
+    return detail::config_read_word(bus, slot, func, 2);
+}
+
+uint8_t get_class_code(uint8_t bus, uint8_t slot, uint8_t func) {
+    return detail::config_read_byte(bus, slot, func, 0xa + 1);
+}
+
+uint8_t get_subclass(uint8_t bus, uint8_t slot, uint8_t func) {
+    return detail::config_read_byte(bus, slot, func, 0xa);
+}
+
+uint16_t get_subsys_id(uint8_t bus, uint8_t slot, uint8_t func) {
+    return detail::config_read_word(bus, slot, func, 0x2c + 2);
+}
+
+uint8_t get_header_type(uint8_t bus, uint8_t slot, uint8_t func) {
+    return detail::config_read_byte(bus, slot, func, 0xc + 2);
+}
+
+class device;
+struct capability {
+
+    uint8_t vendor() const;
+    std::optional<capability> next() const;
+    uint8_t len() const;
+
+    uint8_t read_byte(uint8_t offset) const;
+    uint16_t read_word(uint8_t offset) const;
+    uint32_t read_long(uint8_t offset) const;
+
+    const device* m_dev;
+    uint8_t m_offset;
+};
+
+class device {
+public:
+    device(uint8_t bus, uint8_t slot, uint8_t func)
+        : m_bus{bus}
+        , m_slot{slot}
+        , m_func{func} {
+    }
+
+    tos::pci::classes class_code() const {
+        return tos::pci::classes(get_class_code(m_bus, m_slot, m_func));
+    }
+
+    bool has_capabilities() const {
+        return status() & 1 << 4;
+    }
+
+    uint16_t vendor() const {
+        return get_vendor(m_bus, m_slot, m_func);
+    }
+
+    uint16_t device_id() const {
+        return get_dev_id(m_bus, m_slot, m_func);
+    }
+
+    uint16_t status() const {
+        return detail::config_read_word(m_bus, m_slot, m_func, 0x6);
+    }
+
+    uint32_t bar0() const {
+        return detail::config_read_dword(m_bus, m_slot, m_func, 0x10);
+    }
+
+    uint32_t bar1() const {
+        return detail::config_read_dword(m_bus, m_slot, m_func, 0x14);
+    }
+
+    uint32_t bar2() const {
+        return detail::config_read_dword(m_bus, m_slot, m_func, 0x18);
+    }
+
+    uint32_t bar3() const {
+        return detail::config_read_dword(m_bus, m_slot, m_func, 0x1C);
+    }
+
+    uint32_t bar4() const {
+        return detail::config_read_dword(m_bus, m_slot, m_func, 0x20);
+    }
+
+    uint32_t bar5() const {
+        return detail::config_read_dword(m_bus, m_slot, m_func, 0x24);
+    }
+
+    std::optional<capability> capabilities_root() const {
+        if (has_capabilities()) {
+            return capability{
+                this,
+                static_cast<uint8_t>(
+                    detail::config_read_byte(m_bus, m_slot, m_func, 0x34) & 0xFC)};
+        }
+        return {};
+    }
+
+    template<class Fn, class... Args>
+    auto call_fn(const Fn& fn, Args&&... args) const {
+        return std::invoke(fn, m_bus, m_slot, m_func, std::forward<Args>(args)...);
+    }
+
+private:
+    uint8_t m_bus, m_slot, m_func;
+};
+
+uint8_t capability::vendor() const {
+    return m_dev->call_fn(detail::config_read_byte, m_offset);
+}
+
+std::optional<capability> capability::next() const {
+    auto ptr = m_dev->call_fn(detail::config_read_byte, m_offset + 1);
+    if (ptr != 0) {
+        return capability{m_dev, ptr};
+    }
+    return std::optional<capability>();
+}
+
+uint8_t capability::len() const {
+    return m_dev->call_fn(detail::config_read_byte, m_offset + 2);
+}
+
+uint8_t capability::read_byte(uint8_t offset) const {
+    return m_dev->call_fn(detail::config_read_byte, m_offset + offset);
+}
+uint16_t capability::read_word(uint8_t offset) const {
+    return m_dev->call_fn(detail::config_read_word, m_offset + offset);
+}
+uint32_t capability::read_long(uint8_t offset) const {
+    return m_dev->call_fn(detail::config_read_dword, m_offset + offset);
+}
+} // namespace tos::x86_64::pci
+
+namespace tos::virtio {
+enum pci_capability_type
+{
+    common = 1,
+    notify = 2,
+    isr = 3,
+    device = 4,
+    pci = 5
+};
+} // namespace tos::virtio
+
 void thread() {
     auto uart_res = tos::x86_64::uart_16550::open();
     if (!uart_res) {
@@ -55,14 +248,70 @@ void thread() {
     auto cr3 = tos::x86_64::read_cr3();
     LOG("Page table at:", (void*)cr3);
 
+    for (int i = 0; i < 256; ++i) {
+        for (int j = 0; j < 32; ++j) {
+            auto vendor_id = tos::x86_64::pci::get_vendor(i, j, 0);
+            if (vendor_id != 0xFFFF) {
+                if (vendor_id == 0x1AF4) {
+                    LOG("Virtio device");
+                }
+
+                auto dev = tos::x86_64::pci::device(i, j, 0);
+
+                LOG("PCI Device at",
+                    i,
+                    j,
+                    (void*)tos::x86_64::pci::get_header_type(i, j, 0),
+                    (void*)dev.vendor(),
+                    (void*)dev.device_id(),
+                    (void*)dev.class_code(),
+                    (void*)tos::x86_64::pci::get_subclass(i, j, 0),
+                    (void*)tos::x86_64::pci::get_subsys_id(i, j, 0),
+                    (void*)dev.status(),
+                    "BAR0", (void*)dev.bar0(),
+                    "BAR1", (void*)dev.bar1(),
+                    "BAR4", (void*)dev.bar4(),
+                    "BAR5", (void*)dev.bar5(),
+                    dev.has_capabilities());
+
+                if (dev.has_capabilities()) {
+                    auto cap = dev.capabilities_root();
+                    while (cap) {
+                        LOG((void*)cap->vendor(),
+                            (void*)cap->next()->m_offset,
+                            (void*)cap->len());
+
+                        if (vendor_id == 0x1AF4 && cap->vendor() == 0x9) {
+                            // Virtio vendor capability
+                            LOG("Type:",
+                                (void*)cap->read_byte(3),
+                                "BAR:",
+                                (void*)cap->read_byte(4),
+                                "Offset:",
+                                (void*)cap->read_long(8),
+                                "Length:",
+                                (void*)cap->read_long(12));
+                        }
+
+                        cap = cap->next();
+                    }
+                }
+            }
+        }
+    }
+
+    while (true) {
+        tos::this_thread::yield();
+    }
+
     auto& level0_table = tos::x86_64::get_current_translation_table();
 
     dump_table(level0_table);
-//
-//    for (uintptr_t i = 0; i < 0x40000000; ++i) {
-//        auto ptr = (volatile char*)i;
-//        LOG((void*)i, *ptr);
-//    }
+    //
+    //    for (uintptr_t i = 0; i < 0x40000000; ++i) {
+    //        auto ptr = (volatile char*)i;
+    //        LOG((void*)i, *ptr);
+    //    }
 
     tos::cur_arch::breakpoint();
 
