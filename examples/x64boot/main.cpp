@@ -246,7 +246,6 @@ public:
                 handle_capability(*cap);
             }
         }
-        initialize();
     }
 
     void initialize() {
@@ -262,10 +261,14 @@ public:
         LOG("Features:", (void*)features);
 
         auto driver_features_port = x86_64::port(bar_base + 0x4);
-        driver_features_port.outl(features);
+        driver_features_port.outl(negotiate(features));
 
         status_port.outb(0x11);
     }
+
+protected:
+
+    virtual uint32_t negotiate(uint32_t features) = 0;
 
 private:
     struct capability_data {
@@ -302,6 +305,16 @@ private:
     capability_data* m_pci;
     std::vector<capability_data> m_capabilities;
     x86_64::pci::device m_pci_dev;
+};
+
+class block_device : public dev {
+public:
+    using dev::dev;
+protected:
+private:
+    uint32_t negotiate(uint32_t features) override {
+        return features;
+    }
 };
 } // namespace tos::virtio
 
@@ -361,9 +374,10 @@ void thread() {
                     (void*)dev.bar5(),
                     dev.has_capabilities());
 
-                if (vendor_id == 0x1AF4) {
-                    LOG("Virtio device");
-                    new tos::virtio::dev(std::move(dev));
+                if (vendor_id == 0x1AF4 && dev.device_id() == 0x1001) {
+                    LOG("Virtio block device");
+                    auto blk_dev = new tos::virtio::block_device(std::move(dev));
+                    blk_dev->initialize();
                 }
             }
         }
