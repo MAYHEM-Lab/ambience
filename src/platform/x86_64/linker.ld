@@ -1,5 +1,12 @@
-KERNEL_VMA = 4096;
+KERNEL_VMA = 0x1000;
 ENTRY(_start)
+
+PHDRS
+{
+  RODATA PT_LOAD FLAGS(5);
+  DATA PT_LOAD;
+}
+
 SECTIONS
 {
     . = KERNEL_VMA;
@@ -11,7 +18,7 @@ SECTIONS
         *(.text*)
         *(.text.*)
         . = ALIGN(4096);
-    }
+    } : RODATA
 
    .rodata :
    {
@@ -25,7 +32,7 @@ SECTIONS
         *(.ctors.*)
         end_ctors = .;
         . = ALIGN(4096);
-   }
+   } : RODATA
 
    .data :
    {
@@ -33,10 +40,10 @@ SECTIONS
         *(.data*)
         *(.data.*)
         . = ALIGN(4096);
-   }
+   } : DATA
 
    __bss_start = .;
-   .bss :
+   .bss (NOLOAD):
    {
        _bss = .;
        *(.bss*)
@@ -52,7 +59,7 @@ SECTIONS
        *(.nozero*);
        *(.nozero.*);
        . = ALIGN(4096);
-   }
+   } : DATA
 
    _end = .;
 
