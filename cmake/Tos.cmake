@@ -18,6 +18,9 @@ if (CMAKE_SIZE)
             COMMENT "Calculate size"
     )
 endif()
+
+    add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_STRIP} $<TARGET_FILE:${target}> -o $<TARGET_FILE:${target}>.stripped)
 endfunction()
 
 function(add_executable target)
