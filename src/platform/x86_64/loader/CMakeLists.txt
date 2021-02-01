@@ -8,9 +8,9 @@ target_include_directories(i386-loader PUBLIC ../include)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 add_custom_command(
-    COMMAND Python3::Interpreter "${CMAKE_CURRENT_SOURCE_DIR}/bin2array.py" "${CMAKE_BINARY_DIR}/../cmake-build-bare-x64/bin/x64boot.stripped" -O ${CMAKE_CURRENT_BINARY_DIR}/program.data
+    COMMAND Python3::Interpreter "${CMAKE_CURRENT_SOURCE_DIR}/bin2array.py" "${CMAKE_BINARY_DIR}/../cmake-build-barex64/bin/x64boot.stripped" -O ${CMAKE_CURRENT_BINARY_DIR}/program.data
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/program.data
-    DEPENDS ${CMAKE_BINARY_DIR}/../cmake-build-bare-x64/bin/x64boot.stripped
+    DEPENDS ${CMAKE_BINARY_DIR}/../cmake-build-barex64/bin/x64boot.stripped
 )
 
 target_include_directories(i386-loader PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
