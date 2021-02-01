@@ -30,13 +30,13 @@ else()
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/grub.cfg
     )
     add_custom_command(
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:i386-loader> ${CMAKE_CURRENT_BINARY_DIR}/iso/boot
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/iso/boot/i386-loader
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:i386-loader>.stripped ${CMAKE_CURRENT_BINARY_DIR}/iso/boot
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/iso/boot/i386-loader.stripped
         DEPENDS i386-loader
     )
     add_custom_command(
         COMMAND ${MKRESCUE_BIN} -o ${CMAKE_CURRENT_BINARY_DIR}/Tos.iso ${CMAKE_CURRENT_BINARY_DIR}/iso
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/iso/boot/i386-loader ${CMAKE_CURRENT_BINARY_DIR}/iso/boot/grub/grub.cfg
+        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/iso/boot/i386-loader.stripped ${CMAKE_CURRENT_BINARY_DIR}/iso/boot/grub/grub.cfg
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/Tos.iso
     )
 

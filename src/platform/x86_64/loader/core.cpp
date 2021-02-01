@@ -9,6 +9,10 @@
 #include <tos/self_pointing.hpp>
 #include <tos/span.hpp>
 
+void tos_force_get_failed(void*) {
+    while(true);
+}
+
 extern "C" {
 extern void (*start_ctors[])(void);
 extern void (*end_ctors[])(void);
