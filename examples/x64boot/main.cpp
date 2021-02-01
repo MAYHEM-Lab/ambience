@@ -502,22 +502,20 @@ private:
             q.used_base->ring[0].len,
             int(c),
             (void*)buf[0]);
-
-        for (auto c : buf) {
-            LOG(int(c));
-        }
     }
 
     uint32_t negotiate(uint32_t features) override {
         LOG("RO:", bool(features & feature_read_only));
         LOG("Blksz:", bool(features & feature_blk_size));
         LOG("Topo:", bool(features & feature_topology));
-        return features & ~feature_topology;
+        LOG("Ring evt idx:", bool(features & ring_event_idx));
+        return features & ~(feature_topology | ring_event_idx);
     }
 
     static constexpr uint32_t feature_read_only = 1 << 5;
     static constexpr uint32_t feature_blk_size = 1 << 6;
     static constexpr uint32_t feature_topology = 1 << 10;
+    static constexpr uint32_t ring_event_idx = 1 << 29;
 };
 } // namespace tos::virtio
 
