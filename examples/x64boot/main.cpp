@@ -479,6 +479,8 @@ private:
     std::vector<queue> m_queues;
 };
 
+semaphore pci_irq11_sem{0};
+
 class block_device : public dev {
 public:
     using dev::dev;
@@ -540,9 +542,10 @@ private:
         auto notify_port = x86_64::port(bar_base + 0x10);
         notify_port.outw(0);
 
-        while (q.used_base->index == 0) {
-            //            LOG((void*)buf[0]);
-        }
+        pci_irq11_sem.down();
+//        while (q.used_base->index == 0) {
+//            //            LOG((void*)buf[0]);
+//        }
 
         LOG(q.used_base->index,
             q.used_base->ring[0].id,
@@ -571,6 +574,7 @@ void irq10_handler(tos::x86_64::exception_frame* f) {
     tos::x86_64::port(0x20).outb(0x20);
 }
 void irq11_handler(tos::x86_64::exception_frame* f) {
+    tos::virtio::pci_irq11_sem.up_isr();
     tos::x86_64::port(0x20).outb(0x20);
 }
 }
