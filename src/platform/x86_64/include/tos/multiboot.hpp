@@ -159,8 +159,8 @@ void print(OutStr& str, const info_t& info) {
     print(str,
           (void*)&info,
           (void*)info.flags,
-          reinterpret_cast<void*>(static_cast<uintptr_t>(info.mem_lower)),
-          reinterpret_cast<void*>(static_cast<uintptr_t>(info.mem_upper)));
+          reinterpret_cast<void*>(static_cast<uintptr_t>(info.mem_lower) * 1024),
+          reinterpret_cast<void*>(static_cast<uintptr_t>(info.mem_upper) * 1024));
 }
 
 inline const info_t* load_info;
