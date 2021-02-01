@@ -18,15 +18,15 @@ target_include_directories(tos_memory PUBLIC include)
 if (BUILD_TESTS)
     enable_testing()
     add_executable(tos_memory_buddy_test src/memory/buddy_test.cpp)
-    target_link_libraries(tos_memory_buddy_test PUBLIC tests_main tos_memory)
+    target_link_libraries(tos_memory_buddy_test PUBLIC standalone_tests_main tos_memory)
     add_test(NAME tos_memory_buddy_test COMMAND tos_memory_buddy_test)
 
     add_executable(tos_memory_bump_test src/memory/bump_test.cpp)
-    target_link_libraries(tos_memory_bump_test PUBLIC tests_main tos_memory)
+    target_link_libraries(tos_memory_bump_test PUBLIC standalone_tests_main tos_memory)
     add_test(NAME tos_memory_bump_test COMMAND tos_memory_bump_test)
 
     add_executable(tos_memory_free_list_test src/memory/free_list_test.cpp)
-    target_link_libraries(tos_memory_free_list_test PUBLIC tests_main tos_memory)
+    target_link_libraries(tos_memory_free_list_test PUBLIC standalone_tests_main tos_memory)
     add_test(NAME tos_memory_free_list_test COMMAND tos_memory_free_list_test)
 endif()
 

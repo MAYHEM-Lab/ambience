@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <tos/debug/panic.hpp>
+#include <tos/debug/assert.hpp>
 #include <tos/utility.hpp>
 #include <tos/meta/function_traits.hpp>
 
@@ -70,9 +70,7 @@ public:
 
     function_ref(internal_funptr_t ptr, void* data)
         : function_ref_base<false>(ptr, data) {
-        if (fun() == nullptr) {
-            debug::panic("Function cannot be null!");
-        }
+        Assert(fun() && "Function cannot be null!");
     }
 
     explicit function_ref(internal_funptr_t ptr)

@@ -5,11 +5,11 @@
 #include "doctest.h"
 
 #include <chrono>
-#include <common/driver_base.hpp>
 #include <common/rn2903/sys.hpp>
 #include <cstring>
 #include <string>
 #include <tos/span.hpp>
+#include <tos/self_pointing.hpp>
 
 using namespace tos;
 

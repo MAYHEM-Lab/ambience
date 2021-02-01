@@ -4,10 +4,9 @@
 
 #pragma once
 
-#include "expected.hpp"
-#include "span.hpp"
-
-#include <common/driver_base.hpp>
+#include <tos/expected.hpp>
+#include <tos/self_pointing.hpp>
+#include <tos/span.hpp>
 
 namespace tos {
 class omemory_stream : public self_pointing<omemory_stream> {

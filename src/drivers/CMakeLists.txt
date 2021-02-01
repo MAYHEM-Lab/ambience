@@ -17,7 +17,7 @@ target_link_libraries(tos_spi PUBLIC tos_gpio tos_core)
 target_include_directories(tos_spi PUBLIC include)
 
 add_library(tos_usart include/common/usart.hpp src/stub.cpp)
-target_link_libraries(tos_usart PUBLIC tos::core)
+target_link_libraries(tos_usart PUBLIC tos_util_core)
 target_include_directories(tos_usart PUBLIC include)
 
 add_library(tos_gpio include/common/gpio.hpp src/stub.cpp include/common/detail/gpio_ports.hpp)
@@ -41,7 +41,7 @@ add_library(tos_xbee
         include/common/xbee/response.hpp
         src/stub.cpp
         include/common/xbee/utility.hpp)
-target_link_libraries(tos_xbee PUBLIC tos_core tos_usart Boost::sml)
+target_link_libraries(tos_xbee PUBLIC tos_util_core tos_print tos_usart Boost::sml)
 target_include_directories(tos_xbee PUBLIC include)
 
 add_library(tos_spi_sd src/spi_sd.cpp include/common/sd/spi_sd.hpp include/common/sd/sd_info.hpp)

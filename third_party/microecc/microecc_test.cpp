@@ -4,7 +4,6 @@
 
 #include <cstring>
 #include <doctest.h>
-#include <tos/debug/debug.hpp>
 #include <uECC.h>
 
 namespace {

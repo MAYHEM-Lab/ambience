@@ -8,7 +8,6 @@
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
 
-
 namespace tos {
 namespace {
 TEST_CASE("itoa test") {
