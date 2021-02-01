@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <string_view>
 #include <tos/compiler.hpp>
+#include <tos/elf.hpp>
 #include <tos/i386/assembly.hpp>
 #include <tos/i386/mmu.hpp>
 #include <tos/multiboot.hpp>
@@ -163,7 +164,7 @@ void enable_paging() {
     write_cr0(cr0);
 }
 } // namespace
-extern uint8_t program[];
+extern tos::span<const uint8_t> program_span;
 
 extern "C" {
 
@@ -186,32 +187,26 @@ struct [[gnu::packed]] {
 [[gnu::noinline]] void setup_gdt() {
     memset(&gdt_entry_data, 0, sizeof(gdt_entry_data));
 
-    gdt_entry_data[0] = {
-        .limit_low = 0xffff,
-        .base_low = 0,
-        .base_mid = 0,
-        .access = 0,
-        .opts_limit_mid = 1,
-        .base_hi = 0
-    };
+    gdt_entry_data[0] = {.limit_low = 0xffff,
+                         .base_low = 0,
+                         .base_mid = 0,
+                         .access = 0,
+                         .opts_limit_mid = 1,
+                         .base_hi = 0};
 
-    gdt_entry_data[1] = {
-        .limit_low = 0,
-        .base_low = 0,
-        .base_mid = 0,
-        .access = 0x9a,
-        .opts_limit_mid = 0b10101111,
-        .base_hi = 0
-    };
+    gdt_entry_data[1] = {.limit_low = 0,
+                         .base_low = 0,
+                         .base_mid = 0,
+                         .access = 0x9a,
+                         .opts_limit_mid = 0b10101111,
+                         .base_hi = 0};
 
-    gdt_entry_data[2] = {
-        .limit_low = 0,
-        .base_low = 0,
-        .base_mid = 0,
-        .access = 0x92,
-        .opts_limit_mid = 0,
-        .base_hi = 0
-    };
+    gdt_entry_data[2] = {.limit_low = 0,
+                         .base_low = 0,
+                         .base_mid = 0,
+                         .access = 0x92,
+                         .opts_limit_mid = 0,
+                         .base_hi = 0};
 
     gdt.sz = sizeof gdt_entry_data - 1;
     gdt.ptr = reinterpret_cast<uint32_t>(&gdt_entry_data);
@@ -236,18 +231,59 @@ struct [[gnu::packed]] {
     setup_gdt();
     vga.write("Set up GDT\n\r");
 
-    if (reinterpret_cast<uint64_t>(&program) != 4096) {
-        vga.write("Bad program position!\n\r");
-    }
     vga.write("Init done\n\r");
 
-    vga.write("Loading...\n\r");
+    vga.write("Loading ELF...\n\r");
 
-    using entry_t = int (*)();
-    auto entry = reinterpret_cast<entry_t>(&program[0]);
+    vga.write(tos::itoa(program_span.size()).data());
+    vga.write("\n\r");
+
+    auto res = tos::elf::elf64::from_buffer(program_span);
+    if (!res) {
+        vga.write("Could not parse payload\n\r");
+        vga.write("Error code: ");
+        vga.write(tos::itoa(int(force_error(res))).data());
+        vga.write("\n\r");
+        while (true)
+            ;
+    }
+
+    auto& elf = force_get(res);
+    tos::println(vga, "Entry point:", int(elf.header().entry));
+    tos::println(vga, (int)elf.header().pheader_offset, (int)elf.header().pheader_size);
+
+    for (auto pheader : elf.program_headers()) {
+        tos::println(vga,
+                     "Load",
+                     (void*)(uint32_t)pheader.file_size,
+                     "bytes from",
+                     (void*)(uint32_t)pheader.file_offset,
+                     "to",
+                     (void*)(uint32_t)pheader.virt_address);
+
+        auto seg = elf.segment(pheader);
+        tos::println(vga, seg.slice(0, 32));
+        memcpy(reinterpret_cast<void*>(pheader.virt_address), seg.data(), seg.size());
+    }
 
     asm volatile("lgdt %0" : : "m"(gdt));
-    asm volatile("mov %0, %%edi": : "r"(info));
+    asm volatile("mov %0, %%edi" : : "r"(info));
+    asm("push $0x8\n"
+        "push %%ecx\n"
+        "lret"
+        :
+        : "c"(uint32_t(elf.header().entry)));
+    TOS_UNREACHABLE();
+
+    tos::println(vga, "Done");
+    while (true)
+        ;
+
+    using entry_t = int (*)();
+    //    auto entry = reinterpret_cast<entry_t>(&program[0]);
+
+    asm volatile("lgdt %0" : : "m"(gdt));
+    asm volatile("mov %0, %%edi" : : "r"(info));
     asm volatile("jmp $0x8,$0x1000");
     TOS_UNREACHABLE();
 }

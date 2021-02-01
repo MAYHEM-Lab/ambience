@@ -16,10 +16,9 @@ SECTIONS
         *(.ctors*)
         *(.ctors.*)
         end_ctors = .;
-        . = ALIGN(4096);
-       *(.to_load)
+        *(.to_load)
     }
-    . = ALIGN(4096 * 64);
+    . = ALIGN(4096);
 
    _data = .;
    .data : AT(ADDR(.data) - KERNEL_VMA)
