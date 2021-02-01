@@ -88,11 +88,13 @@ uint8_t config_read_byte(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset
     return (data >> bits) & 0xff;
 }
 
-void config_write_dword(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint32_t value) {
+void config_write_dword(
+    uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint32_t value) {
     return config_write_raw(bus, slot, func, offset, value);
 }
 
-void config_write_byte(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint8_t value) {
+void config_write_byte(
+    uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint8_t value) {
     auto qword = config_read_raw(bus, slot, func, offset);
     auto in_offset = offset & 0b11;
     auto bits = in_offset * 8;
@@ -322,6 +324,12 @@ struct queue {
 
     uint16_t next_buffer = 0;
 
+    std::pair<int, queue_descriptor*> alloc() {
+        auto idx = next_buffer % size;
+        ++next_buffer;
+        return {idx, &descriptors()[idx]};
+    }
+    
     tos::span<const queue_descriptor> descriptors() const {
         return {descriptors_base, size};
     }
@@ -485,24 +493,31 @@ class block_device : public dev {
 public:
     using dev::dev;
 
-protected:
-private:
-    struct req_header {
-        uint32_t type;
-        uint32_t _res;
-        uint64_t sector;
-    };
+    int write();
+    /**
+     * Returns the size of each flash sector/page in bytes.
+     */
+    size_t sector_size_bytes() const {
+        auto bar_base = this->bar_base();
 
-    void initialize() override {
-        base_initialize();
+        auto block_size_port = x86_64::port(bar_base + 0x18 + 16);
+        return block_size_port.inl();
+    }
+
+    /**
+     * Number of sectors in the flash.
+     */
+    size_t number_of_sectors() const {
         auto bar_base = this->bar_base();
         auto sector_count_port_hi = x86_64::port(bar_base + 0x18);
         auto sector_count_port_lo = x86_64::port(bar_base + 0x14);
+        return (uint64_t(sector_count_port_hi.inl()) << 32) | sector_count_port_lo.inl();
+    }
 
-        auto block_size_port = x86_64::port(bar_base + 0x18 + 16);
-
-        LOG("Sector count:", sector_count_port_hi.inl(), sector_count_port_lo.inl());
-        LOG("Block size:", block_size_port.inl());
+    expected<void, int> read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
+        if (offset != 0 || data.size() != sector_size_bytes()) {
+            return unexpected(-1);
+        }
 
         auto& q = queue_at(0);
 
@@ -510,25 +525,28 @@ private:
         header.type = 0;
         header.sector = 0;
 
-        q.descriptors()[0].addr = reinterpret_cast<uintptr_t>(&header);
-        q.descriptors()[0].len = sizeof header;
-        q.descriptors()[0].next = 1;
-        q.descriptors()[0].flags = queue_flags(queue_flags::next);
+        auto [root_idx, root] = q.alloc();
+        auto [data_idx, data_] = q.alloc();
+        auto [code_idx, code_] = q.alloc();
 
-        volatile char buf[512];
-        std::fill(buf, buf + 512, 'x');
-        q.descriptors()[1].addr = reinterpret_cast<uintptr_t>(&buf[0]);
-        q.descriptors()[1].len = 512;
-        q.descriptors()[1].next = 2;
-        q.descriptors()[1].flags = queue_flags(queue_flags::next | queue_flags::write);
+        root->addr = reinterpret_cast<uintptr_t>(&header);
+        root->len = sizeof header;
+        root->next = data_idx;
+        root->flags = queue_flags(queue_flags::next);
+
+        data_->addr = reinterpret_cast<uintptr_t>(data.data());
+        data_->len = data.size();
+        data_->next = code_idx;
+        data_->flags = queue_flags(queue_flags::next | queue_flags::write);
 
         char c;
-        q.descriptors()[2].addr = reinterpret_cast<uintptr_t>(&c);
-        q.descriptors()[2].len = sizeof c;
-        q.descriptors()[2].flags = queue_flags::write;
-        q.descriptors()[2].next = {};
+        code_->addr = reinterpret_cast<uintptr_t>(&c);
+        code_->len = sizeof c;
+        code_->flags = queue_flags::write;
+        code_->next = {};
 
-        q.available_base->ring[0] = 0;
+        LOG(int(root_idx));
+        q.available_base->ring[0] = root_idx;
 
         q.available_base->index++;
 
@@ -536,23 +554,42 @@ private:
             q.used_base->ring[0].id,
             q.used_base->ring[0].len,
             int(c),
-            (void*)buf[0]);
+            (void*)data[0]);
 
+
+        auto bar_base = this->bar_base();
 
         auto notify_port = x86_64::port(bar_base + 0x10);
         notify_port.outw(0);
 
         pci_irq11_sem.down();
-//        while (q.used_base->index == 0) {
-//            //            LOG((void*)buf[0]);
-//        }
 
-        LOG(q.used_base->index,
+        LOG("out", q.used_base->index,
             q.used_base->ring[0].id,
             q.used_base->ring[0].len,
             int(c),
-            (void*)buf[0]);
+            (void*)data[0]);
+        if (c == 0) {
+            return {};
+        }
+        return unexpected(c);
     }
+
+    void initialize() override {
+        base_initialize();
+        LOG("Sector count:", int(number_of_sectors()));
+        LOG("Block size:", int(sector_size_bytes()));
+    }
+
+    void isr();
+
+protected:
+private:
+    struct req_header {
+        uint32_t type;
+        uint32_t _res;
+        uint64_t sector;
+    };
 
     uint32_t negotiate(uint32_t features) override {
         LOG("RO:", bool(features & feature_read_only));
@@ -639,9 +676,11 @@ void thread() {
 
                 if (vendor_id == 0x1AF4 && dev.device_id() == 0x1001) {
                     LOG("Virtio block device");
-                    tos::virtio::dev* blk_dev =
-                        new tos::virtio::block_device(std::move(dev));
+                    auto blk_dev = new tos::virtio::block_device(std::move(dev));
                     blk_dev->initialize();
+                    uint8_t buf[512];
+                    blk_dev->read(0, buf, 0);
+                    blk_dev->read(0, buf, 0);
                 }
             }
         }
