@@ -85,4 +85,6 @@ void _virt_handler();
 void _security_exception_handler();
 void _irq0_handler();
 void _irq1_handler();
+void _irq10_handler();
+void _irq11_handler();
 }

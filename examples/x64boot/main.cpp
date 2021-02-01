@@ -1,3 +1,4 @@
+#include "tos/x86_64/exception.hpp"
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/flags.hpp>
@@ -54,6 +55,18 @@ uint32_t config_read_raw(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset
     return data;
 }
 
+void config_write_raw(
+    uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint32_t value) {
+    auto lbus = static_cast<uint32_t>(bus);
+    auto lslot = static_cast<uint32_t>(slot);
+    auto lfunc = static_cast<uint32_t>(func);
+
+    auto address = lbus << 16 | lslot << 11 | lfunc << 8 | (offset & 0xfc) | 0x80000000;
+    address_port.outl(address);
+
+    data_port.outl(value);
+}
+
 uint32_t config_read_dword(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
     auto data = config_read_raw(bus, slot, func, offset);
     return data;
@@ -61,12 +74,33 @@ uint32_t config_read_dword(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offs
 
 uint16_t config_read_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
     auto data = config_read_raw(bus, slot, func, offset);
-    return (data >> ((offset & 2) * 8)) & 0xffff;
+    auto in_offset = offset & 0b10;
+    auto bits = in_offset * 8;
+
+    return (data >> bits) & 0xffff;
 }
 
 uint8_t config_read_byte(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
     auto data = config_read_raw(bus, slot, func, offset);
-    return (data >> ((offset & 3) * 8)) & 0xff;
+    auto in_offset = offset & 0b11;
+    auto bits = in_offset * 8;
+
+    return (data >> bits) & 0xff;
+}
+
+void config_write_dword(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint32_t value) {
+    return config_write_raw(bus, slot, func, offset, value);
+}
+
+void config_write_byte(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint8_t value) {
+    auto qword = config_read_raw(bus, slot, func, offset);
+    auto in_offset = offset & 0b11;
+    auto bits = in_offset * 8;
+
+    qword &= ~(0xff << bits);
+    qword |= static_cast<uint32_t>(value) << bits;
+
+    config_write_raw(bus, slot, func, offset, qword);
 }
 } // namespace detail
 
@@ -173,6 +207,14 @@ public:
                     detail::config_read_byte(m_bus, m_slot, m_func, 0x34) & 0xFC)};
         }
         return {};
+    }
+
+    uint8_t irq_line() const {
+        return detail::config_read_byte(m_bus, m_slot, m_func, 0x3c);
+    }
+
+    void irq_line(uint8_t line) {
+        detail::config_write_byte(m_bus, m_slot, m_func, 0x3c, line);
     }
 
     template<class Fn, class... Args>
@@ -315,7 +357,7 @@ struct queue {
         used_base = reinterpret_cast<volatile queue_used*>((char*)buf + desc_avail_sz);
         LOG(available_base->index);
 
-        LOG(descriptors_base, available_base, used_base);
+        LOG(descriptors_base, available_base, (void*)used_base);
     }
 };
 
@@ -347,7 +389,8 @@ protected:
         auto status_port = x86_64::port(bar_base + 0x12);
 
         // The spec says a device MUST initialize this register to 0.
-        // However, not setting this register prevents proper initialization for some reason.
+        // However, not setting this register prevents proper initialization for some
+        // reason.
         status_port.outb(0);
         status_port.outb(0x1);
         status_port.outb(0x3);
@@ -523,6 +566,15 @@ private:
 };
 } // namespace tos::virtio
 
+extern "C" {
+void irq10_handler(tos::x86_64::exception_frame* f) {
+    tos::x86_64::port(0x20).outb(0x20);
+}
+void irq11_handler(tos::x86_64::exception_frame* f) {
+    tos::x86_64::port(0x20).outb(0x20);
+}
+}
+
 void thread() {
     auto uart_res = tos::x86_64::uart_16550::open();
     if (!uart_res) {
@@ -569,6 +621,8 @@ void thread() {
                     (void*)tos::x86_64::pci::get_subclass(i, j, 0),
                     (void*)tos::x86_64::pci::get_subsys_id(i, j, 0),
                     (void*)dev.status(),
+                    "IRQ",
+                    int(dev.irq_line()),
                     "BAR0",
                     (void*)dev.bar0(),
                     "BAR1",

@@ -25,8 +25,10 @@ interrupt_descriptor_table default_idt() {
     idt.virt = idt_entry::create(_virt_handler);
     idt.security_exception = idt_entry::create(_security_exception_handler);
 
-    idt.rest[11] = idt_entry::create(_irq0_handler);
-    idt.rest[12] = idt_entry::create(_irq1_handler);
+    idt.rest[11] = idt_entry::create(_irq0_handler); // 0x20
+    idt.rest[12] = idt_entry::create(_irq1_handler); // 0x21
+    idt.rest[21] = idt_entry::create(_irq10_handler); // 0x2a
+    idt.rest[22] = idt_entry::create(_irq11_handler); // 0x2b
     return idt;
 }
 }

@@ -286,6 +286,10 @@ _post_start([[maybe_unused]] const tos::multiboot::info_t* info) {
     auto p = pic();
     p.doit();
 
+    for (int i = 1; i < 16; ++i) {
+        p.enable_irq(i);
+    }
+
     tos::kern::enable_interrupts();
 
     tos_main();
