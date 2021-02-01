@@ -266,6 +266,8 @@ struct [[gnu::packed]] {
         memcpy(reinterpret_cast<void*>(pheader.virt_address), seg.data(), seg.size());
     }
 
+    tos::println(vga, "Jumping...");
+
     asm volatile("lgdt %0" : : "m"(gdt));
     asm volatile("mov %0, %%edi" : : "r"(info));
     asm("push $0x8\n"
@@ -273,18 +275,6 @@ struct [[gnu::packed]] {
         "lret"
         :
         : "c"(uint32_t(elf.header().entry)));
-    TOS_UNREACHABLE();
-
-    tos::println(vga, "Done");
-    while (true)
-        ;
-
-    using entry_t = int (*)();
-    //    auto entry = reinterpret_cast<entry_t>(&program[0]);
-
-    asm volatile("lgdt %0" : : "m"(gdt));
-    asm volatile("mov %0, %%edi" : : "r"(info));
-    asm volatile("jmp $0x8,$0x1000");
     TOS_UNREACHABLE();
 }
 }
