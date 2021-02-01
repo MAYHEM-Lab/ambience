@@ -345,6 +345,10 @@ protected:
         auto bar_base = this->bar_base();
         LOG("Bar base", (void*)bar_base);
         auto status_port = x86_64::port(bar_base + 0x12);
+
+        // The spec says a device MUST initialize this register to 0.
+        // However, not setting this register prevents proper initialization for some reason.
+        status_port.outb(0);
         status_port.outb(0x1);
         status_port.outb(0x3);
 
