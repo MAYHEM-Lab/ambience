@@ -1,4 +1,8 @@
 function(default_include_dirs)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        return()
+    endif()
+
     string(REPLACE " " ";" CMAKE_CXX_FLAGS_LIST ${CMAKE_CXX_FLAGS})
     set(ARGS_SEPARATOR " ")
     execute_process(

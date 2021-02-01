@@ -65,9 +65,11 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     endif ()
 endif ()
 
-set(TOS_C_FLAGS "${TOS_FLAGS} -U__STRICT_ANSI__")
-set(TOS_CXX_FLAGS "${TOS_FLAGS} -Wnon-virtual-dtor -fno-rtti -fno-exceptions \
-    -fno-unwind-tables -fno-threadsafe-statics -Werror=return-type")
+if (NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    set(TOS_C_FLAGS "${TOS_FLAGS} -U__STRICT_ANSI__")
+    set(TOS_CXX_FLAGS "${TOS_FLAGS} -Wnon-virtual-dtor -fno-rtti -fno-exceptions \
+        -fno-unwind-tables -fno-threadsafe-statics -Werror=return-type")
+endif()
 
 set(TOS ON)
 
