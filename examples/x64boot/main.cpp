@@ -214,7 +214,8 @@ uint32_t capability::read_long(uint8_t offset) const {
 extern "C" {
 void abort() {
     LOG_ERROR("Abort called");
-    while (true);
+    while (true)
+        ;
 }
 }
 
@@ -228,11 +229,92 @@ enum pci_capability_type
     pci = 5
 };
 
+enum queue_flags : uint16_t
+{
+    next = 1 << 0,
+    write = 1 << 1,
+    indirect = 1 << 2,
+    available = 1 << 7,
+    used = 1 << 15
+};
+
 struct queue_descriptor {
+    // Physical address
     uint64_t addr{};
     uint32_t len{};
-    uint16_t id{};
-    uint16_t flags{};
+    queue_flags flags{};
+    uint16_t next{};
+};
+
+struct queue_available {
+    uint16_t flags;
+    uint16_t index;
+    uint16_t ring[]; // stores ids
+    //    uint16_t used_event;
+};
+
+static_assert(sizeof(queue_available) == 4);
+
+struct queue_used_elem {
+    uint32_t id;
+    uint32_t len;
+};
+
+struct queue_used {
+    uint16_t flags;
+    uint16_t index;
+    queue_used_elem ring[];
+    // uint16_t avail_event;
+};
+
+alignas(4096) uint8_t pages[4096 * 4];
+
+struct queue {
+    uint16_t size;
+
+    queue_descriptor* descriptors_base;
+    queue_available* available_base;
+    queue_used* used_base;
+
+    uint16_t next_buffer = 0;
+
+    tos::span<const queue_descriptor> descriptors() const {
+        return {descriptors_base, size};
+    }
+
+    tos::span<queue_descriptor> descriptors() {
+        return {descriptors_base, size};
+    }
+
+    explicit queue(uint16_t sz)
+        : size(sz) {
+        auto descriptor_sz = sizeof(queue_descriptor) * sz;
+        auto available_sz = sizeof(queue_available) + sizeof(uint16_t) * sz;
+
+        auto desc_avail_sz =
+            tos::align_nearest_up_pow2(descriptor_sz + available_sz, 4096);
+        LOG(int(desc_avail_sz), int(descriptor_sz + available_sz));
+
+        auto used_sz = sizeof(queue_used) + sizeof(queue_used_elem) * sz;
+        auto total_sz = desc_avail_sz + used_sz;
+        LOG("Need", int(total_sz), "bytes");
+
+        void* buf = &pages[0];
+        std::fill((char*)buf, (char*)buf + 4096 * 4, 0);
+        LOG("Buffer:", buf);
+
+//        for (int i = 0; i < sz; ++i) {
+//            available_base->ring[i] = 0xFFFF;
+//            used_base->ring[i].id = 0xFFFF;
+//        }
+
+        descriptors_base = reinterpret_cast<queue_descriptor*>(buf);
+        available_base = reinterpret_cast<queue_available*>((char*)buf + descriptor_sz);
+        used_base = reinterpret_cast<queue_used*>((char*)buf + desc_avail_sz);
+        LOG(available_base->index);
+
+        LOG(descriptors_base, available_base, used_base);
+    }
 };
 
 class dev {
@@ -248,9 +330,17 @@ public:
         }
     }
 
-    void initialize() {
+    virtual void initialize() = 0;
+
+protected:
+    uint32_t bar_base() const {
         auto common_bar = m_pci_dev.bars()[m_pci->bar];
         auto bar_base = common_bar & 0xFFFFFFFC;
+        return bar_base;
+    }
+
+    void base_initialize() {
+        auto bar_base = this->bar_base();
         LOG("Bar base", (void*)bar_base);
         auto status_port = x86_64::port(bar_base + 0x12);
         status_port.outb(0x1);
@@ -263,12 +353,44 @@ public:
         auto driver_features_port = x86_64::port(bar_base + 0x4);
         driver_features_port.outl(negotiate(features));
 
-        status_port.outb(0x11);
+        status_port.outb(0xB);
+
+        auto resp = status_port.inb();
+        LOG("Status:", resp);
+        if ((resp & 0x8) == 0) {
+            LOG_ERROR("Feature negotiation failed");
+            return;
+        }
+        LOG_INFO("Features negotiated");
+
+        auto queue_sel_port = x86_64::port(bar_base + 0xe);
+        auto queue_sz_port = x86_64::port(bar_base + 0xc);
+        auto queue_base_port = x86_64::port(bar_base + 0x8);
+
+        for (int i = 0; i < 16; ++i) {
+            queue_sel_port.outw(i);
+            auto sz = queue_sz_port.inw();
+            if (sz == 0) {
+                continue;
+            }
+            LOG("Queue", i, "size", sz);
+            m_queues.emplace_back(sz);
+            auto queue_base =
+                reinterpret_cast<uintptr_t>(m_queues.back().descriptors_base) / 4096;
+            queue_base_port.outl(queue_base);
+            LOG(int(queue_base));
+        }
+
+        status_port.outb(0x7);
+        LOG("Device initialized");
+        LOG((void*)status_port.inb());
     }
 
-protected:
-
     virtual uint32_t negotiate(uint32_t features) = 0;
+
+    queue& queue_at(int idx) {
+        return m_queues[idx];
+    }
 
 private:
     struct capability_data {
@@ -305,16 +427,77 @@ private:
     capability_data* m_pci;
     std::vector<capability_data> m_capabilities;
     x86_64::pci::device m_pci_dev;
+    std::vector<queue> m_queues;
 };
 
 class block_device : public dev {
 public:
     using dev::dev;
+
 protected:
 private:
-    uint32_t negotiate(uint32_t features) override {
-        return features;
+    struct req_header {
+        uint32_t type;
+        uint32_t _res;
+        uint64_t sector;
+    };
+
+    void initialize() override {
+        base_initialize();
+        auto bar_base = this->bar_base();
+        auto sector_count_port_hi = x86_64::port(bar_base + 0x18);
+        auto sector_count_port_lo = x86_64::port(bar_base + 0x14);
+
+        auto block_size_port = x86_64::port(bar_base + 0x18 + 16);
+
+        LOG("Sector count:", sector_count_port_hi.inl(), sector_count_port_lo.inl());
+        LOG("Block size:", block_size_port.inl());
+
+        auto& q = queue_at(0);
+
+        req_header header{};
+        header.type = 0;
+        header.sector = 0;
+
+        q.descriptors()[0].addr = reinterpret_cast<uintptr_t>(&header);
+        q.descriptors()[0].len = sizeof header;
+        q.descriptors()[0].next = 1;
+        q.descriptors()[0].flags = queue_flags(queue_flags::next);
+
+        char buf[512];
+        std::fill(buf, buf + 512, 0xff);
+        q.descriptors()[1].addr = reinterpret_cast<uintptr_t>(&buf[0]);
+        q.descriptors()[1].len = 512;
+        q.descriptors()[1].next = 2;
+        q.descriptors()[1].flags = queue_flags(queue_flags::next | queue_flags::write);
+
+        char c;
+        q.descriptors()[2].addr = reinterpret_cast<uintptr_t>(&c);
+        q.descriptors()[2].len = sizeof c;
+        q.descriptors()[2].flags = queue_flags::write;
+
+        q.available_base->ring[0] = 0;
+
+        q.available_base->index++;
+
+        auto notify_port = x86_64::port(bar_base + 0x10);
+        notify_port.outw(0);
+
+        while(true) {
+//            LOG((void*)buf[0]);
+        }
     }
+
+    uint32_t negotiate(uint32_t features) override {
+        LOG("RO:", bool(features & feature_read_only));
+        LOG("Blksz:", bool(features & feature_blk_size));
+        LOG("Topo:", bool(features & feature_topology));
+        return features & ~feature_topology;
+    }
+
+    static constexpr uint32_t feature_read_only = 1 << 5;
+    static constexpr uint32_t feature_blk_size = 1 << 6;
+    static constexpr uint32_t feature_topology = 1 << 10;
 };
 } // namespace tos::virtio
 
@@ -376,7 +559,8 @@ void thread() {
 
                 if (vendor_id == 0x1AF4 && dev.device_id() == 0x1001) {
                     LOG("Virtio block device");
-                    auto blk_dev = new tos::virtio::block_device(std::move(dev));
+                    tos::virtio::dev* blk_dev =
+                        new tos::virtio::block_device(std::move(dev));
                     blk_dev->initialize();
                 }
             }
