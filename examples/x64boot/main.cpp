@@ -246,6 +246,8 @@ struct queue_descriptor {
     uint16_t next{};
 };
 
+static_assert(sizeof(queue_descriptor) == 16);
+
 struct queue_available {
     uint16_t flags;
     uint16_t index;
@@ -274,7 +276,7 @@ struct queue {
 
     queue_descriptor* descriptors_base;
     queue_available* available_base;
-    queue_used* used_base;
+    volatile queue_used* used_base;
 
     uint16_t next_buffer = 0;
 
@@ -303,14 +305,14 @@ struct queue {
         std::fill((char*)buf, (char*)buf + 4096 * 4, 0);
         LOG("Buffer:", buf);
 
-//        for (int i = 0; i < sz; ++i) {
-//            available_base->ring[i] = 0xFFFF;
-//            used_base->ring[i].id = 0xFFFF;
-//        }
+        //        for (int i = 0; i < sz; ++i) {
+        //            available_base->ring[i] = 0xFFFF;
+        //            used_base->ring[i].id = 0xFFFF;
+        //        }
 
         descriptors_base = reinterpret_cast<queue_descriptor*>(buf);
         available_base = reinterpret_cast<queue_available*>((char*)buf + descriptor_sz);
-        used_base = reinterpret_cast<queue_used*>((char*)buf + desc_avail_sz);
+        used_base = reinterpret_cast<volatile queue_used*>((char*)buf + desc_avail_sz);
         LOG(available_base->index);
 
         LOG(descriptors_base, available_base, used_base);
@@ -381,7 +383,7 @@ protected:
             LOG(int(queue_base));
         }
 
-        status_port.outb(0x7);
+        status_port.outb(0xf);
         LOG("Device initialized");
         LOG((void*)status_port.inb());
     }
@@ -464,8 +466,8 @@ private:
         q.descriptors()[0].next = 1;
         q.descriptors()[0].flags = queue_flags(queue_flags::next);
 
-        char buf[512];
-        std::fill(buf, buf + 512, 0xff);
+        volatile char buf[512];
+        std::fill(buf, buf + 512, 'x');
         q.descriptors()[1].addr = reinterpret_cast<uintptr_t>(&buf[0]);
         q.descriptors()[1].len = 512;
         q.descriptors()[1].next = 2;
@@ -475,16 +477,34 @@ private:
         q.descriptors()[2].addr = reinterpret_cast<uintptr_t>(&c);
         q.descriptors()[2].len = sizeof c;
         q.descriptors()[2].flags = queue_flags::write;
+        q.descriptors()[2].next = {};
 
         q.available_base->ring[0] = 0;
 
         q.available_base->index++;
 
+        LOG(q.used_base->index,
+            q.used_base->ring[0].id,
+            q.used_base->ring[0].len,
+            int(c),
+            (void*)buf[0]);
+
+
         auto notify_port = x86_64::port(bar_base + 0x10);
         notify_port.outw(0);
 
-        while(true) {
-//            LOG((void*)buf[0]);
+        while (q.used_base->index == 0) {
+            //            LOG((void*)buf[0]);
+        }
+
+        LOG(q.used_base->index,
+            q.used_base->ring[0].id,
+            q.used_base->ring[0].len,
+            int(c),
+            (void*)buf[0]);
+
+        for (auto c : buf) {
+            LOG(int(c));
         }
     }
 
