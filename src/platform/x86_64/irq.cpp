@@ -32,6 +32,7 @@ void set_irq(int num, tos::function_ref<void(x86_64::exception_frame*, int)> han
 } // namespace tos::platform
 
 extern "C" {
+[[gnu::used]]
 void irq_entry(tos::x86_64::exception_frame* frame, int num) {
     tos::platform::irqs[num - 32](frame, num);
     tos::x86_64::port(0x20).outb(0x20);

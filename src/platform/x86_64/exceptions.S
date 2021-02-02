@@ -44,13 +44,11 @@
     .extern \actual_handler
     .global _\actual_handler
     _\actual_handler:
-        cli
         save_gpr \ec
         mov %rsp, %rdi
         mov $\number, %rsi
         call \actual_handler
         load_gpr \ec
-        sti
         iretq
 .endm
 
@@ -58,13 +56,11 @@
 .macro make_irq number:req
     .global _irq\number\()_handler
     _irq\number\()_handler:
-        cli
         save_gpr 0
         mov %rsp, %rdi
         mov $(32 + \number), %rsi
         call irq_entry
         load_gpr 0
-        sti
         iretq
     #make_isr irq\number\()_handler, (32 + \number), 0
 .endm
