@@ -6,6 +6,7 @@
 #include <tos/peripheral/uart_16550.hpp>
 #include <tos/peripheral/vga_text.hpp>
 #include <tos/x86_64/mmu.hpp>
+#include <tos/x86_64/pic.hpp>
 
 void dump_table(tos::cur_arch::translation_table& table) {
     tos::cur_arch::traverse_table_entries(
@@ -449,6 +450,10 @@ protected:
         return m_queues[idx];
     }
 
+    tos::x86_64::pci::device& pci_dev() {
+        return m_pci_dev;
+    }
+
 private:
     struct capability_data {
         pci_capability_type type;
@@ -577,6 +582,16 @@ public:
 
     void initialize() override {
         base_initialize();
+
+        tos::platform::set_irq(
+            pci_dev().irq_line(),
+            tos::free_function_ref(+[](tos::x86_64::exception_frame* f, int num) {
+//                LOG("PCI IRQ!", num);
+
+                tos::virtio::pci_irq11_sem.up_isr();
+            }));
+        tos::x86_64::pic::enable_irq(pci_dev().irq_line());
+
         LOG("Sector count:", int(number_of_sectors()));
         LOG("Block size:", int(sector_size_bytes()));
     }
@@ -673,13 +688,6 @@ void thread() {
                     "BAR5",
                     (void*)dev.bar5(),
                     dev.has_capabilities());
-
-                tos::platform::set_irq(
-                    dev.irq_line(),
-                    tos::free_function_ref(+[](tos::x86_64::exception_frame* f, int num) {
-                        LOG("PCI IRQ!");
-                        tos::virtio::pci_irq11_sem.up_isr();
-                    }));
 
                 if (vendor_id == 0x1AF4 && dev.device_id() == 0x1001) {
                     LOG("Virtio block device");
