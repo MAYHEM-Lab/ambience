@@ -13,27 +13,12 @@
 #include <tos/x86_64/idt.hpp>
 #include <tos/x86_64/mmu.hpp>
 #include <tos/x86_64/port.hpp>
+#include <tos/x86_64/pic.hpp>
 
 extern void tos_main();
 
 namespace {
 using namespace tos::x86_64;
-
-enum pic_cmd_codes : uint8_t
-{
-    icw4 = 0x1,
-    init = 0x10,
-    end_of_interrupt = 0x20
-};
-
-extern "C" {
-void irq0_handler(exception_frame* f) {
-    port(0x20).outb(end_of_interrupt);
-}
-void irq1_handler(exception_frame* f) {
-    port(0x20).outb(end_of_interrupt);
-}
-}
 
 auto idt = default_idt();
 
@@ -41,76 +26,6 @@ struct [[gnu::packed]] {
     uint16_t limits;
     uint64_t base;
 } idt_thing;
-
-inline void io_wait() {
-    asm volatile("outb %%al, $0x80" : : "a"(0));
-}
-
-class pic {
-public:
-    void doit() {
-        // init with ICW4 needed (0x10 = init, 0x01 = read icw4)
-        master_cmd().outb(0x11);
-        io_wait();
-        slave_cmd().outb(0x11);
-        io_wait();
-
-        // ICW2
-        master_data().outb(0x20); // IRQ offset at 32
-        io_wait();
-        slave_data().outb(0x28); // IRQ offset at 40
-        io_wait();
-
-        // ICW3
-        master_data().outb(0x04); // there is a slave at IRQ2 (0100)
-        io_wait();
-        slave_data().outb(0x02); // slave id is 2
-        io_wait();
-
-        // ICW4 = we're in 8086 mode
-        master_data().outb(0x01);
-        io_wait();
-        slave_data().outb(0x01);
-        io_wait();
-
-        // Masks, all disabled
-        master_data().outb(0xff);
-        slave_data().outb(0xff);
-    }
-
-    void enable_irq(int irq) {
-        if (irq >= 8) {
-            slave_data().outb(slave_data().inb() & ~(1 << (irq - 8)));
-            return;
-        }
-        master_data().outb(master_data().inb() & ~(1 << (irq)));
-    }
-
-    void disable_irq(int irq) {
-        if (irq >= 8) {
-            slave_data().outb(slave_data().inb() | 1 << (irq - 8));
-            return;
-        }
-        master_data().outb(master_data().inb() | 1 << (irq));
-    }
-
-private:
-    port master_cmd() const {
-        return {0x20};
-    }
-
-    port master_data() const {
-        return {0x21};
-    }
-
-    port slave_cmd() const {
-        return {0xA0};
-    }
-
-    port slave_data() const {
-        return {0xA1};
-    }
-};
 
 tos::expected<void, idt_error> idt_setup() {
     idt_thing.base = reinterpret_cast<uint64_t>(&idt);
@@ -283,12 +198,7 @@ _post_start([[maybe_unused]] const tos::multiboot::info_t* info) {
 
     idt_setup();
 
-    auto p = pic();
-    p.doit();
-
-    for (int i = 1; i < 16; ++i) {
-        p.enable_irq(i);
-    }
+    pic::initialize();
 
     tos::kern::enable_interrupts();
 
