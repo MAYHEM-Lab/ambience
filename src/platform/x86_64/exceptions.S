@@ -54,31 +54,42 @@
         iretq
 .endm
 
+.extern irq_entry
 .macro make_irq number:req
-    make_isr irq\number\()_handler, (32 + \number), 0
+    .global _irq\number\()_handler
+    _irq\number\()_handler:
+        cli
+        save_gpr 0
+        mov %rsp, %rdi
+        mov $(32 + \number), %rsi
+        call irq_entry
+        load_gpr 0
+        sti
+        iretq
+    #make_isr irq\number\()_handler, (32 + \number), 0
 .endm
 
-make_isr div_by_zero_handler, 0, 0
-make_isr debug_handler, 1, 0
-make_isr nmi_handler, 2, 0
-make_isr breakpoint_handler, 3, 0
-make_isr overflow_handler, 4, 0
-make_isr out_of_bounds_handler, 5, 0
-make_isr invalid_opcode_handler, 6, 0
-make_isr device_not_available_handler, 7, 0
-make_isr double_fault_handler, 8, 1
-make_isr coprocessor_seg_overrun_handler, 9, 0
-make_isr invalid_tss_handler, 10, 1
-make_isr segment_not_present_handler, 11, 1
-make_isr stack_segment_fault_handler, 12, 1
-make_isr general_protection_fault_handler, 13, 1
-make_isr page_fault_handler, 14, 1
-make_isr x87_fpu_fault_handler, 15, 0
-make_isr alignment_check_handler, 16, 1
-make_isr machine_check_handler, 17, 1
-make_isr simd_fpu_fault_handler, 18, 0
-make_isr virt_handler, 19, 0
-make_isr security_exception_handler, 20, 0
+make_isr div_by_zero_handler,               0,  0
+make_isr debug_handler,                     1,  0
+make_isr nmi_handler,                       2,  0
+make_isr breakpoint_handler,                3,  0
+make_isr overflow_handler,                  4,  0
+make_isr out_of_bounds_handler,             5,  0
+make_isr invalid_opcode_handler,            6,  0
+make_isr device_not_available_handler,      7,  0
+make_isr double_fault_handler,              8,  1
+make_isr coprocessor_seg_overrun_handler,   9,  0
+make_isr invalid_tss_handler,               10, 1
+make_isr segment_not_present_handler,       11, 1
+make_isr stack_segment_fault_handler,       12, 1
+make_isr general_protection_fault_handler,  13, 1
+make_isr page_fault_handler,                14, 1
+make_isr x87_fpu_fault_handler,             15, 0
+make_isr alignment_check_handler,           16, 1
+make_isr machine_check_handler,             17, 1
+make_isr simd_fpu_fault_handler,            18, 0
+make_isr virt_handler,                      19, 0
+make_isr security_exception_handler,        20, 0
 
 make_irq 0
 make_irq 1

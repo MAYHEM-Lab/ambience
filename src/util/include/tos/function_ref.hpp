@@ -5,8 +5,8 @@
 #pragma once
 
 #include <tos/debug/assert.hpp>
-#include <tos/utility.hpp>
 #include <tos/meta/function_traits.hpp>
+#include <tos/utility.hpp>
 
 namespace tos {
 namespace detail {
@@ -114,7 +114,8 @@ private:
 
     template<class ToFun>
     friend ToFun unsafe_function_ref_cast(const function_ref& from) {
-        return ToFun(detail::dangerous_tag{}, static_cast<const function_ref_base<false>&>(from));
+        return ToFun(detail::dangerous_tag{},
+                     static_cast<const function_ref_base<false>&>(from));
     }
 };
 
@@ -143,5 +144,15 @@ auto mem_function_ref(typename meta::function_traits<decltype(MemberFun)>::class
                                       typename Traits::ret_t,
                                       typename Traits::arg_ts>;
     return typename FunRef::type(&FunRef::template forwarder<MemberFun>, &ins);
+}
+
+template<class RetT, class... ArgTs>
+auto free_function_ref(RetT (*fn)(ArgTs...)) {
+    return function_ref<RetT(ArgTs...)>(
+        [](ArgTs... args, void* ptr) -> RetT {
+            auto fptr = reinterpret_cast<RetT (*)(ArgTs...)>(ptr);
+            return fptr(args...);
+        },
+        reinterpret_cast<void*>(fn));
 }
 } // namespace tos

@@ -674,6 +674,13 @@ void thread() {
                     (void*)dev.bar5(),
                     dev.has_capabilities());
 
+                tos::platform::set_irq(
+                    dev.irq_line(),
+                    tos::free_function_ref(+[](tos::x86_64::exception_frame* f, int num) {
+                        LOG("PCI IRQ!");
+                        tos::virtio::pci_irq11_sem.up_isr();
+                    }));
+
                 if (vendor_id == 0x1AF4 && dev.device_id() == 0x1001) {
                     LOG("Virtio block device");
                     auto blk_dev = new tos::virtio::block_device(std::move(dev));
