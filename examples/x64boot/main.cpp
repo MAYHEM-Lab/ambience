@@ -1,4 +1,8 @@
+#include "tos/function_ref.hpp"
+#include "tos/self_pointing.hpp"
+#include "tos/semaphore.hpp"
 #include "tos/x86_64/exception.hpp"
+#include "tos/x86_64/port.hpp"
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/flags.hpp>
@@ -330,7 +334,7 @@ struct queue {
         ++next_buffer;
         return {idx, &descriptors()[idx]};
     }
-    
+
     tos::span<const queue_descriptor> descriptors() const {
         return {descriptors_base, size};
     }
@@ -492,7 +496,8 @@ private:
     std::vector<queue> m_queues;
 };
 
-semaphore pci_irq11_sem{0};
+class block_device;
+block_device* bd;
 
 class block_device : public dev {
 public:
@@ -519,7 +524,8 @@ public:
         return (uint64_t(sector_count_port_hi.inl()) << 32) | sector_count_port_lo.inl();
     }
 
-    expected<void, int> read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
+    expected<void, int>
+    write(uint64_t sector_id, span<const uint8_t> data, size_t offset) {
         if (offset != 0 || data.size() != sector_size_bytes()) {
             return unexpected(-1);
         }
@@ -527,8 +533,8 @@ public:
         auto& q = queue_at(0);
 
         req_header header{};
-        header.type = 0;
-        header.sector = 0;
+        header.type = 1;
+        header.sector = sector_id;
 
         auto [root_idx, root] = q.alloc();
         auto [data_idx, data_] = q.alloc();
@@ -536,13 +542,13 @@ public:
 
         root->addr = reinterpret_cast<uintptr_t>(&header);
         root->len = sizeof header;
-        root->next = data_idx;
         root->flags = queue_flags(queue_flags::next);
+        root->next = data_idx;
 
         data_->addr = reinterpret_cast<uintptr_t>(data.data());
         data_->len = data.size();
+        data_->flags = queue_flags(queue_flags::next);
         data_->next = code_idx;
-        data_->flags = queue_flags(queue_flags::next | queue_flags::write);
 
         char c;
         code_->addr = reinterpret_cast<uintptr_t>(&c);
@@ -550,14 +556,16 @@ public:
         code_->flags = queue_flags::write;
         code_->next = {};
 
-        LOG(int(root_idx));
-        q.available_base->ring[0] = root_idx;
+        auto avail_idx = q.available_base->index % q.size;
+        LOG(int(root_idx), avail_idx);
+
+        q.available_base->ring[avail_idx] = root_idx;
 
         q.available_base->index++;
 
         LOG(q.used_base->index,
-            q.used_base->ring[0].id,
-            q.used_base->ring[0].len,
+            q.used_base->ring[avail_idx].id,
+            q.used_base->ring[avail_idx].len,
             int(c),
             (void*)data[0]);
 
@@ -567,11 +575,76 @@ public:
         auto notify_port = x86_64::port(bar_base + 0x10);
         notify_port.outw(0);
 
-        pci_irq11_sem.down();
+        m_wait_sem.down();
 
-        LOG("out", q.used_base->index,
-            q.used_base->ring[0].id,
-            q.used_base->ring[0].len,
+        LOG("out",
+            q.used_base->index,
+            q.used_base->ring[avail_idx].id,
+            q.used_base->ring[avail_idx].len,
+            int(c),
+            (void*)data[0]);
+        if (c == 0) {
+            return {};
+        }
+        return unexpected(c);
+    }
+
+    expected<void, int> read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
+        if (offset != 0 || data.size() != sector_size_bytes()) {
+            return unexpected(-1);
+        }
+
+        auto& q = queue_at(0);
+
+        req_header header{};
+        header.type = 0;
+        header.sector = sector_id;
+
+        auto [root_idx, root] = q.alloc();
+        auto [data_idx, data_] = q.alloc();
+        auto [code_idx, code_] = q.alloc();
+
+        root->addr = reinterpret_cast<uintptr_t>(&header);
+        root->len = sizeof header;
+        root->flags = queue_flags(queue_flags::next);
+        root->next = data_idx;
+
+        data_->addr = reinterpret_cast<uintptr_t>(data.data());
+        data_->len = data.size();
+        data_->flags = queue_flags(queue_flags::next | queue_flags::write);
+        data_->next = code_idx;
+
+        char c;
+        code_->addr = reinterpret_cast<uintptr_t>(&c);
+        code_->len = sizeof c;
+        code_->flags = queue_flags::write;
+        code_->next = {};
+
+        auto avail_idx = q.available_base->index % q.size;
+        LOG(int(root_idx), avail_idx);
+
+        q.available_base->ring[avail_idx] = root_idx;
+
+        q.available_base->index++;
+
+        LOG(q.used_base->index,
+            q.used_base->ring[avail_idx].id,
+            q.used_base->ring[avail_idx].len,
+            int(c),
+            (void*)data[0]);
+
+
+        auto bar_base = this->bar_base();
+
+        auto notify_port = x86_64::port(bar_base + 0x10);
+        notify_port.outw(0);
+
+        m_wait_sem.down();
+
+        LOG("out",
+            q.used_base->index,
+            q.used_base->ring[avail_idx].id,
+            q.used_base->ring[avail_idx].len,
             int(c),
             (void*)data[0]);
         if (c == 0) {
@@ -581,22 +654,25 @@ public:
     }
 
     void initialize() override {
+        bd = this;
         base_initialize();
 
-        tos::platform::set_irq(
-            pci_dev().irq_line(),
-            tos::free_function_ref(+[](tos::x86_64::exception_frame* f, int num) {
-//                LOG("PCI IRQ!", num);
-
-                tos::virtio::pci_irq11_sem.up_isr();
-            }));
+        tos::platform::set_irq(pci_dev().irq_line(),
+                               tos::mem_function_ref<&block_device::isr>(*this));
         tos::x86_64::pic::enable_irq(pci_dev().irq_line());
 
         LOG("Sector count:", int(number_of_sectors()));
         LOG("Block size:", int(sector_size_bytes()));
     }
 
-    void isr();
+    void isr(tos::x86_64::exception_frame* f, int num) {
+        auto bar_base = this->bar_base();
+        auto isr_status_port = x86_64::port(bar_base + 0x13);
+        auto isr_status = isr_status_port.inb();
+        if (isr_status & 1) {
+            m_wait_sem.up_isr();
+        }
+    }
 
 protected:
 private:
@@ -614,22 +690,14 @@ private:
         return features & ~(feature_topology | ring_event_idx);
     }
 
+    tos::semaphore m_wait_sem{0};
+
     static constexpr uint32_t feature_read_only = 1 << 5;
     static constexpr uint32_t feature_blk_size = 1 << 6;
     static constexpr uint32_t feature_topology = 1 << 10;
     static constexpr uint32_t ring_event_idx = 1 << 29;
 };
 } // namespace tos::virtio
-
-extern "C" {
-void irq10_handler(tos::x86_64::exception_frame* f) {
-    tos::x86_64::port(0x20).outb(0x20);
-}
-void irq11_handler(tos::x86_64::exception_frame* f) {
-    tos::virtio::pci_irq11_sem.up_isr();
-    tos::x86_64::port(0x20).outb(0x20);
-}
-}
 
 void thread() {
     auto uart_res = tos::x86_64::uart_16550::open();
@@ -695,7 +763,8 @@ void thread() {
                     blk_dev->initialize();
                     uint8_t buf[512];
                     blk_dev->read(0, buf, 0);
-                    blk_dev->read(0, buf, 0);
+                    blk_dev->read(1, buf, 0);
+                    blk_dev->write(0, buf, 0);
                 }
             }
         }
