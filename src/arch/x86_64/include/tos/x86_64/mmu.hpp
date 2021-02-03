@@ -6,6 +6,8 @@
 #include <tos/function_ref.hpp>
 #include <tos/memory.hpp>
 #include <tos/x86_64/assembly.hpp>
+#include <tos/expected.hpp>
+#include <tos/paging/physical_page_allocator.hpp>
 
 namespace tos::x86_64 {
 using page_id_t = uint32_t;
@@ -33,7 +35,7 @@ public:
     }
 
     table_entry& writeable(bool write) {
-        m_raw_entry = (m_raw_entry & ~writeable_mask) | (write << 1);
+        m_raw_entry = (m_raw_entry & ~writeable_mask) | (write << writeable_off);
         return *this;
     }
 
@@ -51,7 +53,7 @@ public:
     }
 
     table_entry& huge_page(bool huge) {
-        m_raw_entry = (m_raw_entry & ~huge_page_mask) | (huge << 7);
+        m_raw_entry = (m_raw_entry & ~huge_page_mask) | (huge << huge_page_off);
         return *this;
     }
 
@@ -73,17 +75,34 @@ public:
         return m_raw_entry & user_access_mask;
     }
 
+    table_entry& allow_user(bool val) {
+        m_raw_entry = (m_raw_entry & ~user_access_off) | (val << user_access_off);
+        return *this;
+    }
+
     bool noexec() const {
         return m_raw_entry & noexec_mask;
     }
+
+    table_entry& noexec(bool val) {
+        m_raw_entry = (m_raw_entry & ~present_mask) | (uint64_t(val) << present_off);
+        return *this;
+    }
+
     uint64_t m_raw_entry;
 
 private:
-    static constexpr auto present_mask = 0x1 << 0;
-    static constexpr auto writeable_mask = 0x1 << 1;
-    static constexpr auto user_access_mask = 0x1 << 2;
-    static constexpr auto huge_page_mask = 0x1 << 7;
-    static constexpr auto noexec_mask = 0x1ULL << 63;
+    static constexpr auto present_off = 0;
+    static constexpr auto writeable_off = 1;
+    static constexpr auto user_access_off = 2;
+    static constexpr auto huge_page_off = 7;
+    static constexpr auto noexec_off = 63;
+
+    static constexpr auto present_mask = 0x1 << present_off;
+    static constexpr auto writeable_mask = 0x1 << writeable_off;
+    static constexpr auto user_access_mask = 0x1 << user_access_off;
+    static constexpr auto huge_page_mask = 0x1 << huge_page_off;
+    static constexpr auto noexec_mask = 0x1ULL << noexec_off;
     static constexpr auto page_base_mask = 0xFF'FF'FF'FF'FF'FF'F0'00;
 };
 
@@ -140,4 +159,29 @@ void traverse_table_entries(translation_table& table, FnT&& fn) {
 
 translation_table& get_current_translation_table();
 permissions translate_permissions(const table_entry& entry);
+
+enum class mmu_errors
+{
+    page_alloc_fail,
+    already_allocated,
+    not_allocated,
+    bad_perms,
+};
+
+expected<void, mmu_errors> allocate_region(translation_table& root,
+                                           const segment& virt_seg,
+                                           user_accessible allow_user,
+                                           physical_page_allocator* palloc);
+
+expected<void, mmu_errors> mark_resident(translation_table& root,
+                                         const segment& virt_seg,
+                                         memory_types type,
+                                         void* phys_addr);
+
+expected<void, mmu_errors> mark_nonresident(translation_table& root,
+                                            const segment& virt_seg);
+
+expected<const table_entry*, mmu_errors> entry_for_address(const translation_table& root,
+                                                           uintptr_t virt_addr);
+
 } // namespace tos::x86_64
