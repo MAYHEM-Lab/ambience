@@ -125,6 +125,13 @@ add_library(tos_inet
         include/common/inet/lwip.hpp)
 target_include_directories(tos_inet PUBLIC include)
 
+add_library(tos_pci
+        include/common/pci/classes.hpp
+        src/stub.cpp
+)
+target_include_directories(tos_pci PUBLIC include)
+target_link_libraries(tos_pci PUBLIC tos_util_core)
+
 add_subdirectory(sensor)
 add_subdirectory(ble)
 add_subdirectory(clock)
@@ -133,3 +140,5 @@ add_subdirectory(dma)
 add_subdirectory(memory)
 add_subdirectory(rtc)
 add_subdirectory(serial)
+
+add_subdirectory(virtio)
