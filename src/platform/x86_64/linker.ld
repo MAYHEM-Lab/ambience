@@ -11,7 +11,7 @@ SECTIONS
 {
     . = KERNEL_VMA;
 
-    _code = .;
+    __start = .;
     .text :
     {
         KEEP(*(.text.entry))
@@ -61,7 +61,7 @@ SECTIONS
        . = ALIGN(4096);
    } : DATA
 
-   _end = .;
+   __end = .;
 
    /DISCARD/ :
    {
