@@ -65,6 +65,21 @@ enum class permissions : uint8_t
     all = 7
 };
 
+enum class memory_types
+{
+    // RAM, cachable
+    normal = 1,
+
+    // MMIO etc, not cached
+    device = 2
+};
+
+enum class user_accessible
+{
+    no,
+    yes
+};
+
 struct segment {
     memory_range range;
     permissions perms;
@@ -92,18 +107,6 @@ struct memory_fault {
 
     job* faulting_job;
     fault_frame* frame;
-};
-
-enum class memory_types
-{
-    normal = 1,
-    device = 2
-};
-
-enum class user_accessible
-{
-    no,
-    yes
 };
 
 // Might be anonymous, a device or an abstract object.
