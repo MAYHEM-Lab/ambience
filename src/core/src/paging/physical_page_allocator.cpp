@@ -1,3 +1,4 @@
+#include <tos/algorithm.hpp>
 #include <tos/paging/physical_page_allocator.hpp>
 
 namespace tos {
@@ -13,16 +14,24 @@ physical_page_allocator::physical_page_allocator(size_t num_pages)
     mark_unavailable(this_obj);
 }
 
-intrusive_ptr<physical_page> physical_page_allocator::allocate(int count, int align) {
-    if (count != 1 || align != 1)
+physical_page* physical_page_allocator::allocate(int count, int align) {
+    if (align != 1)
         return nullptr;
-    for (auto& page : get_table()) {
-        if (page.free()) {
-            m_remaining -= 1;
-            return intrusive_ptr<physical_page>(&page);
-        }
+
+    auto it = tos::consecutive_find_if(
+        get_table().begin(), get_table().end(), count, [](auto& p) {
+            return p.free();
+        });
+
+    if (it == get_table().end()) {
+        return nullptr;
     }
-    return nullptr;
+
+    for (int i = 0; i < count; ++i) {
+        intrusive_ref(&*(it + i));
+    }
+    m_remaining -= count;
+    return &*it;
 }
 
 void* physical_page_allocator::address_of(const physical_page& page) const {
