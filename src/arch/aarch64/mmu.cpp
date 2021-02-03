@@ -211,7 +211,6 @@ expected<translation_table*, mmu_errors> clone_level(int level,
     if (!table_page) {
         return unexpected(mmu_errors::page_alloc_fail);
     }
-    intrusive_ref(table_page.get());
 
     EXPECTED_TRYV(allocate_region(
         get_current_translation_table(),

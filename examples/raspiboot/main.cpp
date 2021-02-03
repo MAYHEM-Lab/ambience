@@ -665,7 +665,7 @@ void raspi_main() {
     palloc->mark_unavailable({0, 4096});
     auto p = palloc->allocate(1);
 
-    LOG("Allocated:", p.get());
+    LOG("Allocated:", p);
     LOG("Address of page:", palloc->address_of(*p));
 
     op_res = tos::aarch64::allocate_region(
