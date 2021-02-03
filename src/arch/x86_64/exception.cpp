@@ -78,7 +78,7 @@ void stack_segment_fault_handler([[maybe_unused]] exception_frame* frame,
 }
 void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
                                       [[maybe_unused]] uint64_t num) {
-    LOG("GPF!", (int)num, (void*)frame->error_code, (void*)frame->rip);
+    LOG("GPF!", (int)num, (void*)frame, (void*)frame->error_code, (void*)frame->rip);
     while (true)
         ;
 }
@@ -89,6 +89,7 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
         (void*)frame,
         (void*)frame->error_code,
         (void*)frame->rip,
+        "Fault address:",
         (void*)read_cr2());
     LOG("Handled correctly, hanging");
     while (true)
