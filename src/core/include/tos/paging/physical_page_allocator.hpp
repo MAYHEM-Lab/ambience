@@ -1,9 +1,11 @@
 #pragma once
 
 #include <tos/memory.hpp>
+#include <tos/intrusive_ptr.hpp>
+#include <tos/expected.hpp>
 
 namespace tos {
-struct physical_page : ref_counted<physical_page> {
+struct physical_page : ref_counted<physical_page, int8_t, ignore_t> {
     const mapping* map;
 
     bool free() const {
@@ -18,8 +20,11 @@ public:
     // Allocates the given number of physical pages on the specified alignment.
     // Both arguments are in numbers of physical pages.
     // The alignment argument must be a power of 2.
-    intrusive_ptr<physical_page> allocate(int count, int align = 1);
+    physical_page* allocate(int count, int align = 1);
+    void free(span<physical_page> pages);
 
+    // Returns a pointer to the **physical memory** for the given page.
+    // You **have to** map this physical memory to an address space before you can access it!
     void* address_of(const physical_page& page) const;
 
     int page_num(const physical_page& page) const;
@@ -37,6 +42,10 @@ public:
 
     size_t remaining_page_count() const {
         return m_remaining;
+    }
+
+    size_t page_size() const {
+        return 4096;
     }
 
 private:
