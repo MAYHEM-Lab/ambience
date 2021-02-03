@@ -34,6 +34,12 @@ physical_page* physical_page_allocator::allocate(int count, int align) {
     return &*it;
 }
 
+void physical_page_allocator::free(span<physical_page> pages) {
+    for (auto& pg : pages) {
+        intrusive_unref(&pg);
+    }
+}
+
 void* physical_page_allocator::address_of(const physical_page& page) const {
     return reinterpret_cast<void*>(page_num(page) * 4096);
 }
