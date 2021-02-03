@@ -1,4 +1,6 @@
 #include "tos/function_ref.hpp"
+#include "tos/memory.hpp"
+#include "tos/paging/physical_page_allocator.hpp"
 #include "tos/self_pointing.hpp"
 #include "tos/semaphore.hpp"
 #include "tos/x86_64/exception.hpp"
@@ -73,6 +75,22 @@ void thread() {
     auto cr3 = tos::x86_64::read_cr3();
     LOG("Page table at:", (void*)cr3);
 
+    LOG("Image ends at", (void*)tos::default_segments::image().end());
+
+    auto allocator_space = tos::physical_page_allocator::size_for_pages(1024);
+    LOG("Physpage allocator would need", allocator_space, "bytes");
+
+    auto palloc = new ((void*)tos::default_segments::image().end()) tos::physical_page_allocator(1024);
+    palloc->mark_unavailable(tos::default_segments::image());
+    palloc->mark_unavailable({0, 4096});
+    palloc->mark_unavailable({0x00080000, 0x000FFFFF - 0x00080000});
+    palloc->mark_unavailable({});
+
+    for (int i = 0; i < 200; ++i) {
+        auto p = palloc->allocate(1, 1);
+        LOG(i, palloc->address_of(*p), palloc->remaining_page_count());
+    }
+
     for (int i = 0; i < 256; ++i) {
         for (int j = 0; j < 32; ++j) {
             auto vendor_id = tos::x86_64::pci::get_vendor(i, j, 0);
@@ -101,14 +119,37 @@ void thread() {
                     (void*)dev.bar5(),
                     dev.has_capabilities());
 
-                if (vendor_id == 0x1AF4 && dev.device_id() == 0x1001) {
-                    LOG("Virtio block device");
-                    auto blk_dev = new tos::virtio::block_device(std::move(dev));
-                    blk_dev->initialize();
-                    uint8_t buf[512];
-                    blk_dev->read(0, buf, 0);
-                    blk_dev->read(1, buf, 0);
-                    blk_dev->write(0, buf, 0);
+                if (vendor_id == 0x1AF4) {
+                    switch (dev.device_id()) {
+                    case 0x1001:
+                    {
+                        LOG("Virtio block device");
+                        auto bd = new tos::virtio::block_device(std::move(dev));
+                        bd->initialize(palloc);
+                        uint8_t buf[512];
+                        bd->read(0, buf, 0);
+                        bd->read(1, buf, 0);
+                        bd->write(0, buf, 0);
+                        break;
+                    }
+                    case 0x1000: {
+                        LOG("Virtio network device");
+                        auto nd = new tos::virtio::network_device(std::move(dev));
+                        nd->initialize(palloc);
+                        LOG("MTU", nd->mtu());
+                        LOG((void*)(uintptr_t)nd->address().addr[0],
+                            (void*)(uintptr_t)nd->address().addr[1],
+                            (void*)(uintptr_t)nd->address().addr[2],
+                            (void*)(uintptr_t)nd->address().addr[3],
+                            (void*)(uintptr_t)nd->address().addr[4],
+                            (void*)(uintptr_t)nd->address().addr[5]);
+                        break;
+                    }
+                    default:
+                        LOG_WARN("Unknown virtio type:",
+                                 (void*)(uintptr_t)dev.device_id());
+                        break;
+                    }
                 }
             }
         }
