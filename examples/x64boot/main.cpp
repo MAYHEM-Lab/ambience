@@ -3,8 +3,10 @@
 #include "tos/paging/physical_page_allocator.hpp"
 #include "tos/self_pointing.hpp"
 #include "tos/semaphore.hpp"
+#include "tos/utility.hpp"
 #include "tos/x86_64/exception.hpp"
 #include "tos/x86_64/port.hpp"
+#include <cstddef>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/flags.hpp>
@@ -75,12 +77,37 @@ void thread() {
     auto cr3 = tos::x86_64::read_cr3();
     LOG("Page table at:", (void*)cr3);
 
-    LOG("Image ends at", (void*)tos::default_segments::image().end());
+    auto& level0_table = tos::cur_arch::get_current_translation_table();
 
-    auto allocator_space = tos::physical_page_allocator::size_for_pages(1024);
+    dump_table(level0_table);
+
+    auto vmem_end = (void*)tos::default_segments::image().end();
+
+    LOG("Image ends at", vmem_end);
+
+    auto allocator_space = tos::align_nearest_up_pow2(
+        tos::physical_page_allocator::size_for_pages(1024), 4096);
     LOG("Physpage allocator would need", allocator_space, "bytes");
 
-    auto palloc = new ((void*)tos::default_segments::image().end()) tos::physical_page_allocator(1024);
+    auto allocator_segment =
+        tos::segment{tos::memory_range{uintptr_t(vmem_end), ptrdiff_t(allocator_space)},
+                     tos::permissions::read_write};
+
+    auto op_res =
+        tos::cur_arch::allocate_region(tos::cur_arch::get_current_translation_table(),
+                                       allocator_segment,
+                                       tos::user_accessible::no,
+                                       nullptr);
+    LOG(bool(op_res));
+
+    auto res =
+        tos::cur_arch::mark_resident(tos::cur_arch::get_current_translation_table(),
+                                     allocator_segment,
+                                     tos::memory_types::normal,
+                                     vmem_end);
+    LOG(bool(res));
+
+    auto palloc = new (vmem_end) tos::physical_page_allocator(1024);
     palloc->mark_unavailable(tos::default_segments::image());
     palloc->mark_unavailable({0, 4096});
     palloc->mark_unavailable({0x00080000, 0x000FFFFF - 0x00080000});
@@ -89,6 +116,28 @@ void thread() {
     for (int i = 0; i < 200; ++i) {
         auto p = palloc->allocate(1, 1);
         LOG(i, palloc->address_of(*p), palloc->remaining_page_count());
+
+        auto op_res = tos::cur_arch::allocate_region(
+            tos::cur_arch::get_current_translation_table(),
+            {{uintptr_t(palloc->address_of(*p)), 4096}, tos::permissions::read_write},
+            tos::user_accessible::no,
+            nullptr);
+        LOG(bool(op_res));
+
+        auto res = tos::cur_arch::mark_resident(
+            tos::cur_arch::get_current_translation_table(),
+            {{uintptr_t(palloc->address_of(*p)), 4096}, tos::permissions::read_write},
+            tos::memory_types::normal,
+            vmem_end);
+        LOG(bool(res));
+
+        *((volatile int*)palloc->address_of(*p)) = 42;
+        res = tos::cur_arch::mark_nonresident(
+            tos::cur_arch::get_current_translation_table(),
+            {{uintptr_t(palloc->address_of(*p)), 4096}, tos::permissions::read_write});
+        LOG(bool(res));
+
+        palloc->free({p, 1});
     }
 
     for (int i = 0; i < 256; ++i) {
@@ -121,8 +170,7 @@ void thread() {
 
                 if (vendor_id == 0x1AF4) {
                     switch (dev.device_id()) {
-                    case 0x1001:
-                    {
+                    case 0x1001: {
                         LOG("Virtio block device");
                         auto bd = new tos::virtio::block_device(std::move(dev));
                         bd->initialize(palloc);
@@ -159,9 +207,6 @@ void thread() {
         tos::this_thread::yield();
     }
 
-    auto& level0_table = tos::x86_64::get_current_translation_table();
-
-    dump_table(level0_table);
     //
     //    for (uintptr_t i = 0; i < 0x40000000; ++i) {
     //        auto ptr = (volatile char*)i;
