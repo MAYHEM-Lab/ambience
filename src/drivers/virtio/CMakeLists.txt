@@ -5,5 +5,6 @@ target_link_libraries(tos_virtio PUBLIC tos_drivers arch_x86_64)
 add_library(tos_virtio_block_dev block_device.cpp)
 target_link_libraries(tos_virtio_block_dev PUBLIC tos_virtio)
 
-add_library(tos_virtio_network_dev network_device.cpp)
+add_library(tos_virtio_network_dev network_device.cpp network_device_isr.cpp)
 target_link_libraries(tos_virtio_network_dev PUBLIC tos_virtio tos_inet)
+#target_compile_options(tos_virtio_network_dev PRIVATE -mstackrealign)

@@ -21,9 +21,12 @@ bool block_device::initialize(tos::physical_page_allocator* palloc) {
     LOG("Sector count:", int(number_of_sectors()));
     LOG("Block size:", int(sector_size_bytes()));
 
+    auto bar_base = this->bar_base();
+    auto status_port = x86_64::port(bar_base + status_port_offset);
+    status_port.outb(0xf);
+    LOG_TRACE("Device initialized");
     return true;
 }
-
 
 expected<void, int>
 block_device::write(uint64_t sector_id, span<const uint8_t> data, size_t offset) {

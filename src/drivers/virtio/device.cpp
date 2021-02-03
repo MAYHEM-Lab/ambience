@@ -30,7 +30,9 @@ bool device::base_initialize(tos::physical_page_allocator* palloc) {
     auto features = dev_features_port.inl();
 
     auto driver_features_port = x86_64::port(bar_base + drv_features_port_offset);
-    driver_features_port.outl(negotiate(features));
+    auto accepted_features = negotiate(features);
+    LOG("Accepted features:", (void*)accepted_features);
+    driver_features_port.outl(accepted_features);
 
     status_port.outb(0xB);
 
@@ -59,8 +61,6 @@ bool device::base_initialize(tos::physical_page_allocator* palloc) {
         LOG(int(queue_base));
     }
 
-    status_port.outb(0xf);
-    LOG_TRACE("Device initialized");
     return true;
 }
 
