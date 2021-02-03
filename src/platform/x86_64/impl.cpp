@@ -12,8 +12,8 @@
 #include <tos/x86_64/gdt.hpp>
 #include <tos/x86_64/idt.hpp>
 #include <tos/x86_64/mmu.hpp>
-#include <tos/x86_64/port.hpp>
 #include <tos/x86_64/pic.hpp>
+#include <tos/x86_64/port.hpp>
 
 extern void tos_main();
 
@@ -109,39 +109,59 @@ extern "C" {
     4096) std::array<tos::x86_64::table_entry, 512> p4_table;
 [[gnu::section(".nozero")]] alignas(
     4096) std::array<tos::x86_64::table_entry, 512> p3_table;
-[[gnu::section(".nozero")]] alignas(
-    4096) std::array<tos::x86_64::table_entry, 512> p2_table;
-[[gnu::section(".nozero")]] translation_table p1_tables[2];
+[[gnu::section(".nozero")]] translation_table p2_tables[1];
+[[gnu::section(".nozero")]] translation_table p1_tables[3];
 }
 
 extern "C" {
 void set_up_page_tables() {
     memset(&p4_table, 0, sizeof p4_table);
     memset(&p3_table, 0, sizeof p3_table);
-    memset(&p2_table, 0, sizeof p2_table);
 
     p4_table[0].zero().valid(true).writeable(true).page_num(
         reinterpret_cast<uintptr_t>(&p3_table));
 
     p3_table[0].zero().valid(true).writeable(true).page_num(
-        reinterpret_cast<uintptr_t>(&p2_table));
+        reinterpret_cast<uintptr_t>(&p2_tables[0]));
 
-    for (int i = 0; i < 2; ++i) {
-        p2_table[i]
+    for (int i = 0; i < std::size(p1_tables); ++i) {
+        p2_tables[0][i]
             .zero()
             .page_num(reinterpret_cast<uintptr_t>(&p1_tables[i]))
             .valid(true)
             .writeable(true);
     }
 
+    static constexpr tos::memory_range io_regions[] = {
+        {0x00000000, 0x000003FF - 0x00000000},
+        {0x00000400, 0x000004FF - 0x00000400},
+        {0x00080000, 0x0009FFFF - 0x00080000},
+        {0x000A0000, 0x000BFFFF - 0x000A0000},
+        {0x000C0000, 0x000C7FFF - 0x000C0000},
+        {0x000C8000, 0x000EFFFF - 0x000C8000},
+        {0x000F0000, 0x000FFFFF - 0x000F0000},
+        {0x00F00000, 0x00FFFFFF - 0x00F00000},
+        {0xC0000000, 0xFFFFFFFF - 0xC0000000},
+    };
+
+    auto is_mapped = [](const tos::memory_range& region) -> bool {
+        for (auto& io_reg : io_regions) {
+            if (tos::intersection(region, io_reg)) {
+                return true;
+            }
+        }
+        return tos::intersection(region, tos::default_segments::image()).has_value();
+    };
+
     for (int i = 0; i < 2; ++i) {
         auto& table = p1_tables[i];
         for (int j = 0; j < 512; ++j) {
-            if (i == 0 && j == 0) {
-                // Catch nullptr accesses.
-                table[j].zero();
+            auto page_range = tos::memory_range{uintptr_t((i * 512 + j) << 12), 4096};
+
+            if (!is_mapped(page_range)) {
                 continue;
             }
+
             table[j].zero().valid(true).writeable(true).page_num((i * 512 + j) << 12);
         }
     }
