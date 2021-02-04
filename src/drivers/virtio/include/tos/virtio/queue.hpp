@@ -8,6 +8,7 @@
 namespace tos::virtio {
 enum queue_flags : uint16_t
 {
+    none = 0,
     next = 1 << 0,
     write = 1 << 1,
     indirect = 1 << 2,
@@ -40,6 +41,14 @@ struct queue_used_elem {
 };
 
 struct queue_used {
+    void disable_irq() volatile {
+        flags = 1;
+    }
+
+    void enable_irq() volatile {
+        flags = 0;
+    }
+
     uint16_t flags;
     uint16_t index;
     queue_used_elem ring[];
@@ -54,6 +63,21 @@ struct queue {
     volatile queue_used* used_base;
 
     uint16_t next_buffer = 0;
+
+    uint16_t last_seen_used = 0;
+
+    template<class FnT>
+    void for_each_used(FnT&& fn) {
+        used_base->disable_irq();
+        for (; last_seen_used < used_base->index; ++last_seen_used) {
+            fn(*const_cast<queue_used_elem*>(&used_base->ring[last_seen_used % size]));
+        }
+        used_base->enable_irq();
+    }
+
+    void submit_available(int index) {
+        available_base->ring[available_base->index++ % size] = index;
+    }
 
     std::pair<int, queue_descriptor*> alloc() {
         auto idx = next_buffer % size;

@@ -15,6 +15,11 @@
 #include <tos/x86_64/pic.hpp>
 #include <tos/x86_64/port.hpp>
 
+extern "C" {
+void __cxa_atexit(void (*)(void*), void*, void*) {
+}
+}
+
 extern void tos_main();
 
 namespace {

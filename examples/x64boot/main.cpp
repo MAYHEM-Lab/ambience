@@ -1,4 +1,7 @@
+#include "common/inet/tcp_ip.hpp"
+#include "lwip/init.h"
 #include "tos/function_ref.hpp"
+#include "tos/lwip/udp.hpp"
 #include "tos/memory.hpp"
 #include "tos/paging/physical_page_allocator.hpp"
 #include "tos/self_pointing.hpp"
@@ -11,6 +14,7 @@
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/flags.hpp>
 #include <tos/ft.hpp>
+#include <tos/lwip/if_adapter.hpp>
 #include <tos/peripheral/uart_16550.hpp>
 #include <tos/peripheral/vga_text.hpp>
 #include <tos/virtio.hpp>
@@ -46,6 +50,125 @@ void abort() {
         ;
 }
 }
+
+
+class virtio_net_if {
+public:
+    virtio_net_if(tos::virtio::network_device* dev,
+                  const tos::ipv4_addr_t& addr,
+                  const tos::ipv4_addr_t& mask,
+                  const tos::ipv4_addr_t& gw)
+        : m_dev(std::move(dev)) {
+        auto lwip_addr = tos::lwip::convert_address(addr);
+        auto lwip_mask = tos::lwip::convert_address(mask);
+        auto lwip_gw = tos::lwip::convert_address(gw);
+        netif_add(&m_if,
+                  &lwip_addr,
+                  &lwip_mask,
+                  &lwip_gw,
+                  this,
+                  &virtio_net_if::init,
+                  netif_input);
+    }
+
+    void up() {
+        netif_set_link_up(&m_if);
+        netif_set_up(&m_if);
+    }
+
+    void down() {
+        netif_set_down(&m_if);
+        netif_set_link_down(&m_if);
+    }
+
+    ~virtio_net_if() {
+        down();
+        netif_remove(&m_if);
+    }
+
+private:
+    netif m_if;
+    tos::virtio::network_device* m_dev;
+
+    err_t init() {
+        m_if.hostname = "tos";
+        m_if.flags |= NETIF_FLAG_ETHERNET | NETIF_FLAG_ETHARP | NETIF_FLAG_BROADCAST;
+        m_if.linkoutput = &virtio_net_if::link_output;
+        m_if.output = etharp_output;
+        m_if.name[1] = m_if.name[0] = 'm';
+        m_if.num = 0;
+        m_if.mtu = m_dev->mtu();
+        m_if.hwaddr_len = 6;
+        m_if.link_callback = &virtio_net_if::link_callback;
+        m_if.status_callback = &virtio_net_if::status_callback;
+        // std::iota(std::begin(m_if.hwaddr), std::end(m_if.hwaddr), 1);
+        auto mac = m_dev->address();
+        memcpy(m_if.hwaddr, mac.addr.data(), 6);
+        launch(tos::alloc_stack, [this] { read_thread(); });
+        return ERR_OK;
+    }
+
+    void read_thread() {
+        auto& tok = tos::cancellation_token::system();
+        while (!tok.is_cancelled()) {
+            auto packet = m_dev->take_packet();
+            LOG_TRACE("Received", packet.size(), "bytes");
+            LOG_TRACE(packet);
+            auto p =
+                pbuf_alloc(pbuf_layer::PBUF_RAW, packet.size(), pbuf_type::PBUF_POOL);
+            std::copy(packet.begin(), packet.end(), static_cast<uint8_t*>(p->payload));
+            m_dev->return_packet(packet);
+            m_if.input(p, &m_if);
+        }
+    }
+
+    err_t link_output(pbuf* p) {
+        LOG_TRACE("link_output", p->len, "bytes");
+        // pbuf_ref(p);
+        // return m_if.input(p, &m_if);
+        m_dev->transmit_packet({static_cast<const uint8_t*>(p->payload), p->len});
+        LOG_TRACE("Written bytes");
+        return ERR_OK;
+    }
+
+    err_t output(pbuf* p, [[maybe_unused]] const ip4_addr_t* ipaddr) {
+        LOG_TRACE("output", p->len, "bytes");
+        // pbuf_ref(p);
+        // return m_if.input(p, &m_if);
+        return ERR_OK;
+    }
+
+    void link_callback() {
+    }
+
+    void status_callback() {
+    }
+
+private:
+    static err_t init(struct netif* netif) {
+        return static_cast<virtio_net_if*>(netif->state)->init();
+    }
+
+    static err_t link_output(struct netif* netif, struct pbuf* p) {
+        return static_cast<virtio_net_if*>(netif->state)->link_output(p);
+    }
+
+    static err_t output(struct netif* netif, struct pbuf* p, const ip4_addr_t* ipaddr) {
+        return static_cast<virtio_net_if*>(netif->state)->output(p, ipaddr);
+    }
+
+    static void link_callback(struct netif* netif) {
+        static_cast<virtio_net_if*>(netif->state)->link_callback();
+    }
+
+    static void status_callback(struct netif* netif) {
+        static_cast<virtio_net_if*>(netif->state)->status_callback();
+    }
+
+    friend void set_default(virtio_net_if& interface) {
+        netif_set_default(&interface.m_if);
+    }
+};
 
 void thread() {
     auto uart_res = tos::x86_64::uart_16550::open();
@@ -140,6 +263,8 @@ void thread() {
         palloc->free({p, 1});
     }
 
+    lwip_init();
+
     for (int i = 0; i < 256; ++i) {
         for (int j = 0; j < 32; ++j) {
             auto vendor_id = tos::x86_64::pci::get_vendor(i, j, 0);
@@ -191,6 +316,23 @@ void thread() {
                             (void*)(uintptr_t)nd->address().addr[3],
                             (void*)(uintptr_t)nd->address().addr[4],
                             (void*)(uintptr_t)nd->address().addr[5]);
+
+                        auto interface =
+                            new virtio_net_if(nd,
+                                              tos::parse_ipv4_address("10.0.2.15"),
+                                              tos::parse_ipv4_address("255.255.255.0"),
+                                              tos::parse_ipv4_address("10.0.2.2"));
+                        set_default(*interface);
+                        interface->up();
+
+                        // uint8_t buf[128]{};
+                        // nd->transmit_packet(buf);
+
+                        // while (true) {
+                        //     auto packet = nd->take_packet();
+                        //     LOG("Got it:", packet);
+                        //     nd->return_packet(packet);
+                        // }
                         break;
                     }
                     default:
@@ -202,6 +344,21 @@ void thread() {
             }
         }
     }
+
+    tos::lwip::async_udp_socket sock;
+
+    auto handler = [](auto, auto, auto, tos::lwip::buffer buf) {
+        LOG("Received", buf.size(), "bytes!");
+        std::vector<uint8_t> data(buf.size());
+        buf.read(data);
+        std::string_view sv(reinterpret_cast<char*>(data.data()), data.size());
+        LOG(sv);
+    };
+
+    sock.attach(handler);
+
+    auto bind_res = sock.bind({100}, tos::parse_ipv4_address("10.0.2.15"));
+    LOG(bool(bind_res));
 
     while (true) {
         tos::this_thread::yield();

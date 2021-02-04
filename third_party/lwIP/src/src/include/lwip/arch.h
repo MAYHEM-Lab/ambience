@@ -199,7 +199,7 @@ typedef uintptr_t mem_ptr_t;
 #include <unistd.h>
 #endif
 #else /* SSIZE_MAX */
-#ifndef	__ssize_t_defined
+#if	!defined(__ssize_t_defined) && !defined(_SSIZE_T_DECLARED)
 typedef int ssize_t;
 #define SSIZE_MAX INT_MAX
 #endif
