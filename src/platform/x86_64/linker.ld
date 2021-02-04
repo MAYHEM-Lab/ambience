@@ -12,6 +12,7 @@ SECTIONS
     . = KERNEL_VMA;
 
     __start = .;
+    __text_start = .;
     .text :
     {
         KEEP(*(.text.entry))
@@ -19,7 +20,9 @@ SECTIONS
         *(.text.*)
         . = ALIGN(4096);
     } : RODATA
+    __text_end = .;
 
+    __rodata_start = .;
    .rodata :
    {
         _rodata = .;
@@ -33,7 +36,9 @@ SECTIONS
         end_ctors = .;
         . = ALIGN(4096);
    } : RODATA
+   __rodata_end = .;
 
+   __data_start = .;
    .data :
    {
         _data = .;
@@ -41,6 +46,7 @@ SECTIONS
         *(.data.*)
         . = ALIGN(4096);
    } : DATA
+   __data_end = .;
 
    __bss_start = .;
    .bss (NOLOAD):
