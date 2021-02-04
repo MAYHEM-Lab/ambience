@@ -143,16 +143,15 @@ void network_device::queue_rx_buf(buf& buffer) {
 void network_device::isr(tos::x86_64::exception_frame* f, int num) {
     asm volatile("push %rax");
     auto bar_base = this->bar_base();
+    // LOG("Bar base:", bar_base);
     auto isr_status_port = x86_64::port(bar_base + interrupt_status_port_offset);
     auto isr_status = isr_status_port.inb();
-    LOG("ISR:", int(isr_status));
+    // LOG("ISR:", int(isr_status));
     if (isr_status & 1) {
         auto& rx_queue = queue_at(0);
         auto& tx_queue = queue_at(1);
 
         rx_queue.for_each_used([&](queue_used_elem el) {
-            LOG("New used elem");
-
             auto total_len = el.len;
 
             // The received packet consists of 2 descriptors: header + body
@@ -172,7 +171,6 @@ void network_device::isr(tos::x86_64::exception_frame* f, int num) {
         });
 
         tx_queue.for_each_used([&](queue_used_elem el) {
-            LOG("Transmitted!");
             auto& desc = tx_queue.descriptors()[el.id];
             auto header_ptr = reinterpret_cast<tx_header*>(
                 reinterpret_cast<char*>(desc.addr) - offsetof(tx_header, header));
