@@ -26,12 +26,17 @@ inline page_id_t address_to_page(const volatile void* ptr) {
 
 struct table_entry {
 public:
-    bool writeable() const {
-        return m_raw_entry & writeable_mask;
+    table_entry& zero() {
+        m_raw_entry = 0;
+        return *this;
     }
 
     bool readonly() const {
         return !writeable();
+    }
+
+    bool writeable() const {
+        return m_raw_entry & writeable_mask;
     }
 
     table_entry& writeable(bool write) {
@@ -39,13 +44,13 @@ public:
         return *this;
     }
 
-    table_entry& valid(bool p) {
-        m_raw_entry = (m_raw_entry & ~present_mask) | p;
-        return *this;
-    }
-
     bool valid() const {
         return m_raw_entry & present_mask;
+    }
+
+    table_entry& valid(bool p) {
+        m_raw_entry = (m_raw_entry & ~present_mask) | (p << present_off);
+        return *this;
     }
 
     bool huge_page() const {
@@ -58,16 +63,11 @@ public:
     }
 
     uintptr_t page_num() const {
-        return (m_raw_entry & 0xFF'FF'FF'FF'FF'FF'F0'00) >> 12;
+        return (m_raw_entry & page_base_mask) >> page_base_off;
     }
 
     table_entry& page_num(uintptr_t base) {
         m_raw_entry = (m_raw_entry & ~page_base_mask) | (base & page_base_mask);
-        return *this;
-    }
-
-    table_entry& zero() {
-        m_raw_entry = 0;
         return *this;
     }
 
@@ -85,25 +85,25 @@ public:
     }
 
     table_entry& noexec(bool val) {
-        m_raw_entry = (m_raw_entry & ~present_mask) | (uint64_t(val) << present_off);
+        m_raw_entry = (m_raw_entry & ~noexec_mask) | (uint64_t(val) << noexec_off);
         return *this;
     }
 
-    uint64_t m_raw_entry;
-
 private:
+    uint64_t m_raw_entry;
     static constexpr auto present_off = 0;
     static constexpr auto writeable_off = 1;
     static constexpr auto user_access_off = 2;
     static constexpr auto huge_page_off = 7;
     static constexpr auto noexec_off = 63;
+    static constexpr auto page_base_off = 12;
 
     static constexpr auto present_mask = 0x1 << present_off;
     static constexpr auto writeable_mask = 0x1 << writeable_off;
     static constexpr auto user_access_mask = 0x1 << user_access_off;
     static constexpr auto huge_page_mask = 0x1 << huge_page_off;
     static constexpr auto noexec_mask = 0x1ULL << noexec_off;
-    static constexpr auto page_base_mask = 0xFF'FF'FF'FF'FF'FF'F0'00;
+    static constexpr auto page_base_mask = 0xFF'FF'FF'FF'FF'FF'F << page_base_off;
 };
 
 struct translation_table;
