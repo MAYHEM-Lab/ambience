@@ -160,7 +160,7 @@ void enable_paging() {
     write_cr4(cr4);
 
     auto msr = rdmsr(0xC0000080);
-    msr |= 1 << 8;
+    msr |= 1 << 8 | 1 << 11;
     wrmsr(0xC0000080, msr);
 
     auto cr0 = read_cr0();
