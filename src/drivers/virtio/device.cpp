@@ -12,6 +12,9 @@ device::device(x86_64::pci::device&& pci_dev)
         if (cap->vendor() == 0x9) {
             handle_capability(*cap);
         }
+
+        auto common_bar = m_pci_dev.bars()[m_pci->bar];
+        m_bar_base = common_bar & 0xFFFFFFFC;
     }
 }
 

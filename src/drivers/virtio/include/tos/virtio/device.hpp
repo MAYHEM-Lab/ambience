@@ -14,11 +14,7 @@ public:
     virtual ~device() = default;
 
 protected:
-    uint32_t bar_base() const {
-        auto common_bar = m_pci_dev.bars()[m_pci->bar];
-        auto bar_base = common_bar & 0xFFFFFFFC;
-        return bar_base;
-    }
+    uint32_t bar_base() const;
 
     bool base_initialize(tos::physical_page_allocator* palloc);
 
@@ -49,5 +45,6 @@ private:
     std::vector<capability_data> m_capabilities;
     x86_64::pci::device m_pci_dev;
     std::vector<queue> m_queues;
+    uint16_t m_bar_base;
 };
 } // namespace tos::virtio
