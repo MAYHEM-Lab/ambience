@@ -50,7 +50,7 @@ bool device::base_initialize(tos::physical_page_allocator* palloc) {
     auto queue_sz_port = x86_64::port(bar_base + queue_size_port_offset);
     auto queue_base_port = x86_64::port(bar_base + queue_addr_port_offset);
 
-    for (int i = 0; i < 16; ++i) {
+    for (int i = 0; i < 2; ++i) {
         queue_sel_port.outw(i);
         auto sz = queue_sz_port.inw();
         if (sz == 0) {
@@ -88,5 +88,8 @@ void device::handle_capability(x86_64::pci::capability& cap) {
     if (data.type == capability_type::pci) {
         m_pci = &m_capabilities.back();
     }
+}
+uint32_t device::bar_base() const {
+    return m_bar_base;
 }
 } // namespace tos::virtio
