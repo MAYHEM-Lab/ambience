@@ -6,6 +6,7 @@
 #include "tos/paging/physical_page_allocator.hpp"
 #include "tos/self_pointing.hpp"
 #include "tos/semaphore.hpp"
+#include "tos/thread.hpp"
 #include "tos/utility.hpp"
 #include "tos/x86_64/exception.hpp"
 #include "tos/x86_64/port.hpp"
@@ -69,6 +70,7 @@ public:
                   this,
                   &virtio_net_if::init,
                   netif_input);
+        tos::this_thread::yield();
     }
 
     void up() {
@@ -109,6 +111,7 @@ private:
     }
 
     void read_thread() {
+        LOG("In read thread");
         auto& tok = tos::cancellation_token::system();
         while (!tok.is_cancelled()) {
             auto packet = m_dev->take_packet();
@@ -185,6 +188,8 @@ void thread() {
     tos::debug::detail::any_logger uart_log{&uart_sink};
     uart_log.set_log_level(tos::debug::log_level::trace);
     tos::debug::set_default_log(&uart_log);
+
+    tos::x86_64::pic::enable_irq(0);
 
     LOG("Hello world!");
 
@@ -347,18 +352,43 @@ void thread() {
 
     tos::lwip::async_udp_socket sock;
 
-    auto handler = [](auto, auto, auto, tos::lwip::buffer buf) {
+    auto handler = [&](auto,
+                      tos::lwip::async_udp_socket*,
+                      tos::udp_endpoint_t from,
+                      tos::lwip::buffer buf) {
         LOG("Received", buf.size(), "bytes!");
         std::vector<uint8_t> data(buf.size());
         buf.read(data);
         std::string_view sv(reinterpret_cast<char*>(data.data()), data.size());
         LOG(sv);
+        sock.send_to(data, from);
+        LOG(from.addr.addr[0],
+            from.addr.addr[1],
+            from.addr.addr[2],
+            from.addr.addr[3],
+            from.port.port);
     };
 
     sock.attach(handler);
 
+    tos::this_thread::yield();
     auto bind_res = sock.bind({100}, tos::parse_ipv4_address("10.0.2.15"));
     LOG(bool(bind_res));
+    tos::this_thread::yield();
+
+    uint8_t buf[] = "hello world";
+    tos::udp_endpoint_t ep {
+        tos::parse_ipv4_address("10.0.2.2"),
+        {1234}
+    };
+    sock.send_to(buf, ep);
+    tos::this_thread::yield();
+    sock.send_to(buf, ep);
+    tos::this_thread::yield();
+    sock.send_to(buf, ep);
+    tos::this_thread::yield();
+    sock.send_to(buf, ep);
+    tos::this_thread::yield();
 
     while (true) {
         tos::this_thread::yield();
