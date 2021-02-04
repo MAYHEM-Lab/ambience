@@ -1,10 +1,12 @@
 #pragma once
 
 #include <tos/compiler.hpp>
+#include <tos/x86_64/assembly.hpp>
 
 namespace tos::x86_64 {
-inline bool interrupts_disabled() {
-    return false;
+ALWAYS_INLINE
+bool interrupts_disabled() {
+    return !(read_flags() & (1 << 9));
 }
 
 ALWAYS_INLINE

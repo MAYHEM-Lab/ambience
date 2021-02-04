@@ -1,10 +1,19 @@
 #pragma once
 
 #include <cpuid.h>
+#include <cstdint>
 
 namespace tos::x86_64 {
 inline void breakpoint() {
     asm volatile("int3");
+}
+
+inline uint64_t read_flags() {
+    uint64_t flags;
+    asm volatile("pushf\n"
+                 "pop %0"
+                 : "=g"(flags));
+    return flags;
 }
 
 inline uint64_t xgetbv(uint32_t msr) {
