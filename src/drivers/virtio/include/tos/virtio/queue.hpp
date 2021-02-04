@@ -75,7 +75,28 @@ struct queue {
         used_base->enable_irq();
     }
 
+    void dump_descriptor(int index) {
+        while (true) {
+            auto& desc = descriptors()[index];
+
+            LOG("Descriptor",
+                index,
+                "at",
+                (void*)desc.addr,
+                "len",
+                desc.len,
+                "flags",
+                desc.flags);
+
+            if (!(desc.flags & queue_flags::next)) {
+                break;
+            }
+            index = desc.next;
+        }
+    }
+
     void submit_available(int index) {
+        dump_descriptor(index);
         available_base->ring[available_base->index++ % size] = index;
     }
 

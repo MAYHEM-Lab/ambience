@@ -33,23 +33,10 @@ public:
 
     bool initialize(tos::physical_page_allocator* palloc) override;
 
-    void isr(tos::x86_64::exception_frame* f, int num) {
-        auto bar_base = this->bar_base();
-        auto isr_status_port = x86_64::port(bar_base + 0x13);
-        auto isr_status = isr_status_port.inb();
-        if (isr_status & 1) {
-            m_wait_sem.up_isr();
-        }
-    }
+    void isr(tos::x86_64::exception_frame* f, int num);
 
 protected:
 private:
-    struct req_header {
-        uint32_t type;
-        uint32_t _res;
-        uint64_t sector;
-    };
-
     uint32_t negotiate(uint32_t features) override {
         return features & ~(feature_topology | ring_event_idx);
     }

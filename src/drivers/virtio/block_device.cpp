@@ -7,6 +7,12 @@ namespace tos::virtio {
 namespace {
 constexpr auto sector_count_lo_offset = 0x14;
 constexpr auto sector_count_hi_offset = 0x18;
+
+struct blk_header {
+    uint32_t type;
+    uint32_t _res;
+    uint64_t sector;
+};
 }
 
 bool block_device::initialize(tos::physical_page_allocator* palloc) {
@@ -36,7 +42,7 @@ block_device::write(uint64_t sector_id, span<const uint8_t> data, size_t offset)
 
     auto& q = queue_at(0);
 
-    req_header header{};
+    blk_header header{};
     header.type = 1;
     header.sector = sector_id;
 
@@ -60,19 +66,7 @@ block_device::write(uint64_t sector_id, span<const uint8_t> data, size_t offset)
     code_->flags = queue_flags::write;
     code_->next = {};
 
-    auto avail_idx = q.available_base->index % q.size;
-    LOG(int(root_idx), avail_idx);
-
-    q.available_base->ring[avail_idx] = root_idx;
-
-    q.available_base->index++;
-
-    LOG(q.used_base->index,
-        q.used_base->ring[avail_idx].id,
-        q.used_base->ring[avail_idx].len,
-        int(c),
-        (void*)data[0]);
-
+    q.submit_available(root_idx);
 
     auto bar_base = this->bar_base();
 
@@ -83,8 +77,6 @@ block_device::write(uint64_t sector_id, span<const uint8_t> data, size_t offset)
 
     LOG("out",
         q.used_base->index,
-        q.used_base->ring[avail_idx].id,
-        q.used_base->ring[avail_idx].len,
         int(c),
         (void*)data[0]);
     if (c == 0) {
@@ -101,7 +93,7 @@ block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
 
     auto& q = queue_at(0);
 
-    req_header header{};
+    blk_header header{};
     header.type = 0;
     header.sector = sector_id;
 
@@ -109,10 +101,14 @@ block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
     auto [data_idx, data_] = q.alloc();
     auto [code_idx, code_] = q.alloc();
 
+    LOG(root_idx, data_idx, code_idx);
+
     root->addr = reinterpret_cast<uintptr_t>(&header);
     root->len = sizeof header;
-    root->flags = queue_flags(queue_flags::next);
+    root->flags = queue_flags::next;
     root->next = data_idx;
+
+    LOG(root->flags);
 
     data_->addr = reinterpret_cast<uintptr_t>(data.data());
     data_->len = data.size();
@@ -125,19 +121,11 @@ block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
     code_->flags = queue_flags::write;
     code_->next = {};
 
-    auto avail_idx = q.available_base->index % q.size;
-    LOG(int(root_idx), avail_idx);
-
-    q.available_base->ring[avail_idx] = root_idx;
-
-    q.available_base->index++;
+    q.submit_available(root_idx);
 
     LOG(q.used_base->index,
-        q.used_base->ring[avail_idx].id,
-        q.used_base->ring[avail_idx].len,
         int(c),
         (void*)data[0]);
-
 
     auto bar_base = this->bar_base();
 
@@ -148,8 +136,6 @@ block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
 
     LOG("out",
         q.used_base->index,
-        q.used_base->ring[avail_idx].id,
-        q.used_base->ring[avail_idx].len,
         int(c),
         (void*)data[0]);
     if (c == 0) {
@@ -163,5 +149,14 @@ size_t block_device::number_of_sectors() const {
     auto sector_count_port_hi = x86_64::port(bar_base + sector_count_hi_offset);
     auto sector_count_port_lo = x86_64::port(bar_base + sector_count_lo_offset);
     return (uint64_t(sector_count_port_hi.inl()) << 32) | sector_count_port_lo.inl();
+}
+
+void block_device::isr(tos::x86_64::exception_frame* f, int num) {
+    auto bar_base = this->bar_base();
+    auto isr_status_port = x86_64::port(bar_base + interrupt_status_port_offset);
+    auto isr_status = isr_status_port.inb();
+    if (isr_status & 1) {
+        m_wait_sem.up_isr();
+    }
 }
 } // namespace tos::virtio
