@@ -167,7 +167,18 @@ void set_up_page_tables() {
                 continue;
             }
 
-            table[j].zero().valid(true).writeable(true).page_num((i * 512 + j) << 12);
+            table[j].zero().valid(true).page_num((i * 512 + j) << 12);
+
+            if (tos::intersection(tos::default_segments::text(), page_range)) {
+                table[j].writeable(false).noexec(false);
+            } else {
+                table[j].noexec(true);
+                if (tos::intersection(tos::default_segments::rodata(), page_range)) {
+                    table[j].writeable(false);
+                } else {
+                    table[j].writeable(true);
+                }
+            }
         }
     }
 
