@@ -53,7 +53,7 @@ struct buf {
     }
 };
 
-struct [[gnu::packed]] tx_header {
+struct tx_header {
     tos::semaphore sem{0};
     virtio_net_hdr header;
 };
