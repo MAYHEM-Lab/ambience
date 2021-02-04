@@ -32,7 +32,7 @@ public:
         return {ptr, header().pheader_num};
     }
 
-    span<const uint8_t> segment(const elf64_program_header& header) {
+    span<const uint8_t> segment(const elf64_program_header& header) const {
         return m_buf.slice(header.file_offset, header.file_size);
     }
 
