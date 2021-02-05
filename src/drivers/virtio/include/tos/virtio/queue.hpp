@@ -96,7 +96,7 @@ struct queue {
     }
 
     void submit_available(int index) {
-        dump_descriptor(index);
+        //  dump_descriptor(index);
         available_base->ring[available_base->index++ % size] = index;
     }
 
