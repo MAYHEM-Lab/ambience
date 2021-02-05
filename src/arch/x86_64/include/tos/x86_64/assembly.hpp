@@ -8,6 +8,10 @@ inline void breakpoint() {
     asm volatile("int3");
 }
 
+inline void hlt() {
+    asm volatile("hlt");
+}
+
 inline uint64_t read_flags() {
     uint64_t flags;
     asm volatile("pushf\n"
