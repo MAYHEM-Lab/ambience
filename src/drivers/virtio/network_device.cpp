@@ -143,10 +143,8 @@ void network_device::queue_rx_buf(buf& buffer) {
 void network_device::isr(tos::x86_64::exception_frame* f, int num) {
     asm volatile("push %rax");
     auto bar_base = this->bar_base();
-    // LOG("Bar base:", bar_base);
     auto isr_status_port = x86_64::port(bar_base + interrupt_status_port_offset);
     auto isr_status = isr_status_port.inb();
-    // LOG("ISR:", int(isr_status));
     if (isr_status & 1) {
         auto& rx_queue = queue_at(0);
         auto& tx_queue = queue_at(1);
@@ -160,11 +158,7 @@ void network_device::isr(tos::x86_64::exception_frame* f, int num) {
             auto buf_ptr = reinterpret_cast<buf*>(
                 reinterpret_cast<char*>(body_desc.addr) - offsetof(buf, header));
 
-            LOG((void*)buf_ptr->header.flags,
-                buf_ptr->header.num_buffers,
-                buf_ptr->header.hdr_len);
             buf_ptr->header.hdr_len = total_len - sizeof buf_ptr->header;
-            LOG(buf_ptr->body());
 
             received_packets.push_back(*buf_ptr);
             m_rx_sem.up_isr();
