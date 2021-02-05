@@ -15,6 +15,10 @@ physical_page_allocator::physical_page_allocator(size_t num_pages)
 }
 
 physical_page* physical_page_allocator::allocate(int count, int align) {
+    if (static_cast<size_t>(count) > m_remaining) {
+        return nullptr;
+    }
+
     if (align != 1)
         return nullptr;
 
@@ -37,11 +41,12 @@ physical_page* physical_page_allocator::allocate(int count, int align) {
 void physical_page_allocator::free(span<physical_page> pages) {
     for (auto& pg : pages) {
         intrusive_unref(&pg);
+        m_remaining += 1;
     }
 }
 
 void* physical_page_allocator::address_of(const physical_page& page) const {
-    return reinterpret_cast<void*>(page_num(page) * 4096);
+    return reinterpret_cast<void*>(page_num(page) * page_size());
 }
 
 int physical_page_allocator::page_num(const physical_page& page) const {
@@ -49,8 +54,8 @@ int physical_page_allocator::page_num(const physical_page& page) const {
 }
 
 void physical_page_allocator::mark_unavailable(const memory_range& len) {
-    auto begin_num = align_nearest_down_pow2(len.base, 4096) / 4096;
-    auto end_num = align_nearest_up_pow2(len.end(), 4096) / 4096;
+    auto begin_num = align_nearest_down_pow2(len.base, page_size()) / page_size();
+    auto end_num = align_nearest_up_pow2(len.end(), page_size()) / page_size();
     begin_num = std::min<int>(m_num_pages, begin_num);
     end_num = std::min<int>(m_num_pages, end_num);
     for (size_t i = begin_num; i < end_num; ++i) {
@@ -60,7 +65,7 @@ void physical_page_allocator::mark_unavailable(const memory_range& len) {
 }
 
 physical_page* physical_page_allocator::info(void* ptr) {
-    return info(reinterpret_cast<uintptr_t>(ptr) / 4096);
+    return info(reinterpret_cast<uintptr_t>(ptr) / page_size());
 }
 
 physical_page* physical_page_allocator::info(int32_t page_num) {
