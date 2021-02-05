@@ -4,6 +4,7 @@
 #include "tos/lwip/udp.hpp"
 #include "tos/memory.hpp"
 #include "tos/paging/physical_page_allocator.hpp"
+#include "tos/platform.hpp"
 #include "tos/self_pointing.hpp"
 #include "tos/semaphore.hpp"
 #include "tos/thread.hpp"
@@ -93,6 +94,7 @@ private:
     tos::virtio::network_device* m_dev;
 
     err_t init() {
+        LOG("In init");
         m_if.hostname = "tos";
         m_if.flags |= NETIF_FLAG_ETHERNET | NETIF_FLAG_ETHARP | NETIF_FLAG_BROADCAST;
         m_if.linkoutput = &virtio_net_if::link_output;
@@ -239,33 +241,36 @@ void thread() {
     palloc->mark_unavailable(tos::default_segments::image());
     palloc->mark_unavailable({0, 4096});
     palloc->mark_unavailable({0x00080000, 0x000FFFFF - 0x00080000});
-    palloc->mark_unavailable({});
+    LOG("Available:", palloc, palloc->remaining_page_count());
 
-    for (int i = 0; i < 200; ++i) {
-        auto p = palloc->allocate(1, 1);
-        LOG(i, palloc->address_of(*p), palloc->remaining_page_count());
+    for (int i = 0; i < 5; ++i) {
+        auto p = palloc->allocate(1);
+        auto ptr = palloc->address_of(*p);
+        LOG(i, ptr, palloc->remaining_page_count());
+        LOG("Available:", palloc->remaining_page_count());
 
         auto op_res = tos::cur_arch::allocate_region(
             tos::cur_arch::get_current_translation_table(),
-            {{uintptr_t(palloc->address_of(*p)), 4096}, tos::permissions::read_write},
+            {{uintptr_t(ptr), 4096}, tos::permissions::read_write},
             tos::user_accessible::no,
             nullptr);
         LOG(bool(op_res));
+        LOG("Available:", palloc->remaining_page_count());
 
         auto res = tos::cur_arch::mark_resident(
             tos::cur_arch::get_current_translation_table(),
-            {{uintptr_t(palloc->address_of(*p)), 4096}, tos::permissions::read_write},
+            {{uintptr_t(ptr), 4096}, tos::permissions::read_write},
             tos::memory_types::normal,
-            vmem_end);
+            ptr);
         LOG(bool(res));
+        LOG("Available:", palloc->remaining_page_count());
 
-        *((volatile int*)palloc->address_of(*p)) = 42;
+        *((volatile int*)ptr) = 99;
         res = tos::cur_arch::mark_nonresident(
             tos::cur_arch::get_current_translation_table(),
-            {{uintptr_t(palloc->address_of(*p)), 4096}, tos::permissions::read_write});
+            {{uintptr_t(ptr), 4096}, tos::permissions::read_write});
         LOG(bool(res));
-
-        palloc->free({p, 1});
+        LOG("Available:", palloc->remaining_page_count());
     }
 
     lwip_init();
@@ -353,9 +358,9 @@ void thread() {
     tos::lwip::async_udp_socket sock;
 
     auto handler = [&](auto,
-                      tos::lwip::async_udp_socket*,
-                      tos::udp_endpoint_t from,
-                      tos::lwip::buffer buf) {
+                       tos::lwip::async_udp_socket*,
+                       tos::udp_endpoint_t from,
+                       tos::lwip::buffer buf) {
         std::vector<uint8_t> data(buf.size());
         buf.read(data);
         std::string_view sv(reinterpret_cast<char*>(data.data()), data.size());
@@ -365,27 +370,25 @@ void thread() {
 
     sock.attach(handler);
 
-    tos::this_thread::yield();
     auto bind_res = sock.bind({100}, tos::parse_ipv4_address("10.0.2.15"));
     LOG(bool(bind_res));
-    tos::this_thread::yield();
 
     uint8_t buf[] = "hello world";
-    tos::udp_endpoint_t ep {
-        tos::parse_ipv4_address("10.0.2.2"),
-        {1234}
-    };
+    tos::udp_endpoint_t ep{tos::parse_ipv4_address("10.0.2.2"), {1234}};
     sock.send_to(buf, ep);
-    tos::this_thread::yield();
     sock.send_to(buf, ep);
-    tos::this_thread::yield();
     sock.send_to(buf, ep);
-    tos::this_thread::yield();
     sock.send_to(buf, ep);
-    tos::this_thread::yield();
+
+    tos::semaphore sem{0};
+
+    auto tim_handler = [&](tos::x86_64::exception_frame*, int) { sem.up_isr(); };
+
+    tos::platform::set_irq(
+        0, tos::function_ref<void(tos::x86_64::exception_frame*, int)>(tim_handler));
 
     while (true) {
-        tos::this_thread::yield();
+        sem.down();
     }
 
     //
