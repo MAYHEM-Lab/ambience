@@ -115,8 +115,8 @@ private:
         auto& tok = tos::cancellation_token::system();
         while (!tok.is_cancelled()) {
             auto packet = m_dev->take_packet();
-            LOG_TRACE("Received", packet.size(), "bytes");
-            LOG_TRACE(packet);
+            // LOG_TRACE("Received", packet.size(), "bytes");
+            // LOG_TRACE(packet);
             auto p =
                 pbuf_alloc(pbuf_layer::PBUF_RAW, packet.size(), pbuf_type::PBUF_POOL);
             std::copy(packet.begin(), packet.end(), static_cast<uint8_t*>(p->payload));
@@ -126,11 +126,11 @@ private:
     }
 
     err_t link_output(pbuf* p) {
-        LOG_TRACE("link_output", p->len, "bytes");
+        // LOG_TRACE("link_output", p->len, "bytes");
         // pbuf_ref(p);
         // return m_if.input(p, &m_if);
         m_dev->transmit_packet({static_cast<const uint8_t*>(p->payload), p->len});
-        LOG_TRACE("Written bytes");
+        // LOG_TRACE("Written bytes");
         return ERR_OK;
     }
 
@@ -356,17 +356,11 @@ void thread() {
                       tos::lwip::async_udp_socket*,
                       tos::udp_endpoint_t from,
                       tos::lwip::buffer buf) {
-        LOG("Received", buf.size(), "bytes!");
         std::vector<uint8_t> data(buf.size());
         buf.read(data);
         std::string_view sv(reinterpret_cast<char*>(data.data()), data.size());
         LOG(sv);
         sock.send_to(data, from);
-        LOG(from.addr.addr[0],
-            from.addr.addr[1],
-            from.addr.addr[2],
-            from.addr.addr[3],
-            from.port.port);
     };
 
     sock.attach(handler);
