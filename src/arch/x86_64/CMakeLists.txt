@@ -14,6 +14,8 @@ add_library(arch_x86_64
     include/tos/x86_64/pic.hpp
     include/tos/x86_64/pci.hpp
     pci.cpp
+    include/tos/x86_64/tss.hpp
+    tss.cpp
 )
 target_include_directories(arch_x86_64 PUBLIC include)
 target_link_libraries(arch_x86_64 PUBLIC tos_util_core tos_util tos::libcxx)
