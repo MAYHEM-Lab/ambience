@@ -1,0 +1,1 @@
+add_subdirectory(stm32l4_rtc)

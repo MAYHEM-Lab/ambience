@@ -15,6 +15,11 @@ extern "C" {
 namespace tos::platform {
 static uintptr_t interrupt_disable_key;
 
+bool interrupts_disabled() {
+    // TODO: This needs to be implemented
+    return false;
+}
+
 void enable_interrupts() {
     HwiP_restore(interrupt_disable_key);
 }

@@ -1,10 +1,12 @@
 if (TOS_PROVIDE_LIBCXX)
 add_library(tos_libcxx
     src/vector.cpp
+    src/hash.cpp
     src/string.cpp
     src/memory.cpp
     src/include/atomic_support.h
     src/any.cpp
+    src/charconv.cpp
 
     include/algorithm
     include/array
@@ -85,6 +87,8 @@ target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_DISABLE_VISIBILITY_ANNOTATI
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_ATOMIC_HEADER)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_ABI_VERSION=2)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_LONG_DOUBLE)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_FLOATING_POINT)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_DISABLE_AVAILABILITY)
 
 if(${TOS_PLATFORM} MATCHES "atmega")
     target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_FLOATING_POINT)
@@ -100,7 +104,8 @@ target_compile_definitions(tos_libcxx PUBLIC TOS)
 target_compile_definitions(tos_libcxx PUBLIC TOS_PLATFORM_${TOS_PLATFORM_NAME})
 
 target_compile_features(tos_libcxx PUBLIC cxx_std_17)
-tos_install(tos_libcxx ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(tos_libcxx PUBLIC include)
+target_link_libraries(tos_libcxx PUBLIC picolibc)
 endif()
 
 add_library(base_libcxx src/compile.cpp)

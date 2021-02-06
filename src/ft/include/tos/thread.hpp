@@ -6,6 +6,7 @@
 
 #include <stddef.h>
 #include <tos/ct_map.hpp>
+#include <tos/interrupt.hpp>
 #include <tos/tcb.hpp>
 #include <tos/types.hpp>
 
@@ -30,6 +31,16 @@ thread_id_t get_id();
  * in a busy wait.
  */
 void yield();
+
+/**
+ * Gives control of the CPU back to the scheduler, suspending
+ * the current thread.
+ *
+ * If the interrupts are not disabled when this function
+ * is called, the behaviour is undefined
+ */
+void suspend_self(const no_interrupts&);
+// pre-condition: interrupts must be disabled
 
 /**
  * Puts the calling thread to sleep for at least the given duration using the alarm

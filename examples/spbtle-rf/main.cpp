@@ -6,6 +6,11 @@
 
 #include <arch/drivers.hpp>
 #include <common/ble/gatt.hpp>
+#include <tos/board.hpp>
+#include <lidlrt/service.hpp>
+#include <service_generated.hpp>
+#include <tos/arm/assembly.hpp>
+#include <tos/components/allocator.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/device/spbtlerf/adapter.hpp>
@@ -14,6 +19,12 @@
 #include <tos/intrusive_ptr.hpp>
 #include <tos/print.hpp>
 #include <tos/uuid.hpp>
+
+class calc_impl : public tos::examples::calculator {
+    int32_t multiply(const int32_t& a, const int32_t& b) override {
+        return a * b;
+    }
+};
 
 tos::intrusive_ptr<tos::device::spbtle::gatt_service> add_gatt_service() {
     static constexpr auto uuid =
@@ -56,11 +67,17 @@ tos::intrusive_ptr<tos::device::spbtle::gatt_service> add_gatt_service() {
     return force_get(service);
 }
 
+namespace tos {
+void out_of_memory_handler() {
+    while (true) {
+        tos::arm::nop();
+    }
+}
+}
+
 void ble_task() {
     using namespace tos::tos_literals;
-    auto reset = 8_pin;
-    auto cs_pin = 61_pin;
-    auto exti_pin = 70_pin;
+    using bs = tos::bsp::board_spec;
 
     auto g = tos::open(tos::devs::gpio);
 
@@ -68,9 +85,7 @@ void ble_task() {
     tos::alarm alarm(&timer);
     auto erased_alarm = tos::erase_alarm(&alarm);
 
-    auto usart =
-        tos::open(tos::devs::usart<1>, tos::uart::default_115200, 23_pin, 22_pin);
-    using namespace std::chrono_literals;
+    auto usart = bs::default_com::open();
 
     tos::debug::serial_sink sink{&usart};
     tos::debug::detail::any_logger log_{&sink};
@@ -79,17 +94,16 @@ void ble_task() {
 
     tos::stm32::exti e;
 
-    tos::stm32::spi s(tos::stm32::detail::spis[2], 42_pin, 43_pin, 44_pin);
-    // s.set_8_bit_mode();
+    auto s = bs::ble::spi_dev::open();
 
     tos::device::spbtle::adapter_config conf;
     conf.alarm = erased_alarm.get();
-    conf.m_irq_pin = exti_pin;
+    conf.m_irq_pin = tos::stm32::instantiate_pin(bs::ble::exti_pin);
     conf.gpio = &g;
-    conf.cs_pin = cs_pin;
+    conf.cs_pin = tos::stm32::instantiate_pin(bs::ble::cs_pin);
     conf.exti = &e;
     conf.spi = &s;
-    conf.reset_pin = reset;
+    conf.reset_pin = tos::stm32::instantiate_pin(bs::ble::reset_pin);
 
     auto bl = force_get(tos::device::spbtle::adapter::open(conf));
 
@@ -133,6 +147,8 @@ void ble_task() {
         tos::function_ref<void(int, tos::span<const uint8_t>)>(write_cb));
     tos::device::spbtle::advertising adv;
 
+    using namespace std::chrono_literals;
+
     auto on_disc = [&](int conn) {
         LOG("Disconnected:", conn);
         tos::launch(tos::alloc_stack, [&]{
@@ -148,10 +164,16 @@ void ble_task() {
     adv.start(100ms, "Tos BLE");
     LOG("disc started");
 
+    calc_impl calc;
+    auto runner = lidl::make_procedure_runner<tos::examples::calculator>();
+
     while (true) {
         received.down();
-        auto x = 2 * atoi(reinterpret_cast<const char*>(echo.data()));
-        readable.update_value(tos::raw_cast(tos::itoa(x)));
+        std::array<uint8_t, 128> buf;
+        lidl::message_builder mb(buf);
+        runner(calc, echo, mb);
+        readable.update_value(mb.get_buffer());
+        LOG(tos::current_context().get_component<tos::allocator_component>()->allocator->in_use().value());
     }
 
     tos::this_thread::block_forever();

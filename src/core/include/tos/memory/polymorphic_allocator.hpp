@@ -2,11 +2,15 @@
 
 #include <cstddef>
 #include <utility>
+#include <optional>
 
 namespace tos::memory {
 struct polymorphic_allocator {
     virtual void* allocate(size_t size) = 0;
     virtual void free(void* ptr) = 0;
+    virtual std::optional<size_t> in_use() const {
+        return {};
+    }
     virtual ~polymorphic_allocator() = default;
 };
 
@@ -20,8 +24,13 @@ struct erased_allocator : polymorphic_allocator {
     void* allocate(size_t size) override {
         return (&m_alloc)->allocate(size);
     }
+
     void free(void* ptr) override {
         return (&m_alloc)->free(ptr);
+    }
+
+    std::optional<size_t> in_use() const override {
+        return (&m_alloc)->in_use();
     }
 
     T m_alloc;

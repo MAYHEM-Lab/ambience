@@ -46,6 +46,10 @@ public:
         return {m_ptr, size()};
     }
 
+    explicit operator span<const uint8_t>() const {
+        return data();
+    }
+
     ~packet() {
         if (util::is_flag_set(flags(), packet_flags::owning)) {
             delete[] m_ptr;
@@ -72,6 +76,14 @@ private:
     uint16_t m_size;
     uint8_t m_refcnt = 0;
 };
+
+inline span<uint8_t> as_span(packet& p) {
+    return p.data();
+}
+
+inline span<uint8_t> as_span(intrusive_ptr<io::packet>& packet) {
+    return as_span(*packet);
+}
 
 class packet_list {
 public:

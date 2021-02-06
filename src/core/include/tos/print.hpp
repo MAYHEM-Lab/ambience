@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <stdint.h>
@@ -18,17 +19,20 @@ static constexpr char lookup[] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 }
 
-inline tos::span<const char> itoa(int64_t i, int base = 10) {
+using itoa_input_t = int64_t;
+
+inline tos::span<const char> itoa(itoa_input_t i, int base = 10) {
     static char intbuf[std::numeric_limits<decltype(i)>::digits10 + 1];
 
-    int64_t j = 0, isneg = 0;
+    itoa_input_t j = 0;
+    bool isneg = false;
 
     if (i == 0) {
         return tos::span<const char>("0").slice(0, 1);
     }
 
     if (i < 0) {
-        isneg = 1;
+        isneg = true;
         i = -i;
     }
 
@@ -37,22 +41,14 @@ inline tos::span<const char> itoa(int64_t i, int base = 10) {
         i /= base;
     }
 
-    if (isneg)
+    if (isneg) {
         intbuf[j++] = '-';
-
-    auto len = j;
-    intbuf[j] = '\0';
-    j--;
-    i = 0;
-    while (i < j) {
-        isneg = intbuf[i];
-        intbuf[i] = intbuf[j];
-        intbuf[j] = isneg;
-        i++;
-        j--;
     }
 
-    return {intbuf, size_t(len)};
+    intbuf[j] = '\0';
+    std::reverse(intbuf, intbuf + j);
+
+    return {intbuf, size_t(j)};
 }
 } // namespace tos
 
@@ -119,19 +115,9 @@ void print(CharOstreamT& ostr, double x) {
     }
 }
 
-
-template<class CharOstreamT,
-         class U = uintptr_t,
-         class = std::enable_if_t<!std::is_same_v<U, uint64_t>>>
-void print(CharOstreamT& ostr, uintptr_t ptr) {
-    // print(ostr, '0');
-    // print(ostr, 'x');
-    print(ostr, itoa(ptr, 16));
-}
-
 template<class CharOstreamT>
 void print(CharOstreamT& ostr, void* p) {
-    print(ostr, reinterpret_cast<uintptr_t>(p));
+    print(ostr, itoa(reinterpret_cast<uintptr_t>(p), 16));
 }
 
 template<class CharOstreamT>
@@ -146,6 +132,13 @@ void print(CharOstreamT& ostr, uint64_t p) {
 
 template<class CharOstreamT>
 void print(CharOstreamT& ostr, int64_t p) {
+    print(ostr, itoa(p, 10));
+}
+
+template<class CharOstreamT,
+         class U = size_t,
+         std::enable_if_t<!std::is_same_v<U, uint64_t>>* = nullptr>
+void print(CharOstreamT& ostr, size_t p) {
     print(ostr, itoa(p, 10));
 }
 

@@ -4,35 +4,35 @@
 
 #include <arch/drivers.hpp>
 #include <common/alarm.hpp>
-
+#include <tos/board.hpp>
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
-#include <tos/fixed_fifo.hpp>
 
-auto blink_task = []
-{
+using bs = tos::bsp::board_spec;
+
+auto blink_task = [] {
     using namespace tos;
     using namespace tos_literals;
 
+    auto led_pin = nrf52::instantiate_pin(bs::led_pin);
     auto g = open(tos::devs::gpio);
-    g->set_pin_mode(13_pin, pin_mode::out);
+    g->set_pin_mode(led_pin, pin_mode::out);
 
-    auto usart = open(tos::devs::usart<0>, tos::uart::default_115200, 8_pin, 6_pin);
+    auto usart = bs::default_com::open();
 
     tos::println(usart, "hello");
 
     auto timer = open(tos::devs::timer<1>);
     tos::alarm alarm(&timer);
 
-    while (true)
-    {
+    while (true) {
         using namespace std::chrono_literals;
 
-        g->write(13_pin, digital::low);
+        g->write(led_pin, digital::low);
         tos::println(usart, "On");
         tos::this_thread::sleep_for(alarm, 1s);
 
-        g->write(13_pin, digital::high);
+        g->write(led_pin, digital::high);
         tos::println(usart, "Off");
         tos::this_thread::sleep_for(alarm, 1s);
     }
@@ -40,7 +40,6 @@ auto blink_task = []
     tos::this_thread::block_forever();
 };
 
-void TOS_EXPORT tos_main()
-{
+void tos_main() {
     tos::launch(tos::alloc_stack, blink_task);
 }

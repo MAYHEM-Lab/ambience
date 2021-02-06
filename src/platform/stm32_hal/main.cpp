@@ -1,7 +1,9 @@
 #include <stm32_hal/flash.hpp>
 #include <stm32_hal/rcc.hpp>
+#include <tos/arm/exception.hpp>
 #include <tos/compiler.hpp>
-#include <tos/ft.hpp>
+#include <tos/interrupt.hpp>
+#include <tos/platform.hpp>
 #include <tos/scheduler.hpp>
 
 extern "C" {
@@ -164,6 +166,14 @@ void SystemClock_Config() {
             ;
     }
 
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+    RCC_OscInitStruct.LSIState = RCC_LSI_ON;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+        while (1)
+            ;
+    }
+
     tos::stm32::apb1_clock = 40'000'000;
     tos::stm32::ahb_clock = 80'000'000;
 }
@@ -232,6 +242,14 @@ void SystemClock_Config() {
             ;
     }
 
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_LSE;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+    RCC_OscInitStruct.LSIState = RCC_LSI_ON;
+    RCC_OscInitStruct.LSEState = RCC_LSE_OFF;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+        Error_Handler();
+    }
+
     tos::stm32::apb1_clock = 40'000'000;
     tos::stm32::ahb_clock = 80'000'000;
 }
@@ -268,20 +286,34 @@ void SystemClock_Config() {
 }
 #endif
 
-namespace {
-bool tried_bkpt = false;
-}
 extern "C" void HardFault_Handler() {
-    if (!tried_bkpt) {
-        tried_bkpt = true;
-        __BKPT(0);
-    } else {
-        tos::platform::force_reset();
-        TOS_UNREACHABLE();
-    }
+    tos::arm::exception::hard_fault();
 }
 
-int main() {
+extern "C" void UsageFault_Handler() {
+    tos::arm::exception::usage_fault();
+}
+
+extern "C" void MemManage_Handler() {
+    tos::arm::exception::mem_fault();
+}
+
+extern "C" void BusFault_Handler() {
+    tos::arm::exception::bus_fault();
+}
+
+extern "C" void SVC_Handler() {
+    tos::arm::exception::out_svc_handler();
+}
+
+extern "C" {
+extern void (*start_ctors[])();
+extern void (*end_ctors[])();
+}
+
+extern "C" int main() {
+    std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
+
     HAL_Init();
     SystemClock_Config();
     // NVIC_DisableIRQ(SysTick_IRQn);
@@ -289,29 +321,39 @@ int main() {
     // Interrupts are already enabled:
     tos::kern::enable_interrupts();
     // tos::kern::detail::disable_depth--;
+    HAL_NVIC_EnableIRQ(UsageFault_IRQn);
+    HAL_NVIC_SetPriority(UsageFault_IRQn, 0, 0);
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk;
+
+    HAL_NVIC_EnableIRQ(BusFault_IRQn);
+    HAL_NVIC_SetPriority(BusFault_IRQn, 0, 0);
+    SCB->SHCSR |= SCB_SHCSR_BUSFAULTENA_Msk;
 
     tos_main();
 
     while (true) {
-        auto res = tos::global::sched.schedule();
-        if (res == tos::exit_reason::restart) {
-            tos::platform::force_reset();
-        }
-        if (res == tos::exit_reason::power_down) {
-            HAL_SuspendTick();
-            HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-            HAL_ResumeTick();
+        {
+            tos::int_guard ig;
+            auto res = tos::global::sched.schedule(ig);
+            if (res == tos::exit_reason::restart) {
+                tos::platform::force_reset();
+            }
+            if (res == tos::exit_reason::power_down) {
+                HAL_SuspendTick();
+                HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+                HAL_ResumeTick();
 
-            NVIC_EnableIRQ(SysTick_IRQn);
-            SystemClock_Config();
-            NVIC_DisableIRQ(SysTick_IRQn);
-            //__WFI();
-        }
-        if (res == tos::exit_reason::idle) {
-            __WFI();
-        }
-        if (res == tos::exit_reason::yield) {
-            // Do nothing
+                NVIC_EnableIRQ(SysTick_IRQn);
+                SystemClock_Config();
+                NVIC_DisableIRQ(SysTick_IRQn);
+                //__WFI();
+            }
+            if (res == tos::exit_reason::idle) {
+                __WFI();
+            }
+            if (res == tos::exit_reason::yield) {
+                // Do nothing
+            }
         }
     }
 }

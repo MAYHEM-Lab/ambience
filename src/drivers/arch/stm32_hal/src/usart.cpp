@@ -21,6 +21,11 @@ extern "C" void USART3_IRQHandler() {
     ins->isr();
 }
 
+extern "C" void LPUART1_IRQHandler() {
+    auto ins = usart::get(3);
+    ins->isr();
+}
+
 extern "C" void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
     usart* ins{};
     switch (intptr_t(huart->Instance)) {
@@ -33,6 +38,11 @@ extern "C" void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
 #ifdef USART3
     case USART3_BASE:
         ins = usart::get(2);
+        break;
+#endif
+#ifdef LPUART1
+    case LPUART1_BASE:
+        ins = usart::get(3);
         break;
 #endif
     }
@@ -51,6 +61,11 @@ extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
 #ifdef USART3
     case USART3_BASE:
         ins = usart::get(2);
+        break;
+#endif
+#ifdef LPUART1
+    case LPUART1_BASE:
+        ins = usart::get(3);
         break;
 #endif
     }

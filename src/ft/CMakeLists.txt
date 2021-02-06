@@ -6,7 +6,6 @@ add_library(tos_ft
         include/tos/tcb.hpp
         include/tos/mutex.hpp
         include/tos/semaphore.hpp
-        include/tos/scheduler.hpp
         include/tos/waitable.hpp
         include/tos/event.hpp
         src/ft.cpp
@@ -16,13 +15,14 @@ add_library(tos_ft
         include/tos/types.hpp
         src/tcb.cpp
         include/tos/components/threads.hpp
-        src/components/threads.cpp)
+        src/components/threads.cpp
+        include/tos/suspended_launch.hpp
+)
 
 target_link_libraries(tos_ft PUBLIC tos_util_core)
 target_link_libraries(tos_ft PUBLIC tos_interrupt)
 target_link_libraries(tos_ft PUBLIC tos::libcxx)
 target_link_libraries(tos_ft PUBLIC tos_alarm tos_context)
-target_compile_definitions(tos_ft PUBLIC TOS_DEFAULT_STACK_SIZE=${TOS_DEF_STACK})
 
 add_library(tos::ft ALIAS tos_ft)
 

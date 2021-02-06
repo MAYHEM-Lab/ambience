@@ -1,0 +1,15 @@
+add_library(microecc uECC.c)
+target_include_directories(microecc PUBLIC .)
+target_link_libraries(microecc PUBLIC tos_util_core)
+target_compile_options(microecc PUBLIC "-fomit-frame-pointer")
+target_compile_definitions(microecc PUBLIC uECC_OPTIMIZATION_LEVEL=3)
+
+if (BUILD_TESTS)
+add_executable(microecc_test microecc_test.cpp)
+target_link_libraries(microecc_test PUBLIC standalone_tests_main microecc)
+add_test(NAME microecc_test COMMAND microecc_test)
+endif()
+
+add_library(microecc_bench microecc_bench.cpp)
+target_link_libraries(microecc_bench PUBLIC microecc ubench emsha)
+add_benchmark(microecc_bench)

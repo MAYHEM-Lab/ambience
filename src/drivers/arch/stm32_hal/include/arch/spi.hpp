@@ -5,8 +5,8 @@
 #pragma once
 
 #include "gpio.hpp"
-
 #include <arch/detail/afio.hpp>
+#include <common/spi.hpp>
 #include <optional>
 #include <stm32_hal/dma.hpp>
 #include <stm32_hal/rcc.hpp>
@@ -199,3 +199,26 @@ inline void spi::tx_done_isr() {
     m_busy_sem.up_isr();
 }
 } // namespace tos::stm32
+
+namespace tos {
+inline stm32::spi open_impl(tos::devs::spi_t<1>,
+                            stm32::gpio::pin_type sck,
+                            std::optional<stm32::gpio::pin_type> miso,
+                            std::optional<stm32::gpio::pin_type> mosi) {
+    return stm32::spi{ stm32::detail::spis[0], sck, miso, mosi };
+}
+
+inline stm32::spi open_impl(tos::devs::spi_t<2>,
+                            stm32::gpio::pin_type sck,
+                            std::optional<stm32::gpio::pin_type> miso,
+                            std::optional<stm32::gpio::pin_type> mosi) {
+    return stm32::spi{ stm32::detail::spis[1], sck, miso, mosi };
+}
+
+inline stm32::spi open_impl(tos::devs::spi_t<3>,
+                            stm32::gpio::pin_type sck,
+                            std::optional<stm32::gpio::pin_type> miso,
+                            std::optional<stm32::gpio::pin_type> mosi) {
+    return stm32::spi{ stm32::detail::spis[2], sck, miso, mosi };
+}
+}

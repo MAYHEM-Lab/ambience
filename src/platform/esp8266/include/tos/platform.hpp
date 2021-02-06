@@ -4,6 +4,7 @@
 #include <tos/xtensa/interrupts.hpp>
 
 namespace tos::platform {
+using xtensa::interrupts_disabled;
 using xtensa::enable_interrupts;
 using xtensa::disable_interrupts;
 

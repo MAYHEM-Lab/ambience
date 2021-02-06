@@ -7,17 +7,24 @@
 #include <cstdint>
 #include <tos/arch.hpp>
 #include <tos/barrier.hpp>
+#include <tos/debug/assert.hpp>
 #include <tos/platform.hpp>
 
 namespace tos {
 namespace global {
-inline int8_t disable_depth = 1;
-}
+extern int8_t disable_depth;
+extern bool should_enable;
+} // namespace global
 namespace kern {
-inline void disable_interrupts() {
+inline void do_disable_interrupts([[maybe_unused]] void* ret_addr) {
     tos::detail::memory_barrier();
     if (global::disable_depth == 0) {
-        platform::disable_interrupts();
+        if (platform::interrupts_disabled()) {
+            global::should_enable = false;
+        } else {
+            platform::disable_interrupts();
+            global::should_enable = true;
+        }
     }
     global::disable_depth++;
     tos::detail::memory_barrier();
@@ -29,13 +36,33 @@ inline void disable_interrupts() {
  *
  * Must be matched by a previous `disable_interrupts` call.
  */
-inline void enable_interrupts() {
+inline void do_enable_interrupts([[maybe_unused]] void *ret_addr) {
     tos::detail::memory_barrier();
+    Assert(global::disable_depth > 0);
     global::disable_depth--;
     if (global::disable_depth == 0) {
-        platform::enable_interrupts();
+        if (global::should_enable) {
+            global::should_enable = false;
+            platform::enable_interrupts();
+        }
     }
     tos::detail::memory_barrier();
+}
+NO_INLINE
+inline void disable_interrupts() {
+    do_disable_interrupts(__builtin_return_address(0));
+}
+NO_INLINE
+inline void enable_interrupts() {
+    do_enable_interrupts(__builtin_return_address(0));
+}
+
+inline void disable_interrupts(void* ptr) {
+    do_disable_interrupts(ptr);
+}
+
+inline void enable_interrupts(void* ptr) {
+    do_enable_interrupts(ptr);
 }
 
 /**
@@ -71,16 +98,25 @@ private:
  */
 struct int_guard : no_interrupts {
 public:
-    int_guard() {
-        kern::disable_interrupts();
+    NO_INLINE
+    int_guard(void* ptr) {
+        kern::disable_interrupts(ptr);
     }
-
+    NO_INLINE
+    int_guard() {
+        auto ret = __builtin_return_address(0);
+        kern::disable_interrupts(ret);
+    }
+    NO_INLINE
     ~int_guard() {
-        kern::enable_interrupts();
+        auto ret = __builtin_return_address(0);
+        kern::enable_interrupts(ret);
     }
 
     int_guard(int_guard&&) = delete;
 };
 
-struct int_ctx : no_interrupts {};
+struct int_ctx : no_interrupts {
+    int_ctx() = default;
+};
 } // namespace tos

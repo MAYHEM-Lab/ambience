@@ -12,9 +12,14 @@
 namespace tos::stm32::detail {
 inline namespace l4 {
 struct afio {
-    static constexpr auto get_usart_afio(int,
+    static constexpr auto get_usart_afio(int usart,
                                          std::optional<gpio::pin_type> rx,
                                          std::optional<gpio::pin_type> tx) {
+#if defined(LPUART1_BASE)
+        if (usart == LPUART1_BASE) {
+            return std::make_pair(rx ? GPIO_AF8_LPUART1 : -1, tx ? GPIO_AF8_LPUART1 : -1);
+        }
+#endif
         return std::make_pair(rx ? GPIO_AF7_USART1 : -1, tx ? GPIO_AF7_USART1 : -1);
     }
 

@@ -1,0 +1,16 @@
+$lidlmeta:
+  name: tos::services
+
+threadman:
+  type: service
+  procedures:
+    schedule:
+      parameters:
+        thread_id: u32
+      returns:
+        - bool
+    kill:
+      parameters:
+        thread_id: u32
+      returns:
+        - bool

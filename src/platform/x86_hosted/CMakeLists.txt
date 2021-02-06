@@ -8,12 +8,23 @@ target_compile_features(x86_hosted_core PUBLIC cxx_std_17)
 
 set(Boost_USE_STATIC_LIBS ON)
 # we use boost.asio for asynchronous operations
-find_package(Boost REQUIRED system)
+find_package(Boost COMPONENTS system)
 
 add_library(x86_hosted_impl x86_impl.cpp)
 target_link_libraries(x86_hosted_impl PUBLIC x86_hosted_core)
-target_link_libraries(x86_hosted_impl PUBLIC Boost::boost Boost::system pthread tos_interrupt)
-target_link_libraries(x86_hosted_impl PUBLIC tos_ft)
+target_link_libraries(x86_hosted_impl PUBLIC tos_interrupt)
+target_link_libraries(x86_hosted_impl PUBLIC tos_jobs)
+
+find_package(Threads REQUIRED)
+target_link_libraries(x86_hosted_impl PUBLIC Threads::Threads)
+
+
+if (TARGET Boost::boost)
+    target_link_libraries(x86_hosted_impl PUBLIC Boost::boost)
+endif()
+if (TARGET Boost::system)
+    target_link_libraries(x86_hosted_impl PUBLIC Boost::system)
+endif()
 
 tos_install(x86_hosted_impl ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(x86_hosted_core ${CMAKE_CURRENT_SOURCE_DIR}/include)

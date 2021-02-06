@@ -6,7 +6,6 @@
 
 #include "detail/afio.hpp"
 #include "gpio.hpp"
-
 #include <common/driver_base.hpp>
 #include <common/usart.hpp>
 #include <optional>
@@ -40,6 +39,12 @@ inline const usart_def usarts[] = {
      [] { __HAL_RCC_USART3_CLK_ENABLE(); },
      [] { __HAL_RCC_USART3_CLK_DISABLE(); }},
 #endif
+#if defined(LPUART1)
+    {LPUART1_BASE,
+     LPUART1_IRQn,
+     [] { __HAL_RCC_LPUART1_CLK_ENABLE(); },
+     [] { __HAL_RCC_LPUART1_CLK_DISABLE(); }},
+#endif
 };
 } // namespace detail
 
@@ -58,8 +63,6 @@ public:
                    gpio::pin_type rx,
                    gpio::pin_type tx);
 
-    future<int> write_async(tos::span<const uint8_t> buf);
-
     int write(tos::span<const uint8_t> buf);
 
     tos::span<uint8_t> read(tos::span<uint8_t> b);
@@ -69,6 +72,7 @@ public:
     read(tos::span<uint8_t> b, AlarmT& alarm, std::chrono::milliseconds to);
 
     ~usart() {
+        HAL_UART_Abort(&m_handle);
         NVIC_DisableIRQ(m_def->irq);
         HAL_UART_DeInit(&m_handle);
         m_def->rcc_dis();
@@ -80,10 +84,6 @@ public:
     }
 
     void tx_done_isr() {
-        if (m_async) {
-            m_async->tx_promise.set(0);
-            return;
-        }
         tx_s.up_isr();
     }
 
@@ -102,12 +102,6 @@ private:
     tos::basic_fixed_fifo<uint8_t, 32, tos::ring_buf> rx_buf;
     tos::semaphore rx_s{0};
     tos::semaphore tx_s{0};
-
-    struct async_state {
-        tos::promise<int> tx_promise;
-    };
-
-    std::optional<async_state> m_async;
 
     uint8_t m_recv_byte;
     UART_HandleTypeDef m_handle;
@@ -134,6 +128,13 @@ inline stm32::usart open_impl(tos::devs::usart_t<3>,
                               stm32::gpio::pin_type rx,
                               stm32::gpio::pin_type tx) {
     return stm32::usart{stm32::detail::usarts[2], std::move(constraints), rx, tx};
+}
+
+inline stm32::usart open_impl(tos::devs::lpuart_t<1>,
+                              stm32::usart_constraint&& constraints,
+                              stm32::gpio::pin_type rx,
+                              stm32::gpio::pin_type tx) {
+    return stm32::usart{stm32::detail::usarts[3], std::move(constraints), rx, tx};
 }
 } // namespace tos
 
@@ -235,17 +236,5 @@ inline int usart::write(tos::span<const uint8_t> buf) {
     tx_s.down();
     tos::kern::unbusy();
     return buf.size();
-}
-
-inline future<int> usart::write_async(tos::span<const uint8_t> buf) {
-    m_async.emplace();
-    if (buf.empty())
-        return {};
-    auto res =
-        HAL_UART_Transmit_IT(&m_handle, const_cast<uint8_t*>(buf.data()), buf.size());
-    if (res != HAL_OK) {
-        return {};
-    }
-    return m_async->tx_promise.get_future();
 }
 } // namespace tos::stm32

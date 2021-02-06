@@ -1,5 +1,6 @@
 #include <bluenrg_aci_const.h>
 #include <bluenrg_gatt_aci.h>
+#include <bluenrg_hal_aci.h>
 #include <hci_const.h>
 #include <tos/device/spbtlerf/events.hpp>
 
@@ -39,8 +40,15 @@ struct evt_handler_impl {
         }
     }
 
+    void handle(const evt_hal_initialized& evt) {
+        LOG("Initialization event:", evt.reason_code);
+    }
+
     void handle(const evt_blue_aci& evt) {
         switch (evt.ecode) {
+        case EVT_BLUE_HAL_INITIALIZED:
+            handle(*reinterpret_cast<const evt_hal_initialized*>(evt.data));
+            break;
         case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED:
             handle(*reinterpret_cast<const evt_gatt_attr_modified_IDB05A1*>(evt.data));
             break;

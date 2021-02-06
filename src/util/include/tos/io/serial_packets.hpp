@@ -6,6 +6,7 @@
 #include <tos/crc32.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/expected.hpp>
+#include <tos/io/channel.hpp>
 #include <tos/io/packet.hpp>
 #include <tos/mutex.hpp>
 #include <tos/semaphore.hpp>
@@ -28,6 +29,9 @@ enum class serial_packet_errors
 };
 
 template<class StreamT>
+class serial_packets_channel;
+
+template<class StreamT>
 class serial_packets {
 public:
     explicit serial_packets(StreamT str, bool write_only = false)
@@ -42,14 +46,14 @@ public:
     void send(streamid_t streamid, tos::span<const uint8_t> span) {
         tos::lock_guard g{m_write_prot};
         this->m_usart->write(magic_numbers);
-        this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(streamid)));
+        this->m_usart->write(raw_cast(tos::monospan(streamid)));
         uint16_t size = span.size();
-        this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(size)));
+        this->m_usart->write(raw_cast(tos::monospan(size)));
         if (size != 0) {
             this->m_usart->write(span);
         }
         uint32_t crc32 = tos::crc32(span);
-        this->m_usart->write(raw_cast<const uint8_t>(tos::monospan(crc32)));
+        this->m_usart->write(raw_cast(tos::monospan(crc32)));
     }
 
     intrusive_ptr<packet> receive(streamid_t streamid) {
@@ -82,12 +86,15 @@ public:
         delete port;
     }
 
+    intrusive_ptr<serial_packets_channel<StreamT>> get_channel(int stream);
+
 private:
     void append_packet(port_data& stream, intrusive_ptr<packet> p) {
         stream.m_packets.add_packet(std::move(p));
     }
 
     bool m_stop = false;
+
     void thread() {
         send(0, tos::empty_span<const uint8_t>());
 //        LOG("Serial packets thread running");
@@ -202,4 +209,33 @@ private:
     intrusive_list<port_data> m_ports;
     tos::kern::tcb* m_thread;
 };
+
+
+template<class StreamT>
+class serial_packets_channel : public any_channel {
+public:
+    serial_packets_channel(serial_packets<StreamT>& packets, int stream)
+        : m_packets{&packets}
+        , m_stream{stream} {
+    }
+
+    void send(span<const uint8_t> span) override {
+        m_packets->send(m_stream, span);
+    }
+
+    intrusive_ptr<packet> receive() override {
+        return m_packets->receive(m_stream);
+    }
+
+private:
+    serial_packets<StreamT>* m_packets;
+    int m_stream;
+};
+
+template<class StreamT>
+intrusive_ptr<serial_packets_channel<StreamT>>
+serial_packets<StreamT>::get_channel(int stream) {
+    this->open(stream);
+    return make_intrusive<serial_packets_channel<StreamT>>(*this, stream);
+}
 } // namespace tos::io

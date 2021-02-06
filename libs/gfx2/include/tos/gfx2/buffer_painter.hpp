@@ -42,7 +42,7 @@ public:
     }
 
     int8_t
-    draw_rect(const rectangle& rect, const int8_t& radius, const bool& fill) override {
+    draw_rect(const rectangle& rect, int8_t radius, bool fill) override {
         auto draw_point = [this](const tos::gfx2::point& pt) { this->draw_point(pt); };
 
         if (fill) {
@@ -105,8 +105,8 @@ public:
     }
 
     int8_t draw_circle(const tos::gfx2::point& center,
-                       const int8_t& radius,
-                       const bool& fill) override {
+                       int8_t radius,
+                       bool fill) override {
         draw_circle_quarter<tos::gfx2::circle_quarters::all>(center, radius, fill);
         return 0;
     }
@@ -119,15 +119,15 @@ public:
         return 0;
     }
 
-    bool draw_bitmap(const tos::gfx2::colors& color_type,
+    bool draw_bitmap(tos::gfx2::colors color_type,
                      tos::span<uint8_t> buffer,
-                     const int16_t& stride,
+                     int16_t stride,
                      const tos::gfx2::rectangle& image_rect,
                      const tos::gfx2::rectangle& screen_rect) override {
         // TODO(goksuguvendiren): Implement this.
         return false;
     }
-    bool set_orientation(const tos::services::rotation& orientation) override {
+    bool set_orientation(tos::services::rotation orientation) override {
         // TODO(goksuguvendiren): Implement this.
         return false;
     }

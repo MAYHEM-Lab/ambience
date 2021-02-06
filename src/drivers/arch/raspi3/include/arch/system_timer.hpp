@@ -1,17 +1,20 @@
 #pragma once
 
-#include <tos/function_ref.hpp>
 #include <arch/interrupts.hpp>
+#include <tos/function_ref.hpp>
 #include <tos/self_pointing.hpp>
 
 namespace tos::raspi3 {
 class system_timer : public self_pointing<system_timer> {
 public:
-    system_timer(interrupt_controller& interrupts) : m_handler(function_ref<bool()>([](void* ptr) -> bool {
-        auto self = static_cast<system_timer*>(ptr);
-        return self->irq();
-    }, this)) {
-        interrupts.register_handler(1, m_handler);
+    system_timer(interrupt_controller& interrupts)
+        : m_handler(function_ref<bool()>(
+              [](void* ptr) -> bool {
+                  auto self = static_cast<system_timer*>(ptr);
+                  return self->irq();
+              },
+              this)) {
+        interrupts.register_handler(bcm283x::irq_channels::system_timer, m_handler);
     }
 
     /**
@@ -52,6 +55,6 @@ public:
 private:
     uint16_t m_freq;
     irq_handler m_handler;
-    function_ref<void()> m_cb{[](void*){}};
+    function_ref<void()> m_cb{[](void*) {}};
 };
-}
+} // namespace tos::raspi3

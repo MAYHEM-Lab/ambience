@@ -2,7 +2,7 @@ include(lidlc)
 add_lidlc(mailbox_proto mailbox.yaml)
 
 add_library(raspi3_usart include/arch/usart.hpp src/usart.cpp)
-target_link_libraries(raspi3_usart PUBLIC tos_usart tos::core raspi3_messagebox)
+target_link_libraries(raspi3_usart PUBLIC tos_usart tos::core raspi3_messagebox soc_bcm283x)
 target_include_directories(raspi3_usart PUBLIC include)
 
 add_library(raspi3_interrupts include/arch/interrupts.hpp src/interrupts.cpp)

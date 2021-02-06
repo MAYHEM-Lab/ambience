@@ -14,11 +14,14 @@ option(BUILD_EXAMPLES "Build examples" ON)
 option(ENABLE_LTO "Enable Link Time Optimizations" OFF)
 
 include(Tos)
+include(TosCompiler)
+default_include_dirs()
 
 if (BUILD_TESTS)
     include(CTest)
 endif()
 
+add_subdirectory(config/boards EXCLUDE_FROM_ALL)
 add_subdirectory(libs)
 add_subdirectory(src)
 add_subdirectory(apps EXCLUDE_FROM_ALL)

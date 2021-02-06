@@ -1,0 +1,3 @@
+add_library(stm32f7_disco_board INTERFACE)
+target_link_libraries(stm32f7_disco_board INTERFACE stm32_drivers)
+target_include_directories(stm32f7_disco_board INTERFACE "..")

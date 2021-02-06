@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <type_traits>
 #include <utility>
 
@@ -153,7 +154,7 @@ intrusive_ptr<T> make_intrusive(ArgTs&&... args) {
     return intrusive_ptr<T>(new T(std::forward<ArgTs>(args)...));
 }
 
-template<class T, class RefCntT = int8_t>
+template<class T, class RefCntT = int8_t, class Deleter = std::default_delete<T>>
 class ref_counted {
 public:
     friend void intrusive_ref(T* t) {
@@ -169,7 +170,11 @@ public:
     }
 
     static void collect(T* channel) {
-        delete channel;
+        Deleter{}(channel);
+    }
+
+    RefCntT reference_count() const {
+        return m_refcnt;
     }
 
 private:

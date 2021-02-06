@@ -4,9 +4,10 @@
 
 #include <arch/mailbox.hpp>
 #include <tos/ft.hpp>
+#include <tos/soc/bcm2837.hpp>
 
-using bcm2837::VIDEOCORE_MBOX;
 namespace tos::raspi3 {
+using bcm2837::VIDEOCORE_MBOX;
 void mailbox_channel::write(uint32_t word) {
     tos::lock_guard g{m_prot};
     while (VIDEOCORE_MBOX->status_full()) {

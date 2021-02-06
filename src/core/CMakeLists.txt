@@ -1,6 +1,8 @@
 include(CMakeRC)
 
 add_library(tos_mem include/tos/memory.hpp src/memory.cpp)
+target_link_libraries(tos_mem PUBLIC tos_util_core)
+target_include_directories(tos_mem PUBLIC include)
 
 add_library(tos_memory
         include/tos/memory/buddy.hpp
@@ -16,15 +18,15 @@ target_include_directories(tos_memory PUBLIC include)
 if (BUILD_TESTS)
     enable_testing()
     add_executable(tos_memory_buddy_test src/memory/buddy_test.cpp)
-    target_link_libraries(tos_memory_buddy_test PUBLIC tests_main tos_memory)
+    target_link_libraries(tos_memory_buddy_test PUBLIC standalone_tests_main tos_memory)
     add_test(NAME tos_memory_buddy_test COMMAND tos_memory_buddy_test)
 
     add_executable(tos_memory_bump_test src/memory/bump_test.cpp)
-    target_link_libraries(tos_memory_bump_test PUBLIC tests_main tos_memory)
+    target_link_libraries(tos_memory_bump_test PUBLIC standalone_tests_main tos_memory)
     add_test(NAME tos_memory_bump_test COMMAND tos_memory_bump_test)
 
     add_executable(tos_memory_free_list_test src/memory/free_list_test.cpp)
-    target_link_libraries(tos_memory_free_list_test PUBLIC tests_main tos_memory)
+    target_link_libraries(tos_memory_free_list_test PUBLIC standalone_tests_main tos_memory)
     add_test(NAME tos_memory_free_list_test COMMAND tos_memory_free_list_test)
 endif()
 
@@ -39,6 +41,13 @@ add_library(tos_debug_log
         include/tos/debug/sinks/clock_adapter.hpp)
 target_include_directories(tos_debug_log PUBLIC include)
 target_link_libraries(tos_debug_log PUBLIC tos_util_core tos_print)
+
+include(lidlc)
+
+add_lidlc(log_schema log.yaml)
+add_library(lidl_log_sink include/tos/debug/sinks/lidl_sink.hpp src/lidl_sink.cpp)
+target_include_directories(tos_debug_log PUBLIC include)
+target_link_libraries(lidl_log_sink PUBLIC tos_debug_log log_schema tos_ft)
 
 add_library(tos_dynamic_log src/dynamic_log.cpp include/tos/debug/dynamic_log.hpp)
 target_link_libraries(tos_dynamic_log PUBLIC tos_debug_log)
@@ -62,12 +71,18 @@ if (BUILD_TESTS)
     add_test(NAME context_tests COMMAND context_tests)
 endif()
 
+add_library(tos_debug_core
+        include/tos/debug/assert.hpp
+        src/debug/core_assert.cpp)
+target_link_libraries(tos_debug_core PUBLIC tos_util_core tos_platform)
+target_include_directories(tos_debug_core PUBLIC include)
+
 add_library(tos_debug
         include/tos/debug/debug.hpp
         include/tos/debug/stack_dump.hpp
         include/tos/debug/panic.hpp
         src/debug.cpp)
-target_link_libraries(tos_debug PUBLIC tos_util_core tos_debug_log tos_platform)
+target_link_libraries(tos_debug PUBLIC tos_debug_core tos_util_core tos_debug_log tos_platform tos_ft)
 
 add_library(tos_build_info
         include/tos/build.hpp
@@ -94,7 +109,11 @@ target_link_libraries(tos_platform PUBLIC tos_arch_core ${TOS_PLATFORM_NAME}_imp
 message(STATUS ${TOS_PLATFORM_NAME}_impl)
 
 add_library(tos_interrupt include/tos/interrupt.hpp src/interrupt.cpp)
-target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core tos_platform)
+target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core tos_platform tos_debug_core)
+
+add_library(tos_jobs include/tos/scheduler.hpp include/tos/job.hpp src/job.cpp src/scheduler.cpp)
+target_link_libraries(tos_jobs PUBLIC tos_util_core tos_context)
+target_link_libraries(tos_jobs PRIVATE tos_interrupt)
 
 add_library(tos_core
         include/tos/devices.hpp
@@ -105,12 +124,19 @@ add_library(tos_core
         include/tos/delay.hpp
         include/tos/barrier.hpp
         src/tos_init.cpp
-        src/device_id.cpp)
+        src/device_id.cpp
+        src/paging.cpp
+        src/paging/physical_page_allocator.cpp
+)
 target_link_libraries(tos_core PUBLIC tos_mem tos_util tos_build_info ${TOS_PLATFORM_NAME}_core)
 target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug tos_context)
-target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_platform)
+target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_platform tos_jobs)
 target_include_directories(tos_core PUBLIC include)
 add_library(tos::core ALIAS tos_core)
+
+add_library(tos_interrupt_trampoline include/tos/interrupt_trampoline.hpp src/interrupt_trampoline.cpp)
+target_include_directories(tos_interrupt_trampoline PUBLIC include)
+target_link_libraries(tos_interrupt_trampoline PUBLIC tos_ft tos_util_core)
 
 add_library(tos_print include/tos/print.hpp src/print.cpp)
 target_link_libraries(tos_print PUBLIC tos_util_core tos::libcxx)

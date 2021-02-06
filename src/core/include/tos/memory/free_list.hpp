@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <tos/intrusive_list.hpp>
 #include <tos/span.hpp>
+#include <optional>
 
 namespace tos::memory {
 struct free_header;
@@ -14,6 +15,9 @@ public:
 
     void* allocate(size_t size);
     void free(void* ptr);
+    std::optional<size_t> in_use() const {
+        return m_used;
+    }
 
     [[nodiscard]]
     size_t available_memory() const {

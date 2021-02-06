@@ -5,7 +5,9 @@
 #include <cstddef>
 #include <tos/arch.hpp>
 #include <tos/context.hpp>
+#include <tos/interrupt.hpp>
 #include <tos/intrusive_list.hpp>
+#include <tos/job.hpp>
 #include <tos/utility.hpp>
 #include <utility>
 
@@ -19,8 +21,8 @@ struct processor_state;
  * extend this class to implement required functionality such
  * as starting threads or passing arguments.
  */
-struct alignas(alignof(std::max_align_t)) tcb : public list_node<tcb> {
-    explicit tcb(context& ctx_ptr);
+struct alignas(alignof(std::max_align_t)) tcb : public job {
+    explicit tcb(context& ctx);
     /**
      * Returns a reference to the context of the task.
      *
@@ -44,12 +46,15 @@ struct alignas(alignof(std::max_align_t)) tcb : public list_node<tcb> {
      */
     virtual ~tcb() = 0;
 
-    void set_context(context& ctx);
-    context& get_context();
+    tos::list_node<tcb> m_siblings;
 
-    list_node<tcb> m_siblings;
+protected:
+    void on_set_context(context& new_ctx) override;
+
+public:
+    void operator()() override;
+
 private:
-    context* m_context;
     processor_state* m_ctx;
 };
 } // namespace tos::kern
@@ -83,10 +88,10 @@ struct processor_state {
 
 [[noreturn]] inline void switch_context(kern::processor_state& j, return_codes rc) {
     longjmp(j.buf, static_cast<int>(rc));
-
-    __builtin_unreachable();
+    TOS_UNREACHABLE();
 }
 } // namespace kern
+void swap_context(kern::tcb& current, kern::tcb& to, const no_interrupts&);
 } // namespace tos
 
 #define save_ctx(ctx) (::tos::return_codes) setjmp((ctx).buf)

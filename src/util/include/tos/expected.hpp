@@ -81,7 +81,7 @@ public:
     }
 
     template<class U = T,
-        typename = std::enable_if_t<!is_expected<std::remove_reference_t<U>>{}>>
+             typename = std::enable_if_t<!is_expected<std::remove_reference_t<U>>{}>>
     constexpr expected(U&& u)
         : m_internal(std::forward<U>(u)) {
     }
@@ -118,8 +118,8 @@ private:
     internal_t m_internal;
 
     template<class ExpectedT, class HandlerT, class ErrHandlerT>
-    friend auto with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT &&)
-    -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal)));
+    friend auto with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT&&)
+        -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal)));
 
     template<class ExpectedT,
              class UnexpectedT,
@@ -131,7 +131,7 @@ private:
              std::enable_if_t<!std::is_same_v<ExpectedT, void>>*>
     friend ExpectedT&& force_get(expected<ExpectedT, UnexpectedT>&& e);
 
-    template <class UnexpectedT>
+    template<class UnexpectedT>
     friend void force_get(expected<void, UnexpectedT>& e);
 
     template<class ExpectedT>
@@ -140,7 +140,7 @@ private:
 
 template<class ExpectedT, class HandlerT, class ErrHandlerT>
 ALWAYS_INLINE auto with(ExpectedT&& e, HandlerT&& have_handler, ErrHandlerT&& err_handler)
--> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal))) {
+    -> decltype(have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal))) {
     if (e) {
         return have_handler(std::forward<decltype(*e.m_internal)>(*e.m_internal));
     }
@@ -176,8 +176,8 @@ ALWAYS_INLINE ExpectedT&& force_get(expected<ExpectedT, UnexpectedT>&& e) {
 }
 
 template<class ExpectedT,
-    class UnexpectedT,
-    std::enable_if_t<!std::is_same_v<ExpectedT, void>>* = nullptr>
+         class UnexpectedT,
+         std::enable_if_t<!std::is_same_v<ExpectedT, void>>* = nullptr>
 ALWAYS_INLINE ExpectedT& force_get(expected<ExpectedT, UnexpectedT>& e) {
     if (e) {
         return *e.m_internal;
@@ -191,7 +191,7 @@ typename T::value_type get_or(T&& t, U&& r) {
     return with(
         std::forward<T>(t),
         [](auto&& res) -> decltype(auto) { return std::forward<decltype(res)>(res); },
-        [&](auto &&) -> decltype(auto) { return r; });
+        [&](auto&&) -> decltype(auto) { return r; });
 }
 
 struct ignore_t {
@@ -202,22 +202,22 @@ struct ignore_t {
 static constexpr ignore_t ignore{};
 } // namespace tos
 
-#define EXPECTED_TRYV(...)                                                               \
-    __extension__({                                                                      \
-        auto&& __res = (__VA_ARGS__);                                                    \
-        if (!__res)                                                                      \
-            return ::tos::unexpected(force_error(__res));                                \
+#define EXPECTED_TRYV(...)                                \
+    __extension__({                                       \
+        auto&& __res = (__VA_ARGS__);                     \
+        if (!__res)                                       \
+            return ::tos::unexpected(force_error(__res)); \
     })
 
-#define EXPECTED_TRY(...)                                                                \
-    __extension__({                                                                      \
-        auto&& __res = (__VA_ARGS__);                                                    \
-        if (!__res)                                                                      \
-            return ::tos::unexpected(force_error(__res));                                \
-        force_get(__res);                                                                \
+#define EXPECTED_TRY(...)                                 \
+    __extension__({                                       \
+        auto&& __res = (__VA_ARGS__);                     \
+        if (!__res)                                       \
+            return ::tos::unexpected(force_error(__res)); \
+        std::move(force_get(__res));                      \
     })
 
 #if !defined(TOS_CONFIG_DISABLE_SHORT_TRY)
-#define TRY EXPECTED_TRY
+#define TRY  EXPECTED_TRY
 #define TRYV EXPECTED_TRYV
 #endif

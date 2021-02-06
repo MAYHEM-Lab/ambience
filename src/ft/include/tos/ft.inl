@@ -14,6 +14,29 @@
 #include <tos/stack_storage.hpp>
 #include <tos/tcb.hpp>
 
+namespace tos {
+struct threading_state {
+    kern::processor_state backup_state;
+    kern::tcb* current_thread;
+    int8_t num_threads = 0;
+};
+
+namespace global {
+extern threading_state thread_state;
+}
+
+/**
+ * Returns a pointer to the currently running thread.
+ *
+ * Returns `nullptr` if there's no active thread at the moment.
+ *
+ * @return pointer to the current thread
+ */
+ALWAYS_INLINE kern::tcb* self() {
+    return global::thread_state.current_thread;
+}
+}
+
 namespace tos::this_thread {
 inline thread_id_t get_id() {
     if (!self())
@@ -25,41 +48,9 @@ inline thread_id_t get_id() {
 namespace tos {
 context& current_context();
 
-namespace global {
-inline kern::scheduler sched;
-} // namespace global
-
-namespace this_thread {
-inline void yield() {
-    tos::int_guard ig;
-    kern::processor_state ctx;
-    if (save_context(*self(), ctx) == return_codes::saved) {
-        kern::make_runnable(*self());
-        switch_context(global::sched.main_context, return_codes::yield);
-    }
-}
-
-inline void block_forever() {
-    kern::disable_interrupts();
-    switch_context(global::sched.main_context, return_codes::suspend);
-}
-} // namespace this_thread
-
 namespace kern {
-[[noreturn]] inline void thread_exit() {
-    kern::disable_interrupts();
-
-    // no need to save the current context, we'll exit
-
-    switch_context(global::sched.main_context, return_codes::do_exit);
-}
-
-inline void suspend_self(const no_interrupts&) {
-    kern::processor_state ctx;
-    if (save_context(*self(), ctx) == return_codes::saved) {
-        switch_context(global::sched.main_context, return_codes::suspend);
-    }
-}
+[[noreturn]] void thread_exit();
+void suspend_self(const no_interrupts&);
 
 template<bool FreeStack, class FunT, class... Args>
 struct super_tcb final : tcb {
@@ -127,12 +118,12 @@ prep_lambda_layout(tos::span<uint8_t> task_data, FuncT&& func, ArgTs&&... args) 
 }
 
 template<class TaskT>
-TOS_SIZE_OPTIMIZE inline thread_id_t scheduler::start(TaskT& t) {
+TOS_SIZE_OPTIMIZE thread_id_t start(TaskT& t) {
     static_assert(std::is_base_of<tcb, TaskT>{}, "Tasks must inherit from tcb class!");
 
     // New threads are runnable by default.
     make_runnable(t);
-    num_threads++;
+    global::thread_state.num_threads++;
 
     // prepare the initial ctx for the new task
     auto ctx_ptr = new ((char*)&t - sizeof(processor_state)) processor_state;
@@ -152,85 +143,11 @@ TOS_SIZE_OPTIMIZE inline thread_id_t scheduler::start(TaskT& t) {
      * set the stack pointer so the new thread will have an
      * independent execution context
      */
-    arch::set_stack_ptr(reinterpret_cast<char*>(global::cur_thread));
+    arch::set_stack_ptr(reinterpret_cast<char*>(self()));
 
-    static_cast<TaskT*>(global::cur_thread)->start();
+    static_cast<TaskT*>(self())->start();
 
     TOS_UNREACHABLE();
-}
-
-inline void busy() {
-    global::sched.busy++;
-}
-
-inline void unbusy() {
-    global::sched.busy--;
-}
-
-inline exit_reason scheduler::schedule() {
-    while (true) {
-        if (num_threads == 0) {
-            // no thread left, potentially a bug
-            return exit_reason::restart;
-        }
-
-        /**
-         * We must disable interrupts before we look at the run_queue and sc.busy.
-         * An interrupt might occur between the former and the latter and we can
-         * power down even though there's something to run.
-         */
-        tos::int_guard ig;
-        if (m_run_queue.empty()) {
-            /**
-             * there's no thread to run right now
-             */
-
-            if (busy > 0) {
-                return exit_reason::idle;
-            }
-
-            return exit_reason::power_down;
-        }
-
-        auto why = save_ctx(main_context);
-
-        switch (why) {
-        case return_codes::saved: {
-            auto prev_ctx = &current_context();
-            auto next_ctx = &m_run_queue.front().get_context();
-
-            if (prev_ctx != next_ctx) {
-                current_context().switch_out(*next_ctx);
-            }
-
-            global::cur_thread = &m_run_queue.front();
-            m_run_queue.pop_front();
-
-            if (prev_ctx != next_ctx) {
-                current_context().switch_in(*prev_ctx);
-            }
-
-            switch_context(self()->get_processor_state(), return_codes::scheduled);
-        }
-        case return_codes::do_exit: {
-            // TODO(#34): Potentially a use-after-free. See the issue.
-            std::destroy_at(self());
-            num_threads--;
-            break;
-        }
-        case return_codes::yield:
-        case return_codes::suspend:
-        default:
-            break;
-        }
-
-        global::cur_thread = nullptr;
-        return exit_reason::yield;
-    }
-}
-
-inline void make_runnable(tcb& t) {
-    global::sched.make_runnable(t);
 }
 } // namespace kern
 
@@ -238,7 +155,7 @@ template<bool FreeStack, class FuncT, class... ArgTs>
 auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
     auto& t = kern::prep_lambda_layout<FreeStack>(
         task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
-    global::sched.start(t);
+    start(t);
     return t;
 }
 

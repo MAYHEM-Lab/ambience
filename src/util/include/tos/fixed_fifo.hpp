@@ -14,6 +14,7 @@ namespace tos {
 template<class T, size_t Len, class RingBufT>
 class basic_fixed_fifo {
 public:
+    void push_isr(T t);
     void push(T t);
 
     T pop();
@@ -46,6 +47,12 @@ private:
 // IMPL
 
 namespace tos {
+template<class T, size_t Len, class RingBufT>
+void basic_fixed_fifo<T, Len, RingBufT>::push_isr(T t) {
+    auto i = m_rb.push();
+    new (&m_buf[i].t) T(std::move(t));
+}
+
 template<class T, size_t Len, class RingBufT>
 void basic_fixed_fifo<T, Len, RingBufT>::push(T t) {
     auto i = m_rb.push();

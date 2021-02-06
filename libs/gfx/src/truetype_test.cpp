@@ -1,10 +1,7 @@
-#include "arch/stdio.hpp"
 #include "tos/gfx/bitmap.hpp"
 
 #include <doctest.h>
 #include <tos/gfx/truetype.hpp>
-#include <tos/debug/log.hpp>
-#include <tos/gfx/bitmap_io.hpp>
 #include <tos/gfx/fonts/opensans_regular.hpp>
 
 namespace tos::gfx {
@@ -23,10 +20,6 @@ TEST_CASE("Truetype text rendering works") {
     basic_bitmap_view<mono8> view(bitmap, 128, {128, 24});
 
     auto res = font.render_text("hello", 16, view);
-    LOG(res.dims().width, res.dims().height);
-
-    tos::hosted::stdio io;
-    serialize_pgm(res, io);
 }
 } // namespace
 } // namespace tos::gfx

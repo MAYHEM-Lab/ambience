@@ -3,6 +3,9 @@
 #include <tos/tcb.hpp>
 
 namespace tos {
+namespace global {
+threading_state thread_state;
+}
 tos::context& current_context() {
     if (!self())
         return default_context();

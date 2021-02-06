@@ -15,8 +15,8 @@ struct context : list_node<context> {
 
     virtual component* get_component_with_id(component_id_t) = 0;
 
-    virtual void switch_out(context&) {}
-    virtual void switch_in(context&) {}
+    virtual void switch_out() {}
+    virtual void switch_in() {}
 };
 
 template<class... Components>
@@ -57,6 +57,14 @@ protected:
             return m_old->get_component_with_id(id);
         }
         return first;
+    }
+
+public:
+    void switch_out() override {
+        m_new->switch_out();
+    }
+    void switch_in() override {
+        m_new->switch_in();
     }
 
 public:

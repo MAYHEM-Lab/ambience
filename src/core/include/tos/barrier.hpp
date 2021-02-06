@@ -4,9 +4,12 @@
 
 #pragma once
 
+#include <tos/compiler.hpp>
+
 namespace tos {
 namespace detail {
-inline void memory_barrier() {
+ALWAYS_INLINE
+void memory_barrier() {
     asm volatile("" ::: "memory");
 }
 } // namespace detail

@@ -44,4 +44,13 @@ struct function_traits<RetT (ClassT::*)(ArgTs...) const> {
     static constexpr auto arg_len = sizeof...(ArgTs);
     static constexpr bool is_const = true;
 };
+
+template<class RetT, class ClassT, class... ArgTs>
+struct function_traits<RetT (ClassT::*)(ArgTs...) noexcept> {
+    using ret_t = RetT;
+    using class_t = ClassT;
+    using arg_ts = list<clean_t<ArgTs>...>;
+    static constexpr auto arg_len = sizeof...(ArgTs);
+    static constexpr bool is_const = true;
+};
 }

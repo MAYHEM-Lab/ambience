@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tos/cancellation_token.hpp>
+#include <tos/debug/assert.hpp>
 #include <tos/debug/debug.hpp>
 #include <tos/ft.hpp>
 #include <tos/interrupt.hpp>
@@ -7,7 +9,7 @@
 
 namespace tos {
 struct waitable {
-    using waiter_handle = intrusive_list<kern::tcb>::iterator_t;
+    using waiter_handle = intrusive_list<job>::iterator_t;
 
     /**
      * Makes the current thread yield and block on this
@@ -21,6 +23,8 @@ struct waitable {
      * context, the behaviour is undefined.
      */
     void wait(const int_guard&);
+
+    bool wait(const int_guard&, cancellation_token& cancel);
 
     /**
      * Wakes all of the threads that are waiting on
@@ -47,10 +51,10 @@ struct waitable {
      * @param t task to place in this waitable
      * @return handle to the task
      */
-    waiter_handle add(kern::tcb& t);
+    waiter_handle add(job& t);
 
-    kern::tcb& remove(waiter_handle handle);
-    kern::tcb& remove(kern::tcb& t);
+    job& remove(waiter_handle handle);
+    job& remove(job& t);
 
     /**
      * Number of tasks in this waitable
@@ -66,30 +70,46 @@ struct waitable {
     }
 
 private:
-    intrusive_list<kern::tcb> m_waiters;
+    intrusive_list<job> m_waiters;
 };
 } // namespace tos
 
 namespace tos {
 inline void waitable::wait(const int_guard& ni) {
-    if (self() == nullptr) {
-        debug::panic("wait called from non thread ctx!");
-    }
+    Assert(self() && "wait must be called from a thread!");
     add(*self());
     kern::suspend_self(ni);
 }
 
-inline auto waitable::add(kern::tcb& t) -> waiter_handle {
+inline bool waitable::wait(const int_guard& ig, cancellation_token& cancel) {
+    bool res = false;
+
+    auto wait_handle = add(*self());
+
+    auto cancel_cb = [&] {
+        res = true;
+        auto& t = remove(wait_handle);
+        kern::make_runnable(t);
+    };
+
+    cancel.set_cancel_callback(tos::function_ref<void()>(cancel_cb));
+
+    kern::suspend_self(ig);
+
+    return res;
+}
+
+inline auto waitable::add(job& t) -> waiter_handle {
     return m_waiters.push_back(t);
 }
 
-inline kern::tcb& waitable::remove(waitable::waiter_handle handle) {
+inline job& waitable::remove(waitable::waiter_handle handle) {
     auto& ret = *handle;
     m_waiters.erase(handle);
     return ret;
 }
 
-inline kern::tcb& waitable::remove(kern::tcb& t) {
+inline job& waitable::remove(job& t) {
     return remove(std::find_if(
         m_waiters.begin(), m_waiters.end(), [&t](auto& tcb) { return &t == &tcb; }));
 }
@@ -105,7 +125,7 @@ inline void waitable::signal_one() {
         return;
     auto& front = m_waiters.front();
     m_waiters.pop_front();
-    make_runnable(front);
+    kern::make_runnable(front);
 }
 
 inline void waitable::signal_n(size_t n) {

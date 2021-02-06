@@ -296,11 +296,6 @@ constexpr span<T> monospan(T& t) {
     return span<T>(&t, 1);
 }
 
-template<class U, class T>
-span<U> spanify(T&& t) {
-    return span<U>(std::forward<T>(t));
-}
-
 /**
  * Given a span of type U, creates a view on that span where the type is the given
  * raw type.
@@ -349,4 +344,20 @@ span<T> safe_span_copy(span<T> to, span<const U> from) {
     std::copy_n(from.begin(), len, to.begin());
     return to.slice(0, len);
 }
+
+template <class T>
+span<T> as_span(span<T> s) {
+    return s;
+}
 } // namespace tos
+
+namespace std {
+inline tos::span<uint8_t> as_span(vector<uint8_t>& v) {
+    return v;
+}
+
+template <size_t N>
+inline tos::span<uint8_t> as_span(array<uint8_t, N>& a) {
+    return a;
+}
+}

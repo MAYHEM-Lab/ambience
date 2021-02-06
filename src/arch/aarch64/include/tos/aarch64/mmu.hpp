@@ -1,9 +1,26 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
+#include <tos/expected.hpp>
+#include <tos/function_ref.hpp>
+#include <tos/paging.hpp>
 
 namespace tos::aarch64 {
 using page_id_t = uint32_t;
+
+constexpr uintptr_t page_to_address(page_id_t id, size_t page_size = 4096) {
+    return id * page_size;
+}
+
+constexpr page_id_t address_to_page(uintptr_t ptr, size_t page_size = 4096) {
+    return ptr / page_size;
+}
+
+inline page_id_t address_to_page(const volatile void* ptr) {
+    return address_to_page(reinterpret_cast<uintptr_t>(ptr));
+}
 
 template<uint64_t Pos, uint64_t Len, class Type = uint64_t>
 struct bitfield {
@@ -45,6 +62,18 @@ public:
         auto tmp = m_entry;
         tmp &= ~Shareable::Mask;
         tmp |= (uint64_t(b) << Shareable::Position) & Shareable::Mask;
+        m_entry = tmp;
+        return *this;
+    }
+
+    [[nodiscard]] constexpr bool allow_user() const {
+        return (m_entry & AllowUser::Mask) == AllowUser::Mask;
+    }
+
+    constexpr table_entry& allow_user(bool b) {
+        auto tmp = m_entry;
+        tmp &= ~AllowUser::Mask;
+        tmp |= (uint64_t(b) << AllowUser::Position) & AllowUser::Mask;
         m_entry = tmp;
         return *this;
     }
@@ -121,8 +150,7 @@ public:
         return *this;
     }
 
-    [[nodiscard]]
-    constexpr uint8_t mair_index() const {
+    [[nodiscard]] constexpr uint8_t mair_index() const {
         return (m_entry & MAIRIdx::Mask) >> MAIRIdx::Position;
     }
 
@@ -143,8 +171,7 @@ public:
         return m_entry;
     }
 
-    [[nodiscard]]
-    constexpr const uint64_t& raw() const {
+    [[nodiscard]] constexpr const uint64_t& raw() const {
         return m_entry;
     }
 
@@ -152,4 +179,101 @@ private:
     uint64_t m_entry;
 };
 static_assert(sizeof(table_entry) == 8);
+
+
+struct translation_table;
+inline translation_table& table_at(table_entry& entry) {
+    return *reinterpret_cast<translation_table*>(page_to_address(entry.page_num()));
 }
+
+inline const translation_table& table_at(const table_entry& entry) {
+    return *reinterpret_cast<const translation_table*>(page_to_address(entry.page_num()));
+}
+
+struct alignas(4096) translation_table {
+    table_entry& operator[](int id) {
+        return entries[id];
+    }
+
+    const table_entry& operator[](int id) const {
+        return entries[id];
+    }
+
+    const translation_table& table_at(int id) const {
+        return aarch64::table_at((*this)[id]);
+    }
+
+    translation_table& table_at(int id) {
+        return aarch64::table_at((*this)[id]);
+    }
+
+    size_t size() const {
+        return entries.size();
+    }
+
+    auto begin() {
+        return entries.begin();
+    }
+
+    auto end() {
+        return entries.end();
+    }
+
+private:
+    std::array<table_entry, 512> entries;
+};
+
+translation_table& get_current_translation_table();
+translation_table& set_current_translation_table(translation_table& table);
+
+inline void tlb_invalidate_all() {
+    dsb();
+    asm volatile("tlbi VMALLE1IS");
+    dsb();
+    isb();
+}
+
+enum class mmu_errors
+{
+    page_alloc_fail,
+    already_allocated,
+    not_allocated,
+    bad_perms,
+};
+
+struct vm_page_attributes {
+    permissions perms;
+    memory_types mem_type;
+    bool user_access;
+};
+
+expected<void, mmu_errors> allocate_region(translation_table& root,
+                                           const segment& virt_seg,
+                                           user_accessible allow_user,
+                                           physical_page_allocator* palloc);
+
+expected<void, mmu_errors> mark_resident(translation_table& root,
+                                         const segment& virt_seg,
+                                         memory_types type,
+                                         void* phys_addr);
+
+expected<void, mmu_errors> mark_nonresident(translation_table& root,
+                                            const segment& virt_seg);
+
+expected<const table_entry*, mmu_errors> entry_for_address(const translation_table& root,
+                                                           uintptr_t virt_addr);
+
+expected<translation_table*, mmu_errors>
+recursive_table_clone(const translation_table& existing, physical_page_allocator& palloc);
+
+permissions translate_permissions(const table_entry& entry);
+
+void traverse_table_entries(
+    translation_table& table,
+    function_ref<void(memory_range vrange, table_entry& entry)> fn);
+
+template<class FnT>
+void traverse_table_entries(translation_table& table, FnT&& fn) {
+    traverse_table_entries(table, function_ref<void(memory_range, table_entry&)>(fn));
+}
+} // namespace tos::aarch64

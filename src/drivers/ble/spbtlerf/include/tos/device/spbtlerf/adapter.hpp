@@ -107,6 +107,9 @@ public:
         return m_config.alarm;
     }
 
+    bool enter_standby();
+    void power_off();
+
     ~adapter();
 private:
 

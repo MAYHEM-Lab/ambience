@@ -47,16 +47,25 @@ public:
     size_t num_supported_regions() const;
     size_t min_region_size() const;
 
-    std::optional<tos::memory_region> get_region(int region_id);
+    std::optional<tos::memory_range> get_region(int region_id);
     tos::expected<void, mpu_errors> set_region(int region_id,
-                                               const tos::memory_region& region,
-                                               permissions perms);
+                                               const tos::memory_range& region,
+                                               permissions perms,
+                                               bool shareable = true);
 
     void set_callback(function_ref<void()> callback) {
         m_callback = callback;
     }
 
+    void enable();
+    void disable();
+
+    void enable_default_privileged_access();
+    void disable_default_privileged_access();
+
     void isr();
+
+    ~mpu();
 
 private:
     function_ref<void()> m_callback{[](void*) { arm::breakpoint(); }};

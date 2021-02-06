@@ -1,8 +1,4 @@
-//
-// Created by fatih on 5/11/20.
-//
+#include <sys/types.h>
 
-#ifndef TOS_CC_H
-#define TOS_CC_H
-
-#endif // TOS_CC_H
+#define LWIP_PLATFORM_ASSERT(x) 0
+#define LWIP_PLATFORM_DIAG(x) 0

@@ -7,6 +7,7 @@ add_subdirectory(external/${HAL_NAME})
 
 add_library(stm32_hal_core
         core.cpp
+        include/tos/platform.hpp
         include/stm32_hal/dma.hpp
         include/stm32_hal/hal.hpp
         include/stm32_hal/gpio.hpp
@@ -15,7 +16,9 @@ add_library(stm32_hal_core
         include/stm32_hal/usart.hpp
         include/stm32_hal/tim.hpp
         include/stm32_hal/spi.hpp
-        include/stm32_hal/ll_exti.hpp include/tos/platform.hpp)
+        include/stm32_hal/ll_exti.hpp
+        include/stm32_hal/rtc.hpp
+)
 
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/${HAL_NAME}/soc")
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/${HAL_NAME}/drivers/include")
@@ -32,7 +35,7 @@ add_library(stm32_hal_impl
         external/${HAL_NAME}/startup/${LOWER_CPU_NAME}.s
 )
 target_link_libraries(stm32_hal_impl PUBLIC stm32_hal_core)
-target_link_libraries(stm32_hal_impl PUBLIC tos_ft)
+target_link_libraries(stm32_hal_impl PUBLIC tos_jobs)
 set_target_properties(stm32_hal_impl PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ld/${TOS_LD_FILE})
 target_link_libraries(stm32_hal_impl PUBLIC "-L${CMAKE_CURRENT_SOURCE_DIR}/ld")
 target_link_libraries(stm32_hal_impl PUBLIC "-T${TOS_LD_FILE}")

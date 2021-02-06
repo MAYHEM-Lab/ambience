@@ -92,8 +92,6 @@ LoopFillZerobss:
 
 /* Call the clock system intitialization function.*/
     bl  SystemInit
-/* Call static constructors */
-  bl __libc_init_array
 /* Call the application's entry point.*/
   //bl  main
   // Calling the crt0 'cold-start' entry point. There __libc_init_array is called
@@ -244,21 +242,6 @@ g_pfnVectors:
   .weak	NMI_Handler
 	.thumb_set NMI_Handler,Default_Handler
 
-  .weak	HardFault_Handler
-	.thumb_set HardFault_Handler,Default_Handler
-
-  .weak	MemManage_Handler
-	.thumb_set MemManage_Handler,Default_Handler
-
-  .weak	BusFault_Handler
-	.thumb_set BusFault_Handler,Default_Handler
-
-	.weak	UsageFault_Handler
-	.thumb_set UsageFault_Handler,Default_Handler
-
-	.weak	SVC_Handler
-	.thumb_set SVC_Handler,Default_Handler
-
 	.weak	DebugMon_Handler
 	.thumb_set DebugMon_Handler,Default_Handler
 
@@ -378,15 +361,6 @@ g_pfnVectors:
 
 	.weak	SPI2_IRQHandler
 	.thumb_set SPI2_IRQHandler,Default_Handler
-
-	.weak	USART1_IRQHandler
-	.thumb_set USART1_IRQHandler,Default_Handler
-
-	.weak	USART2_IRQHandler
-	.thumb_set USART2_IRQHandler,Default_Handler
-
-	.weak	USART3_IRQHandler
-	.thumb_set USART3_IRQHandler,Default_Handler
 
 	.weak	EXTI15_10_IRQHandler
 	.thumb_set EXTI15_10_IRQHandler,Default_Handler

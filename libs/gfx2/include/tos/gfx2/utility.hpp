@@ -23,7 +23,7 @@ inline float length(const line& l) {
     auto diff_x_2 = (l.p0().x() - l.p1().x()) * (l.p0().x() - l.p1().x());
     auto diff_y_2 = (l.p0().y() - l.p1().y()) * (l.p0().y() - l.p1().y());
 
-    return std::sqrt(diff_x_2 + diff_y_2);
+    return std::sqrtf(diff_x_2 + diff_y_2);
 }
 
 inline line shorten(const line& l, int radius) {

@@ -88,14 +88,17 @@ public:
     const intrusive_list_iterator operator--(int);
     intrusive_list_iterator& operator--();
 
-    bool operator!=(const intrusive_list_iterator&);
+    bool operator!=(const intrusive_list_iterator&) const;
 
-    bool operator==(const intrusive_list_iterator& rhs) {
+    bool operator==(const intrusive_list_iterator& rhs) const {
         return !(*this != rhs);
     }
 
 private:
     friend class intrusive_list<T, Access>;
+    template<class AccessT, class ElemT>
+    friend intrusive_list_iterator<ElemT, AccessT>
+    ad_hoc_list_iter(list_node<ElemT>& elem);
     explicit intrusive_list_iterator(list_node<T>* p)
         : m_curr(p) {
     }
@@ -293,7 +296,30 @@ public:
     iterator_t unsafe_find(T& t) const {
         return iterator_t{&Access::template access<T>(t)};
     }
+
+    template<class TAccess, class ElemT>
+    friend intrusive_list<ElemT, TAccess> ad_hoc_list(list_node<ElemT>& elem);
 };
+
+template<class Access = through_base, class ElemT>
+intrusive_list<ElemT, Access> ad_hoc_list(list_node<ElemT>& elem) {
+    list_node<ElemT>*head, *tail;
+    for (head = &elem; head->prev; head = head->prev)
+        ;
+    for (tail = &elem; tail->next; tail = tail->next)
+        ;
+
+    intrusive_list<ElemT, Access> res;
+    res.m_head = head;
+    res.m_tail = tail;
+
+    return res;
+}
+
+template<class Access = through_base, class ElemT>
+intrusive_list_iterator<ElemT, Access> ad_hoc_list_iter(list_node<ElemT>& elem) {
+    return intrusive_list_iterator<ElemT, Access>(&elem);
+}
 } // namespace tos
 
 // Implementations
@@ -460,7 +486,8 @@ intrusive_list_iterator<T, Access>& intrusive_list_iterator<T, Access>::operator
 }
 
 template<class T, class Access>
-bool intrusive_list_iterator<T, Access>::operator!=(const intrusive_list_iterator& rhs) {
+bool intrusive_list_iterator<T, Access>::operator!=(
+    const intrusive_list_iterator& rhs) const {
     return m_curr != rhs.m_curr;
 }
 } // namespace tos

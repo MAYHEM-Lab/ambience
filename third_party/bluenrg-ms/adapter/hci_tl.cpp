@@ -8,6 +8,8 @@ extern "C" {
 #include "hci_const.h"
 }
 
+#include <optional>
+
 namespace {
 bluenrg_interface* interface;
 

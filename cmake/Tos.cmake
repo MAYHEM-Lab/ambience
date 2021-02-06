@@ -11,13 +11,16 @@ function(executable_postbuild target)
             COMMENT "Convert to Intel HEX image"
     )
 
-if (CMAKE_SIZE)
-    add_custom_command(
-            TARGET ${target} POST_BUILD
-            COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${target}>
-            COMMENT "Calculate size"
-    )
-endif()
+    if (CMAKE_SIZE)
+        add_custom_command(
+                TARGET ${target} POST_BUILD
+                COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${target}>
+                COMMENT "Calculate size"
+        )
+    endif ()
+
+    add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_STRIP} $<TARGET_FILE:${target}> -o $<TARGET_FILE:${target}>.stripped)
 endfunction()
 
 function(add_executable target)
@@ -28,15 +31,16 @@ function(add_executable target)
 
         if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
             target_link_libraries(${target} PUBLIC "-Xlinker -Map=${CMAKE_BINARY_DIR}/maps/${target}.map")
-        elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-            target_link_libraries(${target} PUBLIC "-Wl,-Map,${CMAKE_BINARY_DIR}/maps/${target}.map")
-        endif()
-    endif()
+        elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            target_link_libraries(${target} PUBLIC "-Map=${CMAKE_BINARY_DIR}/maps/${target}.map")
+        endif ()
+    endif ()
 endfunction()
 
 set(TOS_FLAGS "-Wall -Wextra -Wpedantic \
      -ffunction-sections -fdata-sections -ffreestanding -g -pedantic \
-     -Wno-unknown-pragmas")
+     -Wno-unknown-pragmas -Wno-nested-anon-types -Wno-gnu-anonymous-struct -Wno-c99-extensions -Wno-unused-parameter \
+     -Wno-new-returns-null -Wno-nonnull -Wno-mismatched-tags -Wno-zero-length-array")
 
 message(STATUS "${CMAKE_CXX_COMPILER_ID}")
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
@@ -49,18 +53,23 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     if (ENABLE_LTO)
         set(TOS_GCC_FLAGS "${TOS_GCC_FLAGS} -flto")
         set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -flto -Wl,-flto")
-    endif()
+    endif ()
 
     set(TOS_FLAGS "${TOS_FLAGS} ${TOS_GCC_FLAGS}")
     set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -Wl,--gc-sections -Wl,--build-id")
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(STATUS "Using Clang")
-    set(TOS_FLAGS "${TOS_FLAGS} -D__ELF__ -fdiagnostics-color")
-endif()
+    set(TOS_FLAGS "${TOS_FLAGS} -fdiagnostics-color")
+    if (ENABLE_LTO)
+        set(TOS_FLAGS "${TOS_FLAGS} -flto")
+    endif ()
+endif ()
 
-set(TOS_C_FLAGS "${TOS_FLAGS} -U__STRICT_ANSI__")
-set(TOS_CXX_FLAGS "${TOS_FLAGS} -Wnon-virtual-dtor -fno-rtti -fno-exceptions \
-    -fno-unwind-tables -fno-threadsafe-statics -Werror=return-type")
+if (NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    set(TOS_C_FLAGS "${TOS_FLAGS} -U__STRICT_ANSI__")
+    set(TOS_CXX_FLAGS "${TOS_FLAGS} -Wnon-virtual-dtor -fno-rtti -fno-exceptions \
+        -fno-unwind-tables -fno-threadsafe-statics -Werror=return-type")
+endif()
 
 set(TOS ON)
 
@@ -82,7 +91,7 @@ function(tos_install _target)
 
     if (${ARGC} GREATER 1)
         set(HEADER_PATH ${ARGV1})
-    endif()
+    endif ()
 
     target_include_directories(${_target} PUBLIC
             $<BUILD_INTERFACE:${HEADER_PATH}>

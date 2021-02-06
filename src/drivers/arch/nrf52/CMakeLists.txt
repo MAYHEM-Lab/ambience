@@ -33,6 +33,10 @@ add_library(nrf52_ble include/arch/ble.hpp src/ble.cpp include/arch/ble/softdev.
 target_link_libraries(nrf52_ble PUBLIC tos_core)
 tos_install(nrf52_ble ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(nrf52_cc310 include/arch/cc310/rng.hpp src/stub.cpp include/arch/cc310/sha2.hpp include/arch/cc310/cryptocell.hpp src/cc310/cryptocell.cpp include/arch/cc310/aes.hpp)
+target_link_libraries(nrf52_cc310 PUBLIC tos_core nrf_cc310 etl)
+tos_install(nrf52_cc310 ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 add_library(nrf52_drivers src/stub.cpp include/arch/drivers.hpp)
 target_link_libraries(nrf52_drivers PUBLIC
     nrf52_gpio
@@ -43,6 +47,7 @@ target_link_libraries(nrf52_drivers PUBLIC
     nrf52_spim
     nrf52_ble
     nrf52_flash
+    nrf52_cc310
 )
 tos_install(nrf52_drivers ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set_target_properties(nrf52_drivers PROPERTIES

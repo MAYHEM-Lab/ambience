@@ -10,13 +10,13 @@ extern "C" {
 
 #include <mem.h>
 #include <user_interface.h>
-#include <xtensa/config/core-isa.h>
+#include <machine/core-isa.h>
 }
 
 #include <lwip/timers.h>
 #include <tos/compiler.hpp>
 #include <tos/debug/debug.hpp>
-#include <tos/ft.hpp>
+#include <tos/scheduler.hpp>
 #include <tos/interrupt.hpp>
 
 #if ((SPI_FLASH_SIZE_MAP == 0) || (SPI_FLASH_SIZE_MAP == 1))
@@ -125,7 +125,7 @@ uint32 ICACHE_FLASH_ATTR user_rf_cal_sector_set(void) {
 
 static void ICACHE_FLASH_ATTR main_task(ETSEvent*) {
     // sys_check_timeouts();
-    auto res = tos::global::sched.schedule();
+    auto res = tos::global::sched.schedule(tos::int_guard{});
 
     if (res == tos::exit_reason::yield) {
         system_os_post(tos::esp82::main_task_prio, 0, 0);

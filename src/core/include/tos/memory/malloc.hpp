@@ -11,5 +11,8 @@ public:
     void free(void* ptr) {
         ::free(ptr);
     }
+    std::optional<size_t> in_use() const {
+        return {};
+    }
 };
 }

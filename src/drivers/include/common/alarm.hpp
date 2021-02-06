@@ -233,8 +233,7 @@ std::unique_ptr<any_alarm> erase_alarm(AlarmT&& alarm) {
 }
 } // namespace tos
 
-namespace tos {
-namespace this_thread {
+namespace tos::this_thread {
 template<class AlarmT, class Rep, class Period>
 void sleep_for(AlarmT& alarm, const std::chrono::duration<Rep, Period>& duration) {
     event ev;
@@ -245,11 +244,10 @@ void sleep_for(AlarmT& alarm, const std::chrono::duration<Rep, Period>& duration
     };
     using Type = std::remove_pointer_t<AlarmT>;
     typename Type::sleeper_type s{alarm->time_to_ticks(duration),
-                                  tos::function_ref<void()>(fun)};
+                                  function_ref<void()>(fun)};
     alarm->set_alarm(s);
     if (!b) {
         ev.wait();
     }
 }
-} // namespace this_thread
-} // namespace tos
+} // namespace tos::this_thread
