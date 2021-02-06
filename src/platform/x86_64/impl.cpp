@@ -242,17 +242,17 @@ _post_start([[maybe_unused]] const tos::multiboot::info_t* info) {
 
     while (true) {
         {
-            tos::int_guard ig;
-
-            auto res = tos::global::sched.schedule(ig);
+            auto res = tos::global::sched.schedule(tos::int_guard{});
             if (res == tos::exit_reason::restart) {
             }
 
             if (res == tos::exit_reason::power_down) {
             }
             if (res == tos::exit_reason::idle) {
+                hlt();
             }
             if (res == tos::exit_reason::yield) {
+                hlt();
             }
         }
     }

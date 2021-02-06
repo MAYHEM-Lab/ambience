@@ -126,7 +126,7 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
     for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
          addr += 4096) {
         auto path = pt_path_for_addr(addr);
-        LOG_TRACE("Address", (void*)addr, path[0], path[1], path[2], path[3], path[4]);
+        LOG_TRACE("Address", (void*)addr, path[0], path[1], path[2], path[3]);
         EXPECTED_TRYV(recursive_allocate(root, virt_seg.perms, allow_user, path, palloc));
     }
 
