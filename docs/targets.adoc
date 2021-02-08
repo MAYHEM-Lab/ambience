@@ -2,31 +2,80 @@
 
 This page lists the currently supported and tested targets in Tos.
 
-== Targets
+== Architectures
 
-. arm
-.. STM32
-... STM32F103   (Cortex M3)
-... STM32F746   (Cortex M7)
-... STM32L475   (Cortex M4)
-... STM32L412   (Cortex M4)
-... STM32L053   (Cortex M0+)
-.. Nordic
-... nRF52832    (Cortex M4)
-... nRF52840    (Cortex M4)
-.. Texas Instruments
-... cc3220sf    (Cortex M4)
-. x86
-.. User Space
-... Linux
-... macOS
-. aarch64
-.. Broadcom
-... BCM2837     (Cortex A53)
-.... Raspberry Pi 3
-.. User Space
-... Linux
-. xtensa
-.. Esp8266
-. avr
-.. atmega328p
+[cols="1,2,3,4"]
+|===
+|Name |Toolchain |Libc |Modes
+
+|aarch64
+|LLVM
+|tos
+|Bare metal
+
+|arm
+|GCC, LLVM
+|gcc
+|Bare metal
+
+|avr
+|GCC
+|avr-libc
+|Bare metal
+
+|i386
+|LLVM
+|tos
+|Bare metal, as x64 loader
+
+
+|x86_64
+|LLVM
+|tos
+|Bare metal / hosted
+
+|xtensa
+|GCC
+|tos
+|Bare metal
+|===
+
+== Platforms
+
+[cols="1,2,3a"]
+|===
+|Name |Arch | Targets
+
+|STM32
+|arm
+|. STM32F103   (Cortex M3)
+. STM32F746   (Cortex M7)
+. STM32L475   (Cortex M4)
+. STM32L412   (Cortex M4)
+. STM32L053   (Cortex M0+)
+
+|Nordic
+|arm
+|. nRF52832    (Cortex M4)
+. nRF52840    (Cortex M4)
+
+|Raspi
+|aarch64
+|. Raspberry Pi 3 (Cortex A53)
+
+|TI
+|arm
+|. CC3220SF (Cortex M4)
+
+|ESP
+|xtensa
+|. ESP8266
+
+|AVR
+|avr
+|. atmega328p
+
+|PC
+|x86_64
+|Multiboot 1
+|===
