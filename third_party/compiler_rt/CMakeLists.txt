@@ -1,7 +1,8 @@
 if (NOT ${TOS_ARCH} MATCHES arm AND
     NOT ${TOS_ARCH} MATCHES aarch64 AND
     NOT ${TOS_ARCH} MATCHES x86_64 AND
-    NOT ${TOS_ARCH} MATCHES i386)
+    NOT ${TOS_ARCH} MATCHES i386 AND
+    NOT ${TOS_ARCH} MATCHES riscv)
     return()
 endif()
 
