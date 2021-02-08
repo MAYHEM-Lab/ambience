@@ -15,4 +15,4 @@ target_sources(arch_arm PRIVATE
         nvic.cpp
         exception.cpp
 )
-target_link_libraries(arch_arm PUBLIC tos_util_core cmsis::core tos_drivers tos_mmio)
+target_link_libraries(arch_arm PUBLIC tos_util_core cmsis::core tos_drivers tos_mmio tos::libcxx)
