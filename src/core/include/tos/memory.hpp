@@ -22,7 +22,7 @@ struct memory_range {
     std::uintptr_t base;
     std::ptrdiff_t size;
 
-    [[nodiscard]] std::uintptr_t end() const {
+    [[nodiscard]] constexpr std::uintptr_t end() const {
         return base + size;
     }
 };
