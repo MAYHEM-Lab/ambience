@@ -17,10 +17,16 @@ message(STATUS "${LIMITS_DIR}")
 add_library(picolibc "")
 target_compile_options(picolibc PUBLIC -I${FLOAT_DIR})
 target_compile_options(picolibc PUBLIC -I${LIMITS_DIR})
-target_compile_options(picolibc PUBLIC -Wno-macro-redefined)
 
 target_compile_options(picolibc PUBLIC -nostdlib -nostdinc)
-target_compile_options(picolibc PRIVATE -fno-builtin -Wno-sign-compare -Wno-int-conversion -Wno-implicit-function-declaration -Wno-visibility)
+target_compile_options(picolibc PRIVATE -fno-builtin -Wno-sign-compare -Wno-int-conversion -Wno-implicit-function-declaration)
+
+if(${CMAKE_C_COMPILER_ID} MATCHES "Clang")
+    target_compile_options(picolibc PUBLIC -Wno-macro-redefined)
+    target_compile_options(picolibc PRIVATE -Wno-visibility)
+elseif(${CMAKE_C_COMPILER_ID} MATCHES "GNU")
+    target_compile_options(picolibc PRIVATE -Wno-implicit-fallthrough)
+endif()
 
 target_compile_definitions(picolibc PRIVATE HAVE_ALIAS_ATTRIBUTE)
 

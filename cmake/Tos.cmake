@@ -39,8 +39,14 @@ endfunction()
 
 set(TOS_FLAGS "-Wall -Wextra -Wpedantic \
      -ffunction-sections -fdata-sections -ffreestanding -g -pedantic \
-     -Wno-unknown-pragmas -Wno-nested-anon-types -Wno-gnu-anonymous-struct -Wno-c99-extensions -Wno-unused-parameter \
-     -Wno-new-returns-null -Wno-nonnull -Wno-mismatched-tags -Wno-zero-length-array")
+     -Wno-unknown-pragmas -Wno-unused-parameter \
+     -Wno-nonnull")
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(TOS_FLAGS "${TOS_FLAGS} \
+            -Wno-c99-extensions -Wno-gnu-anonymous-struct -Wno-new-returns-null \
+            -Wno-zero-length-array -Wno-nested-anon-types -Wno-mismatched-tags")
+endif()
 
 message(STATUS "${CMAKE_CXX_COMPILER_ID}")
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
