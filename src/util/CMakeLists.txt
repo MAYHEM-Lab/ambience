@@ -35,6 +35,10 @@ target_compile_features(tos_util_core PUBLIC cxx_std_20)
 target_link_libraries(tos_util_core PUBLIC tos::libcxx tos_memory)
 target_compile_definitions(tos_util_core PUBLIC TOS_DEFAULT_STACK_SIZE=${TOS_DEF_STACK})
 
+if (ENABLE_UBSAN)
+  target_link_libraries(tos_util_core PUBLIC ubsan_support)
+endif()
+
 add_library(
   tos_util src/stub.cpp src/expected.cpp include/tos/expected.hpp src/new.cpp include/tos/fixed_fifo.hpp
            include/tos/sync_ring_buf.hpp
