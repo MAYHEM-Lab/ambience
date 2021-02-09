@@ -177,7 +177,6 @@ void network_device::isr(tos::x86_64::exception_frame* f, int num) {
 span<uint8_t> network_device::take_packet() {
     m_rx_sem.down();
     auto& b = received_packets.front();
-    LOG("Giving packet at", &b);
     received_packets.pop_front();
     return b.body();
 }
@@ -185,7 +184,6 @@ span<uint8_t> network_device::take_packet() {
 void network_device::return_packet(span<uint8_t> buffer) {
     auto b = reinterpret_cast<buf*>(buffer.data() - offsetof(buf, mem));
     Assert(b->header.hdr_len == buffer.size());
-    LOG("Getting packet at", b);
     queue_rx_buf(*b);
 }
 
