@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <cstdint>
+#include <cstddef>
 #include <tos/ring_buf.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/fixed_fifo.hpp>

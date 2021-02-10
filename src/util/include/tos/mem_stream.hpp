@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <tos/expected.hpp>
 #include <tos/self_pointing.hpp>
 #include <tos/span.hpp>
