@@ -6,6 +6,7 @@
 
 #include <tos/@TOS_ARCH@/spmanip.hpp>
 #include <tos/@TOS_ARCH@/assembly.hpp>
+#include <tos/@TOS_ARCH@/processor_state.hpp>
 
 namespace tos {
 namespace cur_arch = @TOS_ARCH@;
