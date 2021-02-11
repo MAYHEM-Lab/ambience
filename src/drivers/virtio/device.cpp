@@ -34,7 +34,7 @@ bool device::base_initialize(tos::physical_page_allocator* palloc) {
 
     auto driver_features_port = x86_64::port(bar_base + drv_features_port_offset);
     auto accepted_features = negotiate(features);
-    LOG("Accepted features:", (void*)accepted_features);
+    LOG("Accepted features:", (void*)(uintptr_t)accepted_features);
     driver_features_port.outl(accepted_features);
 
     status_port.outb(0xB);

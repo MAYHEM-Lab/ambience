@@ -78,7 +78,7 @@ block_device::write(uint64_t sector_id, span<const uint8_t> data, size_t offset)
     LOG("out",
         q.used_base->index,
         int(c),
-        (void*)data[0]);
+        (void*)(uintptr_t)data[0]);
     if (c == 0) {
         return {};
     }
@@ -125,7 +125,7 @@ block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
 
     LOG(q.used_base->index,
         int(c),
-        (void*)data[0]);
+        (void*)(uintptr_t)data[0]);
 
     auto bar_base = this->bar_base();
 
@@ -137,7 +137,7 @@ block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
     LOG("out",
         q.used_base->index,
         int(c),
-        (void*)data[0]);
+        (void*)(uintptr_t)data[0]);
     if (c == 0) {
         return {};
     }
