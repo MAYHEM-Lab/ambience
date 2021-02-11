@@ -129,7 +129,7 @@ void set_up_page_tables() {
     p3_table[0].zero().valid(true).writeable(true).page_num(
         reinterpret_cast<uintptr_t>(&p2_tables[0]));
 
-    for (int i = 0; i < std::size(p1_tables); ++i) {
+    for (size_t i = 0; i < std::size(p1_tables); ++i) {
         p2_tables[0][i]
             .zero()
             .page_num(reinterpret_cast<uintptr_t>(&p1_tables[i]))
@@ -247,12 +247,12 @@ _post_start([[maybe_unused]] const tos::multiboot::info_t* info) {
             }
 
             if (res == tos::exit_reason::power_down) {
+                hlt();
             }
             if (res == tos::exit_reason::idle) {
                 hlt();
             }
             if (res == tos::exit_reason::yield) {
-                hlt();
             }
         }
     }
