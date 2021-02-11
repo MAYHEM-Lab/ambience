@@ -13,6 +13,7 @@
 #include <tos/span.hpp>
 #include <tos/stack_storage.hpp>
 #include <tos/tcb.hpp>
+#include <type_traits>
 
 namespace tos {
 struct threading_state {
@@ -118,44 +119,18 @@ prep_lambda_layout(tos::span<uint8_t> task_data, FuncT&& func, ArgTs&&... args) 
 }
 
 template<class TaskT>
-TOS_SIZE_OPTIMIZE thread_id_t start(TaskT& t) {
-    static_assert(std::is_base_of<tcb, TaskT>{}, "Tasks must inherit from tcb class!");
-
-    // New threads are runnable by default.
-    make_runnable(t);
-    global::thread_state.num_threads++;
-
-    // prepare the initial ctx for the new task
-    auto ctx_ptr = new ((char*)&t - sizeof(processor_state)) processor_state;
-
-    kern::disable_interrupts();
-    if (save_context(t, *ctx_ptr) == return_codes::saved) {
-        kern::enable_interrupts();
-        return {reinterpret_cast<uintptr_t>(static_cast<tcb*>(&t))};
-    }
-
-    // TODO(#35): If a non maskable interrupt fires here, we're toast.
-
-    /**
-     * this is the actual entry point of the thread.
-     * will be called when scheduled
-     *
-     * set the stack pointer so the new thread will have an
-     * independent execution context
-     */
-    arch::set_stack_ptr(reinterpret_cast<char*>(self()));
-
+void start_cur() {
     static_cast<TaskT*>(self())->start();
-
-    TOS_UNREACHABLE();
 }
+
+thread_id_t start(tcb& t, void(*entry)());
 } // namespace kern
 
 template<bool FreeStack, class FuncT, class... ArgTs>
 auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
     auto& t = kern::prep_lambda_layout<FreeStack>(
         task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
-    start(t);
+    start(t, &kern::start_cur<std::remove_reference_t<decltype(t)>>);
     return t;
 }
 

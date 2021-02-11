@@ -61,6 +61,17 @@ void suspend_self(const no_interrupts&) {
         switch_context(global::thread_state.backup_state, return_codes::suspend);
     }
 }
+
+thread_id_t start(tcb& t, void (*entry)()) {
+    auto ctx_ptr = new ((char*)&t - sizeof(processor_state)) processor_state;
+    tos::cur_arch::set_rip(ctx_ptr->buf, reinterpret_cast<uintptr_t>(entry));
+    tos::cur_arch::set_rsp(ctx_ptr->buf, reinterpret_cast<uintptr_t>(&t));
+    t.set_processor_state(*ctx_ptr);
+
+    make_runnable(t);
+    global::thread_state.num_threads++;
+    return {reinterpret_cast<uintptr_t>(static_cast<tcb*>(&t))};
+}
 } // namespace tos::kern
 
 namespace tos {
