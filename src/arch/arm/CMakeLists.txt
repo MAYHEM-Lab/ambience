@@ -1,4 +1,4 @@
-add_library(arch_arm "")
+add_library(arch_arm "" include/tos/arm/processor_state.hpp)
 target_include_directories(arch_arm PUBLIC include)
 target_sources(arch_arm PRIVATE
         include/tos/arm/cmsis.hpp
