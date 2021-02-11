@@ -10,20 +10,20 @@ namespace tos {
 template<class T>
 class base_ring_buf {
 public:
-    explicit base_ring_buf(size_t sz)
+    constexpr explicit base_ring_buf(size_t sz)
         : m_cap{sz} {
     }
 
-    explicit base_ring_buf(size_t sz, size_t begin)
+    constexpr explicit base_ring_buf(size_t sz, size_t begin)
         : m_begin{begin}
         , m_cap{sz} {
     }
 
-    size_t capacity() const {
+    constexpr ssize_t capacity() const {
         return m_cap;
     }
 
-    size_t translate(size_t index) const {
+    constexpr size_t translate(size_t index) const {
         return (m_begin + index) % m_cap;
     }
 
@@ -32,7 +32,7 @@ protected:
         return (m_begin + get_size()) % m_cap;
     }
 
-    size_t pop_base() {
+    constexpr size_t pop_base() {
         auto res = m_begin;
         m_begin = (m_begin + 1) % m_cap;
         return res;
@@ -54,17 +54,17 @@ public:
      * Constructs a new ring buffer with the given capacity
      * @param cap capacity
      */
-    explicit ring_buf(size_t cap)
+    explicit constexpr ring_buf(size_t cap)
         : base_ring_buf{cap}
         , m_sz{0} {
     }
 
-    ring_buf(size_t cap, size_t sz, size_t begin)
+    constexpr ring_buf(size_t cap, size_t sz, size_t begin)
         : base_ring_buf{cap, begin}
         , m_sz{ssize_t(sz)} {
     }
 
-    ssize_t size() const {
+    constexpr ssize_t size() const {
         return m_sz;
     }
 
