@@ -71,7 +71,6 @@ public:
                   this,
                   &virtio_net_if::init,
                   netif_input);
-        tos::this_thread::yield();
     }
 
     void up() {
