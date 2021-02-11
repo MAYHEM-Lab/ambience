@@ -269,11 +269,11 @@
         </option>
         <option>
           <name>IExtraOptionsCheck</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>IExtraOptions</name>
-          <state></state>
+          <state>--diag_suppress Pe111</state>
         </option>
         <option>
           <name>CCLangConformance</name>

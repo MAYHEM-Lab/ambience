@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
 <workspace>  <project>
+    <path>$WS_DIR$\pca10100\iar\crypto_test_app_pca10100.ewp</path>
+  </project>  <project>
     <path>$WS_DIR$\pca10056\iar\crypto_test_app_pca10056.ewp</path>
   </project>  <project>
     <path>$WS_DIR$\pca10040\iar\crypto_test_app_pca10040.ewp</path>
+  </project>  <project>
+    <path>$WS_DIR$\pca10100e\iar\crypto_test_app_pca10100e.ewp</path>
   </project>  <project>
     <path>$WS_DIR$\pca10056_noint\iar\crypto_test_app_pca10056_noint.ewp</path>
   </project>  <project>

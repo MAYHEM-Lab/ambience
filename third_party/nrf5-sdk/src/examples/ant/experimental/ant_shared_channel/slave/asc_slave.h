@@ -62,6 +62,7 @@
 #define ASC_SLAVE_H__
 
 #include <stdint.h>
+#include <stddef.h>
 #include "asc_parameters.h"
 
 #ifdef __cplusplus
@@ -162,8 +163,10 @@ asc_request_data_t ascs_get_last_request(void);
  *       including the correct size shared addres and properly located page id.
  *
  * @param[in] response_data_buffer The response page to be sent back to the ASC Master.
+ * @param[in] buf_size             The size of the response buffer with data to be sent back
+ *                                 to the ASC Master.
  */
-void ascs_send_response(uint8_t * response_data_buffer);
+void ascs_send_response(uint8_t * response_data_buffer, size_t buf_size);
 
 
 

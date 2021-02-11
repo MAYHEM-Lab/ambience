@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2012 - 2020, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -369,6 +369,10 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
 
     switch (p_evt->evt_id)
     {
+        case PM_EVT_CONN_SEC_SUCCEEDED:
+            m_peer_id = p_evt->peer_id;
+            break;
+
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
             advertising_start(false);
             break;

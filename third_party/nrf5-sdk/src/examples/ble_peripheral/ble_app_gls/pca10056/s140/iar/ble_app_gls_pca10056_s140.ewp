@@ -265,11 +265,11 @@
         </option>
         <option>
           <name>IExtraOptionsCheck</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>IExtraOptions</name>
-          <state></state>
+          <state>--diag_suppress Pe111</state>
         </option>
         <option>
           <name>CCLangConformance</name>
@@ -1260,7 +1260,7 @@
     </settings>
   </configuration>  <group>
   <name>nrf_cc310</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_cc310\lib\cortex-m4\hard-float\short-wchar\libnrf_cc310_0.9.12.a</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_cc310\lib\cortex-m4\hard-float\short-wchar\libnrf_cc310_0.9.13.a</name>    </file>  </group>  <group>
   <name>Board Support</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\bsp\bsp.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\bsp\bsp_btn_ble.c</name>    </file>  </group>  <group>
@@ -1320,9 +1320,10 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src\nrf_log_str_formatter.c</name>    </file>  </group>  <group>
   <name>nRF_TLS</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\external\mbedtls\library\aes.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\external\mbedtls\library\ctr_drbg.c</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\external\mbedtls\library\ctr_drbg.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\external\mbedtls\library\platform_util.c</name>    </file>  </group>  <group>
   <name>nRF_Oberon_Crypto</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\liboberon_3.0.1.a</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\liboberon_3.0.6.a</name>    </file>  </group>  <group>
   <name>nRF_Crypto</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_aead.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_aes.c</name>    </file>    <file>

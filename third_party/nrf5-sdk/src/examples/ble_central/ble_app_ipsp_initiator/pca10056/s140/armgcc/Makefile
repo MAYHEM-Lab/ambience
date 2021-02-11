@@ -69,8 +69,10 @@ INC_FOLDERS += \
   $(PROJ_DIR) \
   $(SDK_ROOT)/components/nfc/t4t_parser/hl_detection_procedure \
   $(SDK_ROOT)/components/ble/ble_services/ble_ancs_c \
+  $(SDK_ROOT)/components/nfc/platform \
   $(SDK_ROOT)/components/ble/ble_services/ble_ias_c \
   $(SDK_ROOT)/components/libraries/pwm \
+  $(SDK_ROOT)/components/libraries/sortlist \
   $(SDK_ROOT)/components/libraries/usbd/class/cdc/acm \
   $(SDK_ROOT)/components/libraries/usbd/class/hid/generic \
   $(SDK_ROOT)/components/libraries/usbd/class/msc \
@@ -85,11 +87,10 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/gpiote \
   $(SDK_ROOT)/components/libraries/bootloader/ble_dfu \
   $(SDK_ROOT)/components/nfc/ndef/connection_handover/common \
-  $(SDK_ROOT)/external/utf_converter \
   $(SDK_ROOT)/components/boards \
   $(SDK_ROOT)/components/nfc/ndef/generic/record \
   $(SDK_ROOT)/components/ble/ble_advertising \
-  $(SDK_ROOT)/components/iot/ble_6lowpan \
+  $(SDK_ROOT)/external/utf_converter \
   $(SDK_ROOT)/components/ble/ble_services/ble_bas_c \
   $(SDK_ROOT)/modules/nrfx/drivers/include \
   $(SDK_ROOT)/components/libraries/experimental_task_manager \
@@ -103,7 +104,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/ble/ble_services/ble_rscs_c \
   $(SDK_ROOT)/components/ble/common \
   $(SDK_ROOT)/components/ble/ble_services/ble_lls \
-  $(SDK_ROOT)/components/nfc/platform \
+  $(SDK_ROOT)/components/incubated/iot/common \
   $(SDK_ROOT)/components/libraries/bsp \
   $(SDK_ROOT)/components/nfc/ndef/connection_handover/ac_rec \
   $(SDK_ROOT)/components/ble/ble_services/ble_bas \
@@ -143,9 +144,8 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/timer \
   $(SDK_ROOT)/components/softdevice/s140/headers \
   $(SDK_ROOT)/integration/nrfx \
-  $(SDK_ROOT)/components/iot/common \
   $(SDK_ROOT)/components/nfc/t4t_parser/tlv \
-  $(SDK_ROOT)/components/libraries/sortlist \
+  $(SDK_ROOT)/components/incubated/iot/ble_6lowpan \
   $(SDK_ROOT)/components/libraries/spi_mngr \
   $(SDK_ROOT)/components/nfc/ndef/launchapp \
   $(SDK_ROOT)/components/libraries/led_softblink \
@@ -296,8 +296,8 @@ flash: default
 
 # Flash softdevice
 flash_softdevice:
-	@echo Flashing: s140_nrf52_7.0.1_softdevice.hex
-	nrfjprog -f nrf52 --program $(SDK_ROOT)/components/softdevice/s140/hex/s140_nrf52_7.0.1_softdevice.hex --sectorerase
+	@echo Flashing: s140_nrf52_7.2.0_softdevice.hex
+	nrfjprog -f nrf52 --program $(SDK_ROOT)/components/softdevice/s140/hex/s140_nrf52_7.2.0_softdevice.hex --sectorerase
 	nrfjprog -f nrf52 --reset
 
 erase:

@@ -98,14 +98,17 @@ SRC_FILES += \
   $(SDK_ROOT)/external/mbedtls/library/aes.c \
   $(SDK_ROOT)/external/mbedtls/library/aesni.c \
   $(SDK_ROOT)/external/mbedtls/library/arc4.c \
+  $(SDK_ROOT)/external/mbedtls/library/aria.c \
   $(SDK_ROOT)/external/mbedtls/library/asn1parse.c \
-  $(SDK_ROOT)/external/nrf_tls/mbedtls/replacements/asn1write.c \
+  $(SDK_ROOT)/external/mbedtls/library/asn1write.c \
   $(SDK_ROOT)/external/mbedtls/library/base64.c \
   $(SDK_ROOT)/external/mbedtls/library/bignum.c \
   $(SDK_ROOT)/external/mbedtls/library/blowfish.c \
   $(SDK_ROOT)/external/mbedtls/library/camellia.c \
   $(SDK_ROOT)/external/mbedtls/library/ccm.c \
   $(SDK_ROOT)/external/mbedtls/library/certs.c \
+  $(SDK_ROOT)/external/mbedtls/library/chacha20.c \
+  $(SDK_ROOT)/external/mbedtls/library/chachapoly.c \
   $(SDK_ROOT)/external/mbedtls/library/cipher.c \
   $(SDK_ROOT)/external/mbedtls/library/cipher_wrap.c \
   $(SDK_ROOT)/external/mbedtls/library/cmac.c \
@@ -115,6 +118,7 @@ SRC_FILES += \
   $(SDK_ROOT)/external/mbedtls/library/dhm.c \
   $(SDK_ROOT)/external/mbedtls/library/ecdh.c \
   $(SDK_ROOT)/external/mbedtls/library/ecdsa.c \
+  $(SDK_ROOT)/external/mbedtls/library/ecjpake.c \
   $(SDK_ROOT)/external/mbedtls/library/ecp.c \
   $(SDK_ROOT)/external/mbedtls/library/ecp_curves.c \
   $(SDK_ROOT)/external/mbedtls/library/entropy.c \
@@ -129,6 +133,8 @@ SRC_FILES += \
   $(SDK_ROOT)/external/mbedtls/library/md5.c \
   $(SDK_ROOT)/external/mbedtls/library/md_wrap.c \
   $(SDK_ROOT)/external/mbedtls/library/memory_buffer_alloc.c \
+  $(SDK_ROOT)/external/mbedtls/library/net_sockets.c \
+  $(SDK_ROOT)/external/mbedtls/library/nist_kw.c \
   $(SDK_ROOT)/external/mbedtls/library/oid.c \
   $(SDK_ROOT)/external/mbedtls/library/padlock.c \
   $(SDK_ROOT)/external/mbedtls/library/pem.c \
@@ -140,8 +146,11 @@ SRC_FILES += \
   $(SDK_ROOT)/external/mbedtls/library/pkparse.c \
   $(SDK_ROOT)/external/mbedtls/library/pkwrite.c \
   $(SDK_ROOT)/external/mbedtls/library/platform.c \
+  $(SDK_ROOT)/external/mbedtls/library/platform_util.c \
+  $(SDK_ROOT)/external/mbedtls/library/poly1305.c \
   $(SDK_ROOT)/external/mbedtls/library/ripemd160.c \
   $(SDK_ROOT)/external/mbedtls/library/rsa.c \
+  $(SDK_ROOT)/external/mbedtls/library/rsa_internal.c \
   $(SDK_ROOT)/external/mbedtls/library/sha1.c \
   $(SDK_ROOT)/external/mbedtls/library/sha256.c \
   $(SDK_ROOT)/external/mbedtls/library/sha512.c \
@@ -149,7 +158,7 @@ SRC_FILES += \
   $(SDK_ROOT)/external/mbedtls/library/ssl_ciphersuites.c \
   $(SDK_ROOT)/external/mbedtls/library/ssl_cli.c \
   $(SDK_ROOT)/external/mbedtls/library/ssl_cookie.c \
-  $(SDK_ROOT)/external/nrf_tls/mbedtls/replacements/ssl_srv.c \
+  $(SDK_ROOT)/external/mbedtls/library/ssl_srv.c \
   $(SDK_ROOT)/external/mbedtls/library/ssl_ticket.c \
   $(SDK_ROOT)/external/mbedtls/library/ssl_tls.c \
   $(SDK_ROOT)/external/mbedtls/library/threading.c \
@@ -160,6 +169,8 @@ SRC_FILES += \
   $(SDK_ROOT)/external/mbedtls/library/x509_crl.c \
   $(SDK_ROOT)/external/mbedtls/library/x509_crt.c \
   $(SDK_ROOT)/external/mbedtls/library/x509_csr.c \
+  $(SDK_ROOT)/external/mbedtls/library/x509write_crt.c \
+  $(SDK_ROOT)/external/mbedtls/library/x509write_csr.c \
   $(SDK_ROOT)/external/mbedtls/library/xtea.c \
   $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/cifra/cifra_backend_aes_aead.c \
@@ -236,9 +247,9 @@ INC_FOLDERS += \
 
 # Libraries common to all targets
 LIB_FILES += \
-  $(SDK_ROOT)/external/nrf_cc310/lib/cortex-m4/hard-float/libnrf_cc310_0.9.12.a \
+  $(SDK_ROOT)/external/nrf_cc310/lib/cortex-m4/hard-float/libnrf_cc310_0.9.13.a \
   $(SDK_ROOT)/external/micro-ecc/nrf52hf_armgcc/armgcc/micro_ecc_lib_nrf52.a \
-  $(SDK_ROOT)/external/nrf_oberon/lib/cortex-m4/hard-float/liboberon_3.0.1.a \
+  $(SDK_ROOT)/external/nrf_oberon/lib/cortex-m4/hard-float/liboberon_3.0.6.a \
 
 # Optimization flags
 OPT = -O3 -g3

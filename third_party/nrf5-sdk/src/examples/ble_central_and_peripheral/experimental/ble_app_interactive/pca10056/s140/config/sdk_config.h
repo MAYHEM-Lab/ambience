@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2020, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -351,118 +351,6 @@
 #define BLE_SEC_PARAM_KDIST_PEER_ID 1
 #endif
 
-// <q> BLE_SEC_PARAM_KDIST_OWN_ENC  - Enables Long Term Key and Master Identification distribution by device.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_OWN_ENC
-#define BLE_SEC_PARAM_KDIST_OWN_ENC 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_OWN_ID  - Enables Identity Resolving Key and Identity Address Information distribution by device.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_OWN_ID
-#define BLE_SEC_PARAM_KDIST_OWN_ID 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_PEER_ENC  - Enables Long Term Key and Master Identification distribution by peer.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_PEER_ENC
-#define BLE_SEC_PARAM_KDIST_PEER_ENC 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_PEER_ID  - Enables Identity Resolving Key and Identity Address Information distribution by peer.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_PEER_ID
-#define BLE_SEC_PARAM_KDIST_PEER_ID 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_OWN_ENC  - Enables Long Term Key and Master Identification distribution by device.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_OWN_ENC
-#define BLE_SEC_PARAM_KDIST_OWN_ENC 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_OWN_ID  - Enables Identity Resolving Key and Identity Address Information distribution by device.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_OWN_ID
-#define BLE_SEC_PARAM_KDIST_OWN_ID 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_PEER_ENC  - Enables Long Term Key and Master Identification distribution by peer.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_PEER_ENC
-#define BLE_SEC_PARAM_KDIST_PEER_ENC 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_PEER_ID  - Enables Identity Resolving Key and Identity Address Information distribution by peer.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_PEER_ID
-#define BLE_SEC_PARAM_KDIST_PEER_ID 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_OWN_ENC  - Enables Long Term Key and Master Identification distribution by device.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_OWN_ENC
-#define BLE_SEC_PARAM_KDIST_OWN_ENC 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_OWN_ID  - Enables Identity Resolving Key and Identity Address Information distribution by device.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_OWN_ID
-#define BLE_SEC_PARAM_KDIST_OWN_ID 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_PEER_ENC  - Enables Long Term Key and Master Identification distribution by peer.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_PEER_ENC
-#define BLE_SEC_PARAM_KDIST_PEER_ENC 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_PEER_ID  - Enables Identity Resolving Key and Identity Address Information distribution by peer.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_PEER_ID
-#define BLE_SEC_PARAM_KDIST_PEER_ID 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_OWN_ENC  - Enables Long Term Key and Master Identification distribution by device.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_OWN_ENC
-#define BLE_SEC_PARAM_KDIST_OWN_ENC 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_OWN_ID  - Enables Identity Resolving Key and Identity Address Information distribution by device.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_OWN_ID
-#define BLE_SEC_PARAM_KDIST_OWN_ID 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_PEER_ENC  - Enables Long Term Key and Master Identification distribution by peer.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_PEER_ENC
-#define BLE_SEC_PARAM_KDIST_PEER_ENC 1
-#endif
-
-// <q> BLE_SEC_PARAM_KDIST_PEER_ID  - Enables Identity Resolving Key and Identity Address Information distribution by peer.
- 
-
-#ifndef BLE_SEC_PARAM_KDIST_PEER_ID
-#define BLE_SEC_PARAM_KDIST_PEER_ID 1
-#endif
-
 // </e>
 
 // <q> BLE_SEC_PARAM_LESC  - Enable LE Secure Connection.
@@ -495,26 +383,6 @@
 
 // <o> BLE_SEC_PARAM_IO_CAPS  - IO Capabilities settings.
  
-// <0=> BLE_GAP_IO_CAPS_DISPLAY_ONLY 
-// <1=> BLE_GAP_IO_CAPS_DISPLAY_YESNO 
-// <2=> BLE_GAP_IO_CAPS_KEYBOARD_ONLY 
-// <3=> BLE_GAP_IO_CAPS_NONE 
-// <4=> BLE_GAP_IO_CAPS_KEYBOARD_DISPLAY 
-// <0=> BLE_GAP_IO_CAPS_DISPLAY_ONLY 
-// <1=> BLE_GAP_IO_CAPS_DISPLAY_YESNO 
-// <2=> BLE_GAP_IO_CAPS_KEYBOARD_ONLY 
-// <3=> BLE_GAP_IO_CAPS_NONE 
-// <4=> BLE_GAP_IO_CAPS_KEYBOARD_DISPLAY 
-// <0=> BLE_GAP_IO_CAPS_DISPLAY_ONLY 
-// <1=> BLE_GAP_IO_CAPS_DISPLAY_YESNO 
-// <2=> BLE_GAP_IO_CAPS_KEYBOARD_ONLY 
-// <3=> BLE_GAP_IO_CAPS_NONE 
-// <4=> BLE_GAP_IO_CAPS_KEYBOARD_DISPLAY 
-// <0=> BLE_GAP_IO_CAPS_DISPLAY_ONLY 
-// <1=> BLE_GAP_IO_CAPS_DISPLAY_YESNO 
-// <2=> BLE_GAP_IO_CAPS_KEYBOARD_ONLY 
-// <3=> BLE_GAP_IO_CAPS_NONE 
-// <4=> BLE_GAP_IO_CAPS_KEYBOARD_DISPLAY 
 // <0=> BLE_GAP_IO_CAPS_DISPLAY_ONLY 
 // <1=> BLE_GAP_IO_CAPS_DISPLAY_YESNO 
 // <2=> BLE_GAP_IO_CAPS_KEYBOARD_ONLY 
@@ -7893,48 +7761,6 @@
 
 #ifndef BSP_BTN_BLE_OBSERVER_PRIO
 #define BSP_BTN_BLE_OBSERVER_PRIO 1
-#endif
-
-// <o> NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO  
-// <i> Priority with which BLE events are dispatched to the NFC pairing library.
-
-#ifndef NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO
-#define NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO 1
-#endif
-
-// <o> NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO  
-// <i> Priority with which BLE events are dispatched to the NFC pairing library.
-
-#ifndef NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO
-#define NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO 1
-#endif
-
-// <o> NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO  
-// <i> Priority with which BLE events are dispatched to the NFC pairing library.
-
-#ifndef NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO
-#define NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO 1
-#endif
-
-// <o> NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO  
-// <i> Priority with which BLE events are dispatched to the NFC pairing library.
-
-#ifndef NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO
-#define NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO 1
-#endif
-
-// <o> NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO  
-// <i> Priority with which BLE events are dispatched to the NFC pairing library.
-
-#ifndef NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO
-#define NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO 1
-#endif
-
-// <o> NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO  
-// <i> Priority with which BLE events are dispatched to the NFC pairing library.
-
-#ifndef NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO
-#define NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO 1
 #endif
 
 // <o> NFC_BLE_PAIR_LIB_BLE_OBSERVER_PRIO  

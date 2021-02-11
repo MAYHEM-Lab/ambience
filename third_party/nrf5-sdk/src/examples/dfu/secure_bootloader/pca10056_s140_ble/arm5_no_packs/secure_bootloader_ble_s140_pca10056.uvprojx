@@ -12,7 +12,7 @@
       <TargetOption>
         <TargetCommonOption>          <Device>nRF52840_xxAA</Device>
           <Vendor>Nordic Semiconductor</Vendor>
-          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack_NordicLicense.8.27.0</PackID>
+          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.35.0</PackID>
           <PackURL>http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/</PackURL>          <Cpu>IROM(0x00000000,0x100000) IRAM(0x20000000,0x40000) CPUTYPE("Cortex-M4") FPU2 CLOCK(64000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
@@ -329,8 +329,8 @@
               </OCR_RVCT8>
               <OCR_RVCT9>
                 <Type>0</Type>
-                <StartAddress>0x20005968</StartAddress>
-                <Size>0x3a698</Size>
+                <StartAddress>0x20005978</StartAddress>
+                <Size>0x3a688</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -364,7 +364,7 @@
               <MiscControls>--reduce_paths</MiscControls>
               <Define> BLE_STACK_SUPPORT_REQD BOARD_PCA10056 CONFIG_GPIO_AS_PINRESET FLOAT_ABI_HARD NRF52840_XXAA NRF_DFU_SETTINGS_VERSION=2 NRF_DFU_SVCI_ENABLED NRF_SD_BLE_API_VERSION=7 S140 SOFTDEVICE_PRESENT SVC_INTERFACE_CALL_AS_NORMAL_FUNCTION __HEAP_SIZE=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\config;..\..\..\..\..\components\ble\common;..\..\..\..\..\components\boards;..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\components\libraries\atomic_fifo;..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\components\libraries\bootloader;..\..\..\..\..\components\libraries\bootloader\ble_dfu;..\..\..\..\..\components\libraries\bootloader\dfu;..\..\..\..\..\components\libraries\crc32;..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\components\libraries\crypto\backend\optiga;..\..\..\..\..\components\libraries\delay;..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\components\libraries\fstorage;..\..\..\..\..\components\libraries\log;..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\components\libraries\queue;..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\components\libraries\svc;..\..\..\..\..\components\libraries\util;..\..\..\..\..\components\softdevice\common;..\..\..\..\..\components\softdevice\s140\headers;..\..\..\..\..\components\softdevice\s140\headers\nrf52;..\..;..\..\..\..\..\external\fprintf;..\..\..\..\..\external\nano-pb;..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\external\nrf_cc310_bl\include;..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\integration\nrfx;..\..\..\..\..\modules\nrfx;..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
+              <IncludePath>..\..\config;..\..\..\..\..\components\ble\common;..\..\..\..\..\components\boards;..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\components\libraries\atomic_fifo;..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\components\libraries\bootloader;..\..\..\..\..\components\libraries\bootloader\ble_dfu;..\..\..\..\..\components\libraries\bootloader\dfu;..\..\..\..\..\components\libraries\crc32;..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\components\libraries\crypto\backend\optiga;..\..\..\..\..\components\libraries\delay;..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\components\libraries\fstorage;..\..\..\..\..\components\libraries\log;..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\components\libraries\queue;..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\components\libraries\svc;..\..\..\..\..\components\libraries\util;..\..\..\..\..\components\softdevice\common;..\..\..\..\..\components\softdevice\s140\headers;..\..\..\..\..\components\softdevice\s140\headers\nrf52;..\..;..\..\..\..\..\external\fprintf;..\..\..\..\..\external\nano-pb;..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\external\nrf_cc310_bl\include;..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\integration\nrfx;..\..\..\..\..\modules\nrfx;..\..\..\..\..\modules\nrfx\hal;..\config</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -381,7 +381,7 @@
               <MiscControls> --cpreproc_opts=-DBLE_STACK_SUPPORT_REQD,-DBOARD_PCA10056,-DCONFIG_GPIO_AS_PINRESET,-DFLOAT_ABI_HARD,-DNRF52840_XXAA,-DNRF_DFU_SETTINGS_VERSION=2,-DNRF_DFU_SVCI_ENABLED,-DNRF_SD_BLE_API_VERSION=7,-DS140,-DSOFTDEVICE_PRESENT,-DSVC_INTERFACE_CALL_AS_NORMAL_FUNCTION,-D__HEAP_SIZE=0</MiscControls>
               <Define> BLE_STACK_SUPPORT_REQD BOARD_PCA10056 CONFIG_GPIO_AS_PINRESET FLOAT_ABI_HARD NRF52840_XXAA NRF_DFU_SETTINGS_VERSION=2 NRF_DFU_SVCI_ENABLED NRF_SD_BLE_API_VERSION=7 S140 SOFTDEVICE_PRESENT SVC_INTERFACE_CALL_AS_NORMAL_FUNCTION __HEAP_SIZE=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\config;..\..\..\..\..\components\ble\common;..\..\..\..\..\components\boards;..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\components\libraries\atomic_fifo;..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\components\libraries\bootloader;..\..\..\..\..\components\libraries\bootloader\ble_dfu;..\..\..\..\..\components\libraries\bootloader\dfu;..\..\..\..\..\components\libraries\crc32;..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\components\libraries\crypto\backend\optiga;..\..\..\..\..\components\libraries\delay;..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\components\libraries\fstorage;..\..\..\..\..\components\libraries\log;..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\components\libraries\queue;..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\components\libraries\svc;..\..\..\..\..\components\libraries\util;..\..\..\..\..\components\softdevice\common;..\..\..\..\..\components\softdevice\s140\headers;..\..\..\..\..\components\softdevice\s140\headers\nrf52;..\..;..\..\..\..\..\external\fprintf;..\..\..\..\..\external\nano-pb;..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\external\nrf_cc310_bl\include;..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\integration\nrfx;..\..\..\..\..\modules\nrfx;..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
+              <IncludePath>..\..\config;..\..\..\..\..\components\ble\common;..\..\..\..\..\components\boards;..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\components\libraries\atomic_fifo;..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\components\libraries\bootloader;..\..\..\..\..\components\libraries\bootloader\ble_dfu;..\..\..\..\..\components\libraries\bootloader\dfu;..\..\..\..\..\components\libraries\crc32;..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\components\libraries\crypto\backend\optiga;..\..\..\..\..\components\libraries\delay;..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\components\libraries\fstorage;..\..\..\..\..\components\libraries\log;..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\components\libraries\queue;..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\components\libraries\svc;..\..\..\..\..\components\libraries\util;..\..\..\..\..\components\softdevice\common;..\..\..\..\..\components\softdevice\s140\headers;..\..\..\..\..\components\softdevice\s140\headers\nrf52;..\..;..\..\..\..\..\external\fprintf;..\..\..\..\..\external\nano-pb;..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\external\nrf_cc310_bl\include;..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\integration\nrfx;..\..\..\..\..\modules\nrfx;..\..\..\..\..\modules\nrfx\hal;..\config</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -3114,9 +3114,9 @@
         </Group>        <Group>
           <GroupName>nRF_Oberon_Crypto</GroupName>
           <Files>            <File>
-              <FileName>oberon_3.0.1.lib</FileName>
+              <FileName>oberon_3.0.6.lib</FileName>
               <FileType>4</FileType>
-              <FilePath>..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\oberon_3.0.1.lib</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\oberon_3.0.6.lib</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -3513,9 +3513,9 @@
         </Group>        <Group>
           <GroupName>nrf_cc310_bl</GroupName>
           <Files>            <File>
-              <FileName>nrf_cc310_bl_0.9.12.lib</FileName>
+              <FileName>nrf_cc310_bl_0.9.13.lib</FileName>
               <FileType>4</FileType>
-              <FilePath>..\..\..\..\..\external\nrf_cc310_bl\lib\cortex-m4\hard-float\short-wchar\nrf_cc310_bl_0.9.12.lib</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\external\nrf_cc310_bl\lib\cortex-m4\hard-float\short-wchar\nrf_cc310_bl_0.9.13.lib</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -3558,7 +3558,7 @@
               </FileOption>            </File>          </Files>
         </Group>      </Groups>
     </Target>    <Target>
-      <TargetName>flash_s140_nrf52_7.0.1_softdevice</TargetName>
+      <TargetName>flash_s140_nrf52_7.2.0_softdevice</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
@@ -3596,7 +3596,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>..\..\..\..\..\components\softdevice\s140\hex\</OutputDirectory>
-          <OutputName>s140_nrf52_7.0.1_softdevice.hex</OutputName>
+          <OutputName>s140_nrf52_7.2.0_softdevice.hex</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
@@ -3881,8 +3881,8 @@
               </OCR_RVCT8>
               <OCR_RVCT9>
                 <Type>0</Type>
-                <StartAddress>0x20005968</StartAddress>
-                <Size>0x3a698</Size>
+                <StartAddress>0x20005978</StartAddress>
+                <Size>0x3a688</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -6666,9 +6666,9 @@
         </Group>        <Group>
           <GroupName>nRF_Oberon_Crypto</GroupName>
           <Files>            <File>
-              <FileName>oberon_3.0.1.lib</FileName>
+              <FileName>oberon_3.0.6.lib</FileName>
               <FileType>4</FileType>
-              <FilePath>..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\oberon_3.0.1.lib</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\oberon_3.0.6.lib</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -7065,9 +7065,9 @@
         </Group>        <Group>
           <GroupName>nrf_cc310_bl</GroupName>
           <Files>            <File>
-              <FileName>nrf_cc310_bl_0.9.12.lib</FileName>
+              <FileName>nrf_cc310_bl_0.9.13.lib</FileName>
               <FileType>4</FileType>
-              <FilePath>..\..\..\..\..\external\nrf_cc310_bl\lib\cortex-m4\hard-float\short-wchar\nrf_cc310_bl_0.9.12.lib</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\external\nrf_cc310_bl\lib\cortex-m4\hard-float\short-wchar\nrf_cc310_bl_0.9.13.lib</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -7113,20 +7113,20 @@
   <packages>
     <filter>
       <targetInfos/>
-    </filter>    <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0">
-      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_7.0.1_softdevice"/>      </targetInfos>
+    </filter>    <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="5.6.0">
+      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_7.2.0_softdevice"/>      </targetInfos>
     </package>
-    <package name="nRF_DeviceFamilyPack_NordicLicense" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.27.0">
-      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_7.0.1_softdevice"/>      </targetInfos>
+    <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.35.0">
+      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_7.2.0_softdevice"/>      </targetInfos>
     </package>  </packages>
   <apis/>
-  <components>    <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="4.3.0" condition="CMSIS Core">
-      <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0"/>
-      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_7.0.1_softdevice"/>      </targetInfos>
+  <components>    <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="5.3.0" condition="CMSIS Core">
+      <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="5.6.0"/>
+      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_7.2.0_softdevice"/>      </targetInfos>
     </component>
-    <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.27.0" condition="nRF5x Series CMSIS Device">
-      <package name="nRF_DeviceFamilyPack_NordicLicense" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.27.0"/>
-      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_7.0.1_softdevice"/>      </targetInfos>
+    <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.35.0" condition="nRF5x Series CMSIS Device">
+      <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.35.0"/>
+      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140"/>        <targetInfo excluded="1" name="flash_s140_nrf52_7.2.0_softdevice"/>      </targetInfos>
     </component>  </components>
   <files>  </files>
 </RTE>

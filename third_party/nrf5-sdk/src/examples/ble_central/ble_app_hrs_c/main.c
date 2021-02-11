@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2014 - 2020, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -123,12 +123,18 @@ static bool     m_memory_access_in_progress;                        /**< Flag to
 static ble_gap_scan_params_t const m_scan_param =
 {
     .active        = 0x01,
+#if (NRF_SD_BLE_API_VERSION > 7)
+    .interval_us   = NRF_BLE_SCAN_SCAN_INTERVAL * UNIT_0_625_MS,
+    .window_us     = NRF_BLE_SCAN_SCAN_WINDOW * UNIT_0_625_MS,
+#else
     .interval      = NRF_BLE_SCAN_SCAN_INTERVAL,
     .window        = NRF_BLE_SCAN_SCAN_WINDOW,
+#endif // (NRF_SD_BLE_API_VERSION > 7)
     .filter_policy = BLE_GAP_SCAN_FP_WHITELIST,
     .timeout       = SCAN_DURATION_WITELIST,
     .scan_phys     = BLE_GAP_PHY_1MBPS,
 };
+
 
 /**@brief Names which the central applications will scan for, and which will be advertised by the peripherals.
  *  if these are set to empty strings, the UUIDs defined below will be used

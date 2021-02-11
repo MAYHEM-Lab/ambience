@@ -265,11 +265,11 @@
         </option>
         <option>
           <name>IExtraOptionsCheck</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>IExtraOptions</name>
-          <state></state>
+          <state>--diag_suppress Pe111</state>
         </option>
         <option>
           <name>CCLangConformance</name>
@@ -1107,7 +1107,7 @@
   <name>Board Definition</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\boards\boards.c</name>    </file>  </group>  <group>
   <name>nRF_Oberon_Crypto</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\liboberon_3.0.1.a</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\liboberon_3.0.6.a</name>    </file>  </group>  <group>
   <name>nRF_SoftDevice</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\softdevice\common\nrf_sdh.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\softdevice\common\nrf_sdh_ble.c</name>    </file>    <file>
@@ -1161,7 +1161,7 @@
   <name>nRF_BLE</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\ble\common\ble_srv_common.c</name>    </file>  </group>  <group>
   <name>nrf_cc310_bl</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\external\nrf_cc310_bl\lib\cortex-m4\hard-float\short-wchar\libnrf_cc310_bl_0.9.12.a</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\external\nrf_cc310_bl\lib\cortex-m4\hard-float\short-wchar\libnrf_cc310_bl_0.9.13.a</name>    </file>  </group>  <group>
   <name>nRF_Crypto backend Oberon</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_chacha_poly_aead.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecc.c</name>    </file>    <file>

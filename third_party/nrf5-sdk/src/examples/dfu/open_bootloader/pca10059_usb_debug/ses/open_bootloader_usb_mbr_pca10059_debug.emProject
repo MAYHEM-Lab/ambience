@@ -30,7 +30,7 @@
       linker_section_placement_file="flash_placement.xml"
       linker_section_placement_macros="FLASH_PH_START=0x0;FLASH_PH_SIZE=0x100000;RAM_PH_START=0x20000000;RAM_PH_SIZE=0x40000;FLASH_START=0xe0000;FLASH_SIZE=0x1e000;RAM_START=0x20000008;RAM_SIZE=0x3fff8"
       
-      linker_section_placements_segments="FLASH RX 0x0 0x100000;RAM RWX 0x20000000 0x40000;uicr_bootloader_start_address RX 0x10001014 0x4;bootloader_settings_page RX 0x000FF000 0x1000;uicr_mbr_params_page RX 0x10001018 0x4;mbr_params_page RX 0x000FE000 0x1000"
+      linker_section_placements_segments="FLASH RX 0x0 0x100000;RAM1 RWX 0x20000000 0x40000;mbr_params_page RX 0x000FE000 0x1000;bootloader_settings_page RX 0x000FF000 0x1000;uicr_bootloader_start_address RX 0x10001014 0x4;uicr_mbr_params_page RX 0x10001018 0x4"
       project_directory=""
       project_type="Executable" />
       <folder Name="Segger Startup Files">
@@ -103,7 +103,7 @@
       <file file_name="../../../../../modules/nrfx/drivers/src/nrfx_usbd.c" />
     </folder>
     <folder Name="nRF_Oberon_Crypto">
-      <file file_name="../../../../../external/nrf_oberon/lib/cortex-m4/hard-float/liboberon_3.0.1.a" />
+      <file file_name="../../../../../external/nrf_oberon/lib/cortex-m4/hard-float/liboberon_3.0.6.a" />
     </folder>
     <folder Name="nRF_Crypto">
       <file file_name="../../../../../components/libraries/crypto/nrf_crypto_ecc.c" />
@@ -156,7 +156,7 @@
       <file file_name="../../../../../external/utf_converter/utf.c" />
     </folder>
     <folder Name="nrf_cc310_bl">
-      <file file_name="../../../../../external/nrf_cc310_bl/lib/cortex-m4/hard-float/libnrf_cc310_bl_0.9.12.a" />
+      <file file_name="../../../../../external/nrf_cc310_bl/lib/cortex-m4/hard-float/libnrf_cc310_bl_0.9.13.a" />
     </folder>
     <folder Name="nRF_Crypto backend Oberon">
       <file file_name="../../../../../components/libraries/crypto/backend/oberon/oberon_backend_chacha_poly_aead.c" />
@@ -170,6 +170,6 @@
   </project>
   <configuration Name="Release"
     c_preprocessor_definitions="NDEBUG"
-    gcc_optimization_level="Optimize For Size" />
+    link_time_optimization="No"    gcc_optimization_level="Optimize For Size" />
 
 </solution>

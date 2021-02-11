@@ -23,8 +23,10 @@
     <ProgramSection alignment="4" load="Yes" runin=".fast_run" name=".fast" />
     <ProgramSection alignment="4" load="Yes" runin=".data_run" name=".data" />
     <ProgramSection alignment="4" load="Yes" runin=".tdata_run" name=".tdata" />
+    <ProgramSection alignment="4" keep="Yes" load="No" name=".mbr_params_page" address_symbol="__start_mbr_params_page" end_symbol="__stop_mbr_params_page" start = "0x0002E000" size="0x1000" />
+    <ProgramSection alignment="4" keep="Yes" load="No" name=".bootloader_settings_page" address_symbol="__start_bootloader_settings_page" end_symbol="__stop_bootloader_settings_page" start = "0x0002F000" size="0x1000" />
   </MemorySegment>
-  <MemorySegment name="RAM" start="$(RAM_PH_START)" size="$(RAM_PH_SIZE)">
+  <MemorySegment name="RAM1" start="$(RAM_PH_START)" size="$(RAM_PH_SIZE)">
     <ProgramSection load="no" name=".reserved_ram" start="$(RAM_PH_START)" size="$(RAM_START)-$(RAM_PH_START)" />
     <ProgramSection alignment="0x100" load="No" name=".vectors_ram" start="$(RAM_START)" address_symbol="__app_ram_start__"/>
     <ProgramSection alignment="4" keep="Yes" load="No" name=".nrf_sections_run" address_symbol="__start_nrf_sections_run" />
@@ -41,12 +43,6 @@
     <ProgramSection alignment="4" size="__HEAPSIZE__" load="No" name=".heap" />
     <ProgramSection alignment="8" size="__STACKSIZE__" load="No" place_from_segment_end="Yes" name=".stack"  address_symbol="__StackLimit" end_symbol="__StackTop"/>
     <ProgramSection alignment="8" size="__STACKSIZE_PROCESS__" load="No" name=".stack_process" />
-  </MemorySegment>
-  <MemorySegment name="mbr_params_page" start="0x0002E000" size="0x1000">
-    <ProgramSection alignment="4" keep="Yes" load="No" name=".mbr_params_page" address_symbol="__start_mbr_params_page" end_symbol="__stop_mbr_params_page" start = "0x0002E000" size="0x1000" />
-  </MemorySegment>
-  <MemorySegment name="bootloader_settings_page" start="0x0002F000" size="0x1000">
-    <ProgramSection alignment="4" keep="Yes" load="No" name=".bootloader_settings_page" address_symbol="__start_bootloader_settings_page" end_symbol="__stop_bootloader_settings_page" start = "0x0002F000" size="0x1000" />
   </MemorySegment>
   <MemorySegment name="uicr_bootloader_start_address" start="0x10001014" size="0x4">
     <ProgramSection alignment="4" keep="Yes" load="Yes" name=".uicr_bootloader_start_address" address_symbol="__start_uicr_bootloader_start_address" end_symbol="__stop_uicr_bootloader_start_address" start = "0x10001014" size="0x4" />

@@ -12,7 +12,7 @@
       <TargetOption>
         <TargetCommonOption>          <Device>nRF52832_xxAA</Device>
           <Vendor>Nordic Semiconductor</Vendor>
-          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack_NordicLicense.8.27.0</PackID>
+          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.35.0</PackID>
           <PackURL>http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/</PackURL>          <Cpu>IROM(0x00000000,0x80000) IRAM(0x20000000,0x10000) CPUTYPE("Cortex-M4") FPU2 CLOCK(64000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
@@ -364,7 +364,7 @@
               <MiscControls>--reduce_paths</MiscControls>
               <Define> BOARD_PCA10040 CONFIG_GPIO_AS_PINRESET FLOAT_ABI_HARD MBEDTLS_CONFIG_FILE=&lt;nrf_crypto_mbedtls_config.h&gt; NRF52 NRF52832_XXAA NRF52_PAN_74 NRF_CRYPTO_MAX_INSTANCE_COUNT=1 __HEAP_SIZE=8192 __STACK_SIZE=8192 uECC_ENABLE_VLI_API=0 uECC_OPTIMIZATION_LEVEL=3 uECC_SQUARE_FUNC=0 uECC_SUPPORT_COMPRESSED_POINT=0 uECC_VLI_NATIVE_LITTLE_ENDIAN=1</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\config;..\..\..\..\..\..\..\components\boards;..\..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\..\..\components\libraries\crypto\backend\optiga;..\..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\..\external\cifra_AES128-EAX;..\..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\..\external\mbedtls\include;..\..\..\..\..\..\..\external\micro-ecc\micro-ecc;..\..\..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\..\..\external\nrf_tls\mbedtls\nrf_crypto\config;..\..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
+              <IncludePath>..\..\..\config;..\..\..\..\..\..\..\components\boards;..\..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\..\..\components\libraries\crypto\backend\optiga;..\..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\..\external\cifra_AES128-EAX;..\..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\..\external\mbedtls\include;..\..\..\..\..\..\..\external\micro-ecc\micro-ecc;..\..\..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\..\..\external\nrf_tls\mbedtls\nrf_crypto\config;..\..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\..\modules\nrfx\hal;..\config</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -381,7 +381,7 @@
               <MiscControls> --cpreproc_opts=-DBOARD_PCA10040,-DCONFIG_GPIO_AS_PINRESET,-DFLOAT_ABI_HARD,-DNRF52,-DNRF52832_XXAA,-DNRF52_PAN_74,-DNRF_CRYPTO_MAX_INSTANCE_COUNT=1,-D__HEAP_SIZE=8192,-D__STACK_SIZE=8192,-DuECC_ENABLE_VLI_API=0,-DuECC_OPTIMIZATION_LEVEL=3,-DuECC_SQUARE_FUNC=0,-DuECC_SUPPORT_COMPRESSED_POINT=0,-DuECC_VLI_NATIVE_LITTLE_ENDIAN=1</MiscControls>
               <Define> BOARD_PCA10040 CONFIG_GPIO_AS_PINRESET FLOAT_ABI_HARD NRF52 NRF52832_XXAA NRF52_PAN_74 NRF_CRYPTO_MAX_INSTANCE_COUNT=1 __HEAP_SIZE=8192 __STACK_SIZE=8192 uECC_ENABLE_VLI_API=0 uECC_OPTIMIZATION_LEVEL=3 uECC_SQUARE_FUNC=0 uECC_SUPPORT_COMPRESSED_POINT=0 uECC_VLI_NATIVE_LITTLE_ENDIAN=1</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\config;..\..\..\..\..\..\..\components\boards;..\..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\..\..\components\libraries\crypto\backend\optiga;..\..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\..\external\cifra_AES128-EAX;..\..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\..\external\mbedtls\include;..\..\..\..\..\..\..\external\micro-ecc\micro-ecc;..\..\..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\..\..\external\nrf_tls\mbedtls\nrf_crypto\config;..\..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
+              <IncludePath>..\..\..\config;..\..\..\..\..\..\..\components\boards;..\..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\..\..\components\libraries\crypto\backend\optiga;..\..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\..\external\cifra_AES128-EAX;..\..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\..\external\mbedtls\include;..\..\..\..\..\..\..\external\micro-ecc\micro-ecc;..\..\..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\..\..\external\nrf_tls\mbedtls\nrf_crypto\config;..\..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\..\modules\nrfx\hal;..\config</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -655,9 +655,9 @@
         </Group>        <Group>
           <GroupName>nRF_Oberon_Crypto</GroupName>
           <Files>            <File>
-              <FileName>oberon_3.0.1.lib</FileName>
+              <FileName>oberon_3.0.6.lib</FileName>
               <FileType>4</FileType>
-              <FilePath>..\..\..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\oberon_3.0.1.lib</FilePath>            </File>          </Files>
+              <FilePath>..\..\..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\oberon_3.0.6.lib</FilePath>            </File>          </Files>
         </Group>        <Group>
           <GroupName>nRF_Segger_RTT</GroupName>
           <Files>            <File>
@@ -682,12 +682,15 @@
               <FileName>arc4.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\arc4.c</FilePath>            </File>            <File>
+              <FileName>aria.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\aria.c</FilePath>            </File>            <File>
               <FileName>asn1parse.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\asn1parse.c</FilePath>            </File>            <File>
               <FileName>asn1write.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\..\external\nrf_tls\mbedtls\replacements\asn1write.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\asn1write.c</FilePath>            </File>            <File>
               <FileName>base64.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\base64.c</FilePath>            </File>            <File>
@@ -706,6 +709,12 @@
               <FileName>certs.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\certs.c</FilePath>            </File>            <File>
+              <FileName>chacha20.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\chacha20.c</FilePath>            </File>            <File>
+              <FileName>chachapoly.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\chachapoly.c</FilePath>            </File>            <File>
               <FileName>cipher.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\cipher.c</FilePath>            </File>            <File>
@@ -733,6 +742,9 @@
               <FileName>ecdsa.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\ecdsa.c</FilePath>            </File>            <File>
+              <FileName>ecjpake.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\ecjpake.c</FilePath>            </File>            <File>
               <FileName>ecp.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\ecp.c</FilePath>            </File>            <File>
@@ -775,6 +787,12 @@
               <FileName>memory_buffer_alloc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\memory_buffer_alloc.c</FilePath>            </File>            <File>
+              <FileName>net_sockets.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\net_sockets.c</FilePath>            </File>            <File>
+              <FileName>nist_kw.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\nist_kw.c</FilePath>            </File>            <File>
               <FileName>oid.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\oid.c</FilePath>            </File>            <File>
@@ -808,12 +826,21 @@
               <FileName>platform.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\platform.c</FilePath>            </File>            <File>
+              <FileName>platform_util.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\platform_util.c</FilePath>            </File>            <File>
+              <FileName>poly1305.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\poly1305.c</FilePath>            </File>            <File>
               <FileName>ripemd160.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\ripemd160.c</FilePath>            </File>            <File>
               <FileName>rsa.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\rsa.c</FilePath>            </File>            <File>
+              <FileName>rsa_internal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\rsa_internal.c</FilePath>            </File>            <File>
               <FileName>sha1.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\sha1.c</FilePath>            </File>            <File>
@@ -837,7 +864,7 @@
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\ssl_cookie.c</FilePath>            </File>            <File>
               <FileName>ssl_srv.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\..\external\nrf_tls\mbedtls\replacements\ssl_srv.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\ssl_srv.c</FilePath>            </File>            <File>
               <FileName>ssl_ticket.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\ssl_ticket.c</FilePath>            </File>            <File>
@@ -868,6 +895,12 @@
               <FileName>x509_csr.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\x509_csr.c</FilePath>            </File>            <File>
+              <FileName>x509write_crt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\x509write_crt.c</FilePath>            </File>            <File>
+              <FileName>x509write_csr.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\x509write_csr.c</FilePath>            </File>            <File>
               <FileName>xtea.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\external\mbedtls\library\xtea.c</FilePath>            </File>          </Files>
@@ -880,28 +913,28 @@
         </Group>        <Group>
           <GroupName>nrf_cc310</GroupName>
           <Files>            <File>
-              <FileName>nrf_cc310_0.9.12.lib</FileName>
+              <FileName>nrf_cc310_0.9.13.lib</FileName>
               <FileType>4</FileType>
-              <FilePath>..\..\..\..\..\..\..\external\nrf_cc310\lib\cortex-m4\hard-float\short-wchar\nrf_cc310_0.9.12.lib</FilePath>            </File>          </Files>
+              <FilePath>..\..\..\..\..\..\..\external\nrf_cc310\lib\cortex-m4\hard-float\short-wchar\nrf_cc310_0.9.13.lib</FilePath>            </File>          </Files>
         </Group>      </Groups>
     </Target>  </Targets><RTE>
   <packages>
     <filter>
       <targetInfos/>
-    </filter>    <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0">
+    </filter>    <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="5.6.0">
       <targetInfos>        <targetInfo name="nrf52832_xxaa" versionMatchMode="fixed"/>      </targetInfos>
     </package>
-    <package name="nRF_DeviceFamilyPack_NordicLicense" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.27.0">
+    <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.35.0">
       <targetInfos>        <targetInfo name="nrf52832_xxaa" versionMatchMode="fixed"/>      </targetInfos>
     </package>  </packages>
   <apis/>
-  <components>    <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="4.3.0" condition="CMSIS Core">
-      <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0"/>
+  <components>    <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="5.3.0" condition="CMSIS Core">
+      <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="5.6.0"/>
       <targetInfos>        <targetInfo name="nrf52832_xxaa" versionMatchMode="fixed"/>      </targetInfos>
     </component>
-    <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.27.0" condition="nRF5x Series CMSIS Device">
-      <package name="nRF_DeviceFamilyPack_NordicLicense" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.27.0"/>
-      <targetInfos>        <targetInfo name="nrf52832_xxaa" versionMatchMode="fixed"/>      </targetInfos>
+    <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.35.0" condition="nRF5x Series CMSIS Device">
+      <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.35.0"/>
+      <targetInfos>        <targetInfo name="nrf52832_xxaa"/>      </targetInfos>
     </component>  </components>
   <files>  </files>
 </RTE>

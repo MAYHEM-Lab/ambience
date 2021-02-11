@@ -52,6 +52,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/balloc \
   $(SDK_ROOT)/components/libraries/ringbuf \
   $(SDK_ROOT)/modules/nrfx/hal \
+  $(SDK_ROOT)/components/toolchain/cmsis/dsp/Include \
   $(SDK_ROOT)/components/libraries/bsp \
   $(SDK_ROOT)/components/libraries/log \
   $(SDK_ROOT)/modules/nrfx \

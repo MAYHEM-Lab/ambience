@@ -690,13 +690,11 @@ asc_request_data_t ascs_get_last_request(void)
 }
 
 
-void ascs_send_response(uint8_t * response_data_buffer)
+void ascs_send_response(uint8_t * response_data_buffer, size_t buf_size)
 {
     uint32_t err_code;
-    uint32_t array_size = sizeof(response_data_buffer) / sizeof(response_data_buffer[0]);
 
-
-    if (array_size != ANT_STANDARD_DATA_PAYLOAD_SIZE)
+    if (buf_size != ANT_STANDARD_DATA_PAYLOAD_SIZE)
     {
         err_code = NRF_ERROR_INVALID_PARAM;
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2016 - 2020, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -864,11 +864,8 @@ static void usbd_event_handler(nrf_drv_usbd_evt_t const * const p_event)
         {
             if (NRF_USBD_EP_OK == p_event->data.eptransfer.status)
             {
-                if (!nrf_drv_usbd_errata_154())
-                {
-                    /* Transfer ok - allow status stage */
-                    nrf_drv_usbd_setup_clear();
-                }
+                /* Transfer ok - allow status stage */
+                nrf_drv_usbd_setup_clear();
             }
             else if (NRF_USBD_EP_ABORTED == p_event->data.eptransfer.status)
             {
@@ -888,13 +885,8 @@ static void usbd_event_handler(nrf_drv_usbd_evt_t const * const p_event)
              * The code is here as a pattern how to support such a transfer. */
             if (NRF_USBD_EP_OK == p_event->data.eptransfer.status)
             {
-                /* NOTE: Data values or size may be tested here to decide if clear or stall.
-                 * If errata 154 is present the data transfer is acknowledged by the hardware. */
-                if (!nrf_drv_usbd_errata_154())
-                {
-                    /* Transfer ok - allow status stage */
-                    nrf_drv_usbd_setup_clear();
-                }
+                /* Transfer ok - allow status stage */
+                nrf_drv_usbd_setup_clear();
             }
             else if (NRF_USBD_EP_ABORTED == p_event->data.eptransfer.status)
             {
@@ -1067,7 +1059,7 @@ static void bsp_evt_handler(bsp_event_t evt)
         m_send_flag = 1;
         break;
     }
-    
+
     case BTN_DATA_KEY_RELEASE:
     {
         m_send_flag = 0;
@@ -1164,18 +1156,22 @@ static void log_resetreason(void)
     {
         NRF_LOG_INFO("- OFF");
     }
+#if defined(NRF_POWER_RESETREAS_LPCOMP_MASK)
     if (0 != (rr & NRF_POWER_RESETREAS_LPCOMP_MASK  ))
     {
         NRF_LOG_INFO("- LPCOMP");
     }
+#endif
     if (0 != (rr & NRF_POWER_RESETREAS_DIF_MASK     ))
     {
         NRF_LOG_INFO("- DIF");
     }
+#if defined(NRF_POWER_RESETREAS_NFC_MASK)
     if (0 != (rr & NRF_POWER_RESETREAS_NFC_MASK     ))
     {
         NRF_LOG_INFO("- NFC");
     }
+#endif
     if (0 != (rr & NRF_POWER_RESETREAS_VBUS_MASK    ))
     {
         NRF_LOG_INFO("- VBUS");
@@ -1192,11 +1188,6 @@ int main(void)
     init_cli();
 
     NRF_LOG_INFO("USDB example started.");
-    if (NRF_DRV_USBD_ERRATA_ENABLE)
-    {
-        NRF_LOG_INFO("USB errata 104 %s", (uint32_t)(nrf_drv_usbd_errata_104() ? "enabled" : "disabled"));
-        NRF_LOG_INFO("USB errata 154 %s", (uint32_t)(nrf_drv_usbd_errata_154() ? "enabled" : "disabled"));
-    }
     log_resetreason();
     nrf_power_resetreas_clear(nrf_power_resetreas_get());
 

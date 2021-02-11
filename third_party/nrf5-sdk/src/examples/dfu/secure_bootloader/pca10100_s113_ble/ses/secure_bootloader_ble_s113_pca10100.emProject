@@ -21,16 +21,16 @@
       gcc_entry_point="Reset_Handler"
       macros="CMSIS_CONFIG_TOOL=../../../../../external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar"
       debug_register_definition_file="../../../../../modules/nrfx/mdk/nrf52833.svd"
-      debug_additional_load_file="../../../../../components/softdevice/s113/hex/s113_nrf52_7.0.1_softdevice.hex"
+      debug_additional_load_file="../../../../../components/softdevice/s113/hex/s113_nrf52_7.2.0_softdevice.hex"
       debug_start_from_entry_point_symbol="No"
       gcc_debugging_level="Level 3"      linker_output_format="hex"
       linker_printf_width_precision_supported="Yes"
       linker_printf_fmt_level="long"
       linker_scanf_fmt_level="long"
       linker_section_placement_file="flash_placement.xml"
-      linker_section_placement_macros="FLASH_PH_START=0x0;FLASH_PH_SIZE=0x80000;RAM_PH_START=0x20000000;RAM_PH_SIZE=0x20000;FLASH_START=0x78000;FLASH_SIZE=0x6000;RAM_START=0x2000260c;RAM_SIZE=0x1d9f4"
+      linker_section_placement_macros="FLASH_PH_START=0x0;FLASH_PH_SIZE=0x80000;RAM_PH_START=0x20000000;RAM_PH_SIZE=0x20000;FLASH_START=0x78000;FLASH_SIZE=0x6000;RAM_START=0x20002608;RAM_SIZE=0x1d9f8"
       
-      linker_section_placements_segments="FLASH RX 0x0 0x80000;RAM RWX 0x20000000 0x20000;uicr_bootloader_start_address RX 0x10001014 0x4;bootloader_settings_page RX 0x0007F000 0x1000;uicr_mbr_params_page RX 0x10001018 0x4;mbr_params_page RX 0x0007E000 0x1000"
+      linker_section_placements_segments="FLASH RX 0x0 0x80000;RAM1 RWX 0x20000000 0x20000;mbr_params_page RX 0x0007E000 0x1000;bootloader_settings_page RX 0x0007F000 0x1000;uicr_bootloader_start_address RX 0x10001014 0x4;uicr_mbr_params_page RX 0x10001018 0x4"
       project_directory=""
       project_type="Executable" />
       <folder Name="Segger Startup Files">
@@ -72,7 +72,7 @@
       <file file_name="../../../../../modules/nrfx/soc/nrfx_atomic.c" />
     </folder>
     <folder Name="nRF_Oberon_Crypto">
-      <file file_name="../../../../../external/nrf_oberon/lib/cortex-m4/hard-float/liboberon_3.0.1.a" />
+      <file file_name="../../../../../external/nrf_oberon/lib/cortex-m4/hard-float/liboberon_3.0.6.a" />
     </folder>
     <folder Name="nRF_Crypto">
       <file file_name="../../../../../components/libraries/crypto/nrf_crypto_ecc.c" />
@@ -146,6 +146,6 @@
   </project>
   <configuration Name="Release"
     c_preprocessor_definitions="NDEBUG"
-    gcc_optimization_level="Optimize For Size" />
+    link_time_optimization="No"    gcc_optimization_level="Optimize For Size" />
 
 </solution>

@@ -27,16 +27,16 @@
       linker_printf_fmt_level="long"
       linker_scanf_fmt_level="long"
       linker_section_placement_file="flash_placement.xml"
-      linker_section_placement_macros="FLASH_PH_START=0x0;FLASH_PH_SIZE=0x100000;RAM_PH_START=0x20000000;RAM_PH_SIZE=0x40000;FLASH_START=0x0;FLASH_SIZE=0x100000;RAM_START=0x20001578;RAM_SIZE=0x3ea88"
+      linker_section_placement_macros="FLASH_PH_START=0x0;FLASH_PH_SIZE=0x100000;RAM_PH_START=0x20000000;RAM_PH_SIZE=0x40000;FLASH_START=0x0;FLASH_SIZE=0x100000;RAM_START=0x20001568;RAM_SIZE=0x3ea98"
       
-      linker_section_placements_segments="FLASH RX 0x0 0x100000;RAM RWX 0x20000000 0x40000"
+      linker_section_placements_segments="FLASH RX 0x0 0x100000;RAM1 RWX 0x20000000 0x40000"
       project_directory=""
       project_type="Executable" />
       <folder Name="Segger Startup Files">
         <file file_name="$(StudioDir)/source/thumb_crt0.s" />
       </folder>
     <folder Name="nrf_cc310">
-      <file file_name="../../../../../../external/nrf_cc310/lib/cortex-m4/hard-float/libnrf_cc310_0.9.12.a" />
+      <file file_name="../../../../../../external/nrf_cc310/lib/cortex-m4/hard-float/libnrf_cc310_0.9.13.a" />
     </folder>
     <folder Name="Board Support">
       <file file_name="../../../../../../components/libraries/bsp/bsp.c" />
@@ -130,6 +130,7 @@
     <folder Name="nRF_TLS">
       <file file_name="../../../../../../external/mbedtls/library/aes.c" />
       <file file_name="../../../../../../external/mbedtls/library/ctr_drbg.c" />
+      <file file_name="../../../../../../external/mbedtls/library/platform_util.c" />
     </folder>
     <folder Name="nRF_Drivers">
       <file file_name="../../../../../../integration/nrfx/legacy/nrf_drv_clock.c" />
@@ -174,7 +175,7 @@
       <file file_name="../../../../../../external/segger_rtt/SEGGER_RTT_printf.c" />
     </folder>
     <folder Name="nRF_Oberon_Crypto">
-      <file file_name="../../../../../../external/nrf_oberon/lib/cortex-m4/hard-float/liboberon_3.0.1.a" />
+      <file file_name="../../../../../../external/nrf_oberon/lib/cortex-m4/hard-float/liboberon_3.0.6.a" />
     </folder>
     <folder Name="None">
       <file file_name="../../../../../../modules/nrfx/mdk/ses_startup_nrf52840.s" />
@@ -243,7 +244,7 @@
   </project>
   <configuration Name="Release"
     c_preprocessor_definitions="NDEBUG"
-    gcc_optimization_level="Optimize For Size" />
+    link_time_optimization="No"    gcc_optimization_level="Optimize For Size" />
   <configuration Name="Debug"
     c_preprocessor_definitions="DEBUG; DEBUG_NRF"
     gcc_optimization_level="None"/>

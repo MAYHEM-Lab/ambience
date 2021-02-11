@@ -259,11 +259,11 @@
         </option>
         <option>
           <name>IExtraOptionsCheck</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>IExtraOptions</name>
-          <state></state>
+          <state>--diag_suppress Pe111</state>
         </option>
         <option>
           <name>CCLangConformance</name>
@@ -1110,6 +1110,6 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\modules\nrfx\mdk\iar_startup_nrf52840.s</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\modules\nrfx\mdk\system_nrf52840.c</name>    </file>  </group>  <group>
   <name>nrf_cc310_bl</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_cc310_bl\lib\cortex-m4\hard-float\short-wchar\no-interrupts\libnrf_cc310_bl_0.9.12.a</name>    </file>  </group></project>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_cc310_bl\lib\cortex-m4\hard-float\short-wchar\no-interrupts\libnrf_cc310_bl_0.9.13.a</name>    </file>  </group></project>
 
 

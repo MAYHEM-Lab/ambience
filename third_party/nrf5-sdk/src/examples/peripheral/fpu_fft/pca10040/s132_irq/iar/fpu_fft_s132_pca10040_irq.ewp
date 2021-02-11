@@ -264,11 +264,11 @@
         </option>
         <option>
           <name>IExtraOptionsCheck</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>IExtraOptions</name>
-          <state></state>
+          <state>--diag_suppress Pe111</state>
         </option>
         <option>
           <name>CCLangConformance</name>
@@ -333,6 +333,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\softdevice\common</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\softdevice\s132\headers</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\softdevice\s132\headers\nrf52</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\toolchain\cmsis\dsp\Include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\toolchain\cmsis\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\external\fprintf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\external\segger_rtt</state>
@@ -624,6 +625,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\softdevice\common</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\softdevice\s132\headers</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\softdevice\s132\headers\nrf52</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\toolchain\cmsis\dsp\Include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\toolchain\cmsis\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\external\fprintf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\external\segger_rtt</state>

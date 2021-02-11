@@ -29,14 +29,14 @@
       linker_section_placement_file="flash_placement.xml"
       linker_section_placement_macros="FLASH_PH_START=0x0;FLASH_PH_SIZE=0x80000;RAM_PH_START=0x20000000;RAM_PH_SIZE=0x10000;FLASH_START=0x0;FLASH_SIZE=0x80000;RAM_START=0x20000000;RAM_SIZE=0x10000"
       
-      linker_section_placements_segments="FLASH RX 0x0 0x80000;RAM RWX 0x20000000 0x10000"
+      linker_section_placements_segments="FLASH RX 0x0 0x80000;RAM1 RWX 0x20000000 0x10000"
       project_directory=""
       project_type="Executable" />
       <folder Name="Segger Startup Files">
         <file file_name="$(StudioDir)/source/thumb_crt0.s" />
       </folder>
     <folder Name="nrf_cc310">
-      <file file_name="../../../../../../../../external/nrf_cc310/lib/cortex-m4/hard-float/libnrf_cc310_0.9.12.a" />
+      <file file_name="../../../../../../../../external/nrf_cc310/lib/cortex-m4/hard-float/libnrf_cc310_0.9.13.a" />
     </folder>
     <folder Name="Board Support">
       <file file_name="../../../../../../../../components/libraries/bsp/bsp.c" />
@@ -145,14 +145,17 @@
       <file file_name="../../../../../../../../external/mbedtls/library/aes.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/aesni.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/arc4.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/aria.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/asn1parse.c" />
-      <file file_name="../../../../../../../../external/nrf_tls/mbedtls/replacements/asn1write.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/asn1write.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/base64.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/bignum.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/blowfish.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/camellia.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/ccm.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/certs.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/chacha20.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/chachapoly.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/cipher.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/cipher_wrap.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/cmac.c" />
@@ -162,6 +165,7 @@
       <file file_name="../../../../../../../../external/mbedtls/library/dhm.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/ecdh.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/ecdsa.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/ecjpake.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/ecp.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/ecp_curves.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/entropy.c" />
@@ -176,6 +180,8 @@
       <file file_name="../../../../../../../../external/mbedtls/library/md5.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/md_wrap.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/memory_buffer_alloc.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/net_sockets.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/nist_kw.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/oid.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/padlock.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/pem.c" />
@@ -187,8 +193,11 @@
       <file file_name="../../../../../../../../external/mbedtls/library/pkparse.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/pkwrite.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/platform.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/platform_util.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/poly1305.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/ripemd160.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/rsa.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/rsa_internal.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/sha1.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/sha256.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/sha512.c" />
@@ -196,7 +205,7 @@
       <file file_name="../../../../../../../../external/mbedtls/library/ssl_ciphersuites.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/ssl_cli.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/ssl_cookie.c" />
-      <file file_name="../../../../../../../../external/nrf_tls/mbedtls/replacements/ssl_srv.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/ssl_srv.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/ssl_ticket.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/ssl_tls.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/threading.c" />
@@ -207,10 +216,12 @@
       <file file_name="../../../../../../../../external/mbedtls/library/x509_crl.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/x509_crt.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/x509_csr.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/x509write_crt.c" />
+      <file file_name="../../../../../../../../external/mbedtls/library/x509write_csr.c" />
       <file file_name="../../../../../../../../external/mbedtls/library/xtea.c" />
     </folder>
     <folder Name="nRF_Oberon_Crypto">
-      <file file_name="../../../../../../../../external/nrf_oberon/lib/cortex-m4/hard-float/liboberon_3.0.1.a" />
+      <file file_name="../../../../../../../../external/nrf_oberon/lib/cortex-m4/hard-float/liboberon_3.0.6.a" />
     </folder>
     <folder Name="None">
       <file file_name="../../../../../../../../modules/nrfx/mdk/ses_startup_nrf52.s" />
@@ -237,7 +248,7 @@
   </project>
   <configuration Name="Release"
     c_preprocessor_definitions="NDEBUG"
-    gcc_optimization_level="Optimize For Size" />
+    link_time_optimization="No"    gcc_optimization_level="Optimize For Size" />
   <configuration Name="Debug"
     c_preprocessor_definitions="DEBUG; DEBUG_NRF"
     gcc_optimization_level="None"/>

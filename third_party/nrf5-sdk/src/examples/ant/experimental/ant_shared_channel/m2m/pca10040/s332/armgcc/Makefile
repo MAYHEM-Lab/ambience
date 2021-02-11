@@ -1,4 +1,4 @@
-PROJECT_NAME     := experimental_ant_shared_channel_m2m_pca10040_s332
+PROJECT_NAME     := ant_sc_m2m_pca10040_s332
 TARGETS          := nrf52832_xxaa
 OUTPUT_DIRECTORY := _build
 
@@ -6,7 +6,7 @@ SDK_ROOT := ../../../../../../../..
 PROJ_DIR := ../../..
 
 $(OUTPUT_DIRECTORY)/nrf52832_xxaa.out: \
-  LINKER_SCRIPT  := experimental_ant_shared_channel_m2m_gcc_nrf52.ld
+  LINKER_SCRIPT  := ant_sc_m2m_gcc_nrf52.ld
 
 # Source files common to all targets
 SRC_FILES += \

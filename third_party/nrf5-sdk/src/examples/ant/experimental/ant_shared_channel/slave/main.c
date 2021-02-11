@@ -219,7 +219,7 @@ static void check_and_handle_asc_flags(void)
             }
 
             //tell the slave to send the response
-            ascs_send_response(response_buffer);
+            ascs_send_response(response_buffer, sizeof(response_buffer));
         }
 
         if (asc_flags & EVENT_ASC_DATA_TIMEOUT)

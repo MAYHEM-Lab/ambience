@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2020, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -4011,7 +4011,7 @@
 #define NRFX_WDT_CONFIG_BEHAVIOUR 1
 #endif
 
-// <o> NRFX_WDT_CONFIG_RELOAD_VALUE - Reload value  <15-4294967295> 
+// <o> NRFX_WDT_CONFIG_RELOAD_VALUE - Reload value in ms  <1-131072000> 
 
 
 #ifndef NRFX_WDT_CONFIG_RELOAD_VALUE

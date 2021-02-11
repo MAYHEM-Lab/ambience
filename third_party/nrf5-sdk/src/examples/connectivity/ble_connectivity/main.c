@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2013 - 2020, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -234,6 +234,8 @@ int main(void)
     {
         /* Process SoftDevice events. */
         app_sched_execute();
+
+        CRITICAL_REGION_ENTER();
         if (nrf_sdh_is_suspended())
         {
             // Resume pulling new events if queue utilization drops below 50%.
@@ -242,6 +244,7 @@ int main(void)
                 nrf_sdh_resume();
             }
         }
+        CRITICAL_REGION_EXIT();
 
         /* Process received packets.
          * We can NOT add received packets as events to the application scheduler queue because

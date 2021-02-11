@@ -86,6 +86,7 @@ add_library(nrf5-sdk
         src/components/libraries/atomic/nrf_atomic.c
         src/components/libraries/sha256/sha256.c
         src/components/libraries/pwr_mgmt/nrf_pwr_mgmt.c)
+target_link_libraries(nrf5-sdk PUBLIC cmsis::core picolibc)
 
 target_include_directories(nrf5-sdk PUBLIC include)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/integration/nrfx)
@@ -95,7 +96,6 @@ target_include_directories(nrf5-sdk SYSTEM PUBLIC src/modules/nrfx/mdk/)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/modules/nrfx/hal)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/modules/nrfx/drivers/include)
 
-target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/toolchain/cmsis/include/)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/libraries/delay)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/libraries/log)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/libraries/timer)

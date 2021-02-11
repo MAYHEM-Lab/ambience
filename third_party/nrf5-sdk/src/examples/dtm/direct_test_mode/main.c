@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2012 - 2020, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -52,6 +52,9 @@
 #include "boards.h"
 #include "app_uart.h"
 
+#if defined(NRF21540_DRIVER_ENABLE) && (NRF21540_DRIVER_ENABLE == 1)
+#include "nrf21540.h"
+#endif
 
 // @note: The BLE DTM 2-wire UART standard specifies 8 data bits, 1 stop bit, no flow control.
 //        These parameters are not configurable in the BLE standard.
@@ -121,22 +124,6 @@ static void uart_init(void)
 }
 
 
-/**@brief Function for splitting UART command bit fields into separate command parameters for the DTM library.
- *
- * @param[in]   command   The packed UART command.
- * @return      result status from dtmlib.
- */
-static uint32_t dtm_cmd_put(uint16_t command)
-{
-    dtm_cmd_t      command_code = (command >> 14) & 0x03;
-    dtm_freq_t     freq         = (command >> 8) & 0x3F;
-    uint32_t       length       = (command >> 2) & 0x3F;
-    dtm_pkt_type_t payload      = command & 0x03;
-
-    return dtm_cmd(command_code, freq, length, payload);
-}
-
-
 /**@brief Function for application main entry.
  *
  * @details This function serves as an adaptation layer between a 2-wire UART interface and the
@@ -158,6 +145,12 @@ int main(void)
     uart_init();
 
     dtm_error_code = dtm_init();
+
+#if defined(NRF21540_DRIVER_ENABLE) && (NRF21540_DRIVER_ENABLE == 1)
+    //Initialization of nRF21540 front-end Bluetooth® range extender chip. Do not use if your hardware doesn't support it.
+    APP_ERROR_CHECK(nrf21540_init());
+#endif
+
     if (dtm_error_code != DTM_SUCCESS)
     {
         // If DTM cannot be correctly initialized, then we just return.
@@ -201,7 +194,7 @@ int main(void)
         is_msb_read        = false;
         dtm_cmd_from_uart |= (dtm_cmd_t)rx_byte;
 
-        if (dtm_cmd_put(dtm_cmd_from_uart) != DTM_SUCCESS)
+        if (dtm_cmd(dtm_cmd_from_uart) != DTM_SUCCESS)
         {
             // Extended error handling may be put here.
             // Default behavior is to return the event on the UART (see below);

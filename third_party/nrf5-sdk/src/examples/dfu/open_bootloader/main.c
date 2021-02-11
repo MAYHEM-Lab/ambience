@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2020, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -204,9 +204,9 @@ int main(void)
     nrf_bootloader_mbr_addrs_populate();
 
     // Protect MBR and bootloader code from being overwritten.
-    ret_val = nrf_bootloader_flash_protect(0, MBR_SIZE, false);
+    ret_val = nrf_bootloader_flash_protect(0, MBR_SIZE);
     APP_ERROR_CHECK(ret_val);
-    ret_val = nrf_bootloader_flash_protect(BOOTLOADER_START_ADDR, BOOTLOADER_SIZE, false);
+    ret_val = nrf_bootloader_flash_protect(BOOTLOADER_START_ADDR, BOOTLOADER_SIZE);
     APP_ERROR_CHECK(ret_val);
 
     ret_val = NRF_LOG_INIT(app_timer_cnt_get);

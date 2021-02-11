@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2020, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -1395,7 +1395,7 @@
 
 
 #ifndef MEMORY_MANAGER_XXLARGE_BLOCK_COUNT
-#define MEMORY_MANAGER_XXLARGE_BLOCK_COUNT 2
+#define MEMORY_MANAGER_XXLARGE_BLOCK_COUNT 1
 #endif
 
 // <o> MEMORY_MANAGER_XXLARGE_BLOCK_SIZE -  Size of each memory blocks identified as 'extra extra large' block. 

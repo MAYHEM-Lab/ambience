@@ -7,6 +7,8 @@
   </project>  <project>
     <path>$WS_DIR$\pca10040\blank\iar\esb_prx_pca10040.ewp</path>
   </project>  <project>
+    <path>$WS_DIR$\pca10100e\blank\iar\esb_prx_pca10100e.ewp</path>
+  </project>  <project>
     <path>$WS_DIR$\pca10056e\blank\iar\esb_prx_pca10056e.ewp</path>
   </project>  <project>
     <path>$WS_DIR$\pca10040e\blank\iar\esb_prx_pca10040e.ewp</path>

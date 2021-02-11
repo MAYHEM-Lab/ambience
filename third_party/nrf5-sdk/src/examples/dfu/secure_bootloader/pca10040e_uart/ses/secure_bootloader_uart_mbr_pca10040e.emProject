@@ -30,7 +30,7 @@
       linker_section_placement_file="flash_placement.xml"
       linker_section_placement_macros="FLASH_PH_START=0x0;FLASH_PH_SIZE=0x30000;RAM_PH_START=0x20000000;RAM_PH_SIZE=0x6000;FLASH_START=0x28000;FLASH_SIZE=0x6000;RAM_START=0x20000008;RAM_SIZE=0x5ff8"
       
-      linker_section_placements_segments="FLASH RX 0x0 0x30000;RAM RWX 0x20000000 0x6000;uicr_bootloader_start_address RX 0x10001014 0x4;uicr_mbr_params_page RX 0x10001018 0x4;mbr_params_page RX 0x0002E000 0x1000;bootloader_settings_page RX 0x0002F000 0x1000"
+      linker_section_placements_segments="FLASH RX 0x0 0x30000;RAM1 RWX 0x20000000 0x6000;mbr_params_page RX 0x0002E000 0x1000;bootloader_settings_page RX 0x0002F000 0x1000;uicr_bootloader_start_address RX 0x10001014 0x4;uicr_mbr_params_page RX 0x10001018 0x4"
       project_directory=""
       project_type="Executable" />
       <folder Name="Segger Startup Files">
@@ -83,7 +83,7 @@
       <file file_name="../../../../../modules/nrfx/drivers/src/nrfx_uarte.c" />
     </folder>
     <folder Name="nRF_Oberon_Crypto">
-      <file file_name="../../../../../external/nrf_oberon/lib/cortex-m4/soft-float/liboberon_3.0.1.a" />
+      <file file_name="../../../../../external/nrf_oberon/lib/cortex-m4/soft-float/liboberon_3.0.6.a" />
     </folder>
     <folder Name="nRF_Crypto">
       <file file_name="../../../../../components/libraries/crypto/nrf_crypto_ecc.c" />
@@ -146,6 +146,6 @@
   </project>
   <configuration Name="Release"
     c_preprocessor_definitions="NDEBUG"
-    gcc_optimization_level="Optimize For Size" />
+    link_time_optimization="No"    gcc_optimization_level="Optimize For Size" />
 
 </solution>

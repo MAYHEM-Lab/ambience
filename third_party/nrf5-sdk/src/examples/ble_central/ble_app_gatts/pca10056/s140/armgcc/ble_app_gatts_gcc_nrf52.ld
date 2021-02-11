@@ -6,7 +6,7 @@ GROUP(-lgcc -lc -lnosys)
 MEMORY
 {
   FLASH (rx) : ORIGIN = 0x27000, LENGTH = 0xd9000
-  RAM (rwx) :  ORIGIN = 0x20001d28, LENGTH = 0x3e2d8
+  RAM (rwx) :  ORIGIN = 0x20001d38, LENGTH = 0x3e2c8
 }
 
 SECTIONS
@@ -81,6 +81,12 @@ SECTIONS
     KEEP(*(.nrf_balloc))
     PROVIDE(__stop_nrf_balloc = .);
   } > FLASH
+  .sdh_req_observers :
+  {
+    PROVIDE(__start_sdh_req_observers = .);
+    KEEP(*(SORT(.sdh_req_observers*)))
+    PROVIDE(__stop_sdh_req_observers = .);
+  } > FLASH
   .sdh_state_observers :
   {
     PROVIDE(__start_sdh_state_observers = .);
@@ -92,12 +98,6 @@ SECTIONS
     PROVIDE(__start_sdh_stack_observers = .);
     KEEP(*(SORT(.sdh_stack_observers*)))
     PROVIDE(__stop_sdh_stack_observers = .);
-  } > FLASH
-  .sdh_req_observers :
-  {
-    PROVIDE(__start_sdh_req_observers = .);
-    KEEP(*(SORT(.sdh_req_observers*)))
-    PROVIDE(__stop_sdh_req_observers = .);
   } > FLASH
     .nrf_queue :
   {

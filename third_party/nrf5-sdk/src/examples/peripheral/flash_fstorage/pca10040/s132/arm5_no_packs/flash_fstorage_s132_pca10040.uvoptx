@@ -111,7 +111,7 @@
       <LintConfigFile></LintConfigFile>
     </TargetOption>
   </Target>  <Target>
-    <TargetName>flash_s132_nrf52_7.0.1_softdevice</TargetName>
+    <TargetName>flash_s132_nrf52_7.2.0_softdevice</TargetName>
     <ToolsetNumber>0x4</ToolsetNumber>
     <ToolsetName>ARM-ADS</ToolsetName>
     <TargetOption>

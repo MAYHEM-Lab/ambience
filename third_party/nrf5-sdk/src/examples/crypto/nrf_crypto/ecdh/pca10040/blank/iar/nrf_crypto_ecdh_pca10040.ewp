@@ -265,11 +265,11 @@
         </option>
         <option>
           <name>IExtraOptionsCheck</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>IExtraOptions</name>
-          <state></state>
+          <state>--diag_suppress Pe111</state>
         </option>
         <option>
           <name>CCLangConformance</name>
@@ -1056,7 +1056,7 @@
     </settings>
   </configuration>  <group>
   <name>nrf_cc310</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_cc310\lib\cortex-m4\hard-float\short-wchar\libnrf_cc310_0.9.12.a</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_cc310\lib\cortex-m4\hard-float\short-wchar\libnrf_cc310_0.9.13.a</name>    </file>  </group>  <group>
   <name>nRF_Crypto backend nRF HW</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw\nrf_hw_backend_init.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw\nrf_hw_backend_rng.c</name>    </file>    <file>
@@ -1138,14 +1138,17 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\aes.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\aesni.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\arc4.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\aria.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\asn1parse.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_tls\mbedtls\replacements\asn1write.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\asn1write.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\base64.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\bignum.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\blowfish.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\camellia.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ccm.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\certs.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\chacha20.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\chachapoly.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\cipher.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\cipher_wrap.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\cmac.c</name>    </file>    <file>
@@ -1155,6 +1158,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\dhm.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ecdh.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ecdsa.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ecjpake.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ecp.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ecp_curves.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\entropy.c</name>    </file>    <file>
@@ -1169,6 +1173,8 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\md5.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\md_wrap.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\memory_buffer_alloc.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\net_sockets.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\nist_kw.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\oid.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\padlock.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\pem.c</name>    </file>    <file>
@@ -1180,8 +1186,11 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\pkparse.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\pkwrite.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\platform.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\platform_util.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\poly1305.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ripemd160.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\rsa.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\rsa_internal.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\sha1.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\sha256.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\sha512.c</name>    </file>    <file>
@@ -1189,7 +1198,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ssl_ciphersuites.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ssl_cli.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ssl_cookie.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_tls\mbedtls\replacements\ssl_srv.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ssl_srv.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ssl_ticket.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\ssl_tls.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\threading.c</name>    </file>    <file>
@@ -1200,9 +1209,11 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\x509_crl.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\x509_crt.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\x509_csr.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\x509write_crt.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\x509write_csr.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\mbedtls\library\xtea.c</name>    </file>  </group>  <group>
   <name>nRF_Oberon_Crypto</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\liboberon_3.0.1.a</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\..\external\nrf_oberon\lib\cortex-m4\hard-float\short-wchar\liboberon_3.0.6.a</name>    </file>  </group>  <group>
   <name>None</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\mdk\iar_startup_nrf52.s</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\..\modules\nrfx\mdk\system_nrf52.c</name>    </file>  </group>  <group>
