@@ -39,9 +39,13 @@ if (ENABLE_UBSAN)
   target_link_libraries(tos_util_core PUBLIC ubsan_support)
 endif()
 
-add_library(
-  tos_util src/stub.cpp src/expected.cpp include/tos/expected.hpp src/new.cpp include/tos/fixed_fifo.hpp
-           include/tos/sync_ring_buf.hpp
+add_library(tos_util 
+  src/stub.cpp 
+  src/expected.cpp 
+  include/tos/expected.hpp 
+  src/new.cpp 
+  include/tos/fixed_fifo.hpp
+  include/tos/sync_ring_buf.hpp
 )
 
 target_link_libraries(tos_util PUBLIC tos_debug tos_util_core tos::ft)
