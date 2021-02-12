@@ -27,7 +27,7 @@ struct stm32l4_nucleo {
 };
 }
 
-constexpr auto board = boards::stm32f7_disco{};
+constexpr auto board = boards::stm32l4_disco{};
 
 void blink_task() {
     using namespace tos;
