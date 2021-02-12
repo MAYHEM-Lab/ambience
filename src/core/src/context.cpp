@@ -28,21 +28,41 @@ tos::span<uint8_t> heap_memory() {
     return tos::span<uint8_t>{&_end, &_estack};
 }
 }
+#elif defined(TOS_PLATFORM_nrf52)
+extern "C" {
+extern uint8_t __HeapBase;
+extern uint8_t __HeapLimit;
+}
+#include <tos/memory/free_list.hpp>
+namespace {
+tos::span<uint8_t> heap_memory() {
+    return tos::span<uint8_t>{&__HeapBase, &__HeapLimit};
+}
+}
 #endif
 
 namespace tos {
-context& default_context() {
+namespace {
+auto make_allocator() {
 #if defined(TOS_PLATFORM_raspi) || defined(TOS_PLATFORM_x86_64)
-    static auto erased_alloc =
-        forget(memory::erase_allocator(memory::free_list{heap_mem}));
-#elif defined(TOS_PLATFORM_stm32_hal)
-    static auto erased_alloc = forget(memory::erase_allocator(memory::free_list{heap_memory()}));
+    return memory::erase_allocator(memory::free_list{heap_mem});
+#elif defined(TOS_PLATFORM_stm32_hal) || defined(TOS_PLATFORM_nrf52)
+    return memory::erase_allocator(memory::free_list{heap_memory()});
 #else
-    static auto erased_alloc = forget(memory::erase_allocator(memory::mallocator{}));
+    return memory::erase_allocator(memory::mallocator{});
 #endif
+}
+
+memory::polymorphic_allocator& get_allocator() {
+    static auto alloc = make_allocator();
+    return alloc;
+}
+}
+
+context& default_context() {
     static auto ctx =
         forget<static_context<allocator_component, debug::logger_component>>(
-            erased_alloc.get(), debug::logger_component{});
+            get_allocator(), debug::logger_component{});
     return ctx.get();
 }
 } // namespace tos
