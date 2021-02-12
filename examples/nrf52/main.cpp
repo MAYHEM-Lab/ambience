@@ -10,7 +10,7 @@
 
 using bs = tos::bsp::board_spec;
 
-auto blink_task = [] {
+void blink_task() {
     using namespace tos;
     using namespace tos_literals;
 
