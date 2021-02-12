@@ -311,6 +311,10 @@ extern void (*start_ctors[])();
 extern void (*end_ctors[])();
 }
 
+extern "C" {
+void abort() {}
+}
+
 extern "C" int main() {
     std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
 
@@ -321,13 +325,17 @@ extern "C" int main() {
     // Interrupts are already enabled:
     tos::kern::enable_interrupts();
     // tos::kern::detail::disable_depth--;
+#if defined(SCB_SHCSR_USGFAULTENA_Msk)
     HAL_NVIC_EnableIRQ(UsageFault_IRQn);
     HAL_NVIC_SetPriority(UsageFault_IRQn, 0, 0);
     SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk;
+#endif
 
+#if defined(SCB_SHCSR_BUSFAULTENA_Msk)
     HAL_NVIC_EnableIRQ(BusFault_IRQn);
     HAL_NVIC_SetPriority(BusFault_IRQn, 0, 0);
     SCB->SHCSR |= SCB_SHCSR_BUSFAULTENA_Msk;
+#endif
 
     tos_main();
 
