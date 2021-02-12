@@ -16,3 +16,11 @@ target_sources(arch_arm PRIVATE
         exception.cpp
 )
 target_link_libraries(arch_arm PUBLIC tos_util_core cmsis::core tos_drivers tos_mmio tos::libcxx)
+
+if (${CMAKE_C_COMPILER_TARGET} MATCHES "armv7")
+    target_link_libraries(arch_arm PUBLIC clang_rt.builtins-armv7m)
+endif()
+
+if (${CMAKE_C_COMPILER_TARGET} MATCHES "armv6")
+    target_link_libraries(arch_arm PUBLIC clang_rt.builtins-armv6m)
+endif()

@@ -36,8 +36,10 @@ void mpu::enable() {
 }
 void mpu::disable() {
     MPU->CTRL = 0;
+#if defined(SCB_SHCSR_MEMFAULTENA_Msk)
     SCB->SHCSR &= ~SCB_SHCSR_MEMFAULTENA_Msk;
     NVIC_DisableIRQ(MemoryManagement_IRQn);
+#endif
 }
 
 void mpu::enable_default_privileged_access() {
