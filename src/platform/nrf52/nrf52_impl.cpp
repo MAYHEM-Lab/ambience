@@ -36,7 +36,17 @@ extern "C" [[gnu::weak]] void SVC_Handler() {
     tos::arm::exception::out_svc_handler();
 }
 
-int main() {
+extern "C" {
+int main();
+extern void (*start_ctors[])();
+extern void (*end_ctors[])();
+void _start() {
+    main();
+}
+}
+extern "C" TOS_NO_OPTIMIZE int main() {
+    std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
+
     tos::kern::enable_interrupts();
 
     nrf_pwr_mgmt_init();
