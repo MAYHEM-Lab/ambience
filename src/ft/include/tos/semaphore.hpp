@@ -133,7 +133,7 @@ private:
 
     friend bool try_down_isr(semaphore_base& s) {
         if (s.m_count > 0) {
-            --s.m_count;
+            s.m_count = s.m_count - 1;
             return true;
         }
         return false;
