@@ -69,6 +69,13 @@ struct queue {
     template<class FnT>
     void for_each_used(FnT&& fn) {
         used_base->disable_irq();
+        if (last_seen_used > used_base->index) {
+            // The used ring has wrapped around.
+            for (; last_seen_used != 0; ++last_seen_used) {
+                fn(*const_cast<queue_used_elem*>(
+                    &used_base->ring[last_seen_used % size]));
+            }
+        }
         for (; last_seen_used < used_base->index; ++last_seen_used) {
             fn(*const_cast<queue_used_elem*>(&used_base->ring[last_seen_used % size]));
         }
@@ -101,8 +108,7 @@ struct queue {
     }
 
     std::pair<int, queue_descriptor*> alloc() {
-        auto idx = next_buffer % size;
-        ++next_buffer;
+        auto idx = next_buffer++ % size;
         return {idx, &descriptors()[idx]};
     }
 
