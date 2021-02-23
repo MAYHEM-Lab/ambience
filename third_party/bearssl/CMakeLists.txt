@@ -1,6 +1,7 @@
 add_subdirectory(src)
 target_sources(bearssl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/stub.cpp)
 target_include_directories(bearssl PUBLIC include)
+target_link_libraries(bearssl PUBLIC tos::libc)
 
 add_library(ecdhe_bench ecdhe_bench.cpp)
 target_link_libraries(ecdhe_bench PUBLIC BearSSL::BearSSL ubench)
