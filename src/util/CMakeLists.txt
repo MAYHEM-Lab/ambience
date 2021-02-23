@@ -123,3 +123,5 @@ if(BUILD_TESTS)
   target_link_libraries(cancellation_token_test PUBLIC standalone_tests_main tos_cancellation_token)
   add_test(NAME cancellation_token_test COMMAND cancellation_token_test)
 endif()
+
+add_subdirectory(coro)
