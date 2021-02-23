@@ -123,6 +123,8 @@ void* operator new[](size_t sz, const std::nothrow_t&) noexcept {
     return nullptr;
 }
 
+// On ESP8266, the vendor lib supplies malloc symbols (ugh)
+#if !defined(TOS_PLATFORM_esp8266)
 extern "C" {
 void* _malloc_r(struct _reent *, size_t sz) {
     return new (std::nothrow) char[sz];
@@ -144,3 +146,4 @@ void free(void* ptr) {
     delete[] static_cast<char*>(ptr);
 }
 }
+#endif
