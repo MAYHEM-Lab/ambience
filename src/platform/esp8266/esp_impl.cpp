@@ -7,39 +7,38 @@ extern "C" {
 #include "gpio.h"
 #include "os_type.h"
 #include "osapi.h"
-
+#include <machine/core-isa.h>
 #include <mem.h>
 #include <user_interface.h>
-#include <machine/core-isa.h>
 }
 
 #include <lwip/timers.h>
 #include <tos/compiler.hpp>
 #include <tos/debug/debug.hpp>
-#include <tos/scheduler.hpp>
 #include <tos/interrupt.hpp>
+#include <tos/scheduler.hpp>
 
 #if ((SPI_FLASH_SIZE_MAP == 0) || (SPI_FLASH_SIZE_MAP == 1))
 #error "The flash map is not supported"
 #elif (SPI_FLASH_SIZE_MAP == 2)
-#define SYSTEM_PARTITION_RF_CAL_ADDR 0xfb000
-#define SYSTEM_PARTITION_PHY_DATA_ADDR 0xfc000
+#define SYSTEM_PARTITION_RF_CAL_ADDR           0xfb000
+#define SYSTEM_PARTITION_PHY_DATA_ADDR         0xfc000
 #define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR 0xfd000
 #elif (SPI_FLASH_SIZE_MAP == 3)
-#define SYSTEM_PARTITION_RF_CAL_ADDR 0x1fb000
-#define SYSTEM_PARTITION_PHY_DATA_ADDR 0x1fc000
+#define SYSTEM_PARTITION_RF_CAL_ADDR           0x1fb000
+#define SYSTEM_PARTITION_PHY_DATA_ADDR         0x1fc000
 #define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR 0x1fd000
 #elif (SPI_FLASH_SIZE_MAP == 4)
-#define SYSTEM_PARTITION_RF_CAL_ADDR 0x3fb000
-#define SYSTEM_PARTITION_PHY_DATA_ADDR 0x3fc000
+#define SYSTEM_PARTITION_RF_CAL_ADDR           0x3fb000
+#define SYSTEM_PARTITION_PHY_DATA_ADDR         0x3fc000
 #define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR 0x3fd000
 #elif (SPI_FLASH_SIZE_MAP == 5)
-#define SYSTEM_PARTITION_RF_CAL_ADDR 0x1fb000
-#define SYSTEM_PARTITION_PHY_DATA_ADDR 0x1fc000
+#define SYSTEM_PARTITION_RF_CAL_ADDR           0x1fb000
+#define SYSTEM_PARTITION_PHY_DATA_ADDR         0x1fc000
 #define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR 0x1fd000
 #elif (SPI_FLASH_SIZE_MAP == 6)
-#define SYSTEM_PARTITION_RF_CAL_ADDR 0x3fb000
-#define SYSTEM_PARTITION_PHY_DATA_ADDR 0x3fc000
+#define SYSTEM_PARTITION_RF_CAL_ADDR           0x3fb000
+#define SYSTEM_PARTITION_PHY_DATA_ADDR         0x3fc000
 #define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR 0x3fd000
 #else
 #error "The flash map is not supported"
@@ -53,23 +52,27 @@ void ICACHE_FLASH_ATTR user_init() {
     system_init_done_cb(entry);
 }
 
-constexpr auto EAGLE_FLASH_BIN_ADDR = static_cast<partition_type_t>(SYSTEM_PARTITION_CUSTOMER_BEGIN + 1);
-constexpr auto EAGLE_IROM0TEXT_BIN_ADDR = static_cast<partition_type_t>(SYSTEM_PARTITION_CUSTOMER_BEGIN + 2);
+constexpr auto EAGLE_FLASH_BIN_ADDR =
+    static_cast<partition_type_t>(SYSTEM_PARTITION_CUSTOMER_BEGIN + 1);
+constexpr auto EAGLE_IROM0TEXT_BIN_ADDR =
+    static_cast<partition_type_t>(SYSTEM_PARTITION_CUSTOMER_BEGIN + 2);
 
 static const partition_item_t at_partition_table[] = {
     {EAGLE_FLASH_BIN_ADDR, 0x00000, 0x10000},
     {EAGLE_IROM0TEXT_BIN_ADDR, 0x10000, 0x60000},
-    {SYSTEM_PARTITION_RF_CAL, SYSTEM_PARTITION_RF_CAL_ADDR, 0x1000}, // 4KB
+    {SYSTEM_PARTITION_RF_CAL, SYSTEM_PARTITION_RF_CAL_ADDR, 0x1000},     // 4KB
     {SYSTEM_PARTITION_PHY_DATA, SYSTEM_PARTITION_PHY_DATA_ADDR, 0x1000}, // 4KB
-    {SYSTEM_PARTITION_SYSTEM_PARAMETER, SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR, 0x3000}, // 12KB
+    {SYSTEM_PARTITION_SYSTEM_PARAMETER,
+     SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR,
+     0x3000}, // 12KB
 };
 
 void ICACHE_FLASH_ATTR user_pre_init(void) {
-    if (!system_partition_table_regist(at_partition_table,
-                                       std::size(at_partition_table),
-                                       SPI_FLASH_SIZE_MAP)) {
+    if (!system_partition_table_regist(
+            at_partition_table, std::size(at_partition_table), SPI_FLASH_SIZE_MAP)) {
         os_printf("TOS: system_partition_table_regist fail\r\n");
-        while (true) {}
+        while (true) {
+        }
     }
     os_printf("TOS: system_partition_table_regist ok\r\n");
 
@@ -83,7 +86,8 @@ void ICACHE_FLASH_ATTR user_pre_init(void) {
     }*/
 }
 
-void ICACHE_FLASH_ATTR user_rf_pre_init() {}
+void ICACHE_FLASH_ATTR user_rf_pre_init() {
+}
 
 uint32 ICACHE_FLASH_ATTR user_rf_cal_sector_set(void) {
     enum flash_size_map size_map = system_get_flash_size_map();
