@@ -1,3 +1,7 @@
+if (NOT ${TOS_PLATFORM} MATCHES "x86")
+    return()
+endif()
+
 add_library(tos_virtio queue.cpp device.cpp)
 target_include_directories(tos_virtio PUBLIC include)
 target_link_libraries(tos_virtio PUBLIC tos_drivers arch_x86_64)
