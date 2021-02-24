@@ -40,3 +40,4 @@ add_library(spirit1_driver
     Src/SPIRIT_Types.c
 )
 target_include_directories(spirit1_driver PUBLIC Inc)
+target_link_libraries(spirit1_driver PUBLIC tos::libc)
