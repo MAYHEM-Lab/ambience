@@ -14,6 +14,7 @@
 #include <tos/x86_64/mmu.hpp>
 #include <tos/x86_64/pic.hpp>
 #include <tos/x86_64/port.hpp>
+#include <tos/x86_64/tss.hpp>
 
 extern "C" {
 void __cxa_atexit(void (*)(void*), void*, void*) {
@@ -73,12 +74,22 @@ void enable_sse() {
     write_cr4(cr4);
 }
 
-[[gnu::section(".nozero")]] gdt_entry gdt_entry_data[3];
+[[gnu::section(".nozero")]] gdt_entry gdt_entry_data[6];
 
 [[gnu::section(".nozero")]] struct [[gnu::packed]] {
     uint16_t sz;
     uint64_t ptr;
 } gdt;
+
+tss tss_;
+
+[[gnu::section(".nozero")]] tos::stack_storage<4096 * 8> interrupt_stack{};
+void setup_tss(gdt_entry& entry) {
+    tss_.rsp[0] = reinterpret_cast<uintptr_t>(&interrupt_stack) + sizeof interrupt_stack;
+    tss_.iopb_offset = sizeof tss_;
+
+
+}
 
 [[gnu::noinline]] void setup_gdt() {
     memset(&gdt_entry_data, 0, sizeof(gdt_entry_data));
