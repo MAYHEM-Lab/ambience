@@ -74,50 +74,92 @@ void enable_sse() {
     write_cr4(cr4);
 }
 
-[[gnu::section(".nozero")]] gdt_entry gdt_entry_data[6];
+struct [[gnu::packed]] gdt_entries {
+    gdt_entry normal[5];
+    expanded_gdt_entry expanded[1];
+};
+
+[[gnu::section(".nozero")]] gdt_entries gdt_entry_data;
 
 [[gnu::section(".nozero")]] struct [[gnu::packed]] {
     uint16_t sz;
     uint64_t ptr;
 } gdt;
 
-tss tss_;
+[[gnu::section(".nozero")]] tss tss_;
 
 [[gnu::section(".nozero")]] tos::stack_storage<4096 * 8> interrupt_stack{};
-void setup_tss(gdt_entry& entry) {
+void setup_tss(expanded_gdt_entry& entry) {
+    static_assert(sizeof(tss_) == 104);
+    entry.zero()
+        .base(reinterpret_cast<uint64_t>(&tss_))
+        .entry.type(0b1110'1001)
+        .limit(sizeof(tss_))
+        .long_mode(true);
+
     tss_.rsp[0] = reinterpret_cast<uintptr_t>(&interrupt_stack) + sizeof interrupt_stack;
     tss_.iopb_offset = sizeof tss_;
-
-
 }
 
 [[gnu::noinline]] void setup_gdt() {
     memset(&gdt_entry_data, 0, sizeof(gdt_entry_data));
 
-    gdt_entry_data[0] = {.limit_low = 0xffff,
-                         .base_low = 0,
-                         .base_mid = 0,
-                         .access = 0,
-                         .opts_limit_mid = 1,
-                         .base_hi = 0};
+    // null descriptor
+    gdt_entry_data.normal[0] = {.limit_low = 0xffff,
+                                .base_low = 0,
+                                .base_mid = 0,
+                                .access = 0,
+                                .opts_limit_mid = 1,
+                                .base_hi = 0};
 
-    gdt_entry_data[1] = {.limit_low = 0,
-                         .base_low = 0,
-                         .base_mid = 0,
-                         .access = 0x9a,
-                         .opts_limit_mid = 0b10101111,
-                         .base_hi = 0};
+    // kernel code
+    // Base, limit etc is ignored
+    // type 0xa
+    gdt_entry_data.normal[1] = {.limit_low = 0,
+                                .base_low = 0,
+                                .base_mid = 0,
+                                .access = 0x9a, // 0b1001'1010
+                                .opts_limit_mid = 0b1010'0000,
+                                .base_hi = 0};
 
-    gdt_entry_data[2] = {.limit_low = 0,
-                         .base_low = 0,
-                         .base_mid = 0,
-                         .access = 0x92,
-                         .opts_limit_mid = 0,
-                         .base_hi = 0};
+    // kernel data
+    // type 0x2
+    gdt_entry_data.normal[2] = {.limit_low = 0,
+                                .base_low = 0,
+                                .base_mid = 0,
+                                .access = 0x92, // 0b1001'0010
+                                .opts_limit_mid = 0,
+                                .base_hi = 0};
+
+    // user data
+    // type 0x2
+    // DPL = 3 (ring 3)
+    gdt_entry_data.normal[3] = {.limit_low = 0,
+                                .base_low = 0,
+                                .base_mid = 0,
+                                .access = 0b1111'0010, // 0b1001'0010
+                                .opts_limit_mid = 0,
+                                .base_hi = 0};
+
+    // user code
+    // Base, limit etc is ignored
+    // DPL = 3 (ring 3)
+    gdt_entry_data.normal[4] = {.limit_low = 0,
+                                .base_low = 0,
+                                .base_mid = 0,
+                                .access = 0b1111'1010, // 0b1001'1010
+                                .opts_limit_mid = 0b1010'0000,
+                                .base_hi = 0};
+
+
+    setup_tss(gdt_entry_data.expanded[0]);
 
     gdt.sz = sizeof gdt_entry_data - 1;
     gdt.ptr = reinterpret_cast<uint64_t>(&gdt_entry_data);
     asm volatile("lgdt %0" : : "m"(gdt));
+
+    static_assert(offsetof(gdt_entries, expanded) == 0x28);
+    asm volatile("ltr %%ax" : : "a"(offsetof(gdt_entries, expanded)));
 }
 
 extern "C" {
@@ -134,18 +176,27 @@ void set_up_page_tables() {
     memset(&p4_table, 0, sizeof p4_table);
     memset(&p3_table, 0, sizeof p3_table);
 
-    p4_table[0].zero().valid(true).writeable(true).page_num(
-        reinterpret_cast<uintptr_t>(&p3_table));
+    p4_table[0]
+        .zero()
+        .valid(true)
+        .writeable(true)
+        .page_num(reinterpret_cast<uintptr_t>(&p3_table))
+        .allow_user(true);
 
-    p3_table[0].zero().valid(true).writeable(true).page_num(
-        reinterpret_cast<uintptr_t>(&p2_tables[0]));
+    p3_table[0]
+        .zero()
+        .valid(true)
+        .writeable(true)
+        .page_num(reinterpret_cast<uintptr_t>(&p2_tables[0]))
+        .allow_user(true);
 
     for (size_t i = 0; i < std::size(p1_tables); ++i) {
         p2_tables[0][i]
             .zero()
             .page_num(reinterpret_cast<uintptr_t>(&p1_tables[i]))
             .valid(true)
-            .writeable(true);
+            .writeable(true)
+            .allow_user(true);
     }
 
     static constexpr tos::memory_range io_regions[] = {
@@ -178,7 +229,7 @@ void set_up_page_tables() {
                 continue;
             }
 
-            table[j].zero().valid(true).page_num((i * 512 + j) << 12);
+            table[j].zero().valid(true).page_num((i * 512 + j) << 12).allow_user(true);
 
             if (tos::intersection(tos::default_segments::text(), page_range)) {
                 table[j].writeable(false).noexec(false);

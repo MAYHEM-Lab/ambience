@@ -25,7 +25,7 @@ struct [[gnu::packed]] idt_entry {
         res.ptr_mid = (ptr >> 16) & 0xFFFF;
         res.ptr_high = (ptr >> 32) & 0xFFFFFFFF;
         res.ist = 0;
-        res.type_attributes = 0x8e;
+        res.type_attributes = 0x8e; // 0b1000'0xe type: 64-bit interrupt, in ring 0
         res.gdt_sel = 8;
         return res;
     }

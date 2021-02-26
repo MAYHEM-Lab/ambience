@@ -75,4 +75,12 @@ inline uint32_t read_cr4() {
 inline void write_cr4(uint32_t reg) {
     __asm__ __volatile__("mov %0, %%cr4" : : "r"(uint64_t(reg)) : "memory");
 }
+
+inline void sysret(void* addr) {
+    asm volatile("sysretq" : : "c"(addr));
+}
+
+inline void syscall() {
+    asm volatile("syscall");
+}
 } // namespace tos::x86_64

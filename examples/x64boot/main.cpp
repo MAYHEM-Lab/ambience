@@ -23,6 +23,7 @@
 #include <tos/virtio/block_device.hpp>
 #include <tos/virtio/network_device.hpp>
 #include <tos/x86_64/mmu.hpp>
+#include <tos/x86_64/msr.hpp>
 #include <tos/x86_64/pci.hpp>
 #include <tos/x86_64/pic.hpp>
 
@@ -174,6 +175,27 @@ private:
     }
 };
 
+extern "C" void user_code() {
+    while (true) {
+        tos::x86_64::syscall();
+    }
+}
+
+void syscall_entry() {
+    LOG("In syscall");
+    while (true);
+}
+
+void switch_to_user() {
+    using namespace tos::x86_64;
+    wrmsr(msrs::ia32_efer, rdmsr(msrs::ia32_efer) | 1ULL);
+
+    wrmsr(msrs::star, ((0x10ULL | 0b11ULL) << 48U) | (0x8ULL << 32U));
+    wrmsr(msrs::lstar, reinterpret_cast<uint64_t>(&syscall_entry));
+
+    sysret((void*)user_code);
+}
+
 void thread() {
     auto uart_res = tos::x86_64::uart_16550::open();
     if (!uart_res) {
@@ -213,6 +235,8 @@ void thread() {
     auto vmem_end = (void*)tos::default_segments::image().end();
 
     LOG("Image ends at", vmem_end);
+
+    switch_to_user();
 
     auto allocator_space = tos::align_nearest_up_pow2(
         tos::physical_page_allocator::size_for_pages(1024), 4096);

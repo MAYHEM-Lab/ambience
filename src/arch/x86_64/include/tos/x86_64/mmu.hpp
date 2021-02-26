@@ -3,11 +3,11 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <tos/expected.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/memory.hpp>
-#include <tos/x86_64/assembly.hpp>
-#include <tos/expected.hpp>
 #include <tos/paging/physical_page_allocator.hpp>
+#include <tos/x86_64/assembly.hpp>
 
 namespace tos::x86_64 {
 using page_id_t = uint32_t;
@@ -76,7 +76,7 @@ public:
     }
 
     table_entry& allow_user(bool val) {
-        m_raw_entry = (m_raw_entry & ~user_access_off) | (val << user_access_off);
+        m_raw_entry = (m_raw_entry & ~user_access_mask) | (val << user_access_off);
         return *this;
     }
 

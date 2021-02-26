@@ -42,6 +42,13 @@ void out_of_bounds_handler([[maybe_unused]] exception_frame* frame,
 }
 void invalid_opcode_handler([[maybe_unused]] exception_frame* frame,
                             [[maybe_unused]] uint64_t num) {
+    LOG("Invalid opcode!",
+        (int)num,
+        (void*)frame,
+        (void*)frame->gpr[14],
+        (void*)frame->error_code,
+        (void*)frame->rip);
+
     while (true)
         ;
 }
