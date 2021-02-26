@@ -1,0 +1,1 @@
+#include <tos/detail/tos_bind.hpp>

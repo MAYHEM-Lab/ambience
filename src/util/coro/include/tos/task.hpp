@@ -1,74 +1,176 @@
 #pragma once
 
-#include <iostream>
+#include <cassert>
 #include <tos/detail/coro.hpp>
 #include <utility>
 
-#define __PRETTY_FUNCTION__ __FUNCSIG__
-#define dump() std::cerr << this << " " << __PRETTY_FUNCTION__ << '\n';
-
 namespace tos {
-template<class ResultT, class ErrorT = void>
-class task {
+template<typename T = void>
+class Task {
+    class TaskPromiseBase;
+    class TaskPromise;
+
 public:
-    struct promise_type;
-    using coro_handle = std::coroutine_handle<promise_type>;
-
-    struct promise_type {
-        task get_return_object() noexcept {
-            dump();
-            return task{coro_handle::from_promise(*this)};
-        }
-
-        std::suspend_never initial_suspend() noexcept {
-            dump();
-            return {};
-        }
-
-        std::suspend_never final_suspend() noexcept {
-            dump();
-
-            return {};
-        }
-
-        void unhandled_exception() {
-        }
-
-        template<class T>
-        void return_value(T&& val) {
-            dump();
-
-            m_val = std::forward<T>(val);
-        }
-
-        ResultT m_val;
-    };
-
-    task(coro_handle handle)
-        : handle_(handle) {
-        dump();
+    Task()
+        : coroHandle(nullptr) {
     }
-    task(task&) = delete;
-    task(task&&) = delete;
+    Task(Task& t) = delete;
 
-    constexpr bool await_ready() const noexcept {
-        dump();
-
-        return false;
+    Task(Task&& t) noexcept
+        : coroHandle(std::exchange(t.coroHandle, {})) {
     }
 
-    void await_suspend(std::coroutine_handle<> h) {
-        dump();
-
-        m_cont = h;
+    ~Task() {
+        if (this->coroHandle) {
+            this->coroHandle.destroy();
+        }
     }
 
-    constexpr void await_resume() const noexcept {
-        dump();
+    using promise_type = TaskPromise;
+    using promise_coro_handle = std::coroutine_handle<promise_type>;
+
+    auto operator co_await() const& {
+        struct awaiter {
+            awaiter(promise_coro_handle coro)
+                : coro(coro) {
+            }
+
+            bool await_ready() const noexcept {
+                return false;
+            }
+            std::coroutine_handle<> await_suspend(std::coroutine_handle<> continuation) {
+                this->coro.promise().continuation = continuation;
+
+                return this->coro;
+            }
+
+            decltype(auto) await_resume() {
+                if constexpr (!std::is_void_v<decltype(this->coro.promise().result())>) {
+                    return std::move(this->coro.promise().result());
+                } else {
+                    this->coro.promise().result();
+                }
+            }
+
+        private:
+            promise_coro_handle coro;
+        };
+
+        return awaiter{this->coroHandle};
+    }
+
+    auto operator co_await() const&& {
+        struct awaiter {
+            awaiter(promise_coro_handle coro)
+                : coro(coro) {
+            }
+
+            bool await_ready() const noexcept {
+                return false;
+            }
+            std::coroutine_handle<> await_suspend(std::coroutine_handle<> continuation) {
+                this->coro.promise().continuation = continuation;
+
+                return this->coro;
+            }
+
+            decltype(auto) await_resume() {
+                if constexpr (!std::is_void_v<decltype(this->coro.promise().result())>) {
+                    return std::move(this->coro.promise().result());
+                } else {
+                    this->coro.promise().result();
+                }
+            }
+
+        private:
+            promise_coro_handle coro;
+        };
+
+        return awaiter{this->coroHandle};
+    }
+
+    bool run() {
+        if (!coroHandle.done()) {
+            coroHandle.resume();
+        }
+        return coroHandle.done();
+    }
+
+    T value() {
+        return coroHandle.promise().result();
     }
 
 private:
-    std::coroutine_handle<> m_cont;
-    coro_handle handle_;
+    explicit Task(promise_coro_handle coro)
+        : coroHandle(coro) {
+    }
+
+    promise_coro_handle coroHandle;
+
+    class TaskPromiseBase {
+    protected:
+        TaskPromiseBase() = default;
+        virtual ~TaskPromiseBase() = default;
+
+        friend class Task;
+        std::coroutine_handle<> continuation;
+
+    public:
+        std::suspend_always initial_suspend() const noexcept {
+            return {};
+        }
+
+        auto final_suspend() const noexcept {
+            struct FinalAwaiter {
+                bool await_ready() const noexcept {
+                    return false;
+                }
+
+                std::coroutine_handle<>
+                await_suspend(promise_coro_handle coroHandle) noexcept {
+                    return coroHandle.promise().continuation;
+                }
+
+                void await_resume() noexcept {
+                }
+            };
+
+            return FinalAwaiter{};
+        }
+        void unhandled_exception() {
+        }
+    };
+
+    class TaskPromise : public TaskPromiseBase {
+        T value;
+
+    public:
+        void return_value(T value) {
+            this->value = value;
+        }
+
+        T&& result() {
+            return std::move(this->value);
+        }
+
+        Task get_return_object() noexcept {
+            return Task{promise_coro_handle::from_promise(*this)};
+        }
+    };
 };
+
+template<>
+class Task<void>::TaskPromise : public TaskPromiseBase {
+public:
+    void return_void() {
+    }
+
+    void result() {
+    }
+
+    Task get_return_object() noexcept {
+        return Task{promise_coro_handle::from_promise(*this)};
+    }
+};
+
 } // namespace tos
