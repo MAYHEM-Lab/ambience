@@ -175,6 +175,45 @@ private:
     }
 };
 
+
+tos::semaphore s{0};
+
+auto yield() {
+    struct awaiter
+        : tos::job
+        , tos::int_guard {
+        using job::job;
+
+        bool await_ready() const noexcept {
+            return false;
+        }
+
+        void await_suspend(std::coroutine_handle<> coro) {
+            m_coro = coro;
+            tos::kern::make_runnable(*this);
+        }
+
+        void await_resume() {
+        }
+
+        void operator()() override {
+            m_coro.resume();
+        }
+
+        std::coroutine_handle<> m_coro;
+    };
+
+    return awaiter{tos::current_context()};
+}
+
+auto foo() -> tos::Task<void> {
+    LOG("Hello from coroutine");
+    co_await yield();
+    LOG("Back from yield");
+    co_await s;
+    LOG("Scheduled again");
+}
+
 extern "C" void user_code() {
     while (true) {
         tos::x86_64::syscall();
@@ -215,6 +254,12 @@ void thread() {
     tos::x86_64::pic::enable_irq(0);
 
     LOG("Hello world!");
+
+    tos::coro_job job(tos::current_context(), tos::coro::make_pollable(foo()));
+    tos::kern::make_runnable(job);
+    tos::this_thread::yield();
+
+    s.up();
 
     uint32_t cpuid_data[4];
     __get_cpuid(0, &cpuid_data[0], &cpuid_data[1], &cpuid_data[2], &cpuid_data[3]);
