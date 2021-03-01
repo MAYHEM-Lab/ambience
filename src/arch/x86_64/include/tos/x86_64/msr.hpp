@@ -6,9 +6,15 @@
 namespace tos::x86_64 {
 enum class msrs : uint32_t
 {
-    ia32_efer = 0xC000'0080,
+    ia32_efer = 0xc000'0080,
+
+    // Used to store segment selectors for SYSCALL and SYSRET instructions.
     star = 0xc000'0081,
+
+    // Used to store the SYSCALL target.
     lstar = 0xc000'0082,
+
+    // Used to store the SYSCALL target for compatibility mode, not used by tos.
     cstar = 0xc000'0083,
     sfmask = 0xc000'0084,
 };

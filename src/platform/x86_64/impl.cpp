@@ -14,6 +14,7 @@
 #include <tos/x86_64/mmu.hpp>
 #include <tos/x86_64/pic.hpp>
 #include <tos/x86_64/port.hpp>
+#include <tos/x86_64/syscall.hpp>
 #include <tos/x86_64/tss.hpp>
 
 extern "C" {
@@ -75,7 +76,7 @@ void enable_sse() {
 }
 
 struct [[gnu::packed]] gdt_entries {
-    gdt_entry normal[5];
+    gdt_entry normal[6];
     expanded_gdt_entry expanded[1];
 };
 
@@ -105,12 +106,7 @@ void setup_tss(expanded_gdt_entry& entry) {
     memset(&gdt_entry_data, 0, sizeof(gdt_entry_data));
 
     // null descriptor
-    gdt_entry_data.normal[0] = {.limit_low = 0xffff,
-                                .base_low = 0,
-                                .base_mid = 0,
-                                .access = 0,
-                                .opts_limit_mid = 1,
-                                .base_hi = 0};
+    gdt_entry_data.normal[0].zero();
 
     // kernel code
     // Base, limit etc is ignored
@@ -131,10 +127,12 @@ void setup_tss(expanded_gdt_entry& entry) {
                                 .opts_limit_mid = 0,
                                 .base_hi = 0};
 
+    gdt_entry_data.normal[3].zero();
+
     // user data
     // type 0x2
     // DPL = 3 (ring 3)
-    gdt_entry_data.normal[3] = {.limit_low = 0,
+    gdt_entry_data.normal[4] = {.limit_low = 0,
                                 .base_low = 0,
                                 .base_mid = 0,
                                 .access = 0b1111'0010, // 0b1001'0010
@@ -144,13 +142,12 @@ void setup_tss(expanded_gdt_entry& entry) {
     // user code
     // Base, limit etc is ignored
     // DPL = 3 (ring 3)
-    gdt_entry_data.normal[4] = {.limit_low = 0,
+    gdt_entry_data.normal[5] = {.limit_low = 0,
                                 .base_low = 0,
                                 .base_mid = 0,
                                 .access = 0b1111'1010, // 0b1001'1010
                                 .opts_limit_mid = 0b1010'0000,
                                 .base_hi = 0};
-
 
     setup_tss(gdt_entry_data.expanded[0]);
 
@@ -158,8 +155,8 @@ void setup_tss(expanded_gdt_entry& entry) {
     gdt.ptr = reinterpret_cast<uint64_t>(&gdt_entry_data);
     asm volatile("lgdt %0" : : "m"(gdt));
 
-    static_assert(offsetof(gdt_entries, expanded) == 0x28);
-    asm volatile("ltr %%ax" : : "a"(offsetof(gdt_entries, expanded)));
+    static_assert(offsetof(gdt_entries, expanded) == 0x30);
+    asm volatile("ltr %%ax" : : "a"(offsetof(gdt_entries, expanded) | 0x3ULL));
 }
 
 extern "C" {
@@ -297,6 +294,9 @@ _post_start([[maybe_unused]] const tos::multiboot::info_t* info) {
     idt_setup();
 
     pic::initialize();
+
+    // Initialize the state for SYSCALL/SYSRET instructions.
+    tos::x86_64::initialize_syscall_support();
 
     tos::kern::enable_interrupts();
 

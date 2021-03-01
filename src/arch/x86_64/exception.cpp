@@ -2,7 +2,9 @@
 #include <tos/x86_64/assembly.hpp>
 #include <tos/x86_64/exception.hpp>
 
-namespace tos::x86_64 {}
+namespace tos::x86_64 {
+
+}
 
 using namespace tos::x86_64;
 
@@ -85,7 +87,15 @@ void stack_segment_fault_handler([[maybe_unused]] exception_frame* frame,
 }
 void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
                                       [[maybe_unused]] uint64_t num) {
-    LOG("GPF!", (int)num, (void*)frame, (void*)frame->error_code, (void*)frame->rip);
+    LOG("GPF!",
+        (int)num,
+        (void*)frame,
+        (void*)frame->error_code,
+        (void*)frame->rip,
+        "Return CS",
+        (void*)frame->cs,
+        "Return SS",
+        (void*)frame->ss);
     while (true)
         ;
 }

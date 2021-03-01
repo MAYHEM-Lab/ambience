@@ -2,6 +2,7 @@
 
 #include <cpuid.h>
 #include <cstdint>
+#include <tos/compiler.hpp>
 
 namespace tos::x86_64 {
 inline void breakpoint() {
@@ -10,6 +11,12 @@ inline void breakpoint() {
 
 inline void hlt() {
     asm volatile("hlt");
+}
+
+inline uint64_t read_rcx() {
+    uint64_t res;
+    asm volatile("movq %%rcx, %0" : "=r"(res));
+    return res;
 }
 
 inline uint64_t read_flags() {
@@ -31,13 +38,15 @@ inline void xsetbv(uint32_t msr, uint64_t reg) {
 }
 
 inline uint64_t rdmsr(uint32_t msr) {
-    uint64_t msr_value;
-    asm volatile("rdmsr" : "=A"(msr_value) : "c"(msr));
-    return msr_value;
+    uint32_t low, high;
+    asm volatile("rdmsr" : "=a"(low), "=d"(high) : "c"(msr));
+    return ((uint64_t)high << 32) | low;
 }
 
 inline void wrmsr(uint32_t msr, uint64_t reg) {
-    asm volatile("wrmsr" : : "c"(msr), "A"(reg));
+    uint32_t low = reg & 0xFFFFFFFF;
+    uint32_t high = reg >> 32;
+    asm volatile("wrmsr" : : "c"(msr), "a"(low), "d"(high));
 }
 
 inline uint32_t read_cr0() {
@@ -76,11 +85,31 @@ inline void write_cr4(uint32_t reg) {
     __asm__ __volatile__("mov %0, %%cr4" : : "r"(uint64_t(reg)) : "memory");
 }
 
-inline void sysret(void* addr) {
+/**
+ * Jumps to the given address in ring 3.
+ * The stack pointer is not adjusted in any way.
+ * This means that using this instruction in a C++ function will **not** pop any pushed
+ * registers etc.
+ * Only meant to be used while initializing the user space, not for returning from
+ * syscalls. For those, just use a regular return, restore the state in assembly and then
+ * use sysret. In other words:
+ *
+ *      raw_syscall_entry:
+ *           pushq %rcx
+ *           pushq %rsp
+ *           callq syscall_entry
+ *           popq %rsp
+ *           popq %rcx
+ *           sysretq
+ *
+ * @param addr instruction pointer to return to.
+ */
+[[noreturn]] inline void sysret(void* addr) {
     asm volatile("sysretq" : : "c"(addr));
+    TOS_UNREACHABLE();
 }
 
-inline void syscall() {
-    asm volatile("syscall");
+inline void syscall(uint64_t rdi, uint64_t rsi) {
+    asm volatile("syscall" : : "D"(rdi), "S"(rsi));
 }
 } // namespace tos::x86_64
