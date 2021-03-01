@@ -353,11 +353,11 @@ span<T> as_span(span<T> s) {
 
 namespace std {
 inline tos::span<uint8_t> as_span(vector<uint8_t>& v) {
-    return v;
+    return tos::span<uint8_t>(v);
 }
 
 template <size_t N>
 inline tos::span<uint8_t> as_span(array<uint8_t, N>& a) {
-    return a;
+    return tos::span<uint8_t>(a);
 }
 }
