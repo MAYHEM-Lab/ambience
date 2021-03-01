@@ -14,11 +14,13 @@
 #include <cstddef>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
+#include <tos/detail/tos_bind.hpp>
 #include <tos/flags.hpp>
 #include <tos/ft.hpp>
 #include <tos/lwip/if_adapter.hpp>
 #include <tos/peripheral/uart_16550.hpp>
 #include <tos/peripheral/vga_text.hpp>
+#include <tos/task.hpp>
 #include <tos/virtio.hpp>
 #include <tos/virtio/block_device.hpp>
 #include <tos/virtio/network_device.hpp>
@@ -26,6 +28,7 @@
 #include <tos/x86_64/msr.hpp>
 #include <tos/x86_64/pci.hpp>
 #include <tos/x86_64/pic.hpp>
+#include <tos/x86_64/syscall.hpp>
 
 void dump_table(tos::cur_arch::translation_table& table) {
     tos::cur_arch::traverse_table_entries(
@@ -214,28 +217,157 @@ auto foo() -> tos::Task<void> {
     LOG("Scheduled again");
 }
 
-extern "C" void user_code() {
-    while (true) {
-        tos::x86_64::syscall();
+struct req_elem {
+    const void* arg_ptr;
+    void* ret_ptr;
+    uint8_t procid;
+    uint8_t channel;
+    void* user_ptr;
+
+    auto operator co_await() {
+        struct awaiter {
+            bool await_ready() const noexcept {
+                return false;
+            }
+
+            void await_suspend(std::coroutine_handle<> handle) {
+                el->user_ptr = handle.address();
+            }
+
+            void await_resume() const {
+            }
+
+            req_elem* el;
+        };
+
+        return awaiter{this};
+    }
+};
+
+struct res_elem {
+    void* user_ptr;
+};
+
+union ring_elem {
+    req_elem req;
+    res_elem res;
+};
+
+struct ring {
+    uint16_t head_idx;
+    uint16_t elems[];
+};
+
+struct interface {
+    int size;
+
+    ring_elem* elems;
+    ring* req;
+    ring* res;
+
+    uint16_t res_last_seen = 0;
+
+    uint16_t allocate() {
+        return 0;
+    }
+};
+
+struct kernel_interface {
+    interface* user_iface;
+    uint16_t req_last_seen = 0;
+};
+
+void proc_res_queue(interface& iface) {
+    for (; iface.res_last_seen < iface.res->head_idx; ++iface.res_last_seen) {
+        auto res_idx = iface.res->elems[iface.res_last_seen % iface.size];
+        auto& res = iface.elems[res_idx].res;
+        std::coroutine_handle<>::from_address(res.user_ptr).resume();
     }
 }
 
-void syscall_entry() {
-    LOG("In syscall");
-    while (true);
+void proc_req_queue(kernel_interface& iface) {
+    for (; iface.req_last_seen < iface.user_iface->req->head_idx; ++iface.req_last_seen) {
+        auto req_idx =
+            iface.user_iface->req->elems[iface.req_last_seen % iface.user_iface->size];
+        auto& req = iface.user_iface->elems[req_idx].req;
+        LOG("Got request");
+        if (req.channel == 4 && req.procid == 1) {
+            LOG(*(std::string_view*)req.arg_ptr);
+        }
+
+        auto& res = iface.user_iface->elems[req_idx].res;
+        res.user_ptr = req.user_ptr;
+        iface.user_iface->res
+            ->elems[iface.user_iface->res->head_idx++ % iface.user_iface->size] = req_idx;
+    }
+}
+
+auto& submit_req(interface& iface, int channel, int proc, const void* params, void* res) {
+    auto el_idx = iface.allocate();
+    auto& req_el = iface.elems[el_idx].req;
+    req_el.channel = channel;
+    req_el.procid = proc;
+    req_el.arg_ptr = params;
+    req_el.ret_ptr = res;
+    iface.req->elems[iface.req->head_idx++ % iface.size] = el_idx;
+    return req_el;
+}
+
+ring_elem elems[4];
+
+interface iface{4, elems};
+tos::Task<void> log_str(std::string_view sv) {
+    co_await submit_req(iface, 4, 1, &sv, nullptr);
+}
+
+tos::Task<void> task() {
+    while (true) {
+        co_await log_str("Hello world from user space!");
+        co_await log_str("Second hello world from user space!");
+    }
+}
+
+void user_code() {
+    iface.req = new (new uint8_t[sizeof(ring) + iface.size * sizeof(uint16_t)]) ring{};
+    iface.res = new (new uint8_t[sizeof(ring) + iface.size * sizeof(uint16_t)]) ring{};
+    tos::x86_64::syscall(1, reinterpret_cast<uint64_t>(&iface));
+
+    auto pollable = new tos::coro::pollable(tos::coro::make_pollable(task()));
+    pollable->run();
+
+    while (true) {
+        tos::x86_64::syscall(2, 0);
+        proc_res_queue(iface);
+    }
 }
 
 void switch_to_user() {
     using namespace tos::x86_64;
-    wrmsr(msrs::ia32_efer, rdmsr(msrs::ia32_efer) | 1ULL);
-
-    wrmsr(msrs::star, ((0x10ULL | 0b11ULL) << 48U) | (0x8ULL << 32U));
-    wrmsr(msrs::lstar, reinterpret_cast<uint64_t>(&syscall_entry));
-
+    asm volatile("pushf\n"
+                 "popq %r11");
     sysret((void*)user_code);
 }
 
+int n;
+
+kernel_interface kif;
 void thread() {
+    tos::x86_64::set_syscall_handler(
+        tos::x86_64::syscall_handler_t([](tos::x86_64::syscall_frame& frame, void*) {
+            if (frame.rdi == 1) {
+                // Queue setup
+                auto ifc = reinterpret_cast<interface*>(frame.rsi);
+                LOG("IF", ifc, ifc->size, ifc->elems, ifc->req, ifc->res);
+                kif.user_iface = ifc;
+                proc_req_queue(kif);
+            } else if (frame.rdi == 2) {
+                proc_req_queue(kif);
+            }
+            if ((n++ % 1'000'000) == 0) {
+                LOG(n, "In syscall from", (void*)frame.ret_addr);
+                LOG((void*)frame.rdi, (void*)frame.rsi);
+            }
+        }));
     auto uart_res = tos::x86_64::uart_16550::open();
     if (!uart_res) {
         tos::debug::panic("Could not open the uart");
@@ -280,8 +412,6 @@ void thread() {
     auto vmem_end = (void*)tos::default_segments::image().end();
 
     LOG("Image ends at", vmem_end);
-
-    switch_to_user();
 
     auto allocator_space = tos::align_nearest_up_pow2(
         tos::physical_page_allocator::size_for_pages(1024), 4096);
@@ -450,13 +580,20 @@ void thread() {
 
     tos::semaphore sem{0};
 
-    auto tim_handler = [&](tos::x86_64::exception_frame*, int) { sem.up_isr(); };
+    auto tim_handler = [&](tos::x86_64::exception_frame* frame, int) {
+        LOG("Tick", frame->cs, frame->ss);
+        sem.up_isr();
+    };
 
     tos::platform::set_irq(
         0, tos::function_ref<void(tos::x86_64::exception_frame*, int)>(tim_handler));
 
+    tos::launch(tos::alloc_stack, switch_to_user);
+
+    //    tos::x86_64::pic::disable_irq(0);
     while (true) {
         sem.down();
+        //        LOG("Tick");
     }
 
     //
