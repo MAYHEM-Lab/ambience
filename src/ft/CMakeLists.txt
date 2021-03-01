@@ -19,7 +19,7 @@ add_library(tos_ft
         include/tos/suspended_launch.hpp
 )
 
-target_link_libraries(tos_ft PUBLIC tos_util_core)
+target_link_libraries(tos_ft PUBLIC tos_util_core tos_coro)
 target_link_libraries(tos_ft PUBLIC tos_interrupt)
 target_link_libraries(tos_ft PUBLIC tos::libcxx)
 target_link_libraries(tos_ft PUBLIC tos_alarm tos_context)
