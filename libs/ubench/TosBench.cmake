@@ -10,7 +10,11 @@ endif()
 
 function(add_benchmark target)
     message(STATUS "Benchmarking ${target}")
+if (NOT TOS_BARE_LINKER)
     target_link_libraries(bench_main PRIVATE "-Wl,--whole-archive" ${target} "-Wl,--no-whole-archive")
+else()
+    target_link_libraries(bench_main PRIVATE "--whole-archive" ${target} "--no-whole-archive")
+endif()
 endfunction()
 
 if (${TOS_PLATFORM} MATCHES hosted)
