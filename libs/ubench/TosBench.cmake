@@ -1,7 +1,11 @@
 if (NOT TARGET bench_main)
     add_executable(bench_main)
-    target_link_libraries(bench_main PRIVATE tos_core arch_drivers ubench tos_dynamic_log)
+    target_link_libraries(bench_main PRIVATE tos_core ubench tos_dynamic_log)
     set_target_properties(bench_main PROPERTIES CXX_EXTENSIONS OFF)
+
+    if (TARGET arch_drivers)
+        target_link_libraries(bench_main PRIVATE arch_drivers)
+    endif()
 endif()
 
 function(add_benchmark target)
