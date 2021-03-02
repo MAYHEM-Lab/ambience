@@ -103,6 +103,8 @@ public:
          * after the coroutine is resumed.
          *
          * There is the bool returning await_suspend, but we don't use it for efficiency.
+         * (It would have to save and restore the state unnecessarily in false cases if we
+         * had used it.)
          */
 
         struct awaiter
