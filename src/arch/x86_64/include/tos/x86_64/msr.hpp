@@ -6,6 +6,8 @@
 namespace tos::x86_64 {
 enum class msrs : uint32_t
 {
+    ia32_apic_base = 0x1b,
+
     ia32_efer = 0xc000'0080,
 
     // Used to store segment selectors for SYSCALL and SYSRET instructions.
