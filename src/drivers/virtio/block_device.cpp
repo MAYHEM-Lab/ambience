@@ -13,7 +13,7 @@ struct blk_header {
     uint32_t _res;
     uint64_t sector;
 };
-}
+} // namespace
 
 bool block_device::initialize(tos::physical_page_allocator* palloc) {
     if (!base_initialize(palloc)) {
@@ -75,10 +75,7 @@ block_device::write(uint64_t sector_id, span<const uint8_t> data, size_t offset)
 
     m_wait_sem.down();
 
-    LOG("out",
-        q.used_base->index,
-        int(c),
-        (void*)(uintptr_t)data[0]);
+    LOG("out", q.used_base->index, int(c), (void*)(uintptr_t)data[0]);
     if (c == 0) {
         return {};
     }
@@ -123,9 +120,7 @@ block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
 
     q.submit_available(root_idx);
 
-    LOG(q.used_base->index,
-        int(c),
-        (void*)(uintptr_t)data[0]);
+    LOG(q.used_base->index, int(c), (void*)(uintptr_t)data[0]);
 
     auto bar_base = this->bar_base();
 
@@ -134,10 +129,7 @@ block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
 
     m_wait_sem.down();
 
-    LOG("out",
-        q.used_base->index,
-        int(c),
-        (void*)(uintptr_t)data[0]);
+    LOG("out", q.used_base->index, int(c), (void*)(uintptr_t)data[0]);
     if (c == 0) {
         return {};
     }
