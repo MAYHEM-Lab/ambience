@@ -3,6 +3,7 @@
 #include <tos/cancellation_token.hpp>
 #include <tos/debug/assert.hpp>
 #include <tos/debug/debug.hpp>
+#include <tos/detail/coro.hpp>
 #include <tos/ft.hpp>
 #include <tos/interrupt.hpp>
 #include <tos/scheduler.hpp>
@@ -67,6 +68,39 @@ struct waitable {
 
     bool empty() const {
         return m_waiters.empty();
+    }
+
+    auto operator co_await() {
+        struct awaiter : job {
+            awaiter(context& ctx, waitable& w)
+                : job(ctx)
+                , m_waitable{&w} {
+            }
+
+            bool await_ready() const noexcept {
+                return false;
+            }
+
+            void await_suspend(std::coroutine_handle<> coro) {
+                m_cont = coro;
+                m_waitable->add(*this);
+            }
+
+            void await_resume() {
+            }
+
+            void operator()() override {
+                m_cont.resume();
+            }
+
+            awaiter(awaiter&&) = delete;
+            awaiter(const awaiter&) = delete;
+
+            waitable* m_waitable;
+            std::coroutine_handle<> m_cont;
+        };
+
+        return awaiter{current_context(), *this};
     }
 
 private:

@@ -91,6 +91,59 @@ public:
         : m_count(n) {
     }
 
+    auto operator co_await() {
+        /*
+         * co_await'ing semaphores is a little tricky.
+         *
+         * The primary problem is that the entire down must be atomic, but co_await splits
+         * the operations an awaiter does in 2 functions: checking if we should suspend,
+         * and then suspend.
+         *
+         * Interrupts need to be disabled during this time, and enabled
+         * after the coroutine is resumed.
+         *
+         * There is the bool returning await_suspend, but we don't use it for efficiency.
+         */
+
+        struct awaiter
+            : job
+            , int_guard {
+            awaiter(context& ctx, semaphore_base& s)
+                : job(ctx)
+                , m_sem{&s} {
+                detail::memory_barrier();
+                s.m_count = s.m_count - 1;
+                m_should_wait = s.m_count < 0;
+                detail::memory_barrier();
+            }
+
+            bool await_ready() const noexcept {
+                return !m_should_wait;
+            }
+
+            void await_suspend(std::coroutine_handle<> coro) {
+                m_cont = coro;
+                m_sem->m_wait.add(*this);
+            }
+
+            void await_resume() {
+            }
+
+            void operator()() override {
+                m_cont.resume();
+            }
+
+            awaiter(awaiter&&) = delete;
+            awaiter(const awaiter&) = delete;
+
+            bool m_should_wait;
+            semaphore_base* m_sem;
+            std::coroutine_handle<> m_cont;
+        };
+
+        return awaiter{current_context(), *this};
+    }
+
 private:
     volatile CountT m_count;
     waitable m_wait;
