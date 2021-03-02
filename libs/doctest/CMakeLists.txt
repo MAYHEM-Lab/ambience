@@ -1,6 +1,11 @@
+if (NOT ENABLE_TESTS)
+    return()
+endif()
+
 if (NOT ${TOS_PLATFORM} MATCHES "x86")
     return()
 endif()
+
 add_library(doctest INTERFACE)
 target_compile_definitions(doctest INTERFACE DOCTEST_CONFIG_NO_POSIX_SIGNALS DOCTEST_NO_XML_REPORTER)
 target_include_directories(doctest INTERFACE include)
