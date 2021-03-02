@@ -46,34 +46,34 @@ void operator delete[](void* pt, size_t) {
     }
 }
 
-void operator delete(void* pt, std::align_val_t) {
-}
-void operator delete[](void* pt, std::align_val_t) {
-}
-
-void* operator new(size_t sz, std::align_val_t align) {
-    if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
-        auto res = alloc->allocator->allocate(sz);
-        if (res == nullptr) {
-            tos::out_of_memory_handler();
-        }
-        return res;
-    }
-    tos::out_of_memory_handler();
-    return nullptr;
-}
-
-void* operator new[](size_t sz, std::align_val_t align) {
-    if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
-        auto res = alloc->allocator->allocate(sz);
-        if (res == nullptr) {
-            tos::out_of_memory_handler();
-        }
-        return res;
-    }
-    tos::out_of_memory_handler();
-    return nullptr;
-}
+//void operator delete(void* pt, std::align_val_t) {
+//}
+//void operator delete[](void* pt, std::align_val_t) {
+//}
+//
+//void* operator new(size_t sz, std::align_val_t align) {
+//    if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
+//        auto res = alloc->allocator->allocate(sz);
+//        if (res == nullptr) {
+//            tos::out_of_memory_handler();
+//        }
+//        return res;
+//    }
+//    tos::out_of_memory_handler();
+//    return nullptr;
+//}
+//
+//void* operator new[](size_t sz, std::align_val_t align) {
+//    if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
+//        auto res = alloc->allocator->allocate(sz);
+//        if (res == nullptr) {
+//            tos::out_of_memory_handler();
+//        }
+//        return res;
+//    }
+//    tos::out_of_memory_handler();
+//    return nullptr;
+//}
 
 void* operator new(size_t sz) {
     if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
