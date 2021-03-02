@@ -29,6 +29,7 @@ interrupt_descriptor_table default_idt() {
     idt.rest[12] = idt_entry::create(_irq1_handler); // 0x21
     idt.rest[21] = idt_entry::create(_irq10_handler); // 0x2a
     idt.rest[22] = idt_entry::create(_irq11_handler); // 0x2b
+    idt.rest[23] = idt_entry::create(_irq12_handler); // 0x2c
     return idt;
 }
 }
