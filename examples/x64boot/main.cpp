@@ -505,7 +505,8 @@ void thread() {
                     switch (dev.device_id()) {
                     case 0x1001: {
                         LOG("Virtio block device");
-                        auto bd = new tos::virtio::block_device(std::move(dev));
+                        auto bd = new tos::virtio::block_device(
+                            tos::virtio::make_x86_pci_transport(std::move(dev)));
                         bd->initialize(palloc);
                         uint8_t buf[512];
                         bd->read(0, buf, 0);
@@ -515,7 +516,8 @@ void thread() {
                     }
                     case 0x1000: {
                         LOG("Virtio network device");
-                        auto nd = new tos::virtio::network_device(std::move(dev));
+                        auto nd = new tos::virtio::network_device(
+                            tos::virtio::make_x86_pci_transport(std::move(dev)));
                         nd->initialize(palloc);
                         LOG("MTU", nd->mtu());
                         LOG((void*)(uintptr_t)nd->address().addr[0],
