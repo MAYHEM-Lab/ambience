@@ -1,15 +1,10 @@
 #include "common/inet/tcp_ip.hpp"
 #include "tos/intrusive_list.hpp"
 #include "tos/semaphore.hpp"
-#include "tos/x86_64/port.hpp"
-#include <cstdint>
 #include <cstring>
-#include <tos/arch.hpp>
 #include <tos/debug/log.hpp>
-#include <tos/platform.hpp>
 #include <tos/virtio/network_device.hpp>
 #include <tos/x86_64/mmu.hpp>
-#include <tos/x86_64/pic.hpp>
 
 namespace tos::virtio {
 namespace {
@@ -62,23 +57,22 @@ intrusive_list<buf, through_member<&buf::list_node>> received_packets;
 } // namespace
 
 mac_addr_t network_device::address() const {
-    auto bar_base = this->bar_base();
     mac_addr_t res;
     for (int i = 0; i < 6; ++i) {
-        res.addr[i] = x86_64::port(bar_base + mac_addr_offset + i).inb();
+        res.addr[i] = transport().read_byte(mac_addr_offset + i);
     }
     return res;
 }
 
 size_t network_device::mtu() const {
-    return x86_64::port(bar_base() + mtu_offset).inw();
+    return transport().read_u16(mtu_offset);
 }
 
 bool network_device::initialize(physical_page_allocator* palloc) {
     if (!base_initialize(palloc)) {
         return false;
     }
-    LOG("Status:", x86_64::port(bar_base() + status_offset).inw());
+    LOG("Status:", transport().read_u16(status_offset));
 
     auto recv_mem = palloc->allocate(1, 1);
 
@@ -102,13 +96,9 @@ bool network_device::initialize(physical_page_allocator* palloc) {
 
     queue_rx_buf(*buf_ptr);
 
-    tos::platform::set_irq(pci_dev().irq_line(),
-                           tos::mem_function_ref<&network_device::isr>(*this));
-    tos::x86_64::pic::enable_irq(pci_dev().irq_line());
+    transport().enable_interrupts(tos::mem_function_ref<&network_device::isr>(*this));
 
-    auto bar_base = this->bar_base();
-    auto status_port = x86_64::port(bar_base + status_port_offset);
-    status_port.outb(0xf);
+    transport().write_byte(status_port_offset, 0xf);
     LOG_TRACE("Device initialized");
     return true;
 }
@@ -119,10 +109,6 @@ uint32_t network_device::negotiate(uint32_t features) {
 }
 
 network_device::~network_device() = default;
-
-network_device::network_device(x86_64::pci::device&& pci_dev)
-    : device(std::move(pci_dev)) {
-}
 
 void network_device::queue_rx_buf(buf& buffer) {
     auto rx_queue = queue_at(0);
@@ -136,15 +122,12 @@ void network_device::queue_rx_buf(buf& buffer) {
 
     rx_queue.submit_available(body_idx);
 
-    auto notify_port = x86_64::port(bar_base() + notify_port_offset);
-    notify_port.outw(0);
+    transport().write_u16(notify_port_offset, 0);
 }
 
-void network_device::isr(tos::x86_64::exception_frame* f, int num) {
+void network_device::isr() {
     asm volatile("push %rax");
-    auto bar_base = this->bar_base();
-    auto isr_status_port = x86_64::port(bar_base + interrupt_status_port_offset);
-    auto isr_status = isr_status_port.inb();
+    auto isr_status = transport().read_byte(interrupt_status_port_offset);
     if (isr_status & 1) {
         auto& rx_queue = queue_at(0);
         auto& tx_queue = queue_at(1);
@@ -206,9 +189,33 @@ void network_device::transmit_packet(span<const uint8_t> data) {
     body_desc->next = 0;
 
     tx_queue.submit_available(header_idx);
-    auto notify_port = x86_64::port(bar_base() + notify_port_offset);
-    notify_port.outw(1);
+
+    transport().write_u16(notify_port_offset, 1);
 
     header.sem.down();
+}
+
+Task<void> network_device::async_transmit_packet(span<const uint8_t> data) {
+    auto& tx_queue = queue_at(1);
+
+    auto [header_idx, header_desc] = tx_queue.alloc();
+    auto [body_idx, body_desc] = tx_queue.alloc();
+
+    tx_header header{};
+
+    header_desc->addr = reinterpret_cast<uintptr_t>(&header.header);
+    header_desc->len = sizeof header.header;
+    header_desc->flags = queue_flags(queue_flags::next);
+    header_desc->next = body_idx;
+
+    body_desc->addr = reinterpret_cast<uintptr_t>(data.data());
+    body_desc->len = data.size();
+    body_desc->flags = queue_flags::none;
+    body_desc->next = 0;
+
+    tx_queue.submit_available(header_idx);
+    transport().write_u16(notify_port_offset, 1);
+
+    co_await header.sem;
 }
 } // namespace tos::virtio

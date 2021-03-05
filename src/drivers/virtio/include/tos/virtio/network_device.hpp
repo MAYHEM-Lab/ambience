@@ -3,6 +3,7 @@
 #include "tos/semaphore.hpp"
 #include <common/inet/tcp_ip.hpp>
 #include <cstdint>
+#include <tos/task.hpp>
 #include <tos/virtio/device.hpp>
 #include <tos/x86_64/exception.hpp>
 
@@ -12,7 +13,7 @@ struct buf;
 }
 class network_device : public device {
 public:
-    explicit network_device(x86_64::pci::device&& pci_dev);
+    using device::device;
 
     bool initialize(tos::physical_page_allocator* palloc) override;
     mac_addr_t address() const;
@@ -25,12 +26,13 @@ public:
     void return_packet(span<uint8_t>);
 
     void transmit_packet(span<const uint8_t> data);
+    Task<void> async_transmit_packet(span<const uint8_t> data);
 
 protected:
     uint32_t negotiate(uint32_t) override;
 
 private:
-    void isr(tos::x86_64::exception_frame* f, int num);
+    void isr();
 
     void queue_rx_buf(buf&);
 

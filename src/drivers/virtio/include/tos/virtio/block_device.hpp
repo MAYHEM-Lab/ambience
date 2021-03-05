@@ -1,9 +1,10 @@
 #pragma once
 
 #include <tos/expected.hpp>
+#include <tos/semaphore.hpp>
+#include <tos/task.hpp>
 #include <tos/virtio/device.hpp>
 #include <tos/x86_64/exception.hpp>
-#include <tos/semaphore.hpp>
 
 namespace tos::virtio {
 class block_device : public device {
@@ -14,12 +15,7 @@ public:
     /**
      * Returns the size of each flash sector/page in bytes.
      */
-    size_t sector_size_bytes() const {
-        auto bar_base = this->bar_base();
-
-        auto block_size_port = x86_64::port(bar_base + 0x18 + 16);
-        return block_size_port.inl();
-    }
+    size_t sector_size_bytes() const;
 
     /**
      * Number of sectors in the flash.
@@ -31,9 +27,12 @@ public:
 
     expected<void, int> read(uint64_t sector_id, span<uint8_t> data, size_t offset);
 
+    Task<expected<void, int>>
+    async_read(uint64_t sector_id, span<uint8_t> data, size_t offset);
+
     bool initialize(tos::physical_page_allocator* palloc) override;
 
-    void isr(tos::x86_64::exception_frame* f, int num);
+    void isr();
 
 protected:
 private:

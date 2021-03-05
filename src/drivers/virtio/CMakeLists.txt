@@ -2,7 +2,7 @@ if (NOT ${TOS_PLATFORM} MATCHES "x86")
     return()
 endif()
 
-add_library(tos_virtio queue.cpp device.cpp)
+add_library(tos_virtio queue.cpp device.cpp include/tos/virtio/mmio.hpp include/tos/virtio/transport.hpp include/tos/virtio/x86_pci_transport.hpp x86_pci_transport.cpp)
 target_include_directories(tos_virtio PUBLIC include)
 target_link_libraries(tos_virtio PUBLIC tos_drivers arch_x86_64)
 
