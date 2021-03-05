@@ -60,5 +60,13 @@ struct toblerone_spec {
         static constexpr auto cs_pin = 0;
         static constexpr auto reset_pin = 2;
     };
+
+    struct epd {
+        using spi_dev = spi3;
+        static constexpr auto busy_pin = 3;   // D4
+        static constexpr auto reset_pin = 20; // D5
+        static constexpr auto dc_pin = 17;    // D6
+        static constexpr auto cs_pin = 4;     // D7
+    };
 };
 } // namespace tos::bsp
