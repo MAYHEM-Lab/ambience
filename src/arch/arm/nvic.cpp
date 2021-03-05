@@ -24,7 +24,7 @@ dynamic_vector_table& make_dynamic_vector_table(span<uint8_t> buffer) {
     return *new (buffer.data()) dynamic_vector_table;
 }
 
-void relocate_vector_table(vector_table& table) {
+void relocate_vector_table(const vector_table& table) {
     tos::int_guard ig;
     SCB->VTOR = reinterpret_cast<uintptr_t>(&table);
     dsb();

@@ -53,7 +53,7 @@ struct vector_table {
 
     [[nodiscard]] span<nvic_raw_handler_t> handlers();
 
-    nvic_raw_handler_t vectors[1];
+    nvic_raw_handler_t vectors[16];
 };
 static_assert(offsetof(vector_table, vectors) == 0);
 
@@ -96,5 +96,5 @@ static_assert(offsetof(dynamic_vector_table, vectors) == 0);
 
 dynamic_vector_table& make_dynamic_vector_table(span<uint8_t> buffer);
 
-void relocate_vector_table(vector_table& table);
+void relocate_vector_table(const vector_table& table);
 } // namespace tos::arm
