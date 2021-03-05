@@ -5,6 +5,7 @@
 #pragma once
 
 #include <tos/debug/assert.hpp>
+#include <tos/detail/coro.hpp>
 #include <tos/meta/function_traits.hpp>
 #include <tos/utility.hpp>
 
@@ -154,5 +155,32 @@ auto free_function_ref(RetT (*fn)(ArgTs...)) {
             return fptr(args...);
         },
         reinterpret_cast<void*>(fn));
+}
+
+inline function_ref<void()> coro_resumer(std::coroutine_handle<> handle) {
+    return function_ref<void()>(
+        [](void* ptr) {
+          auto post_handle = std::coroutine_handle<>::from_address(ptr);
+          post_handle.resume();
+        },
+        handle.address());
+}
+
+inline auto make_coro_resumer(function_ref<void()>& ref) {
+    struct awaiter {
+        bool await_ready() const noexcept {
+            return false;
+        }
+
+        void await_suspend(std::coroutine_handle<> handle) {
+            *ref = coro_resumer(handle);
+        }
+
+        void await_resume() {
+        }
+
+        function_ref<void()>* ref;
+    };
+    return awaiter{&ref};
 }
 } // namespace tos
