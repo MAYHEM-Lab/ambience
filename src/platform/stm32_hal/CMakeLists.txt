@@ -23,7 +23,6 @@ add_library(stm32_hal_core
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/${HAL_NAME}/soc")
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/${HAL_NAME}/drivers/include")
 target_compile_definitions(stm32_hal_core PUBLIC STM32_HAL_NAME=${HAL_NAME})
-target_compile_features(stm32_hal_core PUBLIC cxx_std_17)
 target_link_libraries(stm32_hal_core PUBLIC tos_util_core Boost::preprocessor)
 target_link_libraries(stm32_hal_core PUBLIC stm32_hal_drivers cmsis::core arch_arm)
 
