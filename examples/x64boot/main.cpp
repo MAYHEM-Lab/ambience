@@ -24,6 +24,7 @@
 #include <tos/virtio.hpp>
 #include <tos/virtio/block_device.hpp>
 #include <tos/virtio/network_device.hpp>
+#include <tos/x86_64/cpuid.hpp>
 #include <tos/x86_64/mmu.hpp>
 #include <tos/x86_64/msr.hpp>
 #include <tos/x86_64/pci.hpp>
@@ -393,14 +394,7 @@ void thread() {
 
     s.up();
 
-    uint32_t cpuid_data[4];
-    __get_cpuid(0, &cpuid_data[0], &cpuid_data[1], &cpuid_data[2], &cpuid_data[3]);
-
-    char manufacturer_name[12];
-    memcpy(&manufacturer_name[0], &cpuid_data[1], 4);
-    memcpy(&manufacturer_name[4], &cpuid_data[3], 4);
-    memcpy(&manufacturer_name[8], &cpuid_data[2], 4);
-    LOG(manufacturer_name);
+    LOG(tos::x86_64::cpuid::manufacturer().data());
 
     auto cr3 = tos::x86_64::read_cr3();
     LOG("Page table at:", (void*)cr3);
