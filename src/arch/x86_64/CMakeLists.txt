@@ -22,6 +22,8 @@ add_library(arch_x86_64
     syscall_entry.S
     include/tos/x86_64/syscall.hpp
     syscall.cpp
+    include/tos/x86_64/cpuid.hpp
+    cpuid.cpp
 )
 target_include_directories(arch_x86_64 PUBLIC include)
 target_link_libraries(arch_x86_64 PUBLIC tos_util_core tos_util tos::libcxx)
