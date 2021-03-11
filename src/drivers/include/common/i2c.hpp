@@ -4,29 +4,14 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <nonstd/variant.hpp>
 #include <tos/devices.hpp>
 #include <tos/expected.hpp>
 #include <tos/span.hpp>
-#include <nonstd/variant.hpp>
+#include <tos_i2c_generated.hpp>
 
 namespace tos {
-enum class twi_tx_res
-{
-    ok = 0,
-    addr_nack = 1,
-    data_nack = 2,
-    other = 3
-};
-
-enum class twi_rx_res
-{
-    ok,
-    addr_nack,
-    data_nack,
-    other
-};
-
 namespace i2c {
 struct address7 {
     uint8_t addr;

@@ -6,6 +6,7 @@ else()
     message(WARN "No driver specified!")
 endif()
 
+add_subdirectory(schemas)
 
 add_library(tos_drivers include/common/driver_base.hpp src/stub.cpp)
 target_link_libraries(tos_drivers PUBLIC tos_util_core tos_arch_core tos_ft tos_debug)
@@ -66,6 +67,7 @@ add_library(tos_tty include/common/tty.hpp src/stub.cpp)
 target_include_directories(tos_tty PUBLIC include)
 
 add_library(tos_i2c include/common/i2c.hpp src/stub.cpp)
+target_link_libraries(tos_i2c PUBLIC tos_i2c_schema)
 target_include_directories(tos_i2c PUBLIC include)
 
 add_library(tos_lcd include/common/lcd.hpp src/stub.cpp include/common/detail/lcd_constants.hpp)
