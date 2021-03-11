@@ -81,6 +81,21 @@ int uart0::write(tos::span<const uint8_t> buf) {
     return buf.size();
 }
 
+Task<int> uart0::async_write(tos::span<const uint8_t> buf) noexcept {
+    lock_guard lg{m_lock};
+    while (UART0->FR & (1 << 3))
+        ;
+    {
+        int_guard ig;
+        m_sendbuf = buf.pop_front();
+        UART0->IMSC = UART0->IMSC | 1 << 5;
+        UART0->DR = buf.front();
+    }
+
+    co_await m_sem;
+    co_return buf.size();
+}
+
 span<uint8_t> uart0::read(tos::span<uint8_t> b) {
     size_t total = 0;
     auto len = b.size();

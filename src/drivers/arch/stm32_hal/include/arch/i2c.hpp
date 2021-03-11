@@ -13,6 +13,7 @@
 #include <stm32_hal/i2c.hpp>
 #include <stm32_hal/rcc.hpp>
 #include <tos/semaphore.hpp>
+#include <tos/task.hpp>
 
 namespace tos::stm32 {
 namespace detail {
@@ -99,6 +100,8 @@ public:
 
     twi_tx_res transmit(twi_addr_t to, span<const uint8_t> buf) noexcept;
     twi_rx_res receive(twi_addr_t from, span<uint8_t> buf) noexcept;
+
+    Task<twi_tx_res> async_transmit(twi_addr_t to, span<const uint8_t> buf) noexcept;
 
     void tx_fin();
     void rx_fin();

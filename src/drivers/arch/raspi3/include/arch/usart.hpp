@@ -8,6 +8,7 @@
 #include <tos/semaphore.hpp>
 #include <tos/soc/bcm283x.hpp>
 #include <tos/span.hpp>
+#include <tos/task.hpp>
 
 namespace tos::raspi3 {
 using usart_constraint = ct_map<usart_key_policy,
@@ -22,6 +23,8 @@ public:
     int sync_write(tos::span<const uint8_t>);
     int write(tos::span<const uint8_t>);
     span<uint8_t> read(tos::span<uint8_t>);
+
+    Task<int> async_write(tos::span<const uint8_t>) noexcept;
 
 private:
     bool irq();

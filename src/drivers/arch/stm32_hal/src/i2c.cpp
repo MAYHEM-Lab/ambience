@@ -162,24 +162,45 @@ twi_tx_res i2c::transmit(twi_addr_t to, span<const uint8_t> buf) noexcept {
     m_wait.down();
     tos::kern::unbusy();
 
-    switch (native_handle()->ErrorCode)
-    {
-        case HAL_I2C_ERROR_AF:
-            return twi_tx_res::addr_nack;
-        case HAL_I2C_ERROR_NONE:
-            return twi_tx_res::ok;
-        default:
-            return twi_tx_res::other;
+    switch (native_handle()->ErrorCode) {
+    case HAL_I2C_ERROR_AF:
+        return twi_tx_res::addr_nack;
+    case HAL_I2C_ERROR_NONE:
+        return twi_tx_res::ok;
+    default:
+        return twi_tx_res::other;
+    }
+}
+
+Task<twi_tx_res> i2c::async_transmit(twi_addr_t to, span<const uint8_t> buf) noexcept {
+    auto uint8_span = raw_cast<const uint8_t>(buf);
+    auto transmit_res =
+        HAL_I2C_Master_Transmit_IT(native_handle(),
+                                   to.addr << 1,
+                                   const_cast<uint8_t*>(uint8_span.data()),
+                                   uint8_span.size());
+    if (transmit_res != HAL_OK) {
+        co_return twi_tx_res::other;
+    }
+
+    tos::kern::busy();
+    co_await m_wait;
+    tos::kern::unbusy();
+
+    switch (native_handle()->ErrorCode) {
+    case HAL_I2C_ERROR_AF:
+        co_return twi_tx_res::addr_nack;
+    case HAL_I2C_ERROR_NONE:
+        co_return twi_tx_res::ok;
+    default:
+        co_return twi_tx_res::other;
     }
 }
 
 twi_rx_res i2c::receive(twi_addr_t from, span<uint8_t> buf) noexcept {
     auto uint8_span = raw_cast<uint8_t>(buf);
-    auto transmit_res =
-        HAL_I2C_Master_Receive_IT(native_handle(),
-                                   from.addr << 1,
-                                   uint8_span.data(),
-                                   uint8_span.size());
+    auto transmit_res = HAL_I2C_Master_Receive_IT(
+        native_handle(), from.addr << 1, uint8_span.data(), uint8_span.size());
     if (transmit_res != HAL_OK) {
         return twi_rx_res::other;
     }
@@ -188,14 +209,13 @@ twi_rx_res i2c::receive(twi_addr_t from, span<uint8_t> buf) noexcept {
     m_wait.down();
     tos::kern::unbusy();
 
-    switch (native_handle()->ErrorCode)
-    {
-        case HAL_I2C_ERROR_AF:
-            return twi_rx_res::addr_nack;
-        case HAL_I2C_ERROR_NONE:
-            return twi_rx_res::ok;
-        default:
-            return twi_rx_res::other;
+    switch (native_handle()->ErrorCode) {
+    case HAL_I2C_ERROR_AF:
+        return twi_rx_res::addr_nack;
+    case HAL_I2C_ERROR_NONE:
+        return twi_rx_res::ok;
+    default:
+        return twi_rx_res::other;
     }
 }
 
