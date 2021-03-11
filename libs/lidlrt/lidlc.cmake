@@ -24,12 +24,14 @@ if (NOT ${LIDLC_BIN} MATCHES "NOTFOUND")
             list(APPEND LIDLC_OUTPUTS ${LIDLC_OUTPUT})
             SET_SOURCE_FILES_PROPERTIES(${LIDLC_OUTPUT} PROPERTIES GENERATED 1)
 
+            set(INCLUDES -I$<JOIN:$<TARGET_PROPERTY:${Name},INTERFACE_INCLUDE_DIRECTORIES>,$<SEMICOLON>-I>)
             add_custom_command(OUTPUT ${LIDLC_OUTPUT}
                     COMMAND ${LIDLC_BIN}
-                    ARGS -gcpp -f ${FILE} -o ${LIDLC_OUTPUT}
+                    ARGS -gcpp -f ${FILE} -o ${LIDLC_OUTPUT} "${INCLUDES}"
                     DEPENDS ${FILE} ${LIDLC_BIN}
                     COMMENT "Building C++ header for ${FILE}"
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    COMMAND_EXPAND_LISTS)
 
             if (NOT ${CLANG_FORMAT_BIN} MATCHES "NOTFOUND")
                 #[[add_custom_command(OUTPUT ${LIDLC_OUTPUT}

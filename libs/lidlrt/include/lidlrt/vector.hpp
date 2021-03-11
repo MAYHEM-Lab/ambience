@@ -137,7 +137,10 @@ vector<T>& create_vector_sized(message_builder& builder, int size) {
 template<class T, std::enable_if_t<!is_ptr<T>{} && !is_reference_type<T>{}>* = nullptr>
 vector<T>& create_vector_sized(message_builder& builder, int size) {
     auto& vec = emplace_raw<vector<T>>(builder, int16_t(size));
-    builder.allocate(size * sizeof(T), alignof(T));
+    auto alloc = builder.allocate(size * sizeof(T), alignof(T));
+    if (!alloc) {
+        while (true);
+    }
     return vec;
 }
 
