@@ -98,15 +98,14 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 target_compile_definitions(tos_build_info PRIVATE TOS_GIT_SHA1=\"${GIT_SHA1}\")
 
 configure_file(arch.hpp.in include/tos/core/arch.hpp)
-
 add_library(tos_arch_core src/stub.cpp)
 target_link_libraries(tos_arch_core PUBLIC arch_${TOS_ARCH})
-target_compile_definitions(tos_arch_core PUBLIC TOS_PLATFORM_${TOS_PLATFORM_NAME})
 target_include_directories(tos_arch_core PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/include")
 
 add_library(tos_platform include/tos/arch.hpp src/stub.cpp)
-target_link_libraries(tos_platform PUBLIC tos_arch_core ${TOS_PLATFORM_NAME}_impl)
-message(STATUS ${TOS_PLATFORM_NAME}_impl)
+target_link_libraries(tos_platform PUBLIC tos_arch_core ${TOS_PLATFORM_NAME}_core)
+target_compile_definitions(tos_platform PUBLIC TOS_PLATFORM_${TOS_PLATFORM_NAME})
+message(STATUS "Platform: ${TOS_PLATFORM_NAME}")
 
 add_library(tos_interrupt include/tos/interrupt.hpp src/interrupt.cpp)
 target_link_libraries(tos_interrupt PUBLIC tos_arch_core tos_util_core tos_platform tos_debug_core)
@@ -128,7 +127,7 @@ add_library(tos_core
         src/paging.cpp
         src/paging/physical_page_allocator.cpp
 )
-target_link_libraries(tos_core PUBLIC tos_mem tos_util tos_build_info ${TOS_PLATFORM_NAME}_core)
+target_link_libraries(tos_core PUBLIC tos_mem tos_util tos_build_info ${TOS_PLATFORM_NAME}_impl)
 target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug tos_context)
 target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_platform tos_jobs)
 target_include_directories(tos_core PUBLIC include)
