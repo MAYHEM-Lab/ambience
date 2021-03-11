@@ -26,5 +26,5 @@ add_library(arch_x86_64
     cpuid.cpp
 )
 target_include_directories(arch_x86_64 PUBLIC include)
-target_link_libraries(arch_x86_64 PUBLIC tos_util_core tos_util tos::libcxx)
+target_link_libraries(arch_x86_64 PUBLIC tos_util_core tos_pci tos::libcxx)
 target_compile_features(arch_x86_64 PUBLIC cxx_std_20)
