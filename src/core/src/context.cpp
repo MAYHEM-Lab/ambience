@@ -27,7 +27,7 @@ namespace {
 tos::span<uint8_t> heap_memory() {
     return tos::span<uint8_t>{&_end, &_estack};
 }
-}
+} // namespace
 #elif defined(TOS_PLATFORM_nrf52)
 extern "C" {
 extern uint8_t __HeapBase;
@@ -38,7 +38,9 @@ namespace {
 tos::span<uint8_t> heap_memory() {
     return tos::span<uint8_t>{&__HeapBase, &__HeapLimit};
 }
-}
+} // namespace
+#else
+static_assert(false, "No platform specified!");
 #endif
 
 namespace tos {
