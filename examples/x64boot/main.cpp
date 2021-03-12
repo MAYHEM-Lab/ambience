@@ -5,25 +5,32 @@
 #include "tos/memory.hpp"
 #include "tos/paging/physical_page_allocator.hpp"
 #include "tos/platform.hpp"
+#include "tos/print.hpp"
 #include "tos/self_pointing.hpp"
 #include "tos/semaphore.hpp"
+#include "tos/span.hpp"
+#include "tos/stack_storage.hpp"
 #include "tos/thread.hpp"
 #include "tos/utility.hpp"
 #include "tos/x86_64/exception.hpp"
 #include "tos/x86_64/port.hpp"
 #include <cstddef>
+#include <tos/ae/user_space.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/detail/tos_bind.hpp>
 #include <tos/flags.hpp>
 #include <tos/ft.hpp>
 #include <tos/lwip/if_adapter.hpp>
+#include <tos/mem_stream.hpp>
 #include <tos/peripheral/uart_16550.hpp>
 #include <tos/peripheral/vga_text.hpp>
+#include <tos/sync_ring_buf.hpp>
 #include <tos/task.hpp>
 #include <tos/virtio.hpp>
 #include <tos/virtio/block_device.hpp>
 #include <tos/virtio/network_device.hpp>
+#include <tos/virtio/x86_pci_transport.hpp>
 #include <tos/x86_64/cpuid.hpp>
 #include <tos/x86_64/mmu.hpp>
 #include <tos/x86_64/msr.hpp>
@@ -179,7 +186,6 @@ private:
     }
 };
 
-
 tos::semaphore s{0};
 
 auto yield() {
@@ -218,73 +224,11 @@ auto foo() -> tos::Task<void> {
     LOG("Scheduled again");
 }
 
-struct req_elem {
-    const void* arg_ptr;
-    void* ret_ptr;
-    uint8_t procid;
-    uint8_t channel;
-    void* user_ptr;
-
-    auto operator co_await() {
-        struct awaiter {
-            bool await_ready() const noexcept {
-                return false;
-            }
-
-            void await_suspend(std::coroutine_handle<> handle) {
-                el->user_ptr = handle.address();
-            }
-
-            void await_resume() const {
-            }
-
-            req_elem* el;
-        };
-
-        return awaiter{this};
-    }
-};
-
-struct res_elem {
-    void* user_ptr;
-};
-
-union ring_elem {
-    req_elem req;
-    res_elem res;
-};
-
-struct ring {
-    uint16_t head_idx;
-    uint16_t elems[];
-};
-
-struct interface {
-    int size;
-
-    ring_elem* elems;
-    ring* req;
-    ring* res;
-
-    uint16_t res_last_seen = 0;
-
-    uint16_t allocate() {
-        return 0;
-    }
-};
 
 struct kernel_interface {
-    interface* user_iface;
+    tos::ae::interface* user_iface;
     uint16_t req_last_seen = 0;
 };
-
-void proc_res_queue(interface& iface) {
-    for (; iface.res_last_seen < iface.res->head_idx; ++iface.res_last_seen) {
-        auto res_idx = iface.res->elems[iface.res_last_seen % iface.size];
-        auto& res = iface.elems[res_idx].res;
-        std::coroutine_handle<>::from_address(res.user_ptr).resume();
-    }
-}
 
 void proc_req_queue(kernel_interface& iface) {
     for (; iface.req_last_seen < iface.user_iface->req->head_idx; ++iface.req_last_seen) {
@@ -303,44 +247,14 @@ void proc_req_queue(kernel_interface& iface) {
     }
 }
 
-auto& submit_req(interface& iface, int channel, int proc, const void* params, void* res) {
-    auto el_idx = iface.allocate();
-    auto& req_el = iface.elems[el_idx].req;
-    req_el.channel = channel;
-    req_el.procid = proc;
-    req_el.arg_ptr = params;
-    req_el.ret_ptr = res;
-    iface.req->elems[iface.req->head_idx++ % iface.size] = el_idx;
-    return req_el;
-}
-
-ring_elem elems[4];
-
-interface iface{4, elems};
-tos::Task<void> log_str(std::string_view sv) {
-    co_await submit_req(iface, 4, 1, &sv, nullptr);
-}
-
 tos::Task<void> task() {
     while (true) {
-        co_await log_str("Hello world from user space!");
-        co_await log_str("Second hello world from user space!");
+        co_await tos::ae::log_str("Hello world from user space!");
+        co_await tos::ae::log_str("Second hello world from user space!");
     }
 }
 
-void user_code() {
-    iface.req = new (new uint8_t[sizeof(ring) + iface.size * sizeof(uint16_t)]) ring{};
-    iface.res = new (new uint8_t[sizeof(ring) + iface.size * sizeof(uint16_t)]) ring{};
-    tos::x86_64::syscall(1, reinterpret_cast<uint64_t>(&iface));
-
-    auto pollable = new tos::coro::pollable(tos::coro::make_pollable(task()));
-    pollable->run();
-
-    while (true) {
-        tos::x86_64::syscall(2, 0);
-        proc_res_queue(iface);
-    }
-}
+void user_code();
 
 void switch_to_user() {
     using namespace tos::x86_64;
@@ -357,7 +271,7 @@ void thread() {
         tos::x86_64::syscall_handler_t([](tos::x86_64::syscall_frame& frame, void*) {
             if (frame.rdi == 1) {
                 // Queue setup
-                auto ifc = reinterpret_cast<interface*>(frame.rsi);
+                auto ifc = reinterpret_cast<tos::ae::interface*>(frame.rsi);
                 LOG("IF", ifc, ifc->size, ifc->elems, ifc->req, ifc->res);
                 kif.user_iface = ifc;
                 proc_req_queue(kif);
@@ -368,12 +282,14 @@ void thread() {
                 LOG(n, "In syscall from", (void*)frame.ret_addr);
                 LOG((void*)frame.rdi, (void*)frame.rsi);
             }
+            tos::this_thread::yield();
         }));
     auto uart_res = tos::x86_64::uart_16550::open();
     if (!uart_res) {
         tos::debug::panic("Could not open the uart");
     }
     auto& uart = force_get(uart_res);
+    tos::println(uart, "Booted");
 
     tos::x86_64::text_vga vga;
     vga.clear();
@@ -434,36 +350,6 @@ void thread() {
     palloc->mark_unavailable({0, 4096});
     palloc->mark_unavailable({0x00080000, 0x000FFFFF - 0x00080000});
     LOG("Available:", palloc, palloc->remaining_page_count());
-
-    for (int i = 0; i < 5; ++i) {
-        auto p = palloc->allocate(1);
-        auto ptr = palloc->address_of(*p);
-        LOG(i, ptr, palloc->remaining_page_count());
-        LOG("Available:", palloc->remaining_page_count());
-
-        auto op_res = tos::cur_arch::allocate_region(
-            tos::cur_arch::get_current_translation_table(),
-            {{uintptr_t(ptr), 4096}, tos::permissions::read_write},
-            tos::user_accessible::no,
-            nullptr);
-        LOG(bool(op_res));
-        LOG("Available:", palloc->remaining_page_count());
-
-        auto res = tos::cur_arch::mark_resident(
-            tos::cur_arch::get_current_translation_table(),
-            {{uintptr_t(ptr), 4096}, tos::permissions::read_write},
-            tos::memory_types::normal,
-            ptr);
-        LOG(bool(res));
-        LOG("Available:", palloc->remaining_page_count());
-
-        *((volatile int*)ptr) = 99;
-        res = tos::cur_arch::mark_nonresident(
-            tos::cur_arch::get_current_translation_table(),
-            {{uintptr_t(ptr), 4096}, tos::permissions::read_write});
-        LOG(bool(res));
-        LOG("Available:", palloc->remaining_page_count());
-    }
 
     lwip_init();
 
@@ -528,15 +414,6 @@ void thread() {
                                               tos::parse_ipv4_address("10.0.2.2"));
                         set_default(*interface);
                         interface->up();
-
-                        // uint8_t buf[128]{};
-                        // nd->transmit_packet(buf);
-
-                        // while (true) {
-                        //     auto packet = nd->take_packet();
-                        //     LOG("Got it:", packet);
-                        //     nd->return_packet(packet);
-                        // }
                         break;
                     }
                     default:
@@ -586,30 +463,9 @@ void thread() {
 
     tos::launch(tos::alloc_stack, switch_to_user);
 
-    //    tos::x86_64::pic::disable_irq(0);
     while (true) {
         sem.down();
-        //        LOG("Tick");
-    }
-
-    //
-    //    for (uintptr_t i = 0; i < 0x40000000; ++i) {
-    //        auto ptr = (volatile char*)i;
-    //        LOG((void*)i, *ptr);
-    //    }
-
-    tos::cur_arch::breakpoint();
-
-    LOG("Accessing mapped region");
-    *((volatile char*)0x400000 - 1) = 42;
-
-    LOG("Accessing unmapped region");
-    *((volatile char*)0x400000) = 42;
-
-    LOG("Done");
-
-    while (true) {
-        tos::this_thread::yield();
+        LOG("Tick");
     }
 }
 
