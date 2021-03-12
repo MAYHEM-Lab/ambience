@@ -21,5 +21,5 @@ elseif()
 endif()
 
 if (TOS_TOOLCHAIN)
-    set(CMAKE_TOOLCHAIN_FILE cmake/${TOS_TOOLCHAIN}.cmake)
+    set(CMAKE_TOOLCHAIN_FILE ${TOS_PROJECT_ROOT}/cmake/${TOS_TOOLCHAIN}.cmake)
 endif()
