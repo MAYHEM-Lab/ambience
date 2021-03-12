@@ -1,0 +1,5 @@
+add_subdirectory(basic_calc)
+add_subdirectory(bme280)
+add_subdirectory(stm32_flash_serv)
+add_subdirectory(stm32_i2c)
+add_subdirectory(virtio_blk_serv)

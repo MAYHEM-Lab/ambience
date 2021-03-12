@@ -1,0 +1,22 @@
+#include <tos_i2c_generated.hpp>
+#include <i2c_generated.hpp>
+#include <temp_sensor_generated.hpp>
+#include <tos/device/bme280.hpp>
+
+namespace {
+auto delay = [](std::chrono::microseconds) {};
+using driv = tos::device::bme280::driver<tos::ae::service::i2c* const, decltype(delay)>;
+struct impl final : tos::ae::service::temp_sensor {
+    impl(tos::ae::service::i2c& i2c) : m_driver{{0x1}, &i2c, delay} {}
+
+    float sample() override {
+        return force_get(m_driver->read()).temperature;
+    }
+
+    driv m_driver;
+};
+} // namespace
+
+extern "C" tos::ae::service::temp_sensor* init_bme280(tos::ae::service::i2c& i2c) {
+    return new impl{i2c};
+}

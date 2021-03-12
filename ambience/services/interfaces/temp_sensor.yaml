@@ -1,0 +1,10 @@
+$lidlmeta:
+  name: tos::ae::service
+
+temp_sensor:
+  type: service
+  procedures:
+    sample:
+      parameters:
+      returns:
+        - f32

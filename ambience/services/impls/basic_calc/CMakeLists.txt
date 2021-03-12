@@ -1,0 +1,1 @@
+add_service(basic_calc calc impl.cpp)

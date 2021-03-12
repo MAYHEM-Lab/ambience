@@ -1,0 +1,13 @@
+$lidlmeta:
+  name: tos::ae::service
+
+calculator:
+  type: service
+  procedures:
+    add:
+      parameters:
+        x: i32
+        y: i32
+      returns:
+        - i32
+  

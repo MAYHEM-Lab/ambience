@@ -1,0 +1,6 @@
+$lidlmeta:
+  name: tos::ae::service
+
+database:
+  type: service
+  procedures:
