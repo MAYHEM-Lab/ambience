@@ -64,9 +64,10 @@ struct [[gnu::packed]] vector_table {
             nvic_raw_handler_t memory_fault;
             nvic_raw_handler_t bus_fault;
             nvic_raw_handler_t usage_fault;
-            nvic_raw_handler_t __reserved__[5];
+            nvic_raw_handler_t __reserved__[4];
             nvic_raw_handler_t svcall;
             nvic_raw_handler_t debug;
+            nvic_raw_handler_t __reserved2__[1];
             nvic_raw_handler_t pendsv;
             nvic_raw_handler_t systick;
         };
