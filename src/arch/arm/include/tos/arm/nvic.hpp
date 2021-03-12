@@ -35,6 +35,7 @@ static constexpr exception_id_t hard_fault{-13};
 static constexpr exception_id_t memory_fault{-12};
 static constexpr exception_id_t bus_fault{-11};
 static constexpr exception_id_t usage_fault{-10};
+// Between svcall and usage_fault are reserved
 static constexpr exception_id_t svcall{-5};
 static constexpr exception_id_t debug{-4};
 static constexpr exception_id_t pendsv{-2};
@@ -43,7 +44,7 @@ static constexpr exception_id_t systick{-1};
 
 using nvic_raw_handler_t = void (*)();
 
-struct vector_table {
+struct [[gnu::packed]] vector_table {
     /**
      * Gets the current raw handler for the given exception.
      */
@@ -53,9 +54,26 @@ struct vector_table {
 
     [[nodiscard]] span<nvic_raw_handler_t> handlers();
 
-    nvic_raw_handler_t vectors[16];
+    void* stack_ptr;
+    union {
+        nvic_raw_handler_t vectors[15];
+        struct {
+            nvic_raw_handler_t reset;
+            nvic_raw_handler_t nmi;
+            nvic_raw_handler_t hard_fault;
+            nvic_raw_handler_t memory_fault;
+            nvic_raw_handler_t bus_fault;
+            nvic_raw_handler_t usage_fault;
+            nvic_raw_handler_t __reserved__[5];
+            nvic_raw_handler_t svcall;
+            nvic_raw_handler_t debug;
+            nvic_raw_handler_t pendsv;
+            nvic_raw_handler_t systick;
+        };
+    };
 };
-static_assert(offsetof(vector_table, vectors) == 0);
+static_assert(offsetof(vector_table, stack_ptr) == 0);
+static_assert(offsetof(vector_table, vectors) == sizeof(void*));
 
 /**
  * Returns a reference to the current vector table.
@@ -92,7 +110,7 @@ private:
     friend dynamic_vector_table& make_dynamic_vector_table(span<uint8_t> buffer);
 };
 
-static_assert(offsetof(dynamic_vector_table, vectors) == 0);
+static_assert(offsetof(dynamic_vector_table, stack_ptr) == 0);
 
 dynamic_vector_table& make_dynamic_vector_table(span<uint8_t> buffer);
 

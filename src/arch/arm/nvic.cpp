@@ -12,14 +12,15 @@ vector_table& get_vector_table() {
 }
 
 nvic_raw_handler_t vector_table::get_handler(exception_id_t id) const {
-    return *(vectors + id.m_id + 16);
+    return *(vectors + id.m_id + 15);
 }
 
 void dynamic_vector_table::set_handler(exception_id_t id, nvic_raw_handler_t handler) {
-    *(vectors + id.m_id + 16) = handler;
+    *(vectors + id.m_id + 15) = handler;
 }
 
 dynamic_vector_table& make_dynamic_vector_table(span<uint8_t> buffer) {
+    // Vector tables must be at least 128 byte aligned
     Assert((reinterpret_cast<uintptr_t>(buffer.data()) & 0x7F) == 0);
     return *new (buffer.data()) dynamic_vector_table;
 }
