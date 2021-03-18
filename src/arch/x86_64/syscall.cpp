@@ -25,5 +25,8 @@ void initialize_syscall_support() {
 } // namespace tos::x86_64
 
 extern "C" void syscall_entry(tos::x86_64::syscall_frame* frame) {
+    frame->cs = 0x28 | 0x3;
+    frame->ss = 0x20 | 0x3;
+    frame->rsp += 8;
     tos::x86_64::syscall_handler(*frame);
 }

@@ -2,14 +2,10 @@
 
 #include <cstdint>
 #include <tos/function_ref.hpp>
+#include <tos/x86_64/exception.hpp>
 
 namespace tos::x86_64 {
-struct syscall_frame {
-    uint64_t rsi;
-    uint64_t rdi;
-    uint64_t ret_addr;
-    uint64_t rflags;
-};
+using syscall_frame = exception_frame;
 
 using syscall_handler_t = function_ref<void(syscall_frame&)>;
 
