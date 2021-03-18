@@ -82,9 +82,7 @@ private:
      */
     class trampoline_tcb : public tos::kern::tcb {
     public:
-        trampoline_tcb(tos::context& ctx)
-            : tcb(ctx) {
-        }
+        using tcb::tcb;
     };
     trampoline_tcb m_isr_tcb{tos::current_context()};
 
