@@ -112,4 +112,8 @@ inline void write_cr4(uint32_t reg) {
 inline void syscall(uint64_t rdi, uint64_t rsi) {
     asm volatile("syscall" : : "D"(rdi), "S"(rsi));
 }
+
+inline void int0x2c() {
+    asm volatile("int $0x2c" : : : "memory");
+}
 } // namespace tos::x86_64
