@@ -35,9 +35,7 @@
     pop %rcx
     pop %rbx
     pop %rax
-.ifeq \ec
-    pop %rax
-.endif
+    add $8, %rsp // This is either the error code or %rax, and we don't care about either
 .endm
 
 .macro make_isr actual_handler:req number:req ec:req
