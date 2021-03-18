@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <nonstd/variant.hpp>
 
 namespace tos::x86_64 {
 struct [[gnu::packed]] exception_frame {
@@ -31,4 +32,19 @@ struct [[gnu::packed]] exception_frame {
     uint64_t rsp;
     uint64_t ss;
 };
+
+
+struct base_fault {
+    uintptr_t instr_address;
+};
+
+struct undefined_instruction : base_fault {
+};
+
+struct page_fault : base_fault {
+    uintptr_t fault_address;
+    bool access_type;
+};
+
+using fault_variant = mpark::variant<undefined_instruction, page_fault>;
 } // namespace tos::x86_64
