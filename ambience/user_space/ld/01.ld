@@ -1,0 +1,6 @@
+MEMORY {
+    RODATA(rx) : ORIGIN = 0x20000000, LENGTH = 96K
+    DATA(rw) : ORIGIN = 0x10000000, LENGTH = 96K
+}
+
+INCLUDE group.ld
