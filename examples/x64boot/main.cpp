@@ -258,8 +258,7 @@ void user_code();
 
 void switch_to_user() {
     using namespace tos::x86_64;
-    asm volatile("pushf\n"
-                 "popq %r11");
+    asm volatile("movq $0x202, %r11");
     sysret((void*)user_code);
 }
 
