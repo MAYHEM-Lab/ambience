@@ -89,6 +89,9 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
             root[path[0]].allow_user(true);
         }
 
+        tos::aarch64::dsb();
+        tos::aarch64::isb();
+
         return {};
     } else {
         if (!root[path[0]].valid()) {
@@ -110,6 +113,9 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
                 .allow_user(true)
                 .shareable(tos::aarch64::shareable_values::inner)
                 .mair_index(PT_MEM);
+
+            tos::aarch64::dsb();
+            tos::aarch64::isb();
         }
 
         return recursive_allocate(
@@ -128,6 +134,9 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
 
         EXPECTED_TRYV(recursive_allocate(root, virt_seg.perms, allow_user, path, palloc));
     }
+
+    tos::aarch64::dsb();
+    tos::aarch64::isb();
 
     return {};
 }
@@ -157,6 +166,9 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
                 .mair_index(PT_MEM);
         }
     }
+
+    tos::aarch64::dsb();
+    tos::aarch64::isb();
 
     return {};
 }
@@ -241,15 +253,6 @@ expected<translation_table*, mmu_errors> clone_level(int level,
         auto cloned = EXPECTED_TRY(clone_level(level + 1, table_at(entry), palloc));
         entry.page_num(address_to_page(cloned));
     }
-
-    //
-    //    for (auto& entry : *table_ptr) {
-    //        auto pg_info = palloc.info(entry.page_num());
-    //        if (!pg_info) {
-    //            continue;
-    //        }
-    //        intrusive_ref(pg_info);
-    //    }
 
     return table_ptr;
 }
