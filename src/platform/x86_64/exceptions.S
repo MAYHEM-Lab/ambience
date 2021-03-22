@@ -19,7 +19,7 @@
     push %r15
 .endm
 
-.macro load_gpr ec:req
+.macro load_gpr
     pop %r15
     pop %r14
     pop %r13
@@ -46,7 +46,7 @@
         mov %rsp, %rdi
         mov $\number, %rsi
         call \actual_handler
-        load_gpr \ec
+        load_gpr
         iretq
 .endm
 
@@ -58,7 +58,7 @@
         mov %rsp, %rdi
         mov $(32 + \number), %rsi
         call irq_entry
-        load_gpr 0
+        load_gpr
         iretq
     #make_isr irq\number\()_handler, (32 + \number), 0
 .endm
