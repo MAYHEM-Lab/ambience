@@ -6,34 +6,33 @@
 #include "tos/paging/physical_page_allocator.hpp"
 #include "tos/platform.hpp"
 #include "tos/print.hpp"
-#include "tos/self_pointing.hpp"
 #include "tos/semaphore.hpp"
 #include "tos/span.hpp"
-#include "tos/stack_storage.hpp"
 #include "tos/thread.hpp"
 #include "tos/utility.hpp"
 #include "tos/x86_64/exception.hpp"
-#include "tos/x86_64/port.hpp"
 #include <cstddef>
-#include <tos/ae/user_space.hpp>
+#include <deque>
+#include <group1.hpp>
+#include <tos/ae/kernel/rings.hpp>
+#include <tos/ae/rings.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
-#include <tos/detail/tos_bind.hpp>
+#include <tos/elf.hpp>
 #include <tos/flags.hpp>
 #include <tos/ft.hpp>
+#include <tos/interrupt_trampoline.hpp>
 #include <tos/lwip/if_adapter.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/peripheral/uart_16550.hpp>
 #include <tos/peripheral/vga_text.hpp>
-#include <tos/sync_ring_buf.hpp>
-#include <tos/task.hpp>
-#include <tos/virtio.hpp>
+#include <tos/suspended_launch.hpp>
 #include <tos/virtio/block_device.hpp>
 #include <tos/virtio/network_device.hpp>
 #include <tos/virtio/x86_pci_transport.hpp>
+#include <tos/x86_64/assembly.hpp>
 #include <tos/x86_64/cpuid.hpp>
 #include <tos/x86_64/mmu.hpp>
-#include <tos/x86_64/msr.hpp>
 #include <tos/x86_64/pci.hpp>
 #include <tos/x86_64/pic.hpp>
 #include <tos/x86_64/syscall.hpp>
@@ -41,6 +40,7 @@
 void dump_table(tos::cur_arch::translation_table& table) {
     tos::cur_arch::traverse_table_entries(
         table, [](tos::memory_range range, tos::cur_arch::table_entry& entry) {
+            LOG_TRACE((void*)entry.raw());
             LOG_TRACE(
                 "VirtAddress:", "[", (void*)(range.base), ",", (void*)(range.end()), ")");
             LOG_TRACE("PhysAddress:",
@@ -64,7 +64,6 @@ void abort() {
         ;
 }
 }
-
 
 class virtio_net_if {
 public:
@@ -186,75 +185,99 @@ private:
     }
 };
 
-tos::semaphore s{0};
-
-auto foo() -> tos::Task<void> {
-    LOG("Hello from coroutine");
-    co_await yield();
-    LOG("Back from yield");
-    co_await s;
-    LOG("Scheduled again");
-}
-
-
-struct kernel_interface {
-    tos::ae::interface* user_iface;
-    uint16_t req_last_seen = 0;
-};
-
-void proc_req_queue(kernel_interface& iface) {
-    for (; iface.req_last_seen < iface.user_iface->req->head_idx; ++iface.req_last_seen) {
-        auto req_idx =
-            iface.user_iface->req->elems[iface.req_last_seen % iface.user_iface->size];
-        auto& req = iface.user_iface->elems[req_idx].req;
-        LOG("Got request");
-        if (req.channel == 4 && req.procid == 1) {
-            LOG(*(std::string_view*)req.arg_ptr);
-        }
-
-        auto& res = iface.user_iface->elems[req_idx].res;
-        res.user_ptr = req.user_ptr;
-        iface.user_iface->res
-            ->elems[iface.user_iface->res->head_idx++ % iface.user_iface->size] = req_idx;
-    }
-}
-
-tos::Task<void> task() {
-    while (true) {
-        co_await tos::ae::log_str("Hello world from user space!");
-        co_await tos::ae::log_str("Second hello world from user space!");
-    }
-}
-
-void user_code();
-
-void switch_to_user() {
+void switch_to_user(void* user_code) {
     using namespace tos::x86_64;
     asm volatile("movq $0x202, %r11");
-    sysret((void*)user_code);
+    sysret(user_code);
 }
 
-int n;
+struct on_demand_interrupt {
+    template<class T>
+    void operator()(T&& t) {
+        tos::platform::set_irq(12, tos::platform::irq_handler_t(t));
+        tos::cur_arch::int0x2c();
+    }
+};
 
-kernel_interface kif;
+void init_pci(tos::physical_page_allocator& palloc) {
+    for (int i = 0; i < 256; ++i) {
+        for (int j = 0; j < 32; ++j) {
+            auto vendor_id = tos::x86_64::pci::get_vendor(i, j, 0);
+            if (vendor_id != 0xFFFF) {
+                auto dev = tos::x86_64::pci::device(i, j, 0);
+
+                LOG("PCI Device at",
+                    i,
+                    j,
+                    (void*)(uintptr_t)tos::x86_64::pci::get_header_type(i, j, 0),
+                    (void*)(uintptr_t)dev.vendor(),
+                    (void*)(uintptr_t)dev.device_id(),
+                    (void*)dev.class_code(),
+                    (void*)(uintptr_t)tos::x86_64::pci::get_subclass(i, j, 0),
+                    (void*)(uintptr_t)tos::x86_64::pci::get_subsys_id(i, j, 0),
+                    (void*)(uintptr_t)dev.status(),
+                    "IRQ",
+                    int(dev.irq_line()),
+                    "BAR0",
+                    (void*)(uintptr_t)dev.bar0(),
+                    "BAR1",
+                    (void*)(uintptr_t)dev.bar1(),
+                    "BAR4",
+                    (void*)(uintptr_t)dev.bar4(),
+                    "BAR5",
+                    (void*)(uintptr_t)dev.bar5(),
+                    dev.has_capabilities());
+
+                if (vendor_id == 0x1AF4) {
+                    switch (dev.device_id()) {
+                    case 0x1001: {
+                        LOG("Virtio block device");
+                        auto bd = new tos::virtio::block_device(
+                            tos::virtio::make_x86_pci_transport(std::move(dev)));
+                        bd->initialize(&palloc);
+                        uint8_t buf[512];
+                        bd->read(0, buf, 0);
+                        bd->read(1, buf, 0);
+                        bd->write(0, buf, 0);
+                        break;
+                    }
+                    case 0x1000: {
+                        LOG("Virtio network device");
+                        auto nd = new tos::virtio::network_device(
+                            tos::virtio::make_x86_pci_transport(std::move(dev)));
+                        nd->initialize(&palloc);
+                        LOG("MTU", nd->mtu());
+                        LOG((void*)(uintptr_t)nd->address().addr[0],
+                            (void*)(uintptr_t)nd->address().addr[1],
+                            (void*)(uintptr_t)nd->address().addr[2],
+                            (void*)(uintptr_t)nd->address().addr[3],
+                            (void*)(uintptr_t)nd->address().addr[4],
+                            (void*)(uintptr_t)nd->address().addr[5]);
+
+                        auto interface =
+                            new virtio_net_if(nd,
+                                              tos::parse_ipv4_address("10.0.2.15"),
+                                              tos::parse_ipv4_address("255.255.255.0"),
+                                              tos::parse_ipv4_address("10.0.2.2"));
+                        set_default(*interface);
+                        interface->up();
+                        break;
+                    }
+                    default:
+                        LOG_WARN("Unknown virtio type:",
+                                 (void*)(uintptr_t)dev.device_id());
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+tos::ae::kernel::kernel_interface kif;
 void thread() {
-    tos::x86_64::set_syscall_handler(
-        tos::x86_64::syscall_handler_t([](tos::x86_64::syscall_frame& frame, void*) {
-            if (frame.rdi == 1) {
-                // Queue setup
-                auto ifc = reinterpret_cast<tos::ae::interface*>(frame.rsi);
-                LOG("IF", ifc, ifc->size, ifc->elems, ifc->req, ifc->res);
-                kif.user_iface = ifc;
-                proc_req_queue(kif);
-            } else if (frame.rdi == 2) {
-                proc_req_queue(kif);
-            }
-            if ((n++ % 1'000'000) == 0) {
-                LOG(n, "In syscall from", (void*)frame.ret_addr);
-                LOG((void*)frame.rdi, (void*)frame.rsi);
-            }
-            tos::this_thread::yield();
-        }));
+    auto& self = *tos::self();
+
     auto uart_res = tos::x86_64::uart_16550::open();
     if (!uart_res) {
         tos::debug::panic("Could not open the uart");
@@ -275,13 +298,9 @@ void thread() {
 
     LOG("Hello world!");
 
-    tos::coro_job job(tos::current_context(), tos::coro::make_pollable(foo()));
-    tos::kern::make_runnable(job);
-    tos::this_thread::yield();
-
-    s.up();
-
     LOG(tos::x86_64::cpuid::manufacturer().data());
+    on_demand_interrupt odi{};
+    auto trampoline = tos::make_interrupt_trampoline(odi);
 
     auto cr3 = tos::x86_64::read_cr3();
     LOG("Page table at:", (void*)cr3);
@@ -324,78 +343,7 @@ void thread() {
 
     lwip_init();
 
-    for (int i = 0; i < 256; ++i) {
-        for (int j = 0; j < 32; ++j) {
-            auto vendor_id = tos::x86_64::pci::get_vendor(i, j, 0);
-            if (vendor_id != 0xFFFF) {
-                auto dev = tos::x86_64::pci::device(i, j, 0);
-
-                LOG("PCI Device at",
-                    i,
-                    j,
-                    (void*)(uintptr_t)tos::x86_64::pci::get_header_type(i, j, 0),
-                    (void*)(uintptr_t)dev.vendor(),
-                    (void*)(uintptr_t)dev.device_id(),
-                    (void*)dev.class_code(),
-                    (void*)(uintptr_t)tos::x86_64::pci::get_subclass(i, j, 0),
-                    (void*)(uintptr_t)tos::x86_64::pci::get_subsys_id(i, j, 0),
-                    (void*)(uintptr_t)dev.status(),
-                    "IRQ",
-                    int(dev.irq_line()),
-                    "BAR0",
-                    (void*)(uintptr_t)dev.bar0(),
-                    "BAR1",
-                    (void*)(uintptr_t)dev.bar1(),
-                    "BAR4",
-                    (void*)(uintptr_t)dev.bar4(),
-                    "BAR5",
-                    (void*)(uintptr_t)dev.bar5(),
-                    dev.has_capabilities());
-
-                if (vendor_id == 0x1AF4) {
-                    switch (dev.device_id()) {
-                    case 0x1001: {
-                        LOG("Virtio block device");
-                        auto bd = new tos::virtio::block_device(
-                            tos::virtio::make_x86_pci_transport(std::move(dev)));
-                        bd->initialize(palloc);
-                        uint8_t buf[512];
-                        bd->read(0, buf, 0);
-                        bd->read(1, buf, 0);
-                        bd->write(0, buf, 0);
-                        break;
-                    }
-                    case 0x1000: {
-                        LOG("Virtio network device");
-                        auto nd = new tos::virtio::network_device(
-                            tos::virtio::make_x86_pci_transport(std::move(dev)));
-                        nd->initialize(palloc);
-                        LOG("MTU", nd->mtu());
-                        LOG((void*)(uintptr_t)nd->address().addr[0],
-                            (void*)(uintptr_t)nd->address().addr[1],
-                            (void*)(uintptr_t)nd->address().addr[2],
-                            (void*)(uintptr_t)nd->address().addr[3],
-                            (void*)(uintptr_t)nd->address().addr[4],
-                            (void*)(uintptr_t)nd->address().addr[5]);
-
-                        auto interface =
-                            new virtio_net_if(nd,
-                                              tos::parse_ipv4_address("10.0.2.15"),
-                                              tos::parse_ipv4_address("255.255.255.0"),
-                                              tos::parse_ipv4_address("10.0.2.2"));
-                        set_default(*interface);
-                        interface->up();
-                        break;
-                    }
-                    default:
-                        LOG_WARN("Unknown virtio type:",
-                                 (void*)(uintptr_t)dev.device_id());
-                        break;
-                    }
-                }
-            }
-        }
-    }
+    init_pci(*palloc);
 
     tos::lwip::async_udp_socket sock;
 
@@ -415,13 +363,6 @@ void thread() {
     auto bind_res = sock.bind({100}, tos::parse_ipv4_address("10.0.2.15"));
     LOG(bool(bind_res));
 
-    uint8_t buf[] = "hello world";
-    tos::udp_endpoint_t ep{tos::parse_ipv4_address("10.0.2.2"), {1234}};
-    sock.send_to(buf, ep);
-    sock.send_to(buf, ep);
-    sock.send_to(buf, ep);
-    sock.send_to(buf, ep);
-
     tos::semaphore sem{0};
 
     auto tim_handler = [&](tos::x86_64::exception_frame* frame, int) {
@@ -432,7 +373,98 @@ void thread() {
     tos::platform::set_irq(
         0, tos::function_ref<void(tos::x86_64::exception_frame*, int)>(tim_handler));
 
-    tos::launch(tos::alloc_stack, switch_to_user);
+    auto syshandler = [&](tos::x86_64::syscall_frame& frame) {
+        // Interrupts are disabled here!
+
+        if (frame.rdi == 1) {
+            auto ifc = reinterpret_cast<tos::ae::interface*>(frame.rsi);
+            LOG("IF", ifc, ifc->size, ifc->elems, ifc->req, ifc->res);
+            kif.user_iface = ifc;
+            proc_req_queue(kif);
+        } else if (frame.rdi == 2) {
+            proc_req_queue(kif);
+        }
+        trampoline->switch_to(self);
+    };
+    tos::x86_64::set_syscall_handler(tos::x86_64::syscall_handler_t(syshandler));
+
+    LOG(group1.slice(0, 4));
+    auto elf_res = tos::elf::elf64::from_buffer(group1);
+    if (!elf_res) {
+        vga.write("Could not parse payload\n\r");
+        vga.write("Error code: ");
+        vga.write(tos::itoa(int(force_error(elf_res))).data());
+        vga.write("\n\r");
+        while (true)
+            ;
+    }
+
+
+    auto& elf = force_get(elf_res);
+    tos::println(vga, "Entry point:", int(elf.header().entry));
+    tos::println(vga, (int)elf.header().pheader_offset, (int)elf.header().pheader_size);
+
+    for (auto pheader : elf.program_headers()) {
+        if (pheader.type != tos::elf::segment_type::load) {
+            continue;
+        }
+
+        tos::println(vga,
+                     "Load",
+                     (void*)(uint32_t)pheader.file_size,
+                     "bytes from",
+                     (void*)(uint32_t)pheader.file_offset,
+                     "to",
+                     (void*)(uint32_t)pheader.virt_address);
+
+        auto seg = elf.segment(pheader);
+
+        void* base = const_cast<uint8_t*>(seg.data());
+        if (pheader.file_size < pheader.virt_size) {
+            auto pages = pheader.virt_size / 4096;
+            auto p = palloc->allocate(pages);
+            base = palloc->address_of(*p);
+        }
+
+        LOG((void*)pheader.virt_address,
+            pheader.virt_size,
+            (void*)pheader.file_offset,
+            pheader.file_size,
+            base);
+
+        auto vseg =
+            tos::segment{.range = {.base = pheader.virt_address,
+                                   .size = static_cast<ptrdiff_t>(pheader.virt_size)},
+                         .perms = tos::permissions::all};
+
+        auto map_res = tos::cur_arch::map_region(level0_table, vseg, palloc, base);
+        LOG(bool(map_res));
+
+        if (!map_res) {
+            LOG_ERROR(int(force_error(op_res)));
+        }
+    }
+
+    //    dump_table(level0_table);
+
+    LOG((void*)elf.header().entry);
+    auto& user_thread = tos::suspended_launch(
+        tos::alloc_stack, switch_to_user, (void*)elf.header().entry);
+
+    tos::swap_context(self, user_thread, tos::int_guard{});
+
+    auto syshandler2 = [&](tos::x86_64::syscall_frame& frame) {
+        tos::swap_context(user_thread, self, tos::int_ctx{});
+    };
+    tos::x86_64::set_syscall_handler(tos::x86_64::syscall_handler_t(syshandler2));
+
+
+    while (true) {
+        LOG("back");
+        proc_req_queue(kif);
+
+        odi([&](auto...) { tos::swap_context(self, user_thread, tos::int_ctx{}); });
+    }
 
     while (true) {
         sem.down();
