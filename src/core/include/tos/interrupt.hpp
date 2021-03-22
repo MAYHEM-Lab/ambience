@@ -18,6 +18,7 @@ extern bool should_enable;
 namespace kern {
 inline void do_disable_interrupts([[maybe_unused]] void* ret_addr) {
     tos::detail::memory_barrier();
+    Assert(global::disable_depth >= 0);
     if (global::disable_depth == 0) {
         if (platform::interrupts_disabled()) {
             global::should_enable = false;
