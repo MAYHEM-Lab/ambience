@@ -7,6 +7,10 @@
 #include <tos/utility.hpp>
 
 namespace tos {
+// Trouble with this:
+// 1. Stack sizes differ between architectures.
+// 2. Disabling interrupts only works on aarch64
+
 /**
  * This class is used to setup a trampoline that can be used to transition
  * from a thread in interrupt context to another thread in normal mode.
@@ -29,7 +33,9 @@ public:
      */
     template<class InISR>
     void operator()(InISR& in_isr) {
+#if defined(TOS_PLATFORM_raspi)
         kern::disable_interrupts();
+#endif
         in_isr([this](auto&&...) { on_svc(); });
         // The stack up until this point allows us to escape from an interrupt handler.
         // We'll keep that in m_stack and switch to m_tmp_stack to perform the
@@ -41,13 +47,11 @@ public:
         }
         // At this point, we successfully escaped from an interrupt context to thread
         // context, we can safely switch to the requested thread.
-        // The thread context that was interrupted will safely stay in a semi-interrupt
-        // context.
-        global::thread_state.current_thread = m_target;
+        // The thread that was interrupted will safely stay in a interrupt context.
         kern::disable_interrupts();
         global::should_enable = true;
-        kern::switch_context(m_target->get_processor_state(),
-                             tos::return_codes::scheduled);
+        global::thread_state.current_thread = m_target;
+        switch_context(m_target->get_processor_state(), tos::return_codes::scheduled);
     }
 
     template<class InISR>
@@ -57,7 +61,9 @@ public:
         int_guard ig;
         kern::make_runnable(*self());
         swap_context(*self(), t, ig);
+#if defined(TOS_PLATFORM_raspi)
         kern::enable_interrupts();
+#endif
     }
 
     void switch_to(tos::kern::tcb& target) {
