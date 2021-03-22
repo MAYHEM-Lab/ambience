@@ -24,7 +24,6 @@ extern uint64_t _sidata;
 }
 
 [[gnu::used, noreturn]] extern "C" void _user_code() {
-    while (true);
     auto data = tos::default_segments::data();
     auto data_start = reinterpret_cast<uint64_t*>(data.base);
 

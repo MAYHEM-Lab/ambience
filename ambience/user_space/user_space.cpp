@@ -8,6 +8,7 @@ tos::Task<void> log_str(std::string_view sv) {
 }
 
 void proc_res_queue(interface& iface) {
+    // TODO: handle overflow
     for (; iface.res_last_seen < iface.res->head_idx; ++iface.res_last_seen) {
         auto res_idx = iface.res->elems[iface.res_last_seen % iface.size];
         auto& res = iface.elems[res_idx].res;

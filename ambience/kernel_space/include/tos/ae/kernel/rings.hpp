@@ -18,7 +18,7 @@ inline void proc_req_queue(kernel_interface& iface) {
             iface.user_iface->req->elems[iface.req_last_seen % iface.user_iface->size];
         auto& req = iface.user_iface->elems[req_idx].req;
         if (req.channel == 4 && req.procid == 1) {
-            // LOG(*(std::string_view*)req.arg_ptr);
+            LOG(iface.req_last_seen, iface.user_iface->res->head_idx, *(std::string_view*)req.arg_ptr);
         }
 
         auto& res = iface.user_iface->elems[req_idx].res;
