@@ -1,6 +1,4 @@
-#include "state.S"
-
-.extern syscall_entry
+ .extern syscall_entry
 .global raw_syscall_entry
 
 /*
