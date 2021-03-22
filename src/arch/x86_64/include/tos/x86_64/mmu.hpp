@@ -184,4 +184,14 @@ expected<void, mmu_errors> mark_nonresident(translation_table& root,
 expected<const table_entry*, mmu_errors> entry_for_address(const translation_table& root,
                                                            uintptr_t virt_addr);
 
+inline expected<void, mmu_errors> map_region(translation_table& root,
+                                             const segment& vseg,
+                                             physical_page_allocator* palloc,
+                                             void* phys_base) {
+    EXPECTED_TRYV(allocate_region(root, vseg, tos::user_accessible::yes, palloc));
+
+    EXPECTED_TRYV(mark_resident(root, vseg, tos::memory_types::normal, phys_base));
+
+    return {};
+}
 } // namespace tos::x86_64
