@@ -81,13 +81,14 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
         }
 
         root[path[0]].zero();
+        root[path[0]].noexec(true);
 
         if (tos::util::is_flag_set(perms, permissions::write)) {
             root[path[0]].writeable(true);
         }
 
-        if (!tos::util::is_flag_set(perms, permissions::execute)) {
-            root[path[0]].noexec(true);
+        if (tos::util::is_flag_set(perms, permissions::execute)) {
+            root[path[0]].noexec(false);
         }
 
         if (allow_user == user_accessible::yes) {
@@ -106,11 +107,27 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
                 return unexpected(mmu_errors::page_alloc_fail);
             }
 
+            auto res = map_region(get_current_translation_table(),
+                                  segment{.range = {.base = reinterpret_cast<uintptr_t>(
+                                                        palloc->address_of(*page)),
+                                                    .size = 4096},
+                                          permissions::read_write},
+                                  palloc,
+                                  palloc->address_of(*page));
+
+            if (!res) {
+                palloc->free({page, 1});
+                return unexpected(force_error(res));
+            }
+
+            memset(palloc->address_of(*page), 0, 4096);
+
             root[path[0]]
                 .zero()
                 .page_num(palloc->page_num(*page) << 12)
                 .valid(true)
-                .writeable(true);
+                .writeable(true)
+                .allow_user(allow_user == user_accessible::yes);
         }
 
         return recursive_allocate(

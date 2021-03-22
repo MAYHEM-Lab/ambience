@@ -85,25 +85,29 @@ public:
     }
 
     table_entry& noexec(bool val) {
-        m_raw_entry = (m_raw_entry & ~noexec_mask) | (uint64_t(val) << noexec_off);
+        m_raw_entry = (m_raw_entry & ~noexec_mask) | (uint64_t(val ? 1 : 0) << noexec_off);
         return *this;
+    }
+
+    uint64_t raw() const{
+        return m_raw_entry;
     }
 
 private:
     uint64_t m_raw_entry;
-    static constexpr auto present_off = 0;
-    static constexpr auto writeable_off = 1;
-    static constexpr auto user_access_off = 2;
-    static constexpr auto huge_page_off = 7;
-    static constexpr auto noexec_off = 63;
-    static constexpr auto page_base_off = 12;
+    static constexpr auto present_off = 0U;
+    static constexpr auto writeable_off = 1U;
+    static constexpr auto user_access_off = 2U;
+    static constexpr auto huge_page_off = 7U;
+    static constexpr auto noexec_off = 63U;
+    static constexpr auto page_base_off = 12U;
 
-    static constexpr auto present_mask = 0x1 << present_off;
-    static constexpr auto writeable_mask = 0x1 << writeable_off;
-    static constexpr auto user_access_mask = 0x1 << user_access_off;
-    static constexpr auto huge_page_mask = 0x1 << huge_page_off;
+    static constexpr auto present_mask = 0x1ULL << present_off;
+    static constexpr auto writeable_mask = 0x1ULL << writeable_off;
+    static constexpr auto user_access_mask = 0x1ULL << user_access_off;
+    static constexpr auto huge_page_mask = 0x1ULL << huge_page_off;
     static constexpr auto noexec_mask = 0x1ULL << noexec_off;
-    static constexpr auto page_base_mask = 0xFF'FF'FF'FF'FF'FF'F << page_base_off;
+    static constexpr auto page_base_mask = 0x00'FF'FF'FF'FF'FF'FULL << page_base_off;
 };
 
 struct translation_table;
