@@ -35,6 +35,8 @@ SECTIONS
         *(.ctors.*)
         end_ctors = .;
         . = ALIGN(4096);
+        *(.to_load)
+        . = ALIGN(4096);
    } : RODATA
    __rodata_end = .;
 
