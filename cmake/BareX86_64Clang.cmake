@@ -15,7 +15,7 @@ set(TOS_STM32_FLAGS "-target x86_64-none-elf -D__ELF__ -mno-red-zone -fno-stack-
 set(CMAKE_LINKER ${TOOLCHAIN_LD})
 message(STATUS ${CMAKE_LINKER})
 set(CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_LINKER> -o <TARGET> --gc-sections -znorelro --warn-common --no-undefined --fatal-warnings --build-id=sha1 -Bsymbolic -shared <OBJECTS> <LINK_LIBRARIES>")
-set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> -o <TARGET> --lto-O3 --icf=all --gc-sections <OBJECTS> <LINK_LIBRARIES>")
+set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> -o <TARGET> --lto-O3 --icf=all -z norelro --gc-sections <OBJECTS> <LINK_LIBRARIES>")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${TOS_STM32_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOS_STM32_FLAGS}")
