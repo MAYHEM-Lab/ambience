@@ -1,0 +1,9 @@
+#include <tos/span.hpp>
+
+namespace {
+[[gnu::section(".to_load")]] uint8_t __embedded_data[] = {
+#include <@OUTPUT_TARGET@.h>
+};
+} // namespace
+
+tos::span<const uint8_t> @VARIABLE_NAME@{__embedded_data};

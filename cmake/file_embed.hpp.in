@@ -1,0 +1,5 @@
+#pragma once
+
+#include <tos/span.hpp>
+
+extern tos::span<const uint8_t> @VARIABLE_NAME@;
