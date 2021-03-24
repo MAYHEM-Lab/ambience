@@ -1,0 +1,15 @@
+namespace tos;
+
+enum twi_tx_res {
+    ok,
+    addr_nack,
+    data_nack,
+    other,
+}
+
+enum twi_rx_res {
+    ok,
+    addr_nack,
+    data_nack,
+    other,
+}
