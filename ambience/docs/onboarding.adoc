@@ -1,0 +1,70 @@
+= Ambience onboarding
+
+This document will walk you through setting up a development environment for ambience.
+
+The linux path is heavily beaten and is most likely to work, so prefer that if you can.
+
+== Get an as recent as possible LLVM build
+. You can download it to get started here: https://releases.llvm.org/download.html
+. Ideally, build it from source
+. On linux put it in `/opt/llvm`
+. On macOS/Windows just install it with the installer
+
+== Install cmake and ninja
+
+. Package managers have it:
+.. Ubuntu: `apt install ninja-build cmake`
+.. macOS: `brew install ninja cmake`
+
+=== Windows
+.. Get ninja: https://github.com/ninja-build/ninja/releases
+.. Put it in `C:/x-tools/bin`
+
+Put `C:/x-tools/bin` in your path!
+
+== Install qemu
+
+=== Linux
+
+`apt install qemu-system-x86 qemu-system-arm`
+
+=== macOS
+
+`brew install qemu`
+
+=== Windows
+
+Download and install the most recent from here: https://qemu.weilnetz.de/w64/
+
+== Install ISO stuff
+
+Currently this works only on Linux, but it's optional so it's fine.
+
+`apt install xorriso mtools`
+
+== Get lidl
+
+`git clone git@github.com:FatihBAKIR/lidl.git`
+
+=== Build `lidlc`
+
+[source,sh]
+----
+mkdir build
+cd build
+cmake -G Ninja ..
+ninja lidlc
+./src/tools/lidlc --version
+----
+
+You should get something like `Lidl version: 0.1.4` in the output.
+
+If you do, copy that binary to somewhere in your path.
+
+On Windows, prefer `C:/x-tools/bin`
+
+At the end, `lidlc --version` should work.
+
+== Get tos
+
+`git clone git@github.com:FatihBAKIR/tos.git`
