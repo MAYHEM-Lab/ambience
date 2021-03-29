@@ -25,6 +25,8 @@ SECTIONS
         *(.rodata.*)
         *(.rodata)
         *(.gcc_except_table.*)
+        *(.to_load)
+        . = ALIGN(4096);
     }
     .gnu_build_id :
     {
@@ -48,9 +50,12 @@ SECTIONS
     {
         *(.bss.*)
         *(.bss*)
+        . = ALIGN(4096); /* align to page size */
+        PROVIDE(__bss_end = .);
+        *(.nozero*);
+        *(.nozero.*);
+        . = ALIGN(4096);
     }
-    . = ALIGN(4096); /* align to page size */
-    PROVIDE(__bss_end = .);
     PROVIDE(__bss_size = __bss_end - __bss_start);
     __end = .;
 }
