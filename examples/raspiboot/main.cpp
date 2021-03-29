@@ -25,6 +25,8 @@
 #include <uspi/dwhcidevice.h>
 #include <uspi/smsc951x.h>
 #include <uspios.h>
+#include <group1.hpp>
+#include <tos/elf.hpp>
 
 void dump_table(tos::aarch64::translation_table& table) {
     tos::aarch64::traverse_table_entries(
@@ -707,6 +709,16 @@ void raspi_main() {
             uart->write(buf);
         }
     });
+    LOG(group1.slice(0, 4));
+    auto elf_res = tos::elf::elf64::from_buffer(group1);
+    if (!elf_res) {
+        LOG_ERROR("Could not parse payload");
+        LOG_ERROR("Error code: ", int(force_error(elf_res)));
+    } else {
+        auto& elf = force_get(elf_res);
+        LOG("Entry point:", (void*)(elf.header().entry));
+        LOG((int)elf.header().pheader_offset, (int)elf.header().pheader_size);
+    }
 
     tos::intrusive_list<tos::job> runnable;
 
