@@ -3,13 +3,23 @@
 #include <tos/detail/coro.hpp>
 
 namespace tos::ae {
+enum class elem_flag : uint8_t {
+    req = 1,
+    incoming = 2
+};
+
+struct elem {
+    void* user_ptr;
+    elem_flag flags;
+};
 
 struct req_elem {
+    void* user_ptr;
+    elem_flag flags;
+    uint8_t channel;
+    uint8_t procid;
     const void* arg_ptr;
     void* ret_ptr;
-    uint8_t procid;
-    uint8_t channel;
-    void* user_ptr;
 
     auto operator co_await() {
         struct awaiter {
@@ -33,9 +43,11 @@ struct req_elem {
 
 struct res_elem {
     void* user_ptr;
+    elem_flag flags;
 };
 
 union ring_elem {
+    elem common;
     req_elem req;
     res_elem res;
 };
@@ -53,9 +65,10 @@ struct interface {
     ring* res;
 
     uint16_t res_last_seen = 0;
+    int next_elem = 0;
 
     uint16_t allocate() {
-        return 0;
+        return next_elem++ % size;
     }
 };
 } // namespace tos::ae

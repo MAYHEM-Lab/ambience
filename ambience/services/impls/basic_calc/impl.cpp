@@ -1,4 +1,5 @@
 #include <calc_generated.hpp>
+#include <tos/task.hpp>
 
 namespace {
 struct impl : tos::ae::service::calculator {
@@ -8,6 +9,6 @@ struct impl : tos::ae::service::calculator {
 };
 } // namespace
 
-extern "C" tos::ae::service::calculator* init() {
-    return new impl;
+tos::Task<tos::ae::service::calculator*> init_basic_calc() {
+    co_return new impl;
 }

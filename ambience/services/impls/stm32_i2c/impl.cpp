@@ -1,6 +1,7 @@
 #include <arch/i2c.hpp>
 #include <tos_i2c_generated.hpp>
 #include <i2c_generated.hpp>
+#include <tos/task.hpp>
 
 namespace {
 using namespace tos::stm32;
@@ -18,7 +19,6 @@ struct impl final : tos::ae::service::i2c {
 };
 } // namespace
 
-extern "C"
-tos::ae::service::i2c* init_stm32_i2c() {
-    return new impl{};
+tos::Task<tos::ae::service::i2c*> init_stm32_i2c() {
+    co_return new impl{};
 }

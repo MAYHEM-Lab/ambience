@@ -1,6 +1,9 @@
 #pragma once
 
+#include <string_view>
 #include <tos/ae/rings.hpp>
+#include <tos/debug/log.hpp>
+#include <tos/flags.hpp>
 
 namespace tos::ae::kernel {
 /**
@@ -16,13 +19,20 @@ inline void proc_req_queue(kernel_interface& iface) {
     for (; iface.req_last_seen < iface.user_iface->req->head_idx; ++iface.req_last_seen) {
         auto req_idx =
             iface.user_iface->req->elems[iface.req_last_seen % iface.user_iface->size];
+
         auto& req = iface.user_iface->elems[req_idx].req;
+        LOG(req.user_ptr, req.arg_ptr);
+
         if (req.channel == 4 && req.procid == 1) {
-            LOG(iface.req_last_seen, iface.user_iface->res->head_idx, *(std::string_view*)req.arg_ptr);
+            LOG(iface.req_last_seen,
+                iface.user_iface->res->head_idx,
+                *(std::string_view*)req.arg_ptr);
         }
 
         auto& res = iface.user_iface->elems[req_idx].res;
+
         res.user_ptr = req.user_ptr;
+        res.flags = elem_flag::incoming;
         iface.user_iface->res
             ->elems[iface.user_iface->res->head_idx++ % iface.user_iface->size] = req_idx;
     }

@@ -5,14 +5,16 @@
 #include <tos/memory.hpp>
 
 namespace {
-[[gnu::section(".nozero")]]
-tos::ae::ring_elem elems[4];
-[[gnu::section(".nozero")]] uint8_t req_arr[sizeof(tos::ae::ring) + 4 * sizeof(uint16_t)];
-[[gnu::section(".nozero")]] uint8_t res_arr[sizeof(tos::ae::ring) + 4 * sizeof(uint16_t)];
+constexpr auto queue_len = 8;
+[[gnu::section(".nozero")]] tos::ae::ring_elem elems[queue_len];
+[[gnu::section(
+    ".nozero")]] uint8_t req_arr[sizeof(tos::ae::ring) + queue_len * sizeof(uint16_t)];
+[[gnu::section(
+    ".nozero")]] uint8_t res_arr[sizeof(tos::ae::ring) + queue_len * sizeof(uint16_t)];
 } // namespace
 
 tos::ae::interface iface{
-    4, elems, new (&req_arr) tos::ae::ring{}, new (&res_arr) tos::ae::ring{}};
+    queue_len, elems, new (&req_arr) tos::ae::ring{}, new (&res_arr) tos::ae::ring{}};
 
 tos::Task<void> task();
 
@@ -21,6 +23,22 @@ extern void (*start_ctors[])(void);
 extern void (*end_ctors[])(void);
 
 extern uint64_t _sidata;
+
+void abort() {
+    while (true)
+        ;
+}
+
+void __cxa_atexit() {
+}
+}
+
+namespace {
+std::vector<tos::coro::pollable> tasks;
+}
+
+void post(tos::coro::pollable p) {
+    tasks.emplace_back(std::move(p));
 }
 
 [[gnu::used, noreturn]] extern "C" void _user_code() {
@@ -42,7 +60,7 @@ extern uint64_t _sidata;
 
     tos::ae::detail::do_init_syscall(iface);
 
-    auto pollable = tos::coro::pollable(tos::coro::make_pollable(task()));
+    auto pollable = tos::coro::make_pollable(task());
     pollable.run();
 
     while (true) {

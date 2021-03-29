@@ -1,3 +1,8 @@
+function(add_service serv_name interface)
+    add_library(${serv_name} ${ARGN})
+    target_link_libraries(${serv_name} PUBLIC ${interface}_schema)
+endfunction()
+
 add_subdirectory(basic_calc)
 add_subdirectory(bme280)
 add_subdirectory(stm32_flash_serv)

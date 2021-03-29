@@ -1,4 +1,7 @@
 if (${TOS_ARCH} MATCHES "x86_64")
     target_sources(aekernel PRIVATE x86_64.cpp)
     target_link_libraries(aekernel PRIVATE uart_16550)
+elseif (${TOS_ARCH} MATCHES "raspi3")
+    target_sources(aekernel PRIVATE raspi3.cpp)
+    target_link_libraries(aekernel PRIVATE arch_drivers)
 endif()

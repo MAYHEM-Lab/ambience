@@ -15,6 +15,9 @@ add_executable(sample_group sample.cpp)
 target_link_libraries(sample_group PRIVATE ae_user_space)
 target_link_libraries(sample_group PUBLIC "-T ${CMAKE_CURRENT_SOURCE_DIR}/ld/01.ld")
 
+target_link_libraries(sample_group PRIVATE basic_calc)
+
 add_executable(sample_group2 sample.cpp)
 target_link_libraries(sample_group2 PRIVATE ae_user_space)
 target_link_libraries(sample_group2 PUBLIC "-T ${CMAKE_CURRENT_SOURCE_DIR}/ld/02.ld")
+target_link_libraries(sample_group2 PRIVATE basic_calc)
