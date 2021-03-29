@@ -112,6 +112,8 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
                                                         palloc->address_of(*page)),
                                                     .size = 4096},
                                           permissions::read_write},
+                                  user_accessible::no,
+                                  memory_types::normal,
                                   palloc,
                                   palloc->address_of(*page));
 

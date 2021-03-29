@@ -190,11 +190,13 @@ expected<const table_entry*, mmu_errors> entry_for_address(const translation_tab
 
 inline expected<void, mmu_errors> map_region(translation_table& root,
                                              const segment& vseg,
+                                             user_accessible user_access,
+                                             memory_types mem_type,
                                              physical_page_allocator* palloc,
                                              void* phys_base) {
-    EXPECTED_TRYV(allocate_region(root, vseg, tos::user_accessible::yes, palloc));
+    EXPECTED_TRYV(allocate_region(root, vseg, user_access, palloc));
 
-    EXPECTED_TRYV(mark_resident(root, vseg, tos::memory_types::normal, phys_base));
+    EXPECTED_TRYV(mark_resident(root, vseg, mem_type, phys_base));
 
     return {};
 }

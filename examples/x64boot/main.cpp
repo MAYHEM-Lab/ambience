@@ -322,18 +322,13 @@ void thread() {
                      tos::permissions::read_write};
 
     auto op_res =
-        tos::cur_arch::allocate_region(tos::cur_arch::get_current_translation_table(),
-                                       allocator_segment,
-                                       tos::user_accessible::no,
-                                       nullptr);
+        tos::cur_arch::map_region(tos::cur_arch::get_current_translation_table(),
+                                  allocator_segment,
+                                  tos::user_accessible::no,
+                                  tos::memory_types::normal,
+                                  nullptr,
+                                  vmem_end);
     LOG(bool(op_res));
-
-    auto res =
-        tos::cur_arch::mark_resident(tos::cur_arch::get_current_translation_table(),
-                                     allocator_segment,
-                                     tos::memory_types::normal,
-                                     vmem_end);
-    LOG(bool(res));
 
     auto palloc = new (vmem_end) tos::physical_page_allocator(1024);
     palloc->mark_unavailable(tos::default_segments::image());
