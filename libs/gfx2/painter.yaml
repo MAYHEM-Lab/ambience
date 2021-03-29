@@ -13,7 +13,7 @@ rotation:
 style:
   type: structure
   members:
-    color: tos::gfx2.color
+    color: tos::gfx2::color
 
 painter:
   type: service
@@ -24,29 +24,29 @@ painter:
         s: style
     get_dimensions:
       returns:
-        - tos::gfx2.size
+        - tos::gfx2::size
       parameters: []
     draw_point:
       returns: ["i8"]
       parameters:
-        p: tos::gfx2.point
+        p: tos::gfx2::point
     draw_line:
       returns:
         - i8
       parameters:
-        l: tos::gfx2.line
+        l: tos::gfx2::line
     draw_rect:
       returns:
         - i8
       parameters:
-        rect: tos::gfx2.rectangle
+        rect: tos::gfx2::rectangle
         radius: i8
         fill: bool
     draw_circle:
       returns:
         - i8
       parameters:
-        center: tos::gfx2.point
+        center: tos::gfx2::point
         radius: i8
         fill: bool
     draw_text:
@@ -54,19 +54,19 @@ painter:
         - i8
       parameters:
         text: string_view
-        p: tos::gfx2.point
+        p: tos::gfx2::point
     draw_bitmap:
       returns:
         - bool
       parameters:
-        color_type: tos::gfx2.colors
+        color_type: tos::gfx2::colors
         buffer:
           name: span
           parameters:
             - u8
         stride: i16
-        image_rect: tos::gfx2.rectangle
-        screen_rect: tos::gfx2.rectangle
+        image_rect: tos::gfx2::rectangle
+        screen_rect: tos::gfx2::rectangle
     # Flushes any buffers within the painter. Before calling this function, the contents of the output of this painter
     # may be incomplete.
     flush:
