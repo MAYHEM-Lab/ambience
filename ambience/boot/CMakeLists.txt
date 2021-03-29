@@ -1,3 +1,7 @@
+if (NOT ${TOS_PLATFORM} MATCHES "stm32")
+    return()
+endif()
+
 include(lidlc)
 
 add_lidlc(aeboot_schema aeboot.yaml)
