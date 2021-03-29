@@ -276,4 +276,17 @@ template<class FnT>
 void traverse_table_entries(translation_table& table, FnT&& fn) {
     traverse_table_entries(table, function_ref<void(memory_range, table_entry&)>(fn));
 }
+
+inline expected<void, mmu_errors> map_region(translation_table& root,
+                                             const segment& vseg,
+                                             user_accessible user_access,
+                                             memory_types mem_type,
+                                             physical_page_allocator* palloc,
+                                             void* phys_base) {
+    EXPECTED_TRYV(allocate_region(root, vseg, user_access, palloc));
+
+    EXPECTED_TRYV(mark_resident(root, vseg, mem_type, phys_base));
+
+    return {};
+}
 } // namespace tos::aarch64

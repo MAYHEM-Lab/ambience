@@ -103,6 +103,22 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
             if (page == nullptr) {
                 return unexpected(mmu_errors::page_alloc_fail);
             }
+            auto res = map_region(get_current_translation_table(),
+                                  segment{.range = {.base = reinterpret_cast<uintptr_t>(
+                                      palloc->address_of(*page)),
+                                      .size = 4096},
+                                      permissions::read_write},
+                                  user_accessible::no,
+                                  memory_types::normal,
+                                  palloc,
+                                  palloc->address_of(*page));
+
+            if (!res) {
+                palloc->free({page, 1});
+                return unexpected(force_error(res));
+            }
+
+            memset(palloc->address_of(*page), 0, 4096);
 
             root[path[0]]
                 .zero()
