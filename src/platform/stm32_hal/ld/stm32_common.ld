@@ -36,6 +36,8 @@ SECTIONS
     *(.rodata)
     *(.rodata*)
     . = ALIGN(4);
+    *(.to_load)
+    . = ALIGN(4);
   } >FLASH
 
   .ARM : {
