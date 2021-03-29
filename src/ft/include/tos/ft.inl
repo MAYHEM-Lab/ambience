@@ -135,6 +135,11 @@ auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
 }
 
 template<class FuncT, class... ArgTs>
+auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
+    return launch<false>(task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
+}
+
+template<class FuncT, class... ArgTs>
 auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
     auto ptr = new (std::nothrow) char[stack_sz.sz];
     if (!ptr) {
