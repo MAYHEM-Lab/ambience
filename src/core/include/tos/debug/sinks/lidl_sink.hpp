@@ -35,7 +35,7 @@ public:
     void add(std::string_view str) override;
     void add(span<const uint8_t> buf) override;
     void add(bool b) override;
-    void add(void* ptr) override;
+    void add(const void* ptr) override;
     void add(log_level level) override;
     void add(double d) override;
     void end() override;

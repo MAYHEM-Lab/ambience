@@ -109,7 +109,7 @@ void lidl_sink::add(bool b) {
     m_logger->log_bool(b);
 }
 
-void lidl_sink::add(void* ptr) {
+void lidl_sink::add(const void* ptr) {
     m_logger->log_pointer(reinterpret_cast<uint64_t>(ptr));
 }
 
