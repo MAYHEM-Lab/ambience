@@ -40,7 +40,7 @@ public:
         tos::print(m_serial, b, "");
     }
 
-    void add(void* ptr) override {
+    void add(const void* ptr) override {
         tos::print(m_serial, ptr, "");
     }
 

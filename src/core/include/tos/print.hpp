@@ -116,7 +116,7 @@ void print(CharOstreamT& ostr, double x) {
 }
 
 template<class CharOstreamT>
-void print(CharOstreamT& ostr, void* p) {
+void print(CharOstreamT& ostr, const void* p) {
     print(ostr, itoa(reinterpret_cast<uintptr_t>(p), 16));
 }
 

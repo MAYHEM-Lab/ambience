@@ -14,7 +14,7 @@ public:
     }
     void add(bool) override {
     }
-    void add(void*) override {
+    void add(const void*) override {
     }
     void add(log_level) override {
     }

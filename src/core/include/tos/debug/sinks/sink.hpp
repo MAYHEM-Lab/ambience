@@ -12,7 +12,7 @@ struct any_sink {
     virtual void add(std::string_view str) = 0;
     virtual void add(span<const uint8_t> buf) = 0;
     virtual void add(bool b) = 0;
-    virtual void add(void* ptr) = 0;
+    virtual void add(const void* ptr) = 0;
     virtual void add(log_level) = 0;
     virtual void add(double d) = 0;
 
@@ -60,6 +60,10 @@ struct any_sink {
 
     void add(float f) {
         add(static_cast<double>(f));
+    }
+
+    void add(void* f) {
+        add(static_cast<const void*>(f));
     }
 
     virtual void end() = 0;
