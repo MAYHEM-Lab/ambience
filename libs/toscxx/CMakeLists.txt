@@ -70,9 +70,12 @@ add_library(tos_libcxx
     include/any
 )
 
+# These are detected automatically by the config header:
+#target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_EXCEPTIONS)
+#target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_RTTI)
+#target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_ATOMIC_HEADER)
+
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_THREADS)
-target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_EXCEPTIONS)
-target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_RTTI)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_LONG_LONG)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_INT128)
 if(NOT ${TOS_CORE} MATCHES "aarch64")
@@ -84,7 +87,6 @@ target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDOUT)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIN)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)
-target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_ATOMIC_HEADER)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_ABI_VERSION=2)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_LONG_DOUBLE)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_FLOATING_POINT)
