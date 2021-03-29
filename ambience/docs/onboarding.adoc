@@ -68,3 +68,17 @@ At the end, `lidlc --version` should work.
 == Get tos
 
 `git clone git@github.com:FatihBAKIR/tos.git`
+
+=== Your first build
+
+We will start by taking a raspberry pi build.
+
+[source,sh]
+----
+mkdir cmake-build-raspi3
+cd cmake-build-raspi3
+cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_CPU=raspi/3 ..
+ninja sample_group
+ninja raspiboot
+----
+
