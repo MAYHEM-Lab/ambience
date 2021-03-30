@@ -3,8 +3,9 @@
 #include <boost/asio/posix/stream_descriptor.hpp>
 #include <memory>
 #include <tos/expected.hpp>
-#include <tos/span.hpp>
 #include <tos/platform.hpp>
+#include <tos/self_pointing.hpp>
+#include <tos/span.hpp>
 
 namespace tos::hosted {
 struct error_code {
@@ -15,7 +16,7 @@ struct error_code {
  * This driver implements a virtual network device on supported systems using
  * tap drivers.
  */
-struct tap_device {
+struct tap_device : self_pointing<tap_device> {
     explicit tap_device(int fd)
         : m_input{std::make_unique<boost::asio::posix::stream_descriptor>(get_io(), fd)} {
     }
@@ -30,8 +31,8 @@ struct tap_device {
     /**
      * Attempts to read a link layer frame from the network.
      * If the buffer is large enough, the resulting span will have the entire frame.
-     * If the buffer is not large enough, it will perform a short read, and the rest of the 
-     * frame must be read in the future.
+     * If the buffer is not large enough, it will perform a short read, and the rest of
+     * the frame must be read in the future.
      */
     span<uint8_t> read(span<uint8_t> data);
 

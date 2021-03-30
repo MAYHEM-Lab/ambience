@@ -31,7 +31,7 @@ public:
     void add(bool b) override {
         m_sink->add(b);
     }
-    void add(void* ptr) override {
+    void add(const void* ptr) override {
         m_sink->add(ptr);
     }
     void add(log_level level) override {
