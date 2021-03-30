@@ -13,6 +13,7 @@
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/ft.hpp>
 #include <tos/lwip/common.hpp>
+#include <tos/lwip/if_adapter.hpp>
 #include <tos/lwip/tcp.hpp>
 #include <tos/lwip/udp.hpp>
 #include <tos/lwip/utility.hpp>
@@ -64,6 +65,7 @@ void tcp_task() {
     }
 }
 
+namespace hosted = tos::hosted;
 tos::stack_storage tcp_stack;
 void lwip_task() {
     auto clk = tos::erase_clock(tos::hosted::clock<std::chrono::system_clock>());
