@@ -29,7 +29,6 @@ using generated_remote_system =
 using discovery = tos::services::remote_discovery<tos::io::packet_transport>;
 
 void query_sys(tos::services::system_status& server) {
-    LOG("Service name:", server.name());
     std::array<uint8_t, 128> resp_buf;
     lidl::message_builder mb(resp_buf);
     LOG("Commit hash:", server.get_commit_hash(mb));
