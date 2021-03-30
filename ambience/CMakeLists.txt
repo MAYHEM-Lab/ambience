@@ -6,3 +6,8 @@ add_subdirectory(boot)
 add_subdirectory(services)
 add_subdirectory(user_space)
 add_subdirectory(kernel_space)
+
+if (BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
