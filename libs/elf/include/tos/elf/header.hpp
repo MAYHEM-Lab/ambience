@@ -20,8 +20,8 @@ struct header<uint64_t> {
     uint8_t pad[6];
     uint8_t nident;
 
-    type type;
-    machine machine;
+    elf::type type;
+    elf::machine machine;
     uint32_t version;
     uint64_t entry;
     uint64_t pheader_offset;
