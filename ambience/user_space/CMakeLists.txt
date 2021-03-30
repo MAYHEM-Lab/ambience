@@ -1,3 +1,8 @@
+if (NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/syscall/${TOS_ARCH}")
+    message(STATUS "ae user space does not exist on ${TOS_ARCH}")
+    return()
+endif()
+
 add_library(ae_user_space
         user_space.cpp
         include/tos/ae/user_space.hpp
