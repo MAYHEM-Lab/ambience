@@ -1,9 +1,11 @@
 #pragma once
 
+#include <cstdint>
 #include <tos/detail/coro.hpp>
 
 namespace tos::ae {
-enum class elem_flag : uint8_t {
+enum class elem_flag : uint8_t
+{
     req = 1,
     incoming = 2
 };
