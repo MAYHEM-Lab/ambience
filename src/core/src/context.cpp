@@ -39,6 +39,7 @@ tos::span<uint8_t> heap_memory() {
     return tos::span<uint8_t>{&__HeapBase, &__HeapLimit};
 }
 } // namespace
+#elif defined(TOS_PLATFORM_x86_hosted)
 #else
 static_assert(false, "No platform specified!");
 #endif

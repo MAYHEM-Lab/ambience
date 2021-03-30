@@ -1,4 +1,4 @@
-if (NOT ${TOS_ARCH} MATCHES "x86")
+if (NOT ${TOS_ARCH} MATCHES "x86_64")
     return()
 endif()
 
