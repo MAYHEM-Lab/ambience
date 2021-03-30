@@ -1,7 +1,7 @@
 project(tos)
 
 add_executable(util_tests util_test.cpp)
-target_link_libraries(util_tests PUBLIC standalone_tests_main tos_util)
+target_link_libraries(util_tests PUBLIC tests_main tos_util)
 
 add_executable(intrusive_tests intrusive_list_test.cpp)
 target_link_libraries(intrusive_tests PUBLIC standalone_tests_main tos_util_core)
