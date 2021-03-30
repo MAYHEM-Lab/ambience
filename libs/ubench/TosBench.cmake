@@ -19,6 +19,7 @@ endfunction()
 
 if (${TOS_PLATFORM} MATCHES hosted)
     target_sources(bench_main PRIVATE ${CMAKE_CURRENT_LIST_DIR}/hosted_bench_main.cpp)
+    target_link_libraries(bench_main PRIVATE arch_drivers)
 elseif(${TOS_PLATFORM} MATCHES cc32xx)
     target_sources(bench_main PRIVATE ${CMAKE_CURRENT_LIST_DIR}/cc32xx_bench_main.cpp)
 elseif(${TOS_PLATFORM} MATCHES esp)
