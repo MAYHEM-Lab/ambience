@@ -16,25 +16,26 @@ struct kernel_interface {
 };
 
 inline void proc_req_queue(kernel_interface& iface) {
-    for (; iface.req_last_seen < iface.user_iface->req->head_idx; ++iface.req_last_seen) {
-        auto req_idx =
-            iface.user_iface->req->elems[iface.req_last_seen % iface.user_iface->size];
+    iface.req_last_seen =
+        for_each(*iface.user_iface->req,
+                 iface.req_last_seen,
+                 iface.user_iface->size,
+                 [&iface](uint16_t req_idx) {
+                     auto& req = iface.user_iface->elems[req_idx].req;
+                     LOG(req.user_ptr, req.arg_ptr);
 
-        auto& req = iface.user_iface->elems[req_idx].req;
-        LOG(req.user_ptr, req.arg_ptr);
+                     if (req.channel == 4 && req.procid == 1) {
+                         LOG(iface.req_last_seen,
+                             iface.user_iface->res->head_idx,
+                             *(std::string_view*)req.arg_ptr);
+                     }
 
-        if (req.channel == 4 && req.procid == 1) {
-            LOG(iface.req_last_seen,
-                iface.user_iface->res->head_idx,
-                *(std::string_view*)req.arg_ptr);
-        }
+                     auto& res = iface.user_iface->elems[req_idx].res;
 
-        auto& res = iface.user_iface->elems[req_idx].res;
-
-        res.user_ptr = req.user_ptr;
-        res.flags = elem_flag::incoming;
-        iface.user_iface->res
-            ->elems[iface.user_iface->res->head_idx++ % iface.user_iface->size] = req_idx;
-    }
+                     res.user_ptr = req.user_ptr;
+                     res.flags = elem_flag::incoming;
+                     iface.user_iface->res->elems[iface.user_iface->res->head_idx++ %
+                                                  iface.user_iface->size] = req_idx;
+                 });
 }
 } // namespace tos::ae::kernel

@@ -6,15 +6,10 @@
 
 namespace {
 constexpr auto queue_len = 8;
-[[gnu::section(".nozero")]] tos::ae::ring_elem elems[queue_len];
-[[gnu::section(
-    ".nozero")]] uint8_t req_arr[sizeof(tos::ae::ring) + queue_len * sizeof(uint16_t)];
-[[gnu::section(
-    ".nozero")]] uint8_t res_arr[sizeof(tos::ae::ring) + queue_len * sizeof(uint16_t)];
+[[gnu::section(".nozero")]] tos::ae::interface_storage<queue_len> storage;
 } // namespace
 
-tos::ae::interface iface{
-    queue_len, elems, new (&req_arr) tos::ae::ring{}, new (&res_arr) tos::ae::ring{}};
+tos::ae::interface iface = storage.make_interface();
 
 tos::Task<void> task();
 
