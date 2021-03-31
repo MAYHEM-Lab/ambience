@@ -1,6 +1,6 @@
 = Tos
 
-image::http://drone.k3s.fbkr.cc/api/badges/FatihBAKIR/tos/status.svg[]
+image::https://github.com/FatihBAKIR/tos/actions/workflows/build.yml/badge.svg[]
 
 **tos** is a multitasking operating system for the Internet of Things. tos focuses on efficiency,
 ease of programming and compile time safety features.
