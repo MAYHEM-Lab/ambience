@@ -12,7 +12,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - name: Install deps
-      run: sudo apt-get install -y cmake wget xz-utils ninja-build tar gcc-10 g++-10
+      run: sudo apt-get install -y cmake wget xz-utils ninja-build tar gcc-10 g++-10 libboost-all-dev
 
     - name: Cache LLVM
       id: cache-llvm
@@ -29,7 +29,7 @@ jobs:
         sudo mv clang+llvm-11.0.0-x86_64-linux-gnu-ubuntu-20.04 /opt/llvm
 
     - name: Download lidlc
-      run: wget http://cs.ucsb.edu/~bakir/lidlc && sudo mv lidlc /usr/local/bin/
+      run: wget http://cs.ucsb.edu/~bakir/lidlc && chmod +x lidlc && sudo mv lidlc /usr/local/bin/
 
     - uses: FatihBAKIR/checkout@v2
 
@@ -37,7 +37,7 @@ jobs:
       run: mkdir /tmp/cmake-build-debug
 
     - name: Generate hosted debug build
-      run: cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DTOS_CPU=x86/hosted $GITHUB_WORKSPACE
+      run: cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DTOS_CPU=x86/hosted $GITHUB_WORKSPACE
       working-directory: /tmp/cmake-build-debug
       env:
         CC: gcc-10
@@ -47,6 +47,10 @@ jobs:
       run: ninja
       working-directory: /tmp/cmake-build-debug
 
+    #- name: Run tests
+    #  run: ctest
+    #  working-directory: /tmp/cmake-build-debug
+
     - name: Create amd64 build dir
       run: mkdir /tmp/cmake-build-barex64
 
@@ -55,7 +59,7 @@ jobs:
       working-directory: /tmp/cmake-build-barex64
 
     - name: Build amd64
-      run: ninja
+      run: ninja sample_group && ninja sample_group2 && ninja
       working-directory: /tmp/cmake-build-barex64
 
     - name: Create raspi3 build dir
@@ -66,8 +70,5 @@ jobs:
       working-directory: /tmp/cmake-build-raspi3
 
     - name: Build raspi3
-      run: ninja
+      run: ninja sample_group && ninja
       working-directory: /tmp/cmake-build-raspi3
-
-
-
