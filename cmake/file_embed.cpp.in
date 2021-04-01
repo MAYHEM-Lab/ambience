@@ -1,7 +1,8 @@
 #include <tos/span.hpp>
 
 namespace {
-[[gnu::section(".to_load")]] uint8_t __embedded_data[] = {
+// TODO(#64) Get rid of the alignas
+[[gnu::section(".to_load")]] alignas(4096) uint8_t __embedded_data[] = {
 #include <@OUTPUT_TARGET@.h>
 };
 } // namespace
