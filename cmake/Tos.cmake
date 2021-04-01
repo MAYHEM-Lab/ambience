@@ -46,9 +46,10 @@ if(ENABLE_UBSAN)
     set(TOS_FLAGS "${TOS_FLAGS} -fsanitize=bool")
 endif()
 
-if(BUILD_TESTS)
-    set(TOS_FLAGS "${TOS_FLAGS} -fsanitize=address")
-endif()
+# TODO: Blocked on #34
+#if(BUILD_TESTS)
+#    set(TOS_FLAGS "${TOS_FLAGS} -fsanitize=address")
+#endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(TOS_FLAGS "${TOS_FLAGS} \
