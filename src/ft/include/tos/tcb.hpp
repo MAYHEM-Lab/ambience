@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <csetjmp>
 #include <cstddef>
 #include <tos/arch.hpp>
 #include <tos/context.hpp>
@@ -83,17 +82,29 @@ enum class return_codes : uint8_t
 
 namespace kern {
 struct processor_state {
+#if defined(TOS_ARCH_HAS_PROC_STATE)
+    tos::cur_arch::proc_state_t buf;
+#else
     jmp_buf buf;
+#endif
 };
 
 [[noreturn]] inline void switch_context(kern::processor_state& j, return_codes rc) {
+#if defined(TOS_ARCH_HAS_PROC_STATE)
+    tos_longjmp(j.buf, static_cast<int>(rc));
+#else
     longjmp(j.buf, static_cast<int>(rc));
+#endif
     TOS_UNREACHABLE();
 }
 } // namespace kern
 void swap_context(kern::tcb& current, kern::tcb& to, const no_interrupts&);
 } // namespace tos
 
+#if defined(TOS_ARCH_HAS_PROC_STATE)
+#define save_ctx(ctx) (::tos::return_codes) tos_setjmp((ctx).buf)
+#else
 #define save_ctx(ctx) (::tos::return_codes) setjmp((ctx).buf)
+#endif
 
 #define save_context(tcb, ctx) (tcb).set_processor_state((ctx)), save_ctx(ctx)
