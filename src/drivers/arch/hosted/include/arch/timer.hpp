@@ -50,8 +50,8 @@ private:
             return;
         }
 
-        m_cb();
         if (!m_disabled) {
+            m_cb();
             m_tmr.expires_from_now(m_interval);
             m_tmr.async_wait([this](auto ec) { handle(ec); });
         }
