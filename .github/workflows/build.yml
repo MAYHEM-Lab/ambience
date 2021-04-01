@@ -47,9 +47,9 @@ jobs:
       run: ninja
       working-directory: /tmp/cmake-build-debug
 
-    #- name: Run tests
-    #  run: ctest
-    #  working-directory: /tmp/cmake-build-debug
+    - name: Run tests
+      run: ctest
+      working-directory: /tmp/cmake-build-debug
 
     - name: Create amd64 build dir
       run: mkdir /tmp/cmake-build-barex64
