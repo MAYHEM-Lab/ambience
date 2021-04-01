@@ -11,11 +11,13 @@
 #include "tos/thread.hpp"
 #include "tos/utility.hpp"
 #include "tos/x86_64/exception.hpp"
+#include <calc_generated.hpp>
 #include <cstddef>
 #include <deque>
 #include <group1.hpp>
 #include <group2.hpp>
 #include <tos/ae/kernel/rings.hpp>
+#include <tos/ae/kernel/user_group.hpp>
 #include <tos/ae/rings.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
@@ -37,7 +39,6 @@
 #include <tos/x86_64/pci.hpp>
 #include <tos/x86_64/pic.hpp>
 #include <tos/x86_64/syscall.hpp>
-#include <calc_generated.hpp>
 
 void dump_table(tos::cur_arch::translation_table& table) {
     tos::cur_arch::traverse_table_entries(
@@ -276,7 +277,93 @@ void init_pci(tos::physical_page_allocator& palloc) {
     }
 }
 
-tos::ae::kernel::kernel_interface kif;
+tos::ae::kernel::user_group load_from_elf(const tos::elf::elf64& elf,
+                                          tos::interrupt_trampoline& trampoline,
+                                          tos::physical_page_allocator& palloc,
+                                          tos::cur_arch::translation_table& root_table) {
+    for (auto pheader : elf.program_headers()) {
+        if (pheader.type != tos::elf::segment_type::load) {
+            continue;
+        }
+
+        LOG("Load",
+            (void*)(uint32_t)pheader.file_size,
+            "bytes from",
+            (void*)(uint32_t)pheader.file_offset,
+            "to",
+            (void*)(uint32_t)pheader.virt_address);
+
+        auto seg = elf.segment(pheader);
+
+        void* base = const_cast<uint8_t*>(seg.data());
+        if (pheader.file_size < pheader.virt_size) {
+            auto pages = pheader.virt_size / 4096;
+            auto p = palloc.allocate(pages);
+            base = palloc.address_of(*p);
+        }
+
+        LOG((void*)pheader.virt_address,
+            pheader.virt_size,
+            (void*)pheader.file_offset,
+            pheader.file_size,
+            base);
+
+        auto vseg =
+            tos::segment{.range = {.base = pheader.virt_address,
+                                   .size = static_cast<ptrdiff_t>(pheader.virt_size)},
+                         .perms = tos::permissions::all};
+
+        auto map_res = tos::cur_arch::map_region(root_table,
+                                                 vseg,
+                                                 tos::user_accessible::yes,
+                                                 tos::memory_types::normal,
+                                                 &palloc,
+                                                 base);
+        LOG(bool(map_res));
+
+        if (!map_res) {
+            LOG_ERROR(int(force_error(map_res)));
+        }
+    }
+
+    auto stack_pages = palloc.allocate(4);
+    auto map_res = tos::cur_arch::map_region(
+        root_table,
+        tos::segment{.range = {.base = reinterpret_cast<uintptr_t>(
+                                   palloc.address_of(*stack_pages)),
+                               .size = 4096 * 4},
+                     tos::permissions::read_write},
+        tos::user_accessible::yes,
+        tos::memory_types::normal,
+        &palloc,
+        palloc.address_of(*stack_pages));
+    LOG(bool(map_res));
+
+    LOG("Entry point:", (void*)(elf.header().entry));
+    auto& user_thread = tos::suspended_launch(
+        tos::span<uint8_t>(static_cast<uint8_t*>(palloc.address_of(*stack_pages)),
+                           4096 * 4),
+        switch_to_user,
+        (void*)elf.header().entry);
+
+    auto& self = *tos::self();
+
+    tos::ae::kernel::user_group res;
+    res.state = &user_thread;
+    auto syshandler = [&](tos::x86_64::syscall_frame& frame) {
+        assert(frame.rdi == 1);
+
+        auto ifc = reinterpret_cast<tos::ae::interface*>(frame.rsi);
+        res.iface.user_iface = ifc;
+
+        trampoline.switch_to(self);
+    };
+    tos::x86_64::set_syscall_handler(tos::x86_64::syscall_handler_t(syshandler));
+
+    tos::swap_context(self, user_thread, tos::int_guard{});
+    return res;
+}
+
 void thread() {
     auto& self = *tos::self();
 
@@ -370,7 +457,7 @@ void thread() {
     tos::platform::set_irq(
         0, tos::function_ref<void(tos::x86_64::exception_frame*, int)>(tim_handler));
 
-    tos::intrusive_list<tos::job> runnable_groups;
+    std::vector<tos::ae::kernel::user_group> runnable_groups;
     {
         LOG(group1.slice(0, 4));
         auto elf_res = tos::elf::elf64::from_buffer(group1);
@@ -383,89 +470,8 @@ void thread() {
                 ;
         }
 
-        auto& elf = force_get(elf_res);
-        tos::println(vga, "Entry point:", int(elf.header().entry));
-        tos::println(
-            vga, (int)elf.header().pheader_offset, (int)elf.header().pheader_size);
-
-        for (auto pheader : elf.program_headers()) {
-            if (pheader.type != tos::elf::segment_type::load) {
-                continue;
-            }
-
-            tos::println(vga,
-                         "Load",
-                         (void*)(uint32_t)pheader.file_size,
-                         "bytes from",
-                         (void*)(uint32_t)pheader.file_offset,
-                         "to",
-                         (void*)(uint32_t)pheader.virt_address);
-
-            auto seg = elf.segment(pheader);
-
-            void* base = const_cast<uint8_t*>(seg.data());
-            if (pheader.file_size < pheader.virt_size) {
-                auto pages = pheader.virt_size / 4096;
-                auto p = palloc->allocate(pages);
-                base = palloc->address_of(*p);
-            }
-
-            LOG((void*)pheader.virt_address,
-                pheader.virt_size,
-                (void*)pheader.file_offset,
-                pheader.file_size,
-                base);
-
-            auto vseg =
-                tos::segment{.range = {.base = pheader.virt_address,
-                                       .size = static_cast<ptrdiff_t>(pheader.virt_size)},
-                             .perms = tos::permissions::all};
-
-            auto map_res = tos::cur_arch::map_region(level0_table,
-                                                     vseg,
-                                                     tos::user_accessible::yes,
-                                                     tos::memory_types::normal,
-                                                     palloc,
-                                                     base);
-            LOG(bool(map_res));
-
-            if (!map_res) {
-                LOG_ERROR(int(force_error(op_res)));
-            }
-        }
-
-        auto stack_pages = palloc->allocate(4);
-        auto map_res = tos::cur_arch::map_region(
-            level0_table,
-            tos::segment{.range = {.base = reinterpret_cast<uintptr_t>(
-                                       palloc->address_of(*stack_pages)),
-                                   .size = 4096 * 4},
-                         tos::permissions::read_write},
-            tos::user_accessible::yes,
-            tos::memory_types::normal,
-            palloc,
-            palloc->address_of(*stack_pages));
-        LOG(bool(map_res));
-
-        LOG((void*)elf.header().entry);
-        auto& user_thread = tos::suspended_launch(
-            tos::span<uint8_t>(static_cast<uint8_t*>(palloc->address_of(*stack_pages)),
-                               4096 * 4),
-            switch_to_user,
-            (void*)elf.header().entry);
-
-        auto syshandler = [&](tos::x86_64::syscall_frame& frame) {
-            assert(frame.rdi == 1);
-
-            auto ifc = reinterpret_cast<tos::ae::interface*>(frame.rsi);
-            kif.user_iface = ifc;
-
-            trampoline->switch_to(self);
-        };
-        tos::x86_64::set_syscall_handler(tos::x86_64::syscall_handler_t(syshandler));
-
-        tos::swap_context(self, user_thread, tos::int_guard{});
-        runnable_groups.push_back(user_thread);
+        runnable_groups.push_back(
+            load_from_elf(force_get(elf_res), *trampoline, *palloc, level0_table));
     }
 
     {
@@ -480,73 +486,20 @@ void thread() {
                 ;
         }
 
-        auto& elf = force_get(elf_res);
-        tos::println(vga, "Entry point:", int(elf.header().entry));
-        tos::println(
-            vga, (int)elf.header().pheader_offset, (int)elf.header().pheader_size);
-
-        for (auto pheader : elf.program_headers()) {
-            if (pheader.type != tos::elf::segment_type::load) {
-                continue;
-            }
-
-            tos::println(vga,
-                         "Load",
-                         (void*)(uint32_t)pheader.file_size,
-                         "bytes from",
-                         (void*)(uint32_t)pheader.file_offset,
-                         "to",
-                         (void*)(uint32_t)pheader.virt_address);
-
-            auto seg = elf.segment(pheader);
-
-            void* base = const_cast<uint8_t*>(seg.data());
-            if (pheader.file_size < pheader.virt_size) {
-                auto pages = pheader.virt_size / 4096;
-                auto p = palloc->allocate(pages);
-                base = palloc->address_of(*p);
-            }
-
-            LOG((void*)pheader.virt_address,
-                pheader.virt_size,
-                (void*)pheader.file_offset,
-                pheader.file_size,
-                base);
-
-            auto vseg =
-                tos::segment{.range = {.base = pheader.virt_address,
-                                       .size = static_cast<ptrdiff_t>(pheader.virt_size)},
-                             .perms = tos::permissions::all};
-
-            auto map_res = tos::cur_arch::map_region(level0_table,
-                                                     vseg,
-                                                     tos::user_accessible::yes,
-                                                     tos::memory_types::normal,
-                                                     palloc,
-                                                     base);
-            LOG(bool(map_res));
-
-            if (!map_res) {
-                LOG_ERROR(int(force_error(op_res)));
-            }
-        }
+        runnable_groups.push_back(
+            load_from_elf(force_get(elf_res), *trampoline, *palloc, level0_table));
     }
 
-    tos::kern::tcb* cur_user = static_cast<tos::kern::tcb*>(&runnable_groups.front());
+    LOG("Done loading");
+
+    auto cur_user = runnable_groups.front().state;
 
     int32_t x = 3, y = 42;
     auto params = std::make_tuple(&x, &y);
     auto results = tos::ae::service::calculator::add_results{-1};
 
-    auto idx = kif.user_iface->allocate();
-    auto& req = kif.user_iface->elems[idx].req;
-    req.flags = tos::ae::elem_flag::req;
-    req.channel = 0;
-    req.procid = 0;
-    req.arg_ptr = &params;
-    req.ret_ptr = &results;
-    kif.user_iface->res
-        ->elems[kif.user_iface->res->head_idx++ % kif.user_iface->size] = idx;
+    tos::ae::submit_req<true>(
+        *runnable_groups.front().iface.user_iface, 0, 0, &params, &results);
 
     auto syshandler2 = [&](tos::x86_64::syscall_frame& frame) {
         tos::swap_context(*cur_user, self, tos::int_ctx{});
@@ -555,7 +508,7 @@ void thread() {
 
     while (true) {
         LOG("back", results.ret0());
-        proc_req_queue(kif);
+        proc_req_queue(runnable_groups.front().iface);
 
         odi([&](auto...) { tos::swap_context(self, *cur_user, tos::int_ctx{}); });
     }
