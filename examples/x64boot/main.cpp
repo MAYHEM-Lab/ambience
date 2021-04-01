@@ -492,25 +492,29 @@ void thread() {
 
     LOG("Done loading");
 
-    auto cur_user = runnable_groups.front().state;
-
     int32_t x = 3, y = 42;
     auto params = std::make_tuple(&x, &y);
     auto results = tos::ae::service::calculator::add_results{-1};
+    auto results2 = tos::ae::service::calculator::add_results{-1};
 
     tos::ae::submit_req<true>(
         *runnable_groups.front().iface.user_iface, 0, 0, &params, &results);
+    tos::ae::submit_req<true>(
+        *runnable_groups.back().iface.user_iface, 0, 0, &params, &results2);
 
     auto syshandler2 = [&](tos::x86_64::syscall_frame& frame) {
-        tos::swap_context(*cur_user, self, tos::int_ctx{});
+        tos::swap_context(*runnable_groups.front().state, self, tos::int_ctx{});
     };
     tos::x86_64::set_syscall_handler(tos::x86_64::syscall_handler_t(syshandler2));
 
-    while (true) {
-        LOG("back", results.ret0());
+    for(int i = 0; i < 10; ++i) {
+        LOG("back", results.ret0(), results2.ret0());
         proc_req_queue(runnable_groups.front().iface);
 
-        odi([&](auto...) { tos::swap_context(self, *cur_user, tos::int_ctx{}); });
+        odi([&](auto...) {
+            tos::swap_context(self, *runnable_groups.front().state, tos::int_ctx{});
+        });
+        std::swap(runnable_groups.front(), runnable_groups.back());
     }
 
     while (true) {
