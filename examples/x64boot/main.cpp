@@ -277,10 +277,11 @@ void init_pci(tos::physical_page_allocator& palloc) {
     }
 }
 
-tos::ae::kernel::user_group load_from_elf(const tos::elf::elf64& elf,
-                                          tos::interrupt_trampoline& trampoline,
-                                          tos::physical_page_allocator& palloc,
-                                          tos::cur_arch::translation_table& root_table) {
+using error_type = mpark::variant<tos::cur_arch::mmu_errors>;
+
+tos::expected<void, error_type> map_elf(const tos::elf::elf64& elf,
+                                        tos::physical_page_allocator& palloc,
+                                        tos::cur_arch::translation_table& root_table) {
     for (auto pheader : elf.program_headers()) {
         if (pheader.type != tos::elf::segment_type::load) {
             continue;
@@ -313,44 +314,58 @@ tos::ae::kernel::user_group load_from_elf(const tos::elf::elf64& elf,
                                    .size = static_cast<ptrdiff_t>(pheader.virt_size)},
                          .perms = tos::permissions::all};
 
-        auto map_res = tos::cur_arch::map_region(root_table,
-                                                 vseg,
-                                                 tos::user_accessible::yes,
-                                                 tos::memory_types::normal,
-                                                 &palloc,
-                                                 base);
-        LOG(bool(map_res));
-
-        if (!map_res) {
-            LOG_ERROR(int(force_error(map_res)));
-        }
+        EXPECTED_TRYV(tos::cur_arch::map_region(root_table,
+                                                vseg,
+                                                tos::user_accessible::yes,
+                                                tos::memory_types::normal,
+                                                &palloc,
+                                                base));
     }
 
-    auto stack_pages = palloc.allocate(4);
-    auto map_res = tos::cur_arch::map_region(
+    return {};
+}
+
+tos::expected<tos::span<uint8_t>, error_type>
+create_and_map_stack(size_t stack_size,
+                     tos::physical_page_allocator& palloc,
+                     tos::cur_arch::translation_table& root_table) {
+    stack_size = tos::align_nearest_up_pow2(stack_size, 4096);
+    auto page_count = stack_size / 4096;
+    auto stack_pages = palloc.allocate(page_count);
+
+    if (!stack_pages) {
+        return tos::unexpected(tos::cur_arch::mmu_errors::page_alloc_fail);
+    }
+
+    EXPECTED_TRYV(tos::cur_arch::map_region(
         root_table,
         tos::segment{.range = {.base = reinterpret_cast<uintptr_t>(
                                    palloc.address_of(*stack_pages)),
-                               .size = 4096 * 4},
+                               .size = static_cast<ptrdiff_t>(stack_size)},
                      tos::permissions::read_write},
         tos::user_accessible::yes,
         tos::memory_types::normal,
         &palloc,
-        palloc.address_of(*stack_pages));
-    LOG(bool(map_res));
+        palloc.address_of(*stack_pages)));
 
-    LOG("Entry point:", (void*)(elf.header().entry));
-    auto& user_thread = tos::suspended_launch(
-        tos::span<uint8_t>(static_cast<uint8_t*>(palloc.address_of(*stack_pages)),
-                           4096 * 4),
-        switch_to_user,
-        (void*)elf.header().entry);
+    return tos::span<uint8_t>(static_cast<uint8_t*>(palloc.address_of(*stack_pages)),
+                              stack_size);
+}
+
+tos::expected<tos::ae::kernel::user_group, error_type>
+start_group(void (*entry)(),
+            tos::interrupt_trampoline& trampoline,
+            tos::span<uint8_t> stack,
+            tos::physical_page_allocator& palloc,
+            tos::cur_arch::translation_table& root_table) {
+    LOG("Entry point:", (void*)entry);
+    auto& user_thread = tos::suspended_launch(stack, switch_to_user, (void*)entry);
 
     auto& self = *tos::self();
 
     tos::ae::kernel::user_group res;
     res.state = &user_thread;
-    auto syshandler = [&](tos::x86_64::syscall_frame& frame) {
+    auto syshandler = [&](tos::cur_arch::syscall_frame& frame) {
         assert(frame.rdi == 1);
 
         auto ifc = reinterpret_cast<tos::ae::interface*>(frame.rsi);
@@ -358,10 +373,24 @@ tos::ae::kernel::user_group load_from_elf(const tos::elf::elf64& elf,
 
         trampoline.switch_to(self);
     };
-    tos::x86_64::set_syscall_handler(tos::x86_64::syscall_handler_t(syshandler));
+    tos::x86_64::set_syscall_handler(tos::cur_arch::syscall_handler_t(syshandler));
 
     tos::swap_context(self, user_thread, tos::int_guard{});
     return res;
+}
+
+tos::expected<tos::ae::kernel::user_group, error_type>
+load_from_elf(const tos::elf::elf64& elf,
+              tos::interrupt_trampoline& trampoline,
+              tos::physical_page_allocator& palloc,
+              tos::cur_arch::translation_table& root_table) {
+    EXPECTED_TRYV(map_elf(elf, palloc, root_table));
+
+    return start_group(reinterpret_cast<void (*)()>(elf.header().entry),
+                       trampoline,
+                       EXPECTED_TRY(create_and_map_stack(4 * 4096, palloc, root_table)),
+                       palloc,
+                       root_table);
 }
 
 void thread() {
@@ -470,8 +499,8 @@ void thread() {
                 ;
         }
 
-        runnable_groups.push_back(
-            load_from_elf(force_get(elf_res), *trampoline, *palloc, level0_table));
+        runnable_groups.push_back(force_get(
+            load_from_elf(force_get(elf_res), *trampoline, *palloc, level0_table)));
     }
 
     {
@@ -486,8 +515,8 @@ void thread() {
                 ;
         }
 
-        runnable_groups.push_back(
-            load_from_elf(force_get(elf_res), *trampoline, *palloc, level0_table));
+        runnable_groups.push_back(force_get(
+            load_from_elf(force_get(elf_res), *trampoline, *palloc, level0_table)));
     }
 
     LOG("Done loading");
@@ -507,7 +536,7 @@ void thread() {
     };
     tos::x86_64::set_syscall_handler(tos::x86_64::syscall_handler_t(syshandler2));
 
-    for(int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i) {
         LOG("back", results.ret0(), results2.ret0());
         proc_req_queue(runnable_groups.front().iface);
 
