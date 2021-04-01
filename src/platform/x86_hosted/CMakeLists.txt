@@ -14,10 +14,10 @@ add_library(x86_hosted_impl x86_impl.cpp)
 target_link_libraries(x86_hosted_impl PUBLIC x86_hosted_core)
 target_link_libraries(x86_hosted_impl PUBLIC tos_interrupt)
 target_link_libraries(x86_hosted_impl PUBLIC tos_jobs)
+target_compile_definitions(x86_hosted_impl PUBLIC BOOST_NO_EXCEPTIONS)
 
 find_package(Threads REQUIRED)
 target_link_libraries(x86_hosted_impl PUBLIC Threads::Threads)
-
 
 if (TARGET Boost::boost)
     target_link_libraries(x86_hosted_impl PUBLIC Boost::boost)
