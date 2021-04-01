@@ -155,6 +155,12 @@ function(find_llvm_toolchain)
             PATH_SUFFIXES bin ${TOOLCHAIN_TRIPLE}/bin)
     set(TOOLCHAIN_RANLIB ${TOOLCHAIN_RANLIB} PARENT_SCOPE)
 
+    find_program(TOOLCHAIN_STRIP
+            llvm-strip
+            HINTS ${SEARCH_DIRS}
+            PATH_SUFFIXES bin ${TOOLCHAIN_TRIPLE}/bin)
+    set(TOOLCHAIN_STRIP ${TOOLCHAIN_STRIP} PARENT_SCOPE)
+
     if (TOOLCHAIN_SET)
         set(CMAKE_CXX_COMPILER ${TOOLCHAIN_CXX_COMPILER} PARENT_SCOPE)
         set(CMAKE_C_COMPILER ${TOOLCHAIN_C_COMPILER} PARENT_SCOPE)
@@ -167,5 +173,7 @@ function(find_llvm_toolchain)
         set(CMAKE_AR "${CMAKE_AR}" CACHE STRING "AR")
         set(CMAKE_RANLIB ${TOOLCHAIN_RANLIB} PARENT_SCOPE)
         set(CMAKE_RANLIB "${CMAKE_RANLIB}" CACHE STRING "RANLIB")
+        set(CMAKE_STRIP ${TOOLCHAIN_STRIP} PARENT_SCOPE)
+        set(CMAKE_STRIP "${CMAKE_STRIP}" CACHE STRING "STRIP")
     endif()
 endfunction()
