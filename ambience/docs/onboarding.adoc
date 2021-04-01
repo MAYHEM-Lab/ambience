@@ -44,7 +44,12 @@ Currently this works only on Linux, but it's optional so it's fine.
 
 == Get lidl
 
-`git clone git@github.com:FatihBAKIR/lidl.git`
+[source,sh]
+----
+git clone git@github.com:FatihBAKIR/lidl.git
+cd lidl
+git submodule update --init --recursive
+----
 
 === Build `lidlc`
 
