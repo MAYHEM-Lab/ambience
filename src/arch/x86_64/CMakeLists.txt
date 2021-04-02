@@ -24,7 +24,12 @@ add_library(arch_x86_64
     syscall.cpp
     include/tos/x86_64/cpuid.hpp
     cpuid.cpp
+    include/tos/x86_64/address_space.hpp
+    address_space.cpp
 )
 target_include_directories(arch_x86_64 PUBLIC include)
-target_link_libraries(arch_x86_64 PUBLIC tos_util_core tos_pci tos::libcxx)
+target_link_libraries(arch_x86_64 PUBLIC tos_util_core tos_pci tos::libcxx tos_address_space)
+target_link_libraries(arch_x86_64 PRIVATE tos_arch_core)
 target_compile_features(arch_x86_64 PUBLIC cxx_std_20)
+
+set(TOS_ARCH_HAVE_ADDRESS_SPACE ON CACHE BOOL "Have adress space")
