@@ -5,27 +5,27 @@ target_link_libraries(tos_mem PUBLIC tos_util_core)
 target_include_directories(tos_mem PUBLIC include)
 
 add_library(tos_memory
-        include/tos/memory/buddy.hpp
-        src/memory/buddy.cpp
-        include/tos/memory/bump.hpp
-        src/memory/free_list.cpp
-        include/tos/memory/polymorphic_allocator.hpp
-        include/tos/memory/malloc.hpp
-        include/tos/memory/null_allocator.hpp)
+        include/tos/allocator/buddy.hpp
+        src/allocator/buddy.cpp
+        include/tos/allocator/bump.hpp
+        src/allocator/free_list.cpp
+        include/tos/allocator/polymorphic_allocator.hpp
+        include/tos/allocator/malloc.hpp
+        include/tos/allocator/null_allocator.hpp)
 target_link_libraries(tos_memory PUBLIC tos_util_core)
 target_include_directories(tos_memory PUBLIC include)
 
 if (BUILD_TESTS)
     enable_testing()
-    add_executable(tos_memory_buddy_test src/memory/buddy_test.cpp)
+    add_executable(tos_memory_buddy_test src/allocator/buddy_test.cpp)
     target_link_libraries(tos_memory_buddy_test PUBLIC standalone_tests_main tos_memory)
     add_test(NAME tos_memory_buddy_test COMMAND tos_memory_buddy_test)
 
-    add_executable(tos_memory_bump_test src/memory/bump_test.cpp)
+    add_executable(tos_memory_bump_test src/allocator/bump_test.cpp)
     target_link_libraries(tos_memory_bump_test PUBLIC standalone_tests_main tos_memory)
     add_test(NAME tos_memory_bump_test COMMAND tos_memory_bump_test)
 
-    add_executable(tos_memory_free_list_test src/memory/free_list_test.cpp)
+    add_executable(tos_memory_free_list_test src/allocator/free_list_test.cpp)
     target_link_libraries(tos_memory_free_list_test PUBLIC standalone_tests_main tos_memory)
     add_test(NAME tos_memory_free_list_test COMMAND tos_memory_free_list_test)
 endif()
