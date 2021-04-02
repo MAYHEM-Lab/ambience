@@ -116,4 +116,8 @@ inline void syscall(uint64_t rdi, uint64_t rsi) {
 inline void int0x2c() {
     asm volatile("int $0x2c" : : : "memory");
 }
+
+inline void invlpg(uintptr_t addr) {
+    asm volatile("invlpg (%0)" : : "r"(addr) : "memory");
+}
 } // namespace tos::x86_64
