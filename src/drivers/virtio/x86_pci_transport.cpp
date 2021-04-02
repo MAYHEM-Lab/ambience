@@ -103,7 +103,6 @@ private:
         uint32_t length;
     };
 
-    capability_data* m_common;
     capability_data* m_pci;
     std::vector<capability_data> m_capabilities;
 
