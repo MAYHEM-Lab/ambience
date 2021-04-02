@@ -16,6 +16,7 @@
 #include <deque>
 #include <group1.hpp>
 #include <group2.hpp>
+#include <tos/address_space.hpp>
 #include <tos/ae/kernel/rings.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/ae/rings.hpp>
@@ -29,6 +30,7 @@
 #include <tos/mem_stream.hpp>
 #include <tos/peripheral/uart_16550.hpp>
 #include <tos/peripheral/vga_text.hpp>
+#include <tos/physical_memory_backing.hpp>
 #include <tos/suspended_launch.hpp>
 #include <tos/virtio/block_device.hpp>
 #include <tos/virtio/network_device.hpp>
@@ -422,6 +424,11 @@ void thread() {
     auto cr3 = tos::x86_64::read_cr3();
     LOG("Page table at:", (void*)cr3);
 
+    tos::physical_memory_backing pmem(
+        tos::segment{tos::memory_range{.base = 0, .size = 1'000'000'000},
+                     tos::permissions::all},
+        tos::memory_types::normal);
+
     auto& level0_table = tos::cur_arch::get_current_translation_table();
 
     dump_table(level0_table);
@@ -453,6 +460,23 @@ void thread() {
     palloc->mark_unavailable({0, tos::cur_arch::page_size_bytes});
     palloc->mark_unavailable({0x00080000, 0x000FFFFF - 0x00080000});
     LOG("Available:", palloc, palloc->remaining_page_count());
+
+    tos::cur_arch::address_space as;
+    as.m_table = &level0_table;
+    as.palloc = palloc;
+    tos::address_space vas(as);
+    tos::global::cur_as = &vas;
+
+    auto mapping = pmem.create_mapping(
+        tos::segment{
+            tos::memory_range{.base = 0x1200000, .size = tos::cur_arch::page_size_bytes},
+            tos::permissions::read_write},
+        tos::memory_range{.base = 0x200000, .size = tos::cur_arch::page_size_bytes});
+
+    vas.do_mapping(*mapping);
+
+    LOG(*((int*)0x200000));
+    LOG(*((int*)0x1200000));
 
     lwip_init();
 
