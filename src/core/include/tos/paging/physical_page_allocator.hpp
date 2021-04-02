@@ -1,10 +1,11 @@
 #pragma once
 
-#include <tos/memory.hpp>
-#include <tos/intrusive_ptr.hpp>
 #include <tos/expected.hpp>
+#include <tos/intrusive_ptr.hpp>
+#include <tos/memory.hpp>
 
 namespace tos {
+struct mapping;
 struct physical_page : ref_counted<physical_page, int8_t, ignore_t> {
     const mapping* map;
 
@@ -24,7 +25,8 @@ public:
     void free(span<physical_page> pages);
 
     // Returns a pointer to the **physical memory** for the given page.
-    // You **have to** map this physical memory to an address space before you can access it!
+    // You **have to** map this physical memory to an address space before you can access
+    // it!
     void* address_of(const physical_page& page) const;
 
     int page_num(const physical_page& page) const;
@@ -62,4 +64,4 @@ private:
     size_t m_num_pages;
     physical_page m_table[];
 };
-}
+} // namespace tos
