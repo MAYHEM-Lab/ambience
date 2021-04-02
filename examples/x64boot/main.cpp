@@ -298,7 +298,7 @@ tos::expected<void, error_type> map_elf(const tos::elf::elf64& elf,
 
         void* base = const_cast<uint8_t*>(seg.data());
         if (pheader.file_size < pheader.virt_size) {
-            auto pages = pheader.virt_size / 4096;
+            auto pages = pheader.virt_size / tos::cur_arch::page_size_bytes;
             auto p = palloc.allocate(pages);
             base = palloc.address_of(*p);
         }
@@ -329,8 +329,8 @@ tos::expected<tos::span<uint8_t>, error_type>
 create_and_map_stack(size_t stack_size,
                      tos::physical_page_allocator& palloc,
                      tos::cur_arch::translation_table& root_table) {
-    stack_size = tos::align_nearest_up_pow2(stack_size, 4096);
-    auto page_count = stack_size / 4096;
+    stack_size = tos::align_nearest_up_pow2(stack_size, tos::cur_arch::page_size_bytes);
+    auto page_count = stack_size / tos::cur_arch::page_size_bytes;
     auto stack_pages = palloc.allocate(page_count);
 
     if (!stack_pages) {
@@ -385,7 +385,8 @@ load_from_elf(const tos::elf::elf64& elf,
               tos::cur_arch::translation_table& root_table) {
     EXPECTED_TRYV(map_elf(elf, palloc, root_table));
 
-    return start_group(EXPECTED_TRY(create_and_map_stack(4 * 4096, palloc, root_table)),
+    return start_group(EXPECTED_TRY(create_and_map_stack(
+                           4 * tos::cur_arch::page_size_bytes, palloc, root_table)),
                        reinterpret_cast<void (*)()>(elf.header().entry),
                        trampoline,
                        root_table);
@@ -429,8 +430,9 @@ void thread() {
 
     LOG("Image ends at", vmem_end);
 
-    auto allocator_space = tos::align_nearest_up_pow2(
-        tos::physical_page_allocator::size_for_pages(1024), 4096);
+    auto allocator_space =
+        tos::align_nearest_up_pow2(tos::physical_page_allocator::size_for_pages(1024),
+                                   tos::cur_arch::page_size_bytes);
     LOG("Physpage allocator would need", allocator_space, "bytes");
 
     auto allocator_segment =
@@ -448,7 +450,7 @@ void thread() {
 
     auto palloc = new (vmem_end) tos::physical_page_allocator(1024);
     palloc->mark_unavailable(tos::default_segments::image());
-    palloc->mark_unavailable({0, 4096});
+    palloc->mark_unavailable({0, tos::cur_arch::page_size_bytes});
     palloc->mark_unavailable({0x00080000, 0x000FFFFF - 0x00080000});
     LOG("Available:", palloc, palloc->remaining_page_count());
 

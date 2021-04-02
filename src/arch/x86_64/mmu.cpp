@@ -40,7 +40,7 @@ pt_path_for_addr(uint64_t virt_addr) {
 
 static_assert(pt_path_for_addr(0) == std::array<int, 4>{0, 0, 0, 0});
 static_assert(pt_path_for_addr(1) == std::array<int, 4>{0, 0, 0, 0});
-static_assert(pt_path_for_addr(4096) == std::array<int, 4>{0, 0, 0, 1});
+static_assert(pt_path_for_addr(page_size_bytes) == std::array<int, 4>{0, 0, 0, 1});
 
 bool last_level(int level, const table_entry& entry) {
     if (level == 3)
@@ -110,7 +110,7 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
             auto res = map_region(get_current_translation_table(),
                                   segment{.range = {.base = reinterpret_cast<uintptr_t>(
                                                         palloc->address_of(*page)),
-                                                    .size = 4096},
+                                                    .size = page_size_bytes},
                                           permissions::read_write},
                                   user_accessible::no,
                                   memory_types::normal,
@@ -122,11 +122,11 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
                 return unexpected(force_error(res));
             }
 
-            memset(palloc->address_of(*page), 0, 4096);
+            memset(palloc->address_of(*page), 0, page_size_bytes);
 
             root[path[0]]
                 .zero()
-                .page_num(palloc->page_num(*page) << 12)
+                .page_num(palloc->page_num(*page) << page_size_log)
                 .valid(true)
                 .writeable(true)
                 .allow_user(allow_user == user_accessible::yes);
@@ -143,7 +143,7 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
                                            user_accessible allow_user,
                                            physical_page_allocator* palloc) {
     for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
-         addr += 4096) {
+         addr += page_size_bytes) {
         auto path = pt_path_for_addr(addr);
         LOG_TRACE("Address", (void*)addr, path[0], path[1], path[2], path[3]);
         EXPECTED_TRYV(recursive_allocate(root, virt_seg.perms, allow_user, path, palloc));
@@ -157,7 +157,7 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
                                          memory_types type,
                                          void* phys_addr) {
     for (uintptr_t addr = range.base; addr != range.end();
-         addr += 4096, phys_addr = (char*)phys_addr + 4096) {
+         addr += page_size_bytes, phys_addr = (char*)phys_addr + page_size_bytes) {
         auto path = pt_path_for_addr(addr);
 
         translation_table* table = &root;
@@ -171,7 +171,7 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
             table = &table_at(elem);
         }
 
-        (*table)[path.back()].page_num(address_to_page(phys_addr) << 12).valid(true);
+        (*table)[path.back()].page_num(address_to_page(phys_addr) << page_size_log).valid(true);
         if (type == memory_types::device) {
             // (*table)[path.back()]
             //     .shareable(tos::aarch64::shareable_values::outer)
@@ -189,7 +189,7 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
 expected<void, mmu_errors> mark_nonresident(translation_table& root,
                                             const segment& virt_seg) {
     for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
-         addr += 4096) {
+         addr += page_size_bytes) {
         auto path = pt_path_for_addr(addr);
 
         translation_table* table = &root;
