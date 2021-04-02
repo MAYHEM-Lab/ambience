@@ -2,7 +2,7 @@
 #include <tos/components/allocator.hpp>
 #include <tos/components/threads.hpp>
 #include <tos/ft.hpp>
-#include <tos/memory/null_allocator.hpp>
+#include <tos/allocator/null_allocator.hpp>
 #include <tos/semaphore.hpp>
 
 namespace tos {
