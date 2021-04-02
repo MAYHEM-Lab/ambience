@@ -17,8 +17,8 @@ class intrusive_list_iterator;
 template<class T>
 class list_node : public non_copy_movable {
 public:
-    list_node<T>* prev;
-    list_node<T>* next;
+    list_node<T>* prev; // NOLINT
+    list_node<T>* next; // NOLINT
 };
 
 struct through_base {
