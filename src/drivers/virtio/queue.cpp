@@ -27,11 +27,11 @@ queue::queue(uint16_t sz, tos::physical_page_allocator& palloc)
         nullptr);
     LOG(bool(op_res));
 
-    auto res = tos::cur_arch::mark_resident(
-        tos::cur_arch::get_current_translation_table(),
-        {{uintptr_t(buf), ptrdiff_t(total_sz)}, tos::permissions::read_write},
-        tos::memory_types::normal,
-        buf);
+    auto res =
+        tos::cur_arch::mark_resident(tos::cur_arch::get_current_translation_table(),
+                                     {uintptr_t(buf), ptrdiff_t(total_sz)},
+                                     tos::memory_types::normal,
+                                     buf);
     LOG(bool(res));
 
     std::fill((char*)buf, (char*)buf + total_sz, 0);

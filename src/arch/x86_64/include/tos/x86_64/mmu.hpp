@@ -178,7 +178,7 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
                                            physical_page_allocator* palloc);
 
 expected<void, mmu_errors> mark_resident(translation_table& root,
-                                         const segment& virt_seg,
+                                         const memory_range& range,
                                          memory_types type,
                                          void* phys_addr);
 
@@ -196,7 +196,7 @@ inline expected<void, mmu_errors> map_region(translation_table& root,
                                              void* phys_base) {
     EXPECTED_TRYV(allocate_region(root, vseg, user_access, palloc));
 
-    EXPECTED_TRYV(mark_resident(root, vseg, mem_type, phys_base));
+    EXPECTED_TRYV(mark_resident(root, vseg.range, mem_type, phys_base));
 
     return {};
 }

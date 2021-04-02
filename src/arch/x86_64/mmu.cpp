@@ -153,10 +153,10 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
 }
 
 expected<void, mmu_errors> mark_resident(translation_table& root,
-                                         const segment& virt_seg,
+                                         const memory_range& range,
                                          memory_types type,
                                          void* phys_addr) {
-    for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
+    for (uintptr_t addr = range.base; addr != range.end();
          addr += 4096, phys_addr = (char*)phys_addr + 4096) {
         auto path = pt_path_for_addr(addr);
 

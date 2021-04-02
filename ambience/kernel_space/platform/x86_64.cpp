@@ -33,7 +33,7 @@ tos::expected<tos::physical_page_allocator*, page_alloc_res> initialize_page_all
 
     EXPECTED_TRYV(
         tos::cur_arch::mark_resident(tos::cur_arch::get_current_translation_table(),
-                                     allocator_segment,
+                                     allocator_segment.range,
                                      tos::memory_types::normal,
                                      vmem_end));
 

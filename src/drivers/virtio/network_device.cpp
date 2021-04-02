@@ -84,11 +84,11 @@ bool network_device::initialize(physical_page_allocator* palloc) {
         nullptr);
     LOG(bool(op_res));
 
-    auto res = tos::cur_arch::mark_resident(
-        tos::cur_arch::get_current_translation_table(),
-        {{uintptr_t(mem), ptrdiff_t(4096)}, tos::permissions::read_write},
-        tos::memory_types::normal,
-        mem);
+    auto res =
+        tos::cur_arch::mark_resident(tos::cur_arch::get_current_translation_table(),
+                                     {uintptr_t(mem), ptrdiff_t(4096)},
+                                     tos::memory_types::normal,
+                                     mem);
 
     LOG(bool(res));
 
