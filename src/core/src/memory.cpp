@@ -1,4 +1,3 @@
-#include <new>
 #include <tos/memory.hpp>
 
 extern "C" {
@@ -48,24 +47,3 @@ memory_range bss() {
     return {.base = beg, .size = ptrdiff_t(end - beg)};
 }
 } // namespace tos::default_segments
-
-namespace tos {
-std::unique_ptr<mapping>
-physical_memory_backing::create_mapping(const segment& vm_segment,
-                                        const memory_range& obj_range) {
-    if (!contains(m_seg.range, obj_range)) {
-        return nullptr;
-    }
-
-    if ((int(vm_segment.perms) & int(m_seg.perms)) != int(vm_segment.perms)) {
-        return nullptr;
-    }
-
-    auto res = std::make_unique<mapping>();
-    res->obj = intrusive_ptr<backing_object>(this);
-    res->vm_segment = vm_segment;
-    res->obj_range = obj_range;
-    res->mem_type = m_type;
-    return res;
-}
-} // namespace tos

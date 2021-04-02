@@ -149,3 +149,8 @@ tos_install(tos_print ${CMAKE_CURRENT_SOURCE_DIR}/include)
 tos_install(tos_mem ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_subdirectory(benchmarks)
+add_subdirectory(address_space)
+
+if (TARGET tos_address_space)
+    target_link_libraries(tos_core PUBLIC tos_address_space)
+endif()
