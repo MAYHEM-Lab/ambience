@@ -1,5 +1,5 @@
 #include <doctest.h>
-#include <tos/memory/free_list.hpp>
+#include <tos/allocator/free_list.hpp>
 #include <list>
 
 namespace tos::memory {

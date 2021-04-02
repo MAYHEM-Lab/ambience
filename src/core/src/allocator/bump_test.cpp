@@ -1,5 +1,5 @@
 #include <doctest.h>
-#include <tos/memory/bump.hpp>
+#include <tos/allocator/bump.hpp>
 
 namespace tos::memory {
 namespace {

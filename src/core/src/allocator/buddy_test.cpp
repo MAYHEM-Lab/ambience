@@ -3,7 +3,7 @@
 //
 
 #include <doctest.h>
-#include <tos/memory/buddy.hpp>
+#include <tos/allocator/buddy.hpp>
 
 namespace tos::memory {
 namespace {

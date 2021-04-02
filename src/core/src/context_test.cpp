@@ -3,7 +3,7 @@
 #include <tos/components/name.hpp>
 #include <tos/context.hpp>
 #include <tos/ft.hpp>
-#include <tos/memory/malloc.hpp>
+#include <tos/allocator/malloc.hpp>
 
 namespace tos {
 namespace {
