@@ -1,6 +1,8 @@
 #include <tos/debug/log.hpp>
 #include <tos/x86_64/assembly.hpp>
 #include <tos/x86_64/exception.hpp>
+#include <tos/x86_64/mmu.hpp>
+#include <tos/address_space.hpp>
 
 namespace tos::x86_64 {
 
@@ -101,6 +103,10 @@ void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
 }
 void page_fault_handler([[maybe_unused]] exception_frame* frame,
                         [[maybe_unused]] uint64_t num) {
+    if ((frame->cs & 0x3) == 0x3) {
+        // Fault from user space
+    }
+
     LOG("Page fault!",
         (int)num,
         (void*)frame,
@@ -108,9 +114,14 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
         (void*)frame->rip,
         "Fault address:",
         (void*)read_cr2());
-    LOG("Handled correctly, hanging");
-    while (true)
-        ;
+    if (auto res = tos::global::cur_as->m_backend->handle_memory_fault(*frame, read_cr2())) {
+        if (force_get(res)) {
+            LOG("Handled correctly");
+            return;
+        }
+    }
+    LOG("Could not handle");
+    while (true);
 }
 void x87_fpu_fault_handler([[maybe_unused]] exception_frame* frame,
                            [[maybe_unused]] uint64_t num) {
