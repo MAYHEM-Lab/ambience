@@ -2,17 +2,16 @@
 #include <tos/components/allocator.hpp>
 #include <tos/context.hpp>
 #include <tos/debug/dynamic_log.hpp>
-#include <tos/memory/malloc.hpp>
+#include <tos/allocator/malloc.hpp>
+#include <tos/allocator/free_list.hpp>
 #include <tos/utility.hpp>
 #include <type_traits>
 
 #if defined(TOS_PLATFORM_raspi)
-#include <tos/memory/free_list.hpp>
 namespace {
 alignas(16) std::array<uint8_t, 16 * 1024 * 1024> heap_mem;
 }
 #elif defined(TOS_PLATFORM_x86_64)
-#include <tos/memory/free_list.hpp>
 namespace {
 [[gnu::section(".nozero")]]
 alignas(16) std::array<uint8_t, 128 * 1024> heap_mem;
@@ -22,7 +21,6 @@ extern "C" {
 extern uint8_t _estack;
 extern uint8_t _end;
 }
-#include <tos/memory/free_list.hpp>
 namespace {
 tos::span<uint8_t> heap_memory() {
     return tos::span<uint8_t>{&_end, &_estack};

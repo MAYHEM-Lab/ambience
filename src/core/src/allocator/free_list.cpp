@@ -4,7 +4,7 @@
 
 #include <algorithm>
 #include <tos/intrusive_list.hpp>
-#include <tos/memory/free_list.hpp>
+#include <tos/allocator/free_list.hpp>
 
 namespace tos::memory {
 struct free_header : list_node<free_header> {

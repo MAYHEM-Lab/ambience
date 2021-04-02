@@ -2,7 +2,7 @@
 
 #include "component.hpp"
 
-#include <tos/memory/polymorphic_allocator.hpp>
+#include <tos/allocator/polymorphic_allocator.hpp>
 
 namespace tos {
 struct allocator_component : id_component<1> {

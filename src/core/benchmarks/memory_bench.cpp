@@ -1,4 +1,4 @@
-#include <tos/memory/free_list.hpp>
+#include <tos/allocator/free_list.hpp>
 #include <tos/debug/debug.hpp>
 #include <tos/ft.hpp>
 #include <tos/ubench/bench.hpp>

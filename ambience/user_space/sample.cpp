@@ -1,6 +1,6 @@
 #include <calc_generated.hpp>
 #include <tos/ae/user_space.hpp>
-#include <tos/memory/free_list.hpp>
+#include <tos/allocator/free_list.hpp>
 #include <tos/task.hpp>
 
 [[gnu::section(".nozero")]] uint8_t heap[2048];

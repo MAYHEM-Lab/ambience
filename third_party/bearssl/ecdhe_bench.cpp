@@ -5,7 +5,7 @@ extern "C" {
 #include <bearssl_ec.h>
 #include <bearssl_block.h>
 #include <tos/debug/debug.hpp>
-#include <tos/memory/free_list.hpp>
+#include <tos/allocator/free_list.hpp>
 #include <tos/ubench/bench.hpp>
 #include <tos/ubench/state.hpp>
 
