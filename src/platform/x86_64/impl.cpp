@@ -280,6 +280,7 @@ _post_start([[maybe_unused]] const tos::multiboot::info_t* info) {
     enable_sse();
 
     set_up_page_tables();
+    write_cr0(read_cr0() | 1 << 16); // WP bit, makes write protect work in ring0
 
     auto bss = tos::default_segments::bss();
     auto bss_start = reinterpret_cast<uint64_t*>(bss.base);
