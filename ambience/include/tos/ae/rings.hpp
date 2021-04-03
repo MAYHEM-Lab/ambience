@@ -9,6 +9,7 @@
 namespace tos::ae {
 enum class elem_flag : uint8_t
 {
+    none = 0,
     // The element is a request, as opposed to a response
     req = 1,
     // Hypervisor to user element
@@ -110,13 +111,13 @@ template<size_t N>
 struct interface_storage {
     interface_storage() = default;
 
-    tos::ae::ring_elem elems[N];
-    uint8_t req_arr[sizeof(tos::ae::ring) + N * sizeof(uint16_t)];
-    uint8_t res_arr[sizeof(tos::ae::ring) + N * sizeof(uint16_t)];
+    ring_elem elems[N];
+    uint8_t req_arr[sizeof(ring) + N * sizeof(uint16_t)];
+    uint8_t res_arr[sizeof(ring) + N * sizeof(uint16_t)];
 
     interface make_interface() {
-        return tos::ae::interface{
-            N, elems, new (&req_arr) tos::ae::ring{}, new (&res_arr) tos::ae::ring{}};
+        return interface{
+            N, elems, new (&req_arr) ring{}, new (&res_arr) ring{}};
     }
 };
 
@@ -142,5 +143,26 @@ auto& submit_req(interface& iface, int channel, int proc, const void* params, vo
     }
 
     return req_el;
+}
+
+template <bool FromHypervisor>
+void respond(interface& iface, ring_elem& el) {
+    auto el_idx = std::distance(iface.elems, &el);
+
+    auto& req = el.req;
+    auto& res = el.res;
+
+    res.user_ptr = req.user_ptr;
+    res.flags = elem_flag::incoming;
+
+    if constexpr (FromHypervisor) {
+        iface.res->elems[iface.res->head_idx++ % iface.size] = el_idx;
+    } else {
+        iface.req->elems[iface.req->head_idx++ % iface.size] = el_idx;
+    }
+}
+
+inline void ack(interface& iface, ring_elem& elem) {
+    elem.common.flags = elem_flag::none;
 }
 } // namespace tos::ae

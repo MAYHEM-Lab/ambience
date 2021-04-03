@@ -30,12 +30,7 @@ inline void proc_req_queue(kernel_interface& iface) {
                              *(std::string_view*)req.arg_ptr);
                      }
 
-                     auto& res = iface.user_iface->elems[req_idx].res;
-
-                     res.user_ptr = req.user_ptr;
-                     res.flags = elem_flag::incoming;
-                     iface.user_iface->res->elems[iface.user_iface->res->head_idx++ %
-                                                  iface.user_iface->size] = req_idx;
+                     respond<true>(*iface.user_iface, iface.user_iface->elems[req_idx]);
                  });
 }
 } // namespace tos::ae::kernel
