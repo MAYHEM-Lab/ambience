@@ -130,8 +130,7 @@ tos::Task<void> task() {
     auto basic_calc = co_await init_basic_calc();
     basic_calc->add(4, 5);
 
-    auto g = group<1>::make(basic_calc);
-    ::g = &g;
+    ::g = new group<1>(group<1>::make(basic_calc));
 
     while (true) {
         co_await tos::ae::log_str("Hello world from user space!");
