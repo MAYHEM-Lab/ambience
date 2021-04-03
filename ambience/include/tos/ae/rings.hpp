@@ -122,7 +122,7 @@ struct interface_storage {
 };
 
 template<bool FromHypervisor>
-auto& submit_req(interface& iface, int channel, int proc, const void* params, void* res) {
+req_elem& submit_req(interface& iface, int channel, int proc, const void* params, void* res) {
     auto el_idx = iface.allocate();
     auto& req_el = iface.elems[el_idx].req;
 
@@ -135,6 +135,7 @@ auto& submit_req(interface& iface, int channel, int proc, const void* params, vo
     req_el.procid = proc;
     req_el.arg_ptr = params;
     req_el.ret_ptr = res;
+    req_el.user_ptr = nullptr;
 
     if constexpr (FromHypervisor) {
         iface.res->elems[iface.res->head_idx++ % iface.size] = el_idx;
@@ -145,7 +146,7 @@ auto& submit_req(interface& iface, int channel, int proc, const void* params, vo
     return req_el;
 }
 
-template <bool FromHypervisor>
+template<bool FromHypervisor>
 void respond(interface& iface, ring_elem& el) {
     auto el_idx = std::distance(iface.elems, &el);
 
