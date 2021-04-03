@@ -177,7 +177,7 @@ public:
      * @param t object to insert
      * @return iterator to the object
      */
-    iterator_t push_back(T& t);
+    iterator_t push_back(T& t) noexcept;
 
     /**
      * Inserts a new element at the beginning of the list
@@ -190,7 +190,7 @@ public:
      * @param t object to insert
      * @return iterator to the object
      */
-    iterator_t push_front(T& t);
+    iterator_t push_front(T& t) noexcept;
 
     /**
      * Returns a reference to the first element of the list
@@ -336,7 +336,7 @@ auto intrusive_list<T, Access>::end() const -> iterator_t {
 }
 
 template<class T, class Access>
-auto intrusive_list<T, Access>::push_back(T& elem) -> iterator_t {
+auto intrusive_list<T, Access>::push_back(T& elem) noexcept -> iterator_t {
     auto& t = Access::template access<T>(elem);
     if (empty()) {
         m_head = &t;
@@ -351,7 +351,7 @@ auto intrusive_list<T, Access>::push_back(T& elem) -> iterator_t {
 }
 
 template<class T, class Access>
-auto intrusive_list<T, Access>::push_front(T& elem) -> iterator_t {
+auto intrusive_list<T, Access>::push_front(T& elem) noexcept -> iterator_t {
     auto& t = Access::template access<T>(elem);
     if (empty()) {
         m_tail = &t;
