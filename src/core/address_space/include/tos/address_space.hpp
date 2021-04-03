@@ -3,6 +3,7 @@
 #include <tos/arch.hpp>
 #include <tos/mapping.hpp>
 #include <tos/memory.hpp>
+#include <tos/paging/physical_page_allocator.hpp>
 
 namespace tos {
 class address_space {
