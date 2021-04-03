@@ -10,9 +10,17 @@ tos::Task<void> log_str(std::string_view sv) {
     co_await tos::ae::submit_req<false>(iface, 4, 1, &sv, nullptr);
 }
 
+namespace {
+tos::Task<void> req_adaptor(interface& iface, ring_elem& elem, tos::Task<bool> task) {
+    auto res = co_await task;
+
+    respond<false>(iface, elem);
+}
+} // namespace
+
 void proc_res_queue(interface& iface) {
-    iface.res_last_seen =
-        for_each(iface, *iface.res, iface.res_last_seen, iface.size, [](ring_elem& elem) {
+    iface.res_last_seen = for_each(
+        iface, *iface.res, iface.res_last_seen, iface.size, [&](ring_elem& elem) {
             if (!util::is_flag_set(elem.common.flags, elem_flag::req)) {
                 // Response for a request we made.
 
@@ -21,7 +29,8 @@ void proc_res_queue(interface& iface) {
             } else {
                 // We have a request to serve.
                 auto& req = elem.req;
-                auto handler = tos::coro::make_pollable(handle_req(req));
+                auto handler =
+                    tos::coro::make_pollable(req_adaptor(iface, elem, handle_req(req)));
                 if (!handler.run()) {
                     post(std::move(handler));
                 }
