@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <new>
 #include <tos/detail/coro.hpp>
 #include <tos/flags.hpp>
@@ -116,8 +117,7 @@ struct interface_storage {
     uint8_t res_arr[sizeof(ring) + N * sizeof(uint16_t)];
 
     interface make_interface() {
-        return interface{
-            N, elems, new (&req_arr) ring{}, new (&res_arr) ring{}};
+        return interface{N, elems, new (&req_arr) ring{}, new (&res_arr) ring{}};
     }
 };
 
