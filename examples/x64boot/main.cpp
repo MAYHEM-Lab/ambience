@@ -22,6 +22,7 @@
 #include <tos/ae/rings.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
+#include <tos/detail/tos_bind.hpp>
 #include <tos/elf.hpp>
 #include <tos/flags.hpp>
 #include <tos/ft.hpp>
@@ -549,10 +550,20 @@ void thread() {
     auto results = tos::ae::service::calculator::add_results{-1};
     auto results2 = tos::ae::service::calculator::add_results{-1};
 
-    tos::ae::submit_req<true>(
+    auto& req1 = tos::ae::submit_req<true>(
         *runnable_groups.front().iface.user_iface, 0, 0, &params, &results);
-    tos::ae::submit_req<true>(
+    auto& req2 = tos::ae::submit_req<true>(
         *runnable_groups.back().iface.user_iface, 0, 0, &params, &results2);
+
+    auto req_task = [&]() -> tos::Task<void> {
+        co_await req1;
+        co_await req2;
+        tos::launch(tos::alloc_stack, [] { LOG("Reqs finished!!"); });
+    };
+
+    tos::coro_job j(tos::current_context(), tos::coro::make_pollable(req_task()));
+    tos::kern::make_runnable(j);
+    tos::this_thread::yield();
 
     auto syshandler2 = [&](tos::x86_64::syscall_frame& frame) {
         tos::swap_context(*runnable_groups.front().state, self, tos::int_ctx{});
@@ -562,6 +573,7 @@ void thread() {
     for (int i = 0; i < 10; ++i) {
         LOG("back", results.ret0(), results2.ret0());
         proc_req_queue(runnable_groups.front().iface);
+        tos::this_thread::yield();
 
         odi([&](auto...) {
             tos::swap_context(self, *runnable_groups.front().state, tos::int_ctx{});
