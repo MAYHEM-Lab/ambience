@@ -74,10 +74,10 @@ add_library(tos_libcxx
 #target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_EXCEPTIONS)
 #target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_RTTI)
 #target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_ATOMIC_HEADER)
+#target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_INT128)
 
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_THREADS)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_LONG_LONG)
-target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_INT128)
 if(NOT ${TOS_CORE} MATCHES "aarch64")
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_UNICODE_CHARS)
 endif()
