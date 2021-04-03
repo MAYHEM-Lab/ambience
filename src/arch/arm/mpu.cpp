@@ -79,7 +79,9 @@ std::optional<tos::memory_range> mpu::get_region(int region_id) {
 tos::expected<void, mpu_errors> mpu::set_region(int region_id,
                                                 const tos::memory_range& region,
                                                 permissions perms,
-                                                bool shareable) {
+                                                bool shareable,
+                                                uint8_t subregion_disable,
+                                                bool enable) {
     const uint32_t tmp_rbar = region.base | MPU_RBAR_VALID_Msk | region_id;
 
     // Actual size is computed as 2^(size field + 1)
@@ -101,9 +103,9 @@ tos::expected<void, mpu_errors> mpu::set_region(int region_id,
     rasr.execute_never = !util::is_flag_set(perms, permissions::execute);
     rasr.type_extension = 0;
     rasr.access_permissions = permissions;
-    rasr.subregion_disable = 0;
+    rasr.subregion_disable = subregion_disable;
     rasr.size = size_field;
-    rasr.enable = true;
+    rasr.enable = enable;
 
     MPU->RBAR = tmp_rbar;
 

@@ -49,9 +49,17 @@ public:
 
     std::optional<tos::memory_range> get_region(int region_id);
     tos::expected<void, mpu_errors> set_region(int region_id,
-                                               const tos::memory_range& region,
+                                               const memory_range& region,
                                                permissions perms,
-                                               bool shareable = true);
+                                               bool shareable = true,
+                                               uint8_t subregion_disable = 0,
+                                               bool enable = true);
+
+    void enable_region(int region_id);
+    void disable_region(int region_id);
+
+    int save_state(tos::span<uint32_t>);
+    void restore_state(tos::span<uint32_t>);
 
     void set_callback(function_ref<void()> callback) {
         m_callback = callback;

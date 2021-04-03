@@ -1,4 +1,4 @@
-add_library(arch_arm "" include/tos/arm/processor_state.hpp)
+add_library(arch_arm "")
 target_include_directories(arch_arm PUBLIC include)
 target_sources(arch_arm PRIVATE
         include/tos/arm/cmsis.hpp
@@ -14,8 +14,12 @@ target_sources(arch_arm PRIVATE
         core.cpp
         nvic.cpp
         exception.cpp
+        include/tos/arm/processor_state.hpp
+        include/tos/arm/address_space.hpp
+        address_space.cpp
 )
-target_link_libraries(arch_arm PUBLIC tos_util_core cmsis::core tos_drivers tos_mmio tos::libcxx)
+target_link_libraries(arch_arm PUBLIC tos_util_core cmsis::core tos_drivers tos_mmio tos::libcxx tos_address_space)
+target_compile_features(arch_arm PUBLIC cxx_std_20)
 
 if (${CMAKE_C_COMPILER_TARGET} MATCHES "armv7")
     target_link_libraries(arch_arm PUBLIC clang_rt.builtins-armv7m)
@@ -24,3 +28,5 @@ endif()
 if (${CMAKE_C_COMPILER_TARGET} MATCHES "armv6")
     target_link_libraries(arch_arm PUBLIC clang_rt.builtins-armv6m)
 endif()
+
+set(TOS_ARCH_HAVE_ADDRESS_SPACE ON CACHE BOOL "Have adress space")
