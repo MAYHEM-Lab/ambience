@@ -7,7 +7,8 @@
 
 namespace tos::x86_64 {
 struct address_space {
-    expected<void, mmu_errors> allocate_region(mapping& mapping) {
+    expected<void, mmu_errors> allocate_region(mapping& mapping,
+                                               physical_page_allocator* palloc) {
         mapping.backend_data = this;
         Assert(mapping.vm_segment.range.base % 4096 == 0);
         Assert(mapping.vm_segment.range.size % 4096 == 0);
@@ -31,7 +32,6 @@ struct address_space {
     }
 
     tos::address_space* space;
-    physical_page_allocator* palloc;
     translation_table* m_table;
 };
 } // namespace tos::x86_64

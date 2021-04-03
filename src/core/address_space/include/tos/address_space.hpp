@@ -11,10 +11,14 @@ public:
 
     mapping* containing_mapping(uintptr_t virt_addr);
 
-    auto do_mapping(tos::mapping& mapping) {
-        m_mappings.push_back(mapping);
-        mapping.va = this;
-        return m_backend->allocate_region(mapping);
+    auto do_mapping(tos::mapping& mapping, physical_page_allocator* palloc) {
+        auto res = m_backend->allocate_region(mapping, palloc);
+        if (res) {
+            // Only modify internal state if the allocation succeeds.
+            m_mappings.push_back(mapping);
+            mapping.va = this;
+        }
+        return res;
     }
 
     cur_arch::address_space* m_backend;
