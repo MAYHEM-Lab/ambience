@@ -26,6 +26,7 @@ SECTIONS
         *(.rodata)
         *(.gcc_except_table.*)
         *(.to_load)
+        *(.to_load.*)
         . = ALIGN(4096);
     }
     .gnu_build_id :
