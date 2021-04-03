@@ -17,20 +17,30 @@ struct kernel_interface {
 
 inline void proc_req_queue(kernel_interface& iface) {
     iface.req_last_seen =
-        for_each(*iface.user_iface->req,
+        for_each(*iface.user_iface,
+                 *iface.user_iface->req,
                  iface.req_last_seen,
                  iface.user_iface->size,
-                 [&iface](uint16_t req_idx) {
-                     auto& req = iface.user_iface->elems[req_idx].req;
+                 [&iface](ring_elem& elem) {
+                     auto& req = elem.req;
                      LOG(req.user_ptr, req.arg_ptr);
 
-                     if (req.channel == 4 && req.procid == 1) {
-                         LOG(iface.req_last_seen,
-                             iface.user_iface->res->head_idx,
-                             *(std::string_view*)req.arg_ptr);
-                     }
+                     if (!util::is_flag_set(elem.common.flags, elem_flag::req)) {
+                         // Response for a request we made.
 
-                     respond<true>(*iface.user_iface, iface.user_iface->elems[req_idx]);
+                         auto& res = elem.res;
+                         if (res.user_ptr) {
+                             std::coroutine_handle<>::from_address(res.user_ptr).resume();
+                         }
+                     } else {
+                         if (req.channel == 4 && req.procid == 1) {
+                             LOG(iface.req_last_seen,
+                                 iface.user_iface->res->head_idx,
+                                 *(std::string_view*)req.arg_ptr);
+                         }
+
+                         respond<true>(*iface.user_iface, elem);
+                     }
                  });
 }
 } // namespace tos::ae::kernel
