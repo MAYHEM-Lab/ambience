@@ -18,7 +18,7 @@ These numbers are not just the OS, it also includes an application.
 maintainability, safety and portability.
 - A novel <<docs/contexts#, context>> mechanism to provide high level abstractions.
 - Optional memory protection support on both high end MMUs and low end MPUs.
-- Run the same C++17 program on an 8-bit AVR or a 64-bit aarch64 processor.
+- Run the same C++20 program on an 8-bit AVR or a 64-bit aarch64 processor.
 - Power efficient out of the box. **tos** is a tickless kernel, so it will always
 sleep automatically when there isn't anything to run.
 
