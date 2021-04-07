@@ -467,13 +467,15 @@ void thread() {
     tos::address_space vas(as);
     tos::global::cur_as = &vas;
 
-    auto mapping = pmem.create_mapping(
+    tos::mapping mapping;
+    Assert(pmem.create_mapping(
         tos::segment{
             tos::memory_range{.base = 0x1200000, .size = tos::cur_arch::page_size_bytes},
             tos::permissions::read_write},
-        tos::memory_range{.base = 0x200000, .size = tos::cur_arch::page_size_bytes});
+        tos::memory_range{.base = 0x200000, .size = tos::cur_arch::page_size_bytes},
+        mapping));
 
-    vas.do_mapping(*mapping, palloc);
+    vas.do_mapping(mapping, palloc);
 
     LOG(*((int*)0x200000));
     LOG(*((int*)0x1200000));

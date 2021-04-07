@@ -16,8 +16,9 @@ public:
 
     bool handle_memory_fault([[maybe_unused]] const memory_fault& fault) override;
 
-    std::unique_ptr<mapping> create_mapping(const segment& vm_segment,
-                                            const memory_range& obj_range) override;
+    auto create_mapping(const segment& vm_segment,
+                        const memory_range& obj_range,
+                        tos::mapping& mapping) -> bool override;
 
 private:
     segment m_seg;

@@ -4,23 +4,23 @@
 #include <tos/physical_memory_backing.hpp>
 
 namespace tos {
-std::unique_ptr<mapping>
-physical_memory_backing::create_mapping(const segment& vm_segment,
-                                        const memory_range& obj_range) {
+bool physical_memory_backing::create_mapping(const segment& vm_segment,
+                                             const memory_range& obj_range,
+                                             tos::mapping& mapping) {
     if (!contains(m_seg.range, obj_range)) {
-        return nullptr;
+        return false;
     }
 
     if ((int(vm_segment.perms) & int(m_seg.perms)) != int(vm_segment.perms)) {
-        return nullptr;
+        return false;
     }
 
-    auto res = std::make_unique<mapping>();
-    res->obj = intrusive_ptr<backing_object>(this);
-    res->vm_segment = vm_segment;
-    res->obj_range = obj_range;
-    res->mem_type = m_type;
-    return res;
+    mapping.obj = intrusive_ptr<backing_object>(this);
+    mapping.vm_segment = vm_segment;
+    mapping.obj_range = obj_range;
+    mapping.mem_type = m_type;
+
+    return true;
 }
 
 bool physical_memory_backing::handle_memory_fault(const memory_fault& fault) {

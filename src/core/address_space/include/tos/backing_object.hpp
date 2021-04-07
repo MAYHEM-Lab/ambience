@@ -15,8 +15,10 @@ struct job;
 // to in an address space.
 class backing_object : public ref_counted<backing_object> {
 public:
-    virtual auto create_mapping(const segment& vm_segment, const memory_range& obj_range)
-        -> std::unique_ptr<mapping> = 0;
+    virtual auto create_mapping(const segment& vm_segment,
+                                const memory_range& obj_range,
+                                tos::mapping& mapping) -> bool = 0;
+
     virtual auto handle_memory_fault(const memory_fault& fault) -> bool = 0;
 
     virtual ~backing_object() = default;
