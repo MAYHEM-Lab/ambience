@@ -21,6 +21,13 @@ jobs:
         path: /opt/llvm
         key: ${{ runner.os }}-llvm
 
+    - name: Cache CCache
+      id: cache-llvm
+      uses: FatihBAKIR/cache@v2
+      with:
+        path: /home/runner/.cache/ccache
+        key: ${{ runner.os }}-ccache-0
+
     - name: Download LLVM
       if: steps.cache-llvm.outputs.cache-hit != 'true'
       run: >
