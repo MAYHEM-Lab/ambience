@@ -23,25 +23,25 @@ public:
 
 struct through_base {
     template<class T, class U>
-    static list_node<T>& access(U& u) {
+    static constexpr list_node<T>& access(U& u) {
         static_assert(std::is_base_of_v<list_node<T>, U>);
         return static_cast<list_node<T>&>(u);
     }
 
     template<class T, class U>
-    static const list_node<T>& access(const U& u) {
+    static constexpr const list_node<T>& access(const U& u) {
         static_assert(std::is_base_of_v<list_node<T>, U>);
         return static_cast<const list_node<T>&>(u);
     }
 
     template<class T, class U>
-    static T& reverse(list_node<U>& elem) {
+    static constexpr T& reverse(list_node<U>& elem) {
         static_assert(std::is_base_of_v<list_node<U>, T>);
         return static_cast<T&>(elem);
     }
 
     template<class T, class U>
-    static const T& reverse(const list_node<U>& elem) {
+    static constexpr const T& reverse(const list_node<U>& elem) {
         static_assert(std::is_base_of_v<list_node<U>, T>);
         return static_cast<const T&>(elem);
     }
@@ -77,29 +77,29 @@ private:
 template<class T, class Access>
 class intrusive_list_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
 public:
-    T& operator*() {
+    constexpr T& operator*() {
         return Access::template reverse<T>(*m_curr);
     }
-    T* operator->() {
+    constexpr T* operator->() {
         return &Access::template reverse<T>(*m_curr);
     }
-    const intrusive_list_iterator operator++(int);
-    intrusive_list_iterator& operator++();
-    const intrusive_list_iterator operator--(int);
-    intrusive_list_iterator& operator--();
+    constexpr const intrusive_list_iterator operator++(int);
+    constexpr intrusive_list_iterator& operator++();
+    constexpr const intrusive_list_iterator operator--(int);
+    constexpr intrusive_list_iterator& operator--();
 
-    bool operator!=(const intrusive_list_iterator&) const;
+    constexpr bool operator!=(const intrusive_list_iterator&) const;
 
-    bool operator==(const intrusive_list_iterator& rhs) const {
+    constexpr bool operator==(const intrusive_list_iterator& rhs) const {
         return !(*this != rhs);
     }
 
 private:
     friend class intrusive_list<T, Access>;
     template<class AccessT, class ElemT>
-    friend intrusive_list_iterator<ElemT, AccessT>
+    friend constexpr intrusive_list_iterator<ElemT, AccessT>
     ad_hoc_list_iter(list_node<ElemT>& elem);
-    explicit intrusive_list_iterator(list_node<T>* p)
+    constexpr explicit intrusive_list_iterator(list_node<T>* p)
         : m_curr(p) {
     }
     list_node<T>* m_curr;
@@ -298,11 +298,11 @@ public:
     }
 
     template<class TAccess, class ElemT>
-    friend intrusive_list<ElemT, TAccess> ad_hoc_list(list_node<ElemT>& elem);
+    friend constexpr intrusive_list<ElemT, TAccess> ad_hoc_list(list_node<ElemT>& elem);
 };
 
 template<class Access = through_base, class ElemT>
-intrusive_list<ElemT, Access> ad_hoc_list(list_node<ElemT>& elem) {
+constexpr intrusive_list<ElemT, Access> ad_hoc_list(list_node<ElemT>& elem) {
     list_node<ElemT>*head, *tail;
     for (head = &elem; head->prev; head = head->prev)
         ;
@@ -317,7 +317,8 @@ intrusive_list<ElemT, Access> ad_hoc_list(list_node<ElemT>& elem) {
 }
 
 template<class Access = through_base, class ElemT>
-intrusive_list_iterator<ElemT, Access> ad_hoc_list_iter(list_node<ElemT>& elem) {
+constexpr intrusive_list_iterator<ElemT, Access>
+ad_hoc_list_iter(list_node<ElemT>& elem) {
     return intrusive_list_iterator<ElemT, Access>(&elem);
 }
 } // namespace tos
@@ -458,7 +459,7 @@ auto intrusive_list<T, Access>::erase(iterator_t it) -> iterator_t {
 }
 
 template<class T, class Access>
-const intrusive_list_iterator<T, Access>
+constexpr const intrusive_list_iterator<T, Access>
 intrusive_list_iterator<T, Access>::operator++(int) {
     auto ret = *this;
     ++(*this);
@@ -466,13 +467,14 @@ intrusive_list_iterator<T, Access>::operator++(int) {
 }
 
 template<class T, class Access>
-intrusive_list_iterator<T, Access>& intrusive_list_iterator<T, Access>::operator++() {
+constexpr intrusive_list_iterator<T, Access>&
+intrusive_list_iterator<T, Access>::operator++() {
     m_curr = m_curr->next;
     return *this;
 }
 
 template<class T, class Access>
-const intrusive_list_iterator<T, Access>
+constexpr const intrusive_list_iterator<T, Access>
 intrusive_list_iterator<T, Access>::operator--(int) {
     auto ret = *this;
     --(*this);
@@ -480,14 +482,15 @@ intrusive_list_iterator<T, Access>::operator--(int) {
 }
 
 template<class T, class Access>
-intrusive_list_iterator<T, Access>& intrusive_list_iterator<T, Access>::operator--() {
+constexpr intrusive_list_iterator<T, Access>&
+intrusive_list_iterator<T, Access>::operator--() {
     m_curr = m_curr->prev;
     return *this;
 }
 
 template<class T, class Access>
-bool intrusive_list_iterator<T, Access>::operator!=(
-    const intrusive_list_iterator& rhs) const {
+constexpr bool
+intrusive_list_iterator<T, Access>::operator!=(const intrusive_list_iterator& rhs) const {
     return m_curr != rhs.m_curr;
 }
 } // namespace tos
