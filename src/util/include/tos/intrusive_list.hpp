@@ -50,24 +50,24 @@ struct through_base {
 template<auto Member>
 struct through_member {
     template<class T, class U>
-    static list_node<T>& access(U& u) {
+    static constexpr list_node<T>& access(U& u) {
         return u.*Member;
     }
 
     template<class T, class U>
-    static const list_node<T>& access(const U& u) {
+    static constexpr const list_node<T>& access(const U& u) {
         return u.*Member;
     }
 
     template<class T, class U>
-    static T& reverse(list_node<U>& elem) {
-        auto off = meta::offset_of<Member>();
+    constexpr static T& reverse(list_node<U>& elem) {
+        constexpr auto off = meta::offset_of<Member>();
         return *reinterpret_cast<T*>(reinterpret_cast<char*>(&elem) - off);
     }
 
     template<class T, class U>
-    static const T& reverse(const list_node<U>& elem) {
-        auto off = meta::offset_of<Member>();
+    constexpr static const T& reverse(const list_node<U>& elem) {
+        constexpr auto off = meta::offset_of<Member>();
         return *reinterpret_cast<const T*>(reinterpret_cast<const char*>(&elem) - off);
     }
 
