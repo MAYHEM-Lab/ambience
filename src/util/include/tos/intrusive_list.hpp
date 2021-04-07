@@ -123,20 +123,20 @@ public:
     /**
      * Constructs an empty list
      */
-    intrusive_list()
+    constexpr intrusive_list()
         : m_head(nullptr)
         , m_tail(nullptr) {
     }
 
-    intrusive_list(intrusive_list&& rhs) noexcept
+    constexpr intrusive_list(intrusive_list&& rhs) noexcept
         : m_head{std::exchange(rhs.m_head, nullptr)}
         , m_tail{std::exchange(rhs.m_tail, nullptr)} {
     }
 
     intrusive_list(const intrusive_list&) = delete;
-    ~intrusive_list() = default;
+    constexpr ~intrusive_list() = default;
 
-    intrusive_list& operator=(intrusive_list&& rhs) noexcept {
+    constexpr intrusive_list& operator=(intrusive_list&& rhs) noexcept {
         m_head = std::exchange(rhs.m_head, nullptr);
         m_tail = std::exchange(rhs.m_tail, nullptr);
         return *this;
@@ -154,7 +154,7 @@ public:
      *
      * @return number of elements
      */
-    size_t size() const {
+    constexpr size_t size() const {
         return std::distance(begin(), end());
     }
 
@@ -162,7 +162,7 @@ public:
      * Returns whether the list is empty or not
      * @return list contains any elements
      */
-    bool empty() const {
+    constexpr bool empty() const {
         return m_head == nullptr;
     }
 
@@ -177,7 +177,7 @@ public:
      * @param t object to insert
      * @return iterator to the object
      */
-    iterator_t push_back(T& t) noexcept;
+    constexpr iterator_t push_back(T& t) noexcept;
 
     /**
      * Inserts a new element at the beginning of the list
@@ -190,7 +190,7 @@ public:
      * @param t object to insert
      * @return iterator to the object
      */
-    iterator_t push_front(T& t) noexcept;
+    constexpr iterator_t push_front(T& t) noexcept;
 
     /**
      * Returns a reference to the first element of the list
@@ -199,7 +199,7 @@ public:
      *
      * @return reference to the first element
      */
-    T& front();
+    constexpr T& front();
 
     /**
      * Returns a reference to the last element of the list
@@ -208,7 +208,7 @@ public:
      *
      * @return reference to the last element
      */
-    T& back();
+    constexpr T& back();
 
     /**
      * Returns a reference to the first element of the list
@@ -217,7 +217,7 @@ public:
      *
      * @return reference to the first element
      */
-    const T& front() const;
+    constexpr const T& front() const;
 
     /**
      * Returns a reference to the last element of the list
@@ -226,7 +226,7 @@ public:
      *
      * @return reference to the last element
      */
-    const T& back() const;
+    constexpr const T& back() const;
 
     /**
      * Inserts a new object to the given location
@@ -244,7 +244,7 @@ public:
      * @param t object to insert
      * @return iterator to the inserted object
      */
-    iterator_t insert(iterator_t at, T& t);
+    constexpr iterator_t insert(iterator_t at, T& t);
 
     /**
      * Removes the element at the end of the list
@@ -253,7 +253,7 @@ public:
      *
      * Calling this function on an empty list is undefined
      */
-    void pop_back();
+    constexpr void pop_back();
 
     /**
      * Removes the element at the beginning of the list
@@ -262,14 +262,14 @@ public:
      *
      * Calling this function on an empty list is undefined
      */
-    void pop_front();
+    constexpr void pop_front();
 
     /**
      * Removes all elements from the container
      *
      * Complexity: O(1)
      */
-    void clear();
+    constexpr void clear();
 
     /**
      * Removes the object pointed by the given iterator from the list
@@ -279,21 +279,21 @@ public:
      * @param it iterator to the object to be removed
      * @return iterator to the next element in the list
      */
-    iterator_t erase(iterator_t it);
+    constexpr iterator_t erase(iterator_t it);
 
     /**
      * Returns an iterator to the beginning of the list
      * @return the begin iterator
      */
-    iterator_t begin() const;
+    constexpr iterator_t begin() const;
 
     /**
      * Returns an iterator to one past the last element of the list
      * @return the end iterator
      */
-    iterator_t end() const;
+    constexpr iterator_t end() const;
 
-    iterator_t unsafe_find(T& t) const {
+    constexpr iterator_t unsafe_find(T& t) const {
         return iterator_t{&Access::template access<T>(t)};
     }
 
@@ -327,17 +327,17 @@ ad_hoc_list_iter(list_node<ElemT>& elem) {
 
 namespace tos {
 template<class T, class Access>
-auto intrusive_list<T, Access>::begin() const -> iterator_t {
+constexpr auto intrusive_list<T, Access>::begin() const -> iterator_t {
     return iterator_t{m_head};
 }
 
 template<class T, class Access>
-auto intrusive_list<T, Access>::end() const -> iterator_t {
+constexpr auto intrusive_list<T, Access>::end() const -> iterator_t {
     return iterator_t{nullptr};
 }
 
 template<class T, class Access>
-auto intrusive_list<T, Access>::push_back(T& elem) noexcept -> iterator_t {
+constexpr auto intrusive_list<T, Access>::push_back(T& elem) noexcept -> iterator_t {
     auto& t = Access::template access<T>(elem);
     if (empty()) {
         m_head = &t;
@@ -352,7 +352,7 @@ auto intrusive_list<T, Access>::push_back(T& elem) noexcept -> iterator_t {
 }
 
 template<class T, class Access>
-auto intrusive_list<T, Access>::push_front(T& elem) noexcept -> iterator_t {
+constexpr auto intrusive_list<T, Access>::push_front(T& elem) noexcept -> iterator_t {
     auto& t = Access::template access<T>(elem);
     if (empty()) {
         m_tail = &t;
@@ -367,7 +367,7 @@ auto intrusive_list<T, Access>::push_front(T& elem) noexcept -> iterator_t {
 }
 
 template<class T, class Access>
-auto intrusive_list<T, Access>::insert(intrusive_list::iterator_t at, T& elem)
+constexpr auto intrusive_list<T, Access>::insert(intrusive_list::iterator_t at, T& elem)
     -> iterator_t {
     auto& t = Access::template access<T>(elem);
     if (at == begin()) {
@@ -389,33 +389,33 @@ auto intrusive_list<T, Access>::insert(intrusive_list::iterator_t at, T& elem)
 }
 
 template<class T, class Access>
-T& intrusive_list<T, Access>::front() {
+constexpr T& intrusive_list<T, Access>::front() {
     return Access::template reverse<T>(*m_head);
 }
 
 template<class T, class Access>
-T& intrusive_list<T, Access>::back() {
+constexpr T& intrusive_list<T, Access>::back() {
     return Access::template reverse<T>(*m_tail);
 }
 
 template<class T, class Access>
-const T& intrusive_list<T, Access>::front() const {
+constexpr const T& intrusive_list<T, Access>::front() const {
     return Access::template reverse<T>(*m_head);
 }
 
 template<class T, class Access>
-const T& intrusive_list<T, Access>::back() const {
+constexpr const T& intrusive_list<T, Access>::back() const {
     return Access::template reverse<T>(*m_tail);
 }
 
 template<class T, class Access>
-void intrusive_list<T, Access>::clear() {
+constexpr void intrusive_list<T, Access>::clear() {
     m_head = nullptr;
     m_tail = nullptr;
 }
 
 template<class T, class Access>
-void intrusive_list<T, Access>::pop_back() {
+constexpr void intrusive_list<T, Access>::pop_back() {
     if (m_head == m_tail) {
         clear();
         return;
@@ -426,7 +426,7 @@ void intrusive_list<T, Access>::pop_back() {
 }
 
 template<class T, class Access>
-void intrusive_list<T, Access>::pop_front() {
+constexpr void intrusive_list<T, Access>::pop_front() {
     if (m_head == m_tail) {
         clear();
         return;
@@ -437,7 +437,7 @@ void intrusive_list<T, Access>::pop_front() {
 }
 
 template<class T, class Access>
-auto intrusive_list<T, Access>::erase(iterator_t it) -> iterator_t {
+constexpr auto intrusive_list<T, Access>::erase(iterator_t it) -> iterator_t {
     auto ptr = it.m_curr;
 
     if (m_head == m_tail) {
