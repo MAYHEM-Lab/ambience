@@ -25,7 +25,7 @@ jobs:
       id: cache-ccache-dir
       uses: FatihBAKIR/cache@v2
       with:
-        path: /home/runner/.cache/ccache
+        path: /home/runner/.ccache
         key: ${{ runner.os }}-ccache-0
 
     - name: Download LLVM
