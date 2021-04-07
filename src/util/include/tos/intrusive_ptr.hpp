@@ -178,6 +178,6 @@ public:
     }
 
 private:
-    RefCntT m_refcnt;
+    RefCntT m_refcnt{0};
 };
 } // namespace tos
