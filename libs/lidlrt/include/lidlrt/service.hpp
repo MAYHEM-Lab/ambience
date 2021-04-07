@@ -15,9 +15,10 @@ namespace lidl {
 template<class T>
 class service_descriptor;
 
-template<auto Fn, class ParamsT, class ResultsT>
+template<auto Fn, auto AsyncFn, class ParamsT, class ResultsT>
 struct procedure_descriptor {
     static constexpr auto function = Fn;
+    static constexpr auto async_function = AsyncFn;
     using params_type = ParamsT;
     std::string_view name;
 };
@@ -61,9 +62,9 @@ namespace meta {
 template<class... ParamsT>
 struct get_result_type_impl;
 
-template<auto... Procs, class... ParamsT, class... ResultsT>
+template<auto... Procs, auto... AsyncProcs, class... ParamsT, class... ResultsT>
 struct get_result_type_impl<
-    const std::tuple<lidl::procedure_descriptor<Procs, ParamsT, ResultsT>...>> {
+    const std::tuple<lidl::procedure_descriptor<Procs, AsyncProcs, ParamsT, ResultsT>...>> {
     using params  = std::tuple<ParamsT...>;
     using results = std::tuple<ResultsT...>;
 };
@@ -95,7 +96,7 @@ void request_handler(BaseServT& base_service,
 
     // The service descriptor stores the list of procedures in a service. We'll use
     // this information to decode lidl messages into actual calls to services.
-    using descriptor = service_descriptor<ServiceT>;
+    using descriptor = service_descriptor<typename ServiceT::service_type>;
 
     using params_union  = typename descriptor::params_union;
     using results_union = typename descriptor::results_union;
