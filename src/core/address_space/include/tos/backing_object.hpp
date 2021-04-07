@@ -13,7 +13,7 @@ struct job;
 // Might be anonymous, a device or an abstract object.
 // A backing object is responsible for handling page faults in the segments it is mapped
 // to in an address space.
-class backing_object : public ref_counted<backing_object> {
+class backing_object {
 public:
     virtual auto create_mapping(const segment& vm_segment,
                                 const memory_range& obj_range,

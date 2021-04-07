@@ -6,7 +6,7 @@ namespace tos {
 class backing_object;
 class address_space;
 struct mapping {
-    intrusive_ptr<backing_object> obj;
+    backing_object* obj;
     address_space* va;
 
     segment vm_segment;

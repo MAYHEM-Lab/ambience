@@ -321,10 +321,10 @@ tos::expected<void, error_type> map_elf(const tos::elf::elf64& elf,
 
 namespace tos {
 struct null_backing_object : backing_object {
-    auto create_mapping(const segment& vm_segment,
-                        const memory_range& obj_range,
-                        tos::mapping& mapping) -> bool override {
-        mapping.obj = intrusive_ptr<backing_object>(this);
+    constexpr auto create_mapping(const segment& vm_segment,
+                                  const memory_range& obj_range,
+                                  tos::mapping& mapping) -> bool override {
+        mapping.obj = this;
         mapping.vm_segment = vm_segment;
         mapping.obj_range = obj_range;
         mapping.mem_type = memory_types::normal;
