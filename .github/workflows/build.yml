@@ -22,7 +22,7 @@ jobs:
         key: ${{ runner.os }}-llvm
 
     - name: Cache CCache
-      id: cache-llvm
+      id: cache-ccache-dir
       uses: FatihBAKIR/cache@v2
       with:
         path: /home/runner/.cache/ccache
