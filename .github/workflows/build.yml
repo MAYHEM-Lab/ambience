@@ -12,7 +12,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - name: Install deps
-      run: sudo apt-get install -y cmake wget xz-utils ninja-build tar gcc-10 g++-10 libboost-all-dev
+      run: sudo apt-get install -y cmake wget xz-utils ninja-build tar gcc-10 g++-10 libboost-all-dev ccache
 
     - name: Cache LLVM
       id: cache-llvm
@@ -37,7 +37,10 @@ jobs:
       run: mkdir /tmp/cmake-build-debug
 
     - name: Generate hosted debug build
-      run: cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DTOS_CPU=x86/hosted $GITHUB_WORKSPACE
+      run: >
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DTOS_CPU=x86/hosted
+        -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+        $GITHUB_WORKSPACE
       working-directory: /tmp/cmake-build-debug
       env:
         CC: gcc-10
@@ -55,7 +58,10 @@ jobs:
       run: mkdir /tmp/cmake-build-barex64
 
     - name: Generate amd64 build
-      run: cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_CPU=x86_64/bare -DENABLE_LTO=ON $GITHUB_WORKSPACE
+      run: >
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_CPU=x86_64/bare -DENABLE_LTO=ON
+        -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+        $GITHUB_WORKSPACE
       working-directory: /tmp/cmake-build-barex64
 
     - name: Build amd64
@@ -66,7 +72,10 @@ jobs:
       run: mkdir /tmp/cmake-build-raspi3
 
     - name: Generate raspi3 build
-      run: cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_CPU=raspi/3 -DENABLE_LTO=ON $GITHUB_WORKSPACE
+      run: >
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_CPU=raspi/3 -DENABLE_LTO=ON
+        -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+        $GITHUB_WORKSPACE
       working-directory: /tmp/cmake-build-raspi3
 
     - name: Build raspi3
