@@ -60,14 +60,14 @@ struct through_member {
     }
 
     template<class T, class U>
-    constexpr static T& reverse(list_node<U>& elem) {
-        constexpr auto off = meta::offset_of<Member>();
+    static T& reverse(list_node<U>& elem) {
+        auto off = meta::offset_of<Member>();
         return *reinterpret_cast<T*>(reinterpret_cast<char*>(&elem) - off);
     }
 
     template<class T, class U>
-    constexpr static const T& reverse(const list_node<U>& elem) {
-        constexpr auto off = meta::offset_of<Member>();
+    static const T& reverse(const list_node<U>& elem) {
+        auto off = meta::offset_of<Member>();
         return *reinterpret_cast<const T*>(reinterpret_cast<const char*>(&elem) - off);
     }
 

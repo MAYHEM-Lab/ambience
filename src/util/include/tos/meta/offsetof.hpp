@@ -31,7 +31,7 @@ auto return_type(T1 T2::*) -> T1;
 } // namespace detail
 
 template<auto PtrToMem>
-constexpr int offset_of() {
+int offset_of() {
     using class_t = decltype(detail::class_type(PtrToMem));
     using ret_t = decltype(detail::return_type(PtrToMem));
     return detail::offset_of<class_t, ret_t, PtrToMem>();
