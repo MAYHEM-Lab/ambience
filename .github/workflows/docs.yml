@@ -14,10 +14,10 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - name: Install dependencies
-      run: sudo apt-get install -y ruby python3-pip ninja-build
+      run: sudo apt-get install -y ruby python3-pip ninja-build graphviz
     
     - name: Install asciidoctor
-      run: sudo gem install asciidoctor
+      run: sudo gem install asciidoctor asciidoctor-diagram
 
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: FatihBAKIR/checkout@v2

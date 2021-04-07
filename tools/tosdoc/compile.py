@@ -23,8 +23,16 @@ parser.add_argument("-R", dest="root", type=str, help="Root of the project")
 
 
 def compile(src: str) -> str:
-    args = ["asciidoctor", "-s", "-b", "html5", "-q", "-a", "source-highlighter=pygments", "-a", "pygments-css=style",
-            "-a", "pygments-style=xcode", "-a", "showtitle", "-"]
+    args = ["asciidoctor",
+            "-s",
+            "-b", "html5",
+            "-q",
+            "-r", "asciidoctor-diagram",
+            "-a", "source-highlighter=pygments",
+            "-a", "pygments-css=style",
+            "-a", "pygments-style=xcode",
+            "-a", "showtitle",
+            "-"]
     # print(args, file=sys.stderr)
     cmake_proc = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     cmake_proc.stdin.write(src.encode("utf-8"))
