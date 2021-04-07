@@ -30,9 +30,8 @@ free_list::free_list(tos::span<uint8_t> buffer)
 }
 
 void* free_list::allocate(size_t size) {
-    if (size % 16 != 0) {
-        size += 16 - size % 16;
-    }
+    size = align_nearest_up_pow2(size, 16);
+
     auto sz = std::max(sizeof(free_header), size + sizeof(allocation_header));
 
     auto first_fit =
