@@ -22,43 +22,43 @@ public:
     /**
      * Constructs a null pointer.
      */
-    intrusive_ptr()
+    constexpr intrusive_ptr()
         : m_ptr(nullptr) {
     }
 
-    intrusive_ptr(std::nullptr_t)
+    constexpr intrusive_ptr(std::nullptr_t)
         : m_ptr(nullptr) {
     }
 
     template<class U, std::enable_if_t<std::is_convertible_v<U*, T*>>* = nullptr>
-    explicit intrusive_ptr(U* t)
+    constexpr explicit intrusive_ptr(U* t)
         : m_ptr(t) {
         intrusive_ref(m_ptr);
     }
 
     template<class U, std::enable_if_t<std::is_convertible_v<U*, T*>>* = nullptr>
-    intrusive_ptr(const intrusive_ptr<U>& rhs)
+    constexpr intrusive_ptr(const intrusive_ptr<U>& rhs)
         : m_ptr(rhs.m_ptr) {
         intrusive_ref(m_ptr);
     }
 
     template<class U, std::enable_if_t<std::is_convertible_v<U*, T*>>* = nullptr>
-    intrusive_ptr(intrusive_ptr<U>&& rhs)
+    constexpr intrusive_ptr(intrusive_ptr<U>&& rhs)
         : m_ptr(rhs.m_ptr) {
         rhs.m_ptr = nullptr;
     }
 
-    intrusive_ptr(const intrusive_ptr& rhs) noexcept
+    constexpr intrusive_ptr(const intrusive_ptr& rhs) noexcept
         : m_ptr(rhs.m_ptr) {
         intrusive_ref(m_ptr);
     }
 
-    intrusive_ptr(intrusive_ptr&& rhs) noexcept
+    constexpr intrusive_ptr(intrusive_ptr&& rhs) noexcept
         : m_ptr(rhs.m_ptr) {
         rhs.m_ptr = nullptr;
     }
 
-    intrusive_ptr& operator=(const intrusive_ptr& rhs) noexcept {
+    constexpr intrusive_ptr& operator=(const intrusive_ptr& rhs) noexcept {
         if (&rhs == this) {
             return *this;
         }
@@ -70,7 +70,7 @@ public:
         return *this;
     }
 
-    intrusive_ptr& operator=(intrusive_ptr&& rhs) noexcept {
+    constexpr intrusive_ptr& operator=(intrusive_ptr&& rhs) noexcept {
         if (&rhs == this) {
             return *this;
         }
@@ -81,41 +81,41 @@ public:
         return *this;
     }
 
-    T* get() {
+    constexpr T* get() {
         return m_ptr;
     }
 
-    T* get() const {
+    constexpr T* get() const {
         return m_ptr;
     }
 
-    T* operator->() {
+    constexpr T* operator->() {
         return get();
     }
 
-    T* operator->() const {
+    constexpr T* operator->() const {
         return get();
     }
 
-    T& operator*() {
+    constexpr  T& operator*() {
         return *get();
     }
 
-    T& operator*() const {
+    constexpr  T& operator*() const {
         return *get();
     }
 
-    explicit operator bool() {
+    constexpr explicit operator bool() {
         return m_ptr;
     }
 
-    void reset() {
+    constexpr void reset() {
         if (!m_ptr)
             return;
         intrusive_unref(m_ptr);
     }
 
-    ~intrusive_ptr() {
+    constexpr ~intrusive_ptr() {
         reset();
     }
 
@@ -124,27 +124,27 @@ private:
 };
 
 template<class T>
-bool operator==(const intrusive_ptr<T>& left, const intrusive_ptr<T>& right) {
+constexpr bool operator==(const intrusive_ptr<T>& left, const intrusive_ptr<T>& right) {
     return left.get() == right.get();
 }
 
 template<class T>
-bool operator!=(const intrusive_ptr<T>& left, const intrusive_ptr<T>& right) {
+constexpr bool operator!=(const intrusive_ptr<T>& left, const intrusive_ptr<T>& right) {
     return left.get() != right.get();
 }
 
 template<class T>
-bool operator==(const intrusive_ptr<T>& left, std::nullptr_t) {
+constexpr bool operator==(const intrusive_ptr<T>& left, std::nullptr_t) {
     return left.get() == nullptr;
 }
 
 template<class T>
-bool operator!=(std::nullptr_t, const intrusive_ptr<T>& right) {
+constexpr bool operator!=(std::nullptr_t, const intrusive_ptr<T>& right) {
     return nullptr != right.get();
 }
 
 template<class U, class T>
-intrusive_ptr<U> static_pointer_cast(intrusive_ptr<T> ptr) {
+constexpr intrusive_ptr<U> static_pointer_cast(intrusive_ptr<T> ptr) {
     static_assert(std::is_base_of_v<T, U>);
     return intrusive_ptr<U>(static_cast<U*>(ptr.get()));
 }
@@ -157,11 +157,11 @@ intrusive_ptr<T> make_intrusive(ArgTs&&... args) {
 template<class T, class RefCntT = int8_t, class Deleter = std::default_delete<T>>
 class ref_counted {
 public:
-    friend void intrusive_ref(T* t) {
+    constexpr friend void intrusive_ref(T* t) {
         static_cast<ref_counted*>(t)->m_refcnt++;
     }
 
-    friend void intrusive_unref(T* t) {
+    constexpr friend void intrusive_unref(T* t) {
 
         static_cast<ref_counted*>(t)->m_refcnt--;
         if (static_cast<ref_counted*>(t)->m_refcnt == 0) {
@@ -169,11 +169,11 @@ public:
         }
     }
 
-    static void collect(T* channel) {
+    constexpr static void collect(T* channel) {
         Deleter{}(channel);
     }
 
-    RefCntT reference_count() const {
+    constexpr RefCntT reference_count() const {
         return m_refcnt;
     }
 
