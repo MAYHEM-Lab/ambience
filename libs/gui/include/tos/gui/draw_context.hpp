@@ -6,7 +6,7 @@
 
 namespace tos::gui {
 struct draw_context {
-    services::painter* const painter;
+    services::painter::sync_server* const painter;
 
     gfx2::rectangle update_mask;
 

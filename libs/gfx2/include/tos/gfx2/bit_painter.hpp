@@ -6,7 +6,7 @@
 #include <tos/span.hpp>
 
 namespace tos::gfx2 {
-class bit_painter : public services::painter {
+class bit_painter : public services::painter::sync_server {
 public:
     bit_painter(tos::span<uint8_t> buffer, const size& dims);
 

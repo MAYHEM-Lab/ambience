@@ -33,7 +33,7 @@ using zerocopy_fn_t = void (*)(lidl::service_base&, const void*, void*);
 template<class ServiceT, int ProcId>
 constexpr auto zerocopy_translator() -> zerocopy_fn_t {
     return [](lidl::service_base& serv_base, const void* args, void* ret) {
-        auto& serv = static_cast<ServiceT&>(serv_base);
+        auto& serv = static_cast<typename ServiceT::sync_server&>(serv_base);
         using ServDesc = lidl::service_descriptor<ServiceT>;
         constexpr auto& proc_desc = std::get<ProcId>(ServDesc::procedures);
         using ProcTraits = lidl::procedure_traits<decltype(proc_desc.function)>;
@@ -82,7 +82,7 @@ struct service_info {
     template<class ServiceT>
     explicit service_info(ServiceT* serv)
         : impl{serv}
-        , vtable{make_zerocopy_vtable<ServiceT>()} {
+        , vtable{make_zerocopy_vtable<typename ServiceT::service_type>()} {
     }
 
     bool run_proc(int proc, const void* arg, void* res) const {
@@ -125,7 +125,7 @@ tos::Task<bool> handle_req(tos::ae::req_elem el) {
     co_return run_req(*g, el);
 }
 
-tos::Task<tos::ae::service::calculator*> init_basic_calc();
+tos::Task<tos::ae::service::calculator::sync_server*> init_basic_calc();
 tos::Task<void> task() {
     auto basic_calc = co_await init_basic_calc();
     basic_calc->add(4, 5);

@@ -81,6 +81,8 @@ kernel:
           parameters:
             - cancellation_token
     cancel:
+      returns:
+        - bool
       parameters:
         token:
           name: handle

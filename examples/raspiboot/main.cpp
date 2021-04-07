@@ -131,7 +131,7 @@ using zerocopy_fn_t = void (*)(lidl::service_base&, const void*, void*);
 template<class ServiceT, int ProcId>
 constexpr auto zerocopy_translator() -> zerocopy_fn_t {
     return [](lidl::service_base& serv_base, const void* args, void* ret) {
-        auto& serv = static_cast<ServiceT&>(serv_base);
+        auto& serv = static_cast<typename ServiceT::sync_server&>(serv_base);
         using ServDesc = lidl::service_descriptor<ServiceT>;
         constexpr auto& proc_desc = std::get<ProcId>(ServDesc::procedures);
         using ProcTraits = lidl::procedure_traits<decltype(proc_desc.function)>;
@@ -181,18 +181,18 @@ auto x = zerocopy_translator<tos::services::current, 1>();
 void el0_fn() {
     tos::aarch64::svc1();
 
-    auto remote = tos::services::zerocopy_logger<zerocopy_svc_transport<1>>();
+    auto remote = tos::services::logger::zerocopy_client<zerocopy_svc_transport<1>>();
     tos::debug::lidl_sink snk(remote);
     tos::debug::detail::any_logger log(&snk);
     log.set_log_level(tos::debug::log_level::all);
     log.error("hello from user space");
 
-    auto current = tos::services::zerocopy_current<zerocopy_svc_transport<3>>();
+    auto current = tos::services::current::zerocopy_client<zerocopy_svc_transport<3>>();
     log.info(current.get_thread_handle(1, "yo").id());
 
     auto our_addr_space = current.get_address_space();
 
-    auto vm = tos::services::zerocopy_virtual_memory<zerocopy_svc_transport<4>>();
+    auto vm = tos::services::virtual_memory::zerocopy_client<zerocopy_svc_transport<4>>();
 
     std::array<uint8_t, 4096 * 4> buf;
     lidl::message_builder builder(buf);
@@ -479,9 +479,9 @@ struct rt_dynamism {
 class dynamic_service_host {
 public:
     template<class BaseServT>
-    auto register_service(std::unique_ptr<std::common_type_t<BaseServT>>&& serv) {
+    auto register_service(std::unique_ptr<std::common_type_t<typename BaseServT::sync_server>>&& serv) {
         return register_service(
-            rt_dynamism{lidl::make_erased_procedure_runner<BaseServT>(),
+            rt_dynamism{lidl::make_erased_procedure_runner<typename BaseServT::sync_server>(),
                         make_zerocopy_vtable<BaseServT>()},
             std::move(serv));
     }
@@ -735,7 +735,7 @@ void raspi_main() {
         tos::swap_context(*tos::self(), self, tos::int_ctx{});
     };
 
-    struct current_impl : tos::services::current {
+    struct current_impl : tos::services::current::sync_server {
         tos::services::handle<tos::services::address_space> get_address_space() override {
             return {-1};
         }
@@ -835,7 +835,7 @@ void raspi_main() {
         });
     dump_table(*user_ctx.m_trans_table);
 
-    struct vmem : tos::services::virtual_memory {
+    struct vmem : tos::services::virtual_memory::sync_server {
         tos::aarch64::translation_table* table;
         vmem(tos::aarch64::translation_table& tbl)
             : table(&tbl) {

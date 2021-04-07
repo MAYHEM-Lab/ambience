@@ -7,7 +7,7 @@
 #include <tos/span.hpp>
 
 namespace tos::gfx2 {
-class buffer_painter : public services::painter {
+class buffer_painter : public services::painter::sync_server {
     using ColorT = rgb8;
 
 public:

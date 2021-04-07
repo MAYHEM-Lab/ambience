@@ -547,8 +547,8 @@ void thread() {
 
     int32_t x = 3, y = 42;
     auto params = std::make_tuple(&x, &y);
-    auto results = tos::ae::service::calculator::add_results{-1};
-    auto results2 = tos::ae::service::calculator::add_results{-1};
+    auto results = tos::ae::service::calculator::wire_types::add_results{-1};
+    auto results2 = tos::ae::service::calculator::wire_types::add_results{-1};
 
     auto& req1 = tos::ae::submit_req<true>(
         *runnable_groups.front().iface.user_iface, 0, 0, &params, &results);

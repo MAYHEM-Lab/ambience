@@ -5,7 +5,7 @@
 #include <tos/mutex.hpp>
 
 namespace tos::debug {
-class log_server : public services::logger {
+class log_server : public services::logger::sync_server {
 public:
     explicit log_server(tos::debug::detail::any_sink& sink)
         : m_sink{&sink} {
@@ -26,7 +26,7 @@ private:
 
 class lidl_sink : public detail::any_sink {
 public:
-    explicit lidl_sink(services::logger& log)
+    explicit lidl_sink(services::logger::sync_server& log)
         : m_logger{&log} {
     }
 
@@ -42,6 +42,6 @@ public:
 
 private:
     mutex m_prot;
-    services::logger* m_logger;
+    services::logger::sync_server* m_logger;
 };
 } // namespace tos::debug

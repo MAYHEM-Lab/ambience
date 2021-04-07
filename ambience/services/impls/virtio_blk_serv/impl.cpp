@@ -2,7 +2,7 @@
 #include <tos/virtio/block_device.hpp>
 
 namespace {
-struct impl : public tos::ae::services::async_block_memory {
+struct impl : public tos::ae::services::block_memory::async_server {
     tos::Task<int32_t> get_block_size() override {
         co_return m_blk_dev->sector_size_bytes();
     }
@@ -15,6 +15,6 @@ struct impl : public tos::ae::services::async_block_memory {
 } // namespace
 
 extern "C"
-tos::ae::services::async_block_memory* init() {
+tos::ae::services::block_memory::async_server* init() {
     return new impl;
 }
