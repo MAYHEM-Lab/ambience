@@ -2,15 +2,6 @@
 #include "lwip/init.h"
 #include "tos/function_ref.hpp"
 #include "tos/lwip/udp.hpp"
-#include "tos/memory.hpp"
-#include "tos/paging/physical_page_allocator.hpp"
-#include "tos/platform.hpp"
-#include "tos/print.hpp"
-#include "tos/semaphore.hpp"
-#include "tos/span.hpp"
-#include "tos/thread.hpp"
-#include "tos/utility.hpp"
-#include "tos/x86_64/exception.hpp"
 #include <calc_generated.hpp>
 #include <cstddef>
 #include <deque>
@@ -327,6 +318,27 @@ tos::expected<void, error_type> map_elf(const tos::elf::elf64& elf,
 
     return {};
 }
+
+namespace tos {
+struct null_backing_object : backing_object {
+    auto create_mapping(const segment& vm_segment,
+                        const memory_range& obj_range,
+                        tos::mapping& mapping) -> bool override {
+        mapping.obj = intrusive_ptr<backing_object>(this);
+        mapping.vm_segment = vm_segment;
+        mapping.obj_range = obj_range;
+        mapping.mem_type = memory_types::normal;
+
+        return true;
+    }
+
+    auto handle_memory_fault(const memory_fault& fault) -> bool override {
+        // Since we never map anything, any access to a region in this object will cause
+        // a crash.
+        return false;
+    }
+};
+} // namespace tos
 
 tos::expected<tos::span<uint8_t>, error_type>
 create_and_map_stack(size_t stack_size,
