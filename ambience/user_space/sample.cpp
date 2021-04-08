@@ -2,6 +2,7 @@
 #include <tos/ae/user_space.hpp>
 #include <tos/allocator/free_list.hpp>
 #include <tos/task.hpp>
+#include <log_generated.hpp>
 
 [[gnu::section(".nozero")]] uint8_t heap[2048];
 tos::memory::free_list alloc{heap};
@@ -125,12 +126,30 @@ tos::Task<bool> handle_req(tos::ae::req_elem el) {
     co_return run_req(*g, el);
 }
 
+extern tos::ae::interface iface;
+
+struct ambience_queue_transport {
+    explicit ambience_queue_transport(int channel) : channel_id{channel} {}
+
+    tos::Task<bool> execute(int proc_id, const void* args, void* res) {
+        co_await tos::ae::submit_req<false>(iface, channel_id, proc_id, args, res);
+        co_return true;
+    }
+
+    int channel_id;
+};
+
 tos::Task<tos::ae::service::calculator::sync_server*> init_basic_calc();
 tos::Task<void> task() {
     auto basic_calc = co_await init_basic_calc();
     basic_calc->add(4, 5);
 
     ::g = new group<1>(group<1>::make(basic_calc));
+
+    tos::services::logger::async_zerocopy_client<ambience_queue_transport> client(1);
+    co_await client.start(tos::services::log_level::info);
+    co_await client.log_string("Hello world!");
+    co_await client.finish();
 
     while (true) {
         co_await tos::ae::log_str("Hello world from user space!");
