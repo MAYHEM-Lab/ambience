@@ -23,7 +23,7 @@ inline void proc_req_queue(kernel_interface& iface) {
                  iface.user_iface->size,
                  [&iface](ring_elem& elem) {
                      auto& req = elem.req;
-                     LOG(req.user_ptr, req.arg_ptr);
+                     LOG(req.channel, req.procid, req.arg_ptr, req.user_ptr, req.ret_ptr);
 
                      if (!util::is_flag_set(elem.common.flags, elem_flag::req)) {
                          // Response for a request we made.
