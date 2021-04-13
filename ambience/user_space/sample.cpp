@@ -19,7 +19,6 @@ tos::memory::free_list alloc{heap};
     alloc.free(pt);
 }
 
-
 template<class>
 struct convert_types;
 
@@ -48,7 +47,6 @@ constexpr auto zerocopy_translator() -> zerocopy_fn_t {
                                RetType>;
 
         auto do_call = [&serv, ret](auto*... vals) {
-            //            LOG(*vals...);
             constexpr auto& fn = proc_desc.function;
             if constexpr (is_ref) {
                 auto& res = (serv.*fn)(*vals...);
@@ -59,7 +57,7 @@ constexpr auto zerocopy_translator() -> zerocopy_fn_t {
         };
 
         auto& args_tuple = *static_cast<const ArgsTupleType*>(args);
-        std::apply(do_call, args_tuple);
+        return std::apply(do_call, args_tuple);
     };
 }
 
