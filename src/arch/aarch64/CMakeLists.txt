@@ -8,6 +8,7 @@ add_library(arch_aarch64
         exception.cpp
         include/tos/aarch64/semihosting.hpp
         semihosting.cpp
+        include/tos/aarch64/generic_timer.hpp
 )
 target_include_directories(arch_aarch64 PUBLIC include)
 target_compile_features(arch_aarch64 PUBLIC cxx_std_20)
