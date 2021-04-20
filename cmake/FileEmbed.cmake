@@ -11,14 +11,14 @@ function(embed_file TARGET_NAME VARIABLE_NAME FILE_PATH)
         OUTPUT "${OUTPUT_FILE}"
         DEPENDS "${FILE_PATH}"
     )
-    add_custom_target("embed_${OUTPUT_TARGET}" DEPENDS "${OUTPUT_FILE}")
+    add_custom_target("${TARGET_NAME}_embed_${OUTPUT_TARGET}" DEPENDS "${OUTPUT_FILE}")
 
     configure_file(${EMBED_DIR}/file_embed.cpp.in "${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT_TARGET}.cpp" @ONLY)
     configure_file(${EMBED_DIR}/file_embed.hpp.in "${CMAKE_CURRENT_BINARY_DIR}/${VARIABLE_NAME}.hpp" @ONLY)
 
     target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
     target_sources(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT_TARGET}.cpp")
-    target_sources(${TARGET_NAME} PRIVATE "${OUTPUT_FILE}")
+    #target_sources(${TARGET_NAME} PRIVATE "${OUTPUT_FILE}")
 
-    add_dependencies(${TARGET_NAME} "embed_${OUTPUT_TARGET}")
+    add_dependencies(${TARGET_NAME} "${TARGET_NAME}_embed_${OUTPUT_TARGET}")
 endfunction()
