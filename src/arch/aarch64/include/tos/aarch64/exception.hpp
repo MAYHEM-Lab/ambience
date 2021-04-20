@@ -27,7 +27,10 @@ struct fault_t {
     uintptr_t return_address;
 };
 
-struct instruction_abort : fault_t {};
+struct instruction_abort : fault_t {
+    uintptr_t instr_addr;
+    uint8_t ifsc;
+};
 
 enum class access_size : uint8_t
 {

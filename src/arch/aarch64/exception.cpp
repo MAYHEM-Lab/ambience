@@ -15,37 +15,68 @@ namespace {
 svc_handler_t _svc_handler{[](int, stack_frame_t&, void*) {}};
 fault_handler_t _fault_handler{[](const fault_variant& fault, stack_frame_t&, void*) {
     tos::aarch64::semihosting::write0("Unhandled fault!\n");
-    visit(make_overload(
-              [](const data_abort& abort) {
-                  tos::aarch64::semihosting::write0("Data abort!\n");
-                  tos::aarch64::semihosting::write0(
-                      tos::itoa(abort.data_addr, 16).data());
-                  tos::aarch64::semihosting::write0("\n");
-                  tos::aarch64::semihosting::write0(
-                      tos::itoa(abort.return_address, 16).data());
-                  tos::aarch64::semihosting::write0("\n");
+    visit(
+        make_overload(
+            [](const data_abort& abort) {
+                tos::aarch64::semihosting::write0("Data abort!\n");
+                tos::aarch64::semihosting::write0(tos::itoa(abort.data_addr, 16).data());
+                tos::aarch64::semihosting::write0("\n");
+                tos::aarch64::semihosting::write0(
+                    tos::itoa(abort.return_address, 16).data());
+                tos::aarch64::semihosting::write0("\n");
 
-                  auto& pt = get_current_translation_table();
-                  auto entry_res = entry_for_address(pt, abort.data_addr);
-                  if (!entry_res) {
-                      switch (force_error(entry_res)) {
-                      case mmu_errors::not_allocated:
-                          tos::aarch64::semihosting::write0(
-                              "Address not allocated in virtual memory\n");
-                      default:
-                          tos::aarch64::semihosting::write0(
-                              "Unknown\n");
-                          break;
-                      }
-                      return;
-                  }
-                  auto entry = force_get(entry_res);
-                  if (!entry->valid()) {
-                      tos::aarch64::semihosting::write0("Address not resident\n");
-                  }
-              },
-              [](const auto&) { tos::aarch64::semihosting::write0("Unknown fault!\n"); }),
-          fault);
+                auto& pt = get_current_translation_table();
+                auto entry_res = entry_for_address(pt, abort.data_addr);
+                if (!entry_res) {
+                    switch (force_error(entry_res)) {
+                    case mmu_errors::not_allocated:
+                        tos::aarch64::semihosting::write0(
+                            "Address not allocated in virtual memory\n");
+                    default:
+                        tos::aarch64::semihosting::write0("Unknown\n");
+                        break;
+                    }
+                    return;
+                }
+                auto entry = force_get(entry_res);
+                if (!entry->valid()) {
+                    tos::aarch64::semihosting::write0("Address not resident\n");
+                }
+            },
+            [](const instruction_abort& abort) {
+                tos::aarch64::semihosting::write0("Instruction abort!\n");
+                tos::aarch64::semihosting::write0(tos::itoa(abort.instr_addr, 16).data());
+                tos::aarch64::semihosting::write0("\n");
+                tos::aarch64::semihosting::write0(
+                    tos::itoa(abort.return_address, 16).data());
+                tos::aarch64::semihosting::write0("\n");
+                auto& pt = get_current_translation_table();
+                auto entry_res = entry_for_address(pt, abort.instr_addr);
+                if (!entry_res) {
+                    switch (force_error(entry_res)) {
+                    case mmu_errors::not_allocated:
+                        tos::aarch64::semihosting::write0(
+                            "Address not allocated in virtual memory\n");
+                    default:
+                        tos::aarch64::semihosting::write0("Unknown\n");
+                        break;
+                    }
+                    return;
+                }
+                auto entry = force_get(entry_res);
+                if (!entry->valid()) {
+                    tos::aarch64::semihosting::write0("Address not resident\n");
+                    return;
+                }
+
+                tos::aarch64::semihosting::write0("Address is mapped\n");
+                tos::aarch64::semihosting::write0(tos::itoa(entry->noexec(), 10).data());
+            },
+            [](const auto&) {
+                tos::aarch64::semihosting::write0("Unknown fault!\n");
+                tos::aarch64::semihosting::write0(__PRETTY_FUNCTION__);
+            }),
+        fault);
     tos::aarch64::semihosting::exit(1);
 }};
 } // namespace
@@ -58,6 +89,12 @@ svc_handler_t set_svc_handler(svc_handler_t handler) {
 fault_handler_t set_fault_handler(fault_handler_t handler) {
     std::swap(_fault_handler, handler);
     return handler;
+}
+
+instruction_abort analyze_instruction_abort(uint64_t esr, stack_frame_t* frame) {
+    auto far = aarch64::get_far_l1();
+
+    return instruction_abort{{}, far, static_cast<uint8_t>(esr & 0b111111)};
 }
 
 data_abort analyze_data_abort(uint64_t esr, stack_frame_t* frame) {
@@ -110,7 +147,7 @@ fault_variant analyze_fault(stack_frame_t* frame) {
     }
     case exception_classes::instruction_abort:
     case exception_classes::instruction_abort_lower_level:
-        return unknown_fault{};
+        return analyze_instruction_abort(esr, frame);
     case exception_classes::data_abort:
     case exception_classes::data_abort_lower_level:
         return analyze_data_abort(esr, frame);
