@@ -1,12 +1,11 @@
+#include <tos/address_space.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/x86_64/assembly.hpp>
+#include <tos/x86_64/backtrace.hpp>
 #include <tos/x86_64/exception.hpp>
 #include <tos/x86_64/mmu.hpp>
-#include <tos/address_space.hpp>
 
-namespace tos::x86_64 {
-
-}
+namespace tos::x86_64 {}
 
 using namespace tos::x86_64;
 
@@ -89,7 +88,7 @@ void stack_segment_fault_handler([[maybe_unused]] exception_frame* frame,
 }
 void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
                                       [[maybe_unused]] uint64_t num) {
-    LOG("GPF!",
+    LOG_ERROR("GPF!",
         (int)num,
         (void*)frame,
         (void*)frame->error_code,
@@ -98,6 +97,14 @@ void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
         (void*)frame->cs,
         "Return SS",
         (void*)frame->ss);
+
+    LOG_ERROR("Call stack:");
+    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
+    while (root) {
+        LOG_ERROR((void*)root->rip);
+        root = backtrace_next(*root);
+    }
+
     while (true)
         ;
 }
@@ -114,14 +121,16 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
         (void*)frame->rip,
         "Fault address:",
         (void*)read_cr2());
-    if (auto res = tos::global::cur_as->m_backend->handle_memory_fault(*frame, read_cr2())) {
+    if (auto res =
+            tos::global::cur_as->m_backend->handle_memory_fault(*frame, read_cr2())) {
         if (force_get(res)) {
             LOG("Handled correctly");
             return;
         }
     }
     LOG("Could not handle");
-    while (true);
+    while (true)
+        ;
 }
 void x87_fpu_fault_handler([[maybe_unused]] exception_frame* frame,
                            [[maybe_unused]] uint64_t num) {
