@@ -143,6 +143,7 @@ inline void general_timer::set_frequency(uint16_t hertz) {
 }
 
 inline void general_timer::enable() {
+    m_handle.Instance->CNT = 0;
     HAL_NVIC_EnableIRQ(m_def->irq);
     tos::kern::busy();
     HAL_TIM_Base_Start_IT(&m_handle);
