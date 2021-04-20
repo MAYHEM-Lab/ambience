@@ -82,8 +82,6 @@ tos::expected<void, mpu_errors> mpu::set_region(int region_id,
                                                 bool shareable,
                                                 uint8_t subregion_disable,
                                                 bool enable) {
-    const uint32_t tmp_rbar = region.base | MPU_RBAR_VALID_Msk | region_id;
-
     // Actual size is computed as 2^(size field + 1)
     const auto size_field = math::nearest_power_of_two(region.size) - 1;
 
@@ -107,6 +105,8 @@ tos::expected<void, mpu_errors> mpu::set_region(int region_id,
     rasr.size = size_field;
     rasr.enable = enable;
 
+    const uint32_t tmp_rbar = region.base | MPU_RBAR_VALID_Msk | region_id;
+
     MPU->RBAR = tmp_rbar;
 
     dmb();
@@ -120,6 +120,18 @@ tos::expected<void, mpu_errors> mpu::set_region(int region_id,
 
 void mpu::isr() {
     m_callback();
+}
+
+void mpu::enable_region(int region_id) {
+    MPU->RNR = region_id;
+    dmb();
+    MPU->RASR = MPU->RASR | MPU_RASR_ENABLE_Msk;
+}
+
+void mpu::disable_region(int region_id) {
+    MPU->RNR = region_id;
+    dmb();
+    MPU->RASR = MPU->RASR & ~MPU_RASR_ENABLE_Msk;
 }
 } // namespace tos::arm
 #endif
