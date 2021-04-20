@@ -12,6 +12,7 @@
 #include <tos/x86_64/gdt.hpp>
 #include <tos/x86_64/idt.hpp>
 #include <tos/x86_64/mmu.hpp>
+#include <tos/x86_64/msr.hpp>
 #include <tos/x86_64/pic.hpp>
 #include <tos/x86_64/port.hpp>
 #include <tos/x86_64/syscall.hpp>
@@ -70,8 +71,9 @@ void enable_sse() {
      */
     using namespace tos::x86_64;
 
+    // https://en.wikipedia.org/wiki/Control_register#CR4
     auto cr4 = read_cr4();
-    cr4 |= (1 << 9) | (1 << 10);
+    cr4 |= (1 << 9) | (1 << 10); // OSFXSR | OSXMMEXCPT
     write_cr4(cr4);
 }
 
@@ -275,12 +277,17 @@ _start(const tos::multiboot::info_t* info) {
 
 [[noreturn]] [[gnu::used]] void
 _post_start([[maybe_unused]] const tos::multiboot::info_t* info) {
+    write_cr0(read_cr0() | 1 << 16); // WP bit, makes write protect work in ring0
+
+    wrmsr(msrs::ia32_efer, rdmsr(msrs::ia32_efer) | 1 << 11); // NX-bit support
+
+    write_cr4(read_cr4() | 1 << 5 | 1 << 7); // PAE
+
     enable_fpu();
 
     enable_sse();
 
     set_up_page_tables();
-    write_cr0(read_cr0() | 1 << 16); // WP bit, makes write protect work in ring0
 
     auto bss = tos::default_segments::bss();
     auto bss_start = reinterpret_cast<uint64_t*>(bss.base);
