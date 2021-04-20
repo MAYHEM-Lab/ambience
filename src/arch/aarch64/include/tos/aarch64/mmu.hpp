@@ -8,13 +8,15 @@
 #include <tos/paging.hpp>
 
 namespace tos::aarch64 {
+static constexpr size_t page_size_bytes = 4096;
+
 using page_id_t = uint32_t;
 
-constexpr uintptr_t page_to_address(page_id_t id, size_t page_size = 4096) {
+constexpr uintptr_t page_to_address(page_id_t id, size_t page_size = page_size_bytes) {
     return id * page_size;
 }
 
-constexpr page_id_t address_to_page(uintptr_t ptr, size_t page_size = 4096) {
+constexpr page_id_t address_to_page(uintptr_t ptr, size_t page_size = page_size_bytes) {
     return ptr / page_size;
 }
 
@@ -286,6 +288,8 @@ inline expected<void, mmu_errors> map_region(translation_table& root,
     EXPECTED_TRYV(allocate_region(root, vseg, user_access, palloc));
 
     EXPECTED_TRYV(mark_resident(root, vseg, mem_type, phys_base));
+
+    tos::aarch64::tlb_invalidate_all();
 
     return {};
 }
