@@ -26,6 +26,8 @@ add_library(arch_x86_64
     cpuid.cpp
     include/tos/x86_64/address_space.hpp
     address_space.cpp
+    include/tos/x86_64/pit.hpp
+    pit.cpp
     include/tos/x86_64/backtrace.hpp
     backtrace.cpp
 )
