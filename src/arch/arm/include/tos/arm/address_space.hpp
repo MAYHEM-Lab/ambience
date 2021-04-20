@@ -15,6 +15,12 @@ struct address_space {
 
     expected<void, mpu_errors>
     mark_resident(mapping& mapping, memory_range subrange, void* phys_addr) {
+        // As there is no virtual memory with an MPU, the physical address must be the
+        // same with allocation address (i.e. virtual address), therefore we just ignore
+        // it.
+        // Subrange support could be implemented in theory, but we don't support it yet.
+        Assert(mapping.vm_segment.range == subrange);
+        Assert(subrange.base == reinterpret_cast<uintptr_t>(phys_addr));
         mpu().enable_region(1);
         return {};
     }
