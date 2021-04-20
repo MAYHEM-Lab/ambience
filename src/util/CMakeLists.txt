@@ -29,6 +29,7 @@ add_library(
   src/math/saturated.cpp
   include/tos/gnu_build_id.hpp
   include/tos/math/nearest_power_of_two.hpp
+  include/tos/late_constructed.hpp
 )
 
 target_compile_features(tos_util_core PUBLIC cxx_std_20)
