@@ -33,6 +33,10 @@ inline void proc_req_queue(kernel_interface& iface) {
                              std::coroutine_handle<>::from_address(res.user_ptr).resume();
                          }
                      } else {
+                         if (req.ret_ptr) {
+                             *((volatile bool*)req.ret_ptr) = true;
+                         }
+
                          if (req.channel == 4 && req.procid == 1) {
                              LOG(iface.req_last_seen,
                                  iface.user_iface->res->head_idx,
