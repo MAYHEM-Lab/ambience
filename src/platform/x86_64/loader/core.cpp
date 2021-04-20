@@ -150,22 +150,27 @@ void set_up_page_tables() {
 
 namespace {
 NO_INLINE
-void enable_paging() {
+void enable_paging(tos::x86::text_vga& vga) {
     using namespace tos::i386;
 
-    write_cr3(reinterpret_cast<uint32_t>(&p4_table));
-
     auto cr4 = read_cr4();
-    cr4 |= 1 << 5;
+    cr4 |= 1 << 5 | 1 << 7; // PAE | PGE
     write_cr4(cr4);
+    vga.write("Wrote CR4\n\r");
 
-    auto msr = rdmsr(0xC0000080);
-    msr |= 1 << 8 | 1 << 11;
+    write_cr3(reinterpret_cast<uint32_t>(&p4_table));
+    vga.write("Wrote CR3\n\r");
+
+    auto msr = rdmsr(0xC0000080); // IA32_EFER
+    vga.write("Read MSR\n\r");
+    msr |= 1 << 8; // Long mode active
     wrmsr(0xC0000080, msr);
+    vga.write("Wrote MSR\n\r");
 
     auto cr0 = read_cr0();
-    cr0 |= 1 << 31;
+    cr0 |= 1 << 31; // Paging
     write_cr0(cr0);
+    vga.write("Wrote CR0\n\r");
 }
 } // namespace
 extern tos::span<const uint8_t> program_span;
@@ -227,8 +232,9 @@ struct [[gnu::packed]] {
     std::for_each(start_ctors, end_ctors, [](auto x) { x(); });
     vga.write("Hello world\n\r");
     set_up_page_tables();
+    vga.write("Enabling paging\n\r");
 
-    enable_paging();
+    enable_paging(vga);
     vga.write("Switched to long mode\n\r");
 
     vga.write("Setting up GDT\n\r");
