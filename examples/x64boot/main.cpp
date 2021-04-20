@@ -370,8 +370,7 @@ create_and_map_stack(size_t stack_size,
 tos::expected<tos::ae::kernel::user_group, error_type>
 start_group(tos::span<uint8_t> stack,
             void (*entry)(),
-            tos::interrupt_trampoline& trampoline,
-            tos::cur_arch::translation_table& root_table) {
+            tos::interrupt_trampoline& trampoline) {
     LOG("Entry point:", (void*)entry);
     auto& user_thread = tos::suspended_launch(stack, switch_to_user, (void*)entry);
 
@@ -403,8 +402,7 @@ load_from_elf(const tos::elf::elf64& elf,
     return start_group(EXPECTED_TRY(create_and_map_stack(
                            4 * tos::cur_arch::page_size_bytes, palloc, root_table)),
                        reinterpret_cast<void (*)()>(elf.header().entry),
-                       trampoline,
-                       root_table);
+                       trampoline);
 }
 
 void thread() {
