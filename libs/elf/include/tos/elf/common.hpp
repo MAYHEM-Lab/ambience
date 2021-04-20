@@ -22,7 +22,7 @@ enum class abi : uint8_t
     free = 2
 };
 
-enum class segment_type : uint16_t
+enum class segment_type : uint32_t
 {
     null = 0,
     load = 1,
@@ -33,7 +33,7 @@ enum class segment_type : uint16_t
     phdr = 6
 };
 
-enum class segment_attrs : uint16_t
+enum class segment_attrs : uint32_t
 {
     execute = 1,
     write = 2,
