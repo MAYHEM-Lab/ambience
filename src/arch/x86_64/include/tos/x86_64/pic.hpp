@@ -14,6 +14,7 @@ inline void io_wait() {
     asm volatile("outb %%al, $0x80" : : "a"(0));
 }
 
+// 8259 PIC driver
 class pic {
 public:
     static void initialize() {
