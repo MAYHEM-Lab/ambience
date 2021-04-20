@@ -16,4 +16,5 @@ using irq_handler_t = tos::function_ref<void(x86_64::exception_frame*, int)>;
 
 void set_irq(int num, irq_handler_t handler);
 void set_post_irq(tos::function_ref<void(x86_64::exception_frame*)> handler);
+void reset_post_irq();
 } // namespace tos::platform

@@ -39,6 +39,10 @@ void set_irq(int num, irq_handler_t handler) {
 void set_post_irq(tos::function_ref<void(x86_64::exception_frame*)> handler) {
     post_irq = handler;
 }
+
+void reset_post_irq() {
+    post_irq = free_function_ref(null_post_irq);
+}
 } // namespace tos::platform
 
 extern "C" {
