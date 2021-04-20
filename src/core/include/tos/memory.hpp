@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <compare>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -25,6 +26,8 @@ struct memory_range {
     [[nodiscard]] constexpr std::uintptr_t end() const {
         return base + size;
     }
+
+    auto operator<=>(const memory_range&) const noexcept = default;
 };
 
 /**
