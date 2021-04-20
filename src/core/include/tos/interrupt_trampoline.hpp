@@ -107,7 +107,7 @@ private:
 };
 
 template<class InISR>
-auto make_interrupt_trampoline(InISR& isr) {
+std::unique_ptr<interrupt_trampoline> make_interrupt_trampoline(InISR& isr) {
     auto trampoline = std::make_unique<interrupt_trampoline>();
     trampoline->setup(isr);
     return trampoline;
