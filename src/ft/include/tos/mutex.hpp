@@ -42,6 +42,10 @@ public:
         m_sem.down();
     }
 
+    auto operator co_await() {
+        return m_sem.operator co_await();
+    }
+
     /**
      * Releases the mutex.
      *
