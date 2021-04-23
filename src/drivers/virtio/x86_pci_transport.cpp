@@ -21,8 +21,13 @@ public:
             if (cap->vendor() == 0x9) {
                 handle_capability(*cap);
             }
+        }
 
-            auto common_bar = m_pci_dev.bars()[m_pci->bar];
+        if (m_pci_capability) {
+            auto common_bar = m_pci_dev.bars()[m_pci_capability->bar];
+            m_bar_base = common_bar & 0xFFFFFFFC;
+        } else {
+            auto common_bar = m_pci_dev.bars()[0];
             m_bar_base = common_bar & 0xFFFFFFFC;
         }
     }
@@ -92,7 +97,7 @@ private:
         m_capabilities.emplace_back(data);
 
         if (data.type == capability_type::pci) {
-            m_pci = &m_capabilities.back();
+            m_pci_capability = &m_capabilities.back();
         }
     }
 
@@ -103,7 +108,7 @@ private:
         uint32_t length;
     };
 
-    capability_data* m_pci;
+    capability_data* m_pci_capability = nullptr;
     std::vector<capability_data> m_capabilities;
 
     x86_64::pci::device m_pci_dev;
