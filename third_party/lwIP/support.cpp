@@ -2,9 +2,23 @@
 #include <lwip/init.h>
 #include <tos/lwip/common.hpp>
 #include <tos/lwip/if_adapter.hpp>
+#include <cstdio>
+#include <tos/debug/log.hpp>
 
 extern "C" {
-unsigned char debug_flags;
+unsigned char debug_flags = LWIP_DBG_LEVEL_ALL;
+
+int tos_log_printf(const char* fmt, ...) {
+    static char buf[1024];
+
+    va_list myargs;
+    va_start(myargs, fmt);
+    auto ret = vsnprintf(buf, std::size(buf), fmt, myargs);
+    LOG(buf);
+    va_end(myargs);
+
+    return ret;
+}
 
 uint32_t sys_now() {
     using namespace std::chrono;

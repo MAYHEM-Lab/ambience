@@ -453,11 +453,11 @@
 #define NETIF_DEBUG      LWIP_DBG_ON
 #define SOCKETS_DEBUG    LWIP_DBG_ON
 #define DEMO_DEBUG       LWIP_DBG_ON
-#define IP_DEBUG         LWIP_DBG_OFF
+#define IP_DEBUG         LWIP_DBG_ON
 #define IP_REASS_DEBUG   LWIP_DBG_ON
 #define RAW_DEBUG        LWIP_DBG_ON
 #define ICMP_DEBUG       LWIP_DBG_ON
-#define UDP_DEBUG        LWIP_DBG_OFF
+#define UDP_DEBUG        LWIP_DBG_ON
 #define TCP_DEBUG        LWIP_DBG_ON
 #define TCP_INPUT_DEBUG  LWIP_DBG_ON
 #define TCP_OUTPUT_DEBUG LWIP_DBG_ON
@@ -467,7 +467,7 @@
 #define TCP_FR_DEBUG     LWIP_DBG_ON
 #define TCP_QLEN_DEBUG   LWIP_DBG_ON
 #define TCP_RST_DEBUG    LWIP_DBG_ON
-#define ETHARP_DEBUG     LWIP_DBG_OFF
+#define ETHARP_DEBUG     LWIP_DBG_ON
 #define DHCP_DEBUG       LWIP_DBG_ON
 #define IP6_DEBUG        LWIP_DBG_OFF
 
