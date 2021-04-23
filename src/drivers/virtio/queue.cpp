@@ -20,19 +20,13 @@ queue::queue(uint16_t sz, tos::physical_page_allocator& palloc)
     auto pages_ptr = palloc.allocate(total_sz / palloc.page_size());
     auto buf = palloc.address_of(*pages_ptr);
 
-    auto op_res = tos::cur_arch::allocate_region(
+    LOG(bool(tos::cur_arch::map_region(
         tos::cur_arch::get_current_translation_table(),
         {{uintptr_t(buf), ptrdiff_t(total_sz)}, tos::permissions::read_write},
         tos::user_accessible::no,
-        nullptr);
-    LOG(bool(op_res));
-
-    auto res =
-        tos::cur_arch::mark_resident(tos::cur_arch::get_current_translation_table(),
-                                     {uintptr_t(buf), ptrdiff_t(total_sz)},
-                                     tos::memory_types::normal,
-                                     buf);
-    LOG(bool(res));
+        tos::memory_types::normal,
+        &palloc,
+        buf)));
 
     std::fill((char*)buf, (char*)buf + total_sz, 0);
     LOG("Buffer:", buf);
