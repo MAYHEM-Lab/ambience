@@ -55,6 +55,10 @@ if (${TOS_PLATFORM} MATCHES "atmega")
     target_include_directories(tos_nrf24 PUBLIC include)
 endif()
 
+add_library(tos_timer include/common/timer.hpp src/stub.cpp)
+target_link_libraries(tos_timer PUBLIC tos_util_core)
+target_include_directories(tos_timer PUBLIC include)
+
 add_library(tos_alarm include/common/alarm.hpp src/stub.cpp)
 target_link_libraries(tos_alarm PUBLIC tos_util_core)
 target_include_directories(tos_alarm PUBLIC include)
