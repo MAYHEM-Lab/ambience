@@ -10,14 +10,22 @@ queue::queue(uint16_t sz, tos::physical_page_allocator& palloc)
     auto descriptor_sz = sizeof(queue_descriptor) * sz;
     auto available_sz = sizeof(queue_available) + sizeof(uint16_t) * sz;
 
-    auto desc_avail_sz = tos::align_nearest_up_pow2(descriptor_sz + available_sz, tos::cur_arch::page_size_bytes);
+    auto desc_avail_sz = tos::align_nearest_up_pow2(descriptor_sz + available_sz,
+                                                    tos::cur_arch::page_size_bytes);
     LOG(int(desc_avail_sz), int(descriptor_sz + available_sz));
 
     auto used_sz = sizeof(queue_used) + sizeof(queue_used_elem) * sz;
-    auto total_sz = desc_avail_sz + tos::align_nearest_up_pow2(used_sz, tos::cur_arch::page_size_bytes);
-    LOG("Need", int(total_sz), "bytes");
+    auto total_sz = desc_avail_sz +
+                    tos::align_nearest_up_pow2(used_sz, tos::cur_arch::page_size_bytes);
+    auto pages = total_sz / palloc.page_size();
+    LOG("Need", int(total_sz), "bytes", int(pages), "pages");
 
-    auto pages_ptr = palloc.allocate(total_sz / palloc.page_size());
+    auto pages_ptr = palloc.allocate(pages);
+
+    if (!pages_ptr) {
+        LOG_ERROR("Could not allocate pages!");
+    }
+
     auto buf = palloc.address_of(*pages_ptr);
 
     LOG(bool(tos::cur_arch::map_region(
