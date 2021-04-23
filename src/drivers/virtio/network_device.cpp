@@ -77,20 +77,14 @@ bool network_device::initialize(physical_page_allocator* palloc) {
     auto recv_mem = palloc->allocate(1, 1);
 
     auto mem = palloc->address_of(*recv_mem);
-    auto op_res = tos::cur_arch::allocate_region(
+    LOG(bool(tos::cur_arch::map_region(
         tos::cur_arch::get_current_translation_table(),
-        {{uintptr_t(mem), ptrdiff_t(4096)}, tos::permissions::read_write},
+        {{uintptr_t(mem), ptrdiff_t(tos::cur_arch::page_size_bytes)},
+         tos::permissions::read_write},
         tos::user_accessible::no,
-        nullptr);
-    LOG(bool(op_res));
-
-    auto res =
-        tos::cur_arch::mark_resident(tos::cur_arch::get_current_translation_table(),
-                                     {uintptr_t(mem), ptrdiff_t(4096)},
-                                     tos::memory_types::normal,
-                                     mem);
-
-    LOG(bool(res));
+        tos::memory_types::normal,
+        palloc,
+        mem)));
 
     auto buf_ptr = new (mem) buf{};
 
