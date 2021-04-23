@@ -87,6 +87,7 @@ make_isr security_exception_handler,        20, 0
 
 make_irq 0
 make_irq 1
+make_irq 9
 make_irq 10
 make_irq 11
 make_irq 12
