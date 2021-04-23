@@ -74,7 +74,7 @@ bool network_device::initialize(physical_page_allocator* palloc) {
     }
     LOG("Status:", transport().read_u16(status_offset));
 
-    auto recv_mem = palloc->allocate(1, 1);
+    auto recv_mem = palloc->allocate(17, 1);
 
     auto mem = palloc->address_of(*recv_mem);
     LOG(bool(tos::cur_arch::map_region(
