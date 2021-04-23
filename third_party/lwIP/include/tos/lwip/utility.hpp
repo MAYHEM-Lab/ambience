@@ -1,7 +1,9 @@
 #pragma once
 
-#include <lwip/ip4_addr.h>
 #include <common/inet/tcp_ip.hpp>
+#include <lwip/ip4_addr.h>
+#include <lwip/pbuf.h>
+#include <tos/expected.hpp>
 
 namespace tos::lwip {
 /**
@@ -24,5 +26,21 @@ inline ipv4_addr_t convert_to_tos(const ip4_addr_t& addr) {
     ipv4_addr_t res;
     memcpy(res.addr.data(), &addr.addr, 4);
     return res;
+}
+
+enum class pbuf_errors
+{
+
+};
+
+template<class It>
+inline expected<void, pbuf_errors> copy_to_pbuf(It begin, It end, pbuf& head) {
+    auto cur_link = &head;
+    while (begin != end && cur_link) {
+        begin =
+            std::copy_n(begin, cur_link->len, static_cast<uint8_t*>(cur_link->payload));
+        cur_link = cur_link->next;
+    }
+    return {};
 }
 } // namespace tos::lwip
