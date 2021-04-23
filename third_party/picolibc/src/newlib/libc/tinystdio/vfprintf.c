@@ -80,7 +80,7 @@ typedef double printf_float_t;
  */
 
 #ifndef PRINTF_LEVEL
-# define PRINTF_LEVEL PRINTF_FLT
+# define PRINTF_LEVEL PRINTF_MIN
 #endif
 
 #if PRINTF_LEVEL == PRINTF_MIN || PRINTF_LEVEL == PRINTF_STD \
@@ -145,6 +145,8 @@ typedef long ultoa_signed_t;
 #define FL_ALTLWR	0x20
 #define FL_NEGATIVE	0x40
 #define FL_LONG 	0x80
+#define FL_SHORT 	(FL_LONG << 1)
+#define FL_REPD_TYPE 	(FL_SHORT << 1)
 
 int
 vfprintf (FILE * stream, const char *fmt, va_list ap)

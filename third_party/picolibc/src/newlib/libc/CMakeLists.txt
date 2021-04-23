@@ -5,5 +5,6 @@ add_subdirectory(ctype)
 add_subdirectory(errno)
 add_subdirectory(stdlib)
 add_subdirectory(string)
+add_subdirectory(tinystdio)
 
 add_subdirectory(machine)
