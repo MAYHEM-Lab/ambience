@@ -23,7 +23,7 @@ public:
         return get_cntfrq_el0();
     }
 
-    static void set_timeout(uint32_t ticks) {
+    static void set_timeout(uint64_t ticks) {
         set_cntp_tval_el0(ticks);
     }
 
