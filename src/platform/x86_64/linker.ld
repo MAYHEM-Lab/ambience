@@ -28,6 +28,7 @@ SECTIONS
         _rodata = .;
         *(.rodata*)
         *(.rodata.*)
+        .  = ALIGN(8);
         start_ctors = .;
         *(.init_array*)
         *(.init_array.*)
