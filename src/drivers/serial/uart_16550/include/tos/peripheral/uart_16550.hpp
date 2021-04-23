@@ -20,16 +20,18 @@ public:
         res.div_hi().outb(0);
 
         res.line_ctrl().outb(0x03);  // 8 bits, no parity, one stop bit
+
         res.fifo_ctrl().outb(0xc7);  // Enable FIFO, clear them, with 14-byte threshold
+
         res.modem_ctrl().outb(0x0b); // IRQs enabled, RTS/DSR set
 
-        res.modem_ctrl().outb(0x1e);
-
-        res.data().outb(0xf6);
-
-        if (res.data().inb() != 0xf6) {
-            return unexpected(nullptr);
-        }
+//        res.modem_ctrl().outb(0x1e); // Set in loopback mode
+//
+//        res.data().outb(0xf6);
+//
+//        if (res.data().inb() != 0xf6) {
+//            return unexpected(nullptr);
+//        }
 
         res.modem_ctrl().outb(0x0f);
 
