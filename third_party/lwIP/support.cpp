@@ -1,9 +1,10 @@
 #include <common/clock.hpp>
+#include <cstdarg>
+#include <cstdio>
 #include <lwip/init.h>
+#include <tos/debug/log.hpp>
 #include <tos/lwip/common.hpp>
 #include <tos/lwip/if_adapter.hpp>
-#include <cstdio>
-#include <tos/debug/log.hpp>
 
 extern "C" {
 unsigned char debug_flags = LWIP_DBG_LEVEL_ALL;
