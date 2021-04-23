@@ -5,20 +5,17 @@
 #include <tos/x86_64/exception.hpp>
 
 namespace tos::x86_64 {
-class pit : public self_pointing<pit> {
+class pit {
 public:
-    pit();
-
     void set_frequency(int freq);
-    void set_callback(function_ref<void()> cb);
 
     void enable();
     void disable();
 
+    uint32_t get_period() const;
+    uint32_t get_counter() const;
+
 private:
-
-    void irq(tos::x86_64::exception_frame* frame, int);
-
-    function_ref<void()> m_cb;
+    int m_freq;
 };
 } // namespace tos::x86_64
