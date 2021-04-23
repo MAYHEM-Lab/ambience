@@ -13,11 +13,13 @@ bool device::base_initialize(tos::physical_page_allocator* palloc) {
     transport().write_byte(status_port_offset, 0);
     transport().write_byte(status_port_offset, 0x1);
     transport().write_byte(status_port_offset, 0x3);
+    LOG_TRACE("Device status:", transport().read_byte(status_port_offset));
 
     auto features = transport().read_u32(dev_features_port_offset);
+    LOG_TRACE("Offered features:", (void*)(uintptr_t)features);
 
     auto accepted_features = negotiate(features);
-    LOG("Accepted features:", (void*)(uintptr_t)accepted_features);
+    LOG_TRACE("Accepted features:", (void*)(uintptr_t)accepted_features);
     transport().write_u32(drv_features_port_offset, accepted_features);
 
     transport().write_byte(status_port_offset, 0xB);
@@ -27,7 +29,7 @@ bool device::base_initialize(tos::physical_page_allocator* palloc) {
         LOG_ERROR("Feature negotiation failed");
         return false;
     }
-    LOG_TRACE("Features negotiated");
+    LOG_TRACE("Features negotiated", resp);
 
     for (int i = 0; i < 2; ++i) {
         transport().write_u16(queue_sel_port_offset, i);
