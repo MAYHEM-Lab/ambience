@@ -75,8 +75,9 @@ namespace detail {
 template<class ClockT>
 class erased_clock : public any_steady_clock {
 public:
-    explicit erased_clock(ClockT clk)
-        : m_impl{std::move(clk)} {
+    template<class... Ts>
+    explicit erased_clock(Ts&&... clk)
+        : m_impl{std::forward<Ts>(clk)...} {
     }
 
     time_point now() const override {
@@ -124,9 +125,13 @@ template<class TimerT>
 auto clock<TimerT>::now() const -> time_point {
     tos::int_guard ig;
     auto tick_part = static_cast<uint64_t>(m_ticks) * 1000 * m_period;
-    auto fractional_part = static_cast<uint64_t>(m_timer->get_counter()) * 1000 *
-                           m_period / m_timer->get_period();
+
+    const auto cnt = m_timer->get_counter();
+    const auto period = m_timer->get_period();
+    auto fractional_part = static_cast<uint64_t>(cnt) * 1000 * m_period / period;
+
     auto now = tick_part + fractional_part;
+
     if (now < m_last_now) {
         // we missed an interrupt!
         now += 1000 * m_period;
@@ -143,5 +148,4 @@ clock<TimerT>::clock(TimerT timer)
     m_timer->set_callback(function_ref<void()>(*this));
     m_timer->enable();
 }
-
 } // namespace tos

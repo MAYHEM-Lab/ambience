@@ -196,10 +196,13 @@ struct any_alarm {
 
 namespace detail {
 template<class T>
-class erased_alarm : public any_alarm {
+class erased_alarm final
+    : public any_alarm
+    , public self_pointing<erased_alarm<T>> {
 public:
-    erased_alarm(T t)
-        : m_base_alarm(std::move(t)) {
+    template<class... Ts>
+    erased_alarm(Ts&&... t)
+        : m_base_alarm(std::forward<Ts>(t)...) {
     }
 
     void sleep_for(std::chrono::milliseconds dur) override {
