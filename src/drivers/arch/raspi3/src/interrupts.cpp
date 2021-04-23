@@ -42,6 +42,8 @@ void interrupt_controller::irq() {
     if (bcm2837::ARM_CORE->core0_irq_source & 0b10) {
         do_irq(static_cast<int>(bcm283x::irq_channels::generic_timer));
     }
+
+    m_post_irq();
 }
 
 void interrupt_controller::do_irq(int channel) {
@@ -68,5 +70,13 @@ bool interrupt_controller::try_irq(int channel) {
         }
     }
     return handled;
+}
+
+void interrupt_controller::set_post_irq(function_ref<void()> handler) {
+    m_post_irq = handler;
+}
+
+void interrupt_controller::reset_post_irq() {
+    m_post_irq = function_ref<void()>([](void*) {});
 }
 } // namespace tos::raspi3

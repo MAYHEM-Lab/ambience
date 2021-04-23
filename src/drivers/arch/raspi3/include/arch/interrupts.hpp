@@ -5,8 +5,8 @@
 #include <tos/aarch64/interrupts.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/intrusive_list.hpp>
-#include <unordered_map>
 #include <tos/soc/bcm283x.hpp>
+#include <unordered_map>
 
 namespace tos::raspi3 {
 struct irq_handler : list_node<irq_handler> {
@@ -29,10 +29,14 @@ public:
 
     void irq();
 
+    void set_post_irq(function_ref<void()> handler);
+    void reset_post_irq();
+
 private:
     void do_irq(int channel);
     bool try_irq(int channel);
 
     std::unordered_map<int, intrusive_list<irq_handler>> m_irq_lists;
+    function_ref<void()> m_post_irq{[](void*) {}};
 };
 } // namespace tos::raspi3
