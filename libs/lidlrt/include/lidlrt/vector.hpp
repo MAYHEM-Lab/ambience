@@ -1,5 +1,6 @@
 #pragma once
 #include <lidlrt/traits.hpp>
+#include <tos/span.hpp>
 
 namespace lidl {
 template<class T, bool IsTReference = is_ptr<T>{} || is_reference_type<T>{}>
@@ -127,6 +128,7 @@ inline bool operator==(const vector<T>& left, const vector<T>& right) {
            std::equal(left.begin(), left.end(), right.begin());
 }
 
+
 template<class T, std::enable_if_t<is_ptr<T>{}>* = nullptr>
 vector<T>& create_vector_sized(message_builder& builder, int size) {
     auto& vec = emplace_raw<vector<T>>(builder, int16_t(size));
@@ -139,7 +141,8 @@ vector<T>& create_vector_sized(message_builder& builder, int size) {
     auto& vec = emplace_raw<vector<T>>(builder, int16_t(size));
     auto alloc = builder.allocate(size * sizeof(T), alignof(T));
     if (!alloc) {
-        while (true);
+        while (true)
+            ;
     }
     return vec;
 }
@@ -147,13 +150,13 @@ vector<T>& create_vector_sized(message_builder& builder, int size) {
 template<class T, std::enable_if_t<!is_ptr<T>{} && !is_reference_type<T>{}>* = nullptr>
 vector<T>& create_vector(message_builder& builder, tos::span<const T> elems) {
     auto& vec = create_vector_sized<T>(builder, elems.size());
-    copy(vec.span(), elems);
+    safe_span_copy(vec.span(), elems);
     return vec;
 }
 
 template<class T, std::enable_if_t<is_ptr<T>{}>* = nullptr>
 vector<T>& create_vector(message_builder& builder, typename T::element_type& elem) {
-    auto& vec               = create_vector_sized<T>(builder, 1);
+    auto& vec = create_vector_sized<T>(builder, 1);
     vec.get_raw().span()[0] = elem;
     return vec;
 }
@@ -162,10 +165,21 @@ template<class T, std::enable_if_t<is_ptr<T>{}>* = nullptr>
 vector<T>& create_vector(message_builder& builder,
                          typename T::element_type& elem,
                          typename T::element_type& elem1) {
-    auto& vec               = create_vector_sized<T>(builder, 2);
+    auto& vec = create_vector_sized<T>(builder, 2);
     vec.get_raw().span()[0] = elem;
     vec.get_raw().span()[1] = elem1;
     return vec;
+}
+
+template<class T, std::enable_if_t<is_ptr<T>{}>* = nullptr>
+vector<T>& create_vector(message_builder& builder) {
+    auto& vec = emplace_raw<vector<T>>(builder, int16_t(0));
+    return vec;
+}
+
+template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
+vector<ptr<T>>& create_vector(message_builder& builder) {
+    return create_vector<ptr<T>>(builder);
 }
 
 template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
