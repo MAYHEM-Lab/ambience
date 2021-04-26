@@ -143,6 +143,12 @@ function(find_llvm_toolchain)
             PATH_SUFFIXES bin ${TOOLCHAIN_TRIPLE}/bin)
     set(TOOLCHAIN_LD ${TOOLCHAIN_LD} PARENT_SCOPE)
 
+    find_program(TOOLCHAIN_WASM_LD
+            wasm-ld
+            HINTS ${SEARCH_DIRS}
+            PATH_SUFFIXES bin ${TOOLCHAIN_TRIPLE}/bin)
+    set(TOOLCHAIN_WASM_LD ${TOOLCHAIN_WASM_LD} PARENT_SCOPE)
+
     find_program(TOOLCHAIN_AR
             llvm-ar
             HINTS ${SEARCH_DIRS}
