@@ -31,7 +31,6 @@ extern "C" {
 extern uint8_t __HeapBase;
 extern uint8_t __HeapLimit;
 }
-#include <tos/memory/free_list.hpp>
 namespace {
 tos::span<uint8_t> heap_memory() {
     return tos::span<uint8_t>{&__HeapBase, &__HeapLimit};
