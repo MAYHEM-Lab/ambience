@@ -56,7 +56,7 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(TOS_FLAGS "${TOS_FLAGS} \
             -Wno-c99-extensions -Wno-gnu-anonymous-struct -Wno-new-returns-null \
-            -Wno-zero-length-array -Wno-nested-anon-types -Wno-mismatched-tags")
+            -Wno-zero-length-array -Wno-nested-anon-types -Wno-mismatched-tags -Wno-deprecated-volatile")
 endif()
 
 message(STATUS "${CMAKE_CXX_COMPILER_ID}")
