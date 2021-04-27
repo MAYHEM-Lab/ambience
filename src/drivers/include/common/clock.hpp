@@ -91,7 +91,7 @@ private:
 } // namespace detail
 
 template<class ClockT>
-auto erase_clock(ClockT clock) -> detail::erased_clock<ClockT> {
+auto erase_clock(ClockT&& clock) -> detail::erased_clock<ClockT> {
     return detail::erased_clock<ClockT>{std::forward<ClockT>(clock)};
 }
 
