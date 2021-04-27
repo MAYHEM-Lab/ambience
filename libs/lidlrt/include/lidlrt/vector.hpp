@@ -49,6 +49,10 @@ public:
         return span().end();
     }
 
+    const T& back() const {
+        return span().back();
+    }
+
     [[nodiscard]] size_t size() const {
         return m_len;
         //        return m_cur_pos.get_offset() / sizeof(T);
@@ -93,16 +97,24 @@ public:
         return ptr_iterator<T>(m_under.begin());
     }
 
-    ptr_iterator<T> begin() const {
-        return ptr_iterator<T>(m_under.begin());
+    const_ptr_iterator<T> begin() const {
+        return const_ptr_iterator<T>(m_under.begin());
     }
 
     ptr_iterator<T> end() {
         return ptr_iterator<T>(m_under.end());
     }
 
-    ptr_iterator<T> end() const {
-        return ptr_iterator<T>(m_under.end());
+    const_ptr_iterator<T> end() const {
+        return const_ptr_iterator<T>(m_under.end());
+    }
+
+    const T& back() const {
+        return m_under.span().back().unsafe().get();
+    }
+
+    T& back() {
+        return m_under.span().back().unsafe().get();
     }
 
     auto& get_raw() {
