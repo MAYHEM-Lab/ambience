@@ -26,7 +26,7 @@ public:
 
     template<class... MessageTs>
     std::array<uint8_t, 32> operator()(MessageTs&&... messages) const {
-        (void)(sign_one(std::forward<MessageTs>(messages)), ...);
+        (void)((sign_one(std::forward<MessageTs>(messages)), ...));
 
         if (!m_buf.empty()) {
             definitely_sign_one({m_buf.data(), m_buf.size()});
@@ -92,7 +92,7 @@ public:
 
     template<class... MessageTs>
     std::array<uint8_t, 32> operator()(MessageTs&&... messages) const {
-        (void)(hash_one(std::forward<MessageTs>(messages)), ...);
+        (void)((hash_one(std::forward<MessageTs>(messages)), ...));
 
         if (!m_buf.empty()) {
             definitely_hash_one({m_buf.data(), m_buf.size()});
