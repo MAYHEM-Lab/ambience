@@ -229,6 +229,13 @@ public:
         return *begin();
     }
 
+    T& back() {
+        return *(end() - 1);
+    }
+    const T& back() const {
+        return *(end() - 1);
+    }
+
     /**
      * Spans convert to a const version of them automatically
      *
