@@ -45,6 +45,8 @@ extern "C" void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
         ins = usart::get(3);
         break;
 #endif
+    default:
+        Assert(false);
     }
     ins->tx_done_isr();
 }
@@ -68,6 +70,8 @@ extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
         ins = usart::get(3);
         break;
 #endif
+    default:
+        Assert(false);
     }
     ins->rx_done_isr();
 }
