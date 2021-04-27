@@ -18,6 +18,7 @@ add_library(stm32_hal_core
         include/stm32_hal/spi.hpp
         include/stm32_hal/ll_exti.hpp
         include/stm32_hal/rtc.hpp
+        include/stm32_hal/rng.hpp
 )
 
 target_include_directories(stm32_hal_core SYSTEM PUBLIC "external/${HAL_NAME}/soc")
