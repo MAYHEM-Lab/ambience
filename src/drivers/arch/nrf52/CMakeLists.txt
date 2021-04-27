@@ -14,7 +14,7 @@ target_link_libraries(nrf52_timer PUBLIC tos_core nrf5-sdk-drivers)
 tos_install(nrf52_timer ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(nrf52_twim include/arch/twim.hpp src/twim.cpp)
-target_link_libraries(nrf52_twim PUBLIC tos_core nrf5-sdk-drivers)
+target_link_libraries(nrf52_twim PUBLIC tos_core nrf5-sdk-drivers tos_i2c)
 tos_install(nrf52_twim ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(nrf52_spim include/arch/spi.hpp src/stub.cpp)
