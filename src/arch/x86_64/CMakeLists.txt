@@ -30,6 +30,8 @@ add_library(arch_x86_64
     pit.cpp
     include/tos/x86_64/backtrace.hpp
     backtrace.cpp
+    include/tos/x86_64/apic.hpp
+    apic.cpp
 )
 target_include_directories(arch_x86_64 PUBLIC include)
 target_link_libraries(arch_x86_64 PUBLIC tos_util_core tos_pci tos::libcxx tos_address_space)

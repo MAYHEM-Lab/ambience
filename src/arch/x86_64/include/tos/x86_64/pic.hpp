@@ -64,6 +64,12 @@ public:
         master_data().outb(master_data().inb() | 1 << (irq));
     }
 
+    static void disable() {
+        /* Set OCW1 (interrupt masks) */
+        master_data().outb(0xff);
+        slave_data().outb(0xff);
+    }
+
 private:
     static port master_cmd() {
         return {0x20};
