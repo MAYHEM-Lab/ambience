@@ -17,6 +17,7 @@ target_sources(arch_arm PRIVATE
         include/tos/arm/processor_state.hpp
         include/tos/arm/address_space.hpp
         address_space.cpp
+        include/tos/arm/cyccnt_clock.hpp
 )
 target_link_libraries(arch_arm PUBLIC tos_util_core cmsis::core tos_drivers tos_mmio tos::libcxx tos_address_space)
 target_compile_features(arch_arm PUBLIC cxx_std_20)
