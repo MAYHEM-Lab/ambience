@@ -1,7 +1,6 @@
 #pragma once
 
 #include "sink.hpp"
-
 #include <memory>
 #include <string_view>
 #include <tos/mutex.hpp>
@@ -20,7 +19,9 @@ public:
     }
 
     bool begin(log_level level) override {
-        m_prot->lock();
+        if (!platform::interrupts_disabled()) {
+            m_prot->lock();
+        }
         if (!m_tag.empty()) {
             tos::print(m_serial, "[", m_tag, "] ", tos::no_separator());
         }
@@ -59,7 +60,9 @@ public:
 
     void end() override {
         tos::println(m_serial);
-        m_prot->unlock();
+        if (!platform::interrupts_disabled()) {
+            m_prot->unlock();
+        }
     }
 
 public:
