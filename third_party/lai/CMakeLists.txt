@@ -1,3 +1,7 @@
+if (NOT ${TOS_ARCH} MATCHES "x86_64")
+    return()
+endif()
+
 add_library(lai "")
 target_include_directories(lai PUBLIC src/include)
 target_sources(lai PRIVATE
