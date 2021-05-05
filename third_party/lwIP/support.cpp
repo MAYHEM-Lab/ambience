@@ -9,6 +9,10 @@
 extern "C" {
 unsigned char debug_flags = LWIP_DBG_LEVEL_ALL;
 
+void tos_assert(const char* fmt){
+    tos::debug::panic(fmt);
+}
+
 int tos_log_printf(const char* fmt, ...) {
     static char buf[1024];
 
