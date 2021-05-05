@@ -43,10 +43,23 @@ public:
                 terminal_buffer[index] = vga_entry(' ', terminal_color);
             }
         }
+        terminal_row = 0;
+        terminal_column = 0;
     }
 
     void set_color(text_vga_color fg, text_vga_color bg) {
         terminal_color = vga_entry_color(fg, bg);
+    }
+
+    void write_line(int num, std::string_view line) {
+        auto row = get_row(num);
+        size_t i;
+        for (i = 0; i < std::min(row.size(), line.size()); i++) {
+            row[i] = vga_entry(line[i], terminal_color);
+        }
+        for (; i < row.size(); ++i) {
+            row[i] = vga_entry(' ', terminal_color);
+        }
     }
 
     void write(std::string_view str) {
@@ -80,6 +93,8 @@ private:
             if (++terminal_row == heigth) {
                 terminal_row = 0;
             }
+            auto r = get_row(terminal_row);
+//            std::fill(r.begin(), r.end(), vga_entry(' ', terminal_color));
             return;
         }
 
@@ -95,12 +110,19 @@ private:
             if (++terminal_row == heigth) {
                 terminal_row = 0;
             }
+            auto r = get_row(terminal_row);
+            std::fill(r.begin(), r.end(), vga_entry(' ', terminal_color));
         }
     }
 
     void write_at(char c, int x, int y) {
         const size_t index = y * width + x;
         terminal_buffer[index] = vga_entry(c, terminal_color);
+    }
+
+    span<uint16_t> get_row(int row) {
+        const size_t index = row * width;
+        return span<uint16_t>{terminal_buffer + index, width};
     }
 
     uint16_t terminal_row = 0;
