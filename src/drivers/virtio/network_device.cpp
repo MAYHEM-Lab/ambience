@@ -153,8 +153,10 @@ void network_device::isr() {
 
 span<uint8_t> network_device::take_packet() {
     m_rx_sem.down();
+    queue_at(0).used_base->disable_irq();
     auto& b = received_packets.front();
     received_packets.pop_front();
+    queue_at(0).used_base->enable_irq();
     return b.body();
 }
 
