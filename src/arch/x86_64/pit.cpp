@@ -22,14 +22,6 @@ void pit::set_frequency(int freq) {
     port(0x40).outb(high);
 }
 
-void pit::enable() {
-    tos::x86_64::pic::enable_irq(0);
-}
-
-void pit::disable() {
-    tos::x86_64::pic::disable_irq(0);
-}
-
 uint32_t pit::get_period() const {
     return 0;
 }

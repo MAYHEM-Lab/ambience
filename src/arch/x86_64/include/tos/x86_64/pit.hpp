@@ -9,9 +9,6 @@ class pit {
 public:
     void set_frequency(int freq);
 
-    void enable();
-    void disable();
-
     uint32_t get_period() const;
     uint32_t get_counter() const;
 
