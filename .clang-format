@@ -57,6 +57,6 @@ AlwaysBreakTemplateDeclarations: Yes
 
 AlignConsecutiveMacros: true
 AlignEscapedNewlines: true
-Standard: c++17
+Standard: c++20
 
 ReflowComments: true
