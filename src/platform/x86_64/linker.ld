@@ -41,6 +41,12 @@ SECTIONS
    } : RODATA
    __rodata_end = .;
 
+  .gnu_build_id :
+  {
+    PROVIDE(build_id = .);
+    *(.note.gnu.build-id)
+  } : RODATA
+
    __data_start = .;
    .data :
    {
