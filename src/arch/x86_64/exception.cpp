@@ -1,5 +1,6 @@
 #include <tos/address_space.hpp>
 #include <tos/debug/log.hpp>
+#include <tos/ft.inl>
 #include <tos/x86_64/assembly.hpp>
 #include <tos/x86_64/backtrace.hpp>
 #include <tos/x86_64/exception.hpp>
@@ -17,6 +18,14 @@ void div_by_zero_handler([[maybe_unused]] exception_frame* frame,
 }
 void debug_handler([[maybe_unused]] exception_frame* frame,
                    [[maybe_unused]] uint64_t num) {
+    LOG("Debug handler");
+    LOG_ERROR("Call stack:");
+    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
+    while (root) {
+        LOG_ERROR((void*)root->rip);
+        root = backtrace_next(*root);
+    }
+
     while (true)
         ;
 }
@@ -89,14 +98,14 @@ void stack_segment_fault_handler([[maybe_unused]] exception_frame* frame,
 void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
                                       [[maybe_unused]] uint64_t num) {
     LOG_ERROR("GPF!",
-        (int)num,
-        (void*)frame,
-        (void*)frame->error_code,
-        (void*)frame->rip,
-        "Return CS",
-        (void*)frame->cs,
-        "Return SS",
-        (void*)frame->ss);
+              (int)num,
+              (void*)frame,
+              (void*)frame->error_code,
+              (void*)frame->rip,
+              "Return CS",
+              (void*)frame->cs,
+              "Return SS",
+              (void*)frame->ss);
 
     LOG_ERROR("Call stack:");
     auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
@@ -108,11 +117,14 @@ void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
     while (true)
         ;
 }
+
 void page_fault_handler([[maybe_unused]] exception_frame* frame,
                         [[maybe_unused]] uint64_t num) {
     if ((frame->cs & 0x3) == 0x3) {
         // Fault from user space
     }
+
+    LOG("Failing thread:", get_name(*tos::self()));
 
     LOG("Page fault!",
         (int)num,
@@ -121,14 +133,23 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
         (void*)frame->rip,
         "Fault address:",
         (void*)read_cr2());
-    if (auto res =
-            tos::global::cur_as->m_backend->handle_memory_fault(*frame, read_cr2())) {
-        if (force_get(res)) {
-            LOG("Handled correctly");
-            return;
+    if (tos::global::cur_as) {
+        if (auto res =
+                tos::global::cur_as->m_backend->handle_memory_fault(*frame, read_cr2())) {
+            if (force_get(res)) {
+                LOG("Handled correctly");
+                return;
+            }
         }
     }
     LOG("Could not handle");
+    LOG_ERROR("Call stack:");
+    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
+    while (root) {
+        LOG_ERROR((void*)root->rip);
+        root = backtrace_next(*root);
+    }
+
     while (true)
         ;
 }
