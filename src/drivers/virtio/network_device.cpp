@@ -105,7 +105,7 @@ uint32_t network_device::negotiate(uint32_t features) {
 network_device::~network_device() = default;
 
 void network_device::queue_rx_buf(buf& buffer) {
-    auto rx_queue = queue_at(0);
+    auto& rx_queue = queue_at(0);
 
     auto [body_idx, body_desc] = rx_queue.alloc();
 
