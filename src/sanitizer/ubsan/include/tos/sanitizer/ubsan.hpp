@@ -1,8 +1,18 @@
-//
-// Created by fatih on 2/6/2021.
-//
+#pragma once
 
-#ifndef TOS_UBSAN_HPP
-#define TOS_UBSAN_HPP
+#include <tos/function_ref.hpp>
 
-#endif // TOS_UBSAN_HPP
+namespace tos::ubsan::handlers {
+struct ubsan_handlers {
+    virtual void error() = 0;
+};
+
+struct null_handlers : ubsan_handlers {
+    void error() override {
+        while (true);
+    }
+};
+
+inline null_handlers _null_handlers;
+inline ubsan_handlers* handlers = &_null_handlers;
+}
