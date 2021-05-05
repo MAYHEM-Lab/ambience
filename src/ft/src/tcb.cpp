@@ -56,6 +56,12 @@ void thread_exit() {
 }
 
 void suspend_self(const no_interrupts&) {
+#ifdef TOS_FEATURE_TCB_HAVE_LOG_BLOCK_POINT
+    if (self()->log_block_point) {
+        LOG_TRACE("Blocked at", (void*)__builtin_return_address(0));
+    }
+#endif
+
     kern::processor_state ctx;
     if (save_context(*self(), ctx) == return_codes::saved) {
         switch_context(global::thread_state.backup_state, return_codes::suspend);

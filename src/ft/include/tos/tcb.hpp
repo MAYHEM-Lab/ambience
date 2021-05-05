@@ -45,6 +45,10 @@ struct alignas(alignof(std::max_align_t)) tcb : public job {
      */
     virtual ~tcb() = 0;
 
+#define TOS_FEATURE_TCB_HAVE_LOG_BLOCK_POINT
+#ifdef TOS_FEATURE_TCB_HAVE_LOG_BLOCK_POINT
+    bool log_block_point = false;
+#endif
 
 #define TOS_FEATURE_TCB_HAVE_NAME
 #ifdef TOS_FEATURE_TCB_HAVE_NAME
