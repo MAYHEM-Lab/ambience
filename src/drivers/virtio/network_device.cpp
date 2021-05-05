@@ -173,6 +173,44 @@ void network_device::return_packet(span<uint8_t> buffer) {
     queue_rx_buf(*b);
 }
 
+void network_device::transmit_gather(span<span<const uint8_t>> data) {
+    if (data.empty()) {
+        return;
+    }
+
+    auto& tx_queue = queue_at(1);
+
+    tx_header header{};
+
+    auto [header_idx, header_desc] = tx_queue.alloc();
+    header_desc->addr = reinterpret_cast<uintptr_t>(&header.header);
+    header_desc->len = sizeof header.header;
+    header_desc->flags = queue_flags(queue_flags::next);
+    header_desc->next = 0;
+
+    queue_descriptor* cur = header_desc;
+
+    for (int i = 0; i < data.size(); ++i) {
+        auto [body_idx, body_desc] = tx_queue.alloc();
+
+        cur->flags = queue_flags::next;
+        cur->next = body_idx;
+
+        body_desc->addr = reinterpret_cast<uintptr_t>(data.data());
+        body_desc->len = data.size();
+        body_desc->flags = queue_flags::none;
+        body_desc->next = 0;
+        cur = body_desc;
+    }
+    cur->flags = queue_flags::none;
+
+    tx_queue.submit_available(header_idx);
+
+    transport().write_u16(notify_port_offset, 1);
+
+    header.sem.down();
+}
+
 void network_device::transmit_gather_callback_impl(
     function_ref<span<const uint8_t>()> cb) {
     auto& tx_queue = queue_at(1);

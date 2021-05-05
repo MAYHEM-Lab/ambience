@@ -30,6 +30,7 @@ public:
         this->transmit_gather_callback_impl(function_ref<span<const uint8_t>()>(fn));
     }
 
+    void transmit_gather(span<span<const uint8_t>> data);
     void transmit_packet(span<const uint8_t> data);
     Task<void> async_transmit_packet(span<const uint8_t> data);
 
