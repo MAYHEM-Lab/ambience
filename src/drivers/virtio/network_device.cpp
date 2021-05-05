@@ -8,9 +8,10 @@
 
 namespace tos::virtio {
 namespace {
-constexpr auto mac_addr_offset = 0x14;
-constexpr auto status_offset = 0x1a;
-constexpr auto mtu_offset = 0x1e;
+constexpr auto dev_base_offset = 0x14;
+constexpr auto dev_mac_addr_offset = dev_base_offset + 0;
+constexpr auto dev_status_offset = dev_base_offset + 6;
+constexpr auto dev_mtu_offset = dev_base_offset + 10;
 
 enum header_flags : uint8_t
 {
@@ -59,20 +60,21 @@ intrusive_list<buf, through_member<&buf::list_node>> received_packets;
 mac_addr_t network_device::address() const {
     mac_addr_t res;
     for (int i = 0; i < 6; ++i) {
-        res.addr[i] = transport().read_byte(mac_addr_offset + i);
+        res.addr[i] =
+            transport().read_byte((have_msix() ? 4 : 0) + dev_mac_addr_offset + i);
     }
     return res;
 }
 
 size_t network_device::mtu() const {
-    return transport().read_u16(mtu_offset);
+    return transport().read_u16((have_msix() ? 4 : 0) + dev_mtu_offset);
 }
 
 bool network_device::initialize(physical_page_allocator* palloc) {
     if (!base_initialize(palloc)) {
         return false;
     }
-    LOG("Status:", transport().read_u16(status_offset));
+    LOG("Status:", transport().read_u16((have_msix() ? 4 : 0) + dev_status_offset));
 
     for (int i = 0; i < 32; ++i) {
         auto recv_mem = palloc->allocate(1, 1);
@@ -92,7 +94,8 @@ bool network_device::initialize(physical_page_allocator* palloc) {
         queue_rx_buf(*buf_ptr);
     }
 
-    transport().enable_interrupts(tos::mem_function_ref<&network_device::isr>(*this));
+    transport().setup_interrupts(tos::mem_function_ref<&network_device::isr>(*this));
+    transport().enable_interrupts();
 
     transport().write_byte(status_port_offset, 0xf);
     LOG_TRACE("Device initialized");
@@ -123,7 +126,9 @@ void network_device::queue_rx_buf(buf& buffer) {
 
 void network_device::isr() {
     asm volatile("push %rax");
-    auto isr_status = transport().read_byte(interrupt_status_port_offset);
+    auto isr_status =
+        transport().has_msix() ? 1 : transport().read_byte(interrupt_status_port_offset);
+
     if (isr_status & 1) {
         auto& rx_queue = queue_at(0);
         auto& tx_queue = queue_at(1);

@@ -4,6 +4,7 @@
 namespace tos::virtio {
 device::device(std::unique_ptr<virtio::transport> transp)
     : m_transport(std::move(transp)) {
+    m_have_msix = m_transport->has_msix();
 }
 
 bool device::base_initialize(tos::physical_page_allocator* palloc) {
@@ -31,6 +32,10 @@ bool device::base_initialize(tos::physical_page_allocator* palloc) {
     }
     LOG_TRACE("Features negotiated", resp);
 
+    if (have_msix()) {
+        transport().write_u16(config_msix_vector_offset, 0xffff);
+    }
+
     for (int i = 0; i < 2; ++i) {
         transport().write_u16(queue_sel_port_offset, i);
         auto sz = transport().read_u16(queue_size_port_offset);
@@ -42,6 +47,9 @@ bool device::base_initialize(tos::physical_page_allocator* palloc) {
         auto queue_base =
             reinterpret_cast<uintptr_t>(m_queues.back().descriptors_base) / 4096;
         transport().write_u32(queue_addr_port_offset, queue_base);
+        if (have_msix()) {
+            transport().write_u16(queue_msix_vector_offset, 1);
+        }
         LOG(int(queue_base));
     }
 

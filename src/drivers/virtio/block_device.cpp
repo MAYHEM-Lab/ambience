@@ -19,7 +19,8 @@ bool block_device::initialize(tos::physical_page_allocator* palloc) {
         return false;
     }
 
-    transport().enable_interrupts(tos::mem_function_ref<&block_device::isr>(*this));
+    transport().setup_interrupts(tos::mem_function_ref<&block_device::isr>(*this));
+    transport().enable_interrupts();
 
     LOG("Sector count:", int(number_of_sectors()));
     LOG("Block size:", int(sector_size_bytes()));

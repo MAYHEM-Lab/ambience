@@ -14,8 +14,11 @@ struct transport {
     virtual uint32_t read_u32(int offset) = 0;
     virtual void write_u32(int offset, uint32_t data) = 0;
 
-    virtual void enable_interrupts(tos::function_ref<void()> handler) = 0;
+    virtual void setup_interrupts(tos::function_ref<void()> handler) = 0;
+    virtual void enable_interrupts() = 0;
     virtual void disable_interrupts() = 0;
+
+    virtual bool has_msix() = 0;
 
     virtual ~transport() = default;
 };

@@ -27,8 +27,12 @@ protected:
         return *m_transport;
     }
 
+    bool have_msix() const {
+        return m_have_msix;
+    }
 private:
     std::unique_ptr<virtio::transport> m_transport;
     std::vector<queue> m_queues;
+    bool m_have_msix;
 };
 } // namespace tos::virtio
