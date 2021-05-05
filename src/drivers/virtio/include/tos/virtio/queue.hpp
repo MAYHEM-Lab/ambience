@@ -120,6 +120,9 @@ struct queue {
         return {descriptors_base, size};
     }
 
+    queue(const queue&) = delete;
+    queue(queue&&) = default;
+
     explicit queue(uint16_t sz, tos::physical_page_allocator& palloc);
 };
 } // namespace tos::virtio
