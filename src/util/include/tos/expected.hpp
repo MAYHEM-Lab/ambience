@@ -9,6 +9,7 @@
 #include <nonstd/expected.hpp>
 #include <optional>
 #include <tos/compiler.hpp>
+#include <tos/debug/assert.hpp>
 #include <tos/utility.hpp>
 #include <type_traits>
 
@@ -200,6 +201,11 @@ struct ignore_t {
     }
 };
 static constexpr ignore_t ignore{};
+
+template<class T, class E>
+void ensure(const expected<T, E>& expect) {
+    Assert(expect.has_value());
+}
 } // namespace tos
 
 #define EXPECTED_TRYV(...)                                \
