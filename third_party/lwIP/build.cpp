@@ -1,7 +1,6 @@
 #include <arch/drivers.hpp>
 #include <arch/tap.hpp>
 #include <common/inet/tcp_ip.hpp>
-#include <common/inet/tcp_stream.hpp>
 #include <lwip/etharp.h>
 #include <lwip/init.h>
 #include <lwip/sys.h>
@@ -15,6 +14,7 @@
 #include <tos/lwip/common.hpp>
 #include <tos/lwip/if_adapter.hpp>
 #include <tos/lwip/tcp.hpp>
+#include <tos/lwip/tcp_stream.hpp>
 #include <tos/lwip/udp.hpp>
 #include <tos/lwip/utility.hpp>
 

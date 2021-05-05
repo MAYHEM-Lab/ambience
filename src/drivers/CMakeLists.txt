@@ -126,9 +126,8 @@ target_include_directories(tos_clock PUBLIC include)
 
 add_library(tos_inet
         include/common/inet/tcp_ip.hpp
-        include/common/inet/tcp_stream.hpp
         src/stub.cpp
-        include/common/inet/lwip.hpp)
+)
 target_include_directories(tos_inet PUBLIC include)
 
 add_library(tos_pci

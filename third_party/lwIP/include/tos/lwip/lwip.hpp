@@ -5,9 +5,10 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
 #include <lwip/pbuf.h>
-#include <stddef.h>
 #include <tos/ft.hpp>
+#include <tos/mutex.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/span.hpp>
 

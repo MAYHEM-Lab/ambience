@@ -5,7 +5,6 @@
 #pragma once
 
 #include <algorithm>
-#include <common/inet/lwip.hpp>
 #include <common/inet/tcp_ip.hpp>
 #include <lwip/tcp.h>
 #include <tos/arch.hpp>
@@ -13,6 +12,8 @@
 #include <tos/expected.hpp>
 #include <tos/fixed_fifo.hpp>
 #include <tos/intrusive_list.hpp>
+#include <tos/late_constructed.hpp>
+#include <tos/lwip/lwip.hpp>
 #include <tos/track_ptr.hpp>
 
 namespace tos::lwip {
@@ -75,6 +76,34 @@ private:
     template<class ConnHandlerT>
     friend err_t accept_handler(void* user, tcp_pcb* new_conn, err_t err);
 };
+
+auto acceptor(tcp_socket& sock) {
+    struct awaiter {
+        bool await_ready() {
+            return false;
+        }
+
+        void await_suspend(std::coroutine_handle<void()> res) {
+            m_resume = res;
+            m_sock->async_accept(*this);
+        }
+
+        bool operator()(tcp_socket& sock, tcp_endpoint&& ep) {
+            m_ep.emplace(std::move(ep));
+            return true;
+        }
+
+        tcp_endpoint await_resume() {
+            return std::move(m_ep.get());
+        }
+
+        tcp_socket* m_sock;
+        tos::late_constructed<tcp_endpoint> m_ep;
+        std::coroutine_handle<void()> m_resume;
+    };
+
+    return awaiter{&sock};
+}
 
 /**
  * Initiates a TCP connection with the given endpoint.

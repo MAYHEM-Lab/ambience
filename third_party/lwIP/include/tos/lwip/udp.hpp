@@ -1,9 +1,9 @@
 #pragma once
 
-#include <common/inet/lwip.hpp>
 #include <common/inet/tcp_ip.hpp>
 #include <lwip/udp.h>
 #include <tos/expected.hpp>
+#include <tos/lwip/lwip.hpp>
 #include <tos/span.hpp>
 
 namespace tos::lwip {

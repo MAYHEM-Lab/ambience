@@ -5,7 +5,7 @@
 #pragma once
 
 #include <common/driver_base.hpp>
-#include <common/inet/lwip.hpp>
+#include <tos/lwip/lwip.hpp>
 #include <tos/event.hpp>
 #include <tos/expected.hpp>
 #include <tos/fixed_fifo.hpp>
