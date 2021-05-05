@@ -72,11 +72,13 @@ struct queue {
         if (last_seen_used > used_base->index) {
             // The used ring has wrapped around.
             for (; last_seen_used != 0; ++last_seen_used) {
+                // Cast away the volatile
                 fn(*const_cast<queue_used_elem*>(
                     &used_base->ring[last_seen_used % size]));
             }
         }
         for (; last_seen_used < used_base->index; ++last_seen_used) {
+            // Cast away the volatile
             fn(*const_cast<queue_used_elem*>(&used_base->ring[last_seen_used % size]));
         }
         used_base->enable_irq();
@@ -108,6 +110,7 @@ struct queue {
     }
 
     std::pair<int, queue_descriptor*> alloc() {
+        // TODO: need to find a descriptor that's actually free
         auto idx = next_buffer++ % size;
         return {idx, &descriptors()[idx]};
     }
