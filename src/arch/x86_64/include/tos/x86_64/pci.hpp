@@ -63,6 +63,16 @@ inline void config_write_dword(
     return config_write_raw(bus, slot, func, offset, value);
 }
 
+inline void config_write_word(
+    uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint16_t value) {
+    auto qword = config_read_raw(bus, slot, func, offset);
+    auto in_offset = offset & 0b10;
+    auto bits = in_offset * 8;
+    qword &= ~(0xffff << bits);
+    qword |= static_cast<uint32_t>(value) << bits;
+    config_write_raw(bus, slot, func, offset, qword);
+}
+
 inline void config_write_byte(
     uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint8_t value) {
     auto qword = config_read_raw(bus, slot, func, offset);
@@ -112,6 +122,8 @@ struct capability {
     uint8_t read_byte(uint8_t offset) const;
     uint16_t read_word(uint8_t offset) const;
     uint32_t read_long(uint8_t offset) const;
+
+    void write_word(uint8_t offset, uint16_t);
 
     const device* m_dev;
     uint8_t m_offset;
@@ -224,5 +236,9 @@ inline uint16_t capability::read_word(uint8_t offset) const {
 }
 inline uint32_t capability::read_long(uint8_t offset) const {
     return m_dev->call_fn(detail::config_read_dword, m_offset + offset);
+}
+
+inline void capability::write_word(uint8_t offset, uint16_t val) {
+    m_dev->call_fn(detail::config_write_word, m_offset + offset, val);
 }
 } // namespace tos::x86_64::pci
