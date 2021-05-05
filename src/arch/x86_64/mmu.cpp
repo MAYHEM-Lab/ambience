@@ -187,8 +187,8 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
 }
 
 expected<void, mmu_errors> mark_nonresident(translation_table& root,
-                                            const segment& virt_seg) {
-    for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
+                                            const memory_range& virt_range) {
+    for (uintptr_t addr = virt_range.base; addr != virt_range.end();
          addr += page_size_bytes) {
         auto path = pt_path_for_addr(addr);
 

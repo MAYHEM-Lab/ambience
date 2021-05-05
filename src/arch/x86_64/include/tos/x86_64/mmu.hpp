@@ -186,7 +186,7 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
                                          void* phys_addr);
 
 expected<void, mmu_errors> mark_nonresident(translation_table& root,
-                                            const segment& virt_seg);
+                                            const memory_range& virt_range);
 
 expected<const table_entry*, mmu_errors> entry_for_address(const translation_table& root,
                                                            uintptr_t virt_addr);
