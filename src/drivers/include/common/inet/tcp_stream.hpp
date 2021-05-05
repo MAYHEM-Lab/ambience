@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <arch/tcp.hpp>
 #include <common/driver_base.hpp>
 #include <common/inet/lwip.hpp>
 #include <tos/event.hpp>
@@ -74,7 +73,7 @@ inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::sent_t,
 #ifdef ESP_TCP_VERBOSE
     tos_debug_print("sent: %d\n", int(len));
 #endif
-    LOG_TRACE("Sent:", len);
+//    LOG_TRACE("Sent:", len);
     m_sent_bytes += len;
     m_write_sync.up();
 }
@@ -99,6 +98,9 @@ int tcp_stream<BaseEndpointT>::write(tos::span<const uint8_t> buf) {
     }
     m_sent_bytes = 0;
     auto to_send = m_ep.send(buf);
+    if (to_send != buf.size()) {
+        return 0;
+    }
 #ifdef TOS_TCP_VERBOSE
     tos_debug_print("sending: %d\n", int(to_send));
 #endif
