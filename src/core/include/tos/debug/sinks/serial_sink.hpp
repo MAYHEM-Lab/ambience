@@ -24,7 +24,7 @@ public:
         if (!m_tag.empty()) {
             tos::print(m_serial, "[", m_tag, "] ", tos::no_separator());
         }
-        tos::print(m_serial, "[", level, "] ", tos::no_separator());
+        tos::print(m_serial, "[", level, "] [", seq++, "] ", tos::no_separator());
         return true;
     }
 
@@ -63,6 +63,7 @@ public:
     }
 
 public:
+    int seq = 0;
     std::unique_ptr<tos::mutex> m_prot = std::make_unique<tos::mutex>();
     SerialT m_serial;
     std::string_view m_tag;
