@@ -1,4 +1,5 @@
 #include <tos/platform.hpp>
+#include <tos/x86_64/apic.hpp>
 #include <tos/x86_64/port.hpp>
 
 namespace tos::platform {
@@ -48,9 +49,13 @@ void reset_post_irq() {
 extern "C" {
 [[gnu::used]] void irq_entry(tos::x86_64::exception_frame* frame, int num) {
     tos::platform::irqs[num - 32](frame, num);
-    tos::x86_64::port(0x20).outb(0x20);
-    if ((num - 32) >= 8) {
-        tos::x86_64::port(0xa0).outb(0x20);
+    if (tos::x86_64::apic_enabled) {
+        tos::x86_64::get_current_apic_registers().eoi = 0;
+    } else {
+        tos::x86_64::port(0x20).outb(0x20);
+        if ((num - 32) >= 8) {
+            tos::x86_64::port(0xa0).outb(0x20);
+        }
     }
     tos::platform::post_irq(frame);
 }
