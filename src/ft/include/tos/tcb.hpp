@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <string_view>
 #include <tos/arch.hpp>
 #include <tos/context.hpp>
 #include <tos/interrupt.hpp>
