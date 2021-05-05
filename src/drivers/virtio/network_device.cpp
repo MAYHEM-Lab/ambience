@@ -74,21 +74,23 @@ bool network_device::initialize(physical_page_allocator* palloc) {
     }
     LOG("Status:", transport().read_u16(status_offset));
 
-    auto recv_mem = palloc->allocate(17, 1);
+    for (int i = 0; i < 32; ++i) {
+        auto recv_mem = palloc->allocate(1, 1);
 
-    auto mem = palloc->address_of(*recv_mem);
-    LOG(bool(tos::cur_arch::map_region(
-        tos::cur_arch::get_current_translation_table(),
-        {{uintptr_t(mem), ptrdiff_t(tos::cur_arch::page_size_bytes)},
-         tos::permissions::read_write},
-        tos::user_accessible::no,
-        tos::memory_types::normal,
-        palloc,
-        mem)));
+        auto mem = palloc->address_of(*recv_mem);
+        LOG(bool(tos::cur_arch::map_region(
+            tos::cur_arch::get_current_translation_table(),
+            {{uintptr_t(mem), ptrdiff_t(tos::cur_arch::page_size_bytes * 1)},
+             tos::permissions::read_write},
+            tos::user_accessible::no,
+            tos::memory_types::normal,
+            palloc,
+            mem)));
 
-    auto buf_ptr = new (mem) buf{};
+        auto buf_ptr = new (mem) buf{};
 
-    queue_rx_buf(*buf_ptr);
+        queue_rx_buf(*buf_ptr);
+    }
 
     transport().enable_interrupts(tos::mem_function_ref<&network_device::isr>(*this));
 
@@ -110,7 +112,7 @@ void network_device::queue_rx_buf(buf& buffer) {
     auto [body_idx, body_desc] = rx_queue.alloc();
 
     body_desc->addr = reinterpret_cast<uintptr_t>(&buffer.header);
-    body_desc->len = sizeof(virtio_net_hdr) + mtu();
+    body_desc->len = 1526;
     body_desc->flags = queue_flags::write;
     body_desc->next = 0;
 
