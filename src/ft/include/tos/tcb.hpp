@@ -45,6 +45,12 @@ struct alignas(alignof(std::max_align_t)) tcb : public job {
      */
     virtual ~tcb() = 0;
 
+
+#define TOS_FEATURE_TCB_HAVE_NAME
+#ifdef TOS_FEATURE_TCB_HAVE_NAME
+    std::string_view name = "<no-name>";
+#endif
+
     tos::list_node<tcb> m_siblings;
 
 protected:
@@ -56,6 +62,20 @@ public:
 private:
     processor_state* m_ctx;
 };
+
+inline void set_name(tcb& t, std::string_view name) {
+#ifdef TOS_FEATURE_TCB_HAVE_NAME
+    t.name = name;
+#endif
+}
+
+inline std::string_view get_name(const tcb& t) {
+#ifdef TOS_FEATURE_TCB_HAVE_NAME
+    return t.name;
+#else
+    return "<names-not-enabled>";
+#endif
+}
 } // namespace tos::kern
 
 namespace tos {
