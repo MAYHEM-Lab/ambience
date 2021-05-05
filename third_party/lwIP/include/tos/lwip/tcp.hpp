@@ -89,6 +89,7 @@ expected<tcp_endpoint, lwip::connect_error> connect(ipv4_addr_t host, port_num_t
 
 namespace tos::lwip {
 inline tcp_socket::tcp_socket(port_num_t port) {
+    tos::lock_guard lg{tos::lwip::lwip_lock};
     auto pcb = tcp_new();
 
     auto err = tcp_bind(pcb, IP_ADDR_ANY, port.port);
@@ -112,6 +113,7 @@ err_t accept_handler(void* user, tcp_pcb* new_conn, err_t err) {
     if (err != ERR_OK) {
         return ERR_OK;
     }
+
     auto self = static_cast<tcp_socket*>(user);
 
     auto& handler = *(ConnHandlerT*)self->m_accept_handler;
@@ -125,6 +127,7 @@ err_t accept_handler(void* user, tcp_pcb* new_conn, err_t err) {
 template<class ConnHandlerT>
 void tcp_socket::async_accept(ConnHandlerT& handler) {
     m_accept_handler = &handler;
+    tos::lock_guard lg{tos::lwip::lwip_lock};
 
     tcp_arg(m_conn, this);
     tcp_accept(m_conn, &accept_handler<ConnHandlerT>);
@@ -136,6 +139,8 @@ inline tcp_socket::~tcp_socket() {
 
 inline tcp_endpoint::tcp_endpoint(tcp_pcb* conn)
     : m_conn{conn} {
+    tos::lock_guard lg{tos::lwip::lwip_lock};
+
     tcp_arg(m_conn, this);
     tcp_err(m_conn, &null_err_handler);
 }
@@ -143,20 +148,21 @@ inline tcp_endpoint::tcp_endpoint(tcp_pcb* conn)
 inline tcp_endpoint::tcp_endpoint(tcp_endpoint&& rhs) noexcept
     : m_conn{rhs.m_conn}
     , m_event_handler{rhs.m_event_handler} {
+    tos::lock_guard lg{tos::lwip::lwip_lock};
+
     tcp_arg(m_conn, this);
     rhs.m_event_handler = nullptr;
     rhs.m_conn = nullptr;
 }
 
 inline tcp_endpoint::~tcp_endpoint() {
-#ifdef TOS_TCP_VERBOSE
-    tos_debug_print("tcp dtor called\n");
-#endif
-    if (!m_conn)
+    //    LOG_TRACE("tcp dtor called");
+    if (!m_conn) {
         return;
-#ifdef TOS_TCP_VERBOSE
-    tos_debug_print("closing\n");
-#endif
+    }
+    //    LOG_TRACE("closing");
+    tos::lock_guard lg{tos::lwip::lwip_lock};
+
     tcp_recv(m_conn, nullptr);
     tcp_err(m_conn, nullptr);
     tcp_sent(m_conn, nullptr);
@@ -172,10 +178,16 @@ inline uint16_t tcp_endpoint::send(tos::span<const uint8_t> buf) {
         LOG_ERROR("erroneous call to send");
         return 0;
     }
+    //    LOG("tcp send", buf.size());
+    tos::lock_guard lg{tos::lwip::lwip_lock};
+
     auto write_res = tcp_write(m_conn, buf.data(), buf.size(), 0);
-    LOG_TRACE("Write:", write_res);
-    auto out_res = tcp_output(m_conn);
-    LOG_TRACE("Out:", out_res);
+    //    LOG_TRACE("Write:", write_res);
+    if (write_res != ERR_OK) {
+        return 0;
+    }
+    //    auto out_res = tcp_output(m_conn);
+    //    LOG_TRACE("Out:", out_res);
     return buf.size();
 }
 

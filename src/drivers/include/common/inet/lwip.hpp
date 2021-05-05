@@ -235,5 +235,7 @@ private:
     size_t m_read_off;
     tos::semaphore m_len{0};
 };
+
+inline tos::recursive_mutex lwip_lock;
 } // namespace lwip
 } // namespace tos
