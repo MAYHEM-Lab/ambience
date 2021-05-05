@@ -120,7 +120,7 @@ struct info_t {
     uint32_t boot_loader_name;
 
     // APM table.
-    const apm_table_t* apm_table;
+    uint32_t apm_table;
 
     // Video.
     uint32_t vbe_control_info;
@@ -154,13 +154,23 @@ struct info_t {
 };
 
 template<class OutStr>
+void print(OutStr& str, const apm_table_t& apm_table) {
+    using tos::print;
+    print(str, apm_table.version);
+}
+
+template<class OutStr>
 void print(OutStr& str, const info_t& info) {
     using tos::print;
     print(str,
           (void*)&info,
           (void*)info.flags,
+          (void*)(info.flags & info_flags::has_apm),
           reinterpret_cast<void*>(static_cast<uintptr_t>(info.mem_lower) * 1024),
-          reinterpret_cast<void*>(static_cast<uintptr_t>(info.mem_upper) * 1024));
+          reinterpret_cast<void*>(static_cast<uintptr_t>(info.mem_upper) * 1024),
+          (const char*)info.boot_loader_name,
+          (const char*)info.cmdline,
+          *(const apm_table_t*)info.apm_table);
 }
 
 inline const info_t* load_info;
