@@ -25,6 +25,11 @@ public:
     span<uint8_t> take_packet();
     void return_packet(span<uint8_t>);
 
+    template<class Fn>
+    void transmit_gather_callback(Fn&& fn) {
+        this->transmit_gather_callback_impl(function_ref<span<const uint8_t>()>(fn));
+    }
+
     void transmit_packet(span<const uint8_t> data);
     Task<void> async_transmit_packet(span<const uint8_t> data);
 
@@ -32,6 +37,7 @@ protected:
     uint32_t negotiate(uint32_t) override;
 
 private:
+    void transmit_gather_callback_impl(function_ref<span<const uint8_t>()> cb);
     void isr();
 
     void queue_rx_buf(buf&);
