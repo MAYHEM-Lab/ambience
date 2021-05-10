@@ -1,4 +1,4 @@
-add_lidlc(calc_schema calc.yaml)
+add_lidlc(calc_schema calc.lidl)
 
 add_lidlc(block_memory_schema block_memory.yaml)
 
