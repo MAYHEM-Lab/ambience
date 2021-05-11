@@ -7,7 +7,7 @@ tos::Task<bool> handle_req(tos::ae::req_elem el);
 
 namespace tos::ae {
 tos::Task<void> log_str(std::string_view sv) {
-    co_await tos::ae::submit_req<false>(iface, 4, 1, &sv, nullptr);
+    co_await tos::ae::submit_req<false>(iface, 0, 1, &sv, nullptr);
 }
 
 namespace {

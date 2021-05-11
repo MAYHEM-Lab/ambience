@@ -1,4 +1,4 @@
-add_library(aecommon src/common.cpp include/tos/ae/entry.hpp)
+add_library(aecommon src/common.cpp include/tos/ae/entry.hpp include/tos/ae/service_host.hpp include/tos/ae/group.hpp include/tos/ae/transport/downcall.hpp include/tos/ae/transport/upcall.hpp)
 target_include_directories(aecommon PUBLIC include)
 target_link_libraries(aecommon PUBLIC tos_util_core)
 

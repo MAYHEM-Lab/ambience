@@ -1,4 +1,4 @@
-namespace tos::ae::service;
+namespace tos::ae::services;
 
 service calculator {
     add(x: i32, y: i32) -> i32;

@@ -1,3 +1,4 @@
+#include "kernel.hpp"
 #include <arch/drivers.hpp>
 #include <calc_generated.hpp>
 #include <group1.hpp>
@@ -165,13 +166,16 @@ load_from_elf(const tos::elf::elf64& elf,
 
 class raspi3_platform_support {
 public:
-    auto stage1_init() {
+    void stage1_init() {
         tos::periph::clock_manager clock_man;
         LOG("CPU Freq:", clock_man.get_frequency(tos::bcm283x::clocks::arm));
         LOG("Max CPU Freq:", clock_man.get_max_frequency(tos::bcm283x::clocks::arm));
         clock_man.set_frequency(tos::bcm283x::clocks::arm,
                                 clock_man.get_max_frequency(tos::bcm283x::clocks::arm));
         LOG("CPU Freq:", clock_man.get_frequency(tos::bcm283x::clocks::arm));
+    }
+
+    void stage2_init() {
     }
 
     auto init_serial() {
@@ -254,117 +258,38 @@ public:
         return runnable_groups;
     }
 
+    template<class FnT>
+    void set_syscall_handler(FnT&& syshandler) {
+        tos::aarch64::exception::set_svc_handler(
+            tos::aarch64::exception::svc_handler_t(syshandler));
+    }
+
+    void return_to_thread_from_irq(tos::kern::tcb& from, tos::kern::tcb& to) {
+        return_from = &from;
+        return_to = &to;
+        ic.set_post_irq(
+            tos::mem_function_ref<&raspi3_platform_support::do_return>(*this));
+    }
+
 private:
+    void do_return() {
+        ic.reset_post_irq();
+        tos::swap_context(*return_from, *return_to, tos::int_ctx{});
+    }
+
+    tos::kern::tcb* return_from;
+    tos::kern::tcb* return_to;
+
     tos::raspi3::interrupt_controller ic;
 };
 
-template<class T>
-concept PlatformSupport = requires(T t) {
-    t.stage1_init();
-    t.init_serial();
-    t.init_timer();
-    t.init_odi();
-    t.init_physical_memory_allocator();
-    t.init_groups(std::declval<tos::interrupt_trampoline&>(),
-                  *t.init_physical_memory_allocator());
-};
-
-template<PlatformSupport Platform>
-class manager : Platform {
-    using serial_type = decltype(std::declval<Platform>().init_serial());
-    using timer_type = decltype(std::declval<Platform>().init_timer());
-    using odi_type = decltype(std::declval<Platform>().init_odi());
-
-public:
-    manager() {
-    }
-
-    void initialize() {
-        m_serial.emplace_fn(&Platform::init_serial, static_cast<Platform*>(this));
-        tos::println(m_serial.get(), "ambience");
-
-        m_sink.emplace(&m_serial.get());
-        m_logger.emplace(&m_sink.get());
-        tos::debug::set_default_log(&m_logger.get());
-        LOG("Log setup complete");
-
-        // Stage 1 initialization has a logger!
-        Platform::stage1_init();
-
-        m_timer.emplace_fn(&Platform::init_timer, static_cast<Platform*>(this));
-        LOG("Timer setup complete");
-
-        m_odi.emplace_fn(&Platform::init_odi, static_cast<Platform*>(this));
-        m_trampoline = tos::make_interrupt_trampoline(m_odi.get());
-        LOG("Trampoline setup complete");
-
-        auto palloc = Platform::init_physical_memory_allocator();
-        LOG("Page allocator intialized");
-
-        m_runnable_groups = Platform::init_groups(*m_trampoline, *palloc);
-        LOG("Groups initialized");
-
-        m_self = tos::self();
-    }
-
-    void run() {
-        int32_t x = 3, y = 42;
-        auto params = std::make_tuple(&x, &y);
-        auto results = tos::ae::service::calculator::wire_types::add_results{-1};
-
-        auto& req1 = tos::ae::submit_req<true>(
-            *m_runnable_groups.front().iface.user_iface, 0, 0, &params, &results);
-
-        auto syshandler2 = [this](auto&&...) {
-            tos::swap_context(*m_runnable_groups.front().state, *m_self, tos::int_ctx{});
-        };
-
-        bool preempted = false;
-        auto preempt = [&] {
-            preempted = true;
-            tos::swap_context(*m_runnable_groups.front().state, *m_self, tos::int_ctx{});
-        };
-        m_timer.get().set_callback(tos::function_ref<void()>(preempt));
-        m_timer.get().set_frequency(100);
-
-        for (int i = 0; i < 10; ++i) {
-            LOG("back", results.ret0(), "Preempted", preempted);
-            proc_req_queue(m_runnable_groups.front().iface);
-            tos::this_thread::yield();
-
-            m_odi.get()([&](auto...) {
-                tos::aarch64::exception::set_svc_handler(
-                    tos::aarch64::exception::svc_handler_t(syshandler2));
-
-                preempted = false;
-                m_timer.get().enable();
-                tos::swap_context(
-                    *m_self, *m_runnable_groups.front().state, tos::int_ctx{});
-                m_timer.get().disable();
-            });
-            // std::swap(runnable_groups.front(), runnable_groups.back());
-        }
-    }
-
-    ~manager() {
-    }
-
-private:
-    tos::kern::tcb* m_self;
-    std::unique_ptr<tos::interrupt_trampoline> m_trampoline;
-    std::vector<tos::ae::kernel::user_group> m_runnable_groups;
-
-    tos::late_constructed<serial_type> m_serial;
-    tos::late_constructed<tos::debug::serial_sink<serial_type*>> m_sink;
-    tos::late_constructed<tos::debug::detail::any_logger> m_logger;
-    tos::late_constructed<timer_type> m_timer;
-    tos::late_constructed<odi_type> m_odi;
-};
-
 expected<void, errors> kernel() {
-    manager<raspi3_platform_support> man;
+    tos::ae::manager<raspi3_platform_support> man;
     man.initialize();
-    man.run();
+
+    for (int i = 0; i < 10; ++i) {
+        man.run();
+    }
 
     return {};
 }

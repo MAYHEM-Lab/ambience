@@ -1,0 +1,9 @@
+namespace tos::ae;
+
+service group {
+    health_probe() -> bool;
+}
+
+service base_service {
+    health_probe() -> bool;
+}
