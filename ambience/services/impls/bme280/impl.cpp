@@ -7,7 +7,7 @@ namespace {
 auto delay = [](std::chrono::microseconds) {};
 using driv = tos::device::bme280::driver<tos::ae::services::i2c::sync_server* const, decltype(delay)>;
 struct impl final : tos::ae::services::temp_sensor::sync_server {
-    impl(tos::ae::service::i2c::sync_server& i2c) : m_driver{{0x1}, &i2c, delay} {}
+    impl(tos::ae::services::i2c::sync_server& i2c) : m_driver{{0x1}, &i2c, delay} {}
 
     float sample() override {
         return force_get(m_driver->read()).temperature;
