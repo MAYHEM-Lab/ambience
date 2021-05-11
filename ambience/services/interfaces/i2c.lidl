@@ -1,4 +1,4 @@
-namespace tos::ae::service;
+namespace tos::ae::services;
 
 import "tos_i2c";
 

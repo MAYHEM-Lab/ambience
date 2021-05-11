@@ -6,7 +6,7 @@
 namespace {
 using namespace tos::stm32;
 
-struct impl final : tos::ae::service::i2c::sync_server {
+struct impl final : tos::ae::services::i2c::sync_server {
     tos::twi_rx_res receive(uint8_t addr, tos::span<uint8_t> data) override {
         return m_driv->receive({addr}, data);
     }
@@ -19,6 +19,6 @@ struct impl final : tos::ae::service::i2c::sync_server {
 };
 } // namespace
 
-tos::Task<tos::ae::service::i2c::sync_server*> init_stm32_i2c() {
+tos::Task<tos::ae::services::i2c::sync_server*> init_stm32_i2c() {
     co_return new impl{};
 }
