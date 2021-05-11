@@ -9,6 +9,7 @@
 #include <lidlrt/meta.hpp>
 #include <lidlrt/status.hpp>
 #include <string_view>
+#include <tos/task.hpp>
 #include <tuple>
 
 namespace lidl {
@@ -71,10 +72,16 @@ struct get_result_type_impl<const std::tuple<
 } // namespace meta
 
 template<class ServiceT>
-using typed_procedure_runner_t = void (*)(ServiceT&,
+using typed_async_procedure_runner_t = tos::Task<bool> (*)(ServiceT&,
+                                                           tos::span<uint8_t>,
+                                                           lidl::message_builder&);
+
+template<class ServiceT>
+using typed_procedure_runner_t = bool (*)(ServiceT&,
                                           tos::span<uint8_t>,
                                           lidl::message_builder&);
 
+using async_erased_procedure_runner_t = typed_async_procedure_runner_t<service_base>;
 using erased_procedure_runner_t = typed_procedure_runner_t<service_base>;
 
 template<class ServiceT>
@@ -83,15 +90,20 @@ using typed_union_procedure_runner_t =
              typename ServiceT::service_type::wire_types::call_union&,
              lidl::message_builder&);
 
+template<class ServiceT>
+using typed_async_union_procedure_runner_t =
+    tos::Task<void> (*)(ServiceT&,
+                        typename ServiceT::service_type::wire_types::call_union&,
+                        lidl::message_builder&);
+
 template<class>
 class print;
 
 namespace detail {
 template<class ServiceT, class BaseServT = ServiceT>
-void union_caller(
-    BaseServT& base_service,
-    typename ServiceT::service_type::wire_types::call_union& call_union,
-    lidl::message_builder& response) {
+bool union_caller(BaseServT& base_service,
+                  typename ServiceT::service_type::wire_types::call_union& call_union,
+                  lidl::message_builder& response) {
     auto& service = static_cast<ServiceT&>(base_service);
 
     /**
@@ -112,7 +124,7 @@ void union_caller(
     using all_results =
         typename meta::get_result_type_impl<decltype(descriptor::procedures)>::results;
 
-    visit(
+    return visit(
         [&](auto& call_params) -> decltype(auto) {
             constexpr auto idx = meta::tuple_index_of<
                 std::remove_const_t<std::remove_reference_t<decltype(call_params)>>,
@@ -144,16 +156,16 @@ void union_caller(
              *    If not, we return whatever the procedure returned directly.
              *
              */
-            auto make_service_call = [&service, &response](auto&&... args) -> void {
+            auto make_service_call = [&service, &response](auto&&... args) -> bool {
                 constexpr auto proc = rpc_param_traits<std::remove_const_t<
                     std::remove_reference_t<decltype(call_params)>>>::params_for;
 
                 using proc_traits = procedure_traits<decltype(proc)>;
                 if constexpr (!proc_traits::takes_response_builder()) {
-                    auto res = (service.*(proc))(args...);
+                    auto res = std::invoke(proc, service, args...);
                     create<results_union>(response, result_type(res));
                 } else {
-                    const auto& res = (service.*(proc))(args..., response);
+                    const auto& res = std::invoke(proc, service, args..., response);
                     if constexpr (std::is_same_v<meta::remove_cref<decltype(res)>,
                                                  std::string_view>) {
                         /**
@@ -175,15 +187,17 @@ void union_caller(
                         create<results_union>(response, r);
                     }
                 }
+
+                return true;
             };
 
-            apply(make_service_call, call_params);
+            return apply(make_service_call, call_params);
         },
         call_union);
 }
 
 template<class ServiceT, class BaseServT = ServiceT>
-void request_handler(BaseServT& base_service,
+bool request_handler(BaseServT& base_service,
                      tos::span<uint8_t> buffer,
                      lidl::message_builder& response) {
     static_assert(std::is_base_of_v<BaseServT, ServiceT>);
