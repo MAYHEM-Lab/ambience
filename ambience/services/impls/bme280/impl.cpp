@@ -5,8 +5,8 @@
 
 namespace {
 auto delay = [](std::chrono::microseconds) {};
-using driv = tos::device::bme280::driver<tos::ae::service::i2c::sync_server* const, decltype(delay)>;
-struct impl final : tos::ae::service::temp_sensor::sync_server {
+using driv = tos::device::bme280::driver<tos::ae::services::i2c::sync_server* const, decltype(delay)>;
+struct impl final : tos::ae::services::temp_sensor::sync_server {
     impl(tos::ae::service::i2c::sync_server& i2c) : m_driver{{0x1}, &i2c, delay} {}
 
     float sample() override {
@@ -17,6 +17,6 @@ struct impl final : tos::ae::service::temp_sensor::sync_server {
 };
 } // namespace
 
-extern "C" tos::ae::service::temp_sensor::sync_server* init_bme280(tos::ae::service::i2c::sync_server& i2c) {
+extern "C" tos::ae::service::temp_sensor::sync_server* init_bme280(tos::ae::services::i2c::sync_server& i2c) {
     return new impl{i2c};
 }
