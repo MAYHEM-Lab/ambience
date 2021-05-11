@@ -3,8 +3,7 @@
 #include <tos/gui/elements/extra/qrcode.hpp>
 
 namespace tos::gui::elements {
-qrcode_element::qrcode_element(std::string_view data,
-                               qr::error_correction ecc) {
+qrcode_element::qrcode_element(std::string_view data, qr::error_correction ecc) {
     QRCode qrcode;
 
     // Allocate a chunk of memory to store the QR code
@@ -30,7 +29,7 @@ qrcode_element::qrcode_element(std::string_view data,
 
 void qrcode_element::draw(const draw_context& ctx) {
     tos::gfx2::bitmap checkerboard(
-        tos::gfx2::colors::binary_color, m_buffer, {m_size, m_size});
+        tos::gfx2::color::alternatives::binary, m_buffer, {m_size, m_size});
 
     using namespace tos::gui::elements;
     image(checkerboard).draw(ctx);
