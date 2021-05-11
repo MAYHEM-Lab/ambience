@@ -100,6 +100,11 @@ public:
                     return done();
                 }
 
+                if (m_runnable_groups.front().exposed_services.size() <= req.channel - 1) {
+                    LOG_ERROR("No such service!");
+                    return done();
+                }
+
                 m_runnable_groups.front().exposed_services[req.channel - 1].run_zerocopy(
                     req.procid, req.arg_ptr, req.ret_ptr);
                 return done();
