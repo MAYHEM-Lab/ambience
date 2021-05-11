@@ -4,7 +4,7 @@ endif()
 
 include(lidlc)
 
-add_lidlc(painter_schema painter.yaml)
+add_lidlc(painter_schema painter.lidl)
 add_lidlc(gfx_schema gfx.yaml)
 
 add_library(

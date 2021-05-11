@@ -119,7 +119,7 @@ public:
         return 0;
     }
 
-    bool draw_bitmap(tos::gfx2::colors color_type,
+    bool draw_bitmap(tos::gfx2::color::alternatives color_type,
                      tos::span<uint8_t> buffer,
                      int16_t stride,
                      const tos::gfx2::rectangle& image_rect,

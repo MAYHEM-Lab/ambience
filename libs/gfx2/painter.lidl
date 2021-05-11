@@ -1,0 +1,48 @@
+namespace tos::services;
+
+import "./gfx";
+
+enum rotation {
+    vertical,   // 0 degrees
+    horizontal  // 90 degrees CCW
+}
+
+struct style {
+    color: tos::gfx2::color;
+}
+
+service painter {
+    set_style(s: style) -> i8;
+
+    get_dimensions() -> tos::gfx2::size;
+
+    draw_point(p: tos::gfx2::point) -> i8;
+
+    draw_line(l: tos::gfx2::line) -> i8;
+
+    draw_rect(rect: tos::gfx2::rectangle,
+              radius: i8,
+              fill: bool) -> i8;
+
+    draw_circle(center: tos::gfx2::point,
+                radius: i8,
+                fill: bool) -> i8;
+
+    draw_text(text: string_view,
+              p: tos::gfx2::point) -> i8;
+
+    draw_bitmap(color_type: tos::gfx2::color::alternatives,
+                buffer: span<u8>,
+                stride: i16,
+                image_rect: tos::gfx2::rectangle,
+                screen_rect: tos::gfx2::rectangle) -> bool;
+
+    // Flushes any buffers within the painter. Before calling this function, the contents of the output of this painter
+    // may be incomplete.
+    flush() -> i8;
+
+    // Sets the orientation of the painter.
+    // This causes future coordinates to be translated to the physical coordinates. For instance, coordinate (3, 4) will
+    // correspond to (w - 3, 4) when rotated 90 degrees.
+    set_orientation(orientation: rotation) -> bool;
+}

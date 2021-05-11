@@ -46,13 +46,6 @@ mono8:
   members:
     col: u8
 
-colors:
-  type: enumeration
-  members:
-    - binary_color
-    - rgb8
-    - mono8
-
 color:
   type: union
   variants:

@@ -12,8 +12,7 @@ bit_painter::bit_painter(tos::span<uint8_t> buffer, const size& dims)
     , m_col(binary_color{true}) {
 }
 
-int8_t
-bit_painter::draw_rect(const rectangle& rect, int8_t radius, bool fill) {
+int8_t bit_painter::draw_rect(const rectangle& rect, int8_t radius, bool fill) {
     auto draw_point = [this](const tos::gfx2::point& pt) { this->draw_point(pt); };
 
     if (fill) {
@@ -78,7 +77,7 @@ bit_painter::draw_rect(const rectangle& rect, int8_t radius, bool fill) {
 
 int8_t bit_painter::draw_text(std::string_view text, const point& p) {
     static constexpr auto font = tos::gfx::basic_font().mirror_horizontal();
-//    LOG("Drawing text", text);
+    //    LOG("Drawing text", text);
     draw_text_line(text, font, p);
     return 0;
 }
@@ -87,7 +86,7 @@ template<class FontT>
 void bit_painter::draw_text_line(std::string_view str,
                                  const FontT& font,
                                  tos::gfx2::point p) {
-//    LOG("Drawing text line", str);
+    //    LOG("Drawing text line", str);
     for (char c : str) {
         if (c == 0)
             return;
@@ -162,7 +161,7 @@ bool bit_painter::set_orientation(tos::services::rotation orientation) {
     return false;
 }
 
-bool bit_painter::draw_bitmap(tos::gfx2::colors color_type,
+bool bit_painter::draw_bitmap(tos::gfx2::color::alternatives color_type,
                               tos::span<uint8_t> buffer,
                               int16_t stride,
                               const tos::gfx2::rectangle& image_rect,
@@ -172,19 +171,19 @@ bool bit_painter::draw_bitmap(tos::gfx2::colors color_type,
     //     type conversion done here
     auto get_pixel = [&](int row, int col) {
         switch (color_type) {
-        case tos::gfx2::colors::mono8: {
+        case tos::gfx2::color::alternatives::mono: {
             auto base = reinterpret_cast<const tos::gfx2::mono8*>(buffer.data());
             auto color = base[row * stride + col];
 
             return color_convert<binary_color>(color);
         }
-        case tos::gfx2::colors::rgb8: {
+        case tos::gfx2::color::alternatives::rgb: {
             auto base = reinterpret_cast<const tos::gfx2::rgb8*>(buffer.data());
             auto color = base[row * stride + col];
 
             return color_convert<binary_color>(color);
         }
-        case tos::gfx2::colors::binary_color: {
+        case tos::gfx2::color::alternatives::binary: {
             auto base = reinterpret_cast<const tos::gfx2::binary_color*>(buffer.data());
             auto color = base[row * stride + col];
 
