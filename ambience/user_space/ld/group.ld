@@ -1,5 +1,10 @@
 ENTRY(_user_code)
 
+PHDRS {
+  RODATA PT_LOAD FLAGS(5);
+  DATA PT_LOAD;
+}
+
 SECTIONS {
   __start = .;
   __text_start = .;
@@ -9,7 +14,7 @@ SECTIONS {
     *(.text*)
     *(.text.*)
     . = ALIGN(4096);
-  } > ROM
+  } > ROM : RODATA
   __text_end = .;
 
   __rodata_start = .;
@@ -25,21 +30,21 @@ SECTIONS {
     *(.ctors.*)
     end_ctors = .;
     . = ALIGN(4096);
-  } > ROM
+  } > ROM : RODATA
   __rodata_end = .;
 
   .gnu_build_id :
   {
     PROVIDE(build_id = .);
     *(.note.gnu.build-id)
-  } > ROM
+  } > ROM : RODATA
 
   .ARM : {
     __exidx_start = .;
     *(.ARM.exidx*)
     __exidx_end = .;
     . = ALIGN(4096);
-  } >ROM
+  } >ROM : RODATA
 
   _sidata = LOADADDR(.data);
   .data :
@@ -49,7 +54,7 @@ SECTIONS {
     *(.data.*)
     . = ALIGN(4096);
     __data_end = .;
-  } > RAM AT > ROM
+  } > RAM AT > ROM : DATA
 
   __bss_start = .;
   .bss (NOLOAD):
@@ -61,7 +66,7 @@ SECTIONS {
     *(.nozero*);
     *(.nozero.*);
     . = ALIGN(4096);
-  } > RAM
+  } > RAM : DATA
 
    __end = .;
 }
