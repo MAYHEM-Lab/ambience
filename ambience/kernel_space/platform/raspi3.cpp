@@ -8,6 +8,7 @@
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/arch.hpp>
 #include <tos/debug/dynamic_log.hpp>
+#include <tos/debug/sinks/lidl_sink.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
 #include <tos/elf.hpp>
 #include <tos/flags.hpp>
@@ -286,6 +287,10 @@ private:
 expected<void, errors> kernel() {
     tos::ae::manager<raspi3_platform_support> man;
     man.initialize();
+
+    tos::debug::log_server serv(man.get_log_sink());
+
+    man.groups().front().exposed_services.emplace_back(&serv);
 
     for (int i = 0; i < 10; ++i) {
         man.run();
