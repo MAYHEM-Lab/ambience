@@ -6,6 +6,7 @@
 #include <new>
 #include <tos/detail/coro.hpp>
 #include <tos/flags.hpp>
+#include <tos/function_ref.hpp>
 
 namespace tos::ae {
 enum class elem_flag : uint8_t
@@ -39,13 +40,15 @@ struct req_elem {
             }
 
             void await_suspend(std::coroutine_handle<> handle) {
-                el->user_ptr = handle.address();
+                ref = coro_resumer(handle);
+                el->user_ptr = &ref;
             }
 
             void await_resume() const {
             }
 
             req_elem* el;
+            tos::function_ref<void()> ref{[](void*) {}};
         };
 
         return awaiter{this};
@@ -122,7 +125,8 @@ struct interface_storage {
 };
 
 template<bool FromHypervisor>
-req_elem& submit_req(interface& iface, int channel, int proc, const void* params, void* res) {
+req_elem&
+submit_req(interface& iface, int channel, int proc, const void* params, void* res) {
     auto el_idx = iface.allocate();
     auto& req_el = iface.elems[el_idx].req;
 

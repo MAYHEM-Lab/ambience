@@ -1,5 +1,6 @@
 #include <tos/ae/user_space.hpp>
 #include <tos/detail/poll.hpp>
+#include <tos/function_ref.hpp>
 
 void post(tos::coro::pollable p);
 extern tos::ae::interface iface;
@@ -25,7 +26,10 @@ void proc_res_queue(interface& iface) {
                 // Response for a request we made.
 
                 auto& res = elem.res;
-                std::coroutine_handle<>::from_address(res.user_ptr).resume();
+                auto& continuation =
+                    *static_cast<tos::function_ref<void()>*>(res.user_ptr);
+                continuation();
+                //                std::coroutine_handle<>::from_address(res.user_ptr).resume();
             } else {
                 // We have a request to serve.
                 auto& req = elem.req;

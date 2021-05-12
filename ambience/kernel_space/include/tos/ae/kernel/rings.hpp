@@ -37,7 +37,9 @@ inline void proc_req_queue(ExecutorT&& executor, kernel_interface& iface) {
 
                 auto& res = elem.res;
                 if (res.user_ptr) {
-                    std::coroutine_handle<>::from_address(res.user_ptr).resume();
+                    auto& continuation =
+                        *static_cast<tos::function_ref<void()>*>(res.user_ptr);
+                    continuation();
                 }
             } else {
                 executor(req,
