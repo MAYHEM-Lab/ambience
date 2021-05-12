@@ -34,7 +34,7 @@ public:
         : handle_(handle) {
     }
 
-    pollable(pollable&& rhs)
+    pollable(pollable&& rhs) noexcept
         : handle_(std::exchange(rhs.handle_, coro_handle{})) {
     }
 
