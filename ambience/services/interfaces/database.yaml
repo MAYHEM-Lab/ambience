@@ -1,5 +1,5 @@
 $lidlmeta:
-  name: tos::ae::service
+  name: tos::ae::services
 
 database:
   type: service
