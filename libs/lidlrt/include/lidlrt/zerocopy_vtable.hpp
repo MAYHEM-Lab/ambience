@@ -20,11 +20,11 @@ struct convert_types<lidl::meta::list<Ts...>> {
 };
 
 template<class ServiceT, int ProcId>
-constexpr auto async_zerocopy_translator() -> zerocopy_fn_t {
+constexpr auto async_zerocopy_translator() -> async_zerocopy_fn_t {
     return [](lidl::service_base& serv_base,
               const void* args,
               void* ret) -> tos::Task<bool> {
-        auto& serv = static_cast<typename ServiceT::sync_server&>(serv_base);
+        auto& serv = static_cast<typename ServiceT::async_server&>(serv_base);
         using ServDesc = lidl::service_descriptor<ServiceT>;
         constexpr auto& proc_desc = std::get<ProcId>(ServDesc::procedures);
         using ProcTraits = lidl::procedure_traits<decltype(proc_desc.function)>;
@@ -49,7 +49,7 @@ constexpr auto async_zerocopy_translator() -> zerocopy_fn_t {
         };
 
         auto& args_tuple = *static_cast<const ArgsTupleType*>(args);
-        co_return std::apply(do_call, args_tuple);
+        return std::apply(do_call, args_tuple);
     };
 }
 
