@@ -300,10 +300,9 @@ expected<void, errors> kernel() {
     man.groups().front().exposed_services.emplace_back(&serv);
 
     auto req_task = [&g = man.groups().front()]() -> tos::Task<void> {
-        LOG("in coroutine");
         auto serv = static_cast<tos::ae::services::calculator::async_server*>(
             g.channels.front().get());
-        LOG(serv);
+
         auto res = co_await serv->add(3, 4);
         tos::launch(tos::alloc_stack, [res]{
             LOG("3 + 4 =", res);
