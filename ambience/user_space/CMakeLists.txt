@@ -7,8 +7,8 @@ add_library(ae_user_space
         user_space.cpp
         include/tos/ae/user_space.hpp
         entry.cpp
-        syscall/include/tos/ae/detail/syscall.hpp)
-target_link_libraries(ae_user_space PUBLIC tos_coro tos_util_core aecommon tos_arch_core log_schema group_schema)
+        syscall/include/tos/ae/detail/syscall.hpp heap.cpp)
+target_link_libraries(ae_user_space PUBLIC tos_coro tos_util_core aecommon tos_arch_core log_schema group_schema tos_print)
 target_link_libraries(ae_user_space PRIVATE tos_mem)
 
 target_include_directories(ae_user_space PUBLIC include)

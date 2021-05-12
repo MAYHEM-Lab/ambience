@@ -17,27 +17,32 @@ struct kernel_interface {
 
 template<class ExecutorT>
 inline void proc_req_queue(ExecutorT&& executor, kernel_interface& iface) {
-    iface.req_last_seen =
-        for_each(*iface.user_iface,
-                 *iface.user_iface->req,
-                 iface.req_last_seen,
-                 iface.user_iface->size,
-                 [&iface, &executor](ring_elem& elem) {
-                     auto& req = elem.req;
-                     LOG(req.channel, req.procid, req.arg_ptr, req.user_ptr, req.ret_ptr);
+    iface.req_last_seen = for_each(
+        *iface.user_iface,
+        *iface.user_iface->req,
+        iface.req_last_seen,
+        iface.user_iface->size,
+        [&iface, &executor](ring_elem& elem) {
+            auto& req = elem.req;
+            LOG(req.channel,
+                req.procid,
+                req.arg_ptr,
+                req.user_ptr,
+                req.ret_ptr,
+                util::is_flag_set(elem.common.flags, elem_flag::req) ? "Request"
+                                                                     : "Response");
 
-                     if (!util::is_flag_set(elem.common.flags, elem_flag::req)) {
-                         // Response for a request we made.
+            if (!util::is_flag_set(elem.common.flags, elem_flag::req)) {
+                // Response for a request we made.
 
-                         auto& res = elem.res;
-                         if (res.user_ptr) {
-                             std::coroutine_handle<>::from_address(res.user_ptr).resume();
-                         }
-                     } else {
-                         executor(req, [&elem, &iface] {
-                             respond<true>(*iface.user_iface, elem);
-                         });
-                     }
-                 });
+                auto& res = elem.res;
+                if (res.user_ptr) {
+                    std::coroutine_handle<>::from_address(res.user_ptr).resume();
+                }
+            } else {
+                executor(req,
+                         [&elem, &iface] { respond<true>(*iface.user_iface, elem); });
+            }
+        });
 }
 } // namespace tos::ae::kernel

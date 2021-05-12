@@ -77,7 +77,7 @@ public:
         tmr.set_callback(tos::function_ref<void()>(preempt));
         tmr.set_frequency(200);
 
-        LOG("Scheduling");
+        LOG("Scheduling", m_runnable_groups.size());
         m_odi.get()([&](auto...) {
             Platform::set_syscall_handler(syshandler);
 

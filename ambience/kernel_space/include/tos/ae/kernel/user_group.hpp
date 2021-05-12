@@ -11,6 +11,6 @@ struct user_group {
     kernel_interface iface;
     kern::tcb* state;
     std::vector<std::unique_ptr<lidl::service_base>> channels;
-    std::vector<tos::ae::service_host> exposed_services;
+    std::vector<tos::ae::sync_service_host> exposed_services;
 };
 } // namespace tos::ae::kernel

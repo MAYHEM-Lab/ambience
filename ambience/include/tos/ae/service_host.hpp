@@ -3,9 +3,9 @@
 #include <lidlrt/zerocopy_vtable.hpp>
 
 namespace tos::ae {
-struct service_host {
+struct sync_service_host {
     template<class ServiceT>
-    explicit service_host(ServiceT* serv)
+    explicit sync_service_host(ServiceT* serv)
         : impl{serv}
         , zerocopy_vtable{lidl::make_zerocopy_vtable<typename ServiceT::service_type>()}
         , message_runner{lidl::make_erased_procedure_runner<

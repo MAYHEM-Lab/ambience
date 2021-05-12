@@ -6,10 +6,12 @@
 #include <tos/aarch64/exception.hpp>
 #include <tos/aarch64/mmu.hpp>
 #include <tos/ae/kernel/user_group.hpp>
+#include <tos/ae/transport/downcall.hpp>
 #include <tos/arch.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/lidl_sink.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
+#include <tos/detail/tos_bind.hpp>
 #include <tos/elf.hpp>
 #include <tos/flags.hpp>
 #include <tos/interrupt_trampoline.hpp>
@@ -254,6 +256,11 @@ public:
             runnable_groups.push_back(force_get(
                 load_from_elf(force_get(elf_res), trampoline, palloc, level0_table)));
             LOG("Group loaded");
+
+            runnable_groups.back().channels.push_back(
+                std::make_unique<tos::ae::services::calculator::async_zerocopy_client<
+                    tos::ae::downcall_transport>>(
+                    *runnable_groups.back().iface.user_iface, 0));
         }
 
         return runnable_groups;
@@ -291,6 +298,21 @@ expected<void, errors> kernel() {
     tos::debug::log_server serv(man.get_log_sink());
 
     man.groups().front().exposed_services.emplace_back(&serv);
+
+    auto req_task = [&g = man.groups().front()]() -> tos::Task<void> {
+        LOG("in coroutine");
+        auto serv = static_cast<tos::ae::services::calculator::async_server*>(
+            g.channels.front().get());
+        LOG(serv);
+        auto res = co_await serv->add(3, 4);
+        tos::launch(tos::alloc_stack, [res]{
+            LOG("3 + 4 =", res);
+        });
+    };
+
+    tos::coro_job j(tos::current_context(), tos::coro::make_pollable(req_task()));
+    tos::kern::make_runnable(j);
+    tos::this_thread::yield();
 
     for (int i = 0; i < 10; ++i) {
         man.run();
