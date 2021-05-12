@@ -24,21 +24,21 @@ constexpr auto async_zerocopy_translator() -> async_zerocopy_fn_t {
     return [](lidl::service_base& serv_base,
               const void* args,
               void* ret) -> tos::Task<bool> {
-        auto& serv = static_cast<typename ServiceT::async_server&>(serv_base);
         using ServDesc = lidl::service_descriptor<ServiceT>;
         constexpr auto& proc_desc = std::get<ProcId>(ServDesc::procedures);
         using ProcTraits = lidl::procedure_traits<decltype(proc_desc.function)>;
         using ArgsTupleType =
             typename convert_types<typename ProcTraits::param_types>::tuple_type;
         using RetType = typename ProcTraits::return_type;
-        static constexpr bool is_ref = std::is_reference_v<RetType>;
+        constexpr bool is_ref = std::is_reference_v<RetType>;
         using ActualRetType =
             std::conditional_t<is_ref,
                                std::add_pointer_t<std::remove_reference_t<RetType>>,
                                RetType>;
+        constexpr auto& fn = proc_desc.async_function;
 
-        auto do_call = [&serv, ret](auto*... vals) -> tos::Task<bool> {
-            constexpr auto& fn = proc_desc.async_function;
+        auto do_call = [&serv = static_cast<typename ServiceT::async_server&>(serv_base),
+                        ret](auto*... vals) -> tos::Task<bool> {
             if constexpr (is_ref) {
                 auto& res = co_await std::invoke(fn, serv, *vals...);
                 new (ret) ActualRetType(&res);
@@ -49,7 +49,7 @@ constexpr auto async_zerocopy_translator() -> async_zerocopy_fn_t {
         };
 
         auto& args_tuple = *static_cast<const ArgsTupleType*>(args);
-        return std::apply(do_call, args_tuple);
+        co_return co_await std::apply(do_call, args_tuple);
     };
 }
 
