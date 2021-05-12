@@ -857,12 +857,6 @@ public:
 };
 } // namespace
 
-auto start_detached_coro(tos::Task<void>&& task) {
-    auto ptr = new tos::coro::pollable(tos::coro::make_pollable(std::move(task)));
-    ptr->run();
-    return ptr;
-}
-
 tos::expected<void, errors> kernel() {
     tos::ae::manager<x86_64_platform_support> man;
     man.initialize();
