@@ -72,6 +72,11 @@ fault_handler_t _fault_handler{[](const fault_variant& fault, stack_frame_t&, vo
                 tos::aarch64::semihosting::write0("Address is mapped\n");
                 tos::aarch64::semihosting::write0(tos::itoa(entry->noexec(), 10).data());
             },
+            [](const undefined_instruction& ud) {
+                tos::aarch64::semihosting::write0("Undefined instruction!\n");
+                tos::aarch64::semihosting::write0(
+                    tos::itoa(ud.return_address, 16).data());
+            },
             [](const auto&) {
                 tos::aarch64::semihosting::write0("Unknown fault!\n");
                 tos::aarch64::semihosting::write0(__PRETTY_FUNCTION__);
