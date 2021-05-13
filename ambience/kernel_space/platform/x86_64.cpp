@@ -856,6 +856,46 @@ public:
     erased_alarm_type m_alarm{m_tim_mux.channel(2)};
 };
 } // namespace
+struct per_service_data {
+    struct per_session_data {};
+
+    per_service_data(const tos::ae::async_service_host& service, tos::port_num_t port)
+        : serv{service}
+        , sock{port} {
+        sock.async_accept(*this);
+    }
+
+private:
+    // Acceptor
+    bool operator()(tos::lwip::tcp_socket&, tos::lwip::tcp_endpoint&& client) {
+        tos::lock_guard lg(backlog_mut);
+        if (backlog.size() > 20) {
+            LOG("Busy!");
+            return false;
+        }
+        backlog.emplace_back(std::make_unique<tos::tcp_stream<tos::lwip::tcp_endpoint>>(
+            std::move(client)));
+        sem.up();
+        return true;
+    }
+
+    tos::mutex backlog_mut;
+    tos::semaphore sem{0};
+    std::deque<std::unique_ptr<tos::tcp_stream<tos::lwip::tcp_endpoint>>> backlog;
+
+    tos::ae::async_service_host serv;
+    tos::lwip::tcp_socket sock;
+};
+
+struct tcp_transport {
+
+public:
+    tcp_transport(tos::span<tos::ae::async_service_host> servs,
+                  tos::port_num_t base_port){};
+
+private:
+    std::vector<per_service_data> m_services;
+};
 
 tos::expected<void, errors> kernel() {
     tos::ae::manager<x86_64_platform_support> man;
