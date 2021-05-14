@@ -77,7 +77,7 @@ private:
     friend err_t accept_handler(void* user, tcp_pcb* new_conn, err_t err);
 };
 
-auto acceptor(tcp_socket& sock) {
+inline auto acceptor(tcp_socket& sock) {
     struct awaiter {
         bool await_ready() {
             return false;
