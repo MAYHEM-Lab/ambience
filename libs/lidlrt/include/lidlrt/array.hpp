@@ -25,16 +25,16 @@ public:
         return ptr_iterator<T>(m_private.data());
     }
 
-    ptr_iterator<T> begin() const {
-        return ptr_iterator<T>(m_private.data());
+    const_ptr_iterator<T> begin() const {
+        return const_ptr_iterator<T>(m_private.data());
     }
 
     ptr_iterator<T> end() {
         return ptr_iterator<T>(m_private.data() + m_private.size());
     }
 
-    ptr_iterator<T> end() const {
-        return ptr_iterator<T>(m_private.data() + m_private.size());
+    const_ptr_iterator<T> end() const {
+        return const_ptr_iterator<T>(m_private.data() + m_private.size());
     }
 
     auto& get_raw() {
@@ -48,6 +48,9 @@ public:
 private:
     std::array<ptr<T>, N> m_private;
 };
+
+template<class T, std::size_t N>
+class array<T, N, true> : public array<ptr<T>, N, true> {};
 
 template<class T, std::size_t N>
 inline bool operator==(const array<T, N>& left, const array<T, N>& right) {
