@@ -1,17 +1,16 @@
-#include "kernel.hpp"
+#include "../kernel.hpp"
 #include <calc_generated.hpp>
 #include <common/clock.hpp>
 #include <common/timer.hpp>
 #include <deque>
 #include <group1.hpp>
-#include <lai/core.h>
-#include <lai/helpers/pc-bios.h>
-#include <lwip/dhcp.h>
 #include <lwip/init.h>
 #include <lwip/timeouts.h>
 #include <nonstd/variant.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/ae/transport/downcall.hpp>
+#include <tos/ae/transport/lwip/host.hpp>
+#include <tos/ae/transport/lwip/udp.hpp>
 #include <tos/arch.hpp>
 #include <tos/components/allocator.hpp>
 #include <tos/debug/dynamic_log.hpp>
@@ -21,13 +20,10 @@
 #include <tos/detail/poll.hpp>
 #include <tos/detail/tos_bind.hpp>
 #include <tos/elf.hpp>
+#include <tos/generator.hpp>
 #include <tos/gnu_build_id.hpp>
 #include <tos/interrupt_trampoline.hpp>
 #include <tos/lwip/common.hpp>
-#include <tos/lwip/if_adapter.hpp>
-#include <tos/lwip/tcp.hpp>
-#include <tos/lwip/tcp_stream.hpp>
-#include <tos/lwip/udp.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/paging/physical_page_allocator.hpp>
 #include <tos/peripheral/uart_16550.hpp>
@@ -35,9 +31,9 @@
 #include <tos/task.hpp>
 #include <tos/virtio/block_device.hpp>
 #include <tos/virtio/network_device.hpp>
+#include <tos/virtio/virtio_netif.hpp>
 #include <tos/virtio/x86_pci_transport.hpp>
 #include <tos/x86_64/apic.hpp>
-#include <tos/x86_64/backtrace.hpp>
 #include <tos/x86_64/exception.hpp>
 #include <tos/x86_64/mmu.hpp>
 #include <tos/x86_64/pci.hpp>
@@ -53,9 +49,8 @@ void abort() {
 }
 }
 
-int acpi_ver = 0;
 tos::physical_page_allocator* g_palloc;
-acpi_rsdt_t* globalRsdtWindow;
+void do_acpi_stuff();
 
 namespace {
 using page_alloc_res = mpark::variant<tos::cur_arch::mmu_errors>;
@@ -228,361 +223,95 @@ load_from_elf(const tos::elf::elf64& elf,
                        trampoline);
 }
 
-class virtio_net_if {
-public:
-    virtio_net_if(tos::virtio::network_device* dev)
-        : m_dev(std::move(dev)) {
-        netif_add(
-            &m_if, nullptr, nullptr, nullptr, this, &virtio_net_if::init, netif_input);
-    }
-
-    void up() {
-        netif_set_link_up(&m_if);
-        netif_set_up(&m_if);
-        if (auto res = dhcp_start(&m_if); res != ERR_OK) {
-            LOG_ERROR("No DHCP!", res);
-        } else {
-            LOG("DHCP Started");
-        }
-    }
-
-    void down() {
-        netif_set_down(&m_if);
-        netif_set_link_down(&m_if);
-    }
-
-    ~virtio_net_if() {
-        down();
-        netif_remove(&m_if);
-    }
-
-private:
-    netif m_if;
-    tos::virtio::network_device* m_dev;
-
-    err_t init() {
-        LOG("In init");
-        m_if.hostname = "ambience";
-        m_if.flags |= NETIF_FLAG_ETHERNET | NETIF_FLAG_ETHARP | NETIF_FLAG_BROADCAST;
-        m_if.linkoutput = &virtio_net_if::link_output;
-        m_if.output = etharp_output;
-        m_if.name[1] = m_if.name[0] = 'm';
-        m_if.num = 0;
-        m_if.mtu = 1514;
-        LOG("MTU", m_if.mtu);
-        m_if.hwaddr_len = 6;
-        m_if.link_callback = &virtio_net_if::link_callback;
-        m_if.status_callback = &virtio_net_if::status_callback;
-        auto mac = m_dev->address();
-        memcpy(m_if.hwaddr, mac.addr.data(), 6);
-        auto& t = launch(tos::alloc_stack,
-                         [this] { read_thread(tos::cancellation_token::system()); });
-        set_name(t, "LWIP Read Thread");
-        return ERR_OK;
-    }
-
-    void read_thread(tos::cancellation_token& tok) {
-        bool printed = false;
-        LOG("In read thread");
-        while (!tok.is_cancelled()) {
-            auto packet = m_dev->take_packet();
-
-            auto p =
-                pbuf_alloc(pbuf_layer::PBUF_RAW, packet.size(), pbuf_type::PBUF_POOL);
-            if (!p) {
-                LOG_ERROR("Could not allocate pbuf!");
-                m_dev->return_packet(packet);
-                continue;
-            }
-
-            tos::lwip::copy_to_pbuf(packet.begin(), packet.end(), *p);
-            m_dev->return_packet(packet);
-
-            {
-                tos::lock_guard lg{tos::lwip::lwip_lock};
-                m_if.input(p, &m_if);
-            }
-
-            if (!printed && dhcp_supplied_address(&m_if)) {
-                printed = true;
-                auto addr = tos::lwip::convert_to_tos(m_if.ip_addr);
-                LOG("Got addr!",
-                    (int)addr.addr[0],
-                    (int)addr.addr[1],
-                    (int)addr.addr[2],
-                    (int)addr.addr[3]);
-            }
-        }
-    }
-
-    err_t link_output(pbuf* p) {
-        LOG_TRACE("link_output", p->len, p->tot_len, "bytes");
-        //        m_dev->transmit_packet({static_cast<const uint8_t*>(p->payload),
-        //        p->len});
-        m_dev->transmit_gather_callback([p]() mutable {
-            if (!p) {
-                return tos::span<const uint8_t>(nullptr);
-            }
-            auto res =
-                tos::span<const uint8_t>{static_cast<const uint8_t*>(p->payload), p->len};
-            p = p->next;
-            return res;
-        });
-        //        LOG_TRACE("link_output", p->len, "bytes done");
-        return ERR_OK;
-    }
-
-    err_t output(pbuf* p, [[maybe_unused]] const ip4_addr_t* ipaddr) {
-//        LOG_TRACE("output", p->len, "bytes");
-        // pbuf_ref(p);
-        // return m_if.input(p, &m_if);
-        return ERR_OK;
-    }
-
-    void link_callback() {
-    }
-
-    void status_callback() {
-    }
-
-private:
-    static err_t init(struct netif* netif) {
-        return static_cast<virtio_net_if*>(netif->state)->init();
-    }
-
-    static err_t link_output(struct netif* netif, struct pbuf* p) {
-        return static_cast<virtio_net_if*>(netif->state)->link_output(p);
-    }
-
-    static err_t output(struct netif* netif, struct pbuf* p, const ip4_addr_t* ipaddr) {
-        return static_cast<virtio_net_if*>(netif->state)->output(p, ipaddr);
-    }
-
-    static void link_callback(struct netif* netif) {
-        static_cast<virtio_net_if*>(netif->state)->link_callback();
-    }
-
-    static void status_callback(struct netif* netif) {
-        static_cast<virtio_net_if*>(netif->state)->status_callback();
-    }
-
-    friend void set_default(virtio_net_if& interface) {
-        netif_set_default(&interface.m_if);
-    }
-};
-
-void init_pci(tos::physical_page_allocator& palloc) {
-    lwip_init();
+template<class FnT>
+void scan_pci(FnT&& fn) {
     for (int i = 0; i < 256; ++i) {
         for (int j = 0; j < 32; ++j) {
             auto vendor_id = tos::x86_64::pci::get_vendor(i, j, 0);
             if (vendor_id != 0xFFFF) {
-                auto dev = tos::x86_64::pci::device(i, j, 0);
-
-                LOG("PCI Device at",
-                    i,
-                    j,
-                    (void*)(uintptr_t)tos::x86_64::pci::get_header_type(i, j, 0),
-                    (void*)(uintptr_t)dev.vendor(),
-                    (void*)(uintptr_t)dev.device_id(),
-                    (void*)dev.class_code(),
-                    (void*)(uintptr_t)tos::x86_64::pci::get_subclass(i, j, 0),
-                    (void*)(uintptr_t)tos::x86_64::pci::get_subsys_id(i, j, 0),
-                    (void*)(uintptr_t)dev.status(),
-                    "IRQ",
-                    int(dev.irq_line()),
-                    "BAR0",
-                    (void*)(uintptr_t)dev.bar0(),
-                    "BAR1",
-                    (void*)(uintptr_t)dev.bar1(),
-                    "BAR2",
-                    (void*)(uintptr_t)dev.bar2(),
-                    "BAR3",
-                    (void*)(uintptr_t)dev.bar3(),
-                    "BAR4",
-                    (void*)(uintptr_t)dev.bar4(),
-                    "BAR5",
-                    (void*)(uintptr_t)dev.bar5(),
-                    dev.has_capabilities());
-
-                auto irq = dev.irq_line();
-                if (vendor_id == 0x1AF4) {
-                    switch (dev.device_id()) {
-                    case 0x1001: {
-                        LOG("Virtio block device");
-                        break;
-                        auto bd = new tos::virtio::block_device(
-                            tos::virtio::make_x86_pci_transport(std::move(dev)));
-                        bd->initialize(&palloc);
-                        uint8_t buf[512];
-                        bd->read(0, buf, 0);
-                        bd->read(1, buf, 0);
-                        bd->write(0, buf, 0);
-                        break;
-                    }
-                    case 0x1000: {
-                        LOG("Virtio network device");
-                        auto nd = new tos::virtio::network_device(
-                            tos::virtio::make_x86_pci_transport(std::move(dev)));
-                        nd->initialize(&palloc);
-                        LOG("MTU", nd->mtu(), int(irq));
-                        LOG((void*)(uintptr_t)nd->address().addr[0],
-                            (void*)(uintptr_t)nd->address().addr[1],
-                            (void*)(uintptr_t)nd->address().addr[2],
-                            (void*)(uintptr_t)nd->address().addr[3],
-                            (void*)(uintptr_t)nd->address().addr[4],
-                            (void*)(uintptr_t)nd->address().addr[5]);
-                        auto interface = new virtio_net_if(nd);
-                        set_default(*interface);
-                        interface->up();
-
-                        return;
-                        break;
-                    }
-                    default:
-                        LOG_WARN("Unknown virtio type:",
-                                 (void*)(uintptr_t)dev.device_id());
-                        break;
-                    }
-                }
+                fn(tos::x86_64::pci::device(i, j, 0));
             }
         }
     }
 }
-struct [[gnu::packed]] MadtHeader {
-    uint32_t localApicAddress;
-    uint32_t flags;
-};
 
-struct [[gnu::packed]] MadtGenericEntry {
-    uint8_t type;
-    uint8_t length;
-};
-
-struct [[gnu::packed]] MadtLocalEntry {
-    MadtGenericEntry generic;
-    uint8_t processorId;
-    uint8_t localApicId;
-    uint32_t flags;
-};
-
-namespace local_flags {
-static constexpr uint32_t enabled = 1;
-};
-
-struct [[gnu::packed]] MadtIoEntry {
-    MadtGenericEntry generic;
-    uint8_t ioApicId;
-    uint8_t reserved;
-    uint32_t mmioAddress;
-    uint32_t systemIntBase;
-};
-
-enum OverrideFlags
-{
-    polarityMask = 0x03,
-    polarityDefault = 0x00,
-    polarityHigh = 0x01,
-    polarityLow = 0x03,
-
-    triggerMask = 0x0C,
-    triggerDefault = 0x00,
-    triggerEdge = 0x04,
-    triggerLevel = 0x0C
-};
-
-struct [[gnu::packed]] MadtIntOverrideEntry {
-    MadtGenericEntry generic;
-    uint8_t bus;
-    uint8_t sourceIrq;
-    uint32_t systemInt;
-    uint16_t flags;
-};
-
-struct [[gnu::packed]] MadtLocalNmiEntry {
-    MadtGenericEntry generic;
-    uint8_t processorId;
-    uint16_t flags;
-    uint8_t localInt;
-};
-
-void dumpMadt() {
-    void* madtWindow = laihost_scan("APIC", 0);
-    assert(madtWindow);
-    auto madt = reinterpret_cast<acpi_header_t*>(madtWindow);
-
-    size_t offset = sizeof(acpi_header_t) + sizeof(MadtHeader);
-    while (offset < madt->length) {
-        auto generic = (MadtGenericEntry*)((uintptr_t)madt + offset);
-        if (generic->type == 0) { // local APIC
-            auto entry = (MadtLocalEntry*)generic;
-            LOG("Local APIC id:",
-                (int)entry->localApicId,
-                ((entry->flags & local_flags::enabled) ? "" : " (disabled)"));
-        } else if (generic->type == 1) { // I/O APIC
-            auto entry = (MadtIoEntry*)generic;
-            LOG("I/O APIC id:",
-                (int)entry->ioApicId,
-                ", sytem interrupt base:",
-                (int)entry->systemIntBase,
-                (void*)(uintptr_t)entry->mmioAddress);
-        } else if (generic->type == 2) { // interrupt source override
-            auto entry = (MadtIntOverrideEntry*)generic;
-
-            const char *bus, *polarity, *trigger;
-            if (entry->bus == 0) {
-                bus = "ISA";
-            } else {
-                LOG_ERROR("Unexpected bus in MADT interrupt override");
+tos::Generator<tos::x86_64::pci::device> enumerate_pci() {
+    for (int i = 0; i < 256; ++i) {
+        for (int j = 0; j < 32; ++j) {
+            auto vendor_id = tos::x86_64::pci::get_vendor(i, j, 0);
+            if (vendor_id != 0xFFFF) {
+                co_yield tos::x86_64::pci::device(i, j, 0);
             }
-
-            if ((entry->flags & OverrideFlags::polarityMask) ==
-                OverrideFlags::polarityDefault) {
-                polarity = "default";
-            } else if ((entry->flags & OverrideFlags::polarityMask) ==
-                       OverrideFlags::polarityHigh) {
-                polarity = "high";
-            } else if ((entry->flags & OverrideFlags::polarityMask) ==
-                       OverrideFlags::polarityLow) {
-                polarity = "low";
-            } else {
-                LOG_ERROR("Unexpected polarity in MADT interrupt override");
-            }
-
-            if ((entry->flags & OverrideFlags::triggerMask) ==
-                OverrideFlags::triggerDefault) {
-                trigger = "default";
-            } else if ((entry->flags & OverrideFlags::triggerMask) ==
-                       OverrideFlags::triggerEdge) {
-                trigger = "edge";
-            } else if ((entry->flags & OverrideFlags::triggerMask) ==
-                       OverrideFlags::triggerLevel) {
-                trigger = "level";
-            } else {
-                LOG_ERROR("Unexpected trigger mode in MADT interrupt override");
-            }
-
-            LOG("Int override: ",
-                bus,
-                "IRQ",
-                (int)entry->sourceIrq,
-                "is mapped to GSI",
-                entry->systemInt,
-                "(Polarity:",
-                polarity,
-                ", trigger mode:",
-                trigger,
-                ")");
-        } else if (generic->type == 4) { // local APIC NMI source
-            auto entry = (MadtLocalNmiEntry*)generic;
-            LOG("Local APIC NMI: processor",
-                (int)entry->processorId,
-                ", lint:",
-                (int)entry->localInt);
-        } else {
-            LOG("Unexpected MADT entry of type", generic->type);
         }
-        offset += generic->length;
+    }
+}
+
+void init_pci(tos::physical_page_allocator& palloc) {
+    lwip_init();
+
+    for (auto dev : enumerate_pci()) {
+        LOG("PCI Device at",
+            dev.bus(),
+            dev.slot(),
+            (void*)(uintptr_t)dev.header_type(),
+            (void*)(uintptr_t)dev.vendor(),
+            (void*)(uintptr_t)dev.device_id(),
+            (void*)(uintptr_t)dev.class_code(),
+            (void*)(uintptr_t)dev.subclass(),
+            (void*)(uintptr_t)dev.subsys_id(),
+            (void*)(uintptr_t)dev.status(),
+            "IRQ",
+            int(dev.irq_line()),
+            "BAR0",
+            (void*)(uintptr_t)dev.bar0(),
+            "BAR1",
+            (void*)(uintptr_t)dev.bar1(),
+            "BAR2",
+            (void*)(uintptr_t)dev.bar2(),
+            "BAR3",
+            (void*)(uintptr_t)dev.bar3(),
+            "BAR4",
+            (void*)(uintptr_t)dev.bar4(),
+            "BAR5",
+            (void*)(uintptr_t)dev.bar5(),
+            dev.has_capabilities());
+
+        auto irq = dev.irq_line();
+        if (dev.vendor() == 0x1AF4) {
+            switch (dev.device_id()) {
+            case 0x1001: {
+                LOG("Virtio block device");
+                auto bd = new tos::virtio::block_device(
+                    tos::virtio::make_x86_pci_transport(std::move(dev)));
+                bd->initialize(&palloc);
+                uint8_t buf[512];
+                bd->read(0, buf, 0);
+                bd->read(1, buf, 0);
+                bd->write(0, buf, 0);
+                break;
+            }
+            case 0x1000: {
+                LOG("Virtio network device");
+                auto nd = new tos::virtio::network_device(
+                    tos::virtio::make_x86_pci_transport(std::move(dev)));
+                nd->initialize(&palloc);
+                LOG("MTU", nd->mtu(), int(irq));
+                LOG((void*)(uintptr_t)nd->address().addr[0],
+                    (void*)(uintptr_t)nd->address().addr[1],
+                    (void*)(uintptr_t)nd->address().addr[2],
+                    (void*)(uintptr_t)nd->address().addr[3],
+                    (void*)(uintptr_t)nd->address().addr[4],
+                    (void*)(uintptr_t)nd->address().addr[5]);
+                auto interface = new tos::virtio::net_if(nd);
+                set_default(*interface);
+                interface->up();
+                break;
+            }
+            default:
+                LOG_WARN("Unknown virtio type:", (void*)(uintptr_t)dev.device_id());
+                break;
+            }
+        }
     }
 }
 
@@ -672,6 +401,7 @@ public:
                                        m_palloc,
                                        reinterpret_cast<void*>(apic_base)));
 
+        // IOAPIC registers
         seg = tos::segment{
             .range = {.base = 0xfec00000, .size = tos::cur_arch::page_size_bytes},
             .perms = tos::permissions::read_write};
@@ -686,40 +416,8 @@ public:
         LOG((void*)(uintptr_t)apic_regs.id, (void*)(uintptr_t)apic_regs.version);
 
         g_palloc = m_palloc;
-        lai_rsdp_info rsdp_info;
-        auto res = lai_bios_detect_rsdp(&rsdp_info);
-        LOG(res,
-            rsdp_info.acpi_version,
-            (void*)rsdp_info.rsdp_address,
-            (void*)rsdp_info.rsdt_address);
-        acpi_ver = rsdp_info.acpi_version;
 
-        if (rsdp_info.acpi_version == 2) {
-            auto win = laihost_map(rsdp_info.xsdt_address, 0x1000);
-            globalRsdtWindow = reinterpret_cast<acpi_rsdt_t*>(win);
-            //            globalRsdtWindow = laihost_map(rsdp_info.xsdt_address,
-            //            xsdt->header.length);
-        } else if (rsdp_info.acpi_version == 1) {
-            auto win = laihost_map(rsdp_info.rsdt_address, 0x1000);
-            globalRsdtWindow = reinterpret_cast<acpi_rsdt_t*>(win);
-            //            globalRsdtWindow = laihost_map(rsdp_info.rsdt_address, 0x1000);
-            //            auto rsdt = reinterpret_cast<acpi_rsdt_t *>(globalRsdtWindow);
-            //            globalRsdtWindow = laihost_map(rsdp_info.rsdt_address,
-            //            rsdt->header.length);
-        }
-
-        LOG(res,
-            rsdp_info.acpi_version,
-            std::string_view(globalRsdtWindow->header.signature, 4),
-            globalRsdtWindow->header.length,
-            globalRsdtWindow->header.revision);
-
-        lai_create_namespace();
-
-        dumpMadt();
-        void* madtWindow = laihost_scan("APIC", 0);
-        assert(madtWindow);
-        auto madt = reinterpret_cast<acpi_header_t*>(madtWindow);
+        do_acpi_stuff();
 
         tos::x86_64::pic::disable();
         tos::x86_64::apic apic(apic_regs);
@@ -865,153 +563,6 @@ public:
 };
 } // namespace
 
-struct per_service_data {
-    per_service_data(const tos::ae::async_service_host& service, tos::port_num_t port)
-        : serv{service}
-        , sock{port} {
-        udp_sock.attach(*this);
-        udp_sock.bind(port);
-        sock.async_accept(*this);
-        tos::launch(tos::alloc_stack, [this] { serve_thread(); });
-    }
-
-    // Acceptor
-    bool operator()(tos::lwip::tcp_socket&, tos::lwip::tcp_endpoint&& client) {
-        tos::lock_guard lg(backlog_mut);
-        if (backlog.size() > 20) {
-            LOG("Busy!");
-            return false;
-        }
-        backlog.emplace_back(std::make_unique<tos::tcp_stream<tos::lwip::tcp_endpoint>>(
-            std::move(client)));
-        sem.up();
-        return true;
-    }
-
-    void operator()(tos::lwip::events::recvfrom_t,
-                    tos::lwip::async_udp_socket*,
-                    const tos::udp_endpoint_t& from,
-                    tos::lwip::buffer&& buf) {
-        tos::launch(tos::alloc_stack, [this, buf = std::move(buf), from]() mutable {
-            handle_one_req(from, buf);
-        });
-    }
-
-private:
-    static std::vector<uint8_t>
-    read_req(tos::tcp_stream<tos::lwip::tcp_endpoint>& stream) {
-        uint16_t len;
-        stream.read(tos::raw_cast<uint8_t>(tos::monospan(len)));
-
-        std::vector<uint8_t> buffer(len);
-        stream.read(buffer);
-
-        return buffer;
-    }
-
-    void handle_one_req(tos::span<uint8_t> req, lidl::message_builder& response_builder) {
-        tos::semaphore exec_sem{0};
-
-        auto coro_runner = [&]() -> tos::Task<bool> {
-            auto res = co_await serv.run_message(req, response_builder);
-            exec_sem.up();
-            co_return res;
-        };
-
-        auto j = tos::coro::make_pollable(coro_runner());
-        j.run();
-
-        exec_sem.down();
-    }
-
-    void handle_one_req(tos::tcp_stream<tos::lwip::tcp_endpoint>& stream) {
-        auto req = read_req(stream);
-        std::array<uint8_t, 128> resp;
-        lidl::message_builder response_builder{resp};
-
-        handle_one_req(req, response_builder);
-
-        uint16_t resp_len = response_builder.get_buffer().size();
-        stream.write(tos::raw_cast(tos::monospan(resp_len)));
-        stream.write(response_builder.get_buffer());
-    }
-
-    void handle_one_req(const tos::udp_endpoint_t& from, tos::lwip::buffer& buf) {
-        if (buf.size() == buf.cur_bucket().size()) {
-            auto req = buf.cur_bucket();
-
-            std::array<uint8_t, 128> resp;
-            lidl::message_builder response_builder{resp};
-
-            handle_one_req(req, response_builder);
-
-            udp_sock.send_to(response_builder.get_buffer(), from);
-        }
-    }
-
-    void serve_thread() {
-        while (!tok->is_cancelled()) {
-            if (sem.down(*tok) != tos::sem_ret::normal) {
-                return;
-            }
-
-            backlog_mut.lock();
-            auto sock = std::move(backlog.front());
-            backlog.pop_front();
-            backlog_mut.unlock();
-            handle_one_req(*sock);
-        }
-    }
-
-    tos::cancellation_token* tok = &tos::cancellation_token::system();
-
-    tos::mutex backlog_mut;
-    tos::semaphore sem{0};
-    std::deque<std::unique_ptr<tos::tcp_stream<tos::lwip::tcp_endpoint>>> backlog;
-
-    tos::ae::async_service_host serv;
-    tos::lwip::tcp_socket sock;
-    tos::lwip::async_udp_socket udp_sock;
-};
-
-struct udp_transport {
-public:
-    udp_transport(tos::udp_endpoint_t ep)
-        : m_ep{ep} {
-        LOG(int(m_ep.addr.addr[0]),
-            int(m_ep.addr.addr[1]),
-            int(m_ep.addr.addr[2]),
-            int(m_ep.addr.addr[3]));
-        LOG(int(m_ep.port.port));
-        m_sock.attach(*this);
-    }
-
-    auto get_buffer() {
-        return std::array<uint8_t, 128>{};
-    }
-
-    void operator()(tos::lwip::events::recvfrom_t,
-                    tos::lwip::async_udp_socket*,
-                    const tos::udp_endpoint_t& from,
-                    tos::lwip::buffer&& buf) {
-        m_buf = std::move(buf);
-        m_wait.up();
-    }
-
-    auto send_receive(tos::span<uint8_t> buffer) {
-        m_buf = {};
-        LOG(bool(m_sock.send_to(buffer, m_ep)));
-        m_wait.down();
-        return m_buf.cur_bucket();
-    }
-
-private:
-    tos::semaphore m_wait{0};
-    tos::lwip::buffer m_buf;
-    tos::udp_endpoint_t m_ep;
-    tos::lwip::async_udp_socket m_sock;
-};
-
 tos::expected<void, errors> kernel() {
     tos::ae::manager<x86_64_platform_support> man;
     man.initialize();
@@ -1034,20 +585,20 @@ tos::expected<void, errors> kernel() {
     auto calc_serv = static_cast<tos::ae::services::calculator::async_server*>(
         g.channels.front().get());
 
-    per_service_data calc_server(tos::ae::async_service_host(calc_serv),
-                                 tos::port_num_t{1993});
+    tos::ae::async_lwip_host calc_server(tos::ae::async_service_host(calc_serv),
+                                         tos::port_num_t{1993});
 
     tos::launch(tos::alloc_stack, [&man] {
         using namespace std::chrono_literals;
         tos::this_thread::sleep_for(man.m_alarm, 5s);
 
-        tos::ae::services::calculator::stub_client<udp_transport> client{
-            tos::udp_endpoint_t{tos::parse_ipv4_address("138.68.7.60"), {1993}}};
+        tos::ae::services::calculator::stub_client<tos::ae::udp_transport> client{
+            tos::udp_endpoint_t{tos::parse_ipv4_address("10.0.0.38"), {1993}}};
         LOG("In T1");
 
         for (int i = 0; i < 100; ++i) {
             for (int j = 0; j < 100; ++j) {
-                LOG("[T1] [Host: 138.68.7.60:1993]", i, "+", j, "=", client.add(i, j));
+                LOG("[T1] [Host: 10.0.0.38:1993]", i, "+", j, "=", client.add(i, j));
             }
         }
     });
@@ -1055,14 +606,14 @@ tos::expected<void, errors> kernel() {
     tos::launch(tos::alloc_stack, [&man] {
         using namespace std::chrono_literals;
         tos::this_thread::sleep_for(man.m_alarm, 5s);
-        tos::ae::services::calculator::stub_client<udp_transport> client{
-            tos::udp_endpoint_t{tos::parse_ipv4_address("138.68.7.60"), {1993}}};
+        tos::ae::services::calculator::stub_client<tos::ae::udp_transport> client{
+            tos::udp_endpoint_t{tos::parse_ipv4_address("10.0.0.38"), {1993}}};
 
         LOG("In T2");
 
         for (int i = 0; i < 100; ++i) {
             for (int j = 0; j < 100; ++j) {
-                LOG("[T2] [Host: 138.68.7.60:1993]", i, "+", j, "=", client.add(i, j));
+                LOG("[T2] [Host: 10.0.0.38:1993]", i, "+", j, "=", client.add(i, j));
             }
         }
     });
@@ -1152,43 +703,6 @@ tos::expected<void, errors> kernel() {
     return {};
 }
 
-// struct log_handler : tos::ubsan::handlers::ubsan_handlers {
-//     void error() override {
-//         LOG_ERROR("ERROR!");
-//         LOG_ERROR("Call stack:");
-//         tos::kern::processor_state state;
-//         save_ctx(state);
-//
-//         auto root = std::optional<tos::x86_64::trace_elem>{
-//             {.rbp = tos::x86_64::read_rbp(), .rip = tos::x86_64::get_rip(state.buf)}};
-//         while (root) {
-//             LOG_ERROR((void*)root->rip);
-//             root = backtrace_next(*root);
-//         }
-//
-//         while (true)
-//             ;
-//         //
-//         //        namespace tos::ubsan::handlers {
-//         //            void nonnull_arg() {
-//         //                LOG_ERROR("nonnull arg!");
-//         //                while (true);
-//         //            }
-//         //
-//         //            void load_invalid_value() {
-//         //                LOG_ERROR("invalid value!");
-//         //                while (true);
-//         //            }
-//         //
-//         //            void type_mismatch_v1() {
-//         //                LOG_ERROR("type_mismatch_v1!");
-//         //                while (true);
-//         //            }
-//         //        }
-//     }
-// };
-
-// log_handler handler_;
 static tos::stack_storage kern_stack;
 void tos_main() {
     //    tos::ubsan::handlers::handlers = &handler_;

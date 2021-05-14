@@ -6,12 +6,15 @@ add_library(aekernellib
 target_link_libraries(aekernellib PUBLIC aecommon)
 target_include_directories(aekernellib PUBLIC include)
 
-add_executable(aekernel "")
+add_executable(aekernel "" src/transport/lwip/udp.cpp)
 target_sources(aekernel PRIVATE
     platform/kernel.hpp
     platform/kernel.cpp
+    include/tos/ae/transport/lwip/host.hpp
+    src/transport/lwip/host.cpp
+    include/tos/ae/transport/lwip/udp.hpp
 )
-target_link_libraries(aekernel PUBLIC tos_util_core tos_core tos_dynamic_log aekernellib calc_schema lidl_log_sink)
+target_link_libraries(aekernel PUBLIC tos_util_core tos_core tos_dynamic_log aekernellib calc_schema lidl_log_sink lwipcore)
 
 add_subdirectory(common)
 add_subdirectory(platform)
