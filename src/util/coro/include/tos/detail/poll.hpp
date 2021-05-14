@@ -38,6 +38,10 @@ public:
         : handle_(std::exchange(rhs.handle_, coro_handle{})) {
     }
 
+    bool done() const {
+        return handle_.done();
+    }
+
     bool run() {
         if (!handle_.done()) {
             handle_.resume();
