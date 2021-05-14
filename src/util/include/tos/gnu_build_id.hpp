@@ -18,7 +18,7 @@ public:
 private:
     uint32_t namesz;
     uint32_t descsz;
-    uint32_t type;
+    [[maybe_unused]] uint32_t type;
     uint8_t data[];
 };
 
