@@ -21,6 +21,7 @@ class async_udp_socket {
 
 public:
     async_udp_socket() {
+        tos::lock_guard lg{tos::lwip::lwip_lock};
         m_pcb = udp_new();
         m_handler = nullptr;
     }
@@ -28,6 +29,7 @@ public:
     async_udp_socket(async_udp_socket&&) = delete;
 
     expected<void, err_t> bind(port_num_t port, const ipv4_addr_t& addr = {0, 0, 0, 0}) {
+        tos::lock_guard lg{tos::lwip::lwip_lock};
         auto lwip_addr =
             reinterpret_cast<ip_addr_t*>(const_cast<uint8_t*>(&addr.addr[0]));
         auto err = udp_bind(m_pcb, lwip_addr, port.port);
@@ -46,6 +48,8 @@ public:
 
         memcpy(pbuf->payload, buf.data(), buf.size());
 
+        tos::lock_guard lg{tos::lwip::lwip_lock};
+
         auto err = udp_sendto(
             m_pcb,
             pbuf,
@@ -63,6 +67,7 @@ public:
 
     template<class EvHandlerT>
     void attach(EvHandlerT& handler) {
+        tos::lock_guard lg{tos::lwip::lwip_lock};
         m_handler = &handler;
         udp_recv(m_pcb, &udp_receiver<EvHandlerT>, this);
     }
@@ -70,6 +75,7 @@ public:
     ~async_udp_socket() {
         if (!m_pcb)
             return;
+        tos::lock_guard lg{tos::lwip::lwip_lock};
 
         udp_recv(m_pcb, nullptr, nullptr);
         udp_disconnect(m_pcb);
