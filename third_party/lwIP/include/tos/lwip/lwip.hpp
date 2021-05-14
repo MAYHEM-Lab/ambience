@@ -192,6 +192,14 @@ struct buffer {
         reset(b.m_len, 0);
     }
 
+    span<uint8_t> cur_bucket() {
+        return {(uint8_t*)m_root->payload + m_read_off, m_root->len - m_read_off};
+    }
+
+    span<const uint8_t> cur_bucket() const {
+        return {(const uint8_t*)m_root->payload + m_read_off, m_root->len - m_read_off};
+    }
+
 private:
     /**
      * Consumes the given number of bytes from the pbuf chain
@@ -222,14 +230,6 @@ private:
         pbuf_free(m_root);
         m_root = next;
         m_read_off = 0;
-    }
-
-    span<uint8_t> cur_bucket() {
-        return {(uint8_t*)m_root->payload + m_read_off, m_root->len - m_read_off};
-    }
-
-    span<const uint8_t> cur_bucket() const {
-        return {(const uint8_t*)m_root->payload + m_read_off, m_root->len - m_read_off};
     }
 
     pbuf* m_root;
