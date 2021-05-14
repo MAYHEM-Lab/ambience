@@ -85,8 +85,18 @@ void _virt_handler();
 void _security_exception_handler();
 void _irq0_handler();
 void _irq1_handler();
+void _irq2_handler();
+void _irq3_handler();
+void _irq4_handler();
+void _irq5_handler();
+void _irq6_handler();
+void _irq7_handler();
+void _irq8_handler();
 void _irq9_handler();
 void _irq10_handler();
 void _irq11_handler();
 void _irq12_handler();
+void _irq13_handler();
+void _irq14_handler();
+void _irq15_handler();
 }

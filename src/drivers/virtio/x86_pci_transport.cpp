@@ -77,6 +77,8 @@ public:
             auto common_bar = m_pci_dev.bars()[0];
             m_bar_base = common_bar & 0xFFFFFFFC;
         }
+
+        allocated_irq_line = force_get(tos::platform::allocate_irq());
     }
 
     uint8_t read_byte(int offset) override {
@@ -105,9 +107,8 @@ public:
 
     void setup_interrupts(tos::function_ref<void()> handler) override {
         m_irq_handler = handler;
-        tos::platform::set_irq(pci_dev().irq_line(),
+        tos::platform::set_irq(allocated_irq_line,
                                tos::mem_function_ref<&impl::isr>(*this));
-        //        tos::x86_64::pic::enable_irq(pci_dev().irq_line());
 
         if (has_msix()) {
             msix_cap_data msix_data;
@@ -134,12 +135,11 @@ public:
             for (int i = 0; i < msix_data.table_size(); ++i) {
                 msix_vec[i * 4 + 0] = 0xfee00000;
                 msix_vec[i * 4 + 1] = 0;
-                msix_vec[i * 4 + 2] = 32 + pci_dev().irq_line();
+                msix_vec[i * 4 + 2] = 32 + allocated_irq_line;
                 msix_vec[i * 4 + 3] = 1;
             }
         } else {
-            tos::x86_64::ioapic_set_irq(
-                pci_dev().irq_line(), 0, 32 + pci_dev().irq_line());
+            tos::x86_64::ioapic_set_irq(pci_dev().irq_line(), 0, 32 + allocated_irq_line);
         }
     }
 
@@ -271,7 +271,7 @@ private:
         for (int i = 0; i < msix_data.table_size(); ++i) {
             msix_vec[i * 4 + 0] = 0xfee00000;
             msix_vec[i * 4 + 1] = 0;
-            msix_vec[i * 4 + 2] = 32 + pci_dev().irq_line();
+            msix_vec[i * 4 + 2] = 32 + allocated_irq_line;
             msix_vec[i * 4 + 3] = 1;
         }
 
@@ -317,6 +317,8 @@ private:
     uint32_t m_bar_base;
 
     tos::function_ref<void()> m_irq_handler;
+
+    int allocated_irq_line;
 };
 } // namespace
 

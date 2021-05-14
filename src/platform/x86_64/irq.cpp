@@ -31,9 +31,34 @@ std::array<irq_handler_t, 16> irqs{
     free_function_ref(&null_irq),
     free_function_ref(&null_irq),
 };
+
+uint16_t allocated_irqs = 0;
 } // namespace
 
+tos::expected<void, irq_errors> take_irq(int line) {
+    if (allocated_irqs & (1 << line)) {
+        return unexpected(irq_errors{});
+    }
+    allocated_irqs |= (1 << line);
+    return {};
+}
+
+tos::expected<int, irq_errors> platform::allocate_irq() {
+    for (int i = 0; i < 16; ++i) {
+        if (take_irq(i)) {
+            return i;
+        }
+    }
+    return unexpected(irq_errors{});
+}
+
+void platform::free_irq(int line) {
+    Assert(allocated_irqs & (1 << line));
+    allocated_irqs &= ~(1 << line);
+}
+
 void set_irq(int num, irq_handler_t handler) {
+    Assert(allocated_irqs & (1 << num));
     irqs[num] = handler;
 }
 

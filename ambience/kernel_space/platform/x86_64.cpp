@@ -107,9 +107,14 @@ void switch_to_user(void* user_code) {
 }
 
 struct on_demand_interrupt {
+    int irq;
+    on_demand_interrupt() {
+        irq = 12;
+        ensure(tos::platform::take_irq(irq));
+    }
     template<class T>
     void operator()(T&& t) {
-        tos::platform::set_irq(12, tos::platform::irq_handler_t(t));
+        tos::platform::set_irq(irq, tos::platform::irq_handler_t(t));
         tos::cur_arch::int0x2c();
     }
 };
@@ -730,6 +735,7 @@ public:
         tos::x86_64::ioapic_set_irq(2, apic_regs.id, 32 + 0);
         tos::x86_64::ioapic_set_irq(1, apic_regs.id, 32 + 1);
 
+        ensure(tos::platform::take_irq(1));
         tos::platform::set_irq(1, tos::free_function_ref(+kb_isr));
 
         tos::lwip::global::system_clock = &m_clock;
@@ -751,6 +757,7 @@ public:
         : tos::x86_64::pit
         , tos::self_pointing<timer> {
         timer() {
+            ensure(tos::platform::take_irq(0));
             tos::platform::set_irq(0, tos::mem_function_ref<&timer::irq>(*this));
         }
 

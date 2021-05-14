@@ -53,9 +53,14 @@ void switch_to_user(void* user_code) {
 }
 
 struct on_demand_interrupt {
+    int irq;
+    on_demand_interrupt() {
+        irq = 12;
+        ensure(tos::platform::take_irq(irq));
+    }
     template<class T>
     void operator()(T&& t) {
-        tos::platform::set_irq(12, tos::platform::irq_handler_t(t));
+        tos::platform::set_irq(irq, tos::platform::irq_handler_t(t));
         tos::cur_arch::int0x2c();
     }
 };

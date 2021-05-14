@@ -27,10 +27,20 @@ interrupt_descriptor_table default_idt() {
 
     idt.rest[11] = idt_entry::create(_irq0_handler); // 0x20
     idt.rest[12] = idt_entry::create(_irq1_handler); // 0x21
+    idt.rest[13] = idt_entry::create(_irq2_handler); // 0x22
+    idt.rest[14] = idt_entry::create(_irq3_handler); // 0x23
+    idt.rest[15] = idt_entry::create(_irq4_handler); // 0x24
+    idt.rest[16] = idt_entry::create(_irq5_handler); // 0x25
+    idt.rest[17] = idt_entry::create(_irq6_handler); // 0x26
+    idt.rest[18] = idt_entry::create(_irq7_handler); // 0x27
+    idt.rest[19] = idt_entry::create(_irq8_handler); // 0x28
     idt.rest[20] = idt_entry::create(_irq9_handler); // 0x29
     idt.rest[21] = idt_entry::create(_irq10_handler); // 0x2a
     idt.rest[22] = idt_entry::create(_irq11_handler); // 0x2b
     idt.rest[23] = idt_entry::create(_irq12_handler); // 0x2c
+    idt.rest[24] = idt_entry::create(_irq13_handler); // 0x2d
+    idt.rest[25] = idt_entry::create(_irq14_handler); // 0x2e
+    idt.rest[26] = idt_entry::create(_irq15_handler); // 0x2f
     return idt;
 }
 }
