@@ -144,56 +144,62 @@ public:
     }
 
     void enable_interrupts() override {
-        msix_cap_data msix_data;
-        msix_data.reg0 = m_msix_capability->read_long(0);
-        msix_data.reg1 = m_msix_capability->read_long(4);
-        msix_data.reg2 = m_msix_capability->read_long(8);
+        if (has_msix()) {
+            msix_cap_data msix_data;
+            msix_data.reg0 = m_msix_capability->read_long(0);
+            msix_data.reg1 = m_msix_capability->read_long(4);
+            msix_data.reg2 = m_msix_capability->read_long(8);
 
-        auto bar = pci_dev().bars()[msix_data.bir()];
-        Assert(!(bar & 1));
-        auto type = bar & 0b110;
-        uintptr_t map_addr = 0;
-        if (type == 0) {
-            map_addr = bar & ~0b1111;
-        } else if (type == 2) {
-            auto next_bar = pci_dev().bars()[msix_data.bir() + 1];
-            map_addr = (bar & ~0b1111) | (uintptr_t((next_bar & ~0b1111)) << 32);
+            auto bar = pci_dev().bars()[msix_data.bir()];
+            Assert(!(bar & 1));
+            auto type = bar & 0b110;
+            uintptr_t map_addr = 0;
+            if (type == 0) {
+                map_addr = bar & ~0b1111;
+            } else if (type == 2) {
+                auto next_bar = pci_dev().bars()[msix_data.bir() + 1];
+                map_addr = (bar & ~0b1111) | (uintptr_t((next_bar & ~0b1111)) << 32);
+            } else {
+                Assert(false);
+            }
+            LOG((void*)map_addr);
+
+            auto msix_vec = (uint32_t*)map_addr;
+
+            for (int i = 0; i < msix_data.table_size(); ++i) {
+                msix_vec[i * 4 + 3] = 0;
+            }
         } else {
-            Assert(false);
-        }
-        LOG((void*)map_addr);
-
-        auto msix_vec = (uint32_t*)map_addr;
-
-        for (int i = 0; i < msix_data.table_size(); ++i) {
-            msix_vec[i * 4 + 3] = 0;
         }
     }
 
     void disable_interrupts() override {
-        msix_cap_data msix_data;
-        msix_data.reg0 = m_msix_capability->read_long(0);
-        msix_data.reg1 = m_msix_capability->read_long(4);
-        msix_data.reg2 = m_msix_capability->read_long(8);
+        if (has_msix()) {
+            msix_cap_data msix_data;
+            msix_data.reg0 = m_msix_capability->read_long(0);
+            msix_data.reg1 = m_msix_capability->read_long(4);
+            msix_data.reg2 = m_msix_capability->read_long(8);
 
-        auto bar = pci_dev().bars()[msix_data.bir()];
-        Assert(!(bar & 1));
-        auto type = bar & 0b110;
-        uintptr_t map_addr = 0;
-        if (type == 0) {
-            map_addr = bar & ~0b1111;
-        } else if (type == 2) {
-            auto next_bar = pci_dev().bars()[msix_data.bir() + 1];
-            map_addr = (bar & ~0b1111) | (uintptr_t((next_bar & ~0b1111)) << 32);
+            auto bar = pci_dev().bars()[msix_data.bir()];
+            Assert(!(bar & 1));
+            auto type = bar & 0b110;
+            uintptr_t map_addr = 0;
+            if (type == 0) {
+                map_addr = bar & ~0b1111;
+            } else if (type == 2) {
+                auto next_bar = pci_dev().bars()[msix_data.bir() + 1];
+                map_addr = (bar & ~0b1111) | (uintptr_t((next_bar & ~0b1111)) << 32);
+            } else {
+                Assert(false);
+            }
+            LOG((void*)map_addr);
+
+            auto msix_vec = (uint32_t*)map_addr;
+
+            for (int i = 0; i < msix_data.table_size(); ++i) {
+                msix_vec[i * 4 + 3] = 1;
+            }
         } else {
-            Assert(false);
-        }
-        LOG((void*)map_addr);
-
-        auto msix_vec = (uint32_t*)map_addr;
-
-        for (int i = 0; i < msix_data.table_size(); ++i) {
-            msix_vec[i * 4 + 3] = 1;
         }
     }
 
