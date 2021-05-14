@@ -2,9 +2,6 @@
 #include <log_generated.hpp>
 #include <tos/ae/group.hpp>
 #include <tos/ae/transport/upcall.hpp>
-#include <tos/ae/user_space.hpp>
-#include <tos/mem_stream.hpp>
-#include <tos/print.hpp>
 #include <tos/task.hpp>
 
 extern tos::ae::interface iface;

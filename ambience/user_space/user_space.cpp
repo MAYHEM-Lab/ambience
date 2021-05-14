@@ -29,7 +29,6 @@ void proc_res_queue(interface& iface) {
                 auto& continuation =
                     *static_cast<tos::function_ref<void()>*>(res.user_ptr);
                 continuation();
-                //                std::coroutine_handle<>::from_address(res.user_ptr).resume();
             } else {
                 // We have a request to serve.
                 auto& req = elem.req;

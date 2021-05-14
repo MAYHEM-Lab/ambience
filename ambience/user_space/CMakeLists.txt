@@ -10,6 +10,7 @@ add_library(ae_user_space
         syscall/include/tos/ae/detail/syscall.hpp heap.cpp)
 target_link_libraries(ae_user_space PUBLIC tos_coro tos_util_core aecommon tos_arch_core log_schema group_schema tos_print)
 target_link_libraries(ae_user_space PRIVATE tos_mem)
+target_compile_definitions(ae_user_space PUBLIC __ambience__)
 
 target_include_directories(ae_user_space PUBLIC include)
 

@@ -1,11 +1,13 @@
+#include <list>
 #include <memory>
 #include <tos/ae/detail/syscall.hpp>
 #include <tos/ae/user_space.hpp>
 #include <tos/detail/poll.hpp>
+#include <tos/late_constructed.hpp>
 #include <tos/memory.hpp>
 
 namespace {
-constexpr auto queue_len = 8;
+constexpr auto queue_len = 128;
 [[gnu::section(".nozero")]] tos::ae::interface_storage<queue_len> storage;
 } // namespace
 
@@ -29,11 +31,11 @@ void __cxa_atexit() {
 }
 
 namespace {
-std::vector<tos::coro::pollable> tasks;
+tos::late_constructed<std::list<tos::coro::pollable>> tasks;
 }
 
 void post(tos::coro::pollable p) {
-    tasks.emplace_back(std::move(p));
+    tasks.get().emplace_back(std::move(p));
 }
 
 [[gnu::used, noreturn]] extern "C" void _user_code() {
@@ -53,6 +55,8 @@ void post(tos::coro::pollable p) {
     // Call constructors
     std::for_each(start_ctors, end_ctors, [](auto x) { x(); });
 
+    tasks.emplace();
+
     tos::ae::detail::do_init_syscall(iface);
 
     auto pollable = tos::coro::make_pollable(task());
@@ -61,5 +65,8 @@ void post(tos::coro::pollable p) {
     while (true) {
         tos::ae::detail::do_yield_syscall();
         proc_res_queue(iface);
+        while(!tasks.get().empty() && tasks.get().front().done()) {
+            tasks.get().pop_front();
+        }
     }
 }
