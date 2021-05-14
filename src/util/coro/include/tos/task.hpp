@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <tos/detail/coro.hpp>
+#include <tos/late_constructed.hpp>
 #include <utility>
 
 namespace tos {
@@ -142,15 +143,16 @@ private:
     };
 
     class TaskPromise : public TaskPromiseBase {
-        T value;
+        tos::late_constructed<T> m_value;
 
     public:
-        void return_value(T value) {
-            this->value = value;
+        template<class... ValT>
+        void return_value(ValT&&... value) {
+            m_value.emplace(std::forward<ValT>(value)...);
         }
 
         T&& result() {
-            return std::move(this->value);
+            return std::move(m_value.get());
         }
 
         Task get_return_object() noexcept {
