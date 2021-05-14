@@ -12,3 +12,6 @@ target_link_libraries(tos_virtio_block_dev PUBLIC tos_virtio)
 add_library(tos_virtio_network_dev network_device.cpp)
 target_link_libraries(tos_virtio_network_dev PUBLIC tos_virtio tos_inet)
 #target_compile_options(tos_virtio_network_dev PRIVATE -mstackrealign)
+
+add_library(tos_virtio_netif virtio_netif.cpp)
+target_link_libraries(tos_virtio_netif PUBLIC tos_virtio_network_dev lwipcore)

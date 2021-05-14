@@ -1,0 +1,1 @@
+#include <tos/virtio/virtio_netif.hpp>
