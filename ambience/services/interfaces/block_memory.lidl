@@ -1,0 +1,8 @@
+namespace tos::ae::services;
+
+service block_memory {
+    get_block_size() -> i32;
+    get_block_count() -> i32;
+
+    read(block: i32, offset: i32) -> span<u8>;
+}
