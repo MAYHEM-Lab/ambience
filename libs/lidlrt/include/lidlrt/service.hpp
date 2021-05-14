@@ -123,9 +123,9 @@ async_union_caller(BaseServT& base_service,
     using all_results =
         typename meta::get_result_type_impl<decltype(descriptor::procedures)>::results;
 
-    return visit(
+    co_return co_await visit(
         [&service = static_cast<ServiceT&>(base_service),
-         &response](auto& call_params) -> decltype(auto) {
+         &response](auto& call_params) -> tos::Task<bool> {
             constexpr auto idx = meta::tuple_index_of<
                 std::remove_const_t<std::remove_reference_t<decltype(call_params)>>,
                 all_params>::value;
@@ -193,7 +193,7 @@ async_union_caller(BaseServT& base_service,
                 co_return true;
             };
 
-            return apply(make_service_call, call_params);
+            co_return co_await apply(make_service_call, call_params);
         },
         call_union);
 }
