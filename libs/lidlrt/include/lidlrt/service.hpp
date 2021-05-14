@@ -115,7 +115,6 @@ async_union_caller(BaseServT& base_service,
     // this information to decode lidl messages into actual calls to services.
     using descriptor = service_descriptor<typename ServiceT::service_type>;
 
-    using params_union = typename descriptor::params_union;
     using results_union = typename descriptor::results_union;
 
     using all_params =
@@ -212,7 +211,6 @@ bool union_caller(BaseServT& base_service,
     // this information to decode lidl messages into actual calls to services.
     using descriptor = service_descriptor<typename ServiceT::service_type>;
 
-    using params_union = typename descriptor::params_union;
     using results_union = typename descriptor::results_union;
 
     using all_params =
