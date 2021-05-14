@@ -27,6 +27,7 @@
 #include <tos/lwip/if_adapter.hpp>
 #include <tos/lwip/tcp.hpp>
 #include <tos/lwip/tcp_stream.hpp>
+#include <tos/lwip/udp.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/paging/physical_page_allocator.hpp>
 #include <tos/peripheral/uart_16550.hpp>
@@ -310,7 +311,7 @@ private:
     }
 
     err_t link_output(pbuf* p) {
-        //        LOG_TRACE("link_output", p->len, p->tot_len, "bytes");
+        LOG_TRACE("link_output", p->len, p->tot_len, "bytes");
         //        m_dev->transmit_packet({static_cast<const uint8_t*>(p->payload),
         //        p->len});
         m_dev->transmit_gather_callback([p]() mutable {
@@ -327,7 +328,7 @@ private:
     }
 
     err_t output(pbuf* p, [[maybe_unused]] const ip4_addr_t* ipaddr) {
-        LOG_TRACE("output", p->len, "bytes");
+//        LOG_TRACE("output", p->len, "bytes");
         // pbuf_ref(p);
         // return m_if.input(p, &m_if);
         return ERR_OK;
@@ -856,16 +857,17 @@ public:
     erased_alarm_type m_alarm{m_tim_mux.channel(2)};
 };
 } // namespace
-struct per_service_data {
-    struct per_session_data {};
 
+struct per_service_data {
     per_service_data(const tos::ae::async_service_host& service, tos::port_num_t port)
         : serv{service}
         , sock{port} {
+        udp_sock.attach(*this);
+        udp_sock.bind(port);
         sock.async_accept(*this);
+        tos::launch(tos::alloc_stack, [this] { serve_thread(); });
     }
 
-private:
     // Acceptor
     bool operator()(tos::lwip::tcp_socket&, tos::lwip::tcp_endpoint&& client) {
         tos::lock_guard lg(backlog_mut);
@@ -879,22 +881,128 @@ private:
         return true;
     }
 
+    void operator()(tos::lwip::events::recvfrom_t,
+                    tos::lwip::async_udp_socket*,
+                    const tos::udp_endpoint_t& from,
+                    tos::lwip::buffer&& buf) {
+        tos::launch(tos::alloc_stack, [this, buf = std::move(buf), from]() mutable {
+            handle_one_req(from, buf);
+        });
+    }
+
+private:
+    static std::vector<uint8_t>
+    read_req(tos::tcp_stream<tos::lwip::tcp_endpoint>& stream) {
+        uint16_t len;
+        stream.read(tos::raw_cast<uint8_t>(tos::monospan(len)));
+
+        std::vector<uint8_t> buffer(len);
+        stream.read(buffer);
+
+        return buffer;
+    }
+
+    void handle_one_req(tos::span<uint8_t> req, lidl::message_builder& response_builder) {
+        tos::semaphore exec_sem{0};
+
+        auto coro_runner = [&]() -> tos::Task<bool> {
+            auto res = co_await serv.run_message(req, response_builder);
+            exec_sem.up();
+            co_return res;
+        };
+
+        auto j = tos::coro::make_pollable(coro_runner());
+        j.run();
+
+        exec_sem.down();
+    }
+
+    void handle_one_req(tos::tcp_stream<tos::lwip::tcp_endpoint>& stream) {
+        auto req = read_req(stream);
+        std::array<uint8_t, 128> resp;
+        lidl::message_builder response_builder{resp};
+
+        handle_one_req(req, response_builder);
+
+        uint16_t resp_len = response_builder.get_buffer().size();
+        stream.write(tos::raw_cast(tos::monospan(resp_len)));
+        stream.write(response_builder.get_buffer());
+    }
+
+    void handle_one_req(const tos::udp_endpoint_t& from, tos::lwip::buffer& buf) {
+        if (buf.size() == buf.cur_bucket().size()) {
+            auto req = buf.cur_bucket();
+
+            std::array<uint8_t, 128> resp;
+            lidl::message_builder response_builder{resp};
+
+            handle_one_req(req, response_builder);
+
+            udp_sock.send_to(response_builder.get_buffer(), from);
+        }
+    }
+
+    void serve_thread() {
+        while (!tok->is_cancelled()) {
+            if (sem.down(*tok) != tos::sem_ret::normal) {
+                return;
+            }
+
+            backlog_mut.lock();
+            auto sock = std::move(backlog.front());
+            backlog.pop_front();
+            backlog_mut.unlock();
+            handle_one_req(*sock);
+        }
+    }
+
+    tos::cancellation_token* tok = &tos::cancellation_token::system();
+
     tos::mutex backlog_mut;
     tos::semaphore sem{0};
     std::deque<std::unique_ptr<tos::tcp_stream<tos::lwip::tcp_endpoint>>> backlog;
 
     tos::ae::async_service_host serv;
     tos::lwip::tcp_socket sock;
+    tos::lwip::async_udp_socket udp_sock;
 };
 
-struct tcp_transport {
-
+struct udp_transport {
 public:
-    tcp_transport(tos::span<tos::ae::async_service_host> servs,
-                  tos::port_num_t base_port){};
+    udp_transport(tos::udp_endpoint_t ep)
+        : m_ep{ep} {
+        LOG(int(m_ep.addr.addr[0]),
+            int(m_ep.addr.addr[1]),
+            int(m_ep.addr.addr[2]),
+            int(m_ep.addr.addr[3]));
+        LOG(int(m_ep.port.port));
+        m_sock.attach(*this);
+    }
+
+    auto get_buffer() {
+        return std::array<uint8_t, 128>{};
+    }
+
+    void operator()(tos::lwip::events::recvfrom_t,
+                    tos::lwip::async_udp_socket*,
+                    const tos::udp_endpoint_t& from,
+                    tos::lwip::buffer&& buf) {
+        m_buf = std::move(buf);
+        m_wait.up();
+    }
+
+    auto send_receive(tos::span<uint8_t> buffer) {
+        m_buf = {};
+        LOG(bool(m_sock.send_to(buffer, m_ep)));
+        m_wait.down();
+        return m_buf.cur_bucket();
+    }
 
 private:
-    std::vector<per_service_data> m_services;
+    tos::semaphore m_wait{0};
+    tos::lwip::buffer m_buf;
+    tos::udp_endpoint_t m_ep;
+    tos::lwip::async_udp_socket m_sock;
 };
 
 tos::expected<void, errors> kernel() {
@@ -905,7 +1013,7 @@ tos::expected<void, errors> kernel() {
                          [&] {
                              while (true) {
                                  using namespace std::chrono_literals;
-                                 tos::this_thread::sleep_for(man.m_alarm, 500ms);
+                                 tos::this_thread::sleep_for(man.m_alarm, 50ms);
                                  tos::lock_guard lg{tos::lwip::lwip_lock};
                                  sys_check_timeouts();
                              }
@@ -915,21 +1023,42 @@ tos::expected<void, errors> kernel() {
     tos::debug::log_server serv(man.get_log_sink());
 
     man.groups().front().exposed_services.emplace_back(&serv);
+    auto& g = man.groups().front();
+    auto calc_serv = static_cast<tos::ae::services::calculator::async_server*>(
+        g.channels.front().get());
 
-    auto req_task = [&g = man.groups().front()]() -> tos::Task<void> {
-        auto serv = static_cast<tos::ae::services::calculator::async_server*>(
-            g.channels.front().get());
+    per_service_data calc_server(tos::ae::async_service_host(calc_serv),
+                                 tos::port_num_t{1993});
 
-        LOG("3 + 4 =", co_await serv->add(3, 4));
-    };
+    tos::launch(tos::alloc_stack, [&man] {
+        using namespace std::chrono_literals;
+        tos::this_thread::sleep_for(man.m_alarm, 5s);
 
-    tos::coro_job j(tos::current_context(), tos::coro::make_pollable(req_task()));
-    tos::kern::make_runnable(j);
-    tos::this_thread::yield();
+        tos::ae::services::calculator::stub_client<udp_transport> client{
+            tos::udp_endpoint_t{tos::parse_ipv4_address("138.68.7.60"), {1993}}};
+        LOG("In T1");
 
-    for (int i = 0; i < 10; ++i) {
-        man.run();
-    }
+        for (int i = 0; i < 100; ++i) {
+            for (int j = 0; j < 100; ++j) {
+                LOG("[T1] [Host: 138.68.7.60:1993]", i, "+", j, "=", client.add(i, j));
+            }
+        }
+    });
+
+    tos::launch(tos::alloc_stack, [&man] {
+        using namespace std::chrono_literals;
+        tos::this_thread::sleep_for(man.m_alarm, 5s);
+        tos::ae::services::calculator::stub_client<udp_transport> client{
+            tos::udp_endpoint_t{tos::parse_ipv4_address("138.68.7.60"), {1993}}};
+
+        LOG("In T2");
+
+        for (int i = 0; i < 100; ++i) {
+            for (int j = 0; j < 100; ++j) {
+                LOG("[T2] [Host: 138.68.7.60:1993]", i, "+", j, "=", client.add(i, j));
+            }
+        }
+    });
 
     tos::lwip::tcp_socket sock(tos::port_num_t{80});
 
@@ -1008,6 +1137,9 @@ tos::expected<void, errors> kernel() {
 
     sock.async_accept(handler);
 
+    while (true) {
+        man.run();
+    }
     tos::this_thread::block_forever();
 
     return {};
