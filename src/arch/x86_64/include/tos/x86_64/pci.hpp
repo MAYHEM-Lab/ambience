@@ -137,6 +137,11 @@ public:
         , m_func{func} {
     }
 
+    template<class Fn, class... Args>
+    auto call_fn(const Fn& fn, Args&&... args) const {
+        return std::invoke(fn, m_bus, m_slot, m_func, std::forward<Args>(args)...);
+    }
+
     tos::pci::classes class_code() const {
         return tos::pci::classes(get_class_code(m_bus, m_slot, m_func));
     }
@@ -146,11 +151,11 @@ public:
     }
 
     uint16_t vendor() const {
-        return get_vendor(m_bus, m_slot, m_func);
+        return call_fn(get_vendor);
     }
 
     uint16_t device_id() const {
-        return get_dev_id(m_bus, m_slot, m_func);
+        return call_fn(get_dev_id);
     }
 
     uint16_t status() const {
@@ -203,9 +208,28 @@ public:
         detail::config_write_byte(m_bus, m_slot, m_func, 0x3c, line);
     }
 
-    template<class Fn, class... Args>
-    auto call_fn(const Fn& fn, Args&&... args) const {
-        return std::invoke(fn, m_bus, m_slot, m_func, std::forward<Args>(args)...);
+    uint8_t bus() const {
+        return m_bus;
+    }
+
+    uint8_t slot() const {
+        return m_slot;
+    }
+
+    uint8_t func() const {
+        return m_func;
+    }
+
+    uint8_t header_type() const {
+        return call_fn(get_header_type);
+    }
+
+    uint8_t subclass() const {
+        return call_fn(get_subclass);
+    }
+
+    uint8_t subsys_id() const {
+        return call_fn(get_subsys_id);
     }
 
 private:
