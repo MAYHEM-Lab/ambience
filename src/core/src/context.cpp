@@ -1,9 +1,9 @@
 #include <array>
+#include <tos/allocator/free_list.hpp>
+#include <tos/allocator/malloc.hpp>
 #include <tos/components/allocator.hpp>
 #include <tos/context.hpp>
 #include <tos/debug/dynamic_log.hpp>
-#include <tos/allocator/malloc.hpp>
-#include <tos/allocator/free_list.hpp>
 #include <tos/utility.hpp>
 #include <type_traits>
 
@@ -13,8 +13,7 @@ alignas(16) std::array<uint8_t, 16 * 1024 * 1024> heap_mem;
 }
 #elif defined(TOS_PLATFORM_x86_64)
 namespace {
-[[gnu::section(".nozero")]]
-alignas(16) std::array<uint8_t, 512 * 1024> heap_mem;
+[[gnu::section(".nozero")]] alignas(16) std::array<uint8_t, 1024 * 1024> heap_mem;
 }
 #elif defined(TOS_PLATFORM_stm32_hal)
 extern "C" {
@@ -57,7 +56,7 @@ memory::polymorphic_allocator& get_allocator() {
     static auto alloc = make_allocator();
     return alloc;
 }
-}
+} // namespace
 
 context& default_context() {
     static auto ctx =
