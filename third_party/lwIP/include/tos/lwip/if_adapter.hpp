@@ -1,5 +1,6 @@
 #pragma once
 
+#include <lwip/dhcp.h>
 #include <lwip/etharp.h>
 #include <lwip/netif.h>
 #include <numeric>
@@ -8,6 +9,89 @@
 #include <tos/lwip/utility.hpp>
 
 namespace tos::lwip {
+template<class ImplT>
+class netif_base {
+public:
+    void up() {
+        netif_set_link_up(&m_if);
+        netif_set_up(&m_if);
+        if (auto res = dhcp_start(&m_if); res != ERR_OK) {
+            LOG_ERROR("No DHCP!", res);
+        } else {
+            LOG("DHCP Started");
+        }
+    }
+
+    void down() {
+        netif_set_down(&m_if);
+        netif_set_link_down(&m_if);
+    }
+
+    ~netif_base() {
+        down();
+        netif_remove(&m_if);
+    }
+
+    err_t output(pbuf* p, [[maybe_unused]] const ip4_addr_t* ipaddr) {
+        return ERR_OK;
+    }
+
+    void link_callback() {
+    }
+
+    void status_callback() {
+    }
+
+protected:
+    void add() {
+        netif_add(&m_if,
+                  nullptr,
+                  nullptr,
+                  nullptr,
+                  static_cast<ImplT*>(this),
+                  &netif_base::init,
+                  netif_input);
+    }
+
+    void pre_init() {
+        set_callbacks();
+        m_if.output = etharp_output;
+    }
+
+    netif m_if;
+
+private:
+    void set_callbacks() {
+        m_if.linkoutput = &netif_base::link_output;
+        m_if.link_callback = &netif_base::link_callback;
+        m_if.status_callback = &netif_base::status_callback;
+    }
+
+    static err_t init(struct netif* netif) {
+        return static_cast<ImplT*>(netif->state)->init();
+    }
+
+    static err_t link_output(struct netif* netif, struct pbuf* p) {
+        return static_cast<ImplT*>(netif->state)->link_output(p);
+    }
+
+    static err_t output(struct netif* netif, struct pbuf* p, const ip4_addr_t* ipaddr) {
+        return static_cast<ImplT*>(netif->state)->output(p, ipaddr);
+    }
+
+    static void link_callback(struct netif* netif) {
+        static_cast<ImplT*>(netif->state)->link_callback();
+    }
+
+    static void status_callback(struct netif* netif) {
+        static_cast<ImplT*>(netif->state)->status_callback();
+    }
+
+    friend void set_default(ImplT& interface) {
+        netif_set_default(&interface.m_if);
+    }
+};
+
 template<class DeviceT>
 class basic_interface {
 public:
