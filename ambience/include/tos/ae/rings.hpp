@@ -101,7 +101,15 @@ struct interface {
 template<class FnT>
 uint16_t for_each(
     interface& iface, const ring& ring, uint16_t last_seen, size_t size, const FnT& fn) {
-    // TODO: handle overflow
+    if (last_seen > ring.head_idx) {
+        // The used ring has wrapped around.
+        for (; last_seen != 0; ++last_seen) {
+            auto idx = ring.elems[last_seen % size];
+
+            fn(iface.elems[idx]);
+        }
+    }
+
     for (; last_seen < ring.head_idx; ++last_seen) {
         auto idx = ring.elems[last_seen % size];
 
