@@ -78,7 +78,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(STATUS "Using Clang")
     set(TOS_FLAGS "${TOS_FLAGS} -fdiagnostics-color")
     if (ENABLE_LTO)
-        set(TOS_FLAGS "${TOS_FLAGS} -flto")
+        set(TOS_FLAGS "${TOS_FLAGS} -flto -fwhole-program-vtables -fforce-emit-vtables")
     endif ()
 endif ()
 
