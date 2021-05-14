@@ -4,8 +4,10 @@
 
 namespace tos::virtio {
 namespace {
-constexpr auto sector_count_lo_offset = 0x14;
-constexpr auto sector_count_hi_offset = 0x18;
+constexpr auto dev_base_offset = 0x14;
+constexpr auto dev_sector_count_lo_offset = dev_base_offset + 0;
+constexpr auto dev_sector_count_hi_offset = dev_base_offset + 4;
+constexpr auto dev_sector_size_offset = dev_base_offset + 20;
 
 struct blk_header {
     uint32_t type;
@@ -173,14 +175,16 @@ block_device::async_read(uint64_t sector_id, span<uint8_t> data, size_t offset) 
 
     LOG("out", q.used_base->index, int(c), (void*)(uintptr_t)data[0]);
     if (c == 0) {
-        co_return{};
+        co_return tos::expected<void, int>{};
     }
     co_return unexpected(c);
 }
 
 size_t block_device::number_of_sectors() const {
-    auto sector_count_hi = transport().read_u32(sector_count_hi_offset);
-    auto sector_count_lo = transport().read_u32(sector_count_lo_offset);
+    auto sector_count_hi =
+        transport().read_u32((have_msix() ? 4 : 0) + dev_sector_count_hi_offset);
+    auto sector_count_lo =
+        transport().read_u32((have_msix() ? 4 : 0) + dev_sector_count_lo_offset);
     return (uint64_t(sector_count_hi) << 32) | sector_count_lo;
 }
 
@@ -192,6 +196,6 @@ void block_device::isr() {
 }
 
 size_t block_device::sector_size_bytes() const {
-    return transport().read_u32(0x18 + 16);
+    return transport().read_u32((have_msix() ? 4 : 0) + dev_sector_size_offset);
 }
 } // namespace tos::virtio
