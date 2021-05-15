@@ -1,5 +1,6 @@
 #pragma once
 
+#include "lwip.hpp"
 #include <lwip/dhcp.h>
 #include <lwip/etharp.h>
 #include <lwip/netif.h>
@@ -101,19 +102,25 @@ public:
     }
 
     err_t init() {
+        this->pre_init();
         this->m_if.hostname = "tos";
-        this->m_if.flags |= NETIF_FLAG_ETHARP | NETIF_FLAG_BROADCAST;
+        this->m_if.flags |=
+            NETIF_FLAG_ETHERNET | NETIF_FLAG_ETHARP | NETIF_FLAG_BROADCAST;
         this->m_if.name[1] = this->m_if.name[0] = 'm';
         this->m_if.num = 0;
-        this->m_if.mtu = 1500;
+        this->m_if.mtu = 1514;
         this->m_if.hwaddr_len = 6;
-        std::iota(std::begin(this->m_if.hwaddr), std::end(this->m_if.hwaddr), 1);
-        launch(alloc_stack, [this] { read_thread(); });
+        auto mac = m_tap->address();
+        memcpy(this->m_if.hwaddr, mac.addr.data(), 6);
+        auto& t = launch(tos::alloc_stack,
+                         [this] { read_thread(tos::cancellation_token::system()); });
+        set_name(t, "LWIP Read Thread");
         return ERR_OK;
     }
 
-    void read_thread() {
-        auto& tok = tos::cancellation_token::system();
+    void read_thread(tos::cancellation_token& tok) {
+        bool printed = false;
+        LOG("In read thread");
         while (!tok.is_cancelled()) {
             std::vector<uint8_t> buf(1500);
             auto recvd = m_tap->read(buf);
@@ -121,17 +128,35 @@ public:
                 continue;
             }
             LOG_TRACE("Received", recvd.size(), "bytes");
+
             auto p =
-                pbuf_alloc(pbuf_layer::PBUF_LINK, recvd.size(), pbuf_type::PBUF_POOL);
-            std::copy(recvd.begin(), recvd.end(), static_cast<uint8_t*>(p->payload));
-            this->m_if.input(p, &this->m_if);
+                pbuf_alloc(pbuf_layer::PBUF_RAW, recvd.size(), pbuf_type::PBUF_POOL);
+            if (!p) {
+                LOG_ERROR("Could not allocate pbuf!");
+                continue;
+            }
+
+            tos::lwip::copy_to_pbuf(recvd.begin(), recvd.end(), *p);
+
+            {
+                tos::lock_guard lg{tos::lwip::lwip_lock};
+                this->m_if.input(p, &this->m_if);
+            }
+
+            if (!printed && dhcp_supplied_address(&this->m_if)) {
+                printed = true;
+                auto addr = tos::lwip::convert_to_tos(this->m_if.ip_addr);
+                LOG("Got addr!",
+                    (int)addr.addr[0],
+                    (int)addr.addr[1],
+                    (int)addr.addr[2],
+                    (int)addr.addr[3]);
+            }
         }
     }
 
     err_t link_output(pbuf* p) {
-        LOG_TRACE("link_output", p->len, "bytes");
-        // pbuf_ref(p);
-        // return m_if.input(p, &m_if);
+        LOG_TRACE("link_output", p->len, p->tot_len, "bytes");
         auto written = m_tap->write({static_cast<const uint8_t*>(p->payload), p->len});
         LOG_TRACE("Written", written, "bytes");
         return ERR_OK;
