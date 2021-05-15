@@ -22,6 +22,16 @@
 using errors = mpark::variant<tos::aarch64::mmu_errors>;
 using tos::expected;
 
+enum class usb_errors
+{
+    hci_init_fail,
+    no_device
+};
+
+tos::expected<void, usb_errors> usb_task(tos::raspi3::interrupt_controller& ic,
+                                         tos::any_clock& clk,
+                                         tos::any_alarm& alarm);
+
 expected<void, errors> map_elf(const tos::elf::elf64& elf,
                                tos::physical_page_allocator& palloc,
                                tos::cur_arch::translation_table& root_table) {
@@ -179,6 +189,7 @@ public:
     }
 
     void stage2_init() {
+        tos::launch(tos::alloc_stack, [this] { usb_task(ic, m_clock, m_alarm); });
     }
 
     auto init_serial() {
@@ -186,7 +197,7 @@ public:
     }
 
     auto init_timer() {
-        return tos::raspi3::generic_timer(ic, 0);
+        return tos::raspi3::system_timer(ic);
     }
 
     auto init_odi() {
@@ -289,6 +300,18 @@ private:
     tos::kern::tcb* return_to;
 
     tos::raspi3::interrupt_controller ic;
+
+    using timer_mux_type = tos::timer_multiplexer<tos::raspi3::generic_timer, 3>;
+    using channel_type = timer_mux_type::multiplexed_timer;
+    using clock_type = tos::clock<channel_type>;
+    using erased_clock_type = tos::detail::erased_clock<clock_type>;
+
+    using alarm_type = tos::alarm<channel_type>;
+    using erased_alarm_type = tos::detail::erased_alarm<alarm_type>;
+
+    timer_mux_type m_tim_mux{ic, 0};
+    erased_clock_type m_clock{m_tim_mux.channel(1)};
+    erased_alarm_type m_alarm{m_tim_mux.channel(2)};
 };
 
 expected<void, errors> kernel() {
@@ -304,9 +327,7 @@ expected<void, errors> kernel() {
             g.channels.front().get());
 
         auto res = co_await serv->add(3, 4);
-        tos::launch(tos::alloc_stack, [res]{
-            LOG("3 + 4 =", res);
-        });
+        tos::launch(tos::alloc_stack, [res] { LOG("3 + 4 =", res); });
     };
 
     tos::coro_job j(tos::current_context(), tos::coro::make_pollable(req_task()));

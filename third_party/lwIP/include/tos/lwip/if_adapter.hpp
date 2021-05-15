@@ -93,56 +93,21 @@ private:
 };
 
 template<class DeviceT>
-class basic_interface {
+class basic_interface : public netif_base<basic_interface<DeviceT>> {
 public:
-    basic_interface(DeviceT&& dev,
-                    const ipv4_addr_t& addr,
-                    const ipv4_addr_t& mask,
-                    const ipv4_addr_t& gw)
+    explicit basic_interface(DeviceT&& dev)
         : m_tap(std::move(dev)) {
-        auto lwip_addr = convert_address(addr);
-        auto lwip_mask = convert_address(mask);
-        auto lwip_gw = convert_address(gw);
-        netif_add(&m_if,
-                  &lwip_addr,
-                  &lwip_mask,
-                  &lwip_gw,
-                  this,
-                  &basic_interface::init,
-                  netif_input);
+        this->add();
     }
-
-    void up() {
-        netif_set_link_up(&m_if);
-        netif_set_up(&m_if);
-    }
-
-    void down() {
-        netif_set_down(&m_if);
-        netif_set_link_down(&m_if);
-    }
-
-    ~basic_interface() {
-        down();
-        netif_remove(&m_if);
-    }
-
-private:
-    netif m_if;
-    DeviceT m_tap;
 
     err_t init() {
-        m_if.hostname = "tos";
-        m_if.flags |= NETIF_FLAG_ETHARP | NETIF_FLAG_BROADCAST;
-        m_if.linkoutput = &basic_interface::link_output;
-        m_if.output = etharp_output;
-        m_if.name[1] = m_if.name[0] = 'm';
-        m_if.num = 0;
-        m_if.mtu = 1500;
-        m_if.hwaddr_len = 6;
-        m_if.link_callback = &basic_interface::link_callback;
-        m_if.status_callback = &basic_interface::status_callback;
-        std::iota(std::begin(m_if.hwaddr), std::end(m_if.hwaddr), 1);
+        this->m_if.hostname = "tos";
+        this->m_if.flags |= NETIF_FLAG_ETHARP | NETIF_FLAG_BROADCAST;
+        this->m_if.name[1] = this->m_if.name[0] = 'm';
+        this->m_if.num = 0;
+        this->m_if.mtu = 1500;
+        this->m_if.hwaddr_len = 6;
+        std::iota(std::begin(this->m_if.hwaddr), std::end(this->m_if.hwaddr), 1);
         launch(alloc_stack, [this] { read_thread(); });
         return ERR_OK;
     }
@@ -159,7 +124,7 @@ private:
             auto p =
                 pbuf_alloc(pbuf_layer::PBUF_LINK, recvd.size(), pbuf_type::PBUF_POOL);
             std::copy(recvd.begin(), recvd.end(), static_cast<uint8_t*>(p->payload));
-            m_if.input(p, &m_if);
+            this->m_if.input(p, &this->m_if);
         }
     }
 
@@ -172,42 +137,7 @@ private:
         return ERR_OK;
     }
 
-    err_t output(pbuf* p, [[maybe_unused]] const ip4_addr_t* ipaddr) {
-        LOG_TRACE("output", p->len, "bytes");
-        // pbuf_ref(p);
-        // return m_if.input(p, &m_if);
-        return ERR_OK;
-    }
-
-    void link_callback() {
-    }
-
-    void status_callback() {
-    }
-
 private:
-    static err_t init(struct netif* netif) {
-        return static_cast<basic_interface*>(netif->state)->init();
-    }
-
-    static err_t link_output(struct netif* netif, struct pbuf* p) {
-        return static_cast<basic_interface*>(netif->state)->link_output(p);
-    }
-
-    static err_t output(struct netif* netif, struct pbuf* p, const ip4_addr_t* ipaddr) {
-        return static_cast<basic_interface*>(netif->state)->output(p, ipaddr);
-    }
-
-    static void link_callback(struct netif* netif) {
-        static_cast<basic_interface*>(netif->state)->link_callback();
-    }
-
-    static void status_callback(struct netif* netif) {
-        static_cast<basic_interface*>(netif->state)->status_callback();
-    }
-
-    friend void set_default(basic_interface& interface) {
-        netif_set_default(&interface.m_if);
-    }
+    DeviceT m_tap;
 };
 } // namespace tos::lwip

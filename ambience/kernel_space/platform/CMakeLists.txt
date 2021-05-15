@@ -11,6 +11,8 @@ elseif (${TOS_PLATFORM} MATCHES "raspi")
 
     add_dependencies(aekernel sample_group)
     embed_file(aekernel group1 $<TARGET_FILE:sample_group>.stripped)
+
+    add_subdirectory(raspi3)
 elseif (${TOS_PLATFORM} MATCHES "hosted")
     target_sources(aekernel PRIVATE hosted.cpp)
     target_link_libraries(aekernel PRIVATE arch_drivers)
