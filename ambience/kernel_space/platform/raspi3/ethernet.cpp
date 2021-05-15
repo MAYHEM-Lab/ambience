@@ -6,6 +6,7 @@
 #include <tos/debug/log.hpp>
 #include <tos/expected.hpp>
 #include <tos/ft.inl>
+#include <tos/lwip/common.hpp>
 #include <tos/lwip/if_adapter.hpp>
 #include <tos/lwip/udp.hpp>
 #include <tos/self_pointing.hpp>
@@ -88,6 +89,13 @@ public:
         return buf.size();
     }
 
+    tos::mac_addr_t address() {
+        auto mac = SMSC951xDeviceGetMACAddress(m_ptr);
+        tos::mac_addr_t res{0xa2, 0xed, 0x8f, 0xce, 0x99, 0x1f};
+        memcpy(res.addr.data(), mac->m_Address, 6);
+        return res;
+    }
+
 private:
     TSMSC951xDevice* m_ptr;
 };
@@ -130,6 +138,7 @@ tos::expected<void, usb_errors> usb_task(tos::raspi3::interrupt_controller& ic,
     LOG("Link is up!");
 
     LOG("Initialize lwip");
+    tos::lwip::global::system_clock = &clk;
     lwip_init();
 
     set_name(tos::launch(tos::alloc_stack,
@@ -148,6 +157,7 @@ tos::expected<void, usb_errors> usb_task(tos::raspi3::interrupt_controller& ic,
     set_default(interface);
     interface.up();
 
+    tos::this_thread::block_forever();
     tos::lwip::async_udp_socket sock;
 
     auto handler = [](auto, auto, auto, tos::lwip::buffer buf) {
@@ -163,7 +173,6 @@ tos::expected<void, usb_errors> usb_task(tos::raspi3::interrupt_controller& ic,
     auto res = sock.bind({9090});
     Assert(res);
 
-    tos::this_thread::block_forever();
 
     return {};
 }

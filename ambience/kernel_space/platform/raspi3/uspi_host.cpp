@@ -1,5 +1,6 @@
 #include <arch/drivers.hpp>
 #include <common/clock.hpp>
+#include <common/inet/tcp_ip.hpp>
 #include <numeric>
 #include <tos/debug/assert.hpp>
 #include <tos/debug/log.hpp>
@@ -123,7 +124,8 @@ int SetPowerStateOn(unsigned nDeviceId) {
 }
 
 int GetMACAddress(unsigned char Buffer[6]) {
-    std::iota(Buffer, Buffer + 6, 1);
+    tos::mac_addr_t res{0xa2, 0xed, 0x8f, 0xce, 0x99, 0x1f};
+    memcpy(Buffer, res.addr.data(), 6);
     return 1;
 }
 

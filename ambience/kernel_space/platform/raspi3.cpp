@@ -1,6 +1,7 @@
 #include "kernel.hpp"
 #include <arch/drivers.hpp>
 #include <calc_generated.hpp>
+#include <common/inet/tcp_ip.hpp>
 #include <group1.hpp>
 #include <nonstd/variant.hpp>
 #include <tos/aarch64/exception.hpp>
@@ -18,6 +19,7 @@
 #include <tos/late_constructed.hpp>
 #include <tos/periph/bcm2837_clock.hpp>
 #include <tos/platform.hpp>
+#include <tos/ae/transport/lwip/udp.hpp>
 
 using errors = mpark::variant<tos::aarch64::mmu_errors>;
 using tos::expected;
@@ -290,6 +292,14 @@ public:
             tos::mem_function_ref<&raspi3_platform_support::do_return>(*this));
     }
 
+    using timer_mux_type = tos::timer_multiplexer<tos::raspi3::generic_timer, 3>;
+    using channel_type = timer_mux_type::multiplexed_timer;
+    using clock_type = tos::clock<channel_type>;
+    using erased_clock_type = tos::detail::erased_clock<clock_type>;
+
+    using alarm_type = tos::alarm<channel_type>;
+    using erased_alarm_type = tos::detail::erased_alarm<alarm_type>;
+
 private:
     void do_return() {
         ic.reset_post_irq();
@@ -301,13 +311,7 @@ private:
 
     tos::raspi3::interrupt_controller ic;
 
-    using timer_mux_type = tos::timer_multiplexer<tos::raspi3::generic_timer, 3>;
-    using channel_type = timer_mux_type::multiplexed_timer;
-    using clock_type = tos::clock<channel_type>;
-    using erased_clock_type = tos::detail::erased_clock<clock_type>;
-
-    using alarm_type = tos::alarm<channel_type>;
-    using erased_alarm_type = tos::detail::erased_alarm<alarm_type>;
+public:
 
     timer_mux_type m_tim_mux{ic, 0};
     erased_clock_type m_clock{m_tim_mux.channel(1)};
@@ -321,6 +325,8 @@ expected<void, errors> kernel() {
     tos::debug::log_server serv(man.get_log_sink());
 
     man.groups().front().exposed_services.emplace_back(&serv);
+
+    auto& g = man.groups().front();
 
     auto req_task = [&g = man.groups().front()]() -> tos::Task<void> {
         auto serv = static_cast<tos::ae::services::calculator::async_server*>(
@@ -337,6 +343,23 @@ expected<void, errors> kernel() {
     for (int i = 0; i < 10; ++i) {
         man.run();
     }
+
+    tos::launch(tos::alloc_stack, [&man] {
+      using namespace std::chrono_literals;
+      tos::this_thread::sleep_for(man.m_alarm, 5s);
+
+      tos::ae::services::calculator::stub_client<tos::ae::udp_transport> client{
+          tos::udp_endpoint_t{tos::parse_ipv4_address("10.0.0.38"), {1993}}};
+      LOG("In T1");
+
+      for (int i = 0; i < 100; ++i) {
+          for (int j = 0; j < 100; ++j) {
+              LOG("[T1] [Host: 10.0.0.38:1993]", i, "+", j, "=", client.add(i, j));
+          }
+      }
+    });
+
+    tos::this_thread::block_forever();
 
     return {};
 }
