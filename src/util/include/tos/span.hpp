@@ -280,11 +280,11 @@ private:
 };
 
 #if defined(__cpp_deduction_guides) && defined(__cpp_lib_string_view)
-span(std::string_view)->span<const char>;
+span(std::string_view) -> span<const char>;
 #endif
 #if defined(__cpp_deduction_guides)
-span(const std::string&)->span<const char>;
-span(std::string&)->span<char>;
+span(const std::string&) -> span<const char>;
+span(std::string&) -> span<char>;
 #endif
 
 template<class T>
@@ -313,6 +313,11 @@ template<class T = const uint8_t, class U>
 span<T> raw_cast(span<U> sp) {
     static_assert(sizeof(T) == 1, "");
     return {reinterpret_cast<T*>(sp.data()), sp.size_bytes()};
+}
+
+template<class T>
+span<T> const_span_cast(span<const T> res) {
+    return {const_cast<T*>(res.data()), res.size()};
 }
 
 template<class T>
@@ -352,7 +357,7 @@ span<T> safe_span_copy(span<T> to, span<const U> from) {
     return to.slice(0, len);
 }
 
-template <class T>
+template<class T>
 span<T> as_span(span<T> s) {
     return s;
 }
@@ -363,8 +368,8 @@ inline tos::span<uint8_t> as_span(vector<uint8_t>& v) {
     return tos::span<uint8_t>(v);
 }
 
-template <size_t N>
+template<size_t N>
 inline tos::span<uint8_t> as_span(array<uint8_t, N>& a) {
     return tos::span<uint8_t>(a);
 }
-}
+} // namespace std
