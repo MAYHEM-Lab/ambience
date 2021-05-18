@@ -90,17 +90,6 @@ public:
         return awaiter{this->coroHandle};
     }
 
-    bool run() {
-        if (!coroHandle.done()) {
-            coroHandle.resume();
-        }
-        return coroHandle.done();
-    }
-
-    T value() {
-        return coroHandle.promise().result();
-    }
-
 private:
     explicit Task(promise_coro_handle coro)
         : coroHandle(coro) {
