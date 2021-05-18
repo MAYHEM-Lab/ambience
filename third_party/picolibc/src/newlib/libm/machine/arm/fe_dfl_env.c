@@ -31,6 +31,5 @@
 
 #include "_fenv.h"
 
-fenv_t __fe_dfl_env = { 0 };
+const fenv_t __fe_dfl_env = { 0 };
 
-const fenv_t *_fe_dfl_env = &__fe_dfl_env;
