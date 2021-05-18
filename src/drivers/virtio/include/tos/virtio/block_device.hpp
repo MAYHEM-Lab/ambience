@@ -11,7 +11,6 @@ class block_device : public device {
 public:
     using device::device;
 
-    int write();
     /**
      * Returns the size of each flash sector/page in bytes.
      */
