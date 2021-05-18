@@ -196,8 +196,8 @@ typename T::value_type get_or(T&& t, U&& r) {
 }
 
 struct ignore_t {
-    template<class T>
-    void operator()(T&&) const {
+    template<class... T>
+    void operator()(T&&...) const {
     }
 };
 static constexpr ignore_t ignore{};
