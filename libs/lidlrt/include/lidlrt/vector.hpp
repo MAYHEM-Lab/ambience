@@ -49,6 +49,18 @@ public:
         return span().end();
     }
 
+    T& front() {
+        return span().front();
+    }
+
+    const T& front() const {
+        return span().front();
+    }
+
+    T& back() {
+        return span().back();
+    }
+
     const T& back() const {
         return span().back();
     }
@@ -109,6 +121,14 @@ public:
         return const_ptr_iterator<T>(m_under.end());
     }
 
+    const T& front() const {
+        return m_under.span().front().unsafe().get();
+    }
+
+    T& front() {
+        return m_under.span().front().unsafe().get();
+    }
+
     const T& back() const {
         return m_under.span().back().unsafe().get();
     }
@@ -140,7 +160,6 @@ inline bool operator==(const vector<T>& left, const vector<T>& right) {
            std::equal(left.begin(), left.end(), right.begin());
 }
 
-
 template<class T, std::enable_if_t<is_ptr<T>{}>* = nullptr>
 vector<T>& create_vector_sized(message_builder& builder, int size) {
     auto& vec = emplace_raw<vector<T>>(builder, int16_t(size));
@@ -162,6 +181,11 @@ vector<T>& create_vector(message_builder& builder, tos::span<const T> elems) {
     return vec;
 }
 
+template<class T, std::enable_if_t<!is_ptr<T>{} && !is_reference_type<T>{}>* = nullptr>
+vector<T>& create_vector(message_builder& builder, tos::span<T> elems) {
+    return create_vector<T>(builder, tos::span<const T>(elems));
+}
+
 template<class T, std::enable_if_t<is_ptr<T>{}>* = nullptr>
 vector<T>& create_vector(message_builder& builder, typename T::element_type& elem) {
     auto& vec = create_vector_sized<T>(builder, 1);
@@ -180,6 +204,16 @@ vector<T>& create_vector(message_builder& builder,
 }
 
 template<class T, std::enable_if_t<is_ptr<T>{}>* = nullptr>
+vector<T>& create_vector(message_builder& builder,
+                         tos::span<typename T::element_type*> elems) {
+    auto& vec = create_vector_sized<T>(builder, elems.size());
+    for (size_t i = 0; i < elems.size(); ++i) {
+        vec.get_raw().span()[i] = *elems[i];
+    }
+    return vec;
+}
+
+template<class T>
 vector<T>& create_vector(message_builder& builder) {
     auto& vec = emplace_raw<vector<T>>(builder, int16_t(0));
     return vec;
@@ -198,5 +232,10 @@ vector<ptr<T>>& create_vector(message_builder& builder, T& elem) {
 template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
 vector<ptr<T>>& create_vector(message_builder& builder, T& elem, T& elem2) {
     return create_vector<ptr<T>>(builder, elem, elem2);
+}
+
+template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
+vector<ptr<T>>& create_vector(message_builder& builder, tos::span<T*> elems) {
+return create_vector<ptr<T>>(builder, elems);
 }
 } // namespace lidl

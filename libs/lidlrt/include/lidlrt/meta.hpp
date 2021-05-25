@@ -4,7 +4,7 @@ namespace lidl::meta {
 template<class...>
 struct list {};
 
-template <class T>
+template<class T>
 struct identity {
     using type = T;
 };
@@ -22,6 +22,19 @@ struct tuple_index_of<T, std::tuple<U, Types...>> {
     static const std::size_t value = 1 + tuple_index_of<T, std::tuple<Types...>>::value;
 };
 
+template<class T, class Tuple>
+struct list_index_of;
+
+template<class T, class... Types>
+struct list_index_of<T, list<T, Types...>> {
+    static const std::size_t value = 0;
+};
+
+template<class T, class U, class... Types>
+struct list_index_of<T, list<U, Types...>> {
+    static const std::size_t value = 1 + tuple_index_of<T, list<Types...>>::value;
+};
+
 template<class T>
 using remove_cref = std::remove_const_t<std::remove_reference_t<T>>;
-}
+} // namespace lidl::meta

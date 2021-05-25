@@ -12,6 +12,10 @@ public:
         , m_cur_ptr(m_buffer.data()) {
     }
 
+    uint16_t capacity() const {
+        return m_buffer.size();
+    }
+
     uint16_t size() const {
         return static_cast<uint16_t>(m_cur_ptr - m_buffer.data());
     }
@@ -32,7 +36,7 @@ public:
             tmp_cur_ptr++;
         }
 
-        if (std::distance(m_buffer.begin(), tmp_cur_ptr) + size >= m_buffer.size()) {
+        if (std::distance(m_buffer.begin(), tmp_cur_ptr) + size > m_buffer.size()) {
             return nullptr;
         }
 

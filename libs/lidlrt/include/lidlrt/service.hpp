@@ -56,6 +56,10 @@ public:
     virtual ~service_base() = default;
 };
 
+class sync_service_base : public service_base {};
+
+class async_service_base : public service_base {};
+
 template<class T>
 tos::span<uint8_t> as_span(T&);
 
@@ -86,13 +90,13 @@ using erased_procedure_runner_t = typed_procedure_runner_t<service_base>;
 
 template<class ServiceT>
 using typed_union_procedure_runner_t =
-    void (*)(ServiceT&,
+    bool (*)(ServiceT&,
              typename ServiceT::service_type::wire_types::call_union&,
              lidl::message_builder&);
 
 template<class ServiceT>
 using typed_async_union_procedure_runner_t =
-    tos::Task<void> (*)(ServiceT&,
+    tos::Task<bool> (*)(ServiceT&,
                         typename ServiceT::service_type::wire_types::call_union&,
                         lidl::message_builder&);
 
@@ -183,6 +187,9 @@ async_union_caller(BaseServT& base_service,
                         create<results_union>(response, r);
                     } else if constexpr (std::is_same_v<meta::remove_cref<decltype(res)>,
                                                         tos::span<uint8_t>>) {
+                        auto& str = create_vector(response, res);
+                        const auto& r = create<result_type>(response, str);
+                        create<results_union>(response, r);
                     } else {
                         const auto& r = lidl::create<result_type>(response, res);
                         create<results_union>(response, r);
@@ -277,6 +284,9 @@ bool union_caller(BaseServT& base_service,
                         create<results_union>(response, r);
                     } else if constexpr (std::is_same_v<meta::remove_cref<decltype(res)>,
                                                         tos::span<uint8_t>>) {
+                        auto& str = create_vector(response, res);
+                        const auto& r = create<result_type>(response, str);
+                        create<results_union>(response, r);
                     } else {
                         const auto& r = lidl::create<result_type>(response, res);
                         create<results_union>(response, r);
