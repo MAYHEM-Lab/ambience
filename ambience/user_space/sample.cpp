@@ -4,7 +4,12 @@
 #include <tos/ae/transport/upcall.hpp>
 #include <tos/task.hpp>
 
-extern tos::ae::interface iface;
+namespace {
+constexpr auto queue_len = 32;
+[[gnu::section(".nozero")]] tos::ae::interface_storage<queue_len> storage;
+} // namespace
+
+tos::ae::interface iface = storage.make_interface();
 auto transport = tos::ae::upcall_transport<&iface>{};
 
 tos::ae::group<1>* g;

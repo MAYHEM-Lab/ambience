@@ -5,12 +5,7 @@
 #include <tos/detail/poll.hpp>
 #include <tos/memory.hpp>
 
-namespace {
-constexpr auto queue_len = 128;
-[[gnu::section(".nozero")]] tos::ae::interface_storage<queue_len> storage;
-} // namespace
-
-tos::ae::interface iface = storage.make_interface();
+extern tos::ae::interface iface;
 
 tos::Task<void> task();
 
