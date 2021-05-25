@@ -13,7 +13,6 @@
 #include <tos/utility.hpp>
 
 namespace tos {
-
 namespace detail {
 static constexpr char lookup[] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
@@ -54,13 +53,13 @@ inline tos::span<const char> itoa(itoa_input_t i, int base = 10) {
 
 namespace tos {
 template<class CharOstreamT>
-void print(CharOstreamT& ostr, char c) {
-    print(ostr, uint8_t(c));
+auto print(CharOstreamT& ostr, char c) {
+    return print(ostr, uint8_t(c));
 }
 
 template<class CharOstreamT>
-void print(CharOstreamT& ostr, uint8_t b) {
-    ostr->write(tos::span<const uint8_t>{&b, 1});
+auto print(CharOstreamT& ostr, uint8_t b) {
+    return ostr->write(tos::monospan(b));
 }
 
 /**
