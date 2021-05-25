@@ -1,5 +1,5 @@
-#include <tos/debug/sinks/lidl_sink.hpp>
 #include <tos/compiler.hpp>
+#include <tos/debug/sinks/lidl_sink.hpp>
 
 namespace tos::debug {
 namespace {
@@ -46,7 +46,7 @@ services::log_level convert_back(log_level level) {
     }
     TOS_UNREACHABLE();
 }
-}
+} // namespace
 bool log_server::start(services::log_level level) {
     return m_sink->begin(convert(level));
 }
@@ -87,9 +87,9 @@ bool log_server::log_log_level(services::log_level val) {
 
 bool lidl_sink::begin(log_level level) {
     auto res = m_logger->start(convert_back(level));
-//    if (res) {
-//        m_prot.lock();
-//    }
+    //    if (res) {
+    //        m_prot.lock();
+    //    }
     return res;
 }
 
@@ -110,7 +110,7 @@ void lidl_sink::add(bool b) {
 }
 
 void lidl_sink::add(const void* ptr) {
-    m_logger->log_pointer(reinterpret_cast<uint64_t>(ptr));
+    m_logger->log_pointer(reinterpret_cast<uintptr_t>(ptr));
 }
 
 void lidl_sink::add(log_level level) {
@@ -123,6 +123,36 @@ void lidl_sink::add(double d) {
 
 void lidl_sink::end() {
     m_logger->finish();
-//    m_prot.unlock();
+    //    m_prot.unlock();
+}
+
+tos::Task<bool> async_lidl_sink::begin(log_level level) {
+    return m_logger->start(convert_back(level));
+}
+tos::Task<void> async_lidl_sink::add(int64_t i) {
+    co_await m_logger->log_int(i);
+}
+tos::Task<void> async_lidl_sink::add(std::string_view str) {
+    co_await m_logger->log_string(str);
+}
+tos::Task<void> async_lidl_sink::add(span<const uint8_t> buf) {
+    // TODO
+    co_return;
+}
+
+tos::Task<void> async_lidl_sink::add(bool b) {
+    co_await m_logger->log_bool(b);
+}
+tos::Task<void> async_lidl_sink::add(const void* ptr) {
+    co_await m_logger->log_pointer(reinterpret_cast<uintptr_t>(ptr));
+}
+tos::Task<void> async_lidl_sink::add(log_level level) {
+    co_await m_logger->log_log_level(convert_back(level));
+}
+tos::Task<void> async_lidl_sink::add(double d) {
+    co_await m_logger->log_float(d);
+}
+tos::Task<void> async_lidl_sink::end() {
+    co_await m_logger->finish();
 }
 } // namespace tos::debug
