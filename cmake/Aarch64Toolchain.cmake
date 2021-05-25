@@ -14,7 +14,7 @@ set(TOS_STM32_FLAGS "-target aarch64-none-elf -march=armv8-a -mtune=cortex-a53")
 
 set(CMAKE_LINKER ${TOOLCHAIN_LD})
 message(STATUS ${CMAKE_LINKER})
-set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> -o <TARGET> --lto-O3 --icf=all --gc-sections <OBJECTS> <LINK_LIBRARIES>")
+set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> -o <TARGET> --lto-whole-program-visibility --lto-O3 --icf=all --gc-sections <OBJECTS> <LINK_LIBRARIES>")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TOS_STM32_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOS_STM32_FLAGS}")
