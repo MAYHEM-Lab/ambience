@@ -6,6 +6,7 @@
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
+#include <tos/detail/poll.hpp>
 #include <tos/interrupt_trampoline.hpp>
 #include <tos/late_constructed.hpp>
 
@@ -105,11 +106,24 @@ public:
                     return done();
                 }
 
-                m_runnable_groups.front().exposed_services[req.channel - 1].run_zerocopy(
-                    req.procid, req.arg_ptr, req.ret_ptr);
-                return done();
+                auto& channel =
+                    m_runnable_groups.front().exposed_services[req.channel - 1];
+
+                if (auto sync = get_if<tos::ae::sync_service_host>(&channel)) {
+                    tos::launch(tos::alloc_stack, [sync, done, req] {
+                        sync->run_zerocopy(req.procid, req.arg_ptr, req.ret_ptr);
+                        return done();
+                    });
+                    return;
+                }
+
+                auto async = get_if<tos::ae::async_service_host>(&channel);
+
+                tos::coro::make_detached(
+                    async->run_zerocopy(req.procid, req.arg_ptr, req.ret_ptr), done);
             },
             m_runnable_groups.front().iface);
+
         tos::this_thread::yield();
 
         return preempted;
