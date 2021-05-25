@@ -70,7 +70,6 @@ block_device::write(uint64_t sector_id, span<const uint8_t> data, size_t offset)
 
     m_wait_sem.down();
 
-    LOG("out", q.used_base->index, int(c), (void*)(uintptr_t)data[0]);
     if (c == 0) {
         return {};
     }
@@ -93,14 +92,10 @@ block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
     auto [data_idx, data_] = q.alloc();
     auto [code_idx, code_] = q.alloc();
 
-    LOG(root_idx, data_idx, code_idx);
-
     root->addr = reinterpret_cast<uintptr_t>(&header);
     root->len = sizeof header;
     root->flags = queue_flags::next;
     root->next = data_idx;
-
-    LOG(root->flags);
 
     data_->addr = reinterpret_cast<uintptr_t>(data.data());
     data_->len = data.size();
@@ -115,13 +110,10 @@ block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
 
     q.submit_available(root_idx);
 
-    LOG(q.used_base->index, int(c), (void*)(uintptr_t)data[0]);
-
     transport().write_u16(notify_port_offset, 0);
 
     m_wait_sem.down();
 
-    LOG("out", q.used_base->index, int(c), (void*)(uintptr_t)data[0]);
     if (c == 0) {
         return {};
     }
@@ -145,14 +137,10 @@ block_device::async_read(uint64_t sector_id, span<uint8_t> data, size_t offset) 
     auto [data_idx, data_] = q.alloc();
     auto [code_idx, code_] = q.alloc();
 
-    LOG(root_idx, data_idx, code_idx);
-
     root->addr = reinterpret_cast<uintptr_t>(&header);
     root->len = sizeof header;
     root->flags = queue_flags::next;
     root->next = data_idx;
-
-    LOG(root->flags);
 
     data_->addr = reinterpret_cast<uintptr_t>(data.data());
     data_->len = data.size();
@@ -167,13 +155,10 @@ block_device::async_read(uint64_t sector_id, span<uint8_t> data, size_t offset) 
 
     q.submit_available(root_idx);
 
-    LOG(q.used_base->index, int(c), (void*)(uintptr_t)data[0]);
-
     transport().write_u16(notify_port_offset, 0);
 
     co_await m_wait_sem;
 
-    LOG("out", q.used_base->index, int(c), (void*)(uintptr_t)data[0]);
     if (c == 0) {
         co_return tos::expected<void, int>{};
     }
