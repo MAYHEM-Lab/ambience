@@ -4,6 +4,7 @@
 #include <common/pci/classes.hpp>
 #include <cstdint>
 #include <optional>
+#include <tos/generator.hpp>
 #include <tos/x86_64/port.hpp>
 
 namespace tos::x86_64::pci {
@@ -264,5 +265,28 @@ inline uint32_t capability::read_long(uint8_t offset) const {
 
 inline void capability::write_word(uint8_t offset, uint16_t val) {
     m_dev->call_fn(detail::config_write_word, m_offset + offset, val);
+}
+
+template<class FnT>
+void scan_pci(FnT&& fn) {
+    for (int i = 0; i < 256; ++i) {
+        for (int j = 0; j < 32; ++j) {
+            auto vendor_id = tos::x86_64::pci::get_vendor(i, j, 0);
+            if (vendor_id != 0xFFFF) {
+                fn(tos::x86_64::pci::device(i, j, 0));
+            }
+        }
+    }
+}
+
+inline tos::Generator<tos::x86_64::pci::device> enumerate_pci() {
+    for (int i = 0; i < 256; ++i) {
+        for (int j = 0; j < 32; ++j) {
+            auto vendor_id = tos::x86_64::pci::get_vendor(i, j, 0);
+            if (vendor_id != 0xFFFF) {
+                co_yield tos::x86_64::pci::device(i, j, 0);
+            }
+        }
+    }
 }
 } // namespace tos::x86_64::pci
