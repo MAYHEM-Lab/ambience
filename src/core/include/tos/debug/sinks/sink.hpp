@@ -15,6 +15,8 @@ struct any_sink {
     virtual void add(const void* ptr) = 0;
     virtual void add(log_level) = 0;
     virtual void add(double d) = 0;
+    virtual void end() = 0;
+    virtual ~any_sink() = default;
 
     void add(int i) {
         add(static_cast<int64_t>(i));
@@ -65,10 +67,6 @@ struct any_sink {
     void add(void* f) {
         add(static_cast<const void*>(f));
     }
-
-    virtual void end() = 0;
-
-    virtual ~any_sink() = default;
 };
 
 template<class Sink, class... Ts>
