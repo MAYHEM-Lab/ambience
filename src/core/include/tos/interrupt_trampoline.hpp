@@ -51,7 +51,7 @@ public:
         kern::disable_interrupts();
         global::should_enable = true;
         global::thread_state.current_thread = m_target;
-        switch_context(m_target->get_processor_state(), tos::return_codes::scheduled);
+        switch_context(m_target->get_processor_state(), tos::context_codes::scheduled);
     }
 
     template<class InISR>
@@ -73,7 +73,7 @@ public:
 
 private:
     void on_svc() {
-        if (save_context(m_isr_tcb, m_isr_ctx) == tos::return_codes::saved) {
+        if (save_context(m_isr_tcb, m_isr_ctx) == tos::context_codes::saved) {
             m_isr_state = state::first;
             return;
         }
@@ -96,7 +96,7 @@ private:
      * This context stores an execution context that's in an interrupt
      * handler.
      */
-    tos::kern::processor_state m_isr_ctx;
+    tos::processor_context m_isr_ctx;
 
     // Upon executing the trampoline, we'll return to this thread.
     tos::kern::tcb* m_target;
