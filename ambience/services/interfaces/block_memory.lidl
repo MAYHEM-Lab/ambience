@@ -4,5 +4,7 @@ service block_memory {
     get_block_size() -> i32;
     get_block_count() -> i32;
 
-    read(block: i32, offset: i32) -> span<u8>;
+    read(block: i32, offset: i32, len: i32) -> span<u8>;
+    erase(block: i32) -> bool;
+    write(block: i32, offset: i32, data: span<u8>) -> bool;
 }
