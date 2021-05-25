@@ -100,9 +100,13 @@ pollable make_pollable(Task<T> x, BeforeFin fin = {}) {
     co_return;
 }
 
-template<class T, class BeforeFin = tos::ignore_t>
-detached make_detached(Task<T> x, BeforeFin fin = {}) {
-    co_await x;
+template<class AwaitableT, class BeforeFin = tos::ignore_t>
+detached make_detached(AwaitableT x, BeforeFin fin = {}) {
+    if constexpr (std::is_invocable_v<AwaitableT>) {
+        co_await x();
+    } else {
+        co_await x;
+    }
     fin();
     co_return;
 }
