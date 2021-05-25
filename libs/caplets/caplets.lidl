@@ -1,0 +1,7 @@
+namespace caplets;
+
+struct Tag {
+    tag: array<u8, 32>;
+}
+
+struct RootCapability {}
