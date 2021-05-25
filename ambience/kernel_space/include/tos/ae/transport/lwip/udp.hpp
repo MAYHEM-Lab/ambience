@@ -3,13 +3,14 @@
 #include <common/inet/tcp_ip.hpp>
 #include <tos/lwip/lwip.hpp>
 #include <tos/lwip/udp.hpp>
+#include <vector>
 
 namespace tos::ae {
 struct udp_transport {
 public:
     udp_transport(tos::udp_endpoint_t ep);
 
-    std::array<uint8_t, 128> get_buffer();
+    std::vector<uint8_t> get_buffer();
 
     void operator()(tos::lwip::events::recvfrom_t,
                     tos::lwip::async_udp_socket*,
