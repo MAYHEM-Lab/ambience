@@ -8,12 +8,11 @@
 #include <tos/interrupt.hpp>
 #include <tos/intrusive_list.hpp>
 #include <tos/job.hpp>
+#include <tos/processor_context.hpp>
 #include <tos/utility.hpp>
 #include <utility>
 
 namespace tos::kern {
-struct processor_state;
-
 /**
  * This type represents an execution context in the system.
  *
@@ -31,11 +30,11 @@ struct alignas(alignof(std::max_align_t)) tcb : public job {
      *
      * @return execution context of the task
      */
-    processor_state& get_processor_state() {
+    processor_context& get_processor_state() {
         return *m_ctx;
     }
 
-    void set_processor_state(processor_state& buf) {
+    void set_processor_state(processor_context& buf) {
         m_ctx = &buf;
     }
 
@@ -65,7 +64,7 @@ public:
     void operator()() override;
 
 private:
-    processor_state* m_ctx;
+    processor_context* m_ctx;
 };
 
 inline void set_name(tcb& t, std::string_view name) {
@@ -82,54 +81,7 @@ inline std::string_view get_name(const tcb& t) {
 #endif
 }
 } // namespace tos::kern
-
 namespace tos {
-enum class return_codes : uint8_t
-{
-    saved = 0,
-    /**
-     * the running thread yielded
-     */
-    yield,
-    /**
-     * the running thread has been suspended
-     */
-    suspend,
-    /**
-     * a thread exited
-     */
-    do_exit,
-    /**
-     * this thread was assigned the cpu
-     */
-    scheduled
-};
-
-namespace kern {
-struct processor_state {
-#if defined(TOS_ARCH_HAS_PROC_STATE)
-    tos::cur_arch::proc_state_t buf;
-#else
-    jmp_buf buf;
-#endif
-};
-
-[[noreturn]] inline void switch_context(kern::processor_state& j, return_codes rc) {
-#if defined(TOS_ARCH_HAS_PROC_STATE)
-    tos_longjmp(j.buf, static_cast<int>(rc));
-#else
-    longjmp(j.buf, static_cast<int>(rc));
-#endif
-    TOS_UNREACHABLE();
-}
-} // namespace kern
 void swap_context(kern::tcb& current, kern::tcb& to, const no_interrupts&);
-} // namespace tos
-
-#if defined(TOS_ARCH_HAS_PROC_STATE)
-#define save_ctx(ctx) (::tos::return_codes) tos_setjmp((ctx).buf)
-#else
-#define save_ctx(ctx) (::tos::return_codes) setjmp((ctx).buf)
-#endif
-
+}
 #define save_context(tcb, ctx) (tcb).set_processor_state((ctx)), save_ctx(ctx)

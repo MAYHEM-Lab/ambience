@@ -30,7 +30,7 @@ thread_id_t get_id();
  * A blocking mechanism should always be preferred over yielding
  * in a busy wait.
  */
-void yield();
+void yield(const no_interrupts& = tos::int_guard{});
 
 /**
  * Gives control of the CPU back to the scheduler, suspending

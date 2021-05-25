@@ -22,7 +22,7 @@ add_library(tos_ft
 target_link_libraries(tos_ft PUBLIC tos_util_core tos_coro)
 target_link_libraries(tos_ft PUBLIC tos_interrupt)
 target_link_libraries(tos_ft PUBLIC tos::libcxx)
-target_link_libraries(tos_ft PUBLIC tos_alarm tos_context)
+target_link_libraries(tos_ft PUBLIC tos_alarm tos_context tos_pcontext)
 
 add_library(tos::ft ALIAS tos_ft)
 

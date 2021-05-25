@@ -20,17 +20,17 @@ void tcb::operator()() {
     auto save_res = save_ctx(global::thread_state.backup_state);
 
     switch (save_res) {
-    case return_codes::saved:
+    case context_codes::saved:
         global::thread_state.current_thread = this;
-        switch_context(*m_ctx, return_codes::scheduled);
-    case return_codes::yield:
-    case return_codes::suspend:
+        switch_context(*m_ctx, context_codes::scheduled);
+    case context_codes::yield:
+    case context_codes::suspend:
         break;
-    case return_codes::do_exit:
+    case context_codes::do_exit:
         // TODO(#34): Potentially a use-after-free. See the issue.
         std::destroy_at(this);
         break;
-    case return_codes::scheduled:
+    case context_codes::scheduled:
         tos::debug::panic("Should not happen");
     }
 
@@ -52,7 +52,7 @@ void thread_exit() {
 
     // no need to save the current context, we'll exit
 
-    switch_context(global::thread_state.backup_state, return_codes::do_exit);
+    switch_context(global::thread_state.backup_state, context_codes::do_exit);
 }
 
 void suspend_self(const no_interrupts&) {
@@ -62,14 +62,14 @@ void suspend_self(const no_interrupts&) {
     }
 #endif
 
-    kern::processor_state ctx;
-    if (save_context(*self(), ctx) == return_codes::saved) {
-        switch_context(global::thread_state.backup_state, return_codes::suspend);
+    processor_context ctx;
+    if (save_context(*self(), ctx) == context_codes::saved) {
+        switch_context(global::thread_state.backup_state, context_codes::suspend);
     }
 }
 
 thread_id_t start(tcb& t, void (*entry)()) {
-    auto ctx_ptr = new ((char*)&t - sizeof(processor_state)) processor_state;
+    auto ctx_ptr = new ((char*)&t - sizeof(processor_context)) processor_context;
     tos::cur_arch::set_rip(ctx_ptr->buf, reinterpret_cast<uintptr_t>(entry));
 #if defined(TOS_PLATFORM_x86_64) || defined(TOS_PLATFORM_x86_hosted)
     tos::cur_arch::set_rsp(ctx_ptr->buf, reinterpret_cast<uintptr_t>(&t) - 8);
@@ -87,26 +87,25 @@ thread_id_t start(tcb& t, void (*entry)()) {
 
 namespace tos {
 void swap_context(kern::tcb& current, kern::tcb& to, const no_interrupts&) {
-    kern::processor_state context;
-    if (save_context(current, context) == return_codes::saved) {
-        global::thread_state.current_thread = &to;
-        kern::switch_context(to.get_processor_state(), return_codes::scheduled);
-    }
+    processor_context context;
+
+    current.set_processor_state(context);
+    global::thread_state.current_thread = &to;
+    swap_context(context, to.get_processor_state());
 }
 } // namespace tos
 
 namespace tos::this_thread {
 void block_forever() {
     kern::disable_interrupts();
-    switch_context(global::thread_state.backup_state, return_codes::suspend);
+    switch_context(global::thread_state.backup_state, context_codes::suspend);
 }
 
-void yield() {
-    tos::int_guard ig;
-    kern::processor_state ctx;
-    if (save_context(*self(), ctx) == return_codes::saved) {
+void yield(const no_interrupts&) {
+    processor_context ctx;
+    if (save_context(*self(), ctx) == context_codes::saved) {
         kern::make_runnable(*self());
-        switch_context(global::thread_state.backup_state, return_codes::yield);
+        switch_context(global::thread_state.backup_state, context_codes::yield);
     }
 }
 } // namespace tos::this_thread
