@@ -17,34 +17,28 @@ struct kernel_interface {
 
 template<class ExecutorT>
 inline void proc_req_queue(ExecutorT&& executor, kernel_interface& iface) {
-    iface.req_last_seen = for_each(
-        *iface.user_iface,
-        *iface.user_iface->req,
-        iface.req_last_seen,
-        iface.user_iface->size,
-        [&iface, &executor](ring_elem& elem) {
-            auto& req = elem.req;
-            LOG(req.channel,
-                req.procid,
-                req.arg_ptr,
-                req.user_ptr,
-                req.ret_ptr,
-                util::is_flag_set(elem.common.flags, elem_flag::req) ? "Request"
-                                                                     : "Response");
+    iface.req_last_seen =
+        for_each(*iface.user_iface,
+                 *iface.user_iface->guest_to_host,
+                 iface.req_last_seen,
+                 iface.user_iface->size,
+                 [&iface, &executor](ring_elem& elem) {
+                     auto& req = elem.req;
 
-            if (!util::is_flag_set(elem.common.flags, elem_flag::req)) {
-                // Response for a request we made.
+                     if (!util::is_flag_set(elem.common.flags, elem_flag::req)) {
+                         // Response for a request we made.
 
-                auto& res = elem.res;
-                if (res.user_ptr) {
-                    auto& continuation =
-                        *static_cast<tos::function_ref<void()>*>(res.user_ptr);
-                    continuation();
-                }
-            } else {
-                executor(req,
-                         [&elem, &iface] { respond<true>(*iface.user_iface, elem); });
-            }
-        });
+                         auto& res = elem.res;
+                         if (res.user_ptr) {
+                             auto& continuation =
+                                 *static_cast<tos::function_ref<void()>*>(res.user_ptr);
+                             continuation();
+                         }
+                     } else {
+                         executor(req, [&elem, &iface] {
+                             respond<true>(*iface.user_iface, elem);
+                         });
+                     }
+                 });
 }
 } // namespace tos::ae::kernel

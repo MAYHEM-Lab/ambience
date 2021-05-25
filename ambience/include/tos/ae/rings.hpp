@@ -14,8 +14,8 @@ enum class elem_flag : uint8_t
     none = 0,
     // The element is a request, as opposed to a response
     req = 1,
-    // Hypervisor to user element
-    incoming = 2,
+    // The element has a continuation in its user_ptr instead
+    next = 2,
     // This element is not free
     in_use = 4
 };
@@ -44,7 +44,8 @@ struct req_elem {
                 el->user_ptr = &ref;
             }
 
-            void await_resume() const {
+            bool await_resume() const {
+                return true;
             }
 
             req_elem* el;
@@ -69,26 +70,18 @@ union ring_elem {
 struct ring {
     uint16_t head_idx;
     uint16_t elems[];
-};
 
-template<class FnT>
-uint16_t for_each(const ring& ring, uint16_t last_seen, size_t size, const FnT& fn) {
-    // TODO: handle overflow
-    for (; last_seen < ring.head_idx; ++last_seen) {
-        auto idx = ring.elems[last_seen % size];
-
-        fn(idx);
+    void submit(uint16_t elem_idx, int sz) {
+        elems[head_idx++ % sz] = elem_idx;
     }
-
-    return last_seen;
-}
+};
 
 struct interface {
     int size;
 
     ring_elem* elems;
-    ring* req;
-    ring* res;
+    ring* guest_to_host;
+    ring* host_to_guest;
 
     uint16_t res_last_seen = 0;
     int next_elem = 0;
@@ -132,16 +125,12 @@ struct interface_storage {
     }
 };
 
-template<bool FromHypervisor>
-req_elem&
-submit_req(interface& iface, int channel, int proc, const void* params, void* res) {
+inline std::pair<req_elem&, int>
+prepare_req(interface& iface, int channel, int proc, const void* params, void* res) {
     auto el_idx = iface.allocate();
     auto& req_el = iface.elems[el_idx].req;
 
     req_el.flags = elem_flag::req;
-    if constexpr (FromHypervisor) {
-        req_el.flags = tos::util::set_flag(req_el.flags, elem_flag::incoming);
-    }
 
     req_el.channel = channel;
     req_el.procid = proc;
@@ -149,11 +138,24 @@ submit_req(interface& iface, int channel, int proc, const void* params, void* re
     req_el.ret_ptr = res;
     req_el.user_ptr = nullptr;
 
+    return {req_el, el_idx};
+}
+
+template<bool FromHypervisor>
+void submit_elem(interface& iface, int el_idx) {
     if constexpr (FromHypervisor) {
-        iface.res->elems[iface.res->head_idx++ % iface.size] = el_idx;
+        iface.host_to_guest->submit(el_idx, iface.size);
     } else {
-        iface.req->elems[iface.req->head_idx++ % iface.size] = el_idx;
+        iface.guest_to_host->submit(el_idx, iface.size);
     }
+}
+
+template<bool FromHypervisor>
+req_elem&
+submit_req(interface& iface, int channel, int proc, const void* params, void* res) {
+    const auto& [req_el, el_idx] = prepare_req(iface, channel, proc, params, res);
+
+    submit_elem<FromHypervisor>(iface, el_idx);
 
     return req_el;
 }
@@ -166,16 +168,8 @@ void respond(interface& iface, ring_elem& el) {
     auto& res = el.res;
 
     res.user_ptr = req.user_ptr;
-    res.flags = elem_flag::incoming;
+    res.flags = elem_flag::none;
 
-    if constexpr (FromHypervisor) {
-        iface.res->elems[iface.res->head_idx++ % iface.size] = el_idx;
-    } else {
-        iface.req->elems[iface.req->head_idx++ % iface.size] = el_idx;
-    }
-}
-
-inline void ack(interface& iface, ring_elem& elem) {
-    elem.common.flags = elem_flag::none;
+    submit_elem<FromHypervisor>(iface, el_idx);
 }
 } // namespace tos::ae
