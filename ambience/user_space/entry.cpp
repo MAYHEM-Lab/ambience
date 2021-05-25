@@ -3,7 +3,6 @@
 #include <tos/ae/detail/syscall.hpp>
 #include <tos/ae/user_space.hpp>
 #include <tos/detail/poll.hpp>
-#include <tos/late_constructed.hpp>
 #include <tos/memory.hpp>
 
 namespace {
@@ -30,14 +29,6 @@ void __cxa_atexit() {
 }
 }
 
-namespace {
-tos::late_constructed<std::list<tos::coro::pollable>> tasks;
-}
-
-void post(tos::coro::pollable p) {
-    tasks.get().emplace_back(std::move(p));
-}
-
 [[gnu::used, noreturn]] extern "C" void _user_code() {
     auto data = tos::default_segments::data();
     auto data_start = reinterpret_cast<uint64_t*>(data.base);
@@ -55,8 +46,6 @@ void post(tos::coro::pollable p) {
     // Call constructors
     std::for_each(start_ctors, end_ctors, [](auto x) { x(); });
 
-    tasks.emplace();
-
     tos::ae::detail::do_init_syscall(iface);
 
     auto pollable = tos::coro::make_pollable(task());
@@ -65,8 +54,5 @@ void post(tos::coro::pollable p) {
     while (true) {
         tos::ae::detail::do_yield_syscall();
         proc_res_queue(iface);
-        while(!tasks.get().empty() && tasks.get().front().done()) {
-            tasks.get().pop_front();
-        }
     }
 }
