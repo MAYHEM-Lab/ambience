@@ -234,6 +234,45 @@ template<class AlarmT>
 std::unique_ptr<any_alarm> erase_alarm(AlarmT&& alarm) {
     return std::make_unique<detail::erased_alarm<AlarmT>>(std::forward<AlarmT>(alarm));
 }
+
+template<class AlarmT, class Rep, class Period>
+auto async_sleep_for(AlarmT& alarm, const std::chrono::duration<Rep, Period>& duration) {
+    struct awaiter : job {
+        awaiter(AlarmT& alarm, const std::chrono::duration<Rep, Period>& duration)
+            : job(current_context()), m_alarm{alarm}
+            , m_sleeper{alarm->time_to_ticks(duration),
+                        mem_function_ref<&awaiter::tick_fn>(*this)} {
+        }
+
+        bool await_ready() const noexcept {
+            return false;
+        }
+
+        void await_suspend(std::coroutine_handle<> handle) {
+            m_cont = handle;
+            m_alarm->set_alarm(m_sleeper);
+        }
+
+        void await_resume() {
+        }
+
+        void tick_fn() {
+            tos::kern::make_runnable(*this);
+        }
+
+        void operator()() override {
+            m_cont.resume();
+        }
+
+        using Type = std::remove_pointer_t<AlarmT>;
+
+        AlarmT& m_alarm;
+        typename Type::sleeper_type m_sleeper;
+        std::coroutine_handle<> m_cont;
+    };
+
+    return awaiter{alarm, duration};
+}
 } // namespace tos
 
 namespace tos::this_thread {
