@@ -146,6 +146,13 @@ public:
 
     using iterator_t = intrusive_list_iterator<T, Access>;
 
+    constexpr intrusive_list shallow_copy() const noexcept {
+        intrusive_list res;
+        res.m_head = m_head;
+        res.m_tail = m_tail;
+        return res;
+    }
+
     /**
      * Returns the number of elements in the list
      * Traverses the whole list, prefer `empty` if possible
