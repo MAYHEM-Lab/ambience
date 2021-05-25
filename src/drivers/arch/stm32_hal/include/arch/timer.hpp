@@ -53,6 +53,8 @@ class general_timer
     , public tracked_driver<general_timer, std::size(detail::gen_timers)> {
 public:
     explicit general_timer(const detail::gen_tim_def& def);
+    general_timer(const general_timer&) = delete;
+    general_timer(general_timer&&) = delete;
 
     /**
      * Sets the frequency of the tick callback.
@@ -138,11 +140,13 @@ inline void general_timer::set_frequency(uint16_t hertz) {
     m_handle.Init.Period = (2000 / hertz) - 1;
     auto init_res = HAL_TIM_Base_Init(&m_handle);
     if (init_res != HAL_OK) {
-        // error
+        LOG_ERROR("Could not initialize timer!");
     }
 }
 
 inline void general_timer::enable() {
+    __HAL_TIM_CLEAR_IT(&m_handle, TIM_IT_UPDATE);
+    NVIC_ClearPendingIRQ(m_def->irq);
     m_handle.Instance->CNT = 0;
     HAL_NVIC_EnableIRQ(m_def->irq);
     tos::kern::busy();
