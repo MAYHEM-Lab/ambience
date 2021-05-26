@@ -97,6 +97,7 @@ void stack_segment_fault_handler([[maybe_unused]] exception_frame* frame,
 }
 void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
                                       [[maybe_unused]] uint64_t num) {
+    LOG("Failing thread:", get_name(*tos::self()));
     LOG_ERROR("GPF!",
               (int)num,
               (void*)frame,
