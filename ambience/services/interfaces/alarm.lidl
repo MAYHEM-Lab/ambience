@@ -1,0 +1,9 @@
+namespace tos::ae::services;
+
+struct milliseconds {
+    count: i16;
+}
+
+service alarm {
+    sleep_for(dur: milliseconds) -> bool;
+}

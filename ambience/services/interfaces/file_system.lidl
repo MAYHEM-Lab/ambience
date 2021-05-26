@@ -1,0 +1,12 @@
+namespace tos::ae::services;
+
+struct file_handle {
+    priv: u32;
+}
+
+service filesystem {
+    open(path: string_view) -> file_handle;
+    read_file(file: file_handle, at: u32, len: u32) -> span<u8>;
+    write_file(file: file_handle, at: u32, data: span<u8>) -> bool;
+    close_file(file: file_handle) -> bool;
+}

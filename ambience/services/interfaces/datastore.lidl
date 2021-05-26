@@ -1,0 +1,14 @@
+namespace tos::ae::services;
+
+union value {
+    integer: i64;
+    real: f32;
+    string: string;
+    blob: vec<u8>;
+}
+
+service key_value_store {
+    exists(key: string_view) -> bool;
+    set(key: string_view, val: value) -> bool;
+    get(key: string_view) -> value;
+}

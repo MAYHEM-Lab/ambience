@@ -5,6 +5,10 @@ add_lidlc(block_memory_schema block_memory.lidl)
 add_lidlc(temp_sensor_schema temp_sensor.yaml)
 
 add_lidlc(i2c_schema i2c.lidl)
-target_link_libraries(i2c_schema INTERFACE tos_i2c_schema)
+add_lidl_dependency(i2c_schema tos_i2c_schema)
 
 add_lidlc(group_schema group.lidl)
+
+add_lidlc(alarm_schema alarm.lidl)
+add_lidlc(filesystem_schema file_system.lidl)
+target_include_directories(filesystem_schema INTERFACE .)
