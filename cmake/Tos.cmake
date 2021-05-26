@@ -45,7 +45,7 @@ set(TOS_FLAGS "-Wall -Wextra -Wpedantic \
      -Wno-nonnull")
 
 if(ENABLE_UBSAN)
-    set(TOS_FLAGS "${TOS_FLAGS} -fsanitize=bool")
+    set(TOS_FLAGS "${TOS_FLAGS} -fsanitize=bool,null,nonnull-attribute")
 endif()
 
 # TODO: Blocked on #34
