@@ -324,7 +324,7 @@ expected<void, errors> kernel() {
 
     tos::debug::log_server serv(man.get_log_sink());
 
-    man.groups().front().exposed_services.emplace_back(&serv);
+    man.groups().front().exposed_services.emplace_back(tos::ae::service_host(&serv));
 
     auto& g = man.groups().front();
 
@@ -368,3 +368,4 @@ static tos::stack_storage kern_stack;
 void tos_main() {
     tos::launch(kern_stack, kernel);
 }
+
