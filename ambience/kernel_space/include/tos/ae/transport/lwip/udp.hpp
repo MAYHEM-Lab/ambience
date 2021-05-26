@@ -4,9 +4,10 @@
 #include <tos/lwip/lwip.hpp>
 #include <tos/lwip/udp.hpp>
 #include <vector>
+#include <lidlrt/transport/common.hpp>
 
 namespace tos::ae {
-struct udp_transport {
+struct udp_transport : lidl::verbatim_transform {
 public:
     udp_transport(tos::udp_endpoint_t ep);
 
