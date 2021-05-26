@@ -1,0 +1,24 @@
+namespace tos::ae;
+
+import "caplets.lidl";
+import "timeout.lidl";
+import "file_system.lidl";
+
+union Constraints {
+    timeout: caplets::TimeoutConstraint;
+}
+
+union Capabilities {
+    fs_call: tos::ae::services::filesystem::call_union;
+    root: caplets::RootCapability;
+}
+
+struct Frame {
+    capabilities: vector<Capabilities>;
+    constraints: vector<Constraints>;
+}
+
+struct Token {
+    tag: caplets::Tag;
+    frames: vector<Frame>;
+}
