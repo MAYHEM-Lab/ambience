@@ -1,0 +1,1 @@
+add_subdirectory(cc32xx_nwp_fs)
