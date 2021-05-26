@@ -11,3 +11,4 @@ CMakeSettings.json
 compile_commands.json
 **/__pycache__
 .cache
+venv
