@@ -7,6 +7,7 @@ import re
 from elftools.elf.elffile import ELFFile
 from elftools.elf.segments import Segment
 from typing import List
+import tempfile
 
 env = Environment(
     loader=PackageLoader("ambictl"),
@@ -163,7 +164,7 @@ def create_node_dir(build_dir: str, node: defs.DeployNode):
 
 
 if __name__ == "__main__":
-    build_root = "/tmp/test123"
+    build_root = tempfile.mkdtemp()
     create_build_root(build_root, "/home/fatih/tos")
 
     all_nodes = sample_group.sample_deployment()
