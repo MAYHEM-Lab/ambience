@@ -1,0 +1,2 @@
+add_library(littlefs_server littlefs.cpp)
+target_link_libraries(littlefs_server PUBLIC block_memory_schema log_schema lfs filesystem_schema)
