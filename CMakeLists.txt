@@ -30,6 +30,7 @@ add_subdirectory(libs)
 add_subdirectory(src)
 add_subdirectory(apps EXCLUDE_FROM_ALL)
 add_subdirectory(third_party)
+add_subdirectory(staging EXCLUDE_FROM_ALL)
 
 if (BUILD_EXAMPLES)
     add_subdirectory(examples)
