@@ -78,15 +78,20 @@ public:
         tmr.set_callback(tos::function_ref<void()>(preempt));
         tmr.set_frequency(200);
 
-//        LOG("Scheduling", m_runnable_groups.size());
         m_odi.get()([&](auto...) {
             Platform::set_syscall_handler(syshandler);
 
             tmr.enable();
+
+            //            tos::arm::set_control(1);
+            //            tos::arm::isb();
+
             tos::swap_context(*m_self, *m_runnable_groups.front().state, tos::int_ctx{});
+
+            //            tos::arm::set_control(0);
+            //            tos::arm::isb();
         });
 
-//        LOG("Preempted", preempted);
         proc_req_queue(
             [&](tos::ae::req_elem& req, auto done) {
                 if (req.channel == 0) {

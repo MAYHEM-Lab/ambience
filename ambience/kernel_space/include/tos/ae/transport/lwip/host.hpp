@@ -10,8 +10,9 @@
 #include <vector>
 
 namespace tos::ae {
-struct async_lwip_host {
-    async_lwip_host(const async_service_host& service, tos::port_num_t port);
+template <class ServiceHost>
+struct lwip_host {
+    lwip_host(const ServiceHost& service, tos::port_num_t port);
 
     // Acceptor
     bool operator()(tos::lwip::tcp_socket&, tos::lwip::tcp_endpoint&& client);
@@ -25,8 +26,6 @@ private:
     static std::vector<uint8_t>
     read_req(tos::tcp_stream<tos::lwip::tcp_endpoint>& stream);
 
-    void handle_one_req(tos::span<uint8_t> req, lidl::message_builder& response_builder);
-
     void handle_one_req(tos::tcp_stream<tos::lwip::tcp_endpoint>& stream);
 
     void handle_one_req(const tos::udp_endpoint_t& from, tos::lwip::buffer& buf);
@@ -39,9 +38,11 @@ private:
     tos::semaphore sem{0};
     std::deque<std::unique_ptr<tos::tcp_stream<tos::lwip::tcp_endpoint>>> backlog;
 
-    tos::ae::async_service_host serv;
+    ServiceHost serv;
     tos::lwip::tcp_socket sock;
     tos::lwip::async_udp_socket udp_sock;
 };
 
+extern template class lwip_host<sync_service_host>;
+extern template class lwip_host<async_service_host>;
 } // namespace tos::ae

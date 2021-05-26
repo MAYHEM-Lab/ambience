@@ -25,11 +25,11 @@ void __cxa_atexit() {
 }
 
 [[gnu::used, noreturn]] extern "C" void _user_code() {
-    auto data = tos::default_segments::data();
-    auto data_start = reinterpret_cast<uint64_t*>(data.base);
-
-    // Copy initialized data
-    std::copy_n(&_sidata, data.size, data_start);
+//    auto data = tos::default_segments::data();
+//    auto data_start = reinterpret_cast<uint64_t*>(data.base);
+//
+//    // Copy initialized data
+//    std::copy_n(&_sidata, data.size, data_start);
 
     auto bss = tos::default_segments::bss();
     auto bss_start = reinterpret_cast<uint64_t*>(bss.base);
