@@ -1,0 +1,18 @@
+if (NOT TARGET test_main)
+    add_executable(test_main)
+    target_link_libraries(test_main PRIVATE tos_core arch_drivers utest tos_dynamic_log tos_serial_packets)
+    set_target_properties(test_main PROPERTIES CXX_EXTENSIONS OFF)
+endif()
+
+function(add_tostest target)
+    message(STATUS "Testing ${target}")
+    target_link_libraries(test_main PRIVATE "-Wl,--whole-archive" ${target} "-Wl,--no-whole-archive")
+endfunction()
+
+if (${TOS_PLATFORM} MATCHES hosted)
+    target_sources(test_main PRIVATE ${CMAKE_CURRENT_LIST_DIR}/hosted_test_main.cpp)
+elseif(${TOS_PLATFORM} MATCHES stm32_hal)
+    target_sources(test_main PRIVATE ${CMAKE_CURRENT_LIST_DIR}/stm32_hal_test_main.cpp)
+else()
+    target_sources(test_main PRIVATE ${CMAKE_CURRENT_LIST_DIR}/stub_test_main.cpp)
+endif ()
