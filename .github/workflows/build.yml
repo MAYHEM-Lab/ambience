@@ -58,7 +58,7 @@ jobs:
       working-directory: /tmp/cmake-build-debug
 
     - name: Run tests
-      run: ctest
+      run: ctest --rerun-failed --output-on-failure
       working-directory: /tmp/cmake-build-debug
 
     - name: Create amd64 build dir
