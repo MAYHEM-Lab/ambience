@@ -19,6 +19,9 @@ class LidlModule:
         self._abs_path = abs_path
         self.cmake_target = cmake_target
 
+    def absolute_import(self):
+        return self._abs_path
+
     def file_name(self):
         return os.path.basename(self._abs_path)
 

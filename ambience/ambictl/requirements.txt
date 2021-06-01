@@ -1,3 +1,4 @@
 toposort
 Jinja2
 pyelftools
+graphviz
