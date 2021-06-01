@@ -31,4 +31,4 @@ def to_graph(nodes: [defs.DeployNode], logical: bool = False) -> Digraph:
 
 if __name__ == "__main__":
     nodes = sample_group.sample_deployment()
-    print(to_graph(nodes
+    print(to_graph(nodes, logical=False))
