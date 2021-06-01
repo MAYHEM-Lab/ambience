@@ -52,6 +52,7 @@ void foo() {
 === Use with element-wise synchronization
 
 [code, cpp]
+----
 #include <tos/intrusive_list.hpp>
 #include <tos/semaphore.hpp>
 #include <string>
