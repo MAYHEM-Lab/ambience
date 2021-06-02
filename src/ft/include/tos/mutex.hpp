@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include "semaphore.hpp"
-
 #include <optional>
+#include <tos/semaphore.hpp>
 
 namespace tos {
 /**
@@ -40,6 +39,10 @@ public:
      */
     void lock() noexcept {
         m_sem.down();
+    }
+
+    bool try_lock(const no_interrupts& = tos::int_guard{}) {
+        return try_down_isr(m_sem);
     }
 
     auto operator co_await() {
@@ -121,5 +124,119 @@ public:
 
 private:
     MutexT& m_mtx;
+};
+
+struct defer_lock_t {};
+constexpr inline defer_lock_t defer_lock;
+
+struct adopt_lock_t {};
+constexpr inline adopt_lock_t adopt_lock;
+
+struct try_to_lock_t {};
+constexpr inline try_to_lock_t try_to_lock;
+
+template<class MutexT>
+class unique_lock {
+public:
+    using mutex_type = MutexT;
+
+    unique_lock() noexcept
+        : m_mtx{nullptr}
+        , m_taken{false} {
+    }
+
+    explicit unique_lock(MutexT& mtx) noexcept
+        : m_mtx{&m_mtx}
+        , m_taken{false} {
+        lock();
+    }
+
+    unique_lock(MutexT& mtx, defer_lock_t) noexcept
+        : m_mtx{&mtx}
+        , m_taken{false} {
+    }
+
+    unique_lock(MutexT& mtx, adopt_lock_t) noexcept
+        : m_mtx{&mtx}
+        , m_taken{true} {
+    }
+
+    unique_lock(MutexT& mtx, try_to_lock_t) noexcept
+        : m_mtx{&mtx}
+        , m_taken{m_mtx->try_lock()} {
+    }
+
+    unique_lock(const unique_lock&) = delete;
+    unique_lock& operator=(const unique_lock&) = delete;
+
+    unique_lock(unique_lock&& rhs) noexcept
+        : m_mtx(std::exchange(rhs.m_mtx, nullptr))
+        , m_taken(std::exchange(rhs.m_taken, false)) {
+    }
+
+    unique_lock& operator=(unique_lock&& rhs) noexcept {
+        if (m_taken) {
+            unlock();
+        }
+
+        unique_lock{std::move(rhs)}.swap(*this);
+
+        rhs.m_mtx = nullptr;
+        rhs.m_taken = false;
+
+        return *this;
+    }
+
+    ~unique_lock() {
+        if (m_taken) {
+            unlock();
+        }
+    }
+
+    bool try_lock() noexcept {
+        Assert(!owns_lock());
+        return m_taken = m_mtx->try_lock();
+    }
+
+    void lock() noexcept {
+        Assert(!owns_lock());
+        m_taken = m_mtx->lock();
+    }
+
+    void unlock() noexcept {
+        Assert(owns_lock());
+        if (m_mtx) {
+            m_mtx->unlock();
+            m_taken = false;
+        }
+    }
+
+    [[nodiscard]] bool owns_lock() const noexcept {
+        return m_taken;
+    }
+
+    MutexT* release() noexcept {
+        auto res = m_mtx;
+        m_mtx = nullptr;
+        m_taken = false;
+        return res;
+    }
+
+    void swap(unique_lock& rhs) noexcept {
+        std::swap(m_mtx, rhs.m_mtx);
+        std::swap(m_taken, rhs.m_taken);
+    }
+
+    explicit operator bool() const noexcept {
+        return owns_lock();
+    }
+
+    MutexT* mutex() const noexcept {
+        return m_mtx;
+    }
+
+private:
+    MutexT* m_mtx;
+    bool m_taken;
 };
 } // namespace tos
