@@ -6,7 +6,7 @@ add_library(tos_coro_bind src/coro_bind.cpp include/tos/detail/tos_bind.hpp)
 target_link_libraries(tos_coro_bind PUBLIC tos_coro tos_jobs)
 
 if (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
-    target_compile_options(tos_coro PUBLIC -fcoroutines)
+    target_compile_options(tos_coro PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fcoroutines>)
 endif()
 
 if(BUILD_TESTS)
