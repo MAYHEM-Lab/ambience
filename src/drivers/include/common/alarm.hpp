@@ -285,9 +285,9 @@ void sleep_for(AlarmT& alarm, const std::chrono::duration<Rep, Period>& duration
         b = true;
     };
     using Type = std::remove_pointer_t<AlarmT>;
-    typename Type::sleeper_type s{alarm->time_to_ticks(duration),
+    typename Type::sleeper_type s{meta::deref(alarm).time_to_ticks(duration),
                                   function_ref<void()>(fun)};
-    alarm->set_alarm(s);
+    meta::deref(alarm).set_alarm(s);
     if (!b) {
         ev.wait();
     }

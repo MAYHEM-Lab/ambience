@@ -35,4 +35,21 @@ struct self_pointing {
         return *static_cast<const DriverT*>(this);
     }
 };
+
+namespace meta {
+template <class T>
+concept Derefable = requires (T&& t) {
+    *t;
+};
+
+template <Derefable T>
+auto deref(T&& val) -> decltype(*val) {
+    return *val;
+}
+
+template <class T>
+auto deref(T&& val) -> T& {
+    return val;
+}
+}
 } // namespace tos
