@@ -1,0 +1,5 @@
+namespace tos::ebpf;
+
+struct eBPFConstraint {
+    program: vector<u64>;
+}
