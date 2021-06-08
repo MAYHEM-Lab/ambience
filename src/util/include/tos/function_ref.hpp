@@ -27,7 +27,7 @@ struct function_ref_base<false> {
         return reinterpret_cast<RetT (*)(ArgTs...)>(m_function_ptr);
     }
 
-    auto data() const -> const void* {
+    auto data() const -> void* {
         return m_data;
     }
 
@@ -109,7 +109,7 @@ public:
     }
 
 private:
-    internal_funptr_t fun() {
+    internal_funptr_t fun() const {
         return pointer_as<RetT, ArgTs..., void*>();
     }
 
