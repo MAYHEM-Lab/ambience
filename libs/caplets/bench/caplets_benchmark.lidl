@@ -1,0 +1,22 @@
+namespace capletsbench;
+
+import "caplets.lidl";
+import "timeout.lidl";
+
+union Constraints {
+    timeout: caplets::TimeoutConstraint;
+}
+
+union Capabilities {
+    root: caplets::RootCapability;
+}
+
+struct Frame {
+    capabilities: vector<Capabilities>;
+    constraints: vector<Constraints>;
+}
+
+struct Token {
+    tag: caplets::Tag;
+    frames: vector<Frame>;
+}

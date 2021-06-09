@@ -1,22 +1,28 @@
 #pragma once
 
-#include <tos/caplets/tag.hpp>
 #include <array>
-#include <emsha/hmac.hh>
+#include <sha256.h>
+#include <tos/caplets/tag.hpp>
 #include <tos/span.hpp>
 
 struct crypto {
-    crypto(const std::array<uint8_t, 32>& key) : m_hmac(key.data(), key.size()) {}
+    crypto(tos::span<const uint8_t> key) {
+        reset(key);
+    }
 
-    void append(tos::span<const uint8_t> buf) const{
-        m_hmac.update(buf.data(), buf.size());
+    void reset(tos::span<const uint8_t> key) {
+        HMAC_SHA256_Init(&m_buf, key.data(), key.size());
+    }
+
+    void append(tos::span<const uint8_t> buf) const {
+        HMAC_SHA256_Update(&m_buf, buf.data(), buf.size());
     }
 
     caplets::Tag finish() {
         caplets::Tag res{{}};
-        m_hmac.finalize(res.tag().data());
+        HMAC_SHA256_Final(res.tag().data(), &m_buf);
         return res;
     }
 
-    mutable emsha::HMAC m_hmac;
+    mutable HMAC_SHA256_CTX m_buf;
 };

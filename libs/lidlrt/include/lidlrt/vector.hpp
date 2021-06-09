@@ -196,6 +196,32 @@ vector<T>& create_vector(message_builder& builder, typename T::element_type& ele
 template<class T, std::enable_if_t<is_ptr<T>{}>* = nullptr>
 vector<T>& create_vector(message_builder& builder,
                          typename T::element_type& elem,
+                         typename T::element_type& elem1,
+                         typename T::element_type& elem2,
+                         typename T::element_type& elem3) {
+    auto& vec = create_vector_sized<T>(builder, 4);
+    vec.get_raw().span()[0] = elem;
+    vec.get_raw().span()[1] = elem1;
+    vec.get_raw().span()[2] = elem2;
+    vec.get_raw().span()[3] = elem3;
+    return vec;
+}
+
+template<class T, std::enable_if_t<is_ptr<T>{}>* = nullptr>
+vector<T>& create_vector(message_builder& builder,
+                         typename T::element_type& elem,
+                         typename T::element_type& elem1,
+                         typename T::element_type& elem2) {
+    auto& vec = create_vector_sized<T>(builder, 3);
+    vec.get_raw().span()[0] = elem;
+    vec.get_raw().span()[1] = elem1;
+    vec.get_raw().span()[2] = elem2;
+    return vec;
+}
+
+template<class T, std::enable_if_t<is_ptr<T>{}>* = nullptr>
+vector<T>& create_vector(message_builder& builder,
+                         typename T::element_type& elem,
                          typename T::element_type& elem1) {
     auto& vec = create_vector_sized<T>(builder, 2);
     vec.get_raw().span()[0] = elem;
@@ -214,14 +240,18 @@ vector<T>& create_vector(message_builder& builder,
 }
 
 template<class T>
+concept Reference = is_reference_type<T>::value;
+
+
+template<Reference T>
+vector<ptr<T>>& create_vector(message_builder& builder) {
+    return create_vector<ptr<T>>(builder);
+}
+
+template<class T>
 vector<T>& create_vector(message_builder& builder) {
     auto& vec = emplace_raw<vector<T>>(builder, int16_t(0));
     return vec;
-}
-
-template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
-vector<ptr<T>>& create_vector(message_builder& builder) {
-    return create_vector<ptr<T>>(builder);
 }
 
 template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
@@ -234,6 +264,14 @@ vector<ptr<T>>& create_vector(message_builder& builder, T& elem, T& elem2) {
     return create_vector<ptr<T>>(builder, elem, elem2);
 }
 
+template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
+vector<ptr<T>>& create_vector(message_builder& builder, T& elem, T& elem2, T& elem3) {
+return create_vector<ptr<T>>(builder, elem, elem2, elem3);
+}
+template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
+vector<ptr<T>>& create_vector(message_builder& builder, T& elem, T& elem2, T& elem3, T& elem4) {
+return create_vector<ptr<T>>(builder, elem, elem2, elem3, elem4);
+}
 template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
 vector<ptr<T>>& create_vector(message_builder& builder, tos::span<T*> elems) {
 return create_vector<ptr<T>>(builder, elems);

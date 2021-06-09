@@ -58,10 +58,13 @@ void compute_frame_tag(const Frame& tok, const Crypto& crypto) {
     }
 }
 
-template<class Token, class Crypto>
-void compute_token_tag(const Token& tok, const Crypto& crypto) {
+template<class Crypto, class Token>
+auto compute_token_tag(const Token& tok, tos::span<const uint8_t> secret) {
+    Crypto c{secret};
     for (auto& frame : tok.frames()) {
-        compute_frame_tag(frame, crypto);
+        compute_frame_tag(frame, c);
+        c.reset(c.finish().tag());
     }
+    return c.finish();
 }
 } // namespace caplets
