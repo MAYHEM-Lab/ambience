@@ -9,6 +9,7 @@ struct [[gnu::packed]] nvic_vector {
     func_ptr ptrs[90];
 };
 
+[[gnu::section(".isr_vector")]]
 extern constexpr nvic_vector g_pfnVectors{.common = nvic_common::default_handlers(),
                                           .ptrs = {
 #define IRQ(x) x,
