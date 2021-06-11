@@ -307,16 +307,16 @@ extern "C" void SVC_Handler() {
 }
 
 extern "C" {
-extern void (*start_ctors[])();
-extern void (*end_ctors[])();
+void abort() {
+}
 }
 
-extern "C" {
-void abort() {}
+namespace tos::stm32 {
+void initialize();
 }
 
 extern "C" int main() {
-    std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
+    tos::stm32::initialize();
 
     HAL_Init();
     SystemClock_Config();

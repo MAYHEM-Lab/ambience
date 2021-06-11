@@ -1,4 +1,4 @@
-ENTRY(Reset_Handler)
+ENTRY(g_pfnVectors)
 
 PHDRS {
   RODATA PT_LOAD FLAGS(5);
@@ -59,12 +59,12 @@ SECTIONS
   .data :
   {
     . = ALIGN(4);
-    _sdata = .;
+    __data_start = .;
     *(.data)
     *(.data*)
 
     . = ALIGN(4);
-    _edata = .;
+    __data_end = .;
   } > RAM
   AT> FLASH : DATA
 
@@ -78,6 +78,7 @@ SECTIONS
   {
     _sbss = .;
     __bss_start__ = _sbss;
+    __bss_start = _sbss;
     *(.bss)
     *(.bss*)
     *(COMMON)
@@ -85,6 +86,7 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;
     __bss_end__ = _ebss;
+    __bss_end = _ebss;
   } >RAM : DATA
 
   PROVIDE (end = .);
