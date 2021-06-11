@@ -39,7 +39,7 @@ target_link_libraries(stm32_drivers PUBLIC
         stm32_exti
         stm32_flash
         )
-#target_link_libraries(stm32_drivers PUBLIC "-Wl,--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> $<TARGET_FILE:stm32_spi> $<TARGET_FILE:stm32_exti> -Wl,--no-whole-archive" tos_debug_log)
+target_link_libraries(stm32_drivers PUBLIC "--whole-archive $<TARGET_FILE:stm32_timer> $<TARGET_FILE:stm32_usart> $<TARGET_FILE:stm32_spi> $<TARGET_FILE:stm32_exti> --no-whole-archive")
 tos_install(stm32_drivers)
 
 set_target_properties(stm32_drivers PROPERTIES
