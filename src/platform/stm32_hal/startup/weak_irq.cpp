@@ -1,7 +1,7 @@
 #include <boost/preprocessor.hpp>
+#include "irq.h"
 
 extern "C" {
-[[gnu::weak]]
 void Default_Handler() {
     while (true) {
     }
