@@ -88,7 +88,7 @@ public:
     explicit timer_multiplexer(Ts&&... tmr)
         : m_base_timer{std::forward<Ts>(tmr)...} {
         m_base_timer->set_callback(mem_function_ref<&timer_multiplexer::tick>(*this));
-    };
+    }
 
     struct multiplexed_timer : self_pointing<multiplexed_timer> {
     public:
