@@ -11,16 +11,16 @@
 namespace tvm
 {
     template <class VmT>
-    using executor = uint8_t(*)(VmT*, uint32_t);
+    using executor = uint8_t(*)(VmT&, uint32_t);
 
     template <class VmT, class T>
-    constexpr uint8_t executor_impl(VmT* vm, uint32_t instr)
+    constexpr uint8_t executor_impl(VmT& vm, uint32_t instr)
     {
         using traits = functor_traits<T>;
         using args_t = tail_t<typename traits::arg_ts>;
 
-        auto len = instruction_len<T, opcode_len_v<>>();
-        auto shift = (offset_bits<T, opcode_len_v<>>() + (4 - len) * 8);
+        constexpr auto len = instruction_len<T, opcode_len_v<>>();
+        constexpr auto shift = (offset_bits<T, opcode_len_v<>>() + (4 - len) * 8);
 
         auto args = decode(args_t{}, instr >> shift);
 

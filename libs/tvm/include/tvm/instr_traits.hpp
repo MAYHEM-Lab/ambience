@@ -7,12 +7,7 @@
 #include <cstddef>
 #include <tvm/operand_traits.hpp>
 #include <tvm/tvm_types.hpp>
-#include <tvm/util/array.hpp>
 #include <utility>
-
-using std::index_sequence;
-using std::integral_constant;
-using std::tuple;
 
 namespace tvm {
 constexpr uint8_t instruction_len_bits(list<>) {
@@ -100,7 +95,8 @@ constexpr size_t offset_at(std::index_sequence<offsets...>,
 }
 
 template<size_t... offsets>
-constexpr array<size_t, sizeof...(offsets)> to_array(std::index_sequence<offsets...>) {
+constexpr std::array<size_t, sizeof...(offsets)>
+to_array(std::index_sequence<offsets...>) {
     return {{offsets...}};
 }
 

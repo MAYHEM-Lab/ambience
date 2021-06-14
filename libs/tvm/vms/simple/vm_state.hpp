@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <tvm/tvm_types.hpp>
 
 namespace svm
 {
@@ -19,6 +20,16 @@ namespace svm
 
         bool alive() const {
             return registers[14] != 0xDEAD;
+        }
+
+        template<uint8_t N>
+        constexpr uint16_t& operator[](tvm::reg_ind_t<N> ind) const {
+            return registers[ind.index];
+        }
+
+        template<uint8_t N>
+        constexpr uint16_t& operator[](tvm::reg_ind_t<N> ind) {
+            return registers[ind.index];
         }
     };
 }

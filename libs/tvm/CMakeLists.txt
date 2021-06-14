@@ -3,7 +3,8 @@ project(tvm)
 
 add_library(tvm_core include/tvm/meta.hpp include/tvm/tvm_types.hpp
         include/tvm/operand_traits.hpp src/tests.cpp include/tvm/instr_traits.hpp
-        include/tvm/exec/decoding.hpp include/tvm/exec/execution.hpp include/tvm/exec/isa.hpp include/tvm/vm_traits.hpp include/tvm/util/array.hpp include/tvm/exec/executor.hpp include/tvm/util/tuple.hpp)
+        include/tvm/exec/decoding.hpp include/tvm/exec/execution.hpp include/tvm/exec/isa.hpp include/tvm/vm_traits.hpp
+        include/tvm/exec/executor.hpp)
 target_include_directories(tvm_core PUBLIC "include")
 target_compile_features(tvm_core PUBLIC cxx_std_14)
 target_compile_options(tvm_core PUBLIC "-Wno-c++11-narrowing")
@@ -13,7 +14,7 @@ if (TOS)
     target_link_libraries(tvm_core PUBLIC tos_util)
 endif()
 
-if (${TOS_CORE} MATCHES "hosted")
+if (${TOS_PLATFORM} MATCHES "hosted")
 add_library(tvm_disas include/tvm/dis/disassemble.hpp src/stub.cpp)
 target_link_libraries(tvm_disas PUBLIC tvm_core)
 target_compile_features(tvm_disas PUBLIC cxx_std_17)

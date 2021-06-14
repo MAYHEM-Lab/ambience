@@ -12,11 +12,11 @@ template <class VmT, class ISA, uint8_t N>
 constexpr tvm::executor<VmT> get_executor(tvm::opcode_t<N> c)
 {
     constexpr auto lookup = tvm::generate_decode_lookup<VmT, ISA>::value();
-    return lookup.data[c.opcode];
+    return lookup[c.opcode];
 }
 
 template <uint8_t N, class ISA, class VmT>
-constexpr uint8_t exec_one(VmT *state, uint32_t instr)
+constexpr uint8_t exec_one(VmT& state, uint32_t instr)
 {
     return get_executor<VmT, ISA>(tvm::get_opcode<N>(instr))(state, instr);
 }
@@ -38,7 +38,7 @@ struct vm_executor
 template <class FetchT, class VmT, class IsaT>
 constexpr void vm_executor<FetchT, VmT, IsaT>::exec_one()
 {
-    m_state.pc += tvm::exec_one<7, IsaT>(&m_state, m_fetcher.fetch(m_state.pc));
+    m_state.pc += tvm::exec_one<7, IsaT>(m_state, m_fetcher.fetch(m_state.pc));
 }
 
 template <class FetchT, class VmT, class IsaT>
