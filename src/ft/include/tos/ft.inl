@@ -63,9 +63,7 @@ struct super_tcb final : tcb {
         , m_args{std::forward<ArgUs>(args)...} {
     }
 
-    // This must not be inlined so that we don't mess up with the compiler's
-    // stack allocation assumptions.
-    [[noreturn]] NO_INLINE void start() {
+    [[noreturn]] void start() {
         // interrupts should be enabled before entering _user space_
         kern::enable_interrupts();
 
