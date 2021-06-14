@@ -140,7 +140,7 @@ thread_id_t start(tcb& t, void (*entry)());
 } // namespace kern
 
 template<class TaskType, class FuncT, class... ArgTs>
-auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
+auto& raw_launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
     auto& t = kern::prepare_task_layout<TaskType>(
         task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     start(t, &kern::start_cur<std::remove_reference_t<decltype(t)>>);
@@ -152,7 +152,7 @@ auto& launch(tos::span<uint8_t> task_span, FuncT&& func, ArgTs&&... args) {
     using lambda_task =
         kern::mixin_tcb<kern::no_delete, kern::apply_starter_t<FuncT, ArgTs...>>;
 
-    return launch<lambda_task>(
+    return raw_launch<lambda_task>(
         task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
 }
 
@@ -167,7 +167,7 @@ auto& launch(stack_size_t stack_sz, FuncT&& func, ArgTs&&... args) {
     using lambda_task =
         kern::mixin_tcb<kern::deleter, kern::apply_starter_t<FuncT, ArgTs...>>;
 
-    auto& res = launch<lambda_task>(
+    auto& res = raw_launch<lambda_task>(
         task_span, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
     return res;
 }
@@ -177,7 +177,7 @@ auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
     using lambda_task =
         kern::mixin_tcb<kern::no_delete, kern::apply_starter_t<FuncT, ArgTs...>>;
 
-    return launch<lambda_task>(
+    return raw_launch<lambda_task>(
         stack, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
 }
 
