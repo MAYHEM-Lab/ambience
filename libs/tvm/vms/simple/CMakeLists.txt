@@ -5,8 +5,8 @@ target_link_libraries(simple_vm PUBLIC tvm_core)
 target_include_directories(simple_vm PUBLIC ".")
 
 if (TOS)
-    add_executable(svm tos_exec.cpp)
-    target_link_libraries(svm PUBLIC simple_vm tos_print arch_drivers)
+#    add_executable(svm tos_exec.cpp)
+#    target_link_libraries(svm PUBLIC simple_vm tos_print arch_drivers)
 endif()
 
 if (NOT TOS)
