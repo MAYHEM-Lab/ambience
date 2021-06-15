@@ -45,4 +45,26 @@ queue::queue(uint16_t sz, tos::physical_page_allocator& palloc)
 
     LOG(descriptors_base, available_base, (void*)used_base);
 }
+
+void queue::dump_descriptor(int index) {
+    while (true) {
+        auto& desc = descriptors()[index];
+
+        tos::debug::log("Descriptor",
+                        index,
+                        "at",
+                        (void*)desc.addr,
+                        "len",
+                        desc.len,
+                        "flags",
+                        desc.flags,
+                        "next",
+                        desc.next);
+
+        if (!(desc.flags & queue_flags::next)) {
+            break;
+        }
+        index = desc.next;
+    }
+}
 } // namespace tos::virtio
