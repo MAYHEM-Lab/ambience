@@ -1,3 +1,3 @@
 add_executable(ebpf_vm_test ebpf_vm_test.cpp)
 target_link_libraries(ebpf_vm_test PRIVATE standalone_tests_main tos_ebpf)
-add_test(NAME ebpf_vm_test COMMAND ebpf_vm_test)
+#add_test(NAME ebpf_vm_test COMMAND ebpf_vm_test)
