@@ -18,7 +18,17 @@ target_sources(picolibc PRIVATE
         common/s_pow10.c
         common/fmodl.c
         common/cbrtl.c
-        )
+        common/sf_round.c
+        common/s_round.c
+        common/fabsl.c
+        common/s_trunc.c
+        common/sf_trunc.c
+        common/s_copysign.c
+        common/sf_copysign.c
+        common/s_rint.c
+        common/sf_rint.c
+)
+
 target_sources(picolibc PRIVATE
         math/e_acos.c
         math/e_asin.c
@@ -38,7 +48,9 @@ target_sources(picolibc PRIVATE
         math/s_floor.c
         math/e_pow.c
         math/e_fmod.c
-        )
+        math/sf_floor.c
+        math/sf_fabs.c
+)
 
 target_compile_definitions(picolibc PRIVATE _IEEE_LIBM)
 
