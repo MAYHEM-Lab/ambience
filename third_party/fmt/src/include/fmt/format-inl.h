@@ -34,7 +34,7 @@ namespace detail {
 FMT_FUNC void assert_fail(const char* file, int line, const char* message) {
   // Use unchecked std::fprintf to avoid triggering another assertion when
   // writing to stderr fails
-  std::fprintf(stderr, "%s:%d: assertion failed: %s", file, line, message);
+  fprintf(stderr, "%s:%d: assertion failed: %s", file, line, message);
   // Chosen instead of std::abort to satisfy Clang in CUDA mode during device
   // code pass.
   std::terminate();
@@ -81,14 +81,14 @@ FMT_FUNC void report_error(format_func func, int error_code,
   memory_buffer full_message;
   func(full_message, error_code, message);
   // Don't use fwrite_fully because the latter may throw.
-  if (std::fwrite(full_message.data(), full_message.size(), 1, stderr) > 0)
-    std::fputc('\n', stderr);
+  if (fwrite(full_message.data(), full_message.size(), 1, stderr) > 0)
+    fputc('\n', stderr);
 }
 
 // A wrapper around fwrite that throws on error.
 inline void fwrite_fully(const void* ptr, size_t size, size_t count,
                          FILE* stream) {
-  size_t written = std::fwrite(ptr, size, count, stream);
+  size_t written = fwrite(ptr, size, count, stream);
   if (written < count) FMT_THROW(system_error(errno, "cannot write to file"));
 }
 
