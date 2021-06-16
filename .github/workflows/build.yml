@@ -45,7 +45,7 @@ jobs:
 
     - name: Generate hosted debug build
       run: >
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DTOS_CPU=x86/hosted
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DTOS_BOARD=hosted
         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
         $GITHUB_WORKSPACE
       working-directory: /tmp/cmake-build-debug
