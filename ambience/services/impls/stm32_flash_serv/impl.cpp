@@ -4,7 +4,7 @@
 namespace {
 using namespace tos::stm32;
 
-struct impl : tos::ae::services::block_memory {
+struct impl : tos::ae::services::block_memory::sync_server {
     int32_t get_block_size() override {
         return m_flash.sector_size_bytes();
     }
@@ -16,6 +16,6 @@ struct impl : tos::ae::services::block_memory {
 };
 } // namespace
 
-std::unique_ptr<tos::ae::services::block_memory> init() {
+std::unique_ptr<tos::ae::services::block_memory::sync_server> init() {
     return std::make_unique<impl>();
 }

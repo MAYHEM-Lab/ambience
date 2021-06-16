@@ -103,7 +103,7 @@ expected<void, errors> kernel() {
     LOG("Group started");
     int32_t x = 3, y = 42;
     auto params = std::make_tuple(&x, &y);
-    auto results = tos::ae::service::calculator::wire_types::add_results{-1};
+    auto results = tos::ae::services::calculator::wire_types::add_results{-1};
 
     auto& req1 = tos::ae::submit_req<true>(
         *runnable_groups.front().iface.user_iface, 0, 0, &params, &results);
@@ -130,7 +130,8 @@ expected<void, errors> kernel() {
 
     for (int i = 0; i < 10; ++i) {
         LOG("back", results.ret0(), "Preempted", preempted);
-        proc_req_queue(runnable_groups.front().iface);
+        proc_req_queue([](auto& req, auto done) { done(); },
+                       runnable_groups.front().iface);
         tos::this_thread::yield();
 
         odi([&](auto...) {
