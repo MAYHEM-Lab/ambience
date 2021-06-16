@@ -31,14 +31,25 @@
 #endif
 
 namespace tos::ebpf {
+static bool bounds_check(void* addr,
+                         int size,
+                         const char* type,
+                         uint16_t cur_pc,
+                         const void* mem,
+                         size_t mem_len,
+                         void* stack);
 static constexpr auto stack_size = 512;
-uint64_t execute(const execution_context& ctx) {
+uint64_t execute(const execution_context& ctx, span<uint64_t> args) {
     std::array<uint64_t, 16> reg;
     std::array<uint64_t, (stack_size + 7) / 8> stack;
 
-    reg[1] = reinterpret_cast<uintptr_t>(ctx.memory.data());
-    reg[2] = static_cast<uint64_t>(ctx.memory.size());
+    //    reg[1] = reinterpret_cast<uintptr_t>(ctx.memory.data());
+    //    reg[2] = static_cast<uint64_t>(ctx.memory.size());
     reg[10] = reinterpret_cast<uintptr_t>(stack.end());
+
+    for (int i = 0; i < std::min<int>(args.size(), 5); ++i) {
+        reg[1 + i] = args[i];
+    }
 
     uint16_t pc = 0;
 
@@ -78,7 +89,7 @@ uint64_t execute(const execution_context& ctx) {
             break;
         case OP_DIV_REG:
             if (reg[inst.src] == 0) {
-//                LOG_ERROR("division by zero at PC", cur_pc);
+                //                LOG_ERROR("division by zero at PC", cur_pc);
                 return UINT64_MAX;
             }
             reg[inst.dst] = uint32_t(reg[inst.dst]) / uint32_t(reg[inst.src]);
@@ -126,7 +137,7 @@ uint64_t execute(const execution_context& ctx) {
             break;
         case OP_MOD_REG:
             if (reg[inst.src] == 0) {
-//                LOG_ERROR("Division by zero at PC", cur_pc);
+                //                LOG_ERROR("Division by zero at PC", cur_pc);
                 return UINT64_MAX;
             }
             reg[inst.dst] = uint32_t(reg[inst.dst]) % uint32_t(reg[inst.src]);
@@ -199,7 +210,7 @@ uint64_t execute(const execution_context& ctx) {
             break;
         case OP_DIV64_REG:
             if (reg[inst.src] == 0) {
-//                LOG_ERROR("Division by zero at PC", cur_pc);
+                //                LOG_ERROR("Division by zero at PC", cur_pc);
                 return UINT64_MAX;
             }
             reg[inst.dst] /= reg[inst.src];
@@ -236,7 +247,7 @@ uint64_t execute(const execution_context& ctx) {
             break;
         case OP_MOD64_REG:
             if (reg[inst.src] == 0) {
-//                LOG_ERROR("Division by zero at PC", cur_pc);
+                //                LOG_ERROR("Division by zero at PC", cur_pc);
                 return UINT64_MAX;
             }
             reg[inst.dst] %= reg[inst.src];
@@ -260,8 +271,30 @@ uint64_t execute(const execution_context& ctx) {
             reg[inst.dst] = (int64_t)reg[inst.dst] >> reg[inst.src];
             break;
 
-#define BOUNDS_CHECK_LOAD(size)  ;
-#define BOUNDS_CHECK_STORE(size) ;
+#define BOUNDS_CHECK_LOAD(sz)                                 \
+    do {                                                      \
+        if (!bounds_check((char*)reg[inst.src] + inst.offset, \
+                          sz,                                 \
+                          "load",                             \
+                          cur_pc,                             \
+                          ctx.memory.data(),                  \
+                          ctx.memory.size(),                  \
+                          stack.data())) {                    \
+            return UINT64_MAX;                                \
+        }                                                     \
+    } while (0)
+#define BOUNDS_CHECK_STORE(sz)                                \
+    do {                                                      \
+        if (!bounds_check((char*)reg[inst.dst] + inst.offset, \
+                          sz,                                 \
+                          "store",                            \
+                          cur_pc,                             \
+                          ctx.memory.data(),                  \
+                          ctx.memory.size(),                  \
+                          stack.data())) {                    \
+            return UINT64_MAX;                                \
+        }                                                     \
+    } while (0)
 
         case OP_LDXW:
             BOUNDS_CHECK_LOAD(4);
@@ -438,6 +471,34 @@ uint64_t execute(const execution_context& ctx) {
             reg[0] = ctx.ext_funcs[inst.imm](reg[1], reg[2], reg[3], reg[4], reg[5]);
             break;
         }
+    }
+}
+
+static bool bounds_check(void* addr,
+                         int size,
+                         const char* type,
+                         uint16_t cur_pc,
+                         const void* mem,
+                         size_t mem_len,
+                         void* stack) {
+    if (mem && (addr >= mem && ((char*)addr + size) <= ((char*)mem + mem_len))) {
+        /* Context access */
+        return true;
+    } else if (addr >= stack && ((char*)addr + size) <= ((char*)stack + stack_size)) {
+        /* Stack access */
+        return true;
+    } else {
+        LOG_ERROR("uBPF error: out of bounds memory %s at PC %u, addr %p, size %d\nmem "
+                  "%p/%zd stack %p/%d\n",
+                  type,
+                  cur_pc,
+                  addr,
+                  size,
+                  mem,
+                  mem_len,
+                  stack,
+                  stack_size);
+        return false;
     }
 }
 } // namespace tos::ebpf

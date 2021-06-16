@@ -19,5 +19,5 @@ struct execution_context {
     span<const std::string_view> ext_func_names{nullptr};
 };
 
-uint64_t execute(const execution_context& ctx);
+uint64_t execute(const execution_context& ctx, span<uint64_t> args);
 } // namespace tos::ebpf
