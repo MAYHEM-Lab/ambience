@@ -92,6 +92,7 @@ target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_LONG_DOUBLE)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_FLOATING_POINT)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_DISABLE_AVAILABILITY)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_LIBRARY_ALIGNED_ALLOCATION)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE)
 
 if(${TOS_PLATFORM} MATCHES "atmega")
     target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_FLOATING_POINT)
