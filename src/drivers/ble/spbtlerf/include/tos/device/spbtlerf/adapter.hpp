@@ -124,6 +124,5 @@ private:
     adapter_config m_config;
     mutex m_spi_mutex;
     bool m_irq_enabled = false;
-    static inline intrusive_ptr<adapter> m_instance;
 };
 } // namespace tos::device::spbtle

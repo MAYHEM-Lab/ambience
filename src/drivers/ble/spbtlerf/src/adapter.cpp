@@ -209,13 +209,17 @@ adapter::adapter(const adapter_config& conf)
     begin();
 }
 
+namespace {
+intrusive_ptr<adapter> global_instance;
+}
+
 expected<intrusive_ptr<adapter>, errors> adapter::open(const adapter_config& config) {
-    m_instance = make_intrusive<adapter>(config);
-    return m_instance;
+    global_instance = make_intrusive<adapter>(config);
+    return global_instance;
 }
 
 adapter* adapter::instance() {
-    return m_instance.get();
+    return global_instance.get();
 }
 
 void adapter::begin() {
