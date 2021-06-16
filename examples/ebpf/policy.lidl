@@ -1,0 +1,12 @@
+namespace tos;
+
+enum permissions2 {
+    read,
+    write,
+    execute
+}
+
+struct path_capability {
+    path: string;
+    perm: permissions2;
+}
