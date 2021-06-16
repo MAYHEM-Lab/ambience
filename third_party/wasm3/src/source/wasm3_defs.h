@@ -225,7 +225,6 @@
 #  define m3_bswap32(x)     __builtin_bswap32((x))
 #  define m3_bswap64(x)     __builtin_bswap64((x))
 # else
-#  include <endian.h>
 #  if defined(__bswap_16)
 #   define m3_bswap16(x)     __bswap_16((x))
 #   define m3_bswap32(x)     __bswap_32((x))
