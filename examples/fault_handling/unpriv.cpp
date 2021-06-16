@@ -29,12 +29,21 @@ public:
         return tos::span<uint8_t> {nullptr};
     }
 
+    template<class FnT>
+    auto& transform_call(lidl::message_builder&, const FnT& fn) {
+        return fn();
+    }
+
+    template<class RetT>
+    const RetT& transform_return(tos::span<const uint8_t> buf) {
+        return lidl::get_root<RetT>(buf);
+    }
 private:
 
     alignas(32) uint8_t m_buf[128];
 };
 
-using sc_thread_man = tos::services::remote_threadman<syscall_transport>;
+using sc_thread_man = tos::services::threadman::stub_client<syscall_transport>;
 
 void fault_main() {
     uint32_t thread_id = 42;

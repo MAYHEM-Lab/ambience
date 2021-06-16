@@ -20,7 +20,7 @@
 #include <tos/print.hpp>
 #include <tos/uuid.hpp>
 
-class calc_impl : public tos::examples::calculator {
+class calc_impl : public tos::examples::calculator::sync_server {
     int32_t multiply(const int32_t& a, const int32_t& b) override {
         return a * b;
     }
@@ -165,7 +165,7 @@ void ble_task() {
     LOG("disc started");
 
     calc_impl calc;
-    auto runner = lidl::make_procedure_runner<tos::examples::calculator>();
+    auto runner = lidl::make_procedure_runner<tos::examples::calculator::sync_server>();
 
     while (true) {
         received.down();
