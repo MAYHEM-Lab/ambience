@@ -12,6 +12,8 @@ void _fini() {
 }
 void _init() {
 }
+void __cxa_atexit() {
+}
 }
 
 extern void tos_main();
@@ -308,6 +310,7 @@ extern "C" void SVC_Handler() {
 
 extern "C" {
 void abort() {
+    tos::debug::panic("abort called");
 }
 }
 
