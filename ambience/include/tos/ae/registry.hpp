@@ -68,14 +68,14 @@ struct service_registry<service_mapping<Names, Ts>...>
     }
 
     tos::Task<lidl::service_base*> wait(std::string_view name) override {
-        auto call_if = [name](auto& x) -> tos::Task<void> {
+        auto call_if = [name](auto&& x) -> tos::Task<void> {
             ((std::string_view(Names) == name ? co_await x.template operator()<Names>() : false),
              ...);
         };
 
         lidl::service_base* ptr = nullptr;
 
-        call_if([&]<tos::fixed_string Name>(auto& el) -> tos::Task<bool> {
+        call_if([&]<tos::fixed_string Name>() -> tos::Task<bool> {
             ptr = co_await wait<Name>();
             co_return true;
         });

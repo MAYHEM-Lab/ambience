@@ -10,6 +10,8 @@
 #include <lwip/init.h>
 #include <lwip/timeouts.h>
 #include <nonstd/variant.hpp>
+#include <caplets_generated.hpp>
+#include <timeout_generated.hpp>
 #include <schema_generated.hpp>
 #include <tos/ae/caplets_service_host.hpp>
 #include <tos/ae/kernel/user_group.hpp>

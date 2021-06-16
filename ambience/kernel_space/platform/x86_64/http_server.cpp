@@ -77,8 +77,8 @@ void http_server() {
     };
 
     for (int i = 0; i < 5; ++i) {
-        auto& t =
-            tos::launch(tos::alloc_stack, thread, i, tos::cancellation_token::system());
+        auto& t = tos::launch(
+            tos::alloc_stack, thread, i, std::ref(tos::cancellation_token::system()));
         set_name(t, "HTTP Thread Pool Worker");
     }
 
