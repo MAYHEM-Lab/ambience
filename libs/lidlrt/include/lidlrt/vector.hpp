@@ -282,14 +282,22 @@ vector<ptr<T>>& create_vector(message_builder& builder, T& elem, T& elem2) {
 
 template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
 vector<ptr<T>>& create_vector(message_builder& builder, T& elem, T& elem2, T& elem3) {
-return create_vector<ptr<T>>(builder, elem, elem2, elem3);
+    return create_vector<ptr<T>>(builder, elem, elem2, elem3);
 }
+
 template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
-vector<ptr<T>>& create_vector(message_builder& builder, T& elem, T& elem2, T& elem3, T& elem4, T& elem5) {
-return create_vector<ptr<T>>(builder, elem, elem2, elem3, elem4, elem5);
+vector<ptr<T>>&
+create_vector(message_builder& builder, T& elem, T& elem2, T& elem3, T& elem4) {
+    return create_vector<ptr<T>>(builder, elem, elem2, elem3, elem4);
+}
+
+template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
+vector<ptr<T>>&
+create_vector(message_builder& builder, T& elem, T& elem2, T& elem3, T& elem4, T& elem5) {
+    return create_vector<ptr<T>>(builder, elem, elem2, elem3, elem4, elem5);
 }
 template<class T, std::enable_if_t<is_reference_type<T>{}>* = nullptr>
 vector<ptr<T>>& create_vector(message_builder& builder, tos::span<T*> elems) {
-return create_vector<ptr<T>>(builder, elems);
+    return create_vector<ptr<T>>(builder, elems);
 }
 } // namespace lidl
