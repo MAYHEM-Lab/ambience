@@ -44,7 +44,7 @@ void _start() {
     main();
 }
 }
-extern "C" TOS_NO_OPTIMIZE int main() {
+extern "C" int main() {
     std::for_each(start_ctors, end_ctors, [](auto ctor) { ctor(); });
 
     tos::kern::enable_interrupts();
