@@ -5,6 +5,7 @@ add_subdirectory(toblerone)
 add_subdirectory(stm32f7_disco)
 add_subdirectory(nrf52840_dk)
 add_subdirectory(nrf52_thingy)
+add_subdirectory(hosted)
 
 if (TOS_BOARD)
     add_library(tos_board board.cpp)
