@@ -314,13 +314,7 @@ void abort() {
 }
 }
 
-namespace tos::stm32 {
-void initialize();
-}
-
 extern "C" int main() {
-    tos::stm32::initialize();
-
     HAL_Init();
     SystemClock_Config();
     // NVIC_DisableIRQ(SysTick_IRQn);
