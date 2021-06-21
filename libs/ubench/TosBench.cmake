@@ -1,5 +1,5 @@
 if (NOT TARGET bench_main)
-    add_executable(bench_main)
+    add_executable(bench_main EXCLUDE_FROM_ALL)
     target_link_libraries(bench_main PRIVATE tos_core ubench tos_dynamic_log)
     set_target_properties(bench_main PROPERTIES CXX_EXTENSIONS OFF)
 

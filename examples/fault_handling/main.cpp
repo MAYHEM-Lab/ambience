@@ -28,12 +28,12 @@ public:
 
 class thread_man_impl final : public tos::services::threadman::sync_server {
     virtual bool schedule(const uint32_t& thread_id) override {
-        auto tcb = reinterpret_cast<tos::kern::tcb*>(thread_id);
+        [[maybe_unused]] auto tcb = reinterpret_cast<tos::kern::tcb*>(thread_id);
         return true;
     }
 
     virtual bool kill(const uint32_t& thread_id) override {
-        auto tcb = reinterpret_cast<tos::kern::tcb*>(thread_id);
+        [[maybe_unused]] auto tcb = reinterpret_cast<tos::kern::tcb*>(thread_id);
         return true;
     }
 };

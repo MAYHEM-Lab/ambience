@@ -40,7 +40,7 @@ public:
     }
 private:
 
-    alignas(32) uint8_t m_buf[128];
+    /*alignas(32)*/ uint8_t m_buf[128];
 };
 
 using sc_thread_man = tos::services::threadman::stub_client<syscall_transport>;

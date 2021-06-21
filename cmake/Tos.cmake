@@ -80,11 +80,12 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     if (ENABLE_LTO)
         set(TOS_FLAGS "${TOS_FLAGS} -flto -fwhole-program-vtables -fforce-emit-vtables")
     endif ()
+    set(TOS_CXX_FLAGS "-fconstexpr-steps=2271242")
 endif ()
 
 if (NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    set(TOS_C_FLAGS "${TOS_FLAGS} -U__STRICT_ANSI__")
-    set(TOS_CXX_FLAGS "${TOS_FLAGS} -Wnon-virtual-dtor -fno-rtti -fno-exceptions \
+    set(TOS_C_FLAGS "${TOS_C_FLAGS} ${TOS_FLAGS} -U__STRICT_ANSI__")
+    set(TOS_CXX_FLAGS "${TOS_CXX_FLAGS} ${TOS_FLAGS} -Wnon-virtual-dtor -fno-rtti -fno-exceptions \
         -fno-unwind-tables -fno-threadsafe-statics -Werror=return-type")
 endif()
 

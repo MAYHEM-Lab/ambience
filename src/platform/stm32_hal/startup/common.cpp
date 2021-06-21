@@ -10,8 +10,7 @@ extern void (*end_ctors[])(void);
 
 namespace {
 void copy_initialized_memory() {
-    const auto data_seg = tos::default_segments::data();
-    auto data = tos::default_segments::data();
+    const auto data = tos::default_segments::data();
     auto data_start = reinterpret_cast<uint64_t*>(data.base);
 
     // Copy initialized data
