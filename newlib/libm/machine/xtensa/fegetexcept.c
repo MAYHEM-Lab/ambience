@@ -36,32 +36,10 @@
 int fegetexcept(void)
 {
   fexcept_t current;
-  asm ("rur.fsr %0" : "=a"(current));
+  __asm__("rur.fsr %0" : "=a"(current));
   return (current >> _FE_EXCEPTION_ENABLE_OFFSET) & FE_ALL_EXCEPT;
 }
 
-
-int feenableexcept(int excepts)
-{
-  fexcept_t current;
-  if (excepts & ~FE_ALL_EXCEPT)
-    return -1;
-  asm ("rur.fcr %0" : "=a"(current));
-  current |= excepts << _FE_EXCEPTION_ENABLE_OFFSET;
-  asm ("wur.fcr %0" : "=a"(current));
-  return 0;
-}
-
-
-int fedisableexcept(int excepts)
-{
-  fexcept_t current;
-  if (excepts & ~FE_ALL_EXCEPT)
-    return -1;
-  asm ("rur.fcr %0" : "=a"(current));
-  current &= ~(excepts << _FE_EXCEPTION_ENABLE_OFFSET);
-  asm ("wur.fcr %0" : "=a"(current));
-  return 0;
-}
-
+#else
+#include "../../fenv/fegetexcept.c"
 #endif

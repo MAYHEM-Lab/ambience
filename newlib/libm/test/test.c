@@ -14,6 +14,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
+#include <stdlib.h>
 #include <signal.h>
 #include  "test.h"
 #include <math.h>
@@ -88,7 +89,7 @@ main (int ac,
    test_ieee();
 #endif
   printf("Tested %d functions, %d errors detected\n", count, inacc);
-  return inacc != 0;
+  exit(inacc != 0);
 }
 
 static const char *iname = "foo";
@@ -378,6 +379,37 @@ test_mok (double value,
 	    (unsigned long) a.parts.msw,	     (unsigned long) a.parts.lsw,
 	    (unsigned long) b.parts.msw,	     (unsigned long) b.parts.lsw);
     printf("(%g %g)\n",   a.value, b.value);
+    inacc++;
+  }
+}
+
+void
+test_mfok (float value,
+	   float shouldbe,
+	   int okmag)
+{
+  __ieee_float_shape_type a,b;
+  int mag = fmag_of_error(value, shouldbe);
+  if (mag == 0) 
+  {
+    /* error in the first bit is ok if the numbers are both 0 */
+    if (value == 0.0f && shouldbe == 0.0f)
+     return;
+    
+  }
+  a.value = shouldbe;
+  b.value = value;
+  
+  if (mag < okmag) 
+  {
+    printf("%s:%d, wrong answer: bit %d ",
+	   iname, 
+	   theline,
+	   mag);
+     printf("%08lx %08lx) ",
+	    (unsigned long) a.p1,
+	    (unsigned long) b.p1);
+     printf("(%g %g)\n",   (double) a.value, (double) b.value);
     inacc++;
   }
 }

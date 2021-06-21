@@ -34,8 +34,10 @@
 int fetestexcept(int excepts)
 {
   fexcept_t current;
-  asm ("rur.fsr %0" : "=a"(current));
+  __asm__("rur.fsr %0" : "=a"(current));
   return (current >> _FE_EXCEPTION_FLAGS_OFFSET) & excepts;
 }
 
+#else
+#include "../../fenv/fetestexcept.c"
 #endif

@@ -39,11 +39,6 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-/* PSTR() is not used to save 1 byte per string: '\0' at the tail.	*/
-static const char pstr_inf[] = {'I','N','F'};
-static const char pstr_inity[] = {'I','N','I','T','Y'};
-static const char pstr_nan[] = {'N','A','N'};
-
 /**  The strtod() function converts the initial portion of the string pointed
      to by \a nptr to double representation.
 
@@ -103,18 +98,18 @@ strtod (const char * nptr, char ** endptr)
 	c = *nptr++;
     }
 
-    if (!strncmp (nptr - 1, pstr_inf, 3)) {
+    if (__matchcaseprefix(nptr - 1, __match_inf)) {
 	nptr += 2;
-	if (!strncmp (nptr, pstr_inity, 5))
+	if (__matchcaseprefix(nptr, __match_inity))
 	    nptr += 5;
 	if (endptr)
 	    *endptr = (char *)nptr;
-	return flag & FL_MINUS ? (double) -INFINITY : (double) +INFINITY;
+	return flag & FL_MINUS ? -(double)INFINITY : +(double)INFINITY;
     }
 
     /* NAN() construction is not realised.
        Length would be 3 characters only.	*/
-    if (!strncmp (nptr - 1, pstr_nan, 3)) {
+    if (__matchcaseprefix(nptr - 1, __match_nan)) {
 	if (endptr)
 	    *endptr = (char *)nptr + 2;
 	return (double) NAN;
@@ -184,18 +179,20 @@ strtod (const char * nptr, char ** endptr)
 
     if (u64 == 0) {
 	flt = 0;
+    } else {
+	if ((u64digits + exp <= -324)) {
+	    // Number is less than 1e-324, which should be rounded down to 0; return +/-0.0.
+	    flt = 0;
+	}
+	else if (u64digits + exp >= 310) {
+	    // Number is larger than 1e+309, which should be rounded to +/-Infinity.
+	    flt = (double) INFINITY;
+	}
+	else
+	    flt = __atod_engine(u64, exp);
+	if (flt == 0.0 || flt == (double) INFINITY)
+	    errno = ERANGE;
     }
-
-    else if ((u64digits + exp <= -324) || (u64 == 0)) {
-	// Number is less than 1e-324, which should be rounded down to 0; return +/-0.0.
-	flt = 0;
-    }
-    else if (u64digits + exp >= 310) {
-	// Number is larger than 1e+309, which should be rounded to +/-Infinity.
-	flt = (double) INFINITY;
-    }
-    else
-	flt = __atod_engine(u64, exp);
     if (flag & FL_MINUS)
 	flt = -flt;
     return flt;

@@ -64,13 +64,13 @@ SUCH DAMAGE.
 
 _BEGIN_STD_C
 
-typedef struct 
+typedef struct
 {
   int quot; /* quotient */
   int rem; /* remainder */
 } div_t;
 
-typedef struct 
+typedef struct
 {
   long quot; /* quotient */
   long rem; /* remainder */
@@ -105,6 +105,7 @@ __uint32_t arc4random (void);
 __uint32_t arc4random_uniform (__uint32_t);
 void    arc4random_buf (void *, size_t);
 #endif
+#define ATEXIT_MAX	32
 int	atexit (void (*__func)(void));
 double	atof (const char *__nptr);
 #if __MISC_VISIBLE
@@ -173,8 +174,16 @@ void	setkey (const char *__key);
 #endif
 void	srand (unsigned __seed);
 double	strtod (const char *__restrict __n, char **__restrict __end_PTR);
+#ifdef TINY_STDIO
+int strfromd(char *__restrict str, size_t n,
+	     const char *__restrict format, double fp);
+#endif
 #if __ISO_C_VISIBLE >= 1999
 float	strtof (const char *__restrict __n, char **__restrict __end_PTR);
+#ifdef TINY_STDIO
+int strfromf(char *__restrict str, size_t n,
+	     const char *__restrict format, float fp);
+#endif
 #endif
 #if __MISC_VISIBLE
 /* the following strtodf interface is deprecated...use strtof instead */

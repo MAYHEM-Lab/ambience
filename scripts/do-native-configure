@@ -40,11 +40,14 @@ meson "$DIR"/.. \
         -Dmultilib=false \
         -Dpicolib=false \
 	-Dpicocrt=false \
+	-Dsemihost=false \
 	-Dposix-console=true \
 	-Dnative-tests=true \
 	-Dnewlib-global-atexit=true\
+	-Dnewlib-initfini-array=false\
 	-Dincludedir=lib/picolibc/include \
 	-Dlibdir=lib/picolibc/lib \
 	-Dspecsdir=none \
 	-Dtests=true \
+	-Dc_args="-Warray-bounds -fsanitize=bounds -fsanitize-undefined-trap-on-error" \
 	"$@"

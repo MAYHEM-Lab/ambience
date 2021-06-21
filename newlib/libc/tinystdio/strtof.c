@@ -38,11 +38,6 @@
 #include <stdint.h>
 #include <string.h>
 
-/* PSTR() is not used to save 1 byte per string: '\0' at the tail.	*/
-static const char pstr_inf[] = {'I','N','F'};
-static const char pstr_inity[] = {'I','N','I','T','Y'};
-static const char pstr_nan[] = {'N','A','N'};
-
 /**  The strtof() function converts the initial portion of the string pointed
      to by \a nptr to float representation.
 
@@ -102,9 +97,9 @@ strtof (const char * nptr, char ** endptr)
 	c = *nptr++;
     }
 
-    if (!strncmp (nptr - 1, pstr_inf, 3)) {
+    if (__matchcaseprefix(nptr - 1, __match_inf)) {
 	nptr += 2;
-	if (!strncmp (nptr, pstr_inity, 5))
+	if (__matchcaseprefix(nptr, __match_inity))
 	    nptr += 5;
 	if (endptr)
 	    *endptr = (char *)nptr;
@@ -113,7 +108,7 @@ strtof (const char * nptr, char ** endptr)
 
     /* NAN() construction is not realised.
        Length would be 3 characters only.	*/
-    if (!strncmp (nptr - 1, pstr_nan, 3)) {
+    if (__matchcaseprefix(nptr - 1, __match_nan)) {
 	if (endptr)
 	    *endptr = (char *)nptr + 2;
 	return NAN;
@@ -184,18 +179,20 @@ strtof (const char * nptr, char ** endptr)
 
     if (u32 == 0) {
 	flt = 0;
+    } else {
+	if (u32digits + exp <= -46 || (u32 == 0)) {
+	    // Number is less than 1e-46, which should be rounded down to 0; return 0.0.
+	    flt = 0;
+	}
+	else if (u32digits + exp >= 40) {
+	    // Number is larger than 1e+39, which should be rounded to +/-Infinity.
+	    flt = INFINITY;
+	}
+	else
+	    flt = __atof_engine(u32, exp);
+	if (flt == 0.0f || flt == INFINITY)
+	    errno = ERANGE;
     }
-    else if (u32digits + exp <= -46 || (u32 == 0)) {
-	// Number is less than 1e-46, which should be rounded down to 0; return 0.0.
-	flt = 0;
-    }
-    else if (u32digits + exp >= 40) {
-	// Number is larger than 1e+39, which should be rounded to +/-Infinity.
-	flt = INFINITY;
-    }
-    else
-	flt = __atof_engine(u32, exp);
-
     if (flag & FL_MINUS)
 	flt = -flt;
 
