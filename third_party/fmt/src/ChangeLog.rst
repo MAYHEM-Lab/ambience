@@ -1,5 +1,26 @@
-8.0.0 - TBD
------------
+8.0.0 - 2021-06-21
+------------------
+
+* Enabled compile-time format string check by default.
+  For example (`godbolt <https://godbolt.org/z/sMxcohGjz>`__):
+
+  .. code:: c++
+
+     #include <fmt/core.h>
+
+     int main() {
+       fmt::print("{:d}", "I am not a number");
+     }
+
+  gives a compile-time error on compilers with C++20 ``consteval`` support
+  (gcc 10+, clang 11+) because ``d`` is not a valid format specifier for a
+  string.
+
+  To pass a runtime string wrap it in ``fmt::runtime``:
+
+  .. code:: c++
+
+     fmt::print(fmt::runtime("{:d}"), "I am not a number");
 
 * Added compile-time formatting
   (`#2019 <https://github.com/fmtlib/fmt/pull/2019>`_,
@@ -55,7 +76,7 @@
     FMTCompileNew/9223372036854775807       5.28 ns         5.26 ns    130711631
     ----------------------------------------------------------------------------
 
-  And even faster than ``std::to_chars`` from libc++ compiled with clang on
+  It is even faster than ``std::to_chars`` from libc++ compiled with clang on
   macOS::
 
     ----------------------------------------------------------------------------
@@ -133,7 +154,8 @@
   `#2309 <https://github.com/fmtlib/fmt/pull/2309>`_,
   `#2318 <https://github.com/fmtlib/fmt/pull/2318>`_,
   `#2324 <https://github.com/fmtlib/fmt/pull/2324>`_,
-  `#2332 <https://github.com/fmtlib/fmt/pull/2332>`_).
+  `#2332 <https://github.com/fmtlib/fmt/pull/2332>`_,
+  `#2340 <https://github.com/fmtlib/fmt/pull/2340>`_).
   Thanks `@DanielaE (Daniela Engert) <https://github.com/DanielaE>`_.
 
 * Made symbols private by default reducing shared library size
@@ -170,6 +192,21 @@
 
   Thanks `@kamibo (Camille Bordignon) <https://github.com/kamibo>`_.
 
+* Implemented the default format for ``std::chrono::system_clock``
+  (`#2319 <https://github.com/fmtlib/fmt/issues/2319>`_,
+  `#2345 <https://github.com/fmtlib/fmt/pull/2345>`_). For example:
+
+  .. code:: c++
+
+     #include <fmt/chrono.h>
+
+     int main() {
+       fmt::print("{}", std::chrono::system_clock::now());
+     }
+
+  prints "2021-06-18 15:22:00" (the output depends on the current date and
+  time). Thanks `@sunmy2019 <https://github.com/sunmy2019>`_.
+
 * Made more chrono specifiers locale independent by default. Use the ``'L'``
   specifier to get localized formatting. For example:
 
@@ -183,6 +220,12 @@
        fmt::print("{}\n", monday);   // prints "Mon"
        fmt::print("{:L}\n", monday); // prints "пн"
      }
+
+* Improved locale handling in chrono formatting
+  (`#2337 <https://github.com/fmtlib/fmt/issues/2337>`_,
+  `#2349 <https://github.com/fmtlib/fmt/pull/2349>`_,
+  `#2350 <https://github.com/fmtlib/fmt/pull/2350>`_).
+  Thanks `@phprus (Vladislav Shchapov) <https://github.com/phprus>`_.
 
 * Deprecated ``fmt/locale.h`` moving the formatting functions that take a
   locale to ``fmt/format.h`` (``char``) and ``fmt/xchar`` (other overloads).
@@ -536,7 +579,9 @@
   `#2323 <https://github.com/fmtlib/fmt/pull/2323>`_,
   `#2328 <https://github.com/fmtlib/fmt/issues/2328>`_,
   `#2329 <https://github.com/fmtlib/fmt/pull/2329>`_,
-  `#2333 <https://github.com/fmtlib/fmt/pull/2333>`_).
+  `#2333 <https://github.com/fmtlib/fmt/pull/2333>`_,
+  `#2338 <https://github.com/fmtlib/fmt/pull/2338>`_,
+  `#2341 <https://github.com/fmtlib/fmt/pull/2341>`_).
   Thanks `@darklukee <https://github.com/darklukee>`_,
   `@fagg (Ashton Fagg) <https://github.com/fagg>`_,
   `@killerbot242 (Lieven de Cock) <https://github.com/killerbot242>`_,
@@ -569,7 +614,9 @@
   `@mwinterb <https://github.com/mwinterb>`_,
   `@sven-herrmann <https://github.com/sven-herrmann>`_,
   `@jmelas (John Melas) <https://github.com/jmelas>`_,
-  `@twoixter (Jose Miguel Pérez) <https://github.com/twoixter>`_.
+  `@twoixter (Jose Miguel Pérez) <https://github.com/twoixter>`_,
+  `@crbrz <https://github.com/crbrz>`_,
+  `@upsj (Tobias Ribizel) <https://github.com/upsj>`_.
 
 * Improved documentation
   (`#1986 <https://github.com/fmtlib/fmt/issues/1986>`_,
@@ -591,9 +638,12 @@
   `#2196 <https://github.com/fmtlib/fmt/issues/2196>`_,
   `#2217 <https://github.com/fmtlib/fmt/pull/2217>`_,
   `#2247 <https://github.com/fmtlib/fmt/pull/2247>`_,
-  `#2256 <https://github.com/fmtlib/fmt/pull/2256>`_).
-  Thanks `@jgopel (Jonathan Gopel) <https://github.com/jgopel>`_ and
-  `@alexezeder (Alexey Ochapov) <https://github.com/alexezeder>`_.
+  `#2256 <https://github.com/fmtlib/fmt/pull/2256>`_,
+  `#2336 <https://github.com/fmtlib/fmt/pull/2336>`_,
+  `#2346 <https://github.com/fmtlib/fmt/pull/2346>`_).
+  Thanks `@jgopel (Jonathan Gopel) <https://github.com/jgopel>`_,
+  `@alexezeder (Alexey Ochapov) <https://github.com/alexezeder>`_ and
+  `@DanielaE (Daniela Engert) <https://github.com/DanielaE>`_.
   
 7.1.3 - 2020-11-24
 ------------------

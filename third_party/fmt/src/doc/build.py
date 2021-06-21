@@ -4,7 +4,7 @@
 import errno, os, re, sys
 from subprocess import check_call, CalledProcessError, Popen, PIPE, STDOUT
 
-versions = ['1.0.0', '1.1.0', '2.0.0', '3.0.2', '4.0.0', '4.1.0', '5.0.0', '5.1.0', '5.2.0', '5.2.1', '5.3.0', '6.0.0', '6.1.0', '6.1.1', '6.1.2', '6.2.0', '6.2.1', '7.0.0', '7.0.1', '7.0.2', '7.0.3', '7.1.0', '7.1.1', '7.1.2', '7.1.3']
+versions = ['1.0.0', '1.1.0', '2.0.0', '3.0.2', '4.0.0', '4.1.0', '5.0.0', '5.1.0', '5.2.0', '5.2.1', '5.3.0', '6.0.0', '6.1.0', '6.1.1', '6.1.2', '6.2.0', '6.2.1', '7.0.0', '7.0.1', '7.0.2', '7.0.3', '7.1.0', '7.1.1', '7.1.2', '7.1.3', '8.0.0']
 
 class Pip:
   def __init__(self, venv_dir):
@@ -27,7 +27,7 @@ def create_build_env(venv_dir='virtualenv'):
   pip.install('wheel')
   pip.install('six')
   pip.install('sphinx-doc/sphinx', 'v3.3.0')
-  pip.install('michaeljones/breathe', 'v4.23.0')
+  pip.install('michaeljones/breathe', 'v4.16.0')
 
 def build_docs(version='dev', **kwargs):
   doc_dir = kwargs.get('doc_dir', os.path.dirname(os.path.realpath(__file__)))
@@ -90,7 +90,7 @@ def build_docs(version='dev', **kwargs):
 
   html_dir = os.path.join(work_dir, 'html')
   main_versions = reversed(versions[-3:])
-  check_call([os.path.join('virtualenv', 'bin', 'sphinx-build'),
+  check_call([os.path.join(work_dir, 'virtualenv', 'bin', 'sphinx-build'),
               '-Dbreathe_projects.format=' + os.path.abspath(doxyxml_dir),
               '-Dversion=' + version, '-Drelease=' + version,
               '-Aversion=' + version, '-Aversions=' + ','.join(main_versions),
