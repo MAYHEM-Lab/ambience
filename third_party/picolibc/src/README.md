@@ -1,5 +1,5 @@
 # Picolibc
-Copyright © 2018-2020 Keith Packard
+Copyright © 2018-2021 Keith Packard
 
 Picolibc is library offering standard C library APIs that targets
 small embedded systems with limited RAM. Picolibc was formed by blending
@@ -28,8 +28,8 @@ later.
 The file COPYING.picolibc contains all of the current copyright and
 license information in the Debian standard machine-readable format. It
 was generated using the make-copyrights and find-copyright
-scripts. There are currently 75 distinct licenses: 9 versions of the
-2-clause BSD license, 35 versions of the 3-clause BSD license, and 31
+scripts. There are currently 78 distinct licenses: 10 versions of the
+2-clause BSD license, 37 versions of the 3-clause BSD license, and 31
 other licenses.
 
 ## Supported Architectures
@@ -38,9 +38,9 @@ Picolibc inherited code for a *lot* of architectures from Newlib, but
 at this point only has code to build for the following targets:
 
  * ARM (32- and 64- bit)
- * i386 (Linux hosted, for testing)
+ * i386 (Native and Linux hosted, for testing)
  * RISC-V (both 32- and 64- bit)
- * x86_64 (Linux hosted, for testing)
+ * x86_64 (Native Linux hosted, for testing)
  * PowerPC
  * ESP8266 (xtensa-lx106-elf)
 
@@ -96,6 +96,103 @@ areas unrelated to the code used by picolibc, so keeping things in
 sync has not been difficult so far.
 
 ## Releases
+
+### Picolibc version 1.6.2
+
+ 1. Change `restrict` keyword in published headers to `__restrict` to
+    restore compatibility with applications building with --std=c18.
+
+ 2. Additional cleanups in time conversion funcs (Thanks to R. Riez)
+
+### Picolibc version 1.6.1
+
+ 1. Code cleanups for time conversion funcs (Thanks to R. Diez)
+
+ 2. Add '-fno-stack-protector' when supported by the C compiler
+    to avoid trouble building with native Ubuntu GCC.
+
+ 3. Bug fix for converting denorms with sscanf and strto{d,f,ld}.
+
+ 4. Use __asm__ for inline asm code to allow building applications
+    with --std=c18
+
+ 5. Fix exit code for semihosting 'abort' call to make it visible
+    to the hosting system.
+
+ 6. Add strfromf and strfromd implementations. These are simple
+    wrappers around sscanf, but strfromf handles float conversions
+    without requiring a pass through 'double' or special linker hacks.
+
+### Picolibc version 1.6
+
+ 1. Bugfix for snprintf(buf, 0) and vsnprintf(buf, 0) to avoid
+    smashing memory
+
+ 2. Support building libstdc++ on top of picolibc
+
+ 3. Add 'hosted' crt0 variant that calls exit when main
+    returns. This makes testing easier without burdening embedded apps
+    with unused exit processing code.
+
+ 4. Add 'minimal' crt0 variant that skips constructors to
+    save space on systems known to not use any.
+
+ 5. Fix HW floating point initialization on 32-bit ARM processors to
+    perform 'dsb' and 'isb' instructions to ensure the FPU enabling
+    write is complete before executing any FPU instructions.
+
+ 6. Create a new '--picolibc-prefix' GCC command line parameter that
+    sets the base of all picolibc file names.
+
+ 7. Add bare-metal i386 and x86_64 initializatiton code (thanks to
+    Mike Haertel). These initalize the processor from power up to
+    running code without requiring any BIOS.
+
+ 8. Merge newlib as of late April, 2021
+
+ 9. Add 'timegm' function (thanks to R. Diez).
+
+10. Fix a number of tinystdio bugs: handle fread with size==0, parse
+    'NAN' and 'INF' in fscanf in a case-insensitive manner, fix
+    negative precision to '*' arguments in printf, fix handling of
+    'j', 'z' and 't' argument size specifiers (thanks to Sebastian
+    Meyer).
+
+11. Make the fenv API more consistent and more conformant with the
+    spec. All architectures now fall back to the default code
+    for soft float versions, which avoids having the various exception
+    and rounding modes get defined when not supported.
+
+### Picolibc version 1.5.1
+
+ 1. Make riscv crt0 '_exit' symbol 'weak' to allow linking without
+    this function.
+
+### Picolibc version 1.5
+
+ 1. Make picolibc more compatible with C++ compilers.
+   
+ 2. Add GCC specs file and linker script for building C++ applications
+    with G++ that enable exception handling by linking in call stack
+    information.
+
+ 3. A few clang build fixes, including libm exception generation
+
+ 4. Nano malloc fixes, especially for 'unusual' arguments
+
+ 5. Merge in newlib 4.1.0 code
+
+ 6. More libm exception/errno/infinity fixes, mostly in the gamma funcs.
+
+ 7. Add tests for all semihost v2.0 functions.
+
+ 8. A few RISC-V assembly fixes and new libm code.
+
+ 9. Build fixes to reliably replace generic code with
+    architecture-specific implementations.
+
+With a patch which is pending for GCC 11, we'll be able to build C++
+applications that use picolibc with exceptions and iostream.
 
 ### Picolibc version 1.4.7
 

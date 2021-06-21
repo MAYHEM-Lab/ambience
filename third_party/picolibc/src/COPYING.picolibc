@@ -107,16 +107,16 @@ Files: newlib/libc/machine/aarch64/machine/fenv-fp.h
 Copyright: 2004-2005 David Schultz <das@FreeBSD.ORG>
 License: BSD2-1
 
-Files: newlib/libc/machine/x86_64/sys/fenv.h
-Copyright: 2010-2019 Red Hat, Inc.
-License: BSD2-1
-
 Files: newlib/libc/machine/lm32/setjmp.S
 Copyright: 2008 Jon Beniston <jon@beniston.com>
 License: BSD2-1
 
 Files: newlib/libc/machine/mips/machine/fenv-softfloat.h
 Copyright: 2004-2011 David Schultz <das@FreeBSD.ORG>
+License: BSD2-1
+
+Files: newlib/libc/machine/shared_x86/sys/fenv.h
+Copyright: 2010-2019 Red Hat, Inc.
 License: BSD2-1
 
 Files: newlib/libc/stdio/clearerr_u.c
@@ -222,7 +222,6 @@ Copyright: 2004 David Schultz <das@FreeBSD.ORG>
 License: BSD2-1
 
 Files: newlib/libm/machine/arm/_fenv.h
- newlib/libm/machine/arm/fe_dfl_env.c
  newlib/libm/machine/arm/feclearexcept.c
  newlib/libm/machine/arm/fedisableexcept.c
  newlib/libm/machine/arm/feenableexcept.c
@@ -367,7 +366,10 @@ License: BSD2-4
 
 Files: newlib/libm/fenv/fe_dfl_env.c
  newlib/libm/fenv/feclearexcept.c
+ newlib/libm/fenv/fedisableexcept.c
+ newlib/libm/fenv/feenableexcept.c
  newlib/libm/fenv/fegetenv.c
+ newlib/libm/fenv/fegetexcept.c
  newlib/libm/fenv/fegetexceptflag.c
  newlib/libm/fenv/fegetround.c
  newlib/libm/fenv/feholdexcept.c
@@ -412,12 +414,17 @@ License: BSD2-8
 
 Files: newlib/libc/machine/xtensa/sys/fenv.h
  newlib/libm/machine/xtensa/feclearexcept.c
+ newlib/libm/machine/xtensa/fedisableexcept.c
+ newlib/libm/machine/xtensa/feenableexcept.c
  newlib/libm/machine/xtensa/fegetenv.c
  newlib/libm/machine/xtensa/fegetexcept.c
  newlib/libm/machine/xtensa/fegetexceptflag.c
  newlib/libm/machine/xtensa/fegetround.c
  newlib/libm/machine/xtensa/feholdexcept.c
  newlib/libm/machine/xtensa/feraiseexcept.c
+ newlib/libm/machine/xtensa/fesetenv.c
+ newlib/libm/machine/xtensa/fesetexceptflag.c
+ newlib/libm/machine/xtensa/fesetround.c
  newlib/libm/machine/xtensa/fetestexcept.c
  newlib/libm/machine/xtensa/feupdateenv.c
 Copyright: 2011 Tensilica Inc.
@@ -432,10 +439,12 @@ Files: dummyhost/iob.c
  hello-world/Makefile
  hello-world/hello-world.c
  hello-world/run-aarch64
+ hello-world/run-aarch64++
  hello-world/run-arm
+ hello-world/run-arm++
  hello-world/run-riscv
+ hello-world/run-riscv++
  hello-world/*.ld
- meson.build
  meson_options.txt
  newlib/libc/argz/meson.build
  newlib/libc/ctype/meson.build
@@ -533,6 +542,8 @@ Files: dummyhost/iob.c
  newlib/libm/machine/riscv/meson.build
  newlib/libm/math/meson.build
  newlib/libm/meson.build
+ newlib/libm/test/copysign_vec.c
+ newlib/libm/test/copysignf_vec.c
  newlib/libm/test/issignaling_vec.c
  newlib/libm/test/meson.build
  newlib/libm/test/modf_vec.c
@@ -552,19 +563,21 @@ Files: dummyhost/iob.c
  picocrt/crt0.h
  picocrt/machine/aarch64/crt0.c
  picocrt/machine/arm/crt0.c
- picocrt/machine/riscv/crt0.c
  picocrt/meson.build
  picocrt/shared/crt0.c
- picolibc.ld
  scripts/do-aarch64-configure
+ scripts/do-aarch64-zephyr-elf-configure
+ scripts/do-amd64-configure
  scripts/do-arm-configure
  scripts/do-clang-arm-configure
  scripts/do-clang-riscv-configure
+ scripts/do-clang-rv32imafdc-configure
  scripts/do-clang-thumbv7e+fp-configure
  scripts/do-clang-thumbv7m-configure
  scripts/do-configure
  scripts/do-esp32-configure
  scripts/do-freedom-tools-configure
+ scripts/do-i686-configure
  scripts/do-lx106-configure
  scripts/do-native-configure
  scripts/do-riscv-configure
@@ -594,15 +607,26 @@ Files: dummyhost/iob.c
  semihost/semihost.h
  semihost/sys_clock.c
  semihost/sys_close.c
+ semihost/sys_elapsed.c
  semihost/sys_errno.c
+ semihost/sys_exit.c
+ semihost/sys_exit_extended.c
  semihost/sys_feature.c
  semihost/sys_flen.c
  semihost/sys_get_cmdline.c
  semihost/sys_getc.c
+ semihost/sys_heapinfo.c
+ semihost/sys_istty.c
  semihost/sys_open.c
  semihost/sys_putc.c
  semihost/sys_read.c
  semihost/sys_remove.c
+ semihost/sys_rename.c
+ semihost/sys_seek.c
+ semihost/sys_time.c
+ semihost/sys_tmpnam.c
+ semihost/sys_write.c
+ semihost/sys_write0.c
  semihost/unlink.c
  semihost/write.c
  test/meson.build
@@ -613,15 +637,19 @@ Files: dummyhost/iob.c
 Copyright: 2019 Keith Packard
 License: BSD3-1
 
-Files: newlib/libc/errno/errno.c
+Files: hello-world/hello-world++.c++
+ newlib/libc/errno/errno.c
  newlib/libc/iconv/ccs/binary/meson.build
+ newlib/libc/include/machine/math.h
  newlib/libc/include/ssp/meson.build
  newlib/libc/include/sys/auxv.h
  newlib/libc/machine/aarch64/sys/meson.build
+ newlib/libc/machine/arm/machine/meson.build
  newlib/libc/machine/arm/sys/meson.build
  newlib/libc/machine/csky/meson.build
- newlib/libc/machine/i386/sys/meson.build
- newlib/libc/machine/x86_64/sys/meson.build
+ newlib/libc/machine/i386/machine/meson.build
+ newlib/libc/machine/riscv/machine/math.h
+ newlib/libc/machine/riscv/machine/meson.build
  newlib/libc/machine/xtensa/sys/meson.build
  newlib/libc/picolib/getauxval.c
  newlib/libc/picolib/machine/aarch64/tls.c
@@ -653,6 +681,7 @@ Files: newlib/libc/errno/errno.c
  newlib/libc/tinystdio/gcvtf.c
  newlib/libc/tinystdio/gcvtfbuf.c
  newlib/libc/tinystdio/perror.c
+ newlib/libc/tinystdio/setvbuf.c
  newlib/libc/tinystdio/strtod_l.c
  newlib/libc/tinystdio/strtold_l.c
  newlib/libc/tinystdio/vasprintf.c
@@ -668,14 +697,22 @@ Files: newlib/libc/errno/errno.c
  newlib/libm/math/e_lgamma.c
  newlib/libm/math/ef_lgamma.c
  scripts/run-aarch64
+ scripts/run-i686
  scripts/run-rv32imac
+ scripts/run-rv32imafdc
+ scripts/run-x86_64
  scripts/test-arm.ld
  scripts/test-riscv.ld
  scripts/test-riscv32.ld
  scripts/test-riscv64.ld
+ scripts/test-x86.ld
+ scripts/test-x86_64.ld
  semihost/fstat.c
  semihost/isatty.c
  semihost/mapstdio.c
+ semihost/sys_iserror.c
+ semihost/sys_system.c
+ semihost/sys_tickfreq.c
  test/fenv.c
  test/ffs.c
  test/malloc.c
@@ -683,9 +720,46 @@ Files: newlib/libc/errno/errno.c
  test/math_errhandling.c
  test/math_errhandling_tests.c
  test/regex.c
+ test/semihost/meson.build
+ test/semihost/semihost-clock.c
+ test/semihost/semihost-close.c
+ test/semihost/semihost-elapsed.c
+ test/semihost/semihost-errno.c
+ test/semihost/semihost-exit-extended-failure.c
+ test/semihost/semihost-exit-extended.c
+ test/semihost/semihost-exit-failure.c
+ test/semihost/semihost-exit.c
+ test/semihost/semihost-flen.c
+ test/semihost/semihost-get-cmdline.c
+ test/semihost/semihost-heapinfo.c
+ test/semihost/semihost-iserror.c
+ test/semihost/semihost-istty.c
+ test/semihost/semihost-open.c
+ test/semihost/semihost-read.c
+ test/semihost/semihost-readc.c
+ test/semihost/semihost-remove.c
+ test/semihost/semihost-rename.c
+ test/semihost/semihost-seek.c
+ test/semihost/semihost-system-failure.c
+ test/semihost/semihost-system.c
+ test/semihost/semihost-tickfreq.c
+ test/semihost/semihost-time.c
+ test/semihost/semihost-tmpnam.c
+ test/semihost/semihost-tmpname.c
+ test/semihost/semihost-write.c
+ test/semihost/semihost-write0.c
+ test/semihost/semihost-writec.c
+ test/setjmp.c
  test/stack-smash.c
  test/tls.c
+ test/try-ilp32-sub.c
+ test/try-ilp32.c
+ test/try-ilp32.h
 Copyright: 2020 Keith Packard
+License: BSD3-1
+
+Files: meson.build
+Copyright: 2019-2021 Keith Packard
 License: BSD3-1
 
 Files: newlib/libc/machine/aarch64/meson.build
@@ -694,8 +768,46 @@ Copyright: 2019 Keith Packard,
  2020 Anthony Anderson
 License: BSD3-1
 
+Files: newlib/libc/machine/arm/machine/math.h
+Copyright: 2020 Keith Packard
+ 2017 embedded brains GmbH.
+ 2011, 2012 ARM Ltd.
+License: BSD3-1
+
 Files: newlib/libc/machine/powerpc/meson.build
 Copyright: 2019 Ash Logan, Keith Packard
+License: BSD3-1
+
+Files: newlib/libc/machine/shared_x86/meson.build
+ newlib/libc/machine/shared_x86/sys/meson.build
+ newlib/libc/machine/xtensa/machine/meson.build
+ newlib/libc/stdlib/pico-atexit.c
+ newlib/libc/stdlib/pico-exit.c
+ newlib/libc/stdlib/pico-onexit.c
+ newlib/libc/tinystdio/matchcaseprefix.c
+ newlib/libc/tinystdio/strfromd.c
+ newlib/libc/tinystdio/strfromf.c
+ newlib/libm/common/dreml.c
+ newlib/libm/common/exp10l.c
+ newlib/libm/common/pow10l.c
+ newlib/libm/common/sincosl.c
+ semihost/machine/i386/bios.S
+ semihost/machine/i386/e9_exit.c
+ semihost/machine/i386/e9_io.c
+ semihost/machine/i386/e9_kill.c
+ semihost/machine/i386/e9_stub.c
+ semihost/machine/i386/meson.build
+ test/atexit.c
+ test/constructor-skip.c
+ test/constructor.c
+ test/hosted-exit.c
+ test/math-funcs.c
+ test/on_exit.c
+ test/rounding-mode-sub.c
+ test/rounding-mode.c
+ test/timegm.c
+ test/timegm.h
+Copyright: 2021 Keith Packard
 License: BSD3-1
 
 Files: newlib/libc/machine/xtensa/meson.build
@@ -703,8 +815,48 @@ Files: newlib/libc/machine/xtensa/meson.build
 Copyright: 2019 Jonathan McDowell
 License: BSD3-1
 
+Files: newlib/libm/machine/riscv/s_copysign.c
+ newlib/libm/machine/riscv/s_fabs.c
+ newlib/libm/machine/riscv/s_finite.c
+ newlib/libm/machine/riscv/s_fmax.c
+ newlib/libm/machine/riscv/s_fmin.c
+ newlib/libm/machine/riscv/s_fpclassify.c
+ newlib/libm/machine/riscv/s_isinf.c
+ newlib/libm/machine/riscv/s_isnan.c
+ newlib/libm/machine/riscv/s_llrint.c
+ newlib/libm/machine/riscv/s_llround.c
+ newlib/libm/machine/riscv/s_lrint.c
+ newlib/libm/machine/riscv/s_lround.c
+ newlib/libm/machine/riscv/sf_copysign.c
+ newlib/libm/machine/riscv/sf_fabs.c
+ newlib/libm/machine/riscv/sf_finite.c
+ newlib/libm/machine/riscv/sf_fmax.c
+ newlib/libm/machine/riscv/sf_fmin.c
+ newlib/libm/machine/riscv/sf_fpclassify.c
+ newlib/libm/machine/riscv/sf_isinf.c
+ newlib/libm/machine/riscv/sf_isnan.c
+ newlib/libm/machine/riscv/sf_llrint.c
+ newlib/libm/machine/riscv/sf_llround.c
+ newlib/libm/machine/riscv/sf_lrint.c
+ newlib/libm/machine/riscv/sf_lround.c
+Copyright: 2020 Kito Cheng
+License: BSD3-1
+
+Files: picocrt/machine/amd64/crt0.S
+ picocrt/machine/i386/crt0.S
+Copyright: 2021 Mike Haertel and Keith Packard
+License: BSD3-1
+
+Files: picocrt/machine/riscv/crt0.S
+Copyright: 2020 Sebastian Meyer
+License: BSD3-1
+
 Files: scripts/do-freedom-tools-package
 Copyright: 2020 SiFive Inc.
+License: BSD3-1
+
+Files: test/time-tests.c
+Copyright: 2021 R. Diez
 License: BSD3-1
 
 Files: newlib/libc/ctype/ctype_.c
@@ -1376,6 +1528,7 @@ Files: newlib/libc/machine/spu/fdopen.c
  newlib/libm/common/expm1l.c
  newlib/libm/common/fabsl.c
  newlib/libm/common/fdiml.c
+ newlib/libm/common/finitel.c
  newlib/libm/common/floorl.c
  newlib/libm/common/fmal.c
  newlib/libm/common/fmaxl.c
@@ -1384,6 +1537,8 @@ Files: newlib/libc/machine/spu/fdopen.c
  newlib/libm/common/frexpl.c
  newlib/libm/common/hypotl.c
  newlib/libm/common/ilogbl.c
+ newlib/libm/common/isinfl.c
+ newlib/libm/common/isnanl.c
  newlib/libm/common/ldexpl.c
  newlib/libm/common/lgammal.c
  newlib/libm/common/llrintl.c
@@ -1511,7 +1666,6 @@ Files: newlib/libc/machine/spu/memcpy.c
  newlib/libc/machine/spu/strspn.c
  newlib/libc/machine/spu/strxfrm.c
  newlib/libc/machine/spu/vec_literal.h
- newlib/libm/machine/spu/fe_dfl_env.c
  newlib/libm/machine/spu/headers/atanf.h
  newlib/libm/machine/spu/headers/cbrt.h
  newlib/libm/machine/spu/headers/cbrtf.h
@@ -1736,16 +1890,20 @@ Copyright: 1992, 1993 The Regents of the University of California.
  2011 The FreeBSD Foundation
 License: BSD3-29
 
+Files: newlib/libc/sys/rtems/include/sys/poll.h
+Copyright: 1997 Peter Wemm <peter@freebsd.org>
+License: BSD3-30
+
 Files: newlib/libc/time/strptime.c
 Copyright: 1999 Kungliga Tekniska Hgskolan Royal Institute of Technology, Stockholm, Sweden).
-License: BSD3-30
+License: BSD3-31
 
 Files: newlib/libc/tinystdio/atod_engine.c
  newlib/libc/tinystdio/atof_engine.c
  newlib/libc/tinystdio/vfscanf.c
 Copyright: 2002,2004,2005 Joerg Wunsch
  2008  Dmitry Xmelkov
-License: BSD3-31
+License: BSD3-32
 
 Files: newlib/libc/tinystdio/clearerr.c
  newlib/libc/tinystdio/fclose.c
@@ -1754,7 +1912,7 @@ Files: newlib/libc/tinystdio/clearerr.c
  newlib/libc/tinystdio/fgetc.c
  newlib/libc/tinystdio/stdio_private.h
 Copyright: 2002,2005 Joerg Wunsch
-License: BSD3-31
+License: BSD3-32
 
 Files: newlib/libc/tinystdio/dtoa_data.c
  newlib/libc/tinystdio/dtoa_engine.c
@@ -1767,11 +1925,11 @@ Files: newlib/libc/tinystdio/dtoa_data.c
  newlib/libc/tinystdio/vfprintff.c
  newlib/libc/tinystdio/vfscanff.c
 Copyright: 2018, Keith Packard
-License: BSD3-31
+License: BSD3-32
 
 Files: newlib/libc/tinystdio/fdevopen.c
 Copyright: 2002,2005, 2007 Joerg Wunsch
-License: BSD3-31
+License: BSD3-32
 
 Files: newlib/libc/tinystdio/fgets.c
  newlib/libc/tinystdio/fprintf.c
@@ -1791,59 +1949,63 @@ Files: newlib/libc/tinystdio/fgets.c
  newlib/libc/tinystdio/sscanf.c
  newlib/libc/tinystdio/ungetc.c
 Copyright: 2002, Joerg Wunsch
-License: BSD3-31
+License: BSD3-32
 
 Files: newlib/libc/tinystdio/ftoa_engine.h
  newlib/libc/tinystdio/xtoa_fast.h
 Copyright: 2005, Dmitry Xmelkov
-License: BSD3-31
+License: BSD3-32
+
+Files: newlib/libc/tinystdio/snprintfd.c
+ newlib/libc/tinystdio/snprintff.c
+Copyright: 2021 Keith Packard
+License: BSD3-32
 
 Files: newlib/libc/tinystdio/stdio.h
 Copyright: 2002, 2005, 2007 Joerg Wunsch  
  1990, 1991, 1993 The Regents of the University of California. 
-License: BSD3-31
+License: BSD3-32
 
 Files: newlib/libc/tinystdio/strtod.c
  newlib/libc/tinystdio/strtof.c
  newlib/libc/tinystdio/strtold.c
 Copyright: 2002-2005  Michael Stumpf  <mistumpf@de.pepperl-fuchs.com>
  2006,2008  Dmitry Xmelkov 
-License: BSD3-31
+License: BSD3-32
 
 Files: newlib/libc/tinystdio/ultoa_invert.c
 Copyright: 2017 Keith Packard
-License: BSD3-31
+License: BSD3-32
 
 Files: newlib/libc/tinystdio/vfprintf.c
 Copyright: 2002, Alexander Popov (sasho@vip.bg)
  2002,2004,2005 Joerg Wunsch
  2005, Helmut Wallner
  2007, Dmitry Xmelkov
-License: BSD3-31
+License: BSD3-32
 
 Files: newlib/libc/tinystdio/vprintf.c
  newlib/libc/tinystdio/vscanf.c
 Copyright: 2005, Joerg Wunsch
-License: BSD3-31
+License: BSD3-32
 
 Files: newlib/libc/tinystdio/vsnprintf.c
  newlib/libc/tinystdio/vsprintf.c
 Copyright: 2003, Joerg Wunsch
-License: BSD3-31
+License: BSD3-32
 
 Files: newlib/libc/tinystdio/ftoa_engine.c
 Copyright: 2005, Dmitry Xmelkov
-License: BSD3-32
+License: BSD3-33
 
 Files: newlib/libm/common/log2l.c
  newlib/libm/common/logbl.c
  newlib/libm/common/nexttoward.c
  newlib/libm/common/nexttowardl.c
 Copyright: 2014 Mentor Graphics, Inc.
-License: BSD3-33
+License: BSD3-34
 
-Files: newlib/libm/machine/riscv/fe_dfl_env.c
- newlib/libm/machine/riscv/feclearexcept.c
+Files: newlib/libm/machine/riscv/feclearexcept.c
  newlib/libm/machine/riscv/fegetenv.c
  newlib/libm/machine/riscv/fegetexceptflag.c
  newlib/libm/machine/riscv/fegetround.c
@@ -1855,7 +2017,7 @@ Files: newlib/libm/machine/riscv/fe_dfl_env.c
  newlib/libm/machine/riscv/fetestexcept.c
  newlib/libm/machine/riscv/feupdateenv.c
 Copyright: 2017 Michael R. Neilly
-License: BSD3-34
+License: BSD3-35
 
 Files: newlib/libm/machine/spu/headers/acos.h
  newlib/libm/machine/spu/headers/acosd2.h
@@ -1980,7 +2142,7 @@ Files: newlib/libm/machine/spu/headers/acos.h
  newlib/libm/machine/spu/wf_sqrt.c
  newlib/libm/machine/spu/wf_tgamma.c
 Copyright: 2006,2008, International Business Machines Corporation
-License: BSD3-35
+License: BSD3-36
 
 Files: newlib/libm/machine/spu/headers/acosf4.h
  newlib/libm/machine/spu/headers/asinf4.h
@@ -2016,7 +2178,7 @@ Files: newlib/libm/machine/spu/headers/acosf4.h
  newlib/libm/machine/spu/headers/truncd2.h
  newlib/libm/machine/spu/headers/truncf4.h
 Copyright: 2001,2008, International Business Machines Corporation, Sony Computer Entertainment, Incorporated, Toshiba Corporation, 
-License: BSD3-35
+License: BSD3-36
 
 Files: newlib/libm/machine/spu/headers/acoshd2.h
  newlib/libm/machine/spu/headers/acoshf4.h
@@ -2048,13 +2210,13 @@ Files: newlib/libm/machine/spu/headers/acoshd2.h
  newlib/libm/machine/spu/headers/tgammad2.h
  newlib/libm/machine/spu/headers/tgammaf4.h
 Copyright: 2007,2008, International Business Machines Corporation
-License: BSD3-35
+License: BSD3-36
 
 Files: newlib/libm/machine/spu/headers/nearbyintf4.h
  newlib/libm/machine/spu/headers/rintf4.h
  newlib/libm/machine/spu/headers/scalbnf4.h
 Copyright: 2006,2008, International Business Machines Corporation, Sony Computer Entertainment, Incorporated, Toshiba Corporation, 
-License: BSD3-35
+License: BSD3-36
 
 Files: .gitattributes
  .github/Dockerfile
@@ -2096,20 +2258,26 @@ Files: .gitattributes
  newlib/make-library
  newlib/make-target
  newlib/newlib.hin
+ picolibc.ld.in
  picolibc.specs.in
  scripts/cross-aarch64-linux-gnu.txt
- scripts/cross-aarch64-zephyr-elf.xt
+ scripts/cross-aarch64-zephyr-elf.txt
  scripts/cross-arm-none-eabi.txt
  scripts/cross-arm-zephyr-eabi.txt
  scripts/cross-clang-riscv64-unknown-elf.txt
+ scripts/cross-clang-rv32imafdc-unknown-elf.txt
  scripts/cross-clang-thumbv7e+fp-none-eabi.txt
  scripts/cross-clang-thumbv7m-none-eabi.txt
  scripts/cross-i686-linux-gnu.txt
  scripts/cross-riscv64-unknown-elf.txt
  scripts/cross-riscv64-zephyr-elf.txt
  scripts/cross-rv32imac.txt
+ scripts/cross-x86_64-linux-gnu.txt
  scripts/cross-xtensa-esp32-elf.txt
  scripts/cross-xtensa-lx106-elf.txt
+ scripts/monitor-e9
+ semihost/machine/i386/bios.ld
+ test/complex-funcs.c
 Copyright: 2020 The Newlib Project
 License: Default-1
 
@@ -2215,6 +2383,7 @@ License: Default-1
 Files: newlib/libc/include/cpio.h
  newlib/libm/complex/clog10.c
  newlib/libm/complex/clog10f.c
+ newlib/libm/complex/clog10l.c
 Copyright: 2016 Yaakov Selkowitz <yselkowi@redhat.com>
 License: Default-1
 
@@ -2243,7 +2412,6 @@ Files: newlib/libc/include/limits.h
  newlib/libc/string/strndup_r.c
  newlib/libc/string/strnlen.c
  newlib/libc/time/local.h
- newlib/libc/time/tzlock.c
  newlib/libc/time/tzset.c
  newlib/testsuite/newlib.wctype/tiswctype.c
  newlib/testsuite/newlib.wctype/twctrans.c
@@ -2459,7 +2627,6 @@ Files: newlib/libc/stdlib/abort.c
  newlib/libc/stdlib/calloc.c
  newlib/libc/stdlib/ecvtbuf.c
  newlib/libc/stdlib/efgcvt.c
- newlib/libc/stdlib/envlock.c
  newlib/libc/stdlib/eprintf.c
  newlib/libc/stdlib/exit.c
  newlib/libc/stdlib/labs.c
@@ -2472,7 +2639,6 @@ Files: newlib/libc/stdlib/abort.c
  newlib/libc/stdlib/mbstowcs.c
  newlib/libc/stdlib/mbtowc.c
  newlib/libc/stdlib/mbtowc_r.c
- newlib/libc/stdlib/mlock.c
  newlib/libc/stdlib/msize.c
  newlib/libc/stdlib/mstats.c
  newlib/libc/stdlib/mtrim.c
@@ -2575,7 +2741,12 @@ Files: newlib/libm/fenv/fenv_stub.c
 Copyright: 2019 Joel Sherrill <joel@rtems.org
 License: Default-1
 
-Files: newlib/libm/machine/x86_64/fenv.c
+Files: newlib/libm/machine/i386/fenv.c
+ newlib/libm/machine/x86_64/fenv.c
+Copyright: 2019 Joel Sherrill <joel@rtems.org>
+License: Default-1
+
+Files: newlib/libm/machine/shared_x86/fenv.c
 Copyright: 2010-2019 Red Hat, Inc.
 License: Default-1
 
@@ -2796,6 +2967,12 @@ Files: newlib/libc/include/elf.h
  newlib/libc/string/strverscmp.c
  newlib/libm/common/nexttowardf.c
 Copyright: 2005-2014 Rich Felker, et al.
+License: Other-3
+
+Files: newlib/libc/include/ftw.h
+ newlib/libc/posix/ftw.c
+ newlib/libc/posix/nftw.c
+Copyright: 2005-2020 Rich Felker, et al.
 License: Other-3
 
 Files: newlib/libc/machine/xtensa/machine/core-isa.h
@@ -4691,6 +4868,30 @@ License: BSD3-30
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
  are met:
+ 1. Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+ 3. The name of the author may not be used to endorse or promote products
+ derived from this software without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+
+License: BSD3-31
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
  .
  1. Redistributions of source code must retain the above copyright
  notice, this list of conditions and the following disclaimer.
@@ -4715,7 +4916,7 @@ License: BSD3-30
  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-License: BSD3-31
+License: BSD3-32
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
  .
@@ -4743,7 +4944,7 @@ License: BSD3-31
  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  POSSIBILITY OF SUCH DAMAGE.
 
-License: BSD3-32
+License: BSD3-33
  Rewritten in C by Soren Kuula
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
@@ -4768,7 +4969,7 @@ License: BSD3-32
  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  POSSIBILITY OF SUCH DAMAGE.
 
-License: BSD3-33
+License: BSD3-34
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
  Redistributions of source code must retain the above copyright
@@ -4791,7 +4992,7 @@ License: BSD3-33
  INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-License: BSD3-34
+License: BSD3-35
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
  are met:
@@ -4820,7 +5021,7 @@ License: BSD3-34
  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  POSSIBILITY OF SUCH DAMAGE.
 
-License: BSD3-35
+License: BSD3-36
  Redistribution and use in source and binary forms, with or
  without modification, are permitted provided that the
  following conditions are met:

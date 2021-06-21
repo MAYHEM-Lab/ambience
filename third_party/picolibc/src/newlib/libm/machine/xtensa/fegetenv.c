@@ -36,21 +36,12 @@ int fegetenv(fenv_t * env_ptr)
 {
   unsigned int fsr;
   unsigned int fcr;
-  asm ("rur.fsr %0" : "=a"(fsr));
-  asm ("rur.fcr %0" : "=a"(fcr));
+  __asm__("rur.fsr %0" : "=a"(fsr));
+  __asm__("rur.fcr %0" : "=a"(fcr));
   *env_ptr = fsr | fcr;
   return 0;
 }
 
-
-int fesetenv(const fenv_t * env_ptr)
-{
-  fenv_t env = *env_ptr;
-  if (env & ~(_FE_FLOATING_ENV_MASK))
-    return -1;
-  asm ("wur.fsr %0" : : "a"(*env_ptr));
-  asm ("wur.fcr %0" : : "a"(*env_ptr));
-  return 0;
-}
-
+#else
+#include "../../fenv/fegetenv.c"
 #endif

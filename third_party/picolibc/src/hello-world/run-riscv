@@ -37,8 +37,7 @@
 qemu=qemu-system-riscv32
 
 # select the program
-#elf=hello-world-riscv.elf
-elf=hello-world++-riscv
+elf=hello-world-riscv.elf
 
 # Set the target machine
 machine=virt,accel=tcg
