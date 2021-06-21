@@ -1,0 +1,28 @@
+name: build
+
+on: [push, pull_request]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+
+    steps:
+      - uses: FatihBAKIR/checkout@v2
+
+      - name: Create hosted debug build dir
+        run: mkdir /tmp/cmake-build-stm32-iot
+
+      - name: Generate hosted debug build
+        run: >
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DENABLE_LTO=ON -DTOS_BOARD=l4_iot_disco
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          $GITHUB_WORKSPACE
+        working-directory: /tmp/cmake-build-stm32-iot
+
+      - name: Build all stm32
+        run: ninja
+        working-directory: /tmp/cmake-build-stm32-iot
+
