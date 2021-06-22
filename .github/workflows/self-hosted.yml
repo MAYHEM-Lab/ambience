@@ -26,6 +26,16 @@ jobs:
         run: ninja
         working-directory: /tmp/cmake-build-stm32-iot
 
+      - name: Create amd64 user build dir
+        run: mkdir -p /tmp/cmake-build-barex64-user
+
+      - name: Generate amd64 user build
+        run: >
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_CPU=x86_64/bare -DENABLE_LTO=ON
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache -DBUILD_USER_SPACE=ON
+          $GITHUB_WORKSPACE
+        working-directory: /tmp/cmake-build-barex64-user
+
       - name: Create amd64 build dir
         run: mkdir -p /tmp/cmake-build-barex64
 
