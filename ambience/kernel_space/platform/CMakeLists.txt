@@ -1,4 +1,4 @@
-if(${TOS_ARCH} MATCHES "x86_64")
+if(${TOS_PLATFORM} MATCHES "x86_64")
   add_subdirectory(x86_64)
 elseif(${TOS_PLATFORM} MATCHES "raspi")
   target_sources(aekernel PRIVATE raspi3.cpp elf.hpp)
