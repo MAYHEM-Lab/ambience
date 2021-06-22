@@ -2,13 +2,6 @@ from .defs import LidlModule, Group, Platform, BundledElfLoader, Node, Memories,
 
 x86_64 = Platform("x86_64/bare", BundledElfLoader())
 
-vm = Node("vm", x86_64,
-          Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)))
-
-db_serv = Node("cloud", x86_64,
-          Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)))
-
-
 def sample_deployment() -> [DeployNode]:
     calculator_mod = LidlModule("/home/tos/ambience/services/interfaces/calc.lidl", "calc_schema")
     logger_mod = LidlModule("/home/tos/src/core/log.yaml", "log_schema")
@@ -41,6 +34,12 @@ def sample_deployment() -> [DeployNode]:
     g1 = Group("sample_group3", {calc})
 
     db_pg = Group("cloud_privileged", {sqlite}, privileged=True)
+
+    vm = Node("vm", x86_64,
+              Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)))
+
+    db_serv = Node("cloud", x86_64,
+                   Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)))
 
     all_nodes = [
         DeployNode(vm, [pg, g1]),
