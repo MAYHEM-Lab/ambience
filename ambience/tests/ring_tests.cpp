@@ -23,8 +23,12 @@ TEST_CASE("Response queue is initialized correctly") {
     auto iface = storage.make_interface();
 
     REQUIRE_EQ(0, iface.res_last_seen);
-    REQUIRE_EQ(
-        0, for_each(*iface.host_to_guest, iface.res_last_seen, iface.size, [](uint16_t idx) {}));
+    REQUIRE_EQ(0,
+               for_each(iface,
+                        *iface.host_to_guest,
+                        iface.res_last_seen,
+                        iface.size,
+                        [](auto& idx) {}));
 }
 
 TEST_CASE("User submission works") {
@@ -34,8 +38,8 @@ TEST_CASE("User submission works") {
     submit_req<false>(iface, 1, 2, nullptr, nullptr);
     uint16_t req_last_seen = 0;
 
-    req_last_seen =
-        for_each(iface, *iface.guest_to_host, req_last_seen, iface.size, [](ring_elem& el) {
+    req_last_seen = for_each(
+        iface, *iface.guest_to_host, req_last_seen, iface.size, [](ring_elem& el) {
             REQUIRE_EQ(elem_flag::req, el.req.flags);
             REQUIRE_EQ(1, el.req.channel);
             REQUIRE_EQ(2, el.req.procid);

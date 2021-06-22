@@ -23,14 +23,23 @@ expected<tap_device, error_code> make_tap_device() {
     ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
     strcpy(ifr.ifr_name, "tap0");
 
-    int err = ioctl(tapfd, TUNSETIFF, static_cast<void*>(&ifr));
+    int err = ioctl(tapfd, TUNSETIFF, &ifr);
     if (err < 0) {
         LOG_ERROR(strerror(errno));
         return unexpected(error_code{errno});
     }
 
     LOG_TRACE("Got the tap device");
-    return tap_device{tapfd};
+
+    mac_addr_t addr;
+    ifreq s;
+    if (ioctl(tapfd, SIOCGIFHWADDR, &s) == 0) {
+        std::copy(s.ifr_ifru.ifru_addr.sa_data,
+                  s.ifr_ifru.ifru_addr.sa_data + 6,
+                  addr.addr.data());
+    }
+
+    return tap_device{tapfd, addr};
 }
 
 int tap_device::write(span<const uint8_t> buf) {
@@ -49,11 +58,11 @@ span<uint8_t> tap_device::read(span<uint8_t> buf) {
     int size = 0;
     boost::system::error_code ec;
     m_input->async_read_some(boost::asio::buffer(buf.data(), buf.size()),
-                            [&](boost::system::error_code e, std::size_t len) {
-                              size = len;
-                              ec = e;
-                              wait_read.up();
-                            });
+                             [&](boost::system::error_code e, std::size_t len) {
+                                 size = len;
+                                 ec = e;
+                                 wait_read.up();
+                             });
     wait_read.down();
     if (ec) {
         tos::debug::panic(ec.message().c_str());

@@ -75,10 +75,7 @@ void lwip_task() {
 
     LOG("Initialize lwip");
     lwip_init();
-    tos::lwip::basic_interface interface(std::move(tap_dev),
-                                         tos::parse_ipv4_address("192.168.0.10"),
-                                         tos::parse_ipv4_address("255.255.255.0"),
-                                         tos::parse_ipv4_address("192.168.0.1"));
+    tos::lwip::basic_interface interface(std::move(tap_dev));
     set_default(interface);
     interface.up();
 
