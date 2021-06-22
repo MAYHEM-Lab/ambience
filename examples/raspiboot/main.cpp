@@ -311,6 +311,13 @@ public:
         return buf.size();
     }
 
+    tos::mac_addr_t address() {
+        auto mac = SMSC951xDeviceGetMACAddress(m_ptr);
+        tos::mac_addr_t res{0xa2, 0xed, 0x8f, 0xce, 0x99, 0x1f};
+        memcpy(res.addr.data(), mac->m_Address, 6);
+        return res;
+    }
+    
 private:
     TSMSC951xDevice* m_ptr;
 };
@@ -343,10 +350,7 @@ tos::expected<void, usb_errors> usb_task() {
 
     LOG("Initialize lwip");
     lwip_init();
-    tos::lwip::basic_interface interface(eth.get(),
-                                         tos::parse_ipv4_address("192.168.0.250"),
-                                         tos::parse_ipv4_address("255.255.255.0"),
-                                         tos::parse_ipv4_address("192.168.0.249"));
+    tos::lwip::basic_interface interface{eth.get()};
     set_default(interface);
     interface.up();
 
