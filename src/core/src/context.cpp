@@ -36,6 +36,7 @@ tos::span<uint8_t> heap_memory() {
 }
 } // namespace
 #elif defined(TOS_PLATFORM_x86_hosted)
+#elif defined(TOS_PLATFORM_ambience_user)
 #else
 static_assert(false, "No platform specified!");
 #endif
