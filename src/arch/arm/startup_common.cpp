@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <tos/compiler.hpp>
 #include <tos/memory.hpp>
+#include <tos/arm/startup_common.hpp>
 
 extern "C" {
 extern uint64_t _sidata;
@@ -31,29 +32,32 @@ void call_global_ctors() {
 }
 } // namespace
 
-namespace tos::stm32 {
-void initialize() {
+namespace tos {
+void boot_initialize() {
     copy_initialized_memory();
     zero_out_bss();
     call_global_ctors();
 }
-} // namespace tos::stm32
+} // namespace tos
 
 extern "C" {
 void PendSV_Handler() {
-    while (true);
+    while (true)
+        ;
 }
 void NMI_Handler() {
-    while (true);
+    while (true)
+        ;
 }
 void DebugMon_Handler() {
-    while (true);
+    while (true)
+        ;
 }
 
 [[noreturn]] int main();
 void SystemInit();
 void Reset_Handler() {
-    tos::stm32::initialize();
+    tos::boot_initialize();
     SystemInit();
     main();
     TOS_UNREACHABLE();

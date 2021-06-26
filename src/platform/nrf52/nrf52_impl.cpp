@@ -15,6 +15,9 @@
 #endif // SOFTDEVICE_PRESENT
 
 void tos_main();
+extern "C" void SysTick_Handler() {
+    while (true);
+}
 
 extern "C" void HardFault_Handler() {
     tos::arm::exception::hard_fault();
@@ -24,7 +27,7 @@ extern "C" void UsageFault_Handler() {
     tos::arm::exception::usage_fault();
 }
 
-extern "C" void MemoryManagement_Handler() {
+extern "C" void MemManage_Handler() {
     tos::arm::exception::mem_fault();
 }
 

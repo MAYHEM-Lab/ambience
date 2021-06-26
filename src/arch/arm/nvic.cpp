@@ -1,6 +1,5 @@
 #include "tos/arm/assembly.hpp"
 #include "tos/debug/assert.hpp"
-
 #include <tos/arm/cmsis.hpp>
 #include <tos/arm/nvic.hpp>
 #include <tos/interrupt.hpp>

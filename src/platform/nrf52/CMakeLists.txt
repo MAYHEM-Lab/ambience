@@ -4,12 +4,10 @@ add_library(nrf52_core nrf52_core.cpp)
 tos_install(nrf52_core ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(nrf52_core PUBLIC tos_util_core nrf5-sdk tos_arch_core)
 
-add_library(nrf52_impl nrf52_impl.cpp startup.S isr_vector.cpp)
+add_library(nrf52_impl nrf52_impl.cpp isr_vector.cpp nrf52_irq.inc irq.h weak_irq.cpp)
 tos_install(nrf52_impl ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(nrf52_impl PUBLIC nrf52_core nrf5-sdk)
 target_compile_features(nrf52_impl PUBLIC cxx_std_17)
-
-target_compile_definitions(nrf52_impl PUBLIC __HEAP_SIZE=8097 __STACK_SIZE=2048)
 
 target_link_libraries(nrf52_impl PUBLIC tos_jobs)
 

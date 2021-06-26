@@ -76,17 +76,13 @@ SECTIONS
   . = ALIGN(4);
   .bss (NOLOAD) :
   {
-    _sbss = .;
-    __bss_start__ = _sbss;
-    __bss_start = _sbss;
+    __bss_start = .;
     *(.bss)
     *(.bss*)
     *(COMMON)
 
     . = ALIGN(4);
-    _ebss = .;
-    __bss_end__ = _ebss;
-    __bss_end = _ebss;
+    __bss_end = .;
   } >RAM : DATA
 
   PROVIDE (end = .);

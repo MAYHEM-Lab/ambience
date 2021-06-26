@@ -72,6 +72,8 @@ struct [[gnu::packed]] vector_table {
             nvic_raw_handler_t systick;
         };
     };
+
+    static constexpr vector_table default_table();
 };
 static_assert(offsetof(vector_table, stack_ptr) == 0);
 static_assert(offsetof(vector_table, vectors) == sizeof(void*));
