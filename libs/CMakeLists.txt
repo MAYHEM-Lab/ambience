@@ -1,5 +1,3 @@
-add_subdirectory(toscxx)
-
 add_subdirectory(ubench)
 add_subdirectory(lidlrt)
 
