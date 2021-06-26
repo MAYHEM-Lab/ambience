@@ -7,6 +7,10 @@ add_library(tos_libcxx
     src/include/atomic_support.h
     src/any.cpp
     src/charconv.cpp
+    src/thread.cpp
+    src/atomic.cpp
+    src/mutex.cpp
+    src/condition_variable.cpp
 
     include/algorithm
     include/array
@@ -76,7 +80,10 @@ add_library(tos_libcxx
 #target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_ATOMIC_HEADER)
 #target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_INT128)
 
-target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_THREADS)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_BUILDING_LIBRARY)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_THREAD_API_PTHREAD)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_NATIVE_SEMAPHORES)
+#target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_THREADS)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_LONG_LONG)
 if(NOT ${TOS_CORE} MATCHES "aarch64")
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_UNICODE_CHARS)
@@ -109,7 +116,7 @@ target_compile_definitions(tos_libcxx PUBLIC TOS_PLATFORM_${TOS_PLATFORM_NAME})
 
 target_compile_features(tos_libcxx PUBLIC cxx_std_17)
 target_include_directories(tos_libcxx PUBLIC include)
-target_link_libraries(tos_libcxx PUBLIC tos::libc)
+target_link_libraries(tos_libcxx PUBLIC tos::libc tos_pthread)
 endif()
 
 add_library(base_libcxx src/compile.cpp)

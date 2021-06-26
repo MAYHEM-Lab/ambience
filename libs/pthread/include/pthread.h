@@ -27,15 +27,12 @@ struct pthread_cond_t {
     _Alignas(TOS_COND_ALIGNMENT) char cond_buffer[TOS_COND_SIZE];
 };
 
+#define PTHREAD_COND_INITIALIZER { { } }
+
 typedef void* pthread_condattr_t;
 
 // Pthread
 typedef void* pthread_t;
-
-// struct pthread_t {
-//    void* thread;
-//    pthread_cond_t cond;
-//};
 
 struct pthread_attr_t {
     size_t stack_size;
@@ -46,6 +43,8 @@ struct pthread_attr_t {
 struct pthread_mutex_t {
     _Alignas(TOS_MUTEX_ALIGNMENT) char mutex_buffer[TOS_MUTEX_SIZE];
 };
+
+#define PTHREAD_MUTEX_INITIALIZER { { } }
 
 struct pthread_mutexattr_t {
     int protocol;
@@ -60,6 +59,14 @@ struct pthread_rwlock_t {
 };
 
 typedef void* pthread_rwlockattr_t;
+
+struct pthread_once_t {};
+struct pthread_key_t {};
+
+enum pthread_mutex_type
+{
+    PTHREAD_MUTEX_RECURSIVE
+};
 
 /* FUNCTIONS */
 
@@ -111,6 +118,11 @@ int pthread_cond_init(pthread_cond_t* cond, const pthread_condattr_t* attr);
 int pthread_cond_destroy(pthread_cond_t* cond);
 int pthread_cond_wait(pthread_cond_t* cond, pthread_mutex_t* mutex);
 
+// Not implemented!
+int pthread_cond_timedwait(pthread_cond_t* cond,
+                           pthread_mutex_t* mutex,
+                           const struct timespec* abstime);
+
 int pthread_condattr_init(pthread_condattr_t* attr);
 int pthread_condattr_destroy(pthread_condattr_t* attr);
 int pthread_condattr_getpshared(const pthread_condattr_t* attr, int* pshared);
@@ -128,6 +140,15 @@ int pthread_rwlock_unlock(pthread_rwlock_t* rwlock);
 
 int pthread_rwlockattr_init(pthread_rwlockattr_t* attr);
 int pthread_rwlockattr_destroy(pthread_rwlockattr_t* attr);
+
+// Once
+int pthread_once(pthread_once_t* once_control, void (*init_routine)(void));
+
+// TLS, not supported!
+
+int pthread_key_create(pthread_key_t *key, void (*destructor)(void*));
+void *pthread_getspecific(pthread_key_t key);
+int pthread_setspecific(pthread_key_t key, const void *value);
 
 #if defined(__cplusplus)
 }
