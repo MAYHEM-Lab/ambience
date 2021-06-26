@@ -11,8 +11,7 @@ function(build_other_target target other_build_dir other_target)
 
     add_custom_command(
         DEPFILE ${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT_TARGET}.d
-        OUTPUT ${FULL_OUT_PATH}
-        BYPRODUCTS ${OUTPUT_TARGET}_
+        OUTPUT ${FULL_OUT_PATH} ${OUTPUT_TARGET}_
         COMMAND ${CMAKE_COMMAND} --build ${other_build_dir} --target ${other_target}
         COMMENT "Generating ${other_target} in ${other_build_dir}"
         USES_TERMINAL
