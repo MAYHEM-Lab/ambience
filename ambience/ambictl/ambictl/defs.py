@@ -233,6 +233,7 @@ class DeployGroup:
     sizes: (int, int)
     memories: Memories
     source_dir: str
+    kernel_dir: str
 
     def __init__(self, node: DeployNode, group: Group, heap_size: int, queue_size: int):
         self.node = node
@@ -242,6 +243,7 @@ class DeployGroup:
         self.memories = None
         self.sizes = None
         self.source_dir = None
+        self.kernel_dir = None
 
     def generateInterface(self):
         template = env.get_template("group/interface.cpp")
@@ -255,10 +257,12 @@ class DeployGroup:
 
 class Platform:
     tos_cpu: str
+    user_cpu: str
     loader: GroupLoader
 
-    def __init__(self, cpu: str, loader: GroupLoader):
+    def __init__(self, cpu: str, user_cpu: str, loader: GroupLoader):
         self.tos_cpu = cpu
+        self.user_cpu = user_cpu
         self.loader = loader
 
     def generateGroupLoader(self, group: DeployGroup):
@@ -293,6 +297,7 @@ class BundledElfLoader(GroupLoader):
                 "node_name": group.node.node.name,
                 "group_name": group.group.name,
                 "schemas": (iface.module.cmake_target for iface in group.group.interfaceDeps()),
+                "group_build_dir": "${CMAKE_SOURCE_DIR}/cmake-build-barex64-user"
             })
         }
 

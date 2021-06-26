@@ -12,20 +12,20 @@
 {% endfor %}
 
 struct {{group_name}} {
-    tos::ae::kernel::user_group group;
+    std::unique_ptr<tos::ae::kernel::user_group> group;
 
     {% for service_name in services %}
     auto {{service_name}}() -> auto& {
         return static_cast<{{services[service_name]}}&>(
-            *group.channels[{{loop.index}}]);
+            *group->channels[{{loop.index}}]);
     }
     {% endfor %}
 
     template<class Registry>
     tos::Task<void> init_dependencies(Registry& registry) {
-        group.exposed_services.resize({{imported_services|length}});
+        group->exposed_services.resize({{imported_services|length}});
         {% for service_name in imported_services %}
-        group.exposed_services[{{imported_services[service_name]}}] =
+        group->exposed_services[{{imported_services[service_name]}}] =
             tos::ae::service_host(co_await registry.template wait<"{{service_name}}">());
         {% endfor %}
 
@@ -43,5 +43,5 @@ auto init_{{group_name}}(
         tos::interrupt_trampoline& trampoline,
         tos::physical_page_allocator& palloc,
         tos::cur_arch::translation_table& root_table)
-        -> tos::expected<tos::ae::kernel::user_group, int>;
+        -> tos::expected<std::unique_ptr<tos::ae::kernel::user_group>, int>;
 // clang-format on

@@ -24,7 +24,7 @@ def create_build_root(build_at, tos_source: str):
     os.symlink(tos_source, os.path.join(build_at, "tos"), target_is_directory=True)
 
 
-def create_configurations(build_at, deploy_nodes: List[defs.DeployNode]) -> List[str]:
+def create_root_cmake(build_at, deploy_nodes: List[defs.DeployNode]):
     template = env.get_template("build_dir/CMakeLists.txt")
     with open(os.path.join(build_at, "CMakeLists.txt"), mode="w+") as root_cmake:
         with open(os.path.join(build_at, "tos/CMakeLists.txt")) as tos_cmake:
@@ -34,17 +34,34 @@ def create_configurations(build_at, deploy_nodes: List[defs.DeployNode]) -> List
                 "node_subdirs": (node.node.name for node in deploy_nodes)
             }))
 
-    res = []
-    for node in deploy_nodes:
-        conf_dir = os.path.join(build_at, f"ae_build_{node.node.name}")
+
+def unique_platforms(deploy_nodes: List[defs.DeployNode]) -> List[defs.Platform]:
+    return [sample_group.x86_64]
+
+
+def create_configurations(build_at, deploy_nodes: List[defs.DeployNode]) -> List[str]:
+    platforms = unique_platforms(deploy_nodes)
+
+    res = {}
+    for p in platforms:
+        user_conf_dir = os.path.join(build_at, f"cmake-build-barex64-user")
+        os.makedirs(user_conf_dir, exist_ok=True)
+        args = ["cmake", "-G", "Ninja", f"-DTOS_CPU=x86_64/ae_user", "-DCMAKE_BUILD_TYPE=MinSizeRel",
+                "-DENABLE_LTO=ON", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache", "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+                build_at]
+        print(args)
+        cmake_proc = subprocess.Popen(args, cwd=user_conf_dir)
+        cmake_proc.wait()
+
+        conf_dir = os.path.join(build_at, f"cmake-build-barex64")
         os.makedirs(conf_dir, exist_ok=True)
-        args = ["cmake", "-G", "Ninja", f"-DTOS_CPU={node.node.platform.tos_cpu}", "-DCMAKE_BUILD_TYPE=MinSizeRel",
+        args = ["cmake", "-G", "Ninja", f"-DTOS_CPU=x86_64/bare", "-DCMAKE_BUILD_TYPE=MinSizeRel",
                 "-DENABLE_LTO=ON", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache", "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                 build_at]
         print(args)
         cmake_proc = subprocess.Popen(args, cwd=conf_dir)
         cmake_proc.wait()
-        res.append(conf_dir)
+        res[p] = (conf_dir, user_conf_dir)
     return res
 
 
@@ -178,11 +195,16 @@ if __name__ == "__main__":
             create_group_src(dg.source_dir, g)
             create_group_src(dg.source_dir, dg)
 
+    create_root_cmake(build_root, all_nodes)
+
+    # We need to build user groups first.
+    # To do so, we need to create configurations for each unique user_cpu and compute their sizes first
+    # Then, we'll build the final groups
     conf_dirs = create_configurations(build_root, all_nodes)
 
     for i in range(len(all_nodes)):
         for g, dg in all_nodes[i].deploy_groups.items():
-            dg.sizes = compute_size(conf_dirs[i], g)
+            dg.sizes = compute_size(conf_dirs[all_nodes[i].node.platform][1], g)
             print(dg.sizes)
 
     # Compute group bases here

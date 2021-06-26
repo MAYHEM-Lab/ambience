@@ -14,7 +14,7 @@
 {% endfor %}
 // clang-format on
 
-tos::expected<tos::ae::kernel::user_group, errors>
+tos::expected<std::unique_ptr<tos::ae::kernel::user_group>, errors>
 load_from_elf(const tos::elf::elf64& elf,
               tos::interrupt_trampoline& trampoline,
               tos::physical_page_allocator& palloc,
@@ -23,7 +23,7 @@ load_from_elf(const tos::elf::elf64& elf,
 auto init_{{group_name}}(tos::interrupt_trampoline& trampoline,
                          tos::physical_page_allocator& palloc,
                          tos::cur_arch::translation_table& root_table)
-    -> tos::expected<tos::ae::kernel::user_group, int> {
+    -> tos::expected<std::unique_ptr<tos::ae::kernel::user_group>, int> {
     // clang-format off
     LOG({{group_name}}_elf.slice(0, 4));
     auto elf_res = tos::elf::elf64::from_buffer({{group_name}}_elf);
@@ -38,9 +38,9 @@ auto init_{{group_name}}(tos::interrupt_trampoline& trampoline,
     auto& group = force_get(load_res);
 
     {% for service_name in services %}
-    group.channels.push_back(
+    group->channels.push_back(
         std::make_unique<{{services[service_name]}}::service_type::async_zerocopy_client<
-            tos::ae::downcall_transport>>(*group.iface.user_iface, {{loop.index - 1}}));
+            tos::ae::downcall_transport>>(*group->iface.user_iface, {{loop.index - 1}}));
     {% endfor %}
 
     return std::move(group);
