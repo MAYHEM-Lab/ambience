@@ -14,6 +14,7 @@
 #include <nonstd/variant.hpp>
 #include <schema_generated.hpp>
 #include <tos/ae/caplets_service_host.hpp>
+#include <tos/ae/kernel/loaders/preemptive_elf_group.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/ae/registry.hpp>
 #include <tos/ae/transport/caplets/adapter.hpp>
@@ -39,7 +40,6 @@
 #include <tos/x86_64/pic.hpp>
 #include <tos/x86_64/pit.hpp>
 #include <tos/x86_64/syscall.hpp>
-#include <tos/ae/kernel/loaders/preemptive_elf_group.hpp>
 
 using tos::ae::service_mapping;
 using tos::ae::service_registry;
@@ -335,11 +335,21 @@ tos::expected<void, errors> kernel() {
     man.initialize();
     priv_group::init(man);
 
-    tos::coro::make_detached([]() -> tos::Task<void> {
-        auto calc = co_await registry.wait<"calc">();
-        auto res = co_await calc->add(3, 4);
-        tos::launch(tos::alloc_stack, [res] { tos::debug::log("3 + 4 =", res); });
-    }());
+    tos::launch(tos::alloc_stack, [&] {
+        int res = -1;
+        tos::semaphore sem{0};
+        while (true) {
+            using namespace std::chrono_literals;
+            tos::this_thread::sleep_for(*man.m_alarm, 1s);
+            tos::coro::make_detached([&]() -> tos::Task<void> {
+                auto calc = co_await registry.wait<"calc">();
+                res = co_await calc->add(3, 4);
+                sem.up();
+            }());
+            sem.down();
+            tos::debug::log("3 + 4 =", res);
+        }
+    });
 
     auto sample_group = ::sample_group{man.groups().front().get()};
 
@@ -370,7 +380,6 @@ tos::expected<void, errors> kernel() {
     tos::this_thread::yield();
     while (true) {
         man.run();
-        tos::debug::log("Back");
     }
 
     return {};
