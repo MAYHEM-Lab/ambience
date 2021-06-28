@@ -39,6 +39,7 @@
 #include <tos/x86_64/pic.hpp>
 #include <tos/x86_64/pit.hpp>
 #include <tos/x86_64/syscall.hpp>
+#include <tos/ae/kernel/loaders/preemptive_elf_group.hpp>
 
 using tos::ae::service_mapping;
 using tos::ae::service_registry;

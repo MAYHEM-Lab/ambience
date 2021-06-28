@@ -6,6 +6,7 @@
 #include <nonstd/variant.hpp>
 #include <tos/aarch64/exception.hpp>
 #include <tos/aarch64/mmu.hpp>
+#include <tos/ae/kernel/loaders/preemptive_elf_group.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/ae/transport/downcall.hpp>
 #include <tos/ae/transport/lwip/udp.hpp>
