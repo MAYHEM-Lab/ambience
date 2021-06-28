@@ -9,13 +9,13 @@
 
 #if defined(TOS_PLATFORM_raspi)
 namespace {
-alignas(16) std::array<uint8_t, 16 * 1024 * 1024> heap_mem;
+[[gnu::section(".nozero")]] alignas(16) std::array<uint8_t, 16 * 1024 * 1024> heap_mem;
 }
 #elif defined(TOS_PLATFORM_x86_64)
 namespace {
 [[gnu::section(".nozero")]] alignas(16) std::array<uint8_t, 1024 * 1024> heap_mem;
 }
-#elif defined(TOS_PLATFORM_stm32_hal)
+#elif defined(TOS_PLATFORM_stm32_hal) || defined(TOS_PLATFORM_nrf52)
 extern "C" {
 extern uint8_t _estack;
 extern uint8_t _end;
@@ -23,16 +23,6 @@ extern uint8_t _end;
 namespace {
 tos::span<uint8_t> heap_memory() {
     return tos::span<uint8_t>{&_end, &_estack};
-}
-} // namespace
-#elif defined(TOS_PLATFORM_nrf52)
-extern "C" {
-extern uint8_t __HeapBase;
-extern uint8_t __HeapLimit;
-}
-namespace {
-tos::span<uint8_t> heap_memory() {
-    return tos::span<uint8_t>{&__HeapBase, &__HeapLimit};
 }
 } // namespace
 #elif defined(TOS_PLATFORM_x86_hosted)
