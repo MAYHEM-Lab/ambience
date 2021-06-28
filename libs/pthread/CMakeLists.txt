@@ -1,5 +1,6 @@
 # Do not build pthreads on hosted platforms
-if (${TOS_PLATFORM} MATCHES "hosted")
+if (${TOS_PLATFORM} MATCHES "hosted" OR ${TOS_ARCH} MATCHES "i386")
+    add_library(tos_pthread INTERFACE)
     return()
 endif()
 
