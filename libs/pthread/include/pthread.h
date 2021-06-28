@@ -57,10 +57,13 @@ struct pthread_mutexattr_t {
 struct pthread_rwlock_t {
     _Alignas(TOS_RW_ALIGNMENT) char rwlock_buffer[TOS_RW_SIZE];
 };
+#define PTHREAD_RWLOCK_INITIALIZER {{}}
 
 typedef void* pthread_rwlockattr_t;
 
 struct pthread_once_t {};
+#define PTHREAD_ONCE_INIT {}
+
 struct pthread_key_t {};
 
 enum pthread_mutex_type
