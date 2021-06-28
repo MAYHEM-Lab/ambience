@@ -1,6 +1,9 @@
 add_library(
   aekernellib include/tos/ae/kernel/syscall.hpp include/tos/ae/kernel/user_group.hpp include/tos/ae/kernel/rings.hpp
               include/tos/ae/kernel/address_space.hpp stub.cpp
+              include/tos/ae/kernel/runners/preemptive_user_runner.hpp
+              include/tos/ae/kernel/runners/group_runner.hpp
+              include/tos/ae/kernel/group.hpp
 )
 target_link_libraries(aekernellib PUBLIC aecommon)
 target_include_directories(aekernellib PUBLIC include)
