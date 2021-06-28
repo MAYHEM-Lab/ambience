@@ -3,10 +3,18 @@ add_library(
               include/tos/ae/kernel/address_space.hpp stub.cpp
               include/tos/ae/kernel/runners/preemptive_user_runner.hpp
               include/tos/ae/kernel/runners/group_runner.hpp
-              include/tos/ae/kernel/group.hpp
-)
-target_link_libraries(aekernellib PUBLIC aecommon)
+              include/tos/ae/kernel/group.hpp src/start_group_arm.cpp)
+target_link_libraries(aekernellib PUBLIC aecommon tos_arch_core tos_ft tos_elf)
 target_include_directories(aekernellib PUBLIC include)
+
+if (${TOS_ARCH} MATCHES "x86_64" OR ${TOS_ARCH} MATCHES "aarch64")
+    target_sources(aekernellib PRIVATE src/preemptive_user_group.cpp)
+    target_sources(aekernellib PRIVATE src/in_memory_user_group.cpp)
+    target_sources(aekernellib PRIVATE "src/start_group_${TOS_ARCH}.cpp")
+elseif(${TOS_ARCH} MATCHES "arm")
+    target_sources(aekernellib PRIVATE src/in_memory_user_group.cpp)
+    target_sources(aekernellib PRIVATE src/start_group_arm.cpp)
+endif()
 
 add_executable(aekernel "")
 target_sources(

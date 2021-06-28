@@ -70,15 +70,15 @@ public:
             });
 
         preemptive_user_group_runner runner(make_erased_preemptive_runner(ctx));
-        runner.run(m_runnable_groups.front());
+        runner.run(*m_runnable_groups.front());
         tos::this_thread::yield();
     }
 
-    tos::span<const tos::ae::kernel::user_group> groups() const {
+    tos::span<const std::unique_ptr<tos::ae::kernel::user_group>> groups() const {
         return m_runnable_groups;
     }
 
-    tos::span<tos::ae::kernel::user_group> groups() {
+    tos::span<std::unique_ptr<tos::ae::kernel::user_group>> groups() {
         return m_runnable_groups;
     }
 
@@ -88,7 +88,7 @@ public:
 
 private:
     std::unique_ptr<tos::interrupt_trampoline> m_trampoline;
-    std::vector<tos::ae::kernel::user_group> m_runnable_groups;
+    std::vector<std::unique_ptr<tos::ae::kernel::user_group>> m_runnable_groups;
 
     tos::late_constructed<serial_type> m_serial;
     tos::late_constructed<tos::debug::serial_sink<serial_type*>> m_sink;

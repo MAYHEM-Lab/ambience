@@ -2,6 +2,8 @@
 #include "platform_support.hpp"
 #include <alarm_generated.hpp>
 #include <calc_generated.hpp>
+#include <caplets_generated.hpp>
+#include <timeout_generated.hpp>
 #include <common/clock.hpp>
 #include <common/timer.hpp>
 #include <deque>
@@ -10,8 +12,6 @@
 #include <lwip/init.h>
 #include <lwip/timeouts.h>
 #include <nonstd/variant.hpp>
-#include <caplets_generated.hpp>
-#include <timeout_generated.hpp>
 #include <schema_generated.hpp>
 #include <tos/ae/caplets_service_host.hpp>
 #include <tos/ae/kernel/user_group.hpp>
@@ -63,7 +63,7 @@ tos::physical_page_allocator* g_palloc;
 
 using errors = mpark::variant<page_alloc_res, nullptr_t>;
 
-tos::expected<tos::ae::kernel::user_group, errors>
+tos::expected<std::unique_ptr<tos::ae::kernel::user_group>, errors>
 load_from_elf(const tos::elf::elf64& elf,
               tos::interrupt_trampoline& trampoline,
               tos::physical_page_allocator& palloc,
@@ -237,30 +237,22 @@ public:
         return palloc;
     }
 
-    std::vector<tos::ae::kernel::user_group>
+    struct sample_group_descr {
+        static constexpr auto& elf_body = group1;
+        static constexpr auto services = tos::meta::list<tos::ae::services::calculator>{};
+    };
+
+    std::vector<std::unique_ptr<tos::ae::kernel::user_group>>
     init_groups(tos::interrupt_trampoline& trampoline,
                 tos::physical_page_allocator& palloc) {
         auto& level0_table = tos::cur_arch::get_current_translation_table();
 
-        std::vector<tos::ae::kernel::user_group> runnable_groups;
+        std::vector<std::unique_ptr<tos::ae::kernel::user_group>> runnable_groups;
         {
-            LOG(group1.slice(0, 4));
-            auto elf_res = tos::elf::elf64::from_buffer(group1);
-            if (!elf_res) {
-                LOG_ERROR("Could not parse payload!");
-                LOG_ERROR("Error code: ", int(force_error(elf_res)));
-                while (true)
-                    ;
-            }
+            runnable_groups.emplace_back(tos::ae::kernel::load_preemptive_elf_group(
+                sample_group_descr{}, trampoline, palloc, level0_table));
 
-            runnable_groups.push_back(force_get(
-                load_from_elf(force_get(elf_res), trampoline, palloc, level0_table)));
             LOG("Group loaded");
-
-            runnable_groups.back().channels.push_back(
-                std::make_unique<tos::ae::services::calculator::async_zerocopy_client<
-                    tos::ae::downcall_transport>>(
-                    *runnable_groups.back().iface.user_iface, 0));
         }
 
         return runnable_groups;
@@ -343,12 +335,12 @@ tos::expected<void, errors> kernel() {
     priv_group::init(man);
 
     tos::coro::make_detached([]() -> tos::Task<void> {
-      auto calc = co_await registry.wait<"calc">();
-      auto res = co_await calc->add(3, 4);
-      tos::launch(tos::alloc_stack, [res] { tos::debug::log("3 + 4 =", res); });
+        auto calc = co_await registry.wait<"calc">();
+        auto res = co_await calc->add(3, 4);
+        tos::launch(tos::alloc_stack, [res] { tos::debug::log("3 + 4 =", res); });
     }());
 
-    auto sample_group = ::sample_group{&man.groups().front()};
+    auto sample_group = ::sample_group{man.groups().front().get()};
 
     tos::coro::make_detached(sample_group.init_dependencies(registry));
 
@@ -377,6 +369,7 @@ tos::expected<void, errors> kernel() {
     tos::this_thread::yield();
     while (true) {
         man.run();
+        tos::debug::log("Back");
     }
 
     return {};

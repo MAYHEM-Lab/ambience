@@ -4,6 +4,8 @@
 #include <nonstd/variant.hpp>
 #include <tos/ae/kernel/group.hpp>
 #include <tos/ae/kernel/rings.hpp>
+#include <tos/ae/transport/downcall.hpp>
+#include <tos/arch.hpp>
 #include <tos/context.hpp>
 #include <tos/self_pointing.hpp>
 #include <tos/task.hpp>

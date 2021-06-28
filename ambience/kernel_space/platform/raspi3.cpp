@@ -8,6 +8,7 @@
 #include <tos/aarch64/mmu.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/ae/transport/downcall.hpp>
+#include <tos/ae/transport/lwip/udp.hpp>
 #include <tos/arch.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/lidl_sink.hpp>
@@ -19,7 +20,6 @@
 #include <tos/late_constructed.hpp>
 #include <tos/periph/bcm2837_clock.hpp>
 #include <tos/platform.hpp>
-#include <tos/ae/transport/lwip/udp.hpp>
 
 using errors = mpark::variant<tos::aarch64::mmu_errors>;
 using tos::expected;
@@ -34,86 +34,6 @@ tos::expected<void, usb_errors> usb_task(tos::raspi3::interrupt_controller& ic,
                                          tos::any_clock& clk,
                                          tos::any_alarm& alarm);
 
-expected<void, errors> map_elf(const tos::elf::elf64& elf,
-                               tos::physical_page_allocator& palloc,
-                               tos::cur_arch::translation_table& root_table) {
-    for (auto pheader : elf.program_headers()) {
-        if (pheader.type != tos::elf::segment_type::load) {
-            continue;
-        }
-
-        LOG_TRACE("Load",
-                  (void*)(uint32_t)pheader.file_size,
-                  "bytes from",
-                  (void*)(uint32_t)pheader.file_offset,
-                  "to",
-                  (void*)(uint32_t)pheader.virt_address);
-
-        auto seg = elf.segment(pheader);
-
-        void* base = const_cast<uint8_t*>(seg.data());
-        if (pheader.file_size < pheader.virt_size) {
-            auto pages = pheader.virt_size / tos::cur_arch::page_size_bytes;
-            auto p = palloc.allocate(pages);
-            base = palloc.address_of(*p);
-        }
-
-        LOG((void*)pheader.virt_address,
-            pheader.virt_size,
-            (void*)pheader.file_offset,
-            pheader.file_size,
-            base);
-
-        tos::permissions perms = tos::permissions::read_write;
-        if (tos::util::is_flag_set(pheader.attrs, tos::elf::segment_attrs::execute)) {
-            perms = tos::permissions::read_execute;
-        }
-
-        auto vseg =
-            tos::segment{.range = {.base = pheader.virt_address,
-                                   .size = static_cast<ptrdiff_t>(pheader.virt_size)},
-                         .perms = perms};
-
-        EXPECTED_TRYV(tos::cur_arch::map_region(root_table,
-                                                vseg,
-                                                tos::user_accessible::yes,
-                                                tos::memory_types::normal,
-                                                &palloc,
-                                                base));
-
-        LOG_TRACE("OK");
-    }
-
-    return {};
-}
-
-tos::expected<tos::span<uint8_t>, errors>
-create_and_map_stack(size_t stack_size,
-                     tos::physical_page_allocator& palloc,
-                     tos::cur_arch::translation_table& root_table) {
-    stack_size = tos::align_nearest_up_pow2(stack_size, tos::cur_arch::page_size_bytes);
-    auto page_count = stack_size / tos::cur_arch::page_size_bytes;
-    auto stack_pages = palloc.allocate(page_count);
-
-    if (!stack_pages) {
-        return tos::unexpected(tos::cur_arch::mmu_errors::page_alloc_fail);
-    }
-
-    EXPECTED_TRYV(tos::cur_arch::map_region(
-        root_table,
-        tos::segment{.range = {.base = reinterpret_cast<uintptr_t>(
-                                   palloc.address_of(*stack_pages)),
-                               .size = static_cast<ptrdiff_t>(stack_size)},
-                     tos::permissions::read_write},
-        tos::user_accessible::yes,
-        tos::memory_types::normal,
-        &palloc,
-        palloc.address_of(*stack_pages)));
-
-    return tos::span<uint8_t>(static_cast<uint8_t*>(palloc.address_of(*stack_pages)),
-                              stack_size);
-}
-
 class svc_on_demand_interrupt {
 public:
     template<class T>
@@ -123,61 +43,6 @@ public:
         tos::cur_arch::svc1();
     }
 };
-
-void switch_to_el0(void (*el0_fn)(), void* stack, size_t stack_size) {
-    LOG("Switching to EL0", (void*)el0_fn);
-    tos::platform::disable_interrupts();
-    uint64_t spsr_el1 = 0;
-    tos::aarch64::set_spsr_el1(spsr_el1);
-    tos::aarch64::set_elr_el1(reinterpret_cast<uintptr_t>(el0_fn));
-    tos::aarch64::set_sp_el0(reinterpret_cast<uintptr_t>(stack) + stack_size);
-    tos::aarch64::isb();
-    tos::aarch64::eret();
-}
-
-alignas(16) uint8_t stk[1024];
-expected<tos::ae::kernel::user_group, errors> start_group(
-    tos::span<uint8_t> stack, void (*entry)(), tos::interrupt_trampoline& trampoline) {
-    auto& self = *tos::self();
-
-    tos::ae::kernel::user_group res;
-
-    auto svc_handler_ = [&](int svnum, tos::cur_arch::exception::stack_frame_t& frame) {
-        Assert(frame.gpr[0] == 1);
-
-        auto ifc = reinterpret_cast<tos::ae::interface*>(frame.gpr[1]);
-        res.iface.user_iface = ifc;
-
-        trampoline.switch_to(self);
-    };
-    tos::aarch64::exception::set_svc_handler(
-        tos::aarch64::exception::svc_handler_t(svc_handler_));
-
-    res.state = &tos::suspended_launch(
-        tos::alloc_stack, [&] { switch_to_el0(entry, stack.data(), stack.size()); });
-
-    tos::swap_context(self, *res.state, tos::int_guard{});
-
-    return res;
-}
-
-tos::expected<tos::ae::kernel::user_group, errors>
-load_from_elf(const tos::elf::elf64& elf,
-              tos::interrupt_trampoline& trampoline,
-              tos::physical_page_allocator& palloc,
-              tos::cur_arch::translation_table& root_table) {
-    EXPECTED_TRYV(map_elf(elf, palloc, root_table));
-
-    LOG_TRACE("ELF Mapped");
-
-    auto stack = EXPECTED_TRY(
-        create_and_map_stack(4 * tos::cur_arch::page_size_bytes, palloc, root_table));
-
-    LOG_TRACE("Stack Mapped");
-
-    return start_group(
-        stack, reinterpret_cast<void (*)()>(elf.header().entry), trampoline);
-}
 
 class raspi3_platform_support {
 public:
@@ -250,30 +115,22 @@ public:
         return palloc;
     }
 
-    std::vector<tos::ae::kernel::user_group>
+    struct sample_group_descr {
+        static constexpr auto& elf_body = group1;
+        static constexpr auto services = tos::meta::list<tos::ae::services::calculator>{};
+    };
+
+    std::vector<std::unique_ptr<tos::ae::kernel::user_group>>
     init_groups(tos::interrupt_trampoline& trampoline,
                 tos::physical_page_allocator& palloc) {
         auto& level0_table = tos::cur_arch::get_current_translation_table();
 
-        std::vector<tos::ae::kernel::user_group> runnable_groups;
+        std::vector<std::unique_ptr<tos::ae::kernel::user_group>> runnable_groups;
         {
-            LOG(group1.slice(0, 4));
-            auto elf_res = tos::elf::elf64::from_buffer(group1);
-            if (!elf_res) {
-                LOG_ERROR("Could not parse payload!");
-                LOG_ERROR("Error code: ", int(force_error(elf_res)));
-                while (true)
-                    ;
-            }
+            runnable_groups.emplace_back(tos::ae::kernel::load_preemptive_elf_group(
+                sample_group_descr{}, trampoline, palloc, level0_table));
 
-            runnable_groups.push_back(force_get(
-                load_from_elf(force_get(elf_res), trampoline, palloc, level0_table)));
             LOG("Group loaded");
-
-            runnable_groups.back().channels.push_back(
-                std::make_unique<tos::ae::services::calculator::async_zerocopy_client<
-                    tos::ae::downcall_transport>>(
-                    *runnable_groups.back().iface.user_iface, 0));
         }
 
         return runnable_groups;
@@ -312,7 +169,6 @@ private:
     tos::raspi3::interrupt_controller ic;
 
 public:
-
     timer_mux_type m_tim_mux{ic, 0};
     erased_clock_type m_clock{m_tim_mux.channel(1)};
     erased_alarm_type m_alarm{m_tim_mux.channel(2)};
@@ -324,13 +180,13 @@ expected<void, errors> kernel() {
 
     tos::debug::log_server serv(man.get_log_sink());
 
-    man.groups().front().exposed_services.emplace_back(tos::ae::service_host(&serv));
+    man.groups().front()->exposed_services.emplace_back(tos::ae::service_host(&serv));
 
     auto& g = man.groups().front();
 
     auto req_task = [&g = man.groups().front()]() -> tos::Task<void> {
         auto serv = static_cast<tos::ae::services::calculator::async_server*>(
-            g.channels.front().get());
+            g->channels.front().get());
 
         auto res = co_await serv->add(3, 4);
         tos::launch(tos::alloc_stack, [res] { LOG("3 + 4 =", res); });
@@ -343,18 +199,18 @@ expected<void, errors> kernel() {
     }
 
     tos::launch(tos::alloc_stack, [&man] {
-      using namespace std::chrono_literals;
-      tos::this_thread::sleep_for(man.m_alarm, 5s);
+        using namespace std::chrono_literals;
+        tos::this_thread::sleep_for(man.m_alarm, 5s);
 
-      tos::ae::services::calculator::stub_client<tos::ae::udp_transport> client{
-          tos::udp_endpoint_t{tos::parse_ipv4_address("10.0.0.38"), {1993}}};
-      LOG("In T1");
+        tos::ae::services::calculator::stub_client<tos::ae::udp_transport> client{
+            tos::udp_endpoint_t{tos::parse_ipv4_address("10.0.0.38"), {1993}}};
+        LOG("In T1");
 
-      for (int i = 0; i < 100; ++i) {
-          for (int j = 0; j < 100; ++j) {
-              LOG("[T1] [Host: 10.0.0.38:1993]", i, "+", j, "=", client.add(i, j));
-          }
-      }
+        for (int i = 0; i < 100; ++i) {
+            for (int j = 0; j < 100; ++j) {
+                LOG("[T1] [Host: 10.0.0.38:1993]", i, "+", j, "=", client.add(i, j));
+            }
+        }
     });
 
     tos::this_thread::block_forever();
@@ -366,4 +222,3 @@ static tos::stack_storage kern_stack;
 void tos_main() {
     tos::launch(kern_stack, kernel);
 }
-

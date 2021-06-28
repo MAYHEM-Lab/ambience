@@ -4,6 +4,7 @@
 #include <calc_generated.hpp>
 #include <nonstd/variant.hpp>
 #include <tos/address_space.hpp>
+#include <tos/ae/kernel/loaders/in_memory_user.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/ae/transport/downcall.hpp>
 #include <tos/arm/exception.hpp>
@@ -34,51 +35,6 @@ public:
     }
 };
 
-expected<tos::ae::kernel::user_group, errors> start_group(
-    tos::span<uint8_t> stack, void (*entry)(), tos::interrupt_trampoline& trampoline) {
-    auto& self = *tos::self();
-
-    tos::ae::kernel::user_group res;
-
-    tos::arm::mpu mpu;
-
-    auto task_svc_handler = [&](int svc, tos::arm::exception::stack_frame_t& frame) {
-        tos::arm::set_control(0);
-        tos::arm::isb();
-
-        Assert(frame.r0 == 1);
-
-        auto ifc = reinterpret_cast<tos::ae::interface*>(frame.r1);
-        res.iface.user_iface = ifc;
-
-        trampoline.switch_to(self);
-    };
-
-    auto pre_sched = [&] {
-        // mpu.enable();
-        mpu.set_region(0,
-                       {reinterpret_cast<uintptr_t>(stack.data()),
-                        static_cast<ptrdiff_t>(stack.size())},
-                       tos::permissions::read_write);
-        mpu.set_region(
-            1, {0x800'00'00, 1024 * 1024}, tos::permissions::read_execute, false);
-        tos::arm::exception::set_svc_handler(
-            tos::arm::exception::svc_handler_t(task_svc_handler));
-
-        tos::arm::set_control(1);
-        tos::arm::isb();
-    };
-
-    res.state = &tos::suspended_launch(stack, [&] {
-        pre_sched();
-        entry();
-    });
-
-    tos::swap_context(self, *res.state, tos::int_guard{});
-
-    return res;
-}
-
 alignas(4) uint8_t stk[2048];
 class stm32_platform_support {
 public:
@@ -102,17 +58,17 @@ public:
         return nullptr;
     }
 
-    std::vector<tos::ae::kernel::user_group>
+    std::vector<std::unique_ptr<tos::ae::kernel::user_group>>
     init_groups(tos::interrupt_trampoline& trampoline,
                 tos::physical_page_allocator& palloc) {
-        std::vector<tos::ae::kernel::user_group> runnable_groups;
+        std::vector<std::unique_ptr<tos::ae::kernel::user_group>> runnable_groups;
 
-        runnable_groups.push_back(force_get(
-            start_group(stk, reinterpret_cast<void (*)()>(0x8021129), trampoline)));
+        runnable_groups.push_back(tos::ae::kernel::do_load_preemptive_in_memory_group(
+            reinterpret_cast<void (*)()>(0x8021129), trampoline));
 
-        runnable_groups.back().channels.push_back(
+        runnable_groups.back()->channels.push_back(
             std::make_unique<tos::ae::services::calculator::async_zerocopy_client<
-                tos::ae::downcall_transport>>(*runnable_groups.back().iface.user_iface,
+                tos::ae::downcall_transport>>(*runnable_groups.back()->iface.user_iface,
                                               0));
 
         return runnable_groups;
@@ -163,15 +119,15 @@ expected<void, errors> kernel() {
 
     tos::debug::log_server serv(man.get_log_sink());
 
-    man.groups().front().exposed_services.emplace_back(tos::ae::sync_service_host(&serv));
-    man.groups().front().exposed_services.emplace_back(
+    man.groups().front()->exposed_services.emplace_back(tos::ae::sync_service_host(&serv));
+    man.groups().front()->exposed_services.emplace_back(
         tos::ae::async_service_host(&async_alarm));
 
     auto& g = man.groups().front();
 
     auto req_task = [&g = man.groups().front(), &async_alarm]() -> tos::Task<void> {
         auto serv = static_cast<tos::ae::services::calculator::async_server*>(
-            g.channels.front().get());
+            g->channels.front().get());
 
         auto res = co_await serv->add(3, 4);
 

@@ -8,7 +8,6 @@ if (${TOS_ARCH} MATCHES "x86_64")
       aekernel
       PRIVATE x86_64.cpp
               acpi.cpp
-              group_loading.cpp
               http_server.cpp
               pci.cpp
               platform_support.cpp
