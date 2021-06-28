@@ -80,10 +80,14 @@ add_library(tos_libcxx
 #target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_ATOMIC_HEADER)
 #target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_INT128)
 
+if (NOT ${TOS_ARCH} MATCHES "i386")
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_BUILDING_LIBRARY)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_THREAD_API_PTHREAD)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_NATIVE_SEMAPHORES)
-#target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_THREADS)
+else()
+    target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_THREADS)
+endif()
+
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_LONG_LONG)
 if(NOT ${TOS_CORE} MATCHES "aarch64")
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_UNICODE_CHARS)
