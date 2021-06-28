@@ -7,6 +7,18 @@
 #include <tos/@TOS_ARCH@/spmanip.hpp>
 #include <tos/@TOS_ARCH@/assembly.hpp>
 #include <tos/@TOS_ARCH@/processor_state.hpp>
+#if __has_include(<tos/@TOS_ARCH@/syscall.hpp>)
+#include <tos/@TOS_ARCH@/syscall.hpp>
+#endif
+#if __has_include(<tos/@TOS_ARCH@/exception.hpp>)
+#include <tos/@TOS_ARCH@/exception.hpp>
+#endif
+#if __has_include(<tos/@TOS_ARCH@/mpu.hpp>)
+#include <tos/@TOS_ARCH@/mpu.hpp>
+#endif
+#if __has_include(<tos/@TOS_ARCH@/mmu.hpp>)
+#include <tos/@TOS_ARCH@/mmu.hpp>
+#endif
 #if __has_include(<tos/@TOS_ARCH@/address_space.hpp>)
 #define TOS_ARCH_HAVE_ADDRESS_SPACE
 #include <tos/@TOS_ARCH@/address_space.hpp>
