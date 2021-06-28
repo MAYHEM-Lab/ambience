@@ -15,6 +15,9 @@ jobs:
       - name: Create stm32 build dir
         run: mkdir -p /tmp/cmake-build-stm32-iot
 
+      - name: Clear cache
+        run: rm -f /tmp/cmake-build-stm32-iot/CMakeCache.txt
+
       - name: Generate stm32 build
         run: >
           cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DENABLE_LTO=ON -DTOS_BOARD=iot_epd
@@ -29,6 +32,9 @@ jobs:
       - name: Create amd64 user build dir
         run: mkdir -p /tmp/cmake-build-barex64-user
 
+      - name: Clear cache
+        run: rm -f /tmp/cmake-build-barex64-user/CMakeCache.txt
+
       - name: Generate amd64 user build
         run: >
           cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_CPU=x86_64/bare -DENABLE_LTO=ON
@@ -38,6 +44,9 @@ jobs:
 
       - name: Create amd64 build dir
         run: mkdir -p /tmp/cmake-build-barex64
+
+      - name: Clear cache
+        run: rm -f /tmp/cmake-build-barex64/CMakeCache.txt
 
       - name: Generate amd64 build
         run: >
@@ -52,6 +61,9 @@ jobs:
 
       - name: Create raspi3 build dir
         run: mkdir -p /tmp/cmake-build-raspi3
+
+      - name: Clear cache
+        run: rm -f /tmp/cmake-build-raspi3/CMakeCache.txt
 
       - name: Generate raspi3 build
         run: >
