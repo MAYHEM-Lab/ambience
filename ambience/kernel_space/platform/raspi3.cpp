@@ -336,9 +336,7 @@ expected<void, errors> kernel() {
         tos::launch(tos::alloc_stack, [res] { LOG("3 + 4 =", res); });
     };
 
-    tos::coro_job j(tos::current_context(), tos::coro::make_pollable(req_task()));
-    tos::kern::make_runnable(j);
-    tos::this_thread::yield();
+    tos::coro::make_detached(req_task);
 
     for (int i = 0; i < 10; ++i) {
         man.run();
