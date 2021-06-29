@@ -20,3 +20,4 @@ using registry_t = tos::ae::service_registry<
 >;
 
 extern registry_t registry;
+tos::ae::registry_base& get_registry();

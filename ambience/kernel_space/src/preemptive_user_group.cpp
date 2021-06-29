@@ -1,4 +1,5 @@
 #include <tos/ae/kernel/loaders/preemptive_elf_group.hpp>
+#include <tos/ae/kernel/runners/preemptive_user_runner.hpp>
 #include <tos/ae/kernel/start_group.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/elf.hpp>
@@ -36,17 +37,22 @@ map_elf(const tos::elf::elf64& elf,
             pheader.file_size,
             base);
 
+        tos::permissions perms = tos::permissions::read_write;
+        if (tos::util::is_flag_set(pheader.attrs, tos::elf::segment_attrs::execute)) {
+            perms = tos::permissions::read_execute;
+        }
+
         auto vseg =
             tos::segment{.range = {.base = pheader.virt_address,
                                    .size = static_cast<ptrdiff_t>(pheader.virt_size)},
-                         .perms = tos::permissions::all};
+                         .perms = perms};
 
-        EXPECTED_TRYV(tos::cur_arch::map_region(root_table,
-                                                vseg,
-                                                tos::user_accessible::yes,
-                                                tos::memory_types::normal,
-                                                &palloc,
-                                                base));
+        EXPECTED_TRYV(map_region(root_table,
+                                 vseg,
+                                 tos::user_accessible::yes,
+                                 tos::memory_types::normal,
+                                 &palloc,
+                                 base));
     }
 
     return {};
@@ -61,30 +67,31 @@ create_and_map_stack(size_t stack_size,
     auto stack_pages = palloc.allocate(page_count);
 
     if (!stack_pages) {
-        return tos::unexpected(tos::cur_arch::mmu_errors::page_alloc_fail);
+        return tos::unexpected(cur_arch::mmu_errors::page_alloc_fail);
     }
 
-    EXPECTED_TRYV(tos::cur_arch::map_region(
+    auto stack_address = palloc.address_of(*stack_pages);
+    tos::debug::log("Stack at", stack_address);
+
+    EXPECTED_TRYV(map_region(
         root_table,
-        tos::segment{.range = {.base = reinterpret_cast<uintptr_t>(
-                                   palloc.address_of(*stack_pages)),
+        tos::segment{.range = {.base = reinterpret_cast<uintptr_t>(stack_address),
                                .size = static_cast<ptrdiff_t>(stack_size)},
                      tos::permissions::read_write},
         tos::user_accessible::yes,
         tos::memory_types::normal,
         &palloc,
-        palloc.address_of(*stack_pages)));
+        stack_address));
 
-    return tos::span<uint8_t>(static_cast<uint8_t*>(palloc.address_of(*stack_pages)),
-                              stack_size);
+    return tos::span<uint8_t>(static_cast<uint8_t*>(stack_address), stack_size);
 }
 } // namespace
 
 std::unique_ptr<kernel::user_group>
-do_load_preemptive_elf_group(span<const uint8_t> elf_body,
-                             interrupt_trampoline& trampoline,
-                             physical_page_allocator& palloc,
-                             cur_arch::translation_table& root_table) {
+preemptive_elf_group::do_load(span<const uint8_t> elf_body,
+                              interrupt_trampoline& trampoline,
+                              physical_page_allocator& palloc,
+                              cur_arch::translation_table& root_table) {
     auto elf_res = tos::elf::elf64::from_buffer(elf_body);
     if (!elf_res) {
         LOG_ERROR("Could not parse payload!");
@@ -93,7 +100,9 @@ do_load_preemptive_elf_group(span<const uint8_t> elf_body,
     }
 
     auto& elf = force_get(elf_res);
-    if (!map_elf(elf, palloc, root_table)) {
+    if (auto map_res = map_elf(elf, palloc, root_table); !map_res) {
+        auto& err = force_error(map_res);
+        tos::debug::error("Could not map ELF!", int(err));
         return nullptr;
     }
 
@@ -101,12 +110,19 @@ do_load_preemptive_elf_group(span<const uint8_t> elf_body,
         create_and_map_stack(4 * tos::cur_arch::page_size_bytes, palloc, root_table);
 
     if (!stack_res) {
+        tos::debug::error("Could not create and map stack!");
         return nullptr;
     }
 
     auto stack = force_get(stack_res);
 
-    return start_group(
-        stack, reinterpret_cast<void (*)()>(elf.header().entry), trampoline);
+    auto res =
+        start_group(stack, reinterpret_cast<void (*)()>(elf.header().entry), trampoline);
+
+    if (res) {
+        res->runner = &preemptive_user_group_runner::instance();
+    }
+
+    return res;
 }
 } // namespace tos::ae::kernel

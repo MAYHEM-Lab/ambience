@@ -5,6 +5,8 @@
 #include <tos/arch.hpp>
 #include <tos/interrupt_trampoline.hpp>
 #include <tos/paging/physical_page_allocator.hpp>
+#include <tos/ae/kernel/platform_support.hpp>
+#include <tos/debug/assert.hpp>
 
 // clang-format off
 {% for include in service_includes %}
@@ -17,7 +19,7 @@ struct {{group_name}} {
     {% for service_name in services %}
     auto {{service_name}}() -> auto& {
         return static_cast<{{services[service_name]}}&>(
-            *group->channels[{{loop.index}}]);
+            *group->channels[{{loop.index}} - 1]);
     }
     {% endfor %}
 
@@ -36,12 +38,5 @@ struct {{group_name}} {
     }
 };
 
-using page_alloc_res = mpark::variant<tos::cur_arch::mmu_errors>;
-using errors = mpark::variant<page_alloc_res, nullptr_t>;
-
-auto init_{{group_name}}(
-        tos::interrupt_trampoline& trampoline,
-        tos::physical_page_allocator& palloc,
-        tos::cur_arch::translation_table& root_table)
-        -> tos::expected<std::unique_ptr<tos::ae::kernel::user_group>, int>;
+auto init_{{group_name}}(const platform_group_args& platform_args) -> {{group_name}};
 // clang-format on

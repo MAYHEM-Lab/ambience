@@ -1,5 +1,10 @@
 target_sources(aekernel PRIVATE
     ethernet.cpp
     uspi_host.cpp
+    page_allocator.cpp
+    platform_support.cpp
 )
-target_link_libraries(aekernel PRIVATE uspi)
+
+target_link_libraries(aekernel PUBLIC arch_drivers bcm2837_clock lwipcore)
+target_link_libraries(aekernel PUBLIC uspi ephemeral_block littlefs_server)
+target_include_directories(aekernel PUBLIC include)

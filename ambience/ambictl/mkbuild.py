@@ -35,34 +35,12 @@ def create_root_cmake(build_at, deploy_nodes: List[defs.DeployNode]):
             }))
 
 
-def unique_platforms(deploy_nodes: List[defs.DeployNode]) -> List[defs.Platform]:
-    return [sample_group.x86_64]
+def unique_platforms(deploy_nodes: List[defs.DeployNode]):
+    return {node.node.platform for node in deploy_nodes}
 
 
-def create_configurations(build_at, deploy_nodes: List[defs.DeployNode]) -> List[str]:
-    platforms = unique_platforms(deploy_nodes)
-
-    res = {}
-    for p in platforms:
-        user_conf_dir = os.path.join(build_at, f"cmake-build-barex64-user")
-        os.makedirs(user_conf_dir, exist_ok=True)
-        args = ["cmake", "-G", "Ninja", f"-DTOS_CPU=x86_64/ae_user", "-DCMAKE_BUILD_TYPE=MinSizeRel",
-                "-DENABLE_LTO=ON", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache", "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
-                build_at]
-        print(args)
-        cmake_proc = subprocess.Popen(args, cwd=user_conf_dir)
-        cmake_proc.wait()
-
-        conf_dir = os.path.join(build_at, f"cmake-build-barex64")
-        os.makedirs(conf_dir, exist_ok=True)
-        args = ["cmake", "-G", "Ninja", f"-DTOS_CPU=x86_64/bare", "-DCMAKE_BUILD_TYPE=MinSizeRel",
-                "-DENABLE_LTO=ON", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache", "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
-                build_at]
-        print(args)
-        cmake_proc = subprocess.Popen(args, cwd=conf_dir)
-        cmake_proc.wait()
-        res[p] = (conf_dir, user_conf_dir)
-    return res
+def create_configurations(build_at, deploy_nodes: List[defs.DeployNode]):
+    return {p: p.generateBuildDirectories(build_at) for p in unique_platforms(deploy_nodes)}
 
 
 def create_group_dir(build_root: str, group: defs.Group):
@@ -101,20 +79,32 @@ def extract_readelf(build_dir: str) -> str:
         return res[1]
 
 
-def read_seg_sizes(binary_dir: str):
-    with open(binary_dir, 'rb') as file:
+def read_seg_sizes(binary_path: str):
+    with open(binary_path, 'rb') as file:
         elffile = ELFFile(file)
         return elffile.get_segment(0).header.p_memsz, elffile.get_segment(1).header.p_memsz
 
 
+def read_entry_point(binary_path: str):
+    with open(binary_path, 'rb') as file:
+        elffile = ELFFile(file)
+        return elffile.header.e_entry
+
+
 def compute_size(build_dir: str, group: defs.Group) -> (int, int):
-    readelf_path = extract_readelf(build_dir)
-    print(readelf_path)
     args = ["ninja", f"{group.name}_size"]
     print(args)
     cmake_proc = subprocess.Popen(args, cwd=build_dir)
     cmake_proc.wait()
     return read_seg_sizes(os.path.join(build_dir, "bin", f"{group.name}_size"))
+
+
+def get_entry_point(build_dir: str, group: defs.Group) -> int:
+    args = ["ninja", f"{group.name}"]
+    print(args)
+    cmake_proc = subprocess.Popen(args, cwd=build_dir)
+    cmake_proc.wait()
+    return read_entry_point(os.path.join(build_dir, "bin", f"{group.name}"))
 
 
 def compute_bases(all_nodes: List[defs.DeployNode]):
@@ -146,11 +136,6 @@ def create_node_dir(build_dir: str, node: defs.DeployNode):
         template = env.get_template("node/groups/CMakeLists.txt")
         groups_cmake.write(template.render({
             "node_groups": (g.name for g in node.deploy_groups.keys())
-        }))
-
-    with open(os.path.join(node_dir, "node.cpp"), "w+") as node_src:
-        template = env.get_template("node/node.cpp")
-        node_src.write(template.render({
         }))
 
     with open(os.path.join(node_dir, "groups.hpp"), "w+") as node_src:
@@ -201,10 +186,11 @@ if __name__ == "__main__":
     # To do so, we need to create configurations for each unique user_cpu and compute their sizes first
     # Then, we'll build the final groups
     conf_dirs = create_configurations(build_root, all_nodes)
+    print(conf_dirs)
 
     for i in range(len(all_nodes)):
         for g, dg in all_nodes[i].deploy_groups.items():
-            dg.sizes = compute_size(conf_dirs[all_nodes[i].node.platform][1], g)
+            dg.sizes = compute_size(conf_dirs[all_nodes[i].node.platform][0], g)
             print(dg.sizes)
 
     # Compute group bases here
@@ -214,3 +200,18 @@ if __name__ == "__main__":
         for dg in node.deploy_groups.values():
             dg.memories = defs.Memories((bases[dg][0], 1024 ** 3), (bases[dg][1], 1024 ** 3))
             create_group_src(dg.source_dir, dg)
+
+    for i in range(len(all_nodes)):
+        for g, dg in all_nodes[i].deploy_groups.items():
+            dg.entry_point = get_entry_point(conf_dirs[all_nodes[i].node.platform][0], g)
+            print(dg.entry_point)
+
+    for node in all_nodes:
+        create_node_dir(build_root, node)
+
+    for node in all_nodes:
+        conf_dir = conf_dirs[node.node.platform][-1]
+        args = ["ninja", f"{node.target_name}"]
+        print(args)
+        cmake_proc = subprocess.Popen(args, cwd=conf_dir)
+        cmake_proc.wait()

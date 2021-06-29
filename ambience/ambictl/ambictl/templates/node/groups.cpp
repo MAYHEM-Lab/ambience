@@ -1,17 +1,26 @@
 #include "groups.hpp"
+
 #include "registry.hpp"
+#include <boost/hana/for_each.hpp>
 #include <tos/detail/poll.hpp>
 
-groups_t init_all_groups(tos::interrupt_trampoline& trampoline,
-                     tos::physical_page_allocator& palloc,
-                     tos::cur_arch::translation_table& root_table) {
-    // clang-format off
-{% for group in groups %}
-    ::{{group}} {{group}}{force_get(init_{{group}}(trampoline, palloc, root_table))};
-    tos::coro::make_detached({{group}}.init_dependencies(registry));
-{% endfor %}
+namespace hana = boost::hana;
+using namespace hana::literals;
 
-    // TODO: add std::move to these somehow
-    return { {{groups|join(", ")}} };
+groups_t init_all_groups(const platform_group_args& platform_args) {
+    // clang-format off
+    auto res = hana::make_tuple(
+    {% for group in groups %}
+        init_{{group}}(platform_args)
+        {% if not loop.last %}
+        ,
+        {% endif %}
+    {% endfor %}
+    );
     // clang-format on
+
+    boost::hana::for_each(
+        res, [](auto& g) { tos::coro::make_detached(g.init_dependencies(registry)); });
+
+    return res;
 }

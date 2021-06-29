@@ -1,6 +1,7 @@
 #pragma once
 
-#include <tuple>
+#include <boost/hana/tuple.hpp>
+#include <tos/ae/kernel/platform_support.hpp>
 
 // clang-format off
 {% for include in group_includes %}
@@ -8,8 +9,6 @@
 {% endfor %}
 // clang-format on
 
-using groups_t = std::tuple<{{groups | join(", ")}}>;
+using groups_t = boost::hana::tuple<{{groups | join(", ")}}>;
 
-groups_t init_all_groups(tos::interrupt_trampoline& trampoline,
-                         tos::physical_page_allocator& palloc,
-                         tos::cur_arch::translation_table& root_table);
+groups_t init_all_groups(const platform_group_args& platform_args);

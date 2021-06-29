@@ -16,12 +16,10 @@ elseif(${TOS_ARCH} MATCHES "arm")
     target_sources(aekernellib PRIVATE src/start_group_arm.cpp)
 endif()
 
-add_executable(aekernel "")
+add_library(aekernel "")
 target_sources(
   aekernel
-  PRIVATE platform/kernel.hpp
-          platform/kernel.cpp
-          include/tos/ae/transport/lwip/host.hpp
+  PRIVATE include/tos/ae/transport/lwip/host.hpp
           src/transport/lwip/host.cpp
           include/tos/ae/transport/lwip/udp.hpp
           src/transport/lwip/udp.cpp
@@ -37,6 +35,12 @@ target_link_libraries(
          lidl_log_sink
          lwipcore
          alarm_schema
+         hana
+)
+target_sources(
+    aekernel
+    INTERFACE
+        src/node.cpp
 )
 
 add_subdirectory(common)

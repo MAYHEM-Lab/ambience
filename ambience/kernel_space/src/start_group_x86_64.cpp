@@ -32,9 +32,13 @@ start_group(span<uint8_t> stack, void (*entry)(), interrupt_trampoline& trampoli
 
         trampoline.switch_to(self);
     };
+
     x86_64::set_syscall_handler(cur_arch::syscall_handler_t(syshandler));
 
     tos::swap_context(self, user_thread, int_guard{});
+
+    tos::debug::log("Group initialized, interface at", res->iface.user_iface);
+
     return res;
 }
 } // namespace tos::ae::kernel

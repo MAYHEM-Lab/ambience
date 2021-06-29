@@ -2,10 +2,14 @@
 #include <tos/debug/debug.hpp>
 
 [[gnu::section(".nozero")]] uint8_t heap[4096];
-tos::memory::free_list alloc{heap};
+
+auto& alloc() {
+    static tos::memory::free_list alloc{heap};
+    return alloc;
+}
 
 void* operator new(size_t sz) {
-    auto ptr = alloc.allocate(sz);
+    auto ptr = alloc().allocate(sz);
     if (ptr == nullptr) {
         tos::debug::do_not_optimize(&sz);
         while (true);
@@ -15,5 +19,5 @@ void* operator new(size_t sz) {
 }
 
 void operator delete(void* pt) {
-    alloc.free(pt);
+    alloc().free(pt);
 }

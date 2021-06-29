@@ -45,6 +45,8 @@ std::unique_ptr<user_group> start_group(tos::span<uint8_t> stack,
 
     tos::swap_context(self, *res->state, tos::int_guard{});
 
+    tos::debug::log("Group initialized, interface at", res->iface.user_iface);
+
     return res;
 }
 } // namespace tos::ae::kernel

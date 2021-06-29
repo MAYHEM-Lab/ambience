@@ -12,7 +12,7 @@ struct littlefs : tos::ae::services::filesystem::sync_server {
         m_conf.block_count = m_flash->get_block_count();
         m_conf.read_size = m_flash->get_block_size();
         m_conf.prog_size = m_flash->get_block_size();
-        m_conf.cache_size = 512;
+        m_conf.cache_size = m_flash->get_block_size();
         m_conf.lookahead_size = 512;
         m_conf.block_cycles = 500;
         m_conf.context = this;
@@ -29,7 +29,7 @@ struct littlefs : tos::ae::services::filesystem::sync_server {
             auto buf = tos::span(static_cast<uint8_t*>(buffer), size);
             lidl::message_builder builder{buf};
             auto res = self.m_flash->read(block, off, size, builder);
-            return res != buf;
+            return res.size() != buf.size();
         };
 
         m_conf.prog = [](const struct lfs_config* c,

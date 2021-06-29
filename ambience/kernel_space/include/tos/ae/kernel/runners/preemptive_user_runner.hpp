@@ -3,6 +3,7 @@
 #include <tos/ae/kernel/runners/group_runner.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/detail/poll.hpp>
+#include <tos/late_constructed.hpp>
 #include <tos/preemption.hpp>
 
 namespace tos::ae {
@@ -15,6 +16,14 @@ struct preemptive_user_group_runner : group_runner {
         auto& user_group = static_cast<kernel::user_group&>(group);
         m_erased_runner(*user_group.state, 5);
         post_run(user_group);
+    }
+
+    static void create(function_ref<bool(kern::tcb&, int)> runner) {
+        m_instance.emplace(runner);
+    }
+
+    static preemptive_user_group_runner& instance() {
+        return m_instance.get();
     }
 
 private:
@@ -56,7 +65,10 @@ private:
             group.iface);
     }
 
-
+    static late_constructed<preemptive_user_group_runner> m_instance;
     function_ref<bool(kern::tcb&, int)> m_erased_runner;
 };
+
+inline late_constructed<preemptive_user_group_runner>
+    preemptive_user_group_runner::m_instance;
 } // namespace tos::ae

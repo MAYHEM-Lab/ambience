@@ -5,6 +5,7 @@
 #include <string_view>
 #include <tos/async_init.hpp>
 #include <tos/fixed_string.hpp>
+#include <tos/debug/log.hpp>
 
 namespace tos::ae {
 template<tos::fixed_string Name, class T>
@@ -48,6 +49,7 @@ struct service_registry<service_mapping<Names, Ts>...>
     template<tos::fixed_string Name, class T>
     bool register_service(T serv) {
         get<Name>(*this).set_serv(serv);
+        tos::debug::log("Registered service:", Name);
         return true;
     }
 

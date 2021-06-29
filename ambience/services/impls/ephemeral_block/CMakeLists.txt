@@ -1,0 +1,2 @@
+add_service(ephemeral_block block_memory impl.cpp)
+target_link_libraries(ephemeral_block PUBLIC tos_util_core)

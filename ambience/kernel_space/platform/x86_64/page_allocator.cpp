@@ -1,8 +1,9 @@
-#include "platform_support.hpp"
+#include "private.hpp"
 #include <tos/arch.hpp>
 #include <tos/debug/log.hpp>
 
-tos::expected<tos::physical_page_allocator*, page_alloc_res> initialize_page_allocator() {
+tos::expected<tos::physical_page_allocator*, tos::cur_arch::mmu_errors>
+initialize_page_allocator() {
     constexpr auto page_num = 2048;
     auto vmem_end = (void*)tos::default_segments::image().end();
 
