@@ -48,6 +48,10 @@ bool run_preemptively_for(PreemptContext& ctx, kern::tcb& thread, int ticks) {
     auto preempt = [&] {
         tmr.disable();
 
+        if constexpr (PrePostHandler<PreemptContext>) {
+            ctx(preempt_ops::post_switch, thread);
+        }
+
         preempted = true;
         ctx(preempt_ops::return_to_thread_from_irq, thread, self);
     };
@@ -57,6 +61,11 @@ bool run_preemptively_for(PreemptContext& ctx, kern::tcb& thread, int ticks) {
 
     auto syshandler = [&](auto&&...) {
         tmr.disable();
+
+        if constexpr (PrePostHandler<PreemptContext>) {
+            ctx(preempt_ops::post_switch, thread);
+        }
+
         tos::swap_context(thread, self, tos::int_ctx{});
     };
 
@@ -68,11 +77,8 @@ bool run_preemptively_for(PreemptContext& ctx, kern::tcb& thread, int ticks) {
         }
 
         tmr.enable();
-        tos::swap_context(self, thread, tos::int_ctx{});
 
-        if constexpr (PrePostHandler<PreemptContext>) {
-            ctx(preempt_ops::post_switch, thread);
-        }
+        tos::swap_context(self, thread, tos::int_ctx{});
     });
 
     return preempted;
