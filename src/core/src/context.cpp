@@ -9,7 +9,7 @@
 
 #if defined(TOS_PLATFORM_raspi)
 namespace {
-[[gnu::section(".nozero")]] alignas(16) std::array<uint8_t, 16 * 1024 * 1024> heap_mem;
+/*[[gnu::section(".nozero")]]*/ alignas(16) std::array<uint8_t, 4 * 1024 * 1024> heap_mem;
 }
 #elif defined(TOS_PLATFORM_x86_64)
 namespace {
