@@ -33,6 +33,7 @@ add_library(
   include/tos/fixed_string.hpp
   include/tos/async_init.hpp
   include/tos/hex.hpp
+  include/tos/result.hpp
 )
 
 target_compile_features(tos_util_core PUBLIC cxx_std_20)
