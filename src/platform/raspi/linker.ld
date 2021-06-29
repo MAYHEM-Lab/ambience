@@ -52,11 +52,12 @@ SECTIONS
         *(.bss.*)
         *(.bss*)
         . = ALIGN(4096); /* align to page size */
-        PROVIDE(__bss_end = .);
         *(.nozero*);
         *(.nozero.*);
+        PROVIDE(__bss_end = .);
         . = ALIGN(4096);
     }
+
     PROVIDE(__bss_size = __bss_end - __bss_start);
     __end = .;
 }
