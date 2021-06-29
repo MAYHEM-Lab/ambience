@@ -357,6 +357,13 @@ span<T> safe_span_copy(span<T> to, span<const U> from) {
     return to.slice(0, len);
 }
 
+template<class T, class U>
+span<T> safe_span_copy(span<T> to, span<U> from) {
+    auto len = std::min(to.size(), from.size());
+    std::copy_n(from.begin(), len, to.begin());
+    return to.slice(0, len);
+}
+
 template<class T>
 span<T> as_span(span<T> s) {
     return s;
