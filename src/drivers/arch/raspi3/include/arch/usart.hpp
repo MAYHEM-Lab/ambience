@@ -16,7 +16,9 @@ using usart_constraint = ct_map<usart_key_policy,
                                 el_t<usart_parity, const usart_parity&>,
                                 el_t<usart_stop_bit, const usart_stop_bit&>>;
 
-class uart0 : public self_pointing<uart0> {
+class uart0
+    : public self_pointing<uart0>
+    , public tos::non_copy_movable {
 public:
     uart0(usart_constraint&&, interrupt_controller& ic);
 
