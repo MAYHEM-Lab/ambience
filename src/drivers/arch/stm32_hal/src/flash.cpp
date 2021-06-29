@@ -1,7 +1,6 @@
 #include "tos/expected.hpp"
 #include "tos/mutex.hpp"
 #include "tos/thread.hpp"
-
 #include <arch/detail/flash.hpp>
 #include <arch/flash.hpp>
 #include <cstdint>
@@ -49,7 +48,7 @@ tos::expected<void, flash_errors> flash::erase(sector_id_t sector_id) {
     FLASH_EraseInitTypeDef erase_info{};
 #if defined(STM32L4)
     erase_info.TypeErase = FLASH_TYPEERASE_PAGES;
-    erase_info.Banks = FLASH_BANK_1;
+    erase_info.Banks = sector_id < number_of_sectors() / 2 ? FLASH_BANK_1 : FLASH_BANK_2;
     erase_info.Page = sector_id;
     erase_info.NbPages = 1;
 #elif defined(STM32L0) || defined(STM32F1)
