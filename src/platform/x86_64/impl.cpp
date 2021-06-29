@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <string_view>
+#include <tos/debug/panic.hpp>
 #include <tos/memory.hpp>
 #include <tos/multiboot.hpp>
 #include <tos/print.hpp>
@@ -20,6 +21,12 @@
 
 extern "C" {
 void __cxa_atexit(void (*)(void*), void*, void*) {
+}
+}
+
+extern "C" {
+void abort() {
+    tos::debug::panic("abort called");
 }
 }
 
