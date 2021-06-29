@@ -20,6 +20,8 @@ auto analyze_usage_fault(const stack_frame_t& frame, VisitorT&& visitor) {
         return visitor(
             undefined_instruction_fault{.instr_address = frame.return_address});
     }
+#endif
+#if defined(SCB_CFSR_DIVBYZERO_Msk)
     if (cfsr & SCB_CFSR_DIVBYZERO_Msk) {
         return visitor(div_by_zero_fault{.instr_address = frame.return_address});
     }
