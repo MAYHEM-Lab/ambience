@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <alarm_generated.hpp>
 #include <chrono>
 #include <common/driver_base.hpp>
 #include <cstdint>
@@ -239,7 +240,8 @@ template<class AlarmT, class Rep, class Period>
 auto async_sleep_for(AlarmT& alarm, const std::chrono::duration<Rep, Period>& duration) {
     struct awaiter : job {
         awaiter(AlarmT& alarm, const std::chrono::duration<Rep, Period>& duration)
-            : job(current_context()), m_alarm{alarm}
+            : job(current_context())
+            , m_alarm{alarm}
             , m_sleeper{alarm->time_to_ticks(duration),
                         mem_function_ref<&awaiter::tick_fn>(*this)} {
         }
@@ -273,6 +275,23 @@ auto async_sleep_for(AlarmT& alarm, const std::chrono::duration<Rep, Period>& du
 
     return awaiter{alarm, duration};
 }
+
+template<class BaseAlarm>
+struct basic_async_alarm_impl : tos::ae::services::alarm::async_server {
+    template<class... ArgTs>
+    explicit basic_async_alarm_impl(ArgTs&&... args)
+        : alarm(std::forward<ArgTs>(args)...) {
+    }
+
+    tos::Task<bool> sleep_for(tos::ae::services::milliseconds dur) override {
+        co_await tos::async_sleep_for(alarm, std::chrono::milliseconds(dur.count()));
+        co_return true;
+    }
+
+    BaseAlarm alarm;
+};
+
+using async_any_alarm_impl = basic_async_alarm_impl<tos::any_alarm*>;
 } // namespace tos
 
 namespace tos::this_thread {
