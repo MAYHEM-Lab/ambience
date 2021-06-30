@@ -65,7 +65,9 @@ tos::expected<void, tos::common_error> kernel() {
     while (true) {
         tos::this_thread::yield();
         auto& g = group_list.front();
+        group_list.pop_front();
         g.runner->run(g);
+        group_list.push_back(g);
     }
 
     return {};
