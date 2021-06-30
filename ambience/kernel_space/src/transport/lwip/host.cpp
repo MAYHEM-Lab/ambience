@@ -9,7 +9,7 @@ lwip_host<ServiceHost>::lwip_host(const ServiceHost& service, tos::port_num_t po
     udp_sock.attach(*this);
     udp_sock.bind(port);
     sock.async_accept(*this);
-    tos::launch(tos::alloc_stack, [this] { serve_thread(); });
+    set_name(tos::launch(tos::alloc_stack, [this] { serve_thread(); }), "Serve thread");
 }
 
 template<class ServiceHost>
