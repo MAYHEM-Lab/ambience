@@ -12,7 +12,9 @@
 #include <tos/print.hpp>
 #include <tos/sync_ring_buf.hpp>
 
-using namespace tos;
+namespace digital = tos::digital;
+namespace pin_mode = tos::pin_mode;
+namespace pin_change = tos::pin_change;
 using namespace tos::stm32;
 using namespace tos::tos_literals;
 using namespace std::chrono_literals;
