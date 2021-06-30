@@ -73,7 +73,7 @@ tos::expected<void, tos::common_error> kernel() {
     return {};
 }
 
-static tos::stack_storage<2048> kern_stack;
+static tos::stack_storage<TOS_DEFAULT_STACK_SIZE * 2> kern_stack;
 void tos_main() {
     set_name(tos::launch(kern_stack, kernel), "Kernel");
 }
