@@ -39,10 +39,73 @@ concept PrePostHandler = requires(T t) {
 };
 
 template<PreemptionContext PreemptContext>
-bool run_preemptively_for(PreemptContext& ctx, kern::tcb& thread, int ticks) {
+struct preempter {
+    void setup(PreemptContext& ctx, int ticks) {
+        m_ctx = &ctx;
+        auto& tmr = timer();
+
+        tmr.set_callback(tos::mem_function_ref<&preempter::preempt>(*this));
+        tmr.set_frequency(1000 / ticks);
+    }
+
+    void preempt() {
+        timer().disable();
+
+        if constexpr (PrePostHandler<PreemptContext>) {
+            ctx()(preempt_ops::post_switch, *m_thread);
+        }
+
+        m_preempted = true;
+        ctx()(preempt_ops::return_to_thread_from_irq, *m_thread, *m_self);
+    }
+
+    void syshandler() {
+        timer().disable();
+
+        if constexpr (PrePostHandler<PreemptContext>) {
+            ctx()(preempt_ops::post_switch, *m_thread);
+        }
+
+        m_preempted = false;
+        tos::swap_context(*m_thread, *m_self, tos::int_ctx{});
+    }
+
+    bool run(kern::tcb& thread) {
+        m_self = tos::self();
+        m_thread = &thread;
+        ctx()(preempt_ops::get_odi)([&](auto&&...) {
+            ctx()(preempt_ops::set_syscall_handler,
+                  [this](auto&&...) { this->syshandler(); });
+
+            if constexpr (PrePostHandler<PreemptContext>) {
+                ctx()(preempt_ops::pre_switch, *m_thread);
+            }
+
+            timer().enable();
+
+            tos::swap_context(*m_self, *m_thread, tos::int_ctx{});
+        });
+        return m_preempted;
+    }
+
+    auto& timer() {
+        return meta::deref(ctx()(preempt_ops::get_timer));
+    }
+
+    auto& ctx() {
+        return *m_ctx;
+    }
+
+    bool m_preempted;
+    kern::tcb* m_thread;
+    kern::tcb* m_self;
+    PreemptContext* m_ctx;
+};
+
+template<PreemptionContext PreemptContext>
+bool run_preemptively_for(PreemptContext& ctx, kern::tcb& thread) {
     auto& self = *tos::self();
     auto& tmr = meta::deref(ctx(preempt_ops::get_timer));
-    auto& odi = ctx(preempt_ops::get_odi);
 
     bool preempted = false;
     auto preempt = [&] {
@@ -57,7 +120,7 @@ bool run_preemptively_for(PreemptContext& ctx, kern::tcb& thread, int ticks) {
     };
 
     tmr.set_callback(tos::function_ref<void()>(preempt));
-    tmr.set_frequency(1000 / ticks);
+    tmr.set_frequency(1000 / 5);
 
     auto syshandler = [&](auto&&...) {
         tmr.disable();
@@ -69,7 +132,7 @@ bool run_preemptively_for(PreemptContext& ctx, kern::tcb& thread, int ticks) {
         tos::swap_context(thread, self, tos::int_ctx{});
     };
 
-    odi([&](auto&&...) {
+    ctx(preempt_ops::get_odi)([&](auto&&...) {
         ctx(preempt_ops::set_syscall_handler, syshandler);
 
         if constexpr (PrePostHandler<PreemptContext>) {
@@ -85,17 +148,10 @@ bool run_preemptively_for(PreemptContext& ctx, kern::tcb& thread, int ticks) {
 }
 
 template<PreemptionContext Ctx>
-auto make_preemptive_runner(Ctx& ctx) {
-    return [&ctx](kern::tcb& thread, int ticks) -> bool {
-        return run_preemptively_for(ctx, thread, ticks);
-    };
-}
-
-template<PreemptionContext Ctx>
-function_ref<bool(kern::tcb&, int)> make_erased_preemptive_runner(Ctx& ctx) {
-    return function_ref<bool(kern::tcb&, int)>(
-        [](kern::tcb& thread, int ticks, void* arg) -> bool {
-            return run_preemptively_for(*static_cast<Ctx*>(arg), thread, ticks);
+function_ref<bool(kern::tcb&)> make_erased_preemptive_runner(Ctx& ctx) {
+    return function_ref<bool(kern::tcb&)>(
+        [](kern::tcb& thread, void* arg) -> bool {
+            return run_preemptively_for(*static_cast<Ctx*>(arg), thread);
         },
         &ctx);
 }

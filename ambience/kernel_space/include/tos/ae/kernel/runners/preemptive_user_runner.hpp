@@ -8,17 +8,17 @@
 
 namespace tos::ae {
 struct preemptive_user_group_runner : group_runner {
-    explicit preemptive_user_group_runner(function_ref<bool(kern::tcb&, int)> runner)
+    explicit preemptive_user_group_runner(function_ref<bool(kern::tcb&)> runner)
         : m_erased_runner{runner} {
     }
 
     void run(kernel::group& group) override {
         auto& user_group = static_cast<kernel::user_group&>(group);
-        m_erased_runner(*user_group.state, 5);
+        m_erased_runner(*user_group.state);
         post_run(user_group);
     }
 
-    static void create(function_ref<bool(kern::tcb&, int)> runner) {
+    static void create(function_ref<bool(kern::tcb&)> runner) {
         m_instance.emplace(runner);
     }
 
@@ -66,7 +66,7 @@ private:
     }
 
     static late_constructed<preemptive_user_group_runner> m_instance;
-    function_ref<bool(kern::tcb&, int)> m_erased_runner;
+    function_ref<bool(kern::tcb&)> m_erased_runner;
 };
 
 inline late_constructed<preemptive_user_group_runner>
