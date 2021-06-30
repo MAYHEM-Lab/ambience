@@ -6,9 +6,16 @@
 #include <tos/x86_64/exception.hpp>
 #include <tos/x86_64/mmu.hpp>
 
-namespace tos::x86_64 {}
-
 using namespace tos::x86_64;
+
+void dump_registers(const exception_frame& frame) {
+    tos::debug::error(
+        "RIP", (void*)frame.cs, ":", (void*)frame.rip, "\t", "RSP", (void*)frame.ss, ":", (void*)frame.rsp);
+    tos::debug::error("RBP", (void*)frame.rbp, "\t", "RAX", (void*)frame.rax);
+    tos::debug::error("RBX", (void*)frame.rbx, "\t", "RDI", (void*)frame.rdi);
+    tos::debug::error("RSI", (void*)frame.rsi, "\t", "RDX", (void*)frame.rdx);
+    tos::debug::error("RCX", (void*)frame.rcx, "\t", "R8", (void*)frame.r8);
+}
 
 extern "C" {
 void div_by_zero_handler([[maybe_unused]] exception_frame* frame,
@@ -35,12 +42,9 @@ void nmi_handler([[maybe_unused]] exception_frame* frame, [[maybe_unused]] uint6
 }
 void breakpoint_handler([[maybe_unused]] exception_frame* frame,
                         [[maybe_unused]] uint64_t num) {
-    LOG("Breakpoint!",
-        (int)num,
-        (void*)frame,
-        (void*)frame->gpr[14],
-        (void*)frame->error_code,
-        (void*)frame->rip);
+
+    tos::debug::log("Breakpoint from:", get_name(*tos::self()));
+    dump_registers(*frame);
 }
 void overflow_handler([[maybe_unused]] exception_frame* frame,
                       [[maybe_unused]] uint64_t num) {
@@ -107,6 +111,7 @@ void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
               (void*)frame->cs,
               "Return SS",
               (void*)frame->ss);
+    dump_registers(*frame);
 
     LOG_ERROR("Call stack:");
     auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
