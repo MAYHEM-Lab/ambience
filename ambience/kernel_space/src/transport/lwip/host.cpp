@@ -1,5 +1,7 @@
 #include <tos/ae/transport/lwip/host.hpp>
+#include <tos/debug/log.hpp>
 #include <tos/detail/poll.hpp>
+#include <tos/lwip/common.hpp>
 
 namespace tos::ae {
 template<class ServiceHost>
@@ -90,7 +92,14 @@ void lwip_host<ServiceHost>::handle_one_req(const tos::udp_endpoint_t& from,
         std::array<uint8_t, 128> resp;
         lidl::message_builder response_builder{resp};
 
+        auto now = lwip::global::system_clock->now();
         handle_req(serv, req, response_builder);
+        auto end = lwip::global::system_clock->now();
+        tos::debug::log(
+            "Request took",
+            int(std::chrono::duration_cast<std::chrono::microseconds>(end - now).count()),
+            "us",
+            tos::cur_arch::rdtsc());
 
         udp_sock.send_to(response_builder.get_buffer(), from);
     }

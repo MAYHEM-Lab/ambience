@@ -166,7 +166,8 @@ def create_node_dir(build_dir: str, node: defs.DeployNode):
 
 
 if __name__ == "__main__":
-    build_root = tempfile.mkdtemp()
+    # build_root = tempfile.mkdtemp()
+    build_root = "/tmp/aebuild"
     create_build_root(build_root, "/home/fatih/tos")
 
     all_nodes = sample_group.sample_deployment()
