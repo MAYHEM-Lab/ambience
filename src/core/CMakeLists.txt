@@ -131,6 +131,7 @@ add_library(tos_core
 )
 target_link_libraries(tos_core PUBLIC tos_mem tos_util tos_build_info ${TOS_PLATFORM_NAME}_impl)
 target_link_libraries(tos_core PUBLIC tos::libcxx tos_debug tos_context)
+target_link_libraries(tos_core PUBLIC cxxabi_static)
 target_link_libraries(tos_core PUBLIC tos_ft tos_arch_core tos_interrupt tos_platform tos_jobs)
 target_include_directories(tos_core PUBLIC include)
 add_library(tos::core ALIAS tos_core)

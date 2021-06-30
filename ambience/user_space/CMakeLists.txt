@@ -20,6 +20,7 @@ target_link_libraries(
          group_schema
          tos_print
          lidl_log_sink
+         cxxabi_static
 )
 target_link_libraries(ae_user_space PRIVATE tos_mem)
 target_compile_definitions(ae_user_space PUBLIC __ambience__)

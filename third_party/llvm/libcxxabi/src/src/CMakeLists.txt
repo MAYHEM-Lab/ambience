@@ -16,8 +16,13 @@ set(LIBCXXABI_SOURCES
   # Internal files
   abort_message.cpp
   fallback_malloc.cpp
-  private_typeinfo.cpp
 )
+
+if (LIBCXXABI_ENABLE_RTTI)
+  list(APPEND LIBCXXABI_SOURCES
+    private_typeinfo.cpp
+  )
+endif()
 
 if (LIBCXXABI_ENABLE_NEW_DELETE_DEFINITIONS)
   list(APPEND LIBCXXABI_SOURCES
@@ -63,16 +68,6 @@ endif()
 
 if (LIBCXXABI_ENABLE_FORGIVING_DYNAMIC_CAST)
   add_definitions(-D_LIBCXXABI_FORGIVING_DYNAMIC_CAST)
-endif()
-
-if (APPLE)
-  add_library_flags_if(LIBCXXABI_HAS_SYSTEM_LIB System)
-else()
-  if (LIBCXXABI_ENABLE_THREADS)
-    add_library_flags_if(LIBCXXABI_HAS_PTHREAD_LIB pthread)
-  endif()
-
-  add_library_flags_if(LIBCXXABI_HAS_C_LIB c)
 endif()
 
 if (LIBCXXABI_USE_LLVM_UNWINDER)

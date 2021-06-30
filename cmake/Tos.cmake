@@ -65,7 +65,10 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 
     set(TOS_GCC_FLAGS "-fdiagnostics-color=always -freorder-functions")
 
-    set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions -fno-exceptions -fno-rtti -fno-unwind-tables")
+    set(TOS_LINKER_FLAGS "-fno-threadsafe-statics -freorder-functions -fno-exceptions -fno-unwind-tables")
+    if (NOT ENABLE_RTTI)
+        set(TOS_LINKER_FLAGS "${TOS_LINKER_FLAGS} -fno-rtti")
+    endif()
 
     if (ENABLE_LTO)
         set(TOS_GCC_FLAGS "${TOS_GCC_FLAGS} -flto")
@@ -85,8 +88,11 @@ endif ()
 
 if (NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(TOS_C_FLAGS "${TOS_C_FLAGS} ${TOS_FLAGS} -U__STRICT_ANSI__")
-    set(TOS_CXX_FLAGS "${TOS_CXX_FLAGS} ${TOS_FLAGS} -Wnon-virtual-dtor -fno-rtti -fno-exceptions \
+    set(TOS_CXX_FLAGS "${TOS_CXX_FLAGS} ${TOS_FLAGS} -Wnon-virtual-dtor -fno-exceptions \
         -fno-unwind-tables -fno-threadsafe-statics -Werror=return-type")
+    if (NOT ENABLE_RTTI)
+        set(TOS_CXX_FLAGS "${TOS_CXX_FLAGS} -fno-rtti")
+    endif()
 endif()
 
 set(TOS ON)
