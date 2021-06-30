@@ -24,6 +24,25 @@ void kb_isr(tos::x86_64::exception_frame* frame, int) {
 }
 } // namespace
 
+template<class TimerT>
+uint64_t calibrate_tsc(TimerT& timer) {
+    uint64_t end;
+    tos::semaphore sem{0};
+    auto handler = [&] {
+        end = tos::x86_64::rdtsc();
+        timer.disable();
+        sem.up_isr();
+    };
+    timer.set_callback(tos::function_ref<void()>(handler));
+    timer.set_frequency(500);
+    timer.enable();
+    auto begin = tos::x86_64::rdtsc();
+    sem.down();
+    auto diff = end - begin;
+    // diff has rdtsc ticks per 2ms
+    return diff / 2'000;
+}
+
 void platform_support::stage2_init() {
     m_palloc = force_get(initialize_page_allocator());
 
@@ -34,7 +53,12 @@ void platform_support::stage2_init() {
     ensure(tos::platform::take_irq(1));
     tos::platform::set_irq(1, tos::free_function_ref(+kb_isr));
 
-    tos::lwip::global::system_clock = &m_chrono.clock;
+
+    auto ticks_per_us = calibrate_tsc(m_chrono.timer);
+    tos::debug::log("RDTSC ticks per us:", ticks_per_us);
+    m_rdtsc_clock.m_impl.calibrate = ticks_per_us;
+
+    tos::lwip::global::system_clock = &m_rdtsc_clock;
 
     init_pci(*m_palloc, get_registry());
 
@@ -48,6 +72,12 @@ void platform_support::stage2_init() {
                              }
                          }),
              "LWIP check timeouts");
+
+//    auto p = new tos::preempter<platform_support>{};
+//    p->setup(*this, 5);
+//
+//    tos::ae::preemptive_user_group_runner::create(
+//        tos::mem_function_ref<&tos::preempter<platform_support>::run>(*p));
 
     tos::ae::preemptive_user_group_runner::create(
         tos::make_erased_preemptive_runner(*this));

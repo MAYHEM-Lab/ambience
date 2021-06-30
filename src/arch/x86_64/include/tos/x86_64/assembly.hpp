@@ -3,6 +3,7 @@
 #include <cpuid.h>
 #include <cstdint>
 #include <tos/compiler.hpp>
+#include <tos/barrier.hpp>
 
 namespace tos::x86_64 {
 inline void breakpoint() {
@@ -131,5 +132,16 @@ inline void int0x2c() {
 
 inline void invlpg(uintptr_t addr) {
     asm volatile("invlpg (%0)" : : "r"(addr) : "memory");
+}
+
+inline uint64_t rdtsc() {
+    detail::memory_barrier();
+#if __has_builtin(__builtin_ia32_rdtsc)
+    return __builtin_ia32_rdtsc();
+#else
+    uint32_t hi, lo;
+    __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
+    return ((uint64_t)lo) | (((uint64_t)hi) << 32);
+#endif
 }
 } // namespace tos::x86_64

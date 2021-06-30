@@ -14,6 +14,19 @@ struct platform_group_args {
     tos::x86_64::translation_table* table;
 };
 
+struct rdtsc_clock : tos::self_pointing<rdtsc_clock> {
+    using rep = uint64_t;
+    using period = std::micro;
+    using duration = std::chrono::duration<rep, period>;
+    using time_point = std::chrono::time_point<rdtsc_clock>;
+
+    uint64_t calibrate; // ticks per microsecond
+
+    time_point now() const {
+        return time_point{duration{tos::x86_64::rdtsc() / calibrate}};
+    }
+};
+
 class platform_support {
 public:
     void stage1_init() {
@@ -66,4 +79,5 @@ public:
     on_demand_interrupt m_odi;
     std::unique_ptr<tos::interrupt_trampoline> m_trampoline =
         tos::make_interrupt_trampoline(m_odi);
+    tos::detail::erased_clock<rdtsc_clock> m_rdtsc_clock;
 };
