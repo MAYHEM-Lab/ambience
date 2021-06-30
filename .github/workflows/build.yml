@@ -82,7 +82,7 @@ jobs:
       working-directory: /tmp/cmake-build-barex64
 
     - name: Build amd64
-      run: ninja sample_group && ninja sample_group2 && ninja
+      run: ninja
       working-directory: /tmp/cmake-build-barex64
 
     - name: Create raspi3 build dir
@@ -96,5 +96,5 @@ jobs:
       working-directory: /tmp/cmake-build-raspi3
 
     - name: Build raspi3
-      run: ninja sample_group && ninja
+      run: ninja
       working-directory: /tmp/cmake-build-raspi3
