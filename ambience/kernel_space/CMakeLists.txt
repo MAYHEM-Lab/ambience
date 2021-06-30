@@ -37,8 +37,11 @@ target_link_libraries(
          alarm_schema
          hana
 )
+
+add_library(aekernel_node INTERFACE)
+target_link_libraries(aekernel_node INTERFACE aekernel)
 target_sources(
-    aekernel
+    aekernel_node
     INTERFACE
         src/node.cpp
 )
