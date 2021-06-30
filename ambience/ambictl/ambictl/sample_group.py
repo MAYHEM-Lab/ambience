@@ -1,18 +1,24 @@
 from .defs import LidlModule, Group, Platform, BundledElfLoader, Node, Memories, DeployNode, InMemoryLoader
 from .platforms import stm32, raspi3, x86_64
 
+
 def sample_deployment() -> [DeployNode]:
     calculator_mod = LidlModule("/home/tos/ambience/services/interfaces/calc.lidl", "calc_schema")
     logger_mod = LidlModule("/home/tos/src/core/log.yaml", "log_schema")
     alarm_mod = LidlModule("/home/tos/ambience/services/interfaces/alarm.lidl", "alarm_schema")
     fs_mod = LidlModule("/home/tos/ambience/services/interfaces/file_system.lidl", "filesystem_schema")
+    block_mem_mod = LidlModule("/home/tos/ambience/services/interfaces/block_memory.lidl", "block_memory_schema")
     db_mod = LidlModule("/home/tos/ambience/services/interfaces/database.lidl", "database_schema")
 
     calc_if = calculator_mod.get_service("tos::ae::services::calculator")
     logger_if = logger_mod.get_service("tos::services::logger")
     alarm_if = alarm_mod.get_service("tos::ae::services::alarm")
     fs_if = fs_mod.get_service("tos::ae::services::filesystem")
+    block_mem_if = block_mem_mod.get_service("tos::ae::services::block_memory")
     db_if = fs_mod.get_service("tos::ae::services::sql_database")
+
+    littlefs = fs_if.implement("littlefs", cmake_target="littlefs_server", sync=True, extern=False,
+                               deps={"block": block_mem_if})
 
     basic_calc = calc_if.implement("basic_calc", cmake_target="basic_calc", sync=False, extern=False,
                                    deps={"logger": logger_if, "alarm": alarm_if, "fs": fs_if})
@@ -21,7 +27,6 @@ def sample_deployment() -> [DeployNode]:
     alarm_impl = alarm_if.implement("alarm", sync=False, extern=True)
     fs_impl = fs_if.implement("fs", sync=True, extern=True)
     sqlite_impl = db_if.implement("sqlite3", sync=True, extern=True)
-
 
     logger = logger_impl.instantiate("logger")
     alarm = alarm_impl.instantiate("alarm")
