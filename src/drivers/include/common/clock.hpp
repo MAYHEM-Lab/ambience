@@ -85,7 +85,6 @@ public:
             std::chrono::duration_cast<duration>(m_impl->now().time_since_epoch())};
     }
 
-private:
     ClockT m_impl;
 };
 } // namespace detail
