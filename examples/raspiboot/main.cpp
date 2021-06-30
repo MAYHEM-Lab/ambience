@@ -1,4 +1,4 @@
-#include <alarm_generated.hpp>
+#include <alarm1_generated.hpp>
 #include <arch/drivers.hpp>
 #include <common/clock.hpp>
 #include <common/inet/tcp_ip.hpp>
