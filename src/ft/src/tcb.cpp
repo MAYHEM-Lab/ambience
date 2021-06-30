@@ -70,12 +70,7 @@ void suspend_self(const no_interrupts&) {
 
 thread_id_t start(tcb& t, void (*entry)()) {
     auto ctx_ptr = new ((char*)&t - sizeof(processor_context)) processor_context;
-    tos::cur_arch::set_rip(ctx_ptr->buf, reinterpret_cast<uintptr_t>(entry));
-#if defined(TOS_PLATFORM_x86_64) || defined(TOS_PLATFORM_x86_hosted)
-    tos::cur_arch::set_rsp(ctx_ptr->buf, reinterpret_cast<uintptr_t>(&t) - 8);
-#else
-    tos::cur_arch::set_rsp(ctx_ptr->buf, reinterpret_cast<uintptr_t>(&t));
-#endif
+    start(*ctx_ptr, entry, &t);
 
     t.set_processor_state(*ctx_ptr);
 

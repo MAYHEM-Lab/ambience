@@ -34,6 +34,8 @@ struct processor_context {
 
 [[noreturn]] void switch_context(processor_context& j, context_codes rc);
 void swap_context(processor_context& save_to, processor_context& switch_to);
+
+void start(processor_context& ctx, void (*entry)(), void* stack);
 } // namespace tos
 
 #if defined(TOS_ARCH_HAS_PROC_STATE)

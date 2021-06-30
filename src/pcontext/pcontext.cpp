@@ -15,4 +15,13 @@ void swap_context(processor_context& save_to, processor_context& switch_to) {
         switch_context(switch_to, context_codes::scheduled);
     }
 }
+
+void start(processor_context& ctx, void (*entry)(), void* stack) {
+    tos::cur_arch::set_rip(ctx.buf, reinterpret_cast<uintptr_t>(entry));
+#if defined(TOS_PLATFORM_x86_64) || defined(TOS_PLATFORM_x86_hosted)
+    tos::cur_arch::set_rsp(ctx.buf, reinterpret_cast<uintptr_t>(stack));
+#else
+    tos::cur_arch::set_rsp(ctx.buf, reinterpret_cast<uintptr_t>(stack));
+#endif
+}
 } // namespace tos
