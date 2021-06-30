@@ -54,7 +54,7 @@ jobs:
 
       - name: Generate amd64 user build
         run: >
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_CPU=x86_64/bare -DENABLE_LTO=ON
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_CPU=x86_64/ae_user -DENABLE_LTO=ON
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache -DBUILD_USER_SPACE=ON
           $GITHUB_WORKSPACE
         working-directory: /tmp/cmake-build-barex64-user
@@ -67,7 +67,7 @@ jobs:
 
       - name: Generate amd64 build
         run: >
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_CPU=x86_64/bare -DENABLE_LTO=ON
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DTOS_BOARD=x86_64_pc -DENABLE_LTO=ON
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
           $GITHUB_WORKSPACE
         working-directory: /tmp/cmake-build-barex64

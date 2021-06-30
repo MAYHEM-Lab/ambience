@@ -1,0 +1,3 @@
+add_library(digitalocean_vm_board INTERFACE)
+target_link_libraries(digitalocean_vm_board INTERFACE vga_text)
+target_include_directories(digitalocean_vm_board INTERFACE "..")

@@ -14,8 +14,7 @@ target_sources(
 )
 target_link_libraries(
   aekernel
-  PUBLIC uart_16550
-          vga_text
+  PUBLIC  tos_board
           tos_virtio
           tos_virtio_block_dev
           tos_virtio_network_dev

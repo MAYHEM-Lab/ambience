@@ -7,6 +7,8 @@ add_subdirectory(stm32f7_disco)
 add_subdirectory(nrf52840_dk)
 add_subdirectory(nrf52_thingy)
 add_subdirectory(hosted)
+add_subdirectory(digitalocean_vm)
+add_subdirectory(x86_64_pc)
 
 if (TOS_BOARD)
     add_library(tos_board board.cpp)

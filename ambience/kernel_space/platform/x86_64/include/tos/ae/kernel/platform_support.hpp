@@ -7,6 +7,7 @@
 #include <tos/paging/physical_page_allocator.hpp>
 #include <tos/peripheral/uart_16550.hpp>
 #include <tos/preemption.hpp>
+#include <tos/board.hpp>
 
 struct platform_group_args {
     tos::physical_page_allocator* page_alloc;
@@ -34,7 +35,9 @@ public:
 
     void stage2_init();
 
-    tos::x86_64::uart_16550 init_serial();
+    auto init_serial() {
+        return tos::bsp::board_spec::default_com::open();
+    }
 
     // Preemption support calls
     auto operator()(tos::preempt_ops::get_timer_t) -> auto& {
