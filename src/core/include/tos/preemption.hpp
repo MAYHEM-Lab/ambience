@@ -73,9 +73,9 @@ struct preempter {
     bool run(kern::tcb& thread) {
         m_self = tos::self();
         m_thread = &thread;
-        ctx()(preempt_ops::get_odi)([&](auto&&...) {
-            ctx()(preempt_ops::set_syscall_handler,
-                  [this](auto&&...) { this->syshandler(); });
+        ctx()(preempt_ops::get_odi)([this](auto&&...) {
+            auto syscall = [this](auto&&...) { this->syshandler(); };
+            ctx()(preempt_ops::set_syscall_handler, syscall);
 
             if constexpr (PrePostHandler<PreemptContext>) {
                 ctx()(preempt_ops::pre_switch, *m_thread);
