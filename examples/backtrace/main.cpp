@@ -9,13 +9,13 @@
 #include <tos/debug/stack_dump.hpp>
 
 template <class LogT>
-void NO_INLINE leaf(LogT& log)
+NO_INLINE void leaf(LogT& log)
 {
     tos::debug::dump_stack(log);
 }
 
 template <class LogT>
-void NO_INLINE middle(LogT& log)
+NO_INLINE void middle(LogT& log)
 {
     leaf(log);
 }

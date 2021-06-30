@@ -40,6 +40,12 @@ extern "C" [[gnu::weak]] void SVC_Handler() {
 }
 
 extern "C" {
+void abort() {
+    tos::debug::panic("abort called");
+}
+}
+
+extern "C" {
 int main();
 extern void (*start_ctors[])();
 extern void (*end_ctors[])();

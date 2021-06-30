@@ -29,6 +29,23 @@ jobs:
         run: ninja
         working-directory: /tmp/cmake-build-stm32-iot
 
+      - name: Create nrf52840 build dir
+        run: mkdir -p /tmp/cmake-build-nrf52840
+
+      - name: Clear cache
+        run: rm -f /tmp/cmake-build-nrf52840/CMakeCache.txt
+
+      - name: Generate nrf52840 build
+        run: >
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=MinSizeRel -DENABLE_LTO=ON -DTOS_BOARD=nrf52840_dk
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          $GITHUB_WORKSPACE
+        working-directory: /tmp/cmake-build-nrf52840
+
+      - name: Build all nrf52840
+        run: ninja
+        working-directory: /tmp/cmake-build-nrf52840
+
       - name: Create amd64 user build dir
         run: mkdir -p /tmp/cmake-build-barex64-user
 

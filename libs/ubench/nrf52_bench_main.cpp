@@ -75,17 +75,18 @@ void bench_main() {
 
     tos::bench::any_bench benchmark(&clock);
     auto bench_and_print = [&](const auto& name, const auto& fn) {
-        tos::debug::log("Running", name);
+        tos::println(base_usart, "Running", name);
         g->write(power_pin, tos::digital::high);
         auto [dur, iters, sums, squares] = benchmark.do_benchmark(fn);
         auto mean = sums / iters;
         auto stdev = fisqrt(squares / iters - mean * mean);
         g->write(power_pin, tos::digital::low);
-        tos::debug::log(name, ":", dur.count(), iters, int(stdev), sums, squares);
+        tos::println(
+            base_usart, name, ":", int(dur.count()), int(iters), int(stdev), int(sums), int(squares));
     };
 
     tos::bench::run_global_benchmarks(bench_and_print);
-    LOG("All benchmarks ran, shutting down...");
+    tos::println(base_usart, "All benchmarks ran, shutting down...");
     tos::this_thread::block_forever();
 }
 
