@@ -19,7 +19,7 @@ option(BUILD_TESTS "Build unit tests, only works on hosted x86" OFF)
 option(BUILD_EXAMPLES "Build examples" ON)
 option(ENABLE_LTO "Enable Link Time Optimizations" OFF)
 option(ENABLE_UBSAN "Enable undefined behavior sanitizer when available" OFF)
-option(ENABLE_RTTI "Enable run time type information" ON)
+option(ENABLE_RTTI "Enable run time type information" OFF)
 
 include(Tos)
 include(TosCompiler)
