@@ -22,15 +22,18 @@ def sample_deployment() -> [DeployNode]:
     fs_impl = fs_if.implement("fs", sync=True, extern=True)
     sqlite_impl = db_if.implement("sqlite3", sync=True, extern=True)
 
+
     logger = logger_impl.instantiate("logger")
     alarm = alarm_impl.instantiate("alarm")
     fs = fs_impl.instantiate("fs")
     sqlite = fs_impl.instantiate("sqlite")
 
     calc = basic_calc.instantiate("calc", deps={"logger": logger, "alarm": alarm, "fs": fs})
+    calc2 = basic_calc.instantiate("calc2", deps={"logger": logger, "alarm": alarm, "fs": fs})
 
     pg = Group("vm_privileged", {logger, alarm, fs}, privileged=True)
     g1 = Group("sample_group3", {calc})
+    g2 = Group("sample_group4", {calc2})
 
     db_pg = Group("cloud_privileged", {sqlite}, privileged=True)
 
@@ -38,7 +41,7 @@ def sample_deployment() -> [DeployNode]:
               Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)))
 
     all_nodes = [
-        vm.platform.make_deploy_node(vm, [pg, g1]),
+        vm.platform.make_deploy_node(vm, [pg, g1, g2]),
     ]
 
     return all_nodes

@@ -12,3 +12,4 @@ compile_commands.json
 **/__pycache__
 .cache
 venv
+!ambience/ambictl/ambictl/templates/build_dir/
