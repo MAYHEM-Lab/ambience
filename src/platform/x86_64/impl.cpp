@@ -282,7 +282,7 @@ _start(const tos::multiboot::info_t* info) {
     TOS_UNREACHABLE();
 }
 
-[[noreturn]] [[gnu::used]] void
+[[noreturn]] [[gnu::used]] [[gnu::force_align_arg_pointer]] void
 _post_start([[maybe_unused]] const tos::multiboot::info_t* info) {
     write_cr0(read_cr0() | 1 << 16); // WP bit, makes write protect work in ring0
 

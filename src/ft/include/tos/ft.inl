@@ -132,6 +132,9 @@ TaskType& prepare_task_layout(tos::span<uint8_t> task_data, ArgTs&&... args) {
 }
 
 template<class TaskT>
+#if defined(__x86_64__)
+[[gnu::force_align_arg_pointer]]
+#endif
 void start_cur() {
     static_cast<TaskT*>(self())->start();
 }
