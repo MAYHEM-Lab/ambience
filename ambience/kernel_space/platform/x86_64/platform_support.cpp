@@ -53,14 +53,14 @@ void platform_support::stage2_init() {
                          }),
              "LWIP check timeouts");
 
-    //    auto p = new tos::preempter<platform_support>{};
-    //    p->setup(*this, 5);
-    //
-    //    tos::ae::preemptive_user_group_runner::create(
-    //        tos::mem_function_ref<&tos::preempter<platform_support>::run>(*p));
+        auto p = new tos::preempter<platform_support>{};
+        p->setup(*this, 5);
 
-    tos::ae::preemptive_user_group_runner::create(
-        tos::make_erased_preemptive_runner(*this));
+        tos::ae::preemptive_user_group_runner::create(
+            tos::mem_function_ref<&tos::preempter<platform_support>::run>(*p));
+
+//    tos::ae::preemptive_user_group_runner::create(
+//        tos::make_erased_preemptive_runner(*this));
 }
 
 platform_group_args platform_support::make_args() {

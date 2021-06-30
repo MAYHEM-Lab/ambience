@@ -5,7 +5,6 @@
 #include <common/common_timer_multiplexer.hpp>
 #include <tos/interrupt_trampoline.hpp>
 #include <tos/paging/physical_page_allocator.hpp>
-#include <tos/peripheral/uart_16550.hpp>
 #include <tos/preemption.hpp>
 #include <tos/board.hpp>
 

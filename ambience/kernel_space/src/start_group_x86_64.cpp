@@ -23,7 +23,14 @@ start_group(span<uint8_t> stack, void (*entry)(), interrupt_trampoline& trampoli
     auto& self = *tos::self();
 
     auto res = std::make_unique<user_group>();
+
+    if (!res) {
+        tos::debug::error("Could not allocate user group!");
+        return nullptr;
+    }
+
     res->state = &user_thread;
+
     auto syshandler = [&](tos::cur_arch::syscall_frame& frame) {
         assert(frame.rdi == 1);
 
