@@ -38,14 +38,6 @@ void dump_table(tos::cur_arch::translation_table& table) {
         });
 }
 
-extern "C" {
-void abort() {
-    LOG_ERROR("Abort called");
-    while (true)
-        ;
-}
-}
-
 void switch_to_user(void* user_code) {
     using namespace tos::x86_64;
     asm volatile("movq $0x202, %r11");
