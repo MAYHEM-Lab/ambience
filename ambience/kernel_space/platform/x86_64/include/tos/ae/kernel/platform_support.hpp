@@ -2,7 +2,7 @@
 
 #include "on_demand_interrupt.hpp"
 #include "timer.hpp"
-#include <common/timer.hpp>
+#include <common/common_timer_multiplexer.hpp>
 #include <tos/interrupt_trampoline.hpp>
 #include <tos/paging/physical_page_allocator.hpp>
 #include <tos/peripheral/uart_16550.hpp>

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "on_demand_interrupt.hpp"
+#include <common/common_timer_multiplexer.hpp>
 #include <tos/arch.hpp>
 #include <tos/board.hpp>
 #include <tos/interrupt_trampoline.hpp>

@@ -2,6 +2,7 @@
 
 #include "on_demand_interrupt.hpp"
 #include <arch/drivers.hpp>
+#include <common/common_timer_multiplexer.hpp>
 #include <common/timer.hpp>
 #include <tos/aarch64/mmu.hpp>
 #include <tos/aarch64/semihosting.hpp>

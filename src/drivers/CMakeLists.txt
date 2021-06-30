@@ -60,7 +60,7 @@ target_link_libraries(tos_timer PUBLIC tos_util_core)
 target_include_directories(tos_timer PUBLIC include)
 
 add_library(tos_alarm include/common/alarm.hpp src/stub.cpp)
-target_link_libraries(tos_alarm PUBLIC tos_util_core alarm_schema)
+target_link_libraries(tos_alarm PUBLIC tos_util_core alarm_schema tos_ft)
 target_include_directories(tos_alarm PUBLIC include)
 
 add_library(tos_eeprom include/common/eeprom.hpp src/stub.cpp)
