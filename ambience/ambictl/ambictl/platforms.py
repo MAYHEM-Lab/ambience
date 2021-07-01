@@ -1,8 +1,7 @@
-import ambictl.platform
-import ambictl.group_loader
-import ambictl.deploy_node
 import subprocess
 import os
+from .defs import *
+from .group_loader import *
 
 class x86_64(Platform):
     def __init__(self):
@@ -22,7 +21,7 @@ class x86_64(Platform):
 
         conf_dir = os.path.join(source_dir, f"cmake-build-barex64")
         os.makedirs(conf_dir, exist_ok=True)
-        args = ["cmake", "-G", "Ninja", f"-DTOS_BOARD=x86_64_pc", "-DCMAKE_BUILD_TYPE=Release",
+        args = ["cmake", "-G", "Ninja", f"-DTOS_BOARD=digitalocean_vm", "-DCMAKE_BUILD_TYPE=Release",
                 "-DENABLE_LTO=ON", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache", "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                 source_dir]
         print(args)

@@ -1,9 +1,13 @@
-import ambictl..
-
+from ..defs import *
+from ..group_loader import KernelLoader
 
 class KernelGroup(Group):
     def generate_group_dir(self, build_root):
-        pass
+        group_dir = os.path.join(build_root, self.name)
+        os.makedirs(group_dir, exist_ok=True)
+
+        with open(os.path.join(group_dir, "CMakeLists.txt"), mode="w+") as src:
+            src.write("")
 
     def generate_loader_dir(self, build_root):
-        return {}
+        return KernelLoader().generateGroupLoader(self.dg)

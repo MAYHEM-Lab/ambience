@@ -1,7 +1,7 @@
-import ambictl.platforms
-import ambictl.
-import ambictl.groups.kernel_group
-import ambictl.groups.user_group
+from .defs import *
+from .groups.user_group import *
+from .groups.kernel_group import *
+from .platforms import *
 
 
 def sample_deployment() -> [DeployNode]:

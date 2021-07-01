@@ -1,3 +1,3 @@
-{% for group in node_groups %}
+{% for group in node_loaders %}
 add_subdirectory({{group}})
 {% endfor %}

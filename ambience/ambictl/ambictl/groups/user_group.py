@@ -1,4 +1,3 @@
-import ambictl..
 from typing import List
 from toposort import toposort
 import math
@@ -6,6 +5,7 @@ import os
 import subprocess
 from elftools.elf.elffile import ELFFile
 import re
+from ..defs import *
 
 
 def extract_readelf(build_dir: str) -> str:
@@ -30,7 +30,7 @@ def read_entry_point(binary_path: str):
 
 
 class UserGroup(Group):
-    def assignNumsToExternalDeps(self) -> List[(ServiceInstance, int)]:
+    def assignNumsToExternalDeps(self):
         if len(self.servsWithUnmetDeps()) != 0:
             raise RuntimeError("Not all dependencies are met!")
         return list((y, x + 1) for x, y in enumerate(self.uniqueExternalDeps()))
