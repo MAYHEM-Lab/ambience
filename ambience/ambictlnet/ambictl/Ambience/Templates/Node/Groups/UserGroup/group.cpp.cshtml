@@ -1,0 +1,29 @@
+@{
+    DisableEncoding = true;
+}
+@foreach(var x in Model.Group.OrderedInterfaceDependencies())
+{
+@:#include <@x.GetInclude()>
+}
+
+#include <tos/ae/group.hpp>
+#include <tos/ae/transport/upcall.hpp>
+#include <tos/task.hpp>
+
+extern tos::ae::interface iface;
+auto transport = tos::ae::upcall_transport<&iface>{};
+
+tos::ae::group<@Model.Group.Services.Count>* g;
+
+tos::Task<bool> handle_req(tos::ae::req_elem el) {
+    return tos::ae::run_req(*g, el);
+}
+
+@Model.Signatures
+tos::Task<void> task() {
+    @Raw(Model.ExternalDeps)
+    @foreach (var init in Model.Inits)
+    {@Raw(init)}
+
+    @Model.GroupInit
+}

@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ambictl", "ambictl\ambictl.csproj", "{B8DAB1BB-0B19-47E7-8EE7-AC00DFB4AA02}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ambience", "Ambience\Ambience.csproj", "{74479690-F23D-46BE-8F37-BEB0DA2AA85A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B8DAB1BB-0B19-47E7-8EE7-AC00DFB4AA02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8DAB1BB-0B19-47E7-8EE7-AC00DFB4AA02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8DAB1BB-0B19-47E7-8EE7-AC00DFB4AA02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8DAB1BB-0B19-47E7-8EE7-AC00DFB4AA02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74479690-F23D-46BE-8F37-BEB0DA2AA85A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74479690-F23D-46BE-8F37-BEB0DA2AA85A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74479690-F23D-46BE-8F37-BEB0DA2AA85A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74479690-F23D-46BE-8F37-BEB0DA2AA85A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
