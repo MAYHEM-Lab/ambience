@@ -1,6 +1,5 @@
 #include "groups.hpp"
 
-#include "registry.hpp"
 #include <boost/hana/for_each.hpp>
 #include <tos/detail/poll.hpp>
 
@@ -20,7 +19,7 @@ groups_t init_all_groups(const platform_group_args& platform_args) {
     // clang-format on
 
     boost::hana::for_each(
-        res, [](auto& g) { tos::coro::make_detached(g.init_dependencies(registry)); });
+        res, [](auto& g) { tos::coro::make_detached(g.post_load()); });
 
     return res;
 }

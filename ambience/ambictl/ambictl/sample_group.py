@@ -1,5 +1,7 @@
-from .defs import LidlModule, Group, Platform, BundledElfLoader, Node, Memories, DeployNode, InMemoryLoader
-from .platforms import stm32, raspi3, x86_64
+import ambictl.platforms
+import ambictl.
+import ambictl.groups.kernel_group
+import ambictl.groups.user_group
 
 
 def sample_deployment() -> [DeployNode]:
@@ -36,11 +38,9 @@ def sample_deployment() -> [DeployNode]:
     calc = basic_calc.instantiate("calc", deps={"logger": logger, "alarm": alarm, "fs": fs})
     calc2 = basic_calc.instantiate("calc2", deps={"logger": logger, "alarm": alarm, "fs": fs})
 
-    pg = Group("vm_privileged", {logger, alarm, fs}, privileged=True)
-    g1 = Group("sample_group3", {calc})
-    g2 = Group("sample_group4", {calc2})
-
-    db_pg = Group("cloud_privileged", {sqlite}, privileged=True)
+    pg = KernelGroup("vm_privileged", {logger, alarm, fs})
+    g1 = UserGroup("sample_group3", {calc})
+    g2 = UserGroup("sample_group4", {calc2})
 
     vm = Node("vm", x86_64,
               Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)))
@@ -49,4 +49,4 @@ def sample_deployment() -> [DeployNode]:
         vm.platform.make_deploy_node(vm, [pg, g1, g2]),
     ]
 
-    return all_nodes
+    return Deployment(all_nodes)

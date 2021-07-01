@@ -23,19 +23,7 @@ struct {{group_name}} {
     }
     {% endfor %}
 
-    template<class Registry>
-    tos::Task<void> init_dependencies(Registry& registry) {
-        group->exposed_services.resize({{imported_services|length}});
-        {% for service_name in imported_services %}
-        group->exposed_services[{{imported_services[service_name]}}] =
-            tos::ae::service_host(co_await registry.template wait<"{{service_name}}">());
-        {% endfor %}
-
-        // Wait for all dependencies to come online, then register our services
-        {% for service_name in services %}
-        registry.template register_service<"{{service_name}}">(&{{service_name}}());
-        {% endfor %}
-    }
+    tos::Task<void> post_load();
 };
 
 auto init_{{group_name}}(const platform_group_args& platform_args) -> {{group_name}};
