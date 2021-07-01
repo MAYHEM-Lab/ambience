@@ -1,5 +1,6 @@
 #include "groups.hpp"
 #include "registry.hpp"
+#include <boost/hana/for_each.hpp>
 #include <tos/ae/kernel/platform_support.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/lidl_sink.hpp>
@@ -8,12 +9,16 @@
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/result.hpp>
-#include <boost/hana/for_each.hpp>
 
 registry_t registry;
 tos::ae::registry_base& get_registry() {
     return registry;
 }
+
+template <class T>
+concept HasGroup = requires(T& t) {
+    t.group;
+};
 
 tos::expected<void, tos::common_error> kernel() {
     platform_support support;
@@ -42,7 +47,9 @@ tos::expected<void, tos::common_error> kernel() {
 
     tos::intrusive_list<tos::ae::kernel::group> group_list;
     boost::hana::for_each(groups, [&](auto& g) {
-         group_list.push_back(*g.group);
+        if constexpr (HasGroup<decltype(g)>) {
+            group_list.push_back(*g.group);
+        }
     });
 
     tos::launch(tos::alloc_stack, [&] {
