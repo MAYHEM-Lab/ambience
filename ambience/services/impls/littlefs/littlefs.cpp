@@ -117,6 +117,6 @@ struct littlefs : tos::ae::services::filesystem::sync_server {
 } // namespace
 
 tos::ae::services::filesystem::sync_server*
-make_littlefs_server(tos::ae::services::block_memory::sync_server* flash) {
+init_littlefs_server(tos::ae::services::block_memory::sync_server* flash) {
     return new littlefs(flash);
 }
