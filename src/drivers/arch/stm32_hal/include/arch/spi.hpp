@@ -48,7 +48,8 @@ public:
     spi(detail::spi_def& spi,
         gpio::pin_type sck,
         std::optional<gpio::pin_type> miso,
-        std::optional<gpio::pin_type> mosi);
+        std::optional<gpio::pin_type> mosi,
+        bool is_master = true);
 
     ~spi();
 
@@ -75,23 +76,30 @@ namespace tos::stm32 {
 inline spi::spi(detail::spi_def& spi,
                 gpio::pin_type sck,
                 std::optional<gpio::pin_type> miso,
-                std::optional<gpio::pin_type> mosi)
+                std::optional<gpio::pin_type> mosi,
+                bool is_master)
     : tracked_driver(std::distance(&detail::spis[0], &spi))
     , m_handle{} {
     m_handle.Instance = reinterpret_cast<decltype(m_handle.Instance)>(spi.spi);
 
     SPI_InitTypeDef& spi_init = m_handle.Init;
-    spi_init.Mode = SPI_MODE_MASTER;
     spi_init.Direction = SPI_DIRECTION_2LINES;
     spi_init.DataSize = SPI_DATASIZE_8BIT;
     spi_init.CLKPolarity = SPI_POLARITY_LOW;
     spi_init.CLKPhase = SPI_PHASE_1EDGE;
-    spi_init.NSS = SPI_NSS_SOFT;
     spi_init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
     spi_init.FirstBit = SPI_FIRSTBIT_MSB;
     spi_init.TIMode = SPI_TIMODE_DISABLE;
     spi_init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
     spi_init.CRCPolynomial = 7;
+
+    if (is_master) {
+        spi_init.Mode = SPI_MODE_MASTER;
+        spi_init.NSS = SPI_NSS_SOFT;
+    } else {
+        spi_init.Mode = SPI_MODE_SLAVE;
+        spi_init.NSS = SPI_NSS_HARD_INPUT;
+    }
 
 #if !defined(STM32F1)
     auto [sck_afio, miso_afio, mosi_afio] =
@@ -205,20 +213,44 @@ inline stm32::spi open_impl(tos::devs::spi_t<1>,
                             stm32::gpio::pin_type sck,
                             std::optional<stm32::gpio::pin_type> miso,
                             std::optional<stm32::gpio::pin_type> mosi) {
-    return stm32::spi{ stm32::detail::spis[0], sck, miso, mosi };
+    return stm32::spi{ stm32::detail::spis[0], sck, miso, mosi, true };
+}
+
+inline stm32::spi open_impl(tos::devs::spi_t<1>,
+                            stm32::gpio::pin_type sck,
+                            std::optional<stm32::gpio::pin_type> miso,
+                            std::optional<stm32::gpio::pin_type> mosi,
+                            tos::spi_mode::slave_t) {
+    return stm32::spi{ stm32::detail::spis[0], sck, miso, mosi, false };
 }
 
 inline stm32::spi open_impl(tos::devs::spi_t<2>,
                             stm32::gpio::pin_type sck,
                             std::optional<stm32::gpio::pin_type> miso,
                             std::optional<stm32::gpio::pin_type> mosi) {
-    return stm32::spi{ stm32::detail::spis[1], sck, miso, mosi };
+    return stm32::spi{ stm32::detail::spis[1], sck, miso, mosi, true };
+}
+
+inline stm32::spi open_impl(tos::devs::spi_t<2>,
+                            stm32::gpio::pin_type sck,
+                            std::optional<stm32::gpio::pin_type> miso,
+                            std::optional<stm32::gpio::pin_type> mosi,
+                            tos::spi_mode::slave_t) {
+    return stm32::spi{ stm32::detail::spis[1], sck, miso, mosi, false };
 }
 
 inline stm32::spi open_impl(tos::devs::spi_t<3>,
                             stm32::gpio::pin_type sck,
                             std::optional<stm32::gpio::pin_type> miso,
                             std::optional<stm32::gpio::pin_type> mosi) {
-    return stm32::spi{ stm32::detail::spis[2], sck, miso, mosi };
+    return stm32::spi{ stm32::detail::spis[2], sck, miso, mosi, true };
+}
+
+inline stm32::spi open_impl(tos::devs::spi_t<3>,
+                            stm32::gpio::pin_type sck,
+                            std::optional<stm32::gpio::pin_type> miso,
+                            std::optional<stm32::gpio::pin_type> mosi,
+                            tos::spi_mode::slave_t) {
+    return stm32::spi{ stm32::detail::spis[2], sck, miso, mosi, false };
 }
 }

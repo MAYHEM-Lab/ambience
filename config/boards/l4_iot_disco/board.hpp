@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/spi.hpp"
 #include <arch/drivers.hpp>
 
 namespace tos::bsp {
@@ -37,6 +38,21 @@ struct l4_iot_disco_spec {
                              stm32::instantiate_pin(clk_pin),
                              stm32::instantiate_pin(miso_pin),
                              stm32::instantiate_pin(mosi_pin));
+        }
+    };
+
+    struct spi1s {
+        static constexpr auto tag = devs::spi<1>;
+        static constexpr auto clk_pin = 5;
+        static constexpr auto miso_pin = 6;
+        static constexpr auto mosi_pin = 7;
+
+        static auto open() {
+            return tos::open(tag,
+                             stm32::instantiate_pin(clk_pin),
+                             stm32::instantiate_pin(miso_pin),
+                             stm32::instantiate_pin(mosi_pin),
+                             tos::spi_mode::slave);
         }
     };
 
