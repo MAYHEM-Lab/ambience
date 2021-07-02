@@ -1,3 +1,3 @@
 target_sources(aekernel PRIVATE platform_support.cpp)
-target_link_libraries(aekernel PUBLIC tos_board stm32_flash_serv littlefs_server block_partition)
+target_link_libraries(aekernel PUBLIC tos_board stm32_flash_serv block_partition)
 target_include_directories(aekernel PUBLIC include)

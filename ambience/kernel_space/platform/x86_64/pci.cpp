@@ -3,7 +3,6 @@
 //
 
 #include <block_memory_generated.hpp>
-#include <file_system_generated.hpp>
 #include <lwip/init.h>
 #include <tos/ae/registry.hpp>
 #include <tos/virtio/block_device.hpp>

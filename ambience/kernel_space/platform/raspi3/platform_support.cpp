@@ -1,14 +1,11 @@
 #include "private.hpp"
 #include <block_memory_generated.hpp>
-#include <file_system_generated.hpp>
 #include <tos/ae/kernel/platform_support.hpp>
 #include <tos/ae/kernel/runners/preemptive_user_runner.hpp>
 #include <tos/ae/registry.hpp>
 #include <tos/periph/bcm2837_clock.hpp>
 
 tos::ae::services::block_memory::sync_server* init_ephemeral_block();
-tos::ae::services::filesystem::sync_server*
-make_littlefs_server(tos::ae::services::block_memory::sync_server* flash);
 
 tos::ae::registry_base& get_registry();
 
@@ -29,8 +26,7 @@ void platform_support::stage2_init() {
     tos::ae::preemptive_user_group_runner::create(
         tos::make_erased_preemptive_runner(*this));
 
-    auto fs = make_littlefs_server(init_ephemeral_block());
-    get_registry().register_service("fs", fs);
+    get_registry().register_service("node_block", init_ephemeral_block());
 }
 
 // semihosting_output platform_support::init_serial() {
