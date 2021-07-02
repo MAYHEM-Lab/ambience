@@ -4,8 +4,8 @@
 #include <lidlrt/service.hpp>
 #include <string_view>
 #include <tos/async_init.hpp>
-#include <tos/fixed_string.hpp>
 #include <tos/debug/log.hpp>
+#include <tos/fixed_string.hpp>
 
 namespace tos::ae {
 template<tos::fixed_string Name, class T>
@@ -14,6 +14,10 @@ struct service_mapping {
 
     void set_serv(T t) {
         serv.set_value(t);
+    }
+
+    auto* try_take() {
+        return serv.has_value() ? &serv.value() : nullptr;
     }
 
     auto& take() {
@@ -29,6 +33,7 @@ struct registry_base {
 public:
     virtual bool register_service(std::string_view name, lidl::service_base* serv) = 0;
 
+    virtual lidl::service_base* try_take(std::string_view name) = 0;
     virtual tos::Task<lidl::service_base*> wait(std::string_view name);
 
     template<class T>
@@ -63,15 +68,39 @@ struct service_registry<service_mapping<Names, Ts>...>
         return get<Name>(*this).take();
     }
 
+    template<tos::fixed_string Name>
+    auto* try_take() {
+        return get<Name>(*this).try_take();
+    }
+
     bool register_service(std::string_view name, lidl::service_base* serv) override {
         return ((std::string_view(Names) == name &&
                  register_service<Names>(static_cast<Ts>(serv))) ||
                 ...);
     }
 
+    lidl::service_base* try_take(std::string_view name) override {
+        auto call_if = [name](auto&& x) {
+            ((std::string_view(Names) == name ? x.template operator()<Names>() : false),
+             ...);
+        };
+
+        lidl::service_base* ptr = nullptr;
+
+        call_if([&]<tos::fixed_string Name>() {
+            if (auto res = try_take<Name>()) {
+                ptr = *res;
+            }
+            return true;
+        });
+
+        return ptr;
+    }
+
     tos::Task<lidl::service_base*> wait(std::string_view name) override {
         auto call_if = [name](auto&& x) -> tos::Task<void> {
-            ((std::string_view(Names) == name ? co_await x.template operator()<Names>() : false),
+            ((std::string_view(Names) == name ? co_await x.template operator()<Names>()
+                                              : false),
              ...);
         };
 

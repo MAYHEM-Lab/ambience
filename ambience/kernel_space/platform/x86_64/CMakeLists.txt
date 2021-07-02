@@ -22,7 +22,6 @@ target_link_libraries(
           lwipcore
           lai
           virtio_blk_serv
-          littlefs_server
           block_partition
           kernel_schema
 )

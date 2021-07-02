@@ -14,13 +14,9 @@
 tos::ae::services::block_memory::sync_server*
 init_virtio_blk(tos::virtio::block_device* dev);
 
-tos::ae::services::filesystem::sync_server*
-make_littlefs_server(tos::ae::services::block_memory::sync_server* flash);
-
 tos::ae::services::block_memory::sync_server* init_block_partiton(
     tos::ae::services::block_memory::sync_server* dev, int base_block, int block_count);
 
-tos::ae::services::filesystem::sync_server* fs;
 tos::virtio::net_if* net;
 void init_pci(tos::physical_page_allocator& palloc, tos::ae::registry_base& registry) {
     lwip_init();
@@ -57,7 +53,7 @@ void init_pci(tos::physical_page_allocator& palloc, tos::ae::registry_base& regi
             switch (dev.device_id()) {
             case 0x1001: {
                 tos::debug::log("Virtio block device");
-                if (fs)
+                if (registry.try_take("node_block"))
                     break;
                 auto bd = new tos::virtio::block_device(
                     tos::virtio::make_x86_pci_transport(std::move(dev)));
@@ -65,9 +61,8 @@ void init_pci(tos::physical_page_allocator& palloc, tos::ae::registry_base& regi
                 auto base_serv = init_virtio_blk(bd);
                 auto blk_serv =
                     init_block_partiton(base_serv, base_serv->get_block_count() / 2, 100);
-                fs = make_littlefs_server(blk_serv);
 
-                registry.register_service("fs", fs);
+                registry.register_service("node_block", blk_serv);
                 break;
             }
             case 0x1000: {
