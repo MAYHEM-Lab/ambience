@@ -9,7 +9,11 @@
 {% endfor %}
 // clang-format on
 
+{{service_init_sigs}}
 tos::Task<void> {{group_name}}::post_load() {
+    {% for init in service_inits %}
+    {{init}}
+    {% endfor %}
     co_return;
 }
 

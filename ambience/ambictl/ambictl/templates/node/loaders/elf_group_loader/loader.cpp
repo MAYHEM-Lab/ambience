@@ -14,7 +14,7 @@ namespace {
 struct descr {
     using loader = tos::ae::kernel::preemptive_elf_group;
     static constexpr auto& elf_body = {{group_name}}_elf;
-    static constexpr auto services = tos::meta::list<{{services | join("::service_type, ")}}::service_type > {};
+    static constexpr auto services = tos::meta::list<{{service_types | join("::service_type, ")}}::service_type > {};
 };
 } // namespace
 
@@ -26,7 +26,7 @@ tos::Task<void> {{group_name}}::post_load() {
     {% endfor %}
 
     // Wait for all dependencies to come online, then register our services
-    {% for service_name in services %}
+    {% for service_name in service_names %}
     registry.template register_service<"{{service_name}}">(&{{service_name}}());
     {% endfor %}
 }

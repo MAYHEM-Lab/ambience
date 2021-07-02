@@ -35,10 +35,6 @@ class UserGroup(Group):
             raise RuntimeError("Not all dependencies are met!")
         return list((y, x + 1) for x, y in enumerate(self.uniqueExternalDeps()))
 
-    def generateInitSigSection(self):
-        unique_services = set(s.impl for s in self.servs)
-        return "\n".join(s.getInitSignature() for s in unique_services)
-
     def generateExternalDepsSection(self):
         numbering = self.assignNumsToExternalDeps()
         return "\n".join(

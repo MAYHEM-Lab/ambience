@@ -21,7 +21,7 @@ class x86_64(Platform):
 
         conf_dir = os.path.join(source_dir, f"cmake-build-barex64")
         os.makedirs(conf_dir, exist_ok=True)
-        args = ["cmake", "-G", "Ninja", f"-DTOS_BOARD=digitalocean_vm", "-DCMAKE_BUILD_TYPE=Release",
+        args = ["cmake", "-G", "Ninja", f"-DTOS_BOARD=x86_64_pc", "-DCMAKE_BUILD_TYPE=Release",
                 "-DENABLE_LTO=ON", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache", "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                 source_dir]
         print(args)

@@ -19,26 +19,25 @@ def sample_deployment() -> [DeployNode]:
     block_mem_if = block_mem_mod.get_service("tos::ae::services::block_memory")
     db_if = fs_mod.get_service("tos::ae::services::sql_database")
 
-    littlefs = fs_if.implement("littlefs", cmake_target="littlefs_server", sync=True, extern=False,
+    littlefs = fs_if.implement("littlefs_server", cmake_target="littlefs_server", sync=True, extern=False,
                                deps={"block": block_mem_if})
 
     basic_calc = calc_if.implement("basic_calc", cmake_target="basic_calc", sync=False, extern=False,
                                    deps={"logger": logger_if, "alarm": alarm_if, "fs": fs_if})
 
+    virtio_block = block_mem_if.implement("virtio_blk", sync=True, extern=True)
     logger_impl = logger_if.implement("logger", sync=True, extern=True)
     alarm_impl = alarm_if.implement("alarm", sync=False, extern=True)
-    fs_impl = fs_if.implement("fs", sync=True, extern=True)
-    sqlite_impl = db_if.implement("sqlite3", sync=True, extern=True)
 
+    virtio_blk = virtio_block.instantiate("node_block")
     logger = logger_impl.instantiate("logger")
     alarm = alarm_impl.instantiate("alarm")
-    fs = fs_impl.instantiate("fs")
-    sqlite = fs_impl.instantiate("sqlite")
 
+    fs = littlefs.instantiate("fs", deps={"block": virtio_blk})
     calc = basic_calc.instantiate("calc", deps={"logger": logger, "alarm": alarm, "fs": fs})
     calc2 = basic_calc.instantiate("calc2", deps={"logger": logger, "alarm": alarm, "fs": fs})
 
-    pg = KernelGroup("vm_privileged", {logger, alarm, fs})
+    pg = KernelGroup("vm_privileged", {logger, alarm, virtio_blk, fs})
     g1 = UserGroup("sample_group3", {calc})
     g2 = UserGroup("sample_group4", {calc2})
 

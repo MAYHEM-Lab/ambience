@@ -148,6 +148,10 @@ class Group:
         all_ifaces = {serv.impl.iface: set(serv.impl.deps.values()) for serv in self.servs}
         return toposort_flatten(all_ifaces, sort=False)
 
+    def generateInitSigSection(self):
+        unique_services = set(s.impl for s in self.servs if not s.impl.extern)
+        return "\n".join(s.getInitSignature() for s in unique_services)
+
     @abc.abstractmethod
     def generate_group_dir(self, build_root):
         raise NotImplementedError()
