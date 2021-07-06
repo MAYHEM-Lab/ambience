@@ -11,6 +11,7 @@ target_sources(
           platform_support.cpp
           page_allocator.cpp
           apic.cpp
+          machine_impl.cpp
 )
 target_link_libraries(
   aekernel
@@ -24,6 +25,7 @@ target_link_libraries(
           virtio_blk_serv
           block_partition
           kernel_schema
+          machine_schema
 )
 
 target_include_directories(aekernel PUBLIC include)

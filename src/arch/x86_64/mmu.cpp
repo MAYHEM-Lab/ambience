@@ -77,6 +77,7 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
                                               physical_page_allocator* palloc) {
     if constexpr (N == 1) {
         if (root[path[0]].valid()) {
+            tos::debug::error("Page already allocated");
             return unexpected(mmu_errors::already_allocated);
         }
 
@@ -99,11 +100,13 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
     } else {
         if (!root[path[0]].valid()) {
             if (!palloc) {
+                tos::debug::error("Need to allocate, but no allocator");
                 return unexpected(mmu_errors::page_alloc_fail);
             }
 
             auto page = palloc->allocate(1);
             if (page == nullptr) {
+                tos::debug::error("Page allocator failed");
                 return unexpected(mmu_errors::page_alloc_fail);
             }
 

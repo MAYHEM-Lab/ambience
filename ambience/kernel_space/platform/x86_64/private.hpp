@@ -21,3 +21,5 @@ void init_pci(tos::physical_page_allocator& palloc, tos::ae::registry_base& regi
 tos::expected<tos::physical_page_allocator*, tos::cur_arch::mmu_errors>
 initialize_page_allocator();
 void apic_initialize(tos::physical_page_allocator& palloc);
+
+void do_machine_impl();

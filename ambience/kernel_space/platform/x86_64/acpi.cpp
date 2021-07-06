@@ -1,6 +1,7 @@
 #include <cassert>
 #include <lai/core.h>
 #include <lai/helpers/pc-bios.h>
+#include <lai/helpers/pm.h>
 #include <tos/debug/log.hpp>
 
 struct [[gnu::packed]] MadtHeader {
@@ -151,6 +152,8 @@ void do_acpi_stuff() {
         (void*)rsdp_info.rsdp_address,
         (void*)rsdp_info.rsdt_address);
     acpi_ver = rsdp_info.acpi_version;
+
+    lai_set_acpi_revision(rsdp_info.acpi_version);
 
     if (rsdp_info.acpi_version == 2) {
         auto win = laihost_map(rsdp_info.xsdt_address, 0x1000);

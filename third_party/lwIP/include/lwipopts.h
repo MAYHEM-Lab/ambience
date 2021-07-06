@@ -104,7 +104,7 @@
  * per active UDP "connection".
  * (requires the LWIP_UDP option)
  */
-#define MEMP_NUM_UDP_PCB                6
+#define MEMP_NUM_UDP_PCB                16
 
 /**
  * MEMP_NUM_TCP_PCB: the number of simulatenously active TCP connections.

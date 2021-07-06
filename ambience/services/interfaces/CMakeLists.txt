@@ -12,3 +12,5 @@ add_lidlc(group_schema group.lidl)
 add_lidlc(alarm_schema alarm.lidl)
 add_lidlc(filesystem_schema file_system.lidl)
 target_include_directories(filesystem_schema INTERFACE .)
+
+add_lidlc(machine_schema machine.lidl)

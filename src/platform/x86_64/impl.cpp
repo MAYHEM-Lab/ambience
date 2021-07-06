@@ -178,9 +178,12 @@ extern "C" {
 }
 
 extern "C" {
+NO_INLINE
 void set_up_page_tables() {
     memset(&p4_table, 0, sizeof p4_table);
     memset(&p3_table, 0, sizeof p3_table);
+    memset(&p2_tables, 0, sizeof p2_tables);
+    memset(&p1_tables, 0, sizeof p1_tables);
 
     p4_table[0]
         .zero()

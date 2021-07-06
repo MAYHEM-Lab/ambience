@@ -1,0 +1,5 @@
+namespace tos::ae::services;
+
+service machine {
+    reboot() -> bool;
+}
