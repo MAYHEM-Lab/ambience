@@ -3,12 +3,6 @@
 #include <{{group_name}}.hpp>
 #include <registry.hpp>
 
-// clang-format off
-{% for include in service_includes %}
-#include <{{include}}>
-{% endfor %}
-// clang-format on
-
 namespace {
 struct descr {
     using loader = tos::ae::kernel::in_memory_group;
@@ -29,6 +23,8 @@ tos::Task<void> {{group_name}}::post_load() {
     {% for service_name in service_names %}
     registry.template register_service<"{{service_name}}">(&{{service_name}}());
     {% endfor %}
+
+    co_await do_exports();
 }
 
 auto init_{{group_name}}(const platform_group_args& platform_args) -> {{group_name}} {

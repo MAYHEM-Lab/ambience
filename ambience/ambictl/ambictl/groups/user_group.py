@@ -38,7 +38,7 @@ class UserGroup(Group):
     def generateExternalDepsSection(self):
         numbering = self.assignNumsToExternalDeps()
         return "\n".join(
-            f"auto ext_dep{num} = transport.get_service<{serv.impl.iface.absolute_name()}, {num}>();" for serv, num in
+            f"auto ext_dep{num} = transport.get_service<{serv.get_interface().absolute_name()}, {num}>();" for serv, num in
             numbering)
 
     def _generate_init_section(self):

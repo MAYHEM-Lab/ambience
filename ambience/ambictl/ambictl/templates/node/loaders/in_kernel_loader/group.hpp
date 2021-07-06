@@ -15,6 +15,7 @@
 
 struct {{group_name}} {
     tos::Task<void> post_load();
+    tos::Task<void> do_exports();
 };
 
 auto init_{{group_name}}(const platform_group_args& platform_args) -> {{group_name}};

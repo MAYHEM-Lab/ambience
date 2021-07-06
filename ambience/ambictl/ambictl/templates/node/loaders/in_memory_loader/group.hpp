@@ -14,16 +14,17 @@
 {% endfor %}
 
 struct {{group_name}} {
-std::unique_ptr<tos::ae::kernel::user_group> group;
+    std::unique_ptr<tos::ae::kernel::user_group> group;
 
-{% for service_name in services %}
-auto {{service_name}}() -> auto& {
-return static_cast<{{services[service_name]}}&>(
-    *group->channels[{{loop.index}} - 1]);
-}
-{% endfor %}
+    {% for service_name in services %}
+    auto {{service_name}}() -> auto& {
+    return static_cast<{{services[service_name]}}&>(
+        *group->channels[{{loop.index}} - 1]);
+    }
+    {% endfor %}
 
-tos::Task<void> post_load();
+    tos::Task<void> post_load();
+    tos::Task<void> do_exports();
 };
 
 auto init_{{group_name}}(const platform_group_args& platform_args) -> {{group_name}};

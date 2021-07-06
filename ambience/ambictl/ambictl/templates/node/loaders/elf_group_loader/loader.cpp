@@ -5,9 +5,6 @@
 
 // clang-format off
 #include <{{group_name}}_elf.hpp>
-{% for include in service_includes %}
-#include <{{include}}>
-{% endfor %}
 // clang-format on
 
 namespace {
@@ -29,6 +26,8 @@ tos::Task<void> {{group_name}}::post_load() {
     {% for service_name in service_names %}
     registry.template register_service<"{{service_name}}">(&{{service_name}}());
     {% endfor %}
+
+    co_await do_exports();
 }
 
 auto init_{{group_name}}(const platform_group_args& platform_args) -> {{group_name}} {

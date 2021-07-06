@@ -1,5 +1,17 @@
 from .defs import *
 
+def make_exports(group: DeployGroup):
+    src_template = env.get_template("node/loaders/export_common.cpp")
+
+    exported_servs = list(serv for serv in group.group.servs if len(serv.exports) > 0)
+    export_strings = (export.cxx_export_string() for serv in exported_servs for export in serv.exports.values())
+    export_includes = (exporter.get_cxx_include() for exporter in set(export.exporter for serv in exported_servs for export in serv.exports.values()))
+
+    return src_template.render({
+        "group_name": group.group.name,
+        "export_strings": export_strings,
+        "export_includes": export_includes,
+    })
 
 class BundledElfLoader(GroupLoader):
     user_src: str = None
@@ -13,22 +25,23 @@ class BundledElfLoader(GroupLoader):
             f"{group.group.name}.hpp": header_template.render({
                 "group_name": group.group.name,
                 "service_includes": (iface.get_include() for iface in group.group.interfaceDeps()),
-                "services": {serv.name: serv.impl.server_name() for serv in group.group.servs},
+                "services": {serv.name: serv.registry_type() for serv in group.group.servs},
                 "imported_services": {key.name: val - 1 for key, val in group.group.assignNumsToExternalDeps()}
             }),
             "loader.cpp": src_template.render({
                 "group_name": group.group.name,
                 "service_includes": (iface.get_include() for iface in group.group.interfaceDeps()),
-                "service_types": (serv.impl.server_name() for serv in group.group.servs),
+                "service_types": (serv.registry_type() for serv in group.group.servs),
                 "service_names": (serv.name for serv in group.group.servs),
-                "imported_services": {key.name: val - 1 for key, val in group.group.assignNumsToExternalDeps()}
+                "imported_services": {key.name: val - 1 for key, val in group.group.assignNumsToExternalDeps()},
             }),
             "CMakeLists.txt": cmake_template.render({
                 "node_name": group.node.node.name,
                 "group_name": group.group.name,
                 "schemas": (iface.module.cmake_target for iface in group.group.interfaceDeps()),
                 "group_build_dir": self.user_src
-            })
+            }),
+            "exports.cpp": make_exports(group)
         }
 
 
@@ -56,7 +69,8 @@ class InMemoryLoader(GroupLoader):
                 "node_name": group.node.node.name,
                 "group_name": group.group.name,
                 "schemas": (iface.module.cmake_target for iface in group.group.interfaceDeps()),
-            })
+            }),
+            "exports.cpp": make_exports(group)
         }
 
 class KernelLoader(GroupLoader):
@@ -65,34 +79,44 @@ class KernelLoader(GroupLoader):
         header_template = env.get_template("node/loaders/in_kernel_loader/group.hpp")
         cmake_template = env.get_template("node/loaders/in_kernel_loader/CMakeLists.txt")
 
-        needs_init = (serv for serv in group.group.servs if not serv.impl.extern)
+        needs_init = (serv for serv in group.group.servs if serv.needs_init())
 
+        init_includes = []
         initializers = []
         for serv in needs_init:
-            dep_args = (f"co_await registry.wait<\"{dep.name}\">()" for (name, dep) in serv.deps.items())
-            init_str = f"init_{serv.impl.name}({', '.join(dep_args)})"
-            if not serv.impl.sync:
-                init_str = f"co_await {init_str}"
-            init_str = f"registry.register_service<\"{serv.name}\">({init_str});"
-            initializers.append(init_str)
+            if isinstance(serv, ServiceInstance):
+                dep_args = (f"co_await registry.wait<\"{dep.name}\">()" for (name, dep) in serv.deps.items())
+                init_str = f"init_{serv.impl.name}({', '.join(dep_args)})"
+                if not serv.impl.sync:
+                    init_str = f"co_await {init_str}"
+                init_str = f"registry.register_service<\"{serv.name}\">({init_str});"
+                initializers.append(init_str)
+            elif isinstance(serv, ImportedService):
+                init_str = serv._import.cxx_import_string()
+                init_str = f"registry.register_service<\"{serv.name}\">(new {init_str});"
+                initializers.append(init_str)
+                init_includes.append(serv._import.cxx_include())
+            else:
+                raise NotImplementedError("Don't know how to load this type in the kernel")
 
         return {
             f"{group.group.name}.hpp": header_template.render({
                 "group_name": group.group.name,
                 "service_includes": (iface.get_include() for iface in group.group.interfaceDeps()),
-                "services": {serv.name: serv.impl.server_name() for serv in group.group.servs},
+                "services": {serv.name: serv.registry_type() for serv in group.group.servs},
             }),
             "loader.cpp": src_template.render({
                 "group_name": group.group.name,
-                "service_includes": (iface.get_include() for iface in group.group.interfaceDeps()),
-                "services": (serv.impl.server_name() for serv in group.group.servs),
+                "services": (serv.registry_type() for serv in group.group.servs),
                 "service_init_sigs": group.group.generateInitSigSection(),
                 "service_inits": initializers,
+                "init_includes": init_includes,
             }),
             "CMakeLists.txt": cmake_template.render({
                 "node_name": group.node.node.name,
                 "group_name": group.group.name,
                 "schemas": (iface.module.cmake_target for iface in group.group.interfaceDeps()),
-                "service_targets": (serv.impl.cmake_target for serv in group.group.servs if not serv.impl.extern)
-            })
+                "service_targets": (serv.impl.cmake_target for serv in group.group.servs if isinstance(serv, ServiceInstance))
+            }),
+            "exports.cpp": make_exports(group)
         }

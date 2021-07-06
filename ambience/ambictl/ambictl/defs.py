@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections
 from typing import Dict, Set, List
 import os
 import subprocess
@@ -12,6 +13,7 @@ env = Environment(
     loader=PackageLoader("ambictl"),
     autoescape=select_autoescape()
 )
+
 
 class LidlModule:
     _abs_path: str
@@ -30,6 +32,7 @@ class LidlModule:
     def get_service(self, name: str) -> ServiceInterface:
         return ServiceInterface(self, name)
 
+
 class ServiceInterface:
     module: LidlModule
     full_serv_name: str
@@ -47,12 +50,15 @@ class ServiceInterface:
     def async_server_name(self):
         return f"{self.absolute_name()}::async_server"
 
+    def sync_stub_client(self):
+        return f"{self.absolute_name()}::stub_client"
+
     def get_include(self):
         return os.path.splitext(self.module.file_name())[0] + "_generated.hpp"
 
-    def implement(self, name: str, *, sync: bool, extern: bool,
+    def implement(self, name: str, *, sync: bool,
                   deps: Dict[str, ServiceInterface] = {}, cmake_target: str = "") -> Service:
-        return Service(name, cmake_target, self, sync, extern, deps)
+        return Service(name, cmake_target, self, sync, deps)
 
 
 class Service:
@@ -67,21 +73,15 @@ class Service:
 
     deps: Dict[str, ServiceInterface]
 
-    # An extern service is one that has non-ambience dependencies, and cannot be initialized only with ambience services
-    # For instance, a hardware driver service.
-    extern: bool
-
-    def __init__(self, name: str, cmake_target: str, iface: ServiceInterface, sync: bool, extern: bool,
+    def __init__(self, name: str, cmake_target: str, iface: ServiceInterface, sync: bool,
                  deps: Dict[str, ServiceInterface] = {}) -> None:
         self.name = name
         self.cmake_target = cmake_target
         self.iface = iface
         self.deps = deps
         self.sync = sync
-        self.extern = extern
 
-    def getInitSignature(self) -> str:
-        assert not self.extern
+    def cxx_init_signature(self) -> str:
         params = (f"{val.sync_server_name() if self.sync else val.async_server_name()}* {key}" for key, val in
                   self.deps.items())
         if self.sync:
@@ -89,7 +89,7 @@ class Service:
         else:
             return f"auto init_{self.name}({', '.join(params)}) -> tos::Task<{self.server_name()}*>;"
 
-    def instantiate(self, name: str, deps: Dict[str, ServiceInstance] = {}) -> ServiceInstance:
+    def instantiate(self, name: str, deps: Dict[str, Instance] = {}) -> ServiceInstance:
         return ServiceInstance(name, self, deps)
 
     def server_name(self):
@@ -98,18 +98,64 @@ class Service:
         else:
             return self.iface.async_server_name()
 
-class ServiceInstance:
+
+class Export:
+    exporter: Exporter
+    instance: Instance
+    config: {}
+
+    def __init__(self, exporter, instance, config):
+        self.exporter = exporter
+        self.instance = instance
+        self.config = config
+
+    def cxx_export_string(self):
+        return self.exporter.export_service_string(self)
+
+
+class Instance:
     name: str
+    exports: Dict[Exporter, Export]
+    extern: bool
+
+    @abc.abstractmethod
+    def get_interface(self) -> ServiceInterface:
+        raise NotImplementedError()
+
+    def __init__(self, name: str):
+        self.name = name
+        self.exports = {}
+        self.extern = False
+
+    def export(self, exporter, config=None):
+        if exporter not in self.exports:
+            print(f"Export {self.name} with {exporter}")
+            self.exports[exporter] = exporter.export(self, config)
+        return self.exports[exporter]
+
+    def needs_init(self):
+        return not self.extern
+
+    @abc.abstractmethod
+    def get_dependencies(self):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def registry_type(self):
+        raise NotImplementedError()
+
+
+class ServiceInstance(Instance):
     impl: Service
-    deps: Dict[str, ServiceInstance]
+    deps: Dict[str, Instance]
 
     assigned_group: Group
 
     def unmetDeps(self):
         return [nm for nm, dep in self.deps.items() if dep is None]
 
-    def __init__(self, name: str, impl: Service, deps: Dict[str, ServiceInstance] = {}) -> None:
-        self.name = name
+    def __init__(self, name: str, impl: Service, deps: Dict[str, Instance] = {}) -> None:
+        super().__init__(name)
         self.impl = impl
         self.deps = deps
         self.assigned_group = None
@@ -124,12 +170,58 @@ class ServiceInstance:
 
         return self.impl.server_name()
 
+    def get_interface(self) -> ServiceInterface:
+        return self.impl.iface
+
+    def get_dependencies(self):
+        return self.impl.deps.values()
+
+
+class ImportedService(Instance):
+    _import: Import
+
+    def __init__(self, name: str, imprt: Import):
+        super().__init__(name)
+        self._import = imprt
+
+    def get_interface(self) -> ServiceInterface:
+        return self._import.interface
+
+    def get_dependencies(self):
+        return []
+
+    def registry_type(self):
+        return self._import.interface.sync_server_name()
+
+
+class ExternService(Instance):
+    iface: ServiceInterface
+    sync: bool
+
+    def __init__(self, name: str, iface: ServiceInterface, sync: bool):
+        super().__init__(name)
+        self.iface = iface
+        self.extern = True
+        self.sync = sync
+
+    def get_interface(self) -> ServiceInterface:
+        return self.iface
+
+    def get_dependencies(self):
+        return []
+
+    def registry_type(self):
+        if self.sync:
+            return self.iface.sync_server_name()
+        return self.iface.async_server_name()
+
+
 class Group:
     name: str
-    servs: Set[ServiceInstance]
+    servs: Set[Instance]
     dg: DeployGroup
 
-    def __init__(self, name: str, servs: Set[ServiceInstance]) -> None:
+    def __init__(self, name: str, servs: Set[Instance]) -> None:
         self.name = name
         self.servs = servs
         for serv in self.servs:
@@ -138,19 +230,22 @@ class Group:
     def servsWithUnmetDeps(self):
         return [serv for serv in self.servs if len(serv.unmetDeps()) != 0]
 
-    def uniqueDeps(self) -> Set[ServiceInstance]:
-        return set(dep for serv in self.servs for _, dep in serv.deps.items())
+    def uniqueDeps(self) -> Set[Instance]:
+        return set(dep for serv in self.servs for dep in serv.deps.values())
+
+    def _externalDeps(self):
+        return (dep for dep in self.uniqueDeps() if dep not in self.servs)
 
     def uniqueExternalDeps(self):
-        return set(dep for dep in self.uniqueDeps() if dep not in self.servs)
+        return set(self._externalDeps())
 
     def interfaceDeps(self):
-        all_ifaces = {serv.impl.iface: set(serv.impl.deps.values()) for serv in self.servs}
+        all_ifaces = {serv.get_interface(): set(serv.get_dependencies()) for serv in self.servs}
         return toposort_flatten(all_ifaces, sort=False)
 
     def generateInitSigSection(self):
-        unique_services = set(s.impl for s in self.servs if not s.impl.extern)
-        return "\n".join(s.getInitSignature() for s in unique_services)
+        unique_impls = set(s.impl for s in self.servs if isinstance(s, ServiceInstance))
+        return "\n".join(s.cxx_init_signature() for s in unique_impls)
 
     @abc.abstractmethod
     def generate_group_dir(self, build_root):
@@ -167,7 +262,6 @@ class Group:
     @abc.abstractmethod
     def post_generation2(self, build_root, conf_dirs):
         pass
-
 
 
 class DeployGroup:
@@ -189,6 +283,7 @@ class DeployGroup:
         self.sizes = None
         self.entry_point = 0
 
+
 class Memories:
     rom: (int, int)
     ram: (int, int)
@@ -197,9 +292,112 @@ class Memories:
         self.rom = rom
         self.ram = ram
 
+
 class GroupLoader:
     def generateGroupLoader(self, group: DeployGroup):
         raise NotImplementedError()
+
+
+class Import:
+    importer: Importer
+    interface: ServiceInterface
+    config: {}
+
+    def __init__(self, importer: Importer, iface: ServiceInterface, config):
+        self.importer = importer
+        self.interface = iface
+        self.config = config
+
+    def cxx_import_string(self):
+        return self.importer.import_string(self)
+
+    def cxx_include(self):
+        return self.importer.get_cxx_include()
+
+    def instantiate(self, name: str):
+        return ImportedService(name, self)
+
+
+class Importer:
+    @abc.abstractmethod
+    def make_import(self, service: ServiceInterface, config) -> Import:
+        pass
+
+    @abc.abstractmethod
+    def import_from(self, export: Export) -> Import:
+        pass
+
+    @abc.abstractmethod
+    def import_string(self, import_: Import):
+        pass
+
+    @abc.abstractmethod
+    def get_cxx_include(self):
+        pass
+
+
+class Exporter:
+    @abc.abstractmethod
+    def export(self, service: Instance, config) -> Export:
+        pass
+
+    @abc.abstractmethod
+    def export_service_string(self, export: Export):
+        pass
+
+    @abc.abstractmethod
+    def get_cxx_include(self):
+        pass
+
+
+class LwipUdpImporter(Importer):
+    def __init__(self):
+        super().__init__()
+
+    def make_import(self, service, config) -> Import:
+        return Import(self, service, config)
+
+    def import_from(self, export: Export):
+        iface = export.instance.impl.iface
+        conf = {
+            "ip": export.instance.assigned_group.dg.node.node.ip_address,
+            "port": export.config
+        }
+        return self.make_import(iface, conf)
+
+    def import_string(self, import_: Import):
+        format = "{}<tos::ae::udp_transport>{{tos::udp_endpoint_t{{tos::parse_ipv4_address(\"{}\"), {{{}}} }} }}"
+        return format.format(import_.interface.sync_stub_client(), import_.config["ip"], import_.config["port"])
+
+    def get_cxx_include(self):
+        return "tos/ae/transport/lwip/udp.hpp"
+
+
+class LwipUdpExporter(Exporter):
+    allocation: Dict
+    next: int
+
+    def __init__(self):
+        super().__init__()
+        self.allocation = {}
+        self.next = 1993
+
+    def get_port_for_service(self, service):
+        if service not in self.allocation:
+            self.allocation[service] = self.next
+            self.next = self.next + 1
+        return self.allocation[service]
+
+    def export(self, service, config) -> Export:
+        if config is None:
+            config = self.get_port_for_service(service)
+        return Export(self, service, config)
+
+    def export_service_string(self, export):
+        return f"new tos::ae::lwip_host(tos::ae::service_host(co_await registry.wait<\"{export.instance.name}\">()), tos::port_num_t{{{export.config}}});"
+
+    def get_cxx_include(self):
+        return "tos/ae/transport/lwip/host.hpp"
 
 
 class Platform(abc.ABC):
@@ -219,15 +417,28 @@ class Platform(abc.ABC):
     def make_deploy_node(self, node: Node, groups: [Group]):
         raise NotImplementedError()
 
+    def make_node(self, name: str, mems: Memories, exporters: [Exporter] = [], importers: [Importer] = []):
+        return Node(name, self, mems, exporters, importers)
+
+
 class Node:
     name: str
     platform: Platform
     memories: Memories
+    exporters: [Exporter]
+    importers: [Importer]
+    ip_address: str
 
-    def __init__(self, name: str, platform: Platform, memories: Memories):
+    def __init__(self, name: str, platform: Platform, memories: Memories, exporters: [Exporter], importers: [Importer]):
         self.name = name
         self.platform = platform
         self.memories = memories
+        self.exporters = exporters
+        self.importers = importers
+        self.ip_address = "127.0.0.1"
+
+    def deploy(self, groups: List[Group]):
+        return self.platform.make_deploy_node(self, groups)
 
 
 class DeployNode:
@@ -314,6 +525,7 @@ class DeployNode:
         for g in self.groups:
             g.post_generation2(build_root, conf_dirs)
 
+
 def compute_bases(node: DeployNode):
     res = {}
     cur_bases = (node.node.memories.rom[0], node.node.memories.ram[0])
@@ -325,7 +537,6 @@ def compute_bases(node: DeployNode):
         cur_bases = tuple(sum(x) for x in zip(cur_bases, dg.sizes))
         print(cur_bases)
     return res
-
 
 
 class Deployment:
