@@ -16,7 +16,6 @@ init_virtio_blk(tos::virtio::block_device* dev);
 tos::ae::services::block_memory::sync_server* init_block_partiton(
     tos::ae::services::block_memory::sync_server* dev, int base_block, int block_count);
 
-tos::virtio::net_if* net;
 void init_pci(tos::physical_page_allocator& palloc, tos::ae::registry_base& registry) {
     lwip_init();
 
@@ -61,14 +60,12 @@ void init_pci(tos::physical_page_allocator& palloc, tos::ae::registry_base& regi
                 auto blk_serv =
                     init_block_partiton(base_serv, base_serv->get_block_count() / 2, 100);
 
-                registry.register_service("node_block", blk_serv);
+                registry.register_service("node_block", base_serv);
+                registry.register_service("fs_block", blk_serv);
                 break;
             }
             case 0x1000: {
                 tos::debug::log("Virtio network device");
-                if (net) {
-                    break;
-                }
                 auto nd = new tos::virtio::network_device(
                     tos::virtio::make_x86_pci_transport(std::move(dev)));
                 nd->initialize(&palloc);
@@ -79,7 +76,7 @@ void init_pci(tos::physical_page_allocator& palloc, tos::ae::registry_base& regi
                                 (void*)(uintptr_t)nd->address().addr[3],
                                 (void*)(uintptr_t)nd->address().addr[4],
                                 (void*)(uintptr_t)nd->address().addr[5]);
-                net = new tos::virtio::net_if(nd);
+                auto net = new tos::virtio::net_if(nd);
                 tos::debug::log(net);
                 set_default(*net);
                 net->up();

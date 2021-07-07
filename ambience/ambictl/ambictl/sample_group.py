@@ -4,8 +4,15 @@ from .groups.kernel_group import *
 from .platforms import *
 
 
-def x86_64_pc(name: str):
-    return x86_64.make_node(name,
+def x86_64_pc_node(name: str):
+    return x86_64_pc.make_node(name,
+                            Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)),
+                            exporters=[LwipUdpExporter()],
+                            importers=[LwipUdpImporter()])
+
+
+def digitalocean_vm_node(name: str):
+    return digitalocean_vm.make_node(name,
                             Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)),
                             exporters=[LwipUdpExporter()],
                             importers=[LwipUdpImporter()])
@@ -47,7 +54,7 @@ def sample_deployment() -> [DeployNode]:
     basic_calc = calc_if.implement("basic_calc", cmake_target="basic_calc", sync=False,
                                    deps={"logger": logger_if, "alarm": alarm_if, "fs": fs_if})
 
-    vm = x86_64_pc("vm")
+    vm = digitalocean_vm_node("vm")
 
     import_params = {
         "ip": "123.45.67.89",
@@ -57,15 +64,16 @@ def sample_deployment() -> [DeployNode]:
     serv = vm.importers[0].make_import(fs_if, import_params).instantiate("remote_fs")
 
     virtio_blk = ExternService("node_block", block_mem_if, sync=True)
+    fs_blk = ExternService("fs_block", block_mem_if, sync=True)
     logger = ExternService("logger", logger_if, sync=True)
     alarm = ExternService("alarm", alarm_if, sync=False)
     machine = ExternService("machine", machine_if, sync=True)
 
-    fs = littlefs.instantiate("fs", deps={"block": virtio_blk})
+    fs = littlefs.instantiate("fs", deps={"block": fs_blk})
     calc = basic_calc.instantiate("calc", deps={"logger": logger, "alarm": alarm, "fs": fs})
     calc2 = basic_calc.instantiate("calc2", deps={"logger": logger, "alarm": alarm, "fs": fs})
 
-    pg = KernelGroup("vm_privileged", {virtio_blk, logger, alarm, machine, fs})
+    pg = KernelGroup("vm_privileged", {virtio_blk, fs_blk, logger, alarm, machine, fs})
     g1 = UserGroup("sample_group3", {calc})
     g2 = UserGroup("sample_group4", {calc2})
 

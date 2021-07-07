@@ -4,9 +4,11 @@ from .defs import *
 from .group_loader import *
 
 class x86_64(Platform):
-    def __init__(self):
+    board_name: str
+    def __init__(self, board_name: str):
         super().__init__(BundledElfLoader())
         self.loader.user_src = "${CMAKE_SOURCE_DIR}/cmake-build-barex64-user"
+        self.board_name = board_name
         pass
 
     def generateBuildDirectories(self, source_dir: str):
@@ -21,7 +23,7 @@ class x86_64(Platform):
 
         conf_dir = os.path.join(source_dir, f"cmake-build-barex64")
         os.makedirs(conf_dir, exist_ok=True)
-        args = ["cmake", "-G", "Ninja", f"-DTOS_BOARD=x86_64_pc", "-DCMAKE_BUILD_TYPE=Release",
+        args = ["cmake", "-G", "Ninja", f"-DTOS_BOARD={self.board_name}", "-DCMAKE_BUILD_TYPE=Release",
                 "-DENABLE_LTO=ON", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache", "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                 source_dir]
         print(args)
@@ -45,7 +47,8 @@ class x86_64(Platform):
         return res
 
 
-x86_64 = x86_64()
+x86_64_pc = x86_64("x86_64_pc")
+digitalocean_vm = x86_64("digitalocean_vm")
 
 
 class raspi3(Platform):
