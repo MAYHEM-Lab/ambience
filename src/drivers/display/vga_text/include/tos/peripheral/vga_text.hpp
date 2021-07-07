@@ -30,14 +30,14 @@ enum class text_vga_color : uint8_t
 class text_vga : public self_pointing<text_vga> {
 public:
     static constexpr size_t width = 80;
-    static constexpr size_t heigth = 25;
+    static constexpr size_t height = 25;
 
     text_vga() {
         set_color(text_vga_color::white, text_vga_color::black);
     }
 
     void clear() {
-        for (size_t y = 0; y < heigth; y++) {
+        for (size_t y = 0; y < height; y++) {
             for (size_t x = 0; x < width; x++) {
                 auto index = y * width + x;
                 terminal_buffer[index] = vga_entry(' ', terminal_color);
@@ -90,7 +90,7 @@ private:
         }
 
         if (c == '\n') {
-            if (++terminal_row == heigth) {
+            if (++terminal_row == height) {
                 terminal_row = 0;
             }
             auto r = get_row(terminal_row);
@@ -107,7 +107,7 @@ private:
 
         if (++terminal_column == width) {
             terminal_column = 0;
-            if (++terminal_row == heigth) {
+            if (++terminal_row == height) {
                 terminal_row = 0;
             }
             auto r = get_row(terminal_row);
