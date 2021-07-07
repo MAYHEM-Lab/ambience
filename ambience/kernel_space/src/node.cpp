@@ -69,6 +69,9 @@ tos::expected<void, tos::common_error> kernel() {
         }
     });
 
+    if (group_list.empty()) {
+        tos::this_thread::block_forever();
+    }
     while (true) {
         tos::this_thread::yield();
         auto& g = group_list.front();
