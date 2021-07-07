@@ -85,6 +85,12 @@ public:
         co_return true;
     }
 
+    tos::Task<bool> buffered_write(const int32_t& block,
+                                   const int32_t& offset,
+                                   tos::span<uint8_t> data) override {
+        return write(block, offset, data);
+    }
+
     tos::span<uint8_t> span() {
         return m_data;
     }
