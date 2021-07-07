@@ -76,6 +76,50 @@ block_device::write(uint64_t sector_id, span<const uint8_t> data, size_t offset)
     return unexpected(c);
 }
 
+Task<expected<void, int>>
+block_device::async_write(uint64_t sector_id, span<const uint8_t> data, size_t offset) {
+    if (offset != 0 || data.size() != sector_size_bytes()) {
+        co_return unexpected(-1);
+    }
+
+    auto& q = queue_at(0);
+
+    blk_header header{};
+    header.type = 1;
+    header.sector = sector_id;
+
+    auto [root_idx, root] = q.alloc();
+    auto [data_idx, data_] = q.alloc();
+    auto [code_idx, code_] = q.alloc();
+
+    root->addr = reinterpret_cast<uintptr_t>(&header);
+    root->len = sizeof header;
+    root->flags = queue_flags(queue_flags::next);
+    root->next = data_idx;
+
+    data_->addr = reinterpret_cast<uintptr_t>(data.data());
+    data_->len = data.size();
+    data_->flags = queue_flags(queue_flags::next);
+    data_->next = code_idx;
+
+    char c;
+    code_->addr = reinterpret_cast<uintptr_t>(&c);
+    code_->len = sizeof c;
+    code_->flags = queue_flags::write;
+    code_->next = {};
+
+    q.submit_available(root_idx);
+
+    transport().write_u16(notify_port_offset, 0);
+
+    co_await m_wait_sem;
+
+    if (c == 0) {
+        co_return tos::expected<void, int>{};
+    }
+    co_return unexpected(c);
+}
+
 expected<void, int>
 block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
     if (offset != 0 || data.size() != sector_size_bytes()) {

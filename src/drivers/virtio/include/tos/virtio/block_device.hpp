@@ -24,6 +24,9 @@ public:
     expected<void, int>
     write(uint64_t sector_id, span<const uint8_t> data, size_t offset);
 
+    Task<expected<void, int>>
+    async_write(uint64_t sector_id, span<const uint8_t> data, size_t offset);
+
     expected<void, int> read(uint64_t sector_id, span<uint8_t> data, size_t offset);
 
     Task<expected<void, int>>
