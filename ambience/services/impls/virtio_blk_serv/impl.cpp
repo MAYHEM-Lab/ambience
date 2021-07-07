@@ -1,5 +1,7 @@
 #include <block_memory_generated.hpp>
 #include <stdio.h>
+#include <tos/detail/poll.hpp>
+#include <tos/detail/tos_bind.hpp>
 #include <tos/virtio/block_device.hpp>
 
 namespace {
@@ -64,11 +66,29 @@ struct impl final : public tos::ae::services::block_memory::sync_server {
         return true;
     }
 
+    bool buffered_write(const int32_t& block,
+                        const int32_t& offset,
+                        tos::span<uint8_t> data) override {
+        if (data.size() != get_block_size()) {
+            return false;
+        }
+
+        m_write_sem.down();
+        auto copied_data = std::vector<uint8_t>(data.begin(), data.end());
+        tos::coro::make_detached(m_blk_dev->async_write(block, copied_data, 0),
+                                 [&, copied_data = std::move(copied_data)] {
+                                     m_write_sem.up_isr();
+                                 });
+
+        return true;
+    }
+
+    tos::semaphore m_write_sem{128};
     tos::virtio::block_device* m_blk_dev;
 };
 } // namespace
 
 tos::ae::services::block_memory::sync_server*
-init_virtio_blk(tos::virtio::block_device* dev){
+init_virtio_blk(tos::virtio::block_device* dev) {
     return new impl(dev);
 }

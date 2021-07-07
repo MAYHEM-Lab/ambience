@@ -7,4 +7,5 @@ service block_memory {
     read(block: i32, offset: i32, len: i32) -> span<u8>;
     erase(block: i32) -> bool;
     write(block: i32, offset: i32, data: span<u8>) -> bool;
+    buffered_write(block: i32, offset: i32, data: span<u8>) -> bool;
 }

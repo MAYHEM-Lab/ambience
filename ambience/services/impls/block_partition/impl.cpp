@@ -34,6 +34,12 @@ struct impl : tos::ae::services::block_memory::sync_server {
         return m_base->write(block + m_base_block, offset, data);
     }
 
+    bool buffered_write(const int32_t& block,
+                        const int32_t& offset,
+                        tos::span<uint8_t> data) override {
+        return m_base->buffered_write(block + m_base_block, offset, data);
+    }
+
     tos::ae::services::block_memory::sync_server* m_base;
     int m_base_block;
     int m_block_count;

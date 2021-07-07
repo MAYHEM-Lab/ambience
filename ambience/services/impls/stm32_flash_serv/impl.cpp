@@ -29,6 +29,13 @@ struct impl final : tos::ae::services::block_memory::sync_server {
         return true;
     }
 
+    bool buffered_write(const int32_t& block,
+                        const int32_t& offset,
+                        tos::span<uint8_t> data) override {
+        // TODO: Buffer this write
+        return write(block, offset, data);
+    }
+
     bool erase(const int32_t& block) override {
         m_flash.erase(block);
         return true;
