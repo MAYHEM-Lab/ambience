@@ -73,7 +73,7 @@ template<class ServiceHost>
 void lwip_host<ServiceHost>::handle_one_req(
     tos::tcp_stream<tos::lwip::tcp_endpoint>& stream) {
     auto req = read_req(stream);
-    std::array<uint8_t, 128> resp;
+    std::array<uint8_t, 2048> resp;
     lidl::message_builder response_builder{resp};
 
     handle_req(serv, req, response_builder);
@@ -89,7 +89,7 @@ void lwip_host<ServiceHost>::handle_one_req(const tos::udp_endpoint_t& from,
     if (buf.size() == buf.cur_bucket().size()) {
         auto req = buf.cur_bucket();
 
-        std::array<uint8_t, 128> resp;
+        std::array<uint8_t, 2048> resp;
         lidl::message_builder response_builder{resp};
 
         auto now = lwip::global::system_clock->now();
