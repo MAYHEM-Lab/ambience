@@ -126,12 +126,14 @@ public:
             void await_suspend(std::coroutine_handle<> coro) {
                 m_cont = coro;
                 m_sem->m_wait.add(*this);
+                tos::kern::enable_interrupts();
             }
 
             void await_resume() {
             }
 
             void operator()() override {
+                tos::kern::disable_interrupts();
                 m_cont.resume();
             }
 
