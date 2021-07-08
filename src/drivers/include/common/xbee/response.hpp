@@ -6,7 +6,6 @@
 
 #include "constants.hpp"
 #include "types.hpp"
-
 #include <boost/sml.hpp>
 #include <stddef.h>
 #include <tos/expected.hpp>
@@ -138,6 +137,41 @@ struct simple_alloc {
     }
 };
 
+struct recv16 : response_base<api_ids::RX_16_RESPONSE> {
+    recv16() = default;
+    explicit recv16(int len)
+        : m_raw_data(len) {
+    }
+
+    std::vector<uint8_t> m_raw_data;
+
+    addr_16 from() const {
+        uint8_t buf[2];
+        memcpy(&buf, m_raw_data.data(), 2);
+        std::swap(buf[0], buf[1]);
+        addr_16 res;
+        memcpy(&res, buf, 2);
+        return res;
+    }
+
+    span<const uint8_t> data() const {
+        return span<const uint8_t>(m_raw_data).slice(4);
+    }
+};
+
+void consume_payload(recv16& ts, tos::span<const uint8_t> data, size_t index) {
+    ts.m_raw_data[index] = data[0];
+}
+
+template<class Type>
+struct recv_alloc {
+    using obj_type = Type;
+
+    Type operator()(api_ids id, length_t len) {
+        return Type{int(len.len)};
+    }
+};
+
 template<class ResType, class ResAllocator = simple_alloc<ResType>>
 class sm_response_parser : ResAllocator {
 public:
@@ -171,7 +205,9 @@ public:
         sm.process_event(events::byte{data});
 
         if (sm.is("got_len"_s)) {
-            m_pl = static_cast<ResAllocator>(*this)(get_api_id(), get_len());
+            // -1 excludes the api id byte as we have already consumed that
+            m_pl = static_cast<ResAllocator>(*this)(
+                get_api_id(), length_t{uint16_t(get_len().len - 1)});
             // confirm size
         }
     }
@@ -248,7 +284,24 @@ tos::expected<xbee::tx_status, xbee_errors> read_tx_status(StreamT& str, AlarmT&
     xbee::sm_response_parser<xbee::tx_status> parser({});
     while (!parser.finished()) {
         std::array<uint8_t, 1> rbuf;
-        auto r = str.read(rbuf, alarm, 5s);
+        auto r = str.read(rbuf, alarm, 100ms);
+        if (r.size() != 1) {
+            // xbee is non responsive
+            return unexpected(xbee_errors::xbee_non_responsive);
+        }
+        parser.consume(rbuf[0]);
+    }
+    return std::move(parser).get_payload();
+}
+
+template<class StreamT, class AlarmT>
+tos::expected<xbee::recv16, xbee_errors> receive(StreamT& str, AlarmT& alarm) {
+    using namespace std::chrono_literals;
+    xbee::sm_response_parser<tos::xbee::recv16, tos::xbee::recv_alloc<tos::xbee::recv16>>
+        parser({});
+    while (!parser.finished()) {
+        std::array<uint8_t, 1> rbuf;
+        auto r = str.read(rbuf);
         if (r.size() != 1) {
             // xbee is non responsive
             return unexpected(xbee_errors::xbee_non_responsive);
