@@ -25,6 +25,20 @@ struct l4_iot_disco_spec {
         }
     };
 
+    struct usart4 {
+        static constexpr auto tag = devs::usart<4>;
+        static constexpr auto conf = uart::default_9600;
+        static constexpr auto tx_pin = 0;
+        static constexpr auto rx_pin = 1;
+
+        static auto open() {
+            return tos::open(tag,
+                             std::move(conf),
+                             stm32::instantiate_pin(rx_pin),
+                             stm32::instantiate_pin(tx_pin));
+        }
+    };
+
     using default_com = usart1;
 
     struct spi1 {
