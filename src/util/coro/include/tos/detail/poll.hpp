@@ -102,12 +102,20 @@ pollable make_pollable(Task<T> x, BeforeFin fin = {}) {
 
 template<class AwaitableT, class BeforeFin = tos::ignore_t>
 detached make_detached(AwaitableT x, BeforeFin fin = {}) {
-    if constexpr (std::is_invocable_v<AwaitableT>) {
-        co_await x();
+    if constexpr (std::is_invocable_v<BeforeFin>) {
+        if constexpr (std::is_invocable_v<AwaitableT>) {
+            co_await x();
+        } else {
+            co_await x;
+        }
+        fin();
     } else {
-        co_await x;
+        if constexpr (std::is_invocable_v<AwaitableT>) {
+            fin(co_await x());
+        } else {
+            fin(co_await x);
+        }
     }
-    fin();
     co_return;
 }
 } // namespace tos::coro
