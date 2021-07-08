@@ -13,7 +13,7 @@ using usart_constraint = ct_map<usart_key_policy,
                                 el_t<usart_parity, const usart_parity&>,
                                 el_t<usart_stop_bit, const usart_stop_bit&>>;
 
-struct usart {
+struct usart : self_pointing<usart> {
 public:
     usart(boost::asio::io_service& io,
           std::string_view serial_name,
@@ -29,7 +29,7 @@ public:
             asio::serial_port::flow_control(asio::serial_port::flow_control::none));
     }
 
-    expected<int, boost::system::error_code> write(span<const uint8_t> buf) {
+    int write(span<const uint8_t> buf) {
         int size = 0;
         boost::system::error_code ec;
         boost::asio::async_write(m_port,
@@ -54,6 +54,28 @@ public:
                                     m_read.up();
                                 });
         m_read.down();
+        if (ec) {
+            return buf.slice(0, size);
+        }
+        return buf.slice(0, size);
+    }
+
+    template<class AlarmT>
+    span<uint8_t> read(span<uint8_t> buf, AlarmT& alarm, std::chrono::milliseconds to) {
+        int size = 0;
+        boost::system::error_code ec;
+        boost::asio::async_read(m_port,
+                                boost::asio::buffer(buf.data(), buf.size()),
+                                [&](boost::system::error_code e, std::size_t len) {
+                                    size = len;
+                                    ec = e;
+                                    m_read.up();
+                                });
+        auto res = m_read.down(alarm, to);
+        if (res != sem_ret::normal) {
+            m_port.cancel();
+            m_read.down();
+        }
         if (ec) {
             return buf.slice(0, size);
         }
