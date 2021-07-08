@@ -52,7 +52,9 @@ void init_pci(tos::physical_page_allocator& palloc, tos::ae::registry_base& regi
             case 0x1001: {
                 tos::debug::log("Virtio block device");
                 if (registry.try_take("node_block"))
+                {
                     break;
+                }
                 auto bd = new tos::virtio::block_device(
                     tos::virtio::make_x86_pci_transport(std::move(dev)));
                 bd->initialize(&palloc);
@@ -65,7 +67,12 @@ void init_pci(tos::physical_page_allocator& palloc, tos::ae::registry_base& regi
                 break;
             }
             case 0x1000: {
+                static bool already_got_net = false;
                 tos::debug::log("Virtio network device");
+                if (already_got_net) {
+                    break;
+                }
+                already_got_net = true;
                 auto nd = new tos::virtio::network_device(
                     tos::virtio::make_x86_pci_transport(std::move(dev)));
                 nd->initialize(&palloc);
