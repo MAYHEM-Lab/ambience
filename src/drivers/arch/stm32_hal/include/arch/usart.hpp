@@ -39,6 +39,12 @@ inline const usart_def usarts[] = {
      [] { __HAL_RCC_USART3_CLK_ENABLE(); },
      [] { __HAL_RCC_USART3_CLK_DISABLE(); }},
 #endif
+#if defined(UART4)
+    {UART4_BASE,
+     UART4_IRQn,
+     [] { __HAL_RCC_UART4_CLK_ENABLE(); },
+     [] { __HAL_RCC_UART4_CLK_DISABLE(); }},
+#endif
 #if defined(LPUART1)
     {LPUART1_BASE,
      LPUART1_IRQn,
@@ -88,9 +94,7 @@ public:
     }
 
     void rx_done_isr() {
-        rx_buf.push(m_recv_byte);
-        rx_s.up_isr();
-
+        m_read_cb(m_recv_byte);
         HAL_UART_Receive_IT(&m_handle, &m_recv_byte, 1);
     }
 
@@ -98,7 +102,20 @@ public:
         return &m_handle;
     }
 
+    void set_read_cb(tos::function_ref<void(uint8_t)> cb) {
+        m_read_cb = cb;
+    }
+
+    void reset_read_cb() {
+        m_read_cb = mem_function_ref<&usart::default_read_cb>(*this);
+    }
+
 private:
+    void default_read_cb(uint8_t data) {
+        rx_buf.push(data);
+        rx_s.up_isr();
+    }
+
     tos::basic_fixed_fifo<uint8_t, 32, tos::ring_buf> rx_buf;
     tos::semaphore rx_s{0};
     tos::semaphore tx_s{0};
@@ -106,6 +123,7 @@ private:
     uint8_t m_recv_byte;
     UART_HandleTypeDef m_handle;
     const detail::usart_def* m_def;
+    tos::function_ref<void(uint8_t)> m_read_cb;
 };
 } // namespace stm32
 
@@ -130,11 +148,18 @@ inline stm32::usart open_impl(tos::devs::usart_t<3>,
     return stm32::usart{stm32::detail::usarts[2], std::move(constraints), rx, tx};
 }
 
-inline stm32::usart open_impl(tos::devs::lpuart_t<1>,
+inline stm32::usart open_impl(tos::devs::usart_t<4>,
                               stm32::usart_constraint&& constraints,
                               stm32::gpio::pin_type rx,
                               stm32::gpio::pin_type tx) {
     return stm32::usart{stm32::detail::usarts[3], std::move(constraints), rx, tx};
+}
+
+inline stm32::usart open_impl(tos::devs::lpuart_t<1>,
+                              stm32::usart_constraint&& constraints,
+                              stm32::gpio::pin_type rx,
+                              stm32::gpio::pin_type tx) {
+    return stm32::usart{stm32::detail::usarts[4], std::move(constraints), rx, tx};
 }
 } // namespace tos
 
@@ -146,7 +171,8 @@ inline usart::usart(const detail::usart_def& x,
                     gpio::pin_type rx_pin,
                     gpio::pin_type tx_pin)
     : tracked_driver(std::distance(detail::usarts, &x))
-    , m_def{&x} {
+    , m_def{&x}
+    , m_read_cb(mem_function_ref<&usart::default_read_cb>(*this)) {
     m_def->rcc_en();
     {
         enable_rcc(rx_pin.port);

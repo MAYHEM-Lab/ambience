@@ -20,6 +20,11 @@ struct afio {
             return std::make_pair(rx ? GPIO_AF8_LPUART1 : -1, tx ? GPIO_AF8_LPUART1 : -1);
         }
 #endif
+#if defined(UART4_BASE)
+        if (usart == UART4_BASE) {
+            return std::make_pair(rx ? GPIO_AF8_UART4 : -1, tx ? GPIO_AF8_UART4 : -1);
+        }
+#endif
         return std::make_pair(rx ? GPIO_AF7_USART1 : -1, tx ? GPIO_AF7_USART1 : -1);
     }
 
