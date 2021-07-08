@@ -52,26 +52,10 @@ tos::expected<void, tos::common_error> kernel() {
         }
     });
 
-    tos::launch(tos::alloc_stack, [&] {
-        int res = -1;
-        tos::semaphore sem{0};
-        while (true) {
-            using namespace std::chrono_literals;
-            tos::this_thread::sleep_for(*support.get_chrono().alarm, 1s);
-            tos::debug::log("Calling");
-            tos::coro::make_detached([&]() -> tos::Task<void> {
-                auto calc = co_await registry.wait<"calc">();
-                res = co_await calc->add(3, 4);
-                sem.up();
-            }());
-            sem.down();
-            tos::debug::log("3 + 4 =", res);
-        }
-    });
-
     if (group_list.empty()) {
         tos::this_thread::block_forever();
     }
+    
     while (true) {
         tos::this_thread::yield();
         auto& g = group_list.front();
