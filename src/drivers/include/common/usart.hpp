@@ -71,6 +71,10 @@ static constexpr auto default_9600 = usart_config()
                                          .add(tos::usart_baud_rate{9600})
                                          .add(tos::usart_parity::disabled)
                                          .add(tos::usart_stop_bit::one);
+static constexpr auto default_38400 = usart_config()
+                                          .add(tos::usart_baud_rate{38400})
+                                          .add(tos::usart_parity::disabled)
+                                          .add(tos::usart_stop_bit::one);
 static constexpr auto default_115200 = usart_config()
                                            .add(tos::usart_baud_rate{115200})
                                            .add(tos::usart_parity::disabled)
@@ -179,7 +183,7 @@ auto erase_usart(UsartT&& usart) -> detail::erased_usart<UsartT> {
 template<class T>
 class thread_safe_usart : public self_pointing<thread_safe_usart<T>> {
 public:
-    template <class U, std::enable_if_t<!std::is_same_v<U, thread_safe_usart>>* = nullptr>
+    template<class U, std::enable_if_t<!std::is_same_v<U, thread_safe_usart>>* = nullptr>
     explicit thread_safe_usart(U&& t)
         : m_impl(std::forward<U>(t)) {
     }
@@ -199,13 +203,13 @@ public:
     T m_impl;
 };
 
-template <class T>
+template<class T>
 thread_safe_usart(T&&) -> thread_safe_usart<T>;
 
 template<class T, size_t BufferSize = 512>
 class buffered_usart : public self_pointing<buffered_usart<T, BufferSize>> {
 public:
-    template <class U, std::enable_if_t<!std::is_same_v<U, buffered_usart>>* = nullptr>
+    template<class U, std::enable_if_t<!std::is_same_v<U, buffered_usart>>* = nullptr>
     explicit buffered_usart(U&& t)
         : m_impl(std::forward<U>(t)) {
     }
@@ -253,6 +257,6 @@ private:
     uint16_t m_buf_cur = 0;
 };
 
-template <class T>
+template<class T>
 buffered_usart(T&&) -> buffered_usart<T>;
 } // namespace tos
