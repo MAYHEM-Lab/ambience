@@ -2550,7 +2550,6 @@ BOOST_SML_NAMESPACE_END
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #elif defined(__GNUC__)
-#undef __has_builtin
 #pragma GCC diagnostic pop
 #elif defined(_MSC_VER)
 #undef __has_builtin
