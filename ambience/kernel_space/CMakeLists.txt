@@ -19,24 +19,35 @@ endif()
 add_library(aekernel "")
 target_sources(
   aekernel
-  PRIVATE include/tos/ae/transport/lwip/host.hpp
-          src/transport/lwip/host.cpp
-          include/tos/ae/transport/lwip/udp.hpp
-          src/transport/lwip/udp.cpp
-          include/tos/ae/transport/caplets/adapter.hpp
+  PRIVATE include/tos/ae/transport/caplets/adapter.hpp
 )
+
 target_link_libraries(
   aekernel
   PUBLIC tos_util_core
          tos_core
          tos_dynamic_log
          aekernellib
-         calc_schema
          lidl_log_sink
-         lwipcore
          alarm_schema
          hana
 )
+
+if (NOT ${TOS_PLATFORM} MATCHES "hosted")
+    target_sources(
+            aekernel
+            PRIVATE include/tos/ae/transport/lwip/host.hpp
+            src/transport/lwip/host.cpp
+            include/tos/ae/transport/lwip/udp.hpp
+            src/transport/lwip/udp.cpp
+            include/tos/ae/transport/caplets/adapter.hpp
+    )
+    target_link_libraries(
+            aekernel
+            PUBLIC
+            lwipcore
+    )
+endif()
 
 add_library(aekernel_node INTERFACE)
 target_link_libraries(aekernel_node INTERFACE aekernel)

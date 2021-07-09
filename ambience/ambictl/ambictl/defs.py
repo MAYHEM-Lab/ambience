@@ -400,6 +400,56 @@ class LwipUdpExporter(Exporter):
         return "tos/ae/transport/lwip/host.hpp"
 
 
+class HostedUdpImporter(Importer):
+    def __init__(self):
+        super().__init__()
+
+    def make_import(self, service, config) -> Import:
+        return Import(self, service, config)
+
+    def import_from(self, export: Export):
+        iface = export.instance.impl.iface
+        conf = {
+            "ip": export.instance.assigned_group.dg.node.node.ip_address,
+            "port": export.config
+        }
+        return self.make_import(iface, conf)
+
+    def import_string(self, import_: Import):
+        format = "{}<tos::ae::hosted_udp_transport>{{tos::udp_endpoint_t{{tos::parse_ipv4_address(\"{}\"), {{{}}} }} }}"
+        return format.format(import_.interface.sync_stub_client(), import_.config["ip"], import_.config["port"])
+
+    def get_cxx_include(self):
+        return "tos/ae/transport/hosted/udp.hpp"
+
+
+class HostedUdpExporter(Exporter):
+    allocation: Dict
+    next: int
+
+    def __init__(self):
+        super().__init__()
+        self.allocation = {}
+        self.next = 1993
+
+    def get_port_for_service(self, service):
+        if service not in self.allocation:
+            self.allocation[service] = self.next
+            self.next = self.next + 1
+        return self.allocation[service]
+
+    def export(self, service, config) -> Export:
+        if config is None:
+            config = self.get_port_for_service(service)
+        return Export(self, service, config)
+
+    def export_service_string(self, export):
+        return f"new tos::ae::hosted_udp_host(tos::ae::service_host(co_await registry.wait<\"{export.instance.name}\">()), tos::port_num_t{{{export.config}}});"
+
+    def get_cxx_include(self):
+        return "tos/ae/transport/hosted/udp_host.hpp"
+
+
 class Platform(abc.ABC):
     loader: GroupLoader
 

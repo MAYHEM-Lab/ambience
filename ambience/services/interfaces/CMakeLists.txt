@@ -1,3 +1,5 @@
+add_lidlc(echo_schema echo.lidl)
+
 add_lidlc(calc_schema calc.lidl)
 
 add_lidlc(block_memory_schema block_memory.lidl)

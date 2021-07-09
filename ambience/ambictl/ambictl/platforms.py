@@ -3,13 +3,14 @@ import os
 from .defs import *
 from .group_loader import *
 
+
 class x86_64(Platform):
     board_name: str
+
     def __init__(self, board_name: str):
         super().__init__(BundledElfLoader())
         self.loader.user_src = "${CMAKE_SOURCE_DIR}/cmake-build-barex64-user"
         self.board_name = board_name
-        pass
 
     def generateBuildDirectories(self, source_dir: str):
         user_conf_dir = os.path.join(source_dir, f"cmake-build-barex64-user")
@@ -55,7 +56,6 @@ class raspi3(Platform):
     def __init__(self):
         super().__init__(BundledElfLoader())
         self.loader.user_src = "${CMAKE_SOURCE_DIR}/cmake-build-raspi3-user"
-        pass
 
     def make_deploy_node(self, node: Node, groups: [Group]):
         res = DeployNode(node, groups)
@@ -90,7 +90,6 @@ raspi3 = raspi3()
 class stm32(Platform):
     def __init__(self):
         super().__init__(InMemoryLoader())
-        pass
 
     def make_deploy_node(self, node: Node, groups: [Group]):
         res = DeployNode(node, groups)
@@ -120,3 +119,30 @@ class stm32(Platform):
 
 
 stm32 = stm32()
+
+
+class x86_hosted(Platform):
+    def __init__(self):
+        super().__init__(KernelLoader())
+
+    def generateBuildDirectories(self, source_dir: str):
+        conf_dir = os.path.join(source_dir, f"cmake-build-hosted")
+        os.makedirs(conf_dir, exist_ok=True)
+        args = ["cmake", "-G", "Ninja", f"-DTOS_BOARD=hosted", "-DCMAKE_BUILD_TYPE=Release",
+                "-DENABLE_LTO=OFF", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache", "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+                source_dir]
+        print(args)
+        env = os.environ.copy()
+        env["CC"] = "/opt/llvm/bin/clang"
+        env["CXX"] = "/opt/llvm/bin/clang++"
+        cmake_proc = subprocess.Popen(args, cwd=conf_dir, env=env)
+        cmake_proc.wait()
+        return (conf_dir,)
+
+    def make_deploy_node(self, node: Node, groups: [Group]):
+        res = DeployNode(node, groups)
+        res.target_name = f"{node.name}_kernel"
+        return res
+
+
+x86_hosted = x86_hosted()

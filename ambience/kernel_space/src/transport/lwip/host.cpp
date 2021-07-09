@@ -95,12 +95,11 @@ void lwip_host<ServiceHost>::handle_one_req(const tos::udp_endpoint_t& from,
         auto now = lwip::global::system_clock->now();
         handle_req(serv, req, response_builder);
         auto end = lwip::global::system_clock->now();
-        tos::debug::log(
-            "Request took",
-            int(std::chrono::duration_cast<std::chrono::microseconds>(end - now).count()),
-            "us");
-
         udp_sock.send_to(response_builder.get_buffer(), from);
+//        tos::debug::log(
+//            "Request took",
+//            int(std::chrono::duration_cast<std::chrono::microseconds>(end - now).count()),
+//            "us");
     }
 }
 

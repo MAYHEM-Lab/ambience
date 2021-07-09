@@ -1,0 +1,6 @@
+namespace tos::ae::services;
+
+service echo {
+    echo_num(num: i32) -> i32;
+    echo_str(data: string_view) -> string_view;
+}

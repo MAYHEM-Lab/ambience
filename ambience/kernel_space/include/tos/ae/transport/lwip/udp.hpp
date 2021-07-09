@@ -12,13 +12,12 @@ public:
     udp_transport(tos::udp_endpoint_t ep);
 
     std::vector<uint8_t> get_buffer();
+    tos::span<uint8_t> send_receive(tos::span<uint8_t> buffer);
 
     void operator()(tos::lwip::events::recvfrom_t,
                     tos::lwip::async_udp_socket*,
                     const tos::udp_endpoint_t& from,
                     tos::lwip::buffer&& buf);
-
-    tos::span<uint8_t> send_receive(tos::span<uint8_t> buffer);
 
 private:
     tos::semaphore m_wait{0};
