@@ -57,7 +57,12 @@ public:
 
     T& value() {
         Assert(has_value());
-        return m_init.m_t;
+        // Gcc does not like taking references to packed members.
+        // The reinterpret cast is to convince gcc that this is fine.
+        // This is somewhat fine as m_t is the first member of the type, so it'll be well
+        // aligned.
+        // This may not be fine if async_inits are placed in an array.
+        return *reinterpret_cast<T*>(&m_init.m_t);
     }
 
 private:
