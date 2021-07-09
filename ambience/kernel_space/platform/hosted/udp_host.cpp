@@ -1,3 +1,4 @@
+#include <tos/ae/detail/handle_req.hpp>
 #include <tos/ae/transport/hosted/udp_host.hpp>
 #include <tos/cancellation_token.hpp>
 #include <tos/detail/poll.hpp>
@@ -14,25 +15,6 @@ hosted_udp_host<ServiceHost>::hosted_udp_host(const ServiceHost& service,
     tos::launch(tos::alloc_stack, [this] { recv_thread(); });
 }
 
-namespace {
-void handle_req(async_service_host& serv,
-                tos::span<uint8_t> req,
-                lidl::message_builder& response_builder) {
-    tos::semaphore exec_sem{0};
-
-    tos::coro::make_detached(serv.run_message(req, response_builder),
-                             tos::make_semaphore_upper(exec_sem));
-
-    exec_sem.down();
-}
-
-void handle_req(sync_service_host& serv,
-                tos::span<uint8_t> req,
-                lidl::message_builder& response_builder) {
-    serv.run_message(req, response_builder);
-}
-} // namespace
-
 template<class ServiceHost>
 void hosted_udp_host<ServiceHost>::recv_thread() {
     while (!tos::cancellation_token::system().is_cancelled()) {
@@ -43,7 +25,7 @@ void hosted_udp_host<ServiceHost>::recv_thread() {
                         [this, req = force_get(read_res), buf = std::move(buf), from_ep] {
                             std::vector<uint8_t> resp(4096);
                             lidl::message_builder response_builder(resp);
-                            handle_req(m_serv, req, response_builder);
+                            sync_run_message(m_serv, req, response_builder);
 
                             m_sock.send_to(response_builder.get_buffer(), from_ep);
                         });

@@ -19,7 +19,10 @@ endif()
 add_library(aekernel "")
 target_sources(
   aekernel
-  PRIVATE include/tos/ae/transport/caplets/adapter.hpp
+  PRIVATE
+        include/tos/ae/transport/caplets/adapter.hpp
+        src/transport/xbee/xbee_host.cpp
+        src/transport/xbee/xbee_transport.cpp
 )
 
 target_link_libraries(
@@ -31,6 +34,7 @@ target_link_libraries(
          lidl_log_sink
          alarm_schema
          hana
+        tos_xbee
 )
 
 if (NOT ${TOS_PLATFORM} MATCHES "hosted")

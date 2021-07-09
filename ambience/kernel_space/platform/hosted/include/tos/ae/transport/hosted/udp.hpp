@@ -2,6 +2,7 @@
 
 #include <arch/udp.hpp>
 #include <lidlrt/transport/common.hpp>
+#include <tos/ae/importer.hpp>
 
 namespace tos::ae {
 struct hosted_udp_transport : lidl::verbatim_transform {
@@ -14,4 +15,4 @@ private:
     tos::hosted::udp_socket m_sock;
     tos::udp_endpoint_t m_ep;
 };
-}
+} // namespace tos::ae

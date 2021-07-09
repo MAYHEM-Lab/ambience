@@ -1,2 +1,2 @@
 add_executable(hosted_xbee_demo main.cpp)
-target_link_libraries(hosted_xbee_demo PRIVATE tos_board tos_core tos_dynamic_log tos_xbee calc_schema basic_calc)
+target_link_libraries(hosted_xbee_demo PRIVATE tos_board tos_core tos_dynamic_log tos_xbee calc_schema basic_calc aekernel)

@@ -1,2 +1,2 @@
 add_executable(stm32_xbee_demo main.cpp)
-target_link_libraries(stm32_xbee_demo PRIVATE tos_board tos_core tos_dynamic_log tos_xbee calc_schema)
+target_link_libraries(stm32_xbee_demo PRIVATE tos_board tos_core tos_dynamic_log tos_xbee calc_schema aekernel)
