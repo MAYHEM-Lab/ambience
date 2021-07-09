@@ -19,6 +19,8 @@ public:
     expected<span<uint8_t>, boost::system::error_code>
     receive_from(tos::span<uint8_t> data, udp_endpoint_t& from);
 
+    expected<void, boost::system::error_code> bind(port_num_t);
+
 private:
     std::unique_ptr<boost::asio::ip::udp::socket> m_sock;
 };
