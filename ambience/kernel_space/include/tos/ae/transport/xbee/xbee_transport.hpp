@@ -12,7 +12,7 @@ struct xbee_import_args : import_args {
 };
 
 template<class SerialType, class AlarmType>
-class xbee_importer {
+class xbee_importer : public importer::sync_server {
     struct transport : lidl::verbatim_transform {
         transport(xbee_importer* back_ptr, tos::xbee::addr_16 addr, int channel)
             : m_back_ptr{back_ptr}
@@ -22,24 +22,25 @@ class xbee_importer {
 
         tos::span<uint8_t> send_receive(tos::span<uint8_t> buf) {
             tos::lock_guard lg{m_back_ptr->m_mutex};
+            m_back_ptr->m_num_calls++;
             tos::xbee::tx16_req req{m_address, buf, tos::xbee::frame_id_t{1}};
 
-            tos::xbee_s1 x{m_back_ptr->m_ser};
+            tos::xbee_s1 x{meta::deref(m_back_ptr->m_ser)};
             x.transmit(req);
 
             int retries = 5;
             tos::xbee::tx_status stat;
             while (retries-- > 0) {
                 auto tx_r =
-                    tos::xbee::read_tx_status(m_back_ptr->m_ser, m_back_ptr->m_alarm);
+                    tos::xbee::read_tx_status(meta::deref(m_back_ptr->m_ser), meta::deref(m_back_ptr->m_alarm));
                 if (tx_r) {
                     stat = tos::force_get(tx_r);
                     break;
                 }
             }
 
-            m_last_packet =
-                force_get(tos::xbee::receive(m_back_ptr->m_ser, m_back_ptr->m_alarm));
+            m_last_packet = force_get(tos::xbee::receive(
+                meta::deref(m_back_ptr->m_ser), meta::deref(m_back_ptr->m_alarm)));
 
             return tos::const_span_cast(m_last_packet.data());
         }
@@ -60,6 +61,12 @@ public:
         , m_alarm{alarm} {
     }
 
+private:
+    int64_t number_of_calls() override {
+        return m_num_calls;
+    }
+
+public:
     template<class ServiceType>
     typename ServiceType::sync_server* import_service(const xbee_import_args& args) {
         return new typename ServiceType::template stub_client<transport>(
@@ -70,5 +77,6 @@ private:
     tos::mutex m_mutex;
     SerialType m_ser;
     AlarmType m_alarm;
+    int64_t m_num_calls = 0;
 };
 } // namespace tos::ae

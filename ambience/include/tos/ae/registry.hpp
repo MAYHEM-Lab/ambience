@@ -114,6 +114,11 @@ struct service_registry<service_mapping<Names, Ts>...>
         co_return ptr;
     }
 
+    template<tos::fixed_string Name>
+    constexpr bool has_service() {
+        return ((Names == Name) || ...);
+    }
+
 private:
     template<tos::fixed_string Name, class T>
     friend auto& get(service_mapping<Name, T>& mapping) {

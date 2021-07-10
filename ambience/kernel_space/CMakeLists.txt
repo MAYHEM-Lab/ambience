@@ -34,7 +34,8 @@ target_link_libraries(
          lidl_log_sink
          alarm_schema
          hana
-        tos_xbee
+         tos_xbee
+         import_export_schema
 )
 
 if (NOT ${TOS_PLATFORM} MATCHES "hosted")
@@ -59,6 +60,7 @@ target_sources(
     aekernel_node
     INTERFACE
         src/node.cpp
+        src/xbee_exporter.cpp
 )
 
 add_subdirectory(common)

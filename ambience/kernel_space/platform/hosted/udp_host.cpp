@@ -35,4 +35,8 @@ void hosted_udp_host<ServiceHost>::recv_thread() {
 
 template class hosted_udp_host<sync_service_host>;
 template class hosted_udp_host<async_service_host>;
+
+int64_t hosted_udp_exporter::number_of_calls() {
+    return 0;
+}
 } // namespace tos::ae

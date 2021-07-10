@@ -20,6 +20,7 @@ concept HasGroup = requires(T& t) {
     t.group;
 };
 
+void maybe_init_xbee(tos::any_alarm& alarm);
 tos::expected<void, tos::common_error> kernel() {
     platform_support support;
 
@@ -41,6 +42,8 @@ tos::expected<void, tos::common_error> kernel() {
 
     static tos::debug::log_server serv(sink);
     registry.register_service<"logger">(&serv);
+
+    maybe_init_xbee(support.get_chrono().alarm);
 
     auto groups = init_all_groups(support.make_args());
     tos::debug::log("Groups initialized");

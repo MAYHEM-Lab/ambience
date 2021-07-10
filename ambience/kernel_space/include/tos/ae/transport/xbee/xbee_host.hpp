@@ -7,6 +7,7 @@
 #include <tos/cancellation_token.hpp>
 #include <tos/ft.hpp>
 #include <tos/intrusive_list.hpp>
+#include <tos/self_pointing.hpp>
 
 namespace tos::ae {
 struct xbee_export_args : export_args {
@@ -14,7 +15,7 @@ struct xbee_export_args : export_args {
 };
 
 template<class SerialType, class AlarmT>
-class xbee_exporter : public exporter {
+class xbee_exporter : public service_exporter {
 public:
     xbee_exporter(SerialType serial, AlarmT alarm)
         : m_serial{serial}
@@ -52,7 +53,8 @@ private:
         while (!cancellation_token::system().is_cancelled()) {
             auto recv_retry = [&] {
                 while (true) {
-                    if (auto recv_res = tos::xbee::receive(m_serial, m_alarm)) {
+                    if (auto recv_res = tos::xbee::receive(meta::deref(m_serial),
+                                                           meta::deref(m_alarm))) {
                         return force_get(std::move(recv_res));
                     }
                 }
@@ -62,9 +64,10 @@ private:
             std::array<uint8_t, 2048> buf;
             lidl::message_builder rb{buf};
 
+            m_num_calls++;
             run_message_on_channel(0, tos::const_span_cast(p.data()), rb);
 
-            tos::xbee_s1 x(m_serial);
+            tos::xbee_s1 x(meta::deref(m_serial));
             tos::xbee::tx16_req req{p.from(), rb.get_buffer(), tos::xbee::frame_id_t{1}};
             x.transmit(req);
 
@@ -72,7 +75,8 @@ private:
             int retries = 5;
             tos::xbee::tx_status stat;
             while (retries-- > 0) {
-                auto tx_r = tos::xbee::read_tx_status(m_serial, m_alarm);
+                auto tx_r = tos::xbee::read_tx_status(meta::deref(m_serial),
+                                                      meta::deref(m_alarm));
                 if (tx_r) {
                     stat = tos::force_get(tx_r);
                     break;
@@ -86,8 +90,13 @@ private:
     intrusive_list<host<async_service_host>> m_async_hosts;
     SerialType m_serial;
     AlarmT m_alarm;
+    int64_t m_num_calls = 0;
 
 public:
+    int64_t number_of_calls() override {
+        return m_num_calls;
+    }
+
     void export_service(const sync_service_host& h, const export_args& args) override {
         m_sync_hosts.push_back(*new host<sync_service_host>(
             static_cast<const xbee_export_args&>(args).channel, h));

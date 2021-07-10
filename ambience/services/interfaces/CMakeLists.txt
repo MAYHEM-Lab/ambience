@@ -16,3 +16,5 @@ add_lidlc(filesystem_schema file_system.lidl)
 target_include_directories(filesystem_schema INTERFACE .)
 
 add_lidlc(machine_schema machine.lidl)
+
+add_lidlc(import_export_schema import_export.lidl)
