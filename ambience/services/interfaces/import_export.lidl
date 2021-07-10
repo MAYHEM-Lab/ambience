@@ -1,0 +1,9 @@
+namespace tos::ae;
+
+service importer {
+    number_of_calls() -> i64;
+}
+
+service exporter {
+    number_of_calls() -> i64;
+}
