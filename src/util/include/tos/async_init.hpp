@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <tos/detail/coro.hpp>
 #include <tos/intrusive_list.hpp>
+#include <tos/debug/assert.hpp>
 
 namespace tos {
 template<class T>
