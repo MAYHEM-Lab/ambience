@@ -25,7 +25,7 @@ struct l4_iot_disco_spec {
         }
     };
 
-    struct usart4 {
+    struct xbee_uart {
         static constexpr auto tag = devs::usart<4>;
         static constexpr auto conf = uart::default_9600;
         static constexpr auto tx_pin = 0;

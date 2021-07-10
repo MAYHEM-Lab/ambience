@@ -13,8 +13,13 @@ struct hosted_spec {
         static constexpr auto conf = uart::default_115200;
 
         static auto open() {
-            return tos::open(tag,
-                             std::move(conf));
+            return tos::open(tag, std::move(conf));
+        }
+    };
+
+    struct xbee_uart {
+        static auto open() {
+            return tos::hosted::usart{get_io(), "/dev/ttyUSB1", tos::uart::default_38400};
         }
     };
 
