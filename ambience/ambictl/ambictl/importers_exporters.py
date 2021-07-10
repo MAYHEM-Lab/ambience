@@ -20,7 +20,7 @@ class LwipUdpImporter(Importer):
         format = "{}<tos::ae::udp_transport>{{tos::udp_endpoint_t{{tos::parse_ipv4_address(\"{}\"), {{{}}} }} }}"
         return format.format(import_.interface.sync_stub_client(), import_.config["ip"], import_.config["port"])
 
-    def cxx_include(self):
+    def cxx_includes(self):
         return ["tos/ae/transport/lwip/udp.hpp"]
 
 
@@ -47,7 +47,7 @@ class LwipUdpExporter(Exporter):
     def export_service_string(self, export):
         return f"new tos::ae::lwip_host(tos::ae::service_host(co_await registry.wait<\"{export.instance.name}\">()), tos::port_num_t{{{export.config}}});"
 
-    def cxx_include(self):
+    def cxx_includes(self):
         return ["tos/ae/transport/lwip/host.hpp"]
 
     def registry_type(self):
@@ -76,7 +76,7 @@ class HostedUdpImporter(Importer):
         format = "{}<tos::ae::hosted_udp_transport>{{tos::udp_endpoint_t{{tos::parse_ipv4_address(\"{}\"), {{{}}} }} }}"
         return format.format(import_.interface.sync_stub_client(), import_.config["ip"], import_.config["port"])
 
-    def cxx_include(self):
+    def cxx_includes(self):
         return ["tos/ae/transport/hosted/udp.hpp"]
 
 
@@ -103,7 +103,7 @@ class HostedUdpExporter(Exporter):
     def export_service_string(self, export):
         return f"new tos::ae::hosted_udp_host(tos::ae::service_host(co_await registry.wait<\"{export.instance.name}\">()), tos::port_num_t{{{export.config}}});"
 
-    def cxx_include(self):
+    def cxx_includes(self):
         return ["tos/ae/transport/hosted/udp_host.hpp"]
 
     def registry_type(self):
@@ -137,7 +137,7 @@ class XbeeExporter(Exporter):
     def export_service_string(self, export):
         return f"(co_await registry.wait<\"{self.name}\">())->export_service(tos::ae::service_host(co_await registry.wait<\"{export.instance.name}\">()), tos::ae::xbee_export_args{{.channel = {export.config}}});"
 
-    def cxx_include(self):
+    def cxx_includes(self):
         return ["tos/ae/transport/xbee/xbee_host.hpp", "arch/drivers.hpp"]
 
     def registry_type(self):
@@ -167,7 +167,7 @@ class XbeeImporter(Importer):
     def import_string(self, import_: Import):
         return f"(co_await registry.wait<\"{self.name}\">())->import_service<{import_.interface.absolute_name()}>(tos::ae::xbee_import_args{{.addr={import_.config['addr']}, .channel={import_.config['channel']}}})"
 
-    def cxx_include(self):
+    def cxx_includes(self):
         return ["tos/ae/transport/xbee/xbee_transport.hpp", "arch/drivers.hpp"]
 
     def registry_type(self):

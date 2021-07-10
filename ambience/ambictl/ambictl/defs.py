@@ -255,7 +255,7 @@ class Import:
         return self.importer.import_string(self)
 
     def cxx_includes(self):
-        return [self.importer.cxx_include()]
+        return self.importer.cxx_includes()
 
 
 class Importer(Instance):
@@ -360,8 +360,8 @@ class DeployNode:
             "services": {serv.name: serv.registry_type() for serv in self.visibleServices()},
             "service_includes": set(iface.get_include() for group in self.groups for iface in group.interfaceDeps()),
             "exporter_includes": set(
-                (include for exporter in self.node.exporters for include in exporter.cxx_include())).union(
-                set((include for importer in self.node.importers for include in importer.cxx_include()))),
+                (include for exporter in self.node.exporters for include in exporter.cxx_includes())).union(
+                set((include for importer in self.node.importers for include in importer.cxx_includes()))),
         })
 
     def generate_node_dir(self, build_dir):
