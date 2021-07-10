@@ -32,7 +32,7 @@ function(add_executable target)
         if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
             target_link_libraries(${target} PUBLIC "-Xlinker -Map=${CMAKE_BINARY_DIR}/maps/${target}.map")
         elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-            if (NOT ${TOS_ARCH} MATCHES "wasm")
+            if (NOT ${TOS_ARCH} MATCHES "wasm" AND NOT ${TOS_PLATFORM} MATCHES "hosted")
                 target_link_libraries(${target} PUBLIC "-Map=${CMAKE_BINARY_DIR}/maps/${target}.map")
             endif()
         endif ()
@@ -40,9 +40,17 @@ function(add_executable target)
 endfunction()
 
 set(TOS_FLAGS "-Wall -Wextra -Wpedantic \
-     -ffunction-sections -fdata-sections -ffreestanding -g -pedantic \
+     -ffunction-sections -fdata-sections -g -pedantic \
      -Wno-unknown-pragmas -Wno-unused-parameter \
      -Wno-nonnull")
+
+if (NOT ${TOS_PLATFORM} MATCHES "hosted")
+    set(TOS_FLAGS "${TOS_FLAGS} -ffreestanding")
+else()
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        set(TOS_CXX_FLAGS "-lc++abi -stdlib=libc++ -fuse-ld=lld")
+    endif()
+endif()
 
 if(ENABLE_UBSAN)
     set(TOS_FLAGS "${TOS_FLAGS} -fsanitize=bool,null,nonnull-attribute")
@@ -83,7 +91,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     if (ENABLE_LTO)
         set(TOS_FLAGS "${TOS_FLAGS} -flto -fwhole-program-vtables -fforce-emit-vtables")
     endif ()
-    set(TOS_CXX_FLAGS "-fconstexpr-steps=2271242")
+    set(TOS_CXX_FLAGS "${TOS_CXX_FLAGS} -fconstexpr-steps=2271242")
 endif ()
 
 if (NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
