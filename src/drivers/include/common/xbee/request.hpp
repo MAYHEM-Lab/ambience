@@ -64,11 +64,11 @@ private:
 
 template<class StreamT>
 struct chk_str_t : self_pointing<chk_str_t<StreamT>> {
-    StreamT* str{};
+    StreamT str{};
     uint8_t chk_sum{0};
 
     constexpr int write(span<const uint8_t> buf) {
-        auto res = str->write(buf);
+        auto res = meta::deref(str).write(buf);
         for (auto c : buf) {
             chk_sum += uint8_t(c);
         }
@@ -78,7 +78,7 @@ struct chk_str_t : self_pointing<chk_str_t<StreamT>> {
 
 template<class StreamT, class ReqT>
 constexpr void write_to(StreamT& str, const ReqT& req) {
-    chk_str_t<StreamT> chk_str{};
+    chk_str_t<StreamT*> chk_str{};
     chk_str.str = &str;
 
     tos::print(str, START_BYTE);

@@ -63,7 +63,7 @@ struct byte {
 struct pl_done {};
 } // namespace events
 
-void consume_payload(tx_status& ts, tos::span<const uint8_t> data, size_t index) {
+inline void consume_payload(tx_status& ts, tos::span<const uint8_t> data, size_t index) {
     if (index == 0 && data.size() == 1) {
         return;
     } else if (index == 0 && data.size() == 2) {
@@ -73,7 +73,8 @@ void consume_payload(tx_status& ts, tos::span<const uint8_t> data, size_t index)
     }
 }
 
-void consume_payload(modem_status& ts, tos::span<const uint8_t> data, size_t index) {
+inline void
+consume_payload(modem_status& ts, tos::span<const uint8_t> data, size_t index) {
     ts.status = modem_status::statuses(data[0]);
 }
 
@@ -159,7 +160,7 @@ struct recv16 : response_base<api_ids::RX_16_RESPONSE> {
     }
 };
 
-void consume_payload(recv16& ts, tos::span<const uint8_t> data, size_t index) {
+inline void consume_payload(recv16& ts, tos::span<const uint8_t> data, size_t index) {
     ts.m_raw_data[index] = data[0];
 }
 
@@ -317,7 +318,7 @@ tos::expected<xbee::recv16, xbee_errors> receive(StreamT& str, AlarmT& alarm) {
 
 namespace tos {
 namespace xbee {
-parse_errors response_parser::consume(uint8_t data) {
+inline parse_errors response_parser::consume(uint8_t data) {
     if (m_escaped) {
         data ^= 0x20;
         m_escaped = false;
@@ -363,7 +364,7 @@ parse_errors response_parser::consume(uint8_t data) {
     return parse_errors::CHECKSUM_FAILURE;
 }
 
-length_t response_parser::get_len() const {
+inline length_t response_parser::get_len() const {
     if ((int)m_state < (int)parser_state::got_len_lsb) {
         return {0xFFFF};
     }
