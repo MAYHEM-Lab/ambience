@@ -1,7 +1,6 @@
 import subprocess
 import os
-from .defs import *
-from .group_loader import *
+from ambictl import *
 
 
 class x86_64(Platform):

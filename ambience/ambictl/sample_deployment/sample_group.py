@@ -1,13 +1,5 @@
-from .defs import *
-from .groups.user_group import *
-from .groups.kernel_group import *
+from ambictl import *
 from .platforms import *
-from .importers_exporters import *
-from .extern_service import ExternService
-from .imported_service import ImportedService
-from .service_instance import ServiceInstance
-from .deployment import Deployment
-
 
 def x86_64_pc_node(name: str):
     return x86_64_pc.make_node(name,

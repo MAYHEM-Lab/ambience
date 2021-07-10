@@ -1,6 +1,5 @@
 import os
-from ambictl import sample_group
-
+from sample_deployment.sample_group import sample_deployment
 
 def create_build_root(build_at, tos_source: str):
     os.makedirs(build_at, exist_ok=True)
@@ -15,6 +14,6 @@ if __name__ == "__main__":
     build_root = "/tmp/aebuild"
     create_build_root(build_root, "/home/fatih/tos")
 
-    deployment = sample_group.sample_deployment()
+    deployment = sample_deployment()
     deployment.generate_build_dir(build_root)
     deployment.build_all()
