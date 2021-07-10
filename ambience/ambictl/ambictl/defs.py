@@ -15,6 +15,24 @@ env = Environment(
 )
 
 
+class NodeObject:
+    @abc.abstractmethod
+    def cxx_type(self):
+        pass
+
+    @abc.abstractmethod
+    def cxx_init_call(self):
+        pass
+
+    @abc.abstractmethod
+    def cxx_include(self):
+        pass
+
+    @abc.abstractmethod
+    def cmake_target(self):
+        return ""
+
+
 class LidlModule:
     _abs_path: str
     cmake_target: str
@@ -31,6 +49,9 @@ class LidlModule:
 
     def get_service(self, name: str) -> ServiceInterface:
         return ServiceInterface(self, name)
+
+
+import_export_mod = LidlModule("import_export.lidl", "import_export_schema")
 
 
 class ServiceInterface:
@@ -61,6 +82,10 @@ class ServiceInterface:
         return Service(name, cmake_target, self, sync, deps)
 
 
+importer_if = import_export_mod.get_service("importer")
+exporter_if = import_export_mod.get_service("exporter")
+
+
 class Service:
     name: str
     cmake_target: str
@@ -88,9 +113,6 @@ class Service:
             return f"auto init_{self.name}({', '.join(params)}) -> {self.server_name()}*;"
         else:
             return f"auto init_{self.name}({', '.join(params)}) -> tos::Task<{self.server_name()}*>;"
-
-    def instantiate(self, name: str, deps: Dict[str, Instance] = {}) -> ServiceInstance:
-        return ServiceInstance(name, self, deps)
 
     def server_name(self):
         if self.sync:
@@ -130,90 +152,19 @@ class Instance:
     def export(self, exporter, config=None):
         if exporter not in self.exports:
             print(f"Export {self.name} with {exporter}")
-            self.exports[exporter] = exporter.export(self, config)
+            self.exports[exporter] = exporter.export_service(self, config)
         return self.exports[exporter]
 
     def needs_init(self):
         return not self.extern
 
     @abc.abstractmethod
-    def get_dependencies(self):
+    def registry_type(self):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def registry_type(self):
+    def cxx_includes(self):
         raise NotImplementedError()
-
-
-class ServiceInstance(Instance):
-    impl: Service
-    deps: Dict[str, Instance]
-
-    assigned_group: Group
-
-    def unmetDeps(self):
-        return [nm for nm, dep in self.deps.items() if dep is None]
-
-    def __init__(self, name: str, impl: Service, deps: Dict[str, Instance] = {}) -> None:
-        super().__init__(name)
-        self.impl = impl
-        self.deps = deps
-        self.assigned_group = None
-
-        for nm, dep in self.impl.deps.items():
-            if nm not in self.deps:
-                self.deps[nm] = None
-
-    def registry_type(self):
-        # if not self.assigned_group.privileged:
-        #     return self.impl.iface.async_server_name()
-
-        return self.impl.server_name()
-
-    def get_interface(self) -> ServiceInterface:
-        return self.impl.iface
-
-    def get_dependencies(self):
-        return self.impl.deps.values()
-
-
-class ImportedService(Instance):
-    _import: Import
-
-    def __init__(self, name: str, imprt: Import):
-        super().__init__(name)
-        self._import = imprt
-
-    def get_interface(self) -> ServiceInterface:
-        return self._import.interface
-
-    def get_dependencies(self):
-        return []
-
-    def registry_type(self):
-        return self._import.interface.sync_server_name()
-
-
-class ExternService(Instance):
-    iface: ServiceInterface
-    sync: bool
-
-    def __init__(self, name: str, iface: ServiceInterface, sync: bool):
-        super().__init__(name)
-        self.iface = iface
-        self.extern = True
-        self.sync = sync
-
-    def get_interface(self) -> ServiceInterface:
-        return self.iface
-
-    def get_dependencies(self):
-        return []
-
-    def registry_type(self):
-        if self.sync:
-            return self.iface.sync_server_name()
-        return self.iface.async_server_name()
 
 
 class Group:
@@ -227,24 +178,16 @@ class Group:
         for serv in self.servs:
             serv.assigned_group = self
 
-    def servsWithUnmetDeps(self):
-        return [serv for serv in self.servs if len(serv.unmetDeps()) != 0]
-
-    def uniqueDeps(self) -> Set[Instance]:
-        return set(dep for serv in self.servs for dep in serv.deps.values())
-
-    def _externalDeps(self):
-        return (dep for dep in self.uniqueDeps() if dep not in self.servs)
-
-    def uniqueExternalDeps(self):
-        return set(self._externalDeps())
-
     def interfaceDeps(self):
-        all_ifaces = {serv.get_interface(): set(serv.get_dependencies()) for serv in self.servs}
+        all_ifaces = {serv.get_interface(): set(serv.get_dependencies()) for serv in self.servs if
+                      hasattr(serv, "get_dependencies")}
+        for serv in self.servs:
+            if serv.get_interface() not in all_ifaces:
+                all_ifaces[serv.get_interface()] = set()
         return toposort_flatten(all_ifaces, sort=False)
 
     def generateInitSigSection(self):
-        unique_impls = set(s.impl for s in self.servs if isinstance(s, ServiceInstance))
+        unique_impls = set(s.impl for s in self.servs if hasattr(s, "impl"))
         return "\n".join(s.cxx_init_signature() for s in unique_impls)
 
     @abc.abstractmethod
@@ -311,14 +254,15 @@ class Import:
     def cxx_import_string(self):
         return self.importer.import_string(self)
 
-    def cxx_include(self):
-        return self.importer.get_cxx_include()
-
-    def instantiate(self, name: str):
-        return ImportedService(name, self)
+    def cxx_includes(self):
+        return [self.importer.cxx_include()]
 
 
-class Importer:
+class Importer(Instance):
+    def __init__(self, name: str):
+        super().__init__(name)
+        self.extern = True
+
     @abc.abstractmethod
     def make_import(self, service: ServiceInterface, config) -> Import:
         pass
@@ -331,123 +275,25 @@ class Importer:
     def import_string(self, import_: Import):
         pass
 
-    @abc.abstractmethod
-    def get_cxx_include(self):
-        pass
+    def get_interface(self) -> ServiceInterface:
+        return importer_if
 
 
-class Exporter:
+class Exporter(Instance):
+    def __init__(self, name: str):
+        super().__init__(name)
+        self.extern = True
+
     @abc.abstractmethod
-    def export(self, service: Instance, config) -> Export:
+    def export_service(self, service: Instance, config) -> Export:
         pass
 
     @abc.abstractmethod
     def export_service_string(self, export: Export):
         pass
 
-    @abc.abstractmethod
-    def get_cxx_include(self):
-        pass
-
-
-class LwipUdpImporter(Importer):
-    def __init__(self):
-        super().__init__()
-
-    def make_import(self, service, config) -> Import:
-        return Import(self, service, config)
-
-    def import_from(self, export: Export):
-        iface = export.instance.impl.iface
-        conf = {
-            "ip": export.instance.assigned_group.dg.node.node.ip_address,
-            "port": export.config
-        }
-        return self.make_import(iface, conf)
-
-    def import_string(self, import_: Import):
-        format = "{}<tos::ae::udp_transport>{{tos::udp_endpoint_t{{tos::parse_ipv4_address(\"{}\"), {{{}}} }} }}"
-        return format.format(import_.interface.sync_stub_client(), import_.config["ip"], import_.config["port"])
-
-    def get_cxx_include(self):
-        return "tos/ae/transport/lwip/udp.hpp"
-
-
-class LwipUdpExporter(Exporter):
-    allocation: Dict
-    next: int
-
-    def __init__(self):
-        super().__init__()
-        self.allocation = {}
-        self.next = 1993
-
-    def get_port_for_service(self, service):
-        if service not in self.allocation:
-            self.allocation[service] = self.next
-            self.next = self.next + 1
-        return self.allocation[service]
-
-    def export(self, service, config) -> Export:
-        if config is None:
-            config = self.get_port_for_service(service)
-        return Export(self, service, config)
-
-    def export_service_string(self, export):
-        return f"new tos::ae::lwip_host(tos::ae::service_host(co_await registry.wait<\"{export.instance.name}\">()), tos::port_num_t{{{export.config}}});"
-
-    def get_cxx_include(self):
-        return "tos/ae/transport/lwip/host.hpp"
-
-
-class HostedUdpImporter(Importer):
-    def __init__(self):
-        super().__init__()
-
-    def make_import(self, service, config) -> Import:
-        return Import(self, service, config)
-
-    def import_from(self, export: Export):
-        iface = export.instance.impl.iface
-        conf = {
-            "ip": export.instance.assigned_group.dg.node.node.ip_address,
-            "port": export.config
-        }
-        return self.make_import(iface, conf)
-
-    def import_string(self, import_: Import):
-        format = "{}<tos::ae::hosted_udp_transport>{{tos::udp_endpoint_t{{tos::parse_ipv4_address(\"{}\"), {{{}}} }} }}"
-        return format.format(import_.interface.sync_stub_client(), import_.config["ip"], import_.config["port"])
-
-    def get_cxx_include(self):
-        return "tos/ae/transport/hosted/udp.hpp"
-
-
-class HostedUdpExporter(Exporter):
-    allocation: Dict
-    next: int
-
-    def __init__(self):
-        super().__init__()
-        self.allocation = {}
-        self.next = 1993
-
-    def get_port_for_service(self, service):
-        if service not in self.allocation:
-            self.allocation[service] = self.next
-            self.next = self.next + 1
-        return self.allocation[service]
-
-    def export(self, service, config) -> Export:
-        if config is None:
-            config = self.get_port_for_service(service)
-        return Export(self, service, config)
-
-    def export_service_string(self, export):
-        return f"new tos::ae::hosted_udp_host(tos::ae::service_host(co_await registry.wait<\"{export.instance.name}\">()), tos::port_num_t{{{export.config}}});"
-
-    def get_cxx_include(self):
-        return "tos/ae/transport/hosted/udp_host.hpp"
+    def get_interface(self) -> ServiceInterface:
+        return exporter_if
 
 
 class Platform(abc.ABC):
@@ -496,12 +342,14 @@ class DeployNode:
     groups: List[Group]
     deploy_groups: Dict[Group, DeployGroup]
     target_name: str
+    objects: {}
 
     def __init__(self, node: Node, groups: List[Group]):
         self.node = node
         self.groups = groups
         self.deploy_groups = {g: DeployGroup(self, g, 2048, 32) for g in self.groups}
         self.target_name = None
+        self.objects = {}
 
     def visibleServices(self):
         return (serv for group in self.groups for serv in group.servs)
@@ -510,7 +358,10 @@ class DeployNode:
         template = env.get_template("node/registry.hpp")
         return template.render({
             "services": {serv.name: serv.registry_type() for serv in self.visibleServices()},
-            "service_includes": set(iface.get_include() for group in self.groups for iface in group.interfaceDeps())
+            "service_includes": set(iface.get_include() for group in self.groups for iface in group.interfaceDeps()),
+            "exporter_includes": set(
+                (include for exporter in self.node.exporters for include in exporter.cxx_include())).union(
+                set((include for importer in self.node.importers for include in importer.cxx_include()))),
         })
 
     def generate_node_dir(self, build_dir):
@@ -587,52 +438,3 @@ def compute_bases(node: DeployNode):
         cur_bases = tuple(sum(x) for x in zip(cur_bases, dg.sizes))
         print(cur_bases)
     return res
-
-
-class Deployment:
-    nodes: [DeployNode]
-
-    def __init__(self, nodes: [DeployNode]):
-        self.nodes = nodes
-
-    def _create_root_cmake(self, build_at):
-        template = env.get_template("build_dir/CMakeLists.txt")
-        with open(os.path.join(build_at, "CMakeLists.txt"), mode="w+") as root_cmake:
-            with open(os.path.join(build_at, "tos/CMakeLists.txt")) as tos_cmake:
-                root_cmake.write(template.render({
-                    "tos_cmake_contents": tos_cmake.read(),
-                    "group_subdirs": (group.name for node in self.nodes for group in node.deploy_groups),
-                    "node_subdirs": (node.node.name for node in self.nodes)
-                }))
-
-    def _unique_platforms(self):
-        return {node.node.platform for node in self.nodes}
-
-    def _create_configurations(self, build_at):
-        return {p: p.generateBuildDirectories(build_at) for p in self._unique_platforms()}
-
-    def generate_build_dir(self, build_root):
-        self._create_root_cmake(build_root)
-
-        for node in self.nodes:
-            node.generate_node_dir(build_root)
-
-        # We need to build user groups first.
-        # To do so, we need to create configurations for each unique user_cpu and compute their sizes first
-        # Then, we'll build the final groups
-        self.conf_dirs = self._create_configurations(build_root)
-        print(self.conf_dirs)
-
-        for node in self.nodes:
-            node.post_generate(build_root, self.conf_dirs)
-
-        for node in self.nodes:
-            node.generate_node_dir(build_root)
-
-    def build_all(self):
-        for node in self.nodes:
-            conf_dir = self.conf_dirs[node.node.platform][-1]
-            args = ["ninja", f"{node.target_name}"]
-            print(args)
-            cmake_proc = subprocess.Popen(args, cwd=conf_dir)
-            cmake_proc.wait()

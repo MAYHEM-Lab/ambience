@@ -6,6 +6,9 @@
 {% for include in service_includes %}
 #include <{{include}}>
 {% endfor %}
+{% for include in exporter_includes %}
+#include <{{include}}>
+{% endfor %}
 // clang-format on
 
 using registry_t = tos::ae::service_registry<

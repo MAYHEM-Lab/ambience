@@ -7,7 +7,6 @@ from elftools.elf.elffile import ELFFile
 import re
 from ..defs import *
 
-
 def extract_readelf(build_dir: str) -> str:
     cache_path = os.path.join(build_dir, "CMakeCache.txt")
     with open(cache_path) as cache:
@@ -30,6 +29,18 @@ def read_entry_point(binary_path: str):
 
 
 class UserGroup(Group):
+    def _uniqueDeps(self) -> Set[Instance]:
+        return set(dep for serv in self.servs for dep in serv.deps.values())
+
+    def _externalDeps(self):
+        return (dep for dep in self._uniqueDeps() if dep not in self.servs)
+
+    def uniqueExternalDeps(self):
+        return set(self._externalDeps())
+
+    def servsWithUnmetDeps(self):
+        return [serv for serv in self.servs if len(serv.unmetDeps()) != 0]
+
     def assignNumsToExternalDeps(self):
         if len(self.servsWithUnmetDeps()) != 0:
             raise RuntimeError("Not all dependencies are met!")

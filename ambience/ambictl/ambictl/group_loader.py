@@ -1,4 +1,6 @@
 from .defs import *
+from .imported_service import ImportedService
+from .service_instance import ServiceInstance
 
 def make_exports(group: DeployGroup):
     src_template = env.get_template("node/loaders/export_common.cpp")
@@ -10,7 +12,6 @@ def make_exports(group: DeployGroup):
     return src_template.render({
         "group_name": group.group.name,
         "export_strings": export_strings,
-        "export_includes": export_includes,
     })
 
 class BundledElfLoader(GroupLoader):
@@ -93,9 +94,9 @@ class KernelLoader(GroupLoader):
                 initializers.append(init_str)
             elif isinstance(serv, ImportedService):
                 init_str = serv._import.cxx_import_string()
-                init_str = f"registry.register_service<\"{serv.name}\">(new {init_str});"
+                init_str = f"registry.register_service<\"{serv.name}\">({init_str});"
                 initializers.append(init_str)
-                init_includes.append(serv._import.cxx_include())
+                init_includes.extend(serv._import.cxx_includes())
             else:
                 raise NotImplementedError("Don't know how to load this type in the kernel")
 
