@@ -1,4 +1,6 @@
 #include <calc_generated.hpp>
+#include <echo_generated.hpp>
+#include <log_generated.hpp>
 #include <common/xbee.hpp>
 #include <lidlrt/transport/common.hpp>
 #include <tos/ae/transport/xbee/xbee_transport.hpp>
@@ -16,7 +18,7 @@ void main_task() {
     tos::debug::detail::any_logger uart_log{&uart_sink};
     tos::debug::set_default_log(&uart_log);
 
-    auto xbee_uart = bs::usart4::open();
+    auto xbee_uart = bs::xbee_uart::open();
 
     auto timer = tos::open(tos::devs::timer<2>);
     tos::alarm alarm{&timer};
@@ -38,15 +40,14 @@ void main_task() {
     auto r = tos::xbee::read_modem_status(xbee_uart, alarm);
     tos::debug::log(bool(r));
 
-    using transport = tos::ae::xbee_importer<tos::stm32::usart&, decltype(alarm)&>;
-    transport importer(xbee_uart, alarm);
+    tos::ae::xbee_importer importer(&xbee_uart, &alarm);
 
-    auto c = importer.import_service<tos::ae::services::calculator>(
+    auto c = importer.import_service<tos::ae::services::echo>(
         tos::ae::xbee_import_args{.addr = tos::xbee::addr_16{0x1234}, .channel = 0});
 
     for (int i = 0; i < 100; ++i) {
         for (int j = 0; j < 100; ++j) {
-            tos::debug::log(i, "+", j, "=", c->add(i, j));
+            tos::debug::log(i, "+", j, "=", c->echo_num(i + j));
         }
     }
 }

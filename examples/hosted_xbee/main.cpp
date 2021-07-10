@@ -34,7 +34,7 @@ void main_task() {
     calc local_calc;
     tos::ae::sync_service_host host(&local_calc);
 
-    tos::hosted::usart xbee_uart{get_io(), "/dev/ttyUSB1", tos::uart::default_38400};
+    auto xbee_uart = bs::xbee_uart::open();
 
     tos::ae::xbee_exporter<tos::hosted::usart&, decltype((alarm))> exporter(xbee_uart,
                                                                             alarm);

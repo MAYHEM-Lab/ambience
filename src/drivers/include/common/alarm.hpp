@@ -291,7 +291,23 @@ struct basic_async_alarm_impl : tos::ae::services::alarm::async_server {
     BaseAlarm alarm;
 };
 
+template<class BaseAlarm>
+struct basic_sync_alarm_impl : tos::ae::services::alarm::sync_server {
+    template<class... ArgTs>
+    explicit basic_sync_alarm_impl(ArgTs&&... args)
+        : alarm(std::forward<ArgTs>(args)...) {
+    }
+
+    bool sleep_for(tos::ae::services::milliseconds dur) override {
+        tos::this_thread::sleep_for(alarm, std::chrono::milliseconds(dur.count()));
+        return true;
+    }
+
+    BaseAlarm alarm;
+};
+
 using async_any_alarm_impl = basic_async_alarm_impl<tos::any_alarm*>;
+using sync_any_alarm_impl = basic_async_alarm_impl<tos::any_alarm*>;
 } // namespace tos
 
 namespace tos::this_thread {
