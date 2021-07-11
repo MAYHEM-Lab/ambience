@@ -281,6 +281,7 @@ class Importer(Instance):
     net_type: NetworkType
     assigned_network: Network
     assigned_node: None
+    hop_cost: int
 
     def __init__(self, name: str, net_type: NetworkType):
         super().__init__(name)
@@ -288,6 +289,7 @@ class Importer(Instance):
         self.net_type = net_type
         self.assigned_network = None
         self.assigned_node = None
+        self.hop_cost = 0
 
     @abc.abstractmethod
     def make_import(self, service: ServiceInterface, config) -> Import:
@@ -310,6 +312,7 @@ class Exporter(Instance):
     assigned_network: Network
     net_address: None
     assigned_node: Node
+    hop_cost: int
 
     def __init__(self, name: str, net_type: NetworkType):
         super().__init__(name)
@@ -318,6 +321,7 @@ class Exporter(Instance):
         self.net_address = None
         self.assigned_network = None
         self.assigned_node = None
+        self.hop_cost = 0
 
     @abc.abstractmethod
     def export_service(self, service: Instance, config) -> Export:

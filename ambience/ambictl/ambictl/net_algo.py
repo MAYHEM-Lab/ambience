@@ -1,5 +1,6 @@
 from .defs import *
-from queue import Queue, PriorityQueue
+from queue import Queue
+from dijkstar import Graph, find_path
 
 
 class Networks:
@@ -8,7 +9,8 @@ class Networks:
 
 
 def one_hop_importable_nodes(node: Node):
-    return set((n, imp.assigned_network) for imp in node.importers for n in imp.assigned_network.exporting_nodes() if n != node)
+    return set((n, imp.assigned_network) for imp in node.importers for n in imp.assigned_network.exporting_nodes() if
+               n != node)
 
 
 def reachability_graph(client: Node):
@@ -26,6 +28,7 @@ def reachability_graph(client: Node):
 
     return graph
 
+
 def all_nodes(graph):
     res = set()
     for node, value in graph.items():
@@ -34,6 +37,7 @@ def all_nodes(graph):
             res.add(node)
     return res
 
+
 def import_path(client: Node, server: Node):
     graph = reachability_graph(client)
     nodes = all_nodes(graph)
@@ -41,6 +45,16 @@ def import_path(client: Node, server: Node):
     if server not in nodes:
         raise RuntimeError("Server is unreachable from client!")
 
-    costs = [10**6] * len(nodes)
-    queue = PriorityQueue()
-    
+    g = Graph()
+
+    for node, edges in graph.items():
+        for (to, net) in edges:
+            g.add_edge((node, net), (to, net), net.hop_cost)
+
+    for node in nodes:
+        for imp in node.importers:
+            g.add_edge(node, (node, imp.assigned_network), imp.hop_cost)
+        for exp in node.exporters:
+            g.add_edge((node, exp.assigned_network), node, exp.hop_cost)
+
+    return find_path(g, client, server)
