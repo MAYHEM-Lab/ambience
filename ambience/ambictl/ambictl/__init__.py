@@ -7,3 +7,4 @@ from .importers_exporters import *
 from .service_instance import *
 from .groups.user_group import *
 from .groups.kernel_group import *
+from .net_algo import *

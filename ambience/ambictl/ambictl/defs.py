@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import collections
+import enum
 from typing import Dict, Set, List
 import os
 import subprocess
@@ -121,20 +122,6 @@ class Service:
             return self.iface.async_server_name()
 
 
-class Export:
-    exporter: Exporter
-    instance: Instance
-    config: {}
-
-    def __init__(self, exporter, instance, config):
-        self.exporter = exporter
-        self.instance = instance
-        self.config = config
-
-    def cxx_export_string(self):
-        return self.exporter.export_service_string(self)
-
-
 class Instance:
     name: str
     exports: Dict[Exporter, Export]
@@ -241,27 +228,66 @@ class GroupLoader:
         raise NotImplementedError()
 
 
-class Import:
-    importer: Importer
-    interface: ServiceInterface
-    config: {}
+class NetworkType(enum.Enum):
+    UDP = 0
+    TCP = 1
+    XBee = 2
 
-    def __init__(self, importer: Importer, iface: ServiceInterface, config):
-        self.importer = importer
-        self.interface = iface
-        self.config = config
 
-    def cxx_import_string(self):
-        return self.importer.import_string(self)
+class Network:
+    name: str
+    net_type: NetworkType
+    importers: [Importer]  # These can get services from the network
+    exporters: [Exporter]  # These can provide services to the network
+    hop_cost: int
 
-    def cxx_includes(self):
-        return self.importer.cxx_includes()
+    def __init__(self, name: str, net_type: NetworkType):
+        self.name = name
+        self.net_type = net_type
+        self.importers = []
+        self.exporters = []
+        self.hop_cost = 1
 
+    def exporting_nodes(self):
+        return set(exp.assigned_node for exp in self.exporters)
+
+    def add_interface(self, importer_or_exporter):
+        assert importer_or_exporter.net_type == self.net_type
+        if isinstance(importer_or_exporter, Importer):
+            self.importers.append(importer_or_exporter)
+        elif isinstance(importer_or_exporter, Exporter):
+            self.exporters.append(importer_or_exporter)
+        else:
+            raise RuntimeError("Interface must be an importer or exporter")
+        importer_or_exporter.assigned_network = self
+
+    def make_importer(self, importer_type):
+        res = importer_type()
+        assert res.net_type == self.net_type
+        self.add_interface(res)
+        return res
+
+    def make_exporter(self, addr, exporter_type):
+        res = exporter_type()
+        assert res.net_type == self.net_type
+        res.net_address = addr
+        self.add_interface(res)
+        return res
+
+    def __repr__(self):
+        return f"{self.name}({self.net_type.__repr__()})"
 
 class Importer(Instance):
-    def __init__(self, name: str):
+    net_type: NetworkType
+    assigned_network: Network
+    assigned_node: None
+
+    def __init__(self, name: str, net_type: NetworkType):
         super().__init__(name)
         self.extern = True
+        self.net_type = net_type
+        self.assigned_network = None
+        self.assigned_node = None
 
     @abc.abstractmethod
     def make_import(self, service: ServiceInterface, config) -> Import:
@@ -280,9 +306,18 @@ class Importer(Instance):
 
 
 class Exporter(Instance):
-    def __init__(self, name: str):
+    net_type: NetworkType
+    assigned_network: Network
+    net_address: None
+    assigned_node: Node
+
+    def __init__(self, name: str, net_type: NetworkType):
         super().__init__(name)
         self.extern = True
+        self.net_type = net_type
+        self.net_address = None
+        self.assigned_network = None
+        self.assigned_node = None
 
     @abc.abstractmethod
     def export_service(self, service: Instance, config) -> Export:
@@ -294,6 +329,37 @@ class Exporter(Instance):
 
     def get_interface(self) -> ServiceInterface:
         return exporter_if
+
+
+class Export:
+    exporter: Exporter
+    instance: Instance
+    config: {}
+
+    def __init__(self, exporter, instance, config):
+        self.exporter = exporter
+        self.instance = instance
+        self.config = config
+
+    def cxx_export_string(self):
+        return self.exporter.export_service_string(self)
+
+
+class Import:
+    importer: Importer
+    interface: ServiceInterface
+    config: {}
+
+    def __init__(self, importer: Importer, iface: ServiceInterface, config):
+        self.importer = importer
+        self.interface = iface
+        self.config = config
+
+    def cxx_import_string(self):
+        return self.importer.import_string(self)
+
+    def cxx_includes(self):
+        return self.importer.cxx_includes()
 
 
 class Platform(abc.ABC):
@@ -323,7 +389,6 @@ class Node:
     memories: Memories
     exporters: [Exporter]
     importers: [Importer]
-    ip_address: str
 
     def __init__(self, name: str, platform: Platform, memories: Memories, exporters: [Exporter], importers: [Importer]):
         self.name = name
@@ -331,11 +396,19 @@ class Node:
         self.memories = memories
         self.exporters = exporters
         self.importers = importers
-        self.ip_address = "127.0.0.1"
+
+        for imp in self.importers:
+            imp.assigned_node = self
+
+        for exp in self.exporters:
+            exp.assigned_node = self
 
     def deploy(self, groups: List[Group]):
         return self.platform.make_deploy_node(self, groups)
 
+
+    def __repr__(self):
+        return self.name
 
 class DeployNode:
     node: Node

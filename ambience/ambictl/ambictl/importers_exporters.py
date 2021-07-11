@@ -3,15 +3,15 @@ from .defs import *
 
 class LwipUdpImporter(Importer):
     def __init__(self):
-        super().__init__(self.__class__.__name__)
+        super().__init__(self.__class__.__name__, NetworkType.UDP)
 
     def make_import(self, service, config) -> Import:
         return Import(self, service, config)
 
     def import_from(self, export: Export):
-        iface = export.instance.impl.iface
+        iface = export.instance.get_interface()
         conf = {
-            "ip": export.instance.assigned_group.dg.node.node.ip_address,
+            "ip": export.exporter.net_address,
             "port": export.config
         }
         return self.make_import(iface, conf)
@@ -29,7 +29,7 @@ class LwipUdpExporter(Exporter):
     next: int
 
     def __init__(self):
-        super().__init__(self.__class__.__name__)
+        super().__init__(self.__class__.__name__, NetworkType.UDP)
         self.allocation = {}
         self.next = 1993
 
@@ -59,15 +59,15 @@ class LwipUdpExporter(Exporter):
 
 class HostedUdpImporter(Importer):
     def __init__(self):
-        super().__init__(self.__class__.__name__)
+        super().__init__(self.__class__.__name__, NetworkType.UDP)
 
     def make_import(self, service, config) -> Import:
         return Import(self, service, config)
 
     def import_from(self, export: Export):
-        iface = export.instance.impl.iface
+        iface = export.instance.get_interface()
         conf = {
-            "ip": export.instance.assigned_group.dg.node.node.ip_address,
+            "ip": export.exporter.net_address,
             "port": export.config
         }
         return self.make_import(iface, conf)
@@ -85,7 +85,7 @@ class HostedUdpExporter(Exporter):
     next: int
 
     def __init__(self):
-        super().__init__(self.__class__.__name__)
+        super().__init__(self.__class__.__name__, NetworkType.UDP)
         self.allocation = {}
         self.next = 1993
 
@@ -117,7 +117,7 @@ class XbeeExporter(Exporter):
     alarm_type: str
 
     def __init__(self, serial_type, alarm_type="tos::any_alarm*"):
-        super().__init__(self.__class__.__name__)
+        super().__init__(self.__class__.__name__, NetworkType.XBee)
         self.allocation = {}
         self.next = 0
         self.serial_type = serial_type
@@ -149,7 +149,7 @@ class XbeeImporter(Importer):
     alarm_type: str
 
     def __init__(self, serial_type, alarm_type="tos::any_alarm*"):
-        super().__init__(self.__class__.__name__)
+        super().__init__(self.__class__.__name__, NetworkType.XBee)
         self.serial_type = serial_type
         self.alarm_type = alarm_type
 
@@ -157,9 +157,9 @@ class XbeeImporter(Importer):
         return Import(self, service, config)
 
     def import_from(self, export: Export):
-        iface = export.instance.impl.iface
+        iface = export.instance.get_interface()
         conf = {
-            "addr": export.instance.assigned_group.dg.node.node.xbee_address,
+            "addr": export.exporter.net_address,
             "channel": export.config
         }
         return self.make_import(iface, conf)
