@@ -126,6 +126,7 @@ class Instance:
     name: str
     exports: Dict[Exporter, Export]
     extern: bool
+    assigned_group: Group
 
     @abc.abstractmethod
     def get_interface(self) -> ServiceInterface:
@@ -135,6 +136,7 @@ class Instance:
         self.name = name
         self.exports = {}
         self.extern = False
+        self.assigned_group = None
 
     def export(self, exporter, config=None):
         if exporter not in self.exports:

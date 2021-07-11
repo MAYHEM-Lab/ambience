@@ -6,8 +6,6 @@ class ServiceInstance(Instance):
     impl: Service
     deps: Dict[str, Instance]
 
-    assigned_group: Group
-
     def unmetDeps(self):
         return [nm for nm, dep in self.deps.items() if dep is None]
 
@@ -15,7 +13,6 @@ class ServiceInstance(Instance):
         super().__init__(name)
         self.impl = impl
         self.deps = deps
-        self.assigned_group = None
 
         for nm, dep in self.impl.deps.items():
             if nm not in self.deps:

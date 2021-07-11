@@ -8,9 +8,9 @@ class Networks:
         UDP = Network("udp internet", NetworkType.UDP)
 
 
-def one_hop_importable_nodes(node: Node):
-    return set((n, imp.assigned_network) for imp in node.importers for n in imp.assigned_network.exporting_nodes() if
-               n != node)
+def one_hop_import_exports(node: Node):
+    return set((imp, exp) for imp in node.importers for exp in imp.assigned_network.exporters if
+               exp.assigned_node != node)
 
 
 def reachability_graph(client: Node):
@@ -20,11 +20,11 @@ def reachability_graph(client: Node):
 
     while not node_queue.empty():
         front = node_queue.get()
-        reachables = one_hop_importable_nodes(front)
+        reachables = one_hop_import_exports(front)
         graph[front] = reachables
-        for (reachable, net) in reachables:
-            if reachable not in graph:
-                node_queue.put(reachable)
+        for (importer, exporter) in reachables:
+            if exporter.assigned_node not in graph:
+                node_queue.put(exporter.assigned_node)
 
     return graph
 
@@ -33,8 +33,8 @@ def all_nodes(graph):
     res = set()
     for node, value in graph.items():
         res.add(node)
-        for (node, net) in value:
-            res.add(node)
+        for (imp, exp) in value:
+            res.add(exp.assigned_node)
     return res
 
 
@@ -48,13 +48,19 @@ def import_path(client: Node, server: Node):
     g = Graph()
 
     for node, edges in graph.items():
-        for (to, net) in edges:
-            g.add_edge((node, net), (to, net), net.hop_cost)
+        for (imp, exp) in edges:
+            g.add_edge(imp, exp, imp.assigned_network.hop_cost)
 
     for node in nodes:
         for imp in node.importers:
-            g.add_edge(node, (node, imp.assigned_network), imp.hop_cost)
+            g.add_edge(node, imp, imp.hop_cost)
         for exp in node.exporters:
-            g.add_edge((node, exp.assigned_network), node, exp.hop_cost)
+            g.add_edge(exp, node, exp.hop_cost)
 
-    return find_path(g, client, server)
+    return find_path(g, client, server).nodes
+
+def make_remote_import(client: Node, server: Instance):
+    server_node = server.assigned_group.dg.node.node
+    path = import_path(client, server_node)
+
+
