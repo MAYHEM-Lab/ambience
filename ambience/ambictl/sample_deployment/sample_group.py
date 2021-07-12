@@ -1,114 +1,124 @@
-from ambictl import *
-from .platforms import *
+import ambictl
+from .node_topology import nodes
+from .boilerplate import *
 
-def x86_64_pc_node(name: str):
-    return x86_64_pc.make_node(name,
-                               Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)),
-                               exporters=[LwipUdpExporter()],
-                               importers=[LwipUdpImporter()])
+auto = ""
+node_local = {}
 
 
-def digitalocean_vm_node(name: str):
-    return digitalocean_vm.make_node(name,
-                                     Memories((0x8000000 + 128 * 1024, 256 * 1024),
-                                              (0x20000000 + 64 * 1024, 64 * 1024)),
-                                     exporters=[LwipUdpExporter()],
-                                     importers=[LwipUdpImporter()])
+def pick_node_local(node: ambictl.Node, decl):
+    pass
 
 
-def raspi3(name: str):
-    return raspi3.make_node(name,
-                            Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)),
-                            exporters=[LwipUdpExporter()],
-                            importers=[LwipUdpImporter()])
+instances = {}
+groups = {}
+nnodes = {}
 
+group_to_node = {}
+service_to_group = {}
+service_to_node = {}
 
-def stm32l475(name: str):
-    return stm32.make_node(name,
-                           Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)),
-                           exporters=[], importers=[XbeeImporter("tos::stm32::usart*")])
-
-
-def hosted_node(name: str):
-    return x86_hosted.make_node(name,
-                                Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)),
-                                exporters=[HostedUdpExporter(), XbeeExporter("tos::hosted::usart*")],
-                                importers=[])
-
-
-def sample_deployment() -> [DeployNode]:
-    calculator_mod = LidlModule("//ambience/services/interfaces/calc.lidl", "calc_schema")
-    alarm_mod = LidlModule("//ambience/services/interfaces/alarm.lidl", "alarm_schema")
-    fs_mod = LidlModule("//ambience/services/interfaces/file_system.lidl", "filesystem_schema")
-    block_mem_mod = LidlModule("//ambience/services/interfaces/block_memory.lidl", "block_memory_schema")
-    machine_mod = LidlModule("//ambience/services/interfaces/machine.lidl", "machine_schema")
-    echo_mod = LidlModule("//ambience/services/interfaces/echo.lidl", "echo_schema")
-    db_mod = LidlModule("//ambience/services/interfaces/database.lidl", "database_schema")
-    logger_mod = LidlModule("//src/core/log.yaml", "log_schema")
-
-    calc_if = calculator_mod.get_service("tos::ae::services::calculator")
-    logger_if = logger_mod.get_service("tos::services::logger")
-    alarm_if = alarm_mod.get_service("tos::ae::services::alarm")
-    fs_if = fs_mod.get_service("tos::ae::services::filesystem")
-    machine_if = machine_mod.get_service("tos::ae::services::machine")
-    block_mem_if = block_mem_mod.get_service("tos::ae::services::block_memory")
-    echo_if = echo_mod.get_service("tos::ae::services::echo")
-    db_if = fs_mod.get_service("tos::ae::services::sql_database")
-
-    basic_echo = echo_if.implement("basic_echo", cmake_target="basic_echo", sync=True,
-                                   deps={"logger": logger_if})
-
-    littlefs = fs_if.implement("littlefs_server", cmake_target="littlefs_server", sync=True,
-                               deps={"block": block_mem_if})
-
-    basic_calc = calc_if.implement("basic_calc", cmake_target="basic_calc", sync=False,
-                                   deps={"logger": logger_if, "alarm": alarm_if, "fs": fs_if})
-
-    hosted = hosted_node("hosted")
-    vm = digitalocean_vm_node("vm")
-    mcu = stm32l475("stm32")
-
-    import_params = {
-        "ip": "123.45.67.89",
-        "port": 1993
+def serv_instance(*, name, serv, deps=node_local):
+    instances[name] = {
+        "name": name,
+        "serv": serv,
+        "deps": deps
     }
 
-    serv = ImportedService("remote_fs", vm.importers[0].make_import(fs_if, import_params))
 
-    virtio_blk = ExternService("node_block", block_mem_if, sync=True)
-    fs_blk = ExternService("fs_block", block_mem_if, sync=True)
-    logger = ExternService("logger", logger_if, sync=True)
-    alarm = ExternService("alarm", alarm_if, sync=False)
-    logger2 = ExternService("logger", logger_if, sync=True)
-    alarm2 = ExternService("alarm", alarm_if, sync=False)
-    logger3 = ExternService("logger", logger_if, sync=True)
-    alarm3 = ExternService("alarm", alarm_if, sync=False)
-    machine = ExternService("machine", machine_if, sync=True)
+def group(*, name=auto, services):
+    for serv in services:
+        service_to_group[serv] = name
 
-    fs = ServiceInstance("fs", littlefs, deps={"block": fs_blk})
-    calc = ServiceInstance("calc", basic_calc, deps={"logger": logger, "alarm": alarm, "fs": fs})
-    calc2 = ServiceInstance("calc2", basic_calc, deps={"logger": logger, "alarm": alarm, "fs": fs})
+    groups[name] = {
+        "name": name,
+        "services": services
+    }
 
-    pg = KernelGroup("vm_privileged", {virtio_blk, fs_blk, logger, alarm, machine, fs})
-    g1 = UserGroup("sample_group3", {calc})
-    g2 = UserGroup("sample_group4", {calc2})
 
-    hg = KernelGroup("hosted_group",
-                     {logger2, alarm2, hosted.exporters[0], hosted.exporters[1],
-                      ServiceInstance("basic_echo", basic_echo, deps={"logger": logger2})})
+def node(*, node: ambictl.Node, groups):
+    for group in groups:
+        if group in groups:
+        group_to_node[group] = node.name
+        for serv in group["services"]:
+            service_to_node[serv] = node.name
 
-    sg = KernelGroup("stm32_group", {logger3, alarm3, mcu.importers[0], ImportedService("remote_echo", mcu.importers[0].make_import(echo_if, {"addr":"0x1234", "channel": 0}))})
+    for serv in node.node_services:
+        instances[f"{node.name}.{serv.name}"] = {
+            "name": f"{node.name}.{serv.name}"
+        }
+        service_to_node[f"{node.name}.{serv.name}"] = node.name
 
-    all_nodes = [
-        vm.deploy([pg, g1, g2]),
-        hosted.deploy([hg]),
-        mcu.deploy([sg])
-    ]
+    nnodes[node.name] = {
+        "node": node,
+        "groups": groups
+    }
 
-    for node in all_nodes:
-        for exporter in node.node.exporters:
-            for g in node.groups:
-                for serv in g.servs:
-                    serv.export(exporter)
 
-    return Deployment(all_nodes)
+def finalize_service(serv):
+    print(f"Finalizing service {serv['name']}")
+
+    if serv["deps"] == node_local:
+        # We'll try to satisfy all dependencies with node locals
+        deps = {}
+        for dep in serv["serv"].deps:
+            deps[dep] = node_local
+        serv["deps"] = deps
+
+    for name, dep in serv["deps"].items():
+        if dep == node_local:
+            print(f"Need to satisfy {name} from a node service")
+            pass
+
+def finalize_group(group):
+    pass
+
+def finalize_node(node):
+    all_groups = []
+    for g in
+
+def finalize():
+    all_nodes = []
+    for node in nnodes:
+        all_nodes.append(finalize_node(node))
+    return all_nodes
+
+serv_instance(
+    name="fs",
+    serv=littlefs,
+    deps={
+        "block": "fs_block"
+    }
+)
+
+serv_instance(
+    name="calc",
+    serv=basic_calc,
+)
+
+serv_instance(
+    name="calc2",
+    serv=basic_calc
+)
+
+serv_instance(
+    name="basic_echo",
+    serv=basic_echo
+)
+
+node(
+    node=nodes[0],
+    groups=["", "basic_echo"]
+)
+
+node(
+    node=nodes[2],
+    groups=["fs", "calc", "calc2"]
+)
+
+nodes(
+    node=nodes[1],
+    groups=[]
+)
+
+finalize()

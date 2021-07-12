@@ -167,6 +167,10 @@ class Group:
         for serv in self.servs:
             serv.assigned_group = self
 
+    def add_service(self, ins: Instance):
+        self.servs.add(ins)
+        ins.assigned_group = self
+
     def interfaceDeps(self):
         all_ifaces = {serv.get_interface(): set(serv.get_dependencies()) for serv in self.servs if
                       hasattr(serv, "get_dependencies")}
@@ -278,6 +282,7 @@ class Network:
 
     def __repr__(self):
         return f"{self.name}({self.net_type.__repr__()})"
+
 
 class Importer(Instance):
     net_type: NetworkType
@@ -395,6 +400,7 @@ class Node:
     memories: Memories
     exporters: [Exporter]
     importers: [Importer]
+    node_services: [Instance]  # These services are exposed by the node itself
 
     def __init__(self, name: str, platform: Platform, memories: Memories, exporters: [Exporter], importers: [Importer]):
         self.name = name
@@ -402,19 +408,26 @@ class Node:
         self.memories = memories
         self.exporters = exporters
         self.importers = importers
+        self.node_services = []
 
         for imp in self.importers:
             imp.assigned_node = self
+            self.node_services.append(imp)
 
         for exp in self.exporters:
             exp.assigned_node = self
+            self.node_services.append(exp)
 
     def deploy(self, groups: List[Group]):
+        host_group = groups[0]
+        for ns in self.node_services:
+            if ns not in host_group:
+                host_group.add_service(ns)
         return self.platform.make_deploy_node(self, groups)
-
 
     def __repr__(self):
         return self.name
+
 
 class DeployNode:
     node: Node

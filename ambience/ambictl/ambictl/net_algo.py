@@ -62,5 +62,7 @@ def import_path(client: Node, server: Node):
 def make_remote_import(client: Node, server: Instance):
     server_node = server.assigned_group.dg.node.node
     path = import_path(client, server_node)
+    rpath = path.reverse()
 
-
+    [source, exporter] = rpath[0:2]
+    source_export = exporter.export_service(server)
