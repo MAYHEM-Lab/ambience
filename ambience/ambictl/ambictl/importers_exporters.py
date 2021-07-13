@@ -23,6 +23,8 @@ class LwipUdpImporter(Importer):
     def cxx_includes(self):
         return ["tos/ae/transport/lwip/udp.hpp"]
 
+    def registry_type(self):
+        return "tos::ae::lwip_udp_importer"
 
 class LwipUdpExporter(Exporter):
     allocation: Dict
@@ -79,6 +81,8 @@ class HostedUdpImporter(Importer):
     def cxx_includes(self):
         return ["tos/ae/transport/hosted/udp.hpp"]
 
+    def registry_type(self):
+        return "tos::ae::hosted_udp_importer"
 
 class HostedUdpExporter(Exporter):
     allocation: Dict

@@ -77,7 +77,8 @@ class raspi3(Platform):
                 source_dir]
         print(args)
         cmake_proc = subprocess.Popen(args, cwd=conf_dir)
-        cmake_proc.wait()
+        if cmake_proc.wait() != 0:
+            raise RuntimeError("Generation failed")
 
         return (user_conf_dir, conf_dir)
 
@@ -111,7 +112,8 @@ class stm32(Platform):
                 source_dir]
         print(args)
         cmake_proc = subprocess.Popen(args, cwd=conf_dir)
-        cmake_proc.wait()
+        if cmake_proc.wait() != 0:
+            raise RuntimeError("Generation failed")
 
         return (user_conf_dir, conf_dir)
 
@@ -134,7 +136,8 @@ class x86_hosted(Platform):
         env["CC"] = "/opt/llvm/bin/clang"
         env["CXX"] = "/opt/llvm/bin/clang++"
         cmake_proc = subprocess.Popen(args, cwd=conf_dir, env=env)
-        cmake_proc.wait()
+        if cmake_proc.wait() != 0:
+            raise RuntimeError("Generation failed")
         return (conf_dir,)
 
     def make_deploy_node(self, node: Node, groups: [Group]):

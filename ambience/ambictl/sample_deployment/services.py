@@ -17,22 +17,6 @@ serv_instance(
 )
 
 serv_instance(
-    name="basic_echo",
+    name="echo",
     serv=basic_echo
 )
-
-deploy(
-    node="hosted",
-    groups=["", "basic_echo"]
-)
-
-deploy(
-    node="sfo2-vm1",
-    groups=["fs", "calc", "calc2"]
-)
-
-deploy(
-    node="mcu1",
-    groups=[]
-)
-

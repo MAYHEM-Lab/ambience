@@ -154,7 +154,7 @@ class Instance:
 
     @abc.abstractmethod
     def registry_type(self):
-        raise NotImplementedError()
+        raise NotImplementedError(f"registry_type not implemented in {self.__class__.__name__}")
 
     @abc.abstractmethod
     def cxx_includes(self):

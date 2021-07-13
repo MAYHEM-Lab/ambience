@@ -5,6 +5,7 @@
 #include <tos/lwip/udp.hpp>
 #include <vector>
 #include <lidlrt/transport/common.hpp>
+#include <tos/ae/importer.hpp>
 
 namespace tos::ae {
 struct udp_transport : lidl::verbatim_transform {
@@ -24,5 +25,18 @@ private:
     tos::lwip::buffer m_buf;
     tos::udp_endpoint_t m_ep;
     tos::lwip::async_udp_socket m_sock;
+};
+
+using udp_import_args = udp_endpoint_t;
+
+struct lwip_udp_importer : importer::sync_server {
+    template<class Service>
+    typename Service::sync_server* import_service(const udp_import_args& args) {
+        return new typename Service::template stub_client<udp_transport>(args);
+    }
+
+    int64_t number_of_calls() override {
+        return 0;
+    }
 };
 } // namespace tos::ae

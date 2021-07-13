@@ -176,7 +176,7 @@ def deploy(*, node, groups):
 
 def _finalize_service(serv):
     if "done" in serv:
-        return
+        return serv["instance"]
 
     print(f"Finalizing service {serv['name']}")
 
@@ -214,11 +214,14 @@ def _finalize_service(serv):
         if depins["node"] != serv["node"]:
             print("Remote import")
 
+    for name, dep in serv["deps"].items():
+        _finalize_service(_instances[dep])
+
     serv["done"] = True
     serv["instance"] = ambictl.ServiceInstance(
         name=serv["name"],
         impl=serv["serv"],
-        deps={name: _instances[dep] for name, dep in serv["deps"].items()}
+        deps={name: _instances[dep]["instance"] for name, dep in serv["deps"].items()}
     )
     return serv["instance"]
 
