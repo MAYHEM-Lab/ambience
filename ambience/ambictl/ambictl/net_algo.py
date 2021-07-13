@@ -5,7 +5,7 @@ from dijkstar import Graph, find_path
 
 class Networks:
     class Internet:
-        UDP = Network("udp internet", NetworkType.UDP)
+        UDP = Network("udp-internet", NetworkType.UDP)
 
 
 def one_hop_import_exports(node: Node):

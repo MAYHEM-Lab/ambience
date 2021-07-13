@@ -82,6 +82,8 @@ class ServiceInterface:
                   deps: Dict[str, ServiceInterface] = {}, cmake_target: str = "") -> Service:
         return Service(name, cmake_target, self, sync, deps)
 
+    def __deepcopy__(self, memo):
+        return self
 
 importer_if = import_export_mod.get_service("importer")
 exporter_if = import_export_mod.get_service("exporter")
@@ -120,6 +122,9 @@ class Service:
             return self.iface.sync_server_name()
         else:
             return self.iface.async_server_name()
+
+    def dependency_type(self, name):
+        return self.deps[name]
 
 
 class Instance:
@@ -421,7 +426,7 @@ class Node:
     def deploy(self, groups: List[Group]):
         host_group = groups[0]
         for ns in self.node_services:
-            if ns not in host_group:
+            if ns not in host_group.servs:
                 host_group.add_service(ns)
         return self.platform.make_deploy_node(self, groups)
 

@@ -1,6 +1,5 @@
 import subprocess
 import os
-from ambictl import *
 
 
 class x86_64(Platform):
@@ -145,3 +144,74 @@ class x86_hosted(Platform):
 
 
 x86_hosted = x86_hosted()
+
+platform(
+    name="common",
+    memories=Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)),
+    node_services=[
+        ExternService("logger", logger_if, sync=True),
+        ExternService("alarm", alarm_if, sync=False),
+        ExternService("node_block", block_mem_if, sync=True),
+    ]
+)
+
+platform(
+    name="x86_64",
+    inherit="common",
+    node_services=[
+        ExternService("machine", machine_if, sync=True),
+        ExternService("fs_block", block_mem_if, sync=True),
+    ]
+)
+
+platform(
+    name="x86_64_pc",
+    inherit="x86_64",
+    native=x86_64_pc,
+    importers=[
+        importer(
+            network="udp-internet",
+            native=LwipUdpImporter
+        ),
+    ]
+)
+
+platform(
+    name="digitalocean_vm",
+    inherit="x86_64",
+    native=digitalocean_vm,
+    importers=[
+        importer(
+            network="udp-internet",
+            native=LwipUdpImporter
+        ),
+        importer(
+            network="DO-SFO2",
+            native=HostedUdpImporter
+        ),
+    ],
+)
+
+platform(
+    name="stm32l4",
+    inherit="common",
+    native=stm32,
+    importers=[
+        importer(
+            network="xbee-home",
+            native=lambda: XbeeImporter("tos::stm32::usart*")
+        ),
+    ]
+)
+
+platform(
+    name="hosted",
+    inherit="common",
+    native=x86_hosted,
+    importers=[
+        importer(
+            network="udp-internet",
+            native=HostedUdpImporter
+        ),
+    ]
+)

@@ -1,6 +1,5 @@
 from .defs import *
 
-
 class ExternService(Instance):
     iface: ServiceInterface
     sync: bool
@@ -18,3 +17,6 @@ class ExternService(Instance):
         if self.sync:
             return self.iface.sync_server_name()
         return self.iface.async_server_name()
+
+    def __repr__(self):
+        return f"ExternService({self.name})"
