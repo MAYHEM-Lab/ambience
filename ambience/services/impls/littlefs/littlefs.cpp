@@ -3,6 +3,7 @@
 #include <lfs.h>
 #include <log_generated.hpp>
 #include <stdio.h>
+#include <unordered_map>
 
 namespace {
 struct littlefs : tos::ae::services::filesystem::sync_server {
@@ -71,12 +72,23 @@ struct littlefs : tos::ae::services::filesystem::sync_server {
         }
     }
 
+    struct refcounted_lfs_file {
+        lfs_file file;
+        int ref_cnt = 1;
+    };
+
+    std::unordered_map<std::string, refcounted_lfs_file*> open_files;
     tos::ae::services::file_handle open(std::string_view path) override {
-        auto file_ptr = new lfs_file;
         auto str = std::string(path);
+        if (auto it = open_files.find(str); it != open_files.end()) {
+            it->second->ref_cnt++;
+            return {reinterpret_cast<uintptr_t>(it->second)};
+        }
+        auto file_ptr = new refcounted_lfs_file;
         auto open_res =
-            lfs_file_open(&m_lfs, file_ptr, str.c_str(), LFS_O_RDWR | LFS_O_CREAT);
-        printf("open %s: %d, %p", str.c_str(), open_res, file_ptr);
+            lfs_file_open(&m_lfs, &file_ptr->file, str.c_str(), LFS_O_RDWR | LFS_O_CREAT);
+        //        printf("open %s: %d, %p", str.c_str(), open_res, file_ptr);
+        open_files.emplace(std::move(str), file_ptr);
         return {reinterpret_cast<uintptr_t>(file_ptr)};
     }
 
@@ -84,30 +96,40 @@ struct littlefs : tos::ae::services::filesystem::sync_server {
                                  const uint32_t& at,
                                  const uint32_t& len,
                                  lidl::message_builder& response_builder) override {
-        auto file_ptr = reinterpret_cast<lfs_file*>(file.priv());
+        auto file_ptr = reinterpret_cast<refcounted_lfs_file*>(file.priv());
         auto buffer = response_builder.allocate(len, 1);
-        auto seek_res = lfs_file_seek(&m_lfs, file_ptr, at, LFS_SEEK_SET);
-        printf("seek %p: %d", file_ptr, seek_res);
-        auto read_res = lfs_file_read(&m_lfs, file_ptr, buffer, len);
-        printf("read %p, %d, %d: %d", file_ptr, at, len, read_res);
+        auto seek_res = lfs_file_seek(&m_lfs, &file_ptr->file, at, LFS_SEEK_SET);
+        //        printf("seek %p: %d", file_ptr, seek_res);
+        auto read_res = lfs_file_read(&m_lfs, &file_ptr->file, buffer, len);
+        //        printf("read %p, %d, %d: %d", file_ptr, at, len, read_res);
         return tos::span<uint8_t>(buffer, read_res);
     }
 
     bool write_file(const tos::ae::services::file_handle& file,
                     const uint32_t& at,
                     tos::span<uint8_t> data) override {
-        auto file_ptr = reinterpret_cast<lfs_file*>(file.priv());
-        auto seek_res = lfs_file_seek(&m_lfs, file_ptr, at, LFS_SEEK_SET);
-        printf("seek %p: %d", file_ptr, seek_res);
-        auto res = lfs_file_write(&m_lfs, file_ptr, data.data(), data.size());
-        printf("write %p, %d, %p, %d: %d", file_ptr, at, data.data(), data.size(), res);
+        auto file_ptr = reinterpret_cast<refcounted_lfs_file*>(file.priv());
+        auto seek_res = lfs_file_seek(&m_lfs, &file_ptr->file, at, LFS_SEEK_SET);
+        //        printf("seek %p: %d", file_ptr, seek_res);
+        auto res = lfs_file_write(&m_lfs, &file_ptr->file, data.data(), data.size());
+        //        printf("write %p, %d, %p, %d: %d", file_ptr, at, data.data(),
+        //        data.size(), res);
         return res == data.size();
     }
 
     bool close_file(const tos::ae::services::file_handle& file) override {
-        auto file_ptr = reinterpret_cast<lfs_file*>(file.priv());
-        auto close_res = lfs_file_close(&m_lfs, file_ptr);
-        return close_res >= 0;
+        auto file_ptr = reinterpret_cast<refcounted_lfs_file*>(file.priv());
+        if (file_ptr->ref_cnt == 1) {
+            auto close_res = lfs_file_close(&m_lfs, &file_ptr->file);
+            auto it = std::find_if(open_files.begin(), open_files.end(), [&](auto& el) {
+                return el.second == file_ptr;
+            });
+            open_files.erase(it);
+            delete file_ptr;
+            return close_res >= 0;
+        }
+        file_ptr->ref_cnt--;
+        return true;
     }
 
     lfs_t m_lfs{};
