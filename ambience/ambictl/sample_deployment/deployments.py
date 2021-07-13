@@ -4,12 +4,21 @@ deploy(
 )
 
 deploy(
-    node="sfo2-vm1",
-    groups=["fs", "calc", "calc2"]
+    node="sfo2_vm1",
+    groups=["fs", "calc2"]
+)
+
+deploy(
+    node="sfo2_vm2",
+    groups=["", "calc3"]
 )
 
 deploy(
     node="mcu1",
-    groups=[]
+    groups=["", "calc"]
 )
 
+deploy(
+    node="qemu_vm1",
+    groups=["fs2", "calc4"]
+)

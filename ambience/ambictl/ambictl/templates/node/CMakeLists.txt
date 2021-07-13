@@ -9,6 +9,10 @@ endif()
 add_library({{node_name}}_common INTERFACE)
 target_include_directories({{node_name}}_common INTERFACE .)
 
+{% for target in link_targets %}
+target_link_libraries({{node_name}}_common INTERFACE {{target}})
+{% endfor %}
+
 {% for schema in schemas %}
 target_link_libraries({{node_name}}_common INTERFACE {{schema}})
 {% endfor %}

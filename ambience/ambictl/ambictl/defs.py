@@ -85,6 +85,7 @@ class ServiceInterface:
     def __deepcopy__(self, memo):
         return self
 
+
 importer_if = import_export_mod.get_service("importer")
 exporter_if = import_export_mod.get_service("exporter")
 
@@ -159,6 +160,10 @@ class Instance:
     @abc.abstractmethod
     def cxx_includes(self):
         raise NotImplementedError()
+
+    @abc.abstractmethod
+    def cmake_targets(self):
+        return []
 
 
 class Group:
@@ -360,6 +365,9 @@ class Export:
     def cxx_export_string(self):
         return self.exporter.export_service_string(self)
 
+    def __repr__(self):
+        return f"Export({repr(self.exporter)}, {repr(self.instance)}, {repr(self.config)})"
+
 
 class Import:
     importer: Importer
@@ -406,6 +414,7 @@ class Node:
     exporters: [Exporter]
     importers: [Importer]
     node_services: [Instance]  # These services are exposed by the node itself
+    deploy_node: DeployNode
 
     def __init__(self, name: str, platform: Platform, memories: Memories, exporters: [Exporter], importers: [Importer]):
         self.name = name
@@ -414,6 +423,7 @@ class Node:
         self.exporters = exporters
         self.importers = importers
         self.node_services = []
+        self.deploy_node = None
 
         for imp in self.importers:
             imp.assigned_node = self
@@ -424,11 +434,13 @@ class Node:
             self.node_services.append(exp)
 
     def deploy(self, groups: List[Group]):
+        assert not self.deploy_node
         host_group = groups[0]
         for ns in self.node_services:
             if ns not in host_group.servs:
                 host_group.add_service(ns)
-        return self.platform.make_deploy_node(self, groups)
+        self.deploy_node = self.platform.make_deploy_node(self, groups)
+        return self.deploy_node
 
     def __repr__(self):
         return self.name
@@ -474,7 +486,10 @@ class DeployNode:
             node_cmake.write(template.render({
                 "node_name": self.node.name,
                 "node_groups": (g.name for g in self.deploy_groups.keys()),
-                "schemas": set(iface.module.cmake_target for g in self.groups for iface in g.interfaceDeps())
+                "schemas": set(iface.module.cmake_target for g in self.groups for iface in g.interfaceDeps()),
+                "link_targets": set(
+                    target for exporter in self.node.exporters for target in exporter.cmake_targets()).union(
+                    set(target for importer in self.node.importers for target in importer.cmake_targets()))
             }))
 
         with open(os.path.join(loaders_dir, "CMakeLists.txt"), "w+") as groups_cmake:

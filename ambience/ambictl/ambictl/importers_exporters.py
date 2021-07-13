@@ -17,7 +17,7 @@ class LwipUdpImporter(Importer):
         return self.make_import(iface, conf)
 
     def import_string(self, import_: Import):
-        format = "{}<tos::ae::udp_transport>{{tos::udp_endpoint_t{{tos::parse_ipv4_address(\"{}\"), {{{}}} }} }}"
+        format = "new {}<tos::ae::udp_transport>{{tos::udp_endpoint_t{{tos::parse_ipv4_address(\"{}\"), {{{}}} }} }}"
         return format.format(import_.interface.sync_stub_client(), import_.config["ip"], import_.config["port"])
 
     def cxx_includes(self):
@@ -75,7 +75,7 @@ class HostedUdpImporter(Importer):
         return self.make_import(iface, conf)
 
     def import_string(self, import_: Import):
-        format = "{}<tos::ae::hosted_udp_transport>{{tos::udp_endpoint_t{{tos::parse_ipv4_address(\"{}\"), {{{}}} }} }}"
+        format = "new {}<tos::ae::hosted_udp_transport>{{tos::udp_endpoint_t{{tos::parse_ipv4_address(\"{}\"), {{{}}} }} }}"
         return format.format(import_.interface.sync_stub_client(), import_.config["ip"], import_.config["port"])
 
     def cxx_includes(self):
@@ -147,6 +147,8 @@ class XbeeExporter(Exporter):
     def registry_type(self):
         return f"tos::ae::xbee_exporter<{self.serial_type}, {self.alarm_type}>"
 
+    def cmake_targets(self):
+        return ["ae_xbee_transports"]
 
 class XbeeImporter(Importer):
     serial_type: str
@@ -169,10 +171,13 @@ class XbeeImporter(Importer):
         return self.make_import(iface, conf)
 
     def import_string(self, import_: Import):
-        return f"(co_await registry.wait<\"{self.name}\">())->import_service<{import_.interface.absolute_name()}>(tos::ae::xbee_import_args{{.addr={import_.config['addr']}, .channel={import_.config['channel']}}})"
+        return f"(co_await registry.wait<\"{self.name}\">())->import_service<{import_.interface.absolute_name()}>(tos::ae::xbee_import_args{{.addr={{{import_.config['addr']}}}, .channel={import_.config['channel']}}})"
 
     def cxx_includes(self):
         return ["tos/ae/transport/xbee/xbee_transport.hpp", "arch/drivers.hpp"]
 
     def registry_type(self):
         return f"tos::ae::xbee_importer<{self.serial_type}, {self.alarm_type}>"
+
+    def cmake_targets(self):
+        return ["ae_xbee_transports"]

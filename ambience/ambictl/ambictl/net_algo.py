@@ -1,7 +1,7 @@
 from .defs import *
 from queue import Queue
 from dijkstar import Graph, find_path
-
+from .imported_service import ImportedService
 
 class Networks:
     class Internet:
@@ -59,10 +59,32 @@ def import_path(client: Node, server: Node):
 
     return find_path(g, client, server).nodes
 
-def make_remote_import(client: Node, server: Instance):
-    server_node = server.assigned_group.dg.node.node
-    path = import_path(client, server_node)
-    rpath = path.reverse()
 
-    [source, exporter] = rpath[0:2]
-    source_export = exporter.export_service(server)
+def make_remote_import(client: Node, server_node: Node, ins: Instance):
+    path = import_path(client, server_node)
+    print(path)
+    path.reverse()
+    print(path)
+
+    res = {}
+    all_exports = []
+    [node, exporter] = path[0:2]
+    all_exports.append(ins.export(exporter))
+    print(all_exports)
+
+    for [importer, node, exporter] in zip(*(iter(path[2:]),) * 3):
+        print((importer, node, exporter))
+        imprt = importer.import_from(all_exports[-1])
+        serv = ImportedService(f"import_{ins.name}.{node.name}", imprt)
+        all_exports.append(serv.export(exporter))
+        print(all_exports)
+        res[node] = serv
+
+
+    [importer, node] = path[-2:]
+    print((importer, node))
+    imprt = importer.import_from(all_exports[-1])
+    serv = ImportedService(f"import_{ins.name}.{node.name}", imprt)
+    res[node] = serv
+    return res
+

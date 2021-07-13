@@ -62,7 +62,8 @@ class InMemoryLoader(GroupLoader):
             "loader.cpp": src_template.render({
                 "group_name": group.group.name,
                 "service_includes": (iface.get_include() for iface in group.group.interfaceDeps()),
-                "services": (serv.impl.server_name() for serv in group.group.servs),
+                "service_types": (serv.registry_type() for serv in group.group.servs),
+                "service_names": (serv.name for serv in group.group.servs),
                 "imported_services": {key.name: val - 1 for key, val in group.group.assignNumsToExternalDeps()},
                 "start_addr": hex(group.entry_point)
             }),

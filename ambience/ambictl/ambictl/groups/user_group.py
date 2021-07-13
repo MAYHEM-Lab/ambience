@@ -111,7 +111,7 @@ class UserGroup(Group):
         with open(os.path.join(subdir, "null.cpp"), mode="w+") as src:
             src.write("")
         with open(os.path.join(subdir, "linker.ld"), mode="w+") as src:
-            src.write("")
+            src.write(self.generateLinker(Memories(rom=(0, 1024*1024), ram=(1024*1024, 1024*1024))))
         with open(os.path.join(subdir, "group.cpp"), mode="w+") as src:
             src.write(self.generateBody())
         with open(os.path.join(subdir, "CMakeLists.txt"), mode="w+") as src:

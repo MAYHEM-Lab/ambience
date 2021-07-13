@@ -190,7 +190,7 @@ platform(
         ),
         importer(
             network="DO-SFO2",
-            native=HostedUdpImporter
+            native=LwipUdpImporter
         ),
     ],
 )

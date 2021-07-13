@@ -1,7 +1,7 @@
 from ambictl import Networks
 
 node(
-    name="sfo2-vm1",
+    name="sfo2_vm1",
     platform="digitalocean_vm",
     exporters=[
         exporter(
@@ -15,6 +15,35 @@ node(
             native=LwipUdpExporter
         ),
     ],
+)
+
+node(
+    name="sfo2_vm2",
+    platform="digitalocean_vm",
+    exporters=[
+        exporter(
+            network="udp-internet",
+            address="138.68.240.95",
+            native=LwipUdpExporter
+        ),
+        exporter(
+            network="DO-SFO2",
+            address="10.138.0.4",
+            native=LwipUdpExporter
+        ),
+    ],
+)
+
+node(
+    name="qemu_vm1",
+    platform="x86_64_pc",
+    exporters=[
+        exporter(
+            network="udp-internet",
+            address="10.0.0.2",
+            native=LwipUdpExporter
+        ),
+    ]
 )
 
 node(
