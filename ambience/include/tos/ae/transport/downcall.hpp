@@ -1,37 +1,41 @@
 #pragma once
 
+#include <tos/ae/kernel/rings.hpp>
+#include <tos/ae/kernel/user_group.hpp>
 #include <tos/ae/rings.hpp>
 #include <tos/task.hpp>
 
 namespace tos::ae {
 struct awaiter {
     auto operator co_await() {
-        tos::ae::submit_elem<true>(*iface, id);
+        tos::ae::submit_elem<true>(*g->iface.user_iface, id);
+        g->notify_downcall();
         return m_elem->operator co_await();
     }
 
     req_elem* m_elem;
     int id;
-    interface* iface;
+    kernel::user_group* g;
 };
 
 struct downcall_transport {
-    explicit downcall_transport(interface& iface, int channel)
-        : iface{&iface}
+    explicit downcall_transport(kernel::user_group& g, int channel)
+        : g{&g}
         , channel_id{channel} {
     }
 
     awaiter execute(int proc_id, const void* args, void* res) {
-        const auto& [req, id] = prepare_req(*iface, channel_id, proc_id, args, res);
+        const auto& [req, id] =
+            prepare_req(*g->iface.user_iface, channel_id, proc_id, args, res);
 
         return awaiter{
             .m_elem = &req,
             .id = id,
-            .iface = iface,
+            .g = g,
         };
     }
 
-    interface* iface;
+    kernel::user_group* g;
     int channel_id;
 };
 } // namespace tos::ae

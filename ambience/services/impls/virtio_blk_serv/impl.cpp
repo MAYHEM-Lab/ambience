@@ -24,8 +24,6 @@ struct impl final : public tos::ae::services::block_memory::sync_server {
                             lidl::message_builder& response_builder) override {
         auto start = response_builder.allocate(len, 1);
         auto res = tos::span<uint8_t>(start, len);
-        printf(
-            "read %d bytes to %p at offset %d from block %d", len, start, offset, block);
 
         if (len != get_block_size()) {
             std::vector<uint8_t> buffer(get_block_size());
@@ -45,12 +43,6 @@ struct impl final : public tos::ae::services::block_memory::sync_server {
 
     bool
     write(const int32_t& block, const int32_t& offset, tos::span<uint8_t> data) override {
-        printf("write %d bytes from %p at offset %d to block %d",
-               int(data.size()),
-               data.data(),
-               offset,
-               block);
-
         if (data.size() != get_block_size()) {
             std::vector<uint8_t> buffer(get_block_size());
             m_blk_dev->read(block, buffer, 0);

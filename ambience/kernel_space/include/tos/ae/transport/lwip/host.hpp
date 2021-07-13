@@ -2,6 +2,7 @@
 
 #include <common/inet/tcp_ip.hpp>
 #include <deque>
+#include <tos/ae/exporter.hpp>
 #include <tos/ae/service_host.hpp>
 #include <tos/lwip/tcp.hpp>
 #include <tos/lwip/tcp_stream.hpp>
@@ -10,7 +11,7 @@
 #include <vector>
 
 namespace tos::ae {
-template <class ServiceHost>
+template<class ServiceHost>
 struct lwip_host {
     lwip_host(const ServiceHost& service, tos::port_num_t port);
 
@@ -45,4 +46,10 @@ private:
 
 extern template class lwip_host<sync_service_host>;
 extern template class lwip_host<async_service_host>;
+
+struct lwip_exporter : exporter::sync_server {
+    int64_t number_of_calls() override {
+        return 0;
+    }
+};
 } // namespace tos::ae

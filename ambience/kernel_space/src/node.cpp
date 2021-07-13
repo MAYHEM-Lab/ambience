@@ -20,6 +20,8 @@ concept HasGroup = requires(T& t) {
     t.group;
 };
 
+tos::function_ref<void(tos::ae::kernel::group&)> make_runnable{[](tos::ae::kernel::group&, void*) {}};
+
 void maybe_init_xbee(tos::any_alarm& alarm);
 tos::expected<void, tos::common_error> kernel() {
     platform_support support;
@@ -43,24 +45,23 @@ tos::expected<void, tos::common_error> kernel() {
     static tos::debug::log_server serv(sink);
     registry.register_service<"logger">(&serv);
 
+#if defined(TOS_AE_HAVE_XBEE)
     maybe_init_xbee(support.get_chrono().alarm);
+#endif
 
     auto groups = init_all_groups(support.make_args());
     tos::debug::log("Groups initialized");
 
+    tos::semaphore run_sem{0};
     tos::intrusive_list<tos::ae::kernel::group> group_list;
-    boost::hana::for_each(groups, [&](auto& g) {
-        if constexpr (HasGroup<decltype(g)>) {
-            group_list.push_back(*g.group);
-        }
-    });
+    auto runnable_maker = [&](tos::ae::kernel::group& group) {
+        group_list.push_back(group);
+        run_sem.up();
+    };
+    make_runnable = tos::function_ref<void(tos::ae::kernel::group&)>(runnable_maker);
 
-    if (group_list.empty()) {
-        tos::this_thread::block_forever();
-    }
-    
     while (true) {
-        tos::this_thread::yield();
+        run_sem.down();
         auto& g = group_list.front();
         group_list.pop_front();
         g.runner->run(g);

@@ -25,34 +25,6 @@ struct impl : tos::ae::services::calculator::async_server {
             co_await log_to_async_sink(
                 ptr, tos::debug::log_level::info, std::string_view("in add"));
         }());
-        tos::coro::make_detached([this]() -> tos::Task<void> {
-            auto handle = co_await m_fs->open("/calc");
-
-            std::array<uint8_t, 32> buf;
-            lidl::message_builder builder{buf};
-
-            auto res = co_await m_fs->read_file(handle, 0, 4, builder);
-
-            int call_cnt;
-            if (res.empty()) {
-                call_cnt = 0;
-            } else {
-                memcpy(&call_cnt, res.data(), res.size());
-            }
-            ++call_cnt;
-
-            auto ptr = &m_sink;
-
-            co_await log_to_async_sink(ptr,
-                                       tos::debug::log_level::info,
-                                       std::string_view("Call count:"),
-                                       int64_t(call_cnt));
-
-            co_await m_fs->write_file(
-                handle, 0, tos::const_span_cast(tos::raw_cast(tos::monospan(call_cnt))));
-
-            co_await m_fs->close_file(handle);
-        }());
         co_return x + y;
     }
 

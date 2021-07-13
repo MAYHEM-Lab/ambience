@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tos/ae/kernel/user_group.hpp>
+#include <tos/ae/transport/downcall.hpp>
 #include <tos/interrupt_trampoline.hpp>
 
 namespace tos::ae::kernel {
@@ -8,7 +9,7 @@ template<class... ServTs>
 void expose_services_to_group(meta::list<ServTs...>, user_group& group) {
     ((group.channels.push_back(
          std::make_unique<typename ServTs::template async_zerocopy_client<
-             tos::ae::downcall_transport>>(*group.iface.user_iface, 0))),
+             tos::ae::downcall_transport>>(group, 0))),
      ...);
 }
 

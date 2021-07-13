@@ -3,7 +3,7 @@ add_library(
               include/tos/ae/kernel/address_space.hpp stub.cpp
               include/tos/ae/kernel/runners/preemptive_user_runner.hpp
               include/tos/ae/kernel/runners/group_runner.hpp
-              include/tos/ae/kernel/group.hpp)
+              include/tos/ae/kernel/group.hpp src/user_group.cpp)
 target_link_libraries(aekernellib PUBLIC aecommon tos_arch_core tos_ft tos_elf)
 target_include_directories(aekernellib PUBLIC include)
 
@@ -54,13 +54,17 @@ if (NOT ${TOS_PLATFORM} MATCHES "hosted")
     )
 endif()
 
+add_library(ae_xbee_transports INTERFACE)
+target_link_libraries(ae_xbee_transports INTERFACE aekernel)
+target_sources(ae_xbee_transports INTERFACE src/xbee_exporter.cpp)
+target_compile_definitions(ae_xbee_transports INTERFACE TOS_AE_HAVE_XBEE)
+
 add_library(aekernel_node INTERFACE)
 target_link_libraries(aekernel_node INTERFACE aekernel)
 target_sources(
     aekernel_node
     INTERFACE
         src/node.cpp
-        src/xbee_exporter.cpp
 )
 
 add_subdirectory(common)

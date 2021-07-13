@@ -47,7 +47,7 @@ void __cxa_atexit() {
     pollable.run();
 
     while (true) {
-        tos::ae::detail::do_yield_syscall();
         proc_res_queue(iface);
+        tos::ae::detail::do_yield_syscall();
     }
 }

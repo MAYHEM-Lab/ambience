@@ -15,6 +15,7 @@ struct preemptive_user_group_runner : group_runner {
     void run(kernel::group& group) override {
         auto& user_group = static_cast<kernel::user_group&>(group);
         m_erased_runner(*user_group.state);
+        user_group.m_runnable = false;
         post_run(user_group);
     }
 
@@ -39,19 +40,22 @@ private:
                         LOG(*(std::string_view*)req.arg_ptr);
                     }
 
+                    group.notify_downcall();
                     return done();
                 }
 
                 if (group.exposed_services.size() <= req.channel - 1) {
                     LOG_ERROR("No such service!");
+                    group.notify_downcall();
                     return done();
                 }
 
                 auto& channel = group.exposed_services[req.channel - 1];
 
                 if (auto sync = get_if<tos::ae::sync_service_host>(&channel)) {
-                    tos::launch(tos::alloc_stack, [sync, done, req] {
+                    tos::launch(tos::alloc_stack, [&group, sync, done, req] {
                         sync->run_zerocopy(req.procid, req.arg_ptr, req.ret_ptr);
+                        group.notify_downcall();
                         return done();
                     });
                     return;
@@ -60,7 +64,11 @@ private:
                 auto async = get_if<tos::ae::async_service_host>(&channel);
 
                 tos::coro::make_detached(
-                    async->run_zerocopy(req.procid, req.arg_ptr, req.ret_ptr), done);
+                    async->run_zerocopy(req.procid, req.arg_ptr, req.ret_ptr),
+                    [&group, done] {
+                        group.notify_downcall();
+                        done();
+                    });
             },
             group.iface);
     }
