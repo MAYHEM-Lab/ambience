@@ -2,6 +2,7 @@
 #include <tos/debug/log.hpp>
 #include <tos/detail/poll.hpp>
 #include <tos/lwip/common.hpp>
+#include <tos/ae/detail/handle_req.hpp>
 
 namespace tos::ae {
 template<class ServiceHost>
@@ -50,25 +51,6 @@ lwip_host<ServiceHost>::read_req(tos::tcp_stream<tos::lwip::tcp_endpoint>& strea
     return buffer;
 }
 
-namespace {
-void handle_req(async_service_host& serv,
-                tos::span<uint8_t> req,
-                lidl::message_builder& response_builder) {
-    tos::semaphore exec_sem{0};
-
-    tos::coro::make_detached(serv.run_message(req, response_builder),
-                             tos::make_semaphore_upper(exec_sem));
-
-    exec_sem.down();
-}
-
-void handle_req(sync_service_host& serv,
-                tos::span<uint8_t> req,
-                lidl::message_builder& response_builder) {
-    serv.run_message(req, response_builder);
-}
-} // namespace
-
 template<class ServiceHost>
 void lwip_host<ServiceHost>::handle_one_req(
     tos::tcp_stream<tos::lwip::tcp_endpoint>& stream) {
@@ -76,7 +58,7 @@ void lwip_host<ServiceHost>::handle_one_req(
     std::array<uint8_t, 2048> resp;
     lidl::message_builder response_builder{resp};
 
-    handle_req(serv, req, response_builder);
+    sync_run_message(serv, req, response_builder);
 
     uint16_t resp_len = response_builder.get_buffer().size();
     stream.write(tos::raw_cast(tos::monospan(resp_len)));
@@ -93,7 +75,7 @@ void lwip_host<ServiceHost>::handle_one_req(const tos::udp_endpoint_t& from,
         lidl::message_builder response_builder{resp};
 
         auto now = lwip::global::system_clock->now();
-        handle_req(serv, req, response_builder);
+        sync_run_message(serv, req, response_builder);
         auto end = lwip::global::system_clock->now();
         udp_sock.send_to(response_builder.get_buffer(), from);
 //        tos::debug::log(
