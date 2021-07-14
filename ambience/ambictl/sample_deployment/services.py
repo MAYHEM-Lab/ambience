@@ -7,14 +7,6 @@ serv_instance(
 )
 
 serv_instance(
-    name="fs2",
-    serv=littlefs,
-    deps={
-        "block": "fs_block.local"
-    }
-)
-
-serv_instance(
     name="calc",
     serv=basic_calc,
     deps={
@@ -45,18 +37,31 @@ serv_instance(
 )
 
 serv_instance(
-    name="calc4",
-    serv=basic_calc,
+    name="bench_agent",
+    serv=calc_bench_agent,
     deps={
-        "logger": node_local,
-        "alarm": node_local,
-        "fs": "fs2"
+        "calc": "calc2"
+    }
+)
+
+serv_instance(
+    name="bench_agent2",
+    serv=async_calc_bench_agent,
+    deps={
+        "calc": "calc3"
     }
 )
 
 export(
-    service="calc4",
+    service="bench_agent",
     networks={
-        "udp-internet": 1893
+        "udp-internet": 1894
+    }
+)
+
+export(
+    service="bench_agent2",
+    networks={
+        "udp-internet": 1895
     }
 )

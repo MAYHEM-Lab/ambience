@@ -23,7 +23,7 @@ node(
     exporters=[
         exporter(
             network="udp-internet",
-            address="138.68.240.95",
+            address="138.197.207.30",
             native=LwipUdpExporter
         ),
         exporter(
@@ -34,17 +34,17 @@ node(
     ],
 )
 
-node(
-    name="qemu_vm1",
-    platform="x86_64_pc",
-    exporters=[
-        exporter(
-            network="udp-internet",
-            address="10.0.0.2",
-            native=LwipUdpExporter
-        ),
-    ]
-)
+# node(
+#     name="qemu_vm1",
+#     platform="x86_64_pc",
+#     exporters=[
+#         exporter(
+#             network="udp-internet",
+#             address="10.0.0.2",
+#             native=LwipUdpExporter
+#         ),
+#     ]
+# )
 
 node(
     name="hosted",
