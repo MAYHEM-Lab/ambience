@@ -36,8 +36,8 @@ struct preemptive_user_group_runner : group_runner {
 private:
     void post_run(kernel::user_group& group) {
         proc_req_queue(
-            [&](tos::ae::req_elem& req, auto done) {
-                if (req.channel == 0) {
+            [&](tos::ae::req_elem req, auto done) {
+                if (req.channel == 0) [[unlikely]] {
                     if (req.ret_ptr) {
                         *((volatile bool*)req.ret_ptr) = true;
                     }
@@ -50,7 +50,7 @@ private:
                     return done();
                 }
 
-                if (group.exposed_services.size() <= req.channel - 1) {
+                if (group.exposed_services.size() <= req.channel - 1) [[unlikely]] {
                     LOG_ERROR("No such service!");
                     group.notify_downcall();
                     return done();
