@@ -217,17 +217,15 @@ class Group:
 class DeployGroup:
     node: DeployNode
     group: Group
-    heap_size: int
     queue_size: int
     sizes: (int, int)
     memories: Memories
     entry_point: int
 
-    def __init__(self, node: DeployNode, group: Group, heap_size: int, queue_size: int):
+    def __init__(self, node: DeployNode, group: Group, queue_size: int):
         group.dg = self
         self.node = node
         self.group = group
-        self.heap_size = heap_size
         self.queue_size = queue_size
         self.memories = None
         self.sizes = None
@@ -460,7 +458,7 @@ class DeployNode:
     def __init__(self, node: Node, groups: List[Group]):
         self.node = node
         self.groups = groups
-        self.deploy_groups = {g: DeployGroup(self, g, 2048, 32) for g in self.groups}
+        self.deploy_groups = {g: DeployGroup(self, g, 32) for g in self.groups}
         self.target_name = None
         self.objects = {}
 
