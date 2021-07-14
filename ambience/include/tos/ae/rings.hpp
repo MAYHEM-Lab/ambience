@@ -134,7 +134,7 @@ template<size_t N>
 struct interface_storage {
     interface_storage() = default;
 
-    ring_elem elems[N];
+    ring_elem elems[N]{};
     uint8_t req_arr[sizeof(ring) + N * sizeof(uint16_t)];
     uint8_t res_arr[sizeof(ring) + N * sizeof(uint16_t)];
 
