@@ -20,11 +20,11 @@ struct impl : tos::ae::services::calculator::async_server {
     }
 
     tos::Task<int32_t> add(const int32_t& x, const int32_t& y) override {
-        tos::coro::make_detached([this]() -> tos::Task<void> {
-            auto ptr = &m_sink;
-            co_await log_to_async_sink(
-                ptr, tos::debug::log_level::info, std::string_view("in add"));
-        }());
+//        tos::coro::make_detached([this]() -> tos::Task<void> {
+//            auto ptr = &m_sink;
+//            co_await log_to_async_sink(
+//                ptr, tos::debug::log_level::info, std::string_view("in add"));
+//        }());
         co_return x + y;
     }
 
