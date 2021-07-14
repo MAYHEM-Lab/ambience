@@ -93,7 +93,17 @@ struct interface {
     int next_elem = 0;
 
     uint16_t allocate() {
-        return next_elem++ % size;
+        auto res = next_elem % size;
+        if (tos::util::is_flag_set(elems[res].common.flags, elem_flag::in_use)) {
+            // Error
+            //            Assert(false);
+        }
+        ++next_elem;
+        return res;
+    }
+
+    void release(int idx) {
+        elems[idx].common.flags = elem_flag::none;
     }
 };
 
@@ -106,6 +116,7 @@ uint16_t for_each(
             auto idx = ring.elems[last_seen % size];
 
             fn(iface.elems[idx]);
+            iface.release(idx);
         }
     }
 
@@ -113,6 +124,7 @@ uint16_t for_each(
         auto idx = ring.elems[last_seen % size];
 
         fn(iface.elems[idx]);
+        iface.release(idx);
     }
 
     return last_seen;
@@ -136,7 +148,7 @@ prepare_req(interface& iface, int channel, int proc, const void* params, void* r
     auto el_idx = iface.allocate();
     auto& req_el = iface.elems[el_idx].req;
 
-    req_el.flags = elem_flag::req;
+    req_el.flags = tos::util::set_flag(elem_flag::req, elem_flag::in_use);
 
     req_el.channel = channel;
     req_el.procid = proc;
@@ -181,7 +193,7 @@ void respond(interface& iface, ring_elem& el) {
     auto& res = el.res;
 
     res.user_ptr = req.user_ptr;
-    res.flags = elem_flag::none;
+    res.flags = elem_flag::in_use;
 
     submit_elem<FromHypervisor>(iface, el_idx);
 }
