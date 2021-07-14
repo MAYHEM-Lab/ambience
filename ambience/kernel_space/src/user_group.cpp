@@ -9,4 +9,9 @@ void user_group::notify_downcall() {
     m_runnable = true;
     make_runnable(*this);
 }
+
+void user_group::clear_runnable() {
+//    tos::debug::log("Clear runnable");
+    m_runnable = false;
+}
 } // namespace tos::ae::kernel
