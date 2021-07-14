@@ -8,8 +8,10 @@ namespace tos::ae::kernel {
 struct user_group : group {
     kernel_interface iface;
     kern::tcb* state;
-    bool m_runnable = false;
 
     void notify_downcall();
+    void clear_runnable();
+private:
+    bool m_runnable = false;
 };
 } // namespace tos::ae::kernel

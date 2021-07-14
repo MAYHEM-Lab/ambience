@@ -14,8 +14,14 @@ struct preemptive_user_group_runner : group_runner {
 
     void run(kernel::group& group) override {
         auto& user_group = static_cast<kernel::user_group&>(group);
-        m_erased_runner(*user_group.state);
-        user_group.m_runnable = false;
+
+        if (m_erased_runner(*user_group.state)) {
+            user_group.clear_runnable();
+            user_group.notify_downcall();
+        } else {
+            user_group.clear_runnable();
+        }
+
         post_run(user_group);
     }
 
