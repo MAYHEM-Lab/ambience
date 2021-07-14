@@ -6,14 +6,10 @@
 #include <utility>
 
 namespace tos::coro {
-class detached {
-public:
-    struct promise_type;
-    using coro_handle = std::coroutine_handle<promise_type>;
-
+struct detached {
     struct promise_type {
         detached get_return_object() noexcept {
-            return detached{coro_handle::from_promise(*this)};
+            return detached{};
         }
 
         std::suspend_never initial_suspend() noexcept {
@@ -30,13 +26,6 @@ public:
         void return_void() {
         }
     };
-
-    explicit detached(coro_handle handle)
-        : handle_(handle) {
-    }
-
-private:
-    coro_handle handle_;
 };
 
 class pollable {
