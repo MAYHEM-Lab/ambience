@@ -16,6 +16,10 @@ env = Environment(
 )
 
 
+def _write_if_different(file, content):
+    file.write(content)
+
+
 class NodeObject:
     @abc.abstractmethod
     def cxx_type(self):
@@ -483,7 +487,7 @@ class DeployNode:
 
         with open(os.path.join(node_dir, "CMakeLists.txt"), "w+") as node_cmake:
             template = env.get_template("node/CMakeLists.txt")
-            node_cmake.write(template.render({
+            _write_if_different(node_cmake, template.render({
                 "node_name": self.node.name,
                 "node_groups": (g.name for g in self.deploy_groups.keys()),
                 "schemas": set(iface.module.cmake_target for g in self.groups for iface in g.interfaceDeps()),
@@ -494,25 +498,25 @@ class DeployNode:
 
         with open(os.path.join(loaders_dir, "CMakeLists.txt"), "w+") as groups_cmake:
             template = env.get_template("node/loaders/CMakeLists.txt")
-            groups_cmake.write(template.render({
+            _write_if_different(groups_cmake, template.render({
                 "node_loaders": (g.name for g in self.deploy_groups.keys())
             }))
 
         with open(os.path.join(node_dir, "groups.hpp"), "w+") as node_src:
             template = env.get_template("node/groups.hpp")
-            node_src.write(template.render({
+            _write_if_different(node_src, template.render({
                 "groups": (group.name for group in self.deploy_groups),
                 "group_includes": (f"{group.name}.hpp" for group in self.deploy_groups)
             }))
 
         with open(os.path.join(node_dir, "groups.cpp"), "w+") as node_src:
             template = env.get_template("node/groups.cpp")
-            node_src.write(template.render({
+            _write_if_different(node_src, template.render({
                 "groups": list(group.name for group in self.deploy_groups)
             }))
 
         with open(os.path.join(node_dir, "registry.hpp"), "w+") as node_src:
-            node_src.write(self.generateRegistry())
+            _write_if_different(node_src, self.generateRegistry())
 
         for dg in self.deploy_groups.values():
             group_dir = os.path.join(loaders_dir, dg.group.name)
@@ -520,7 +524,7 @@ class DeployNode:
             loader = dg.group.generate_loader_dir("")
             for name, content in loader.items():
                 with open(os.path.join(group_dir, name), "w+") as group_src:
-                    group_src.write(content)
+                    _write_if_different(group_src, content)
 
     def post_generate(self, build_root, conf_dirs):
         for g in self.groups:

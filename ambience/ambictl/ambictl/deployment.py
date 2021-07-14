@@ -1,4 +1,4 @@
-from .defs import DeployNode, env
+from .defs import DeployNode, env, _write_if_different
 import os
 import subprocess
 
@@ -13,7 +13,7 @@ class Deployment:
         template = env.get_template("build_dir/CMakeLists.txt")
         with open(os.path.join(build_at, "CMakeLists.txt"), mode="w+") as root_cmake:
             with open(os.path.join(build_at, "tos/CMakeLists.txt")) as tos_cmake:
-                root_cmake.write(template.render({
+                _write_if_different(root_cmake, template.render({
                     "tos_cmake_contents": tos_cmake.read(),
                     "group_subdirs": (group.name for node in self.nodes for group in node.deploy_groups),
                     "node_subdirs": (node.node.name for node in self.nodes)

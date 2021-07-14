@@ -6,6 +6,8 @@ import subprocess
 from elftools.elf.elffile import ELFFile
 import re
 from ..defs import *
+from ..defs import _write_if_different
+
 
 def extract_readelf(build_dir: str) -> str:
     cache_path = os.path.join(build_dir, "CMakeCache.txt")
@@ -109,18 +111,18 @@ class UserGroup(Group):
         subdir = os.path.join(build_root, self.name)
         os.makedirs(subdir, exist_ok=True)
         with open(os.path.join(subdir, "null.cpp"), mode="w+") as src:
-            src.write("")
+            _write_if_different(src, "")
         with open(os.path.join(subdir, "linker.ld"), mode="w+") as src:
-            src.write(self.generateLinker(Memories(rom=(0, 1024*1024), ram=(1024*1024, 1024*1024))))
+            _write_if_different(src, self.generateLinker(Memories(rom=(0, 1024*1024), ram=(1024*1024, 1024*1024))))
         with open(os.path.join(subdir, "group.cpp"), mode="w+") as src:
-            src.write(self.generateBody())
+            _write_if_different(src, self.generateBody())
         with open(os.path.join(subdir, "CMakeLists.txt"), mode="w+") as src:
-            src.write(self.generateCmake())
+            _write_if_different(src, self.generateCmake())
         with open(os.path.join(subdir, "interface.cpp"), mode="w+") as src:
-            src.write(self.generateInterface(self.dg.queue_size))
+            _write_if_different(src, self.generateInterface(self.dg.queue_size))
         if self.dg.memories is not None:
             with open(os.path.join(subdir, "linker.ld"), mode="w+") as src:
-                src.write(self.generateLinker(self.dg.memories))
+                _write_if_different(src, self.generateLinker(self.dg.memories))
 
     def generate_loader_dir(self, build_root):
         return self.dg.node.node.platform.generateGroupLoader(self.dg)

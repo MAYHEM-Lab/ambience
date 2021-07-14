@@ -1,4 +1,5 @@
 from ..defs import *
+from ..defs import _write_if_different
 from ..group_loader import KernelLoader
 
 class KernelGroup(Group):
@@ -7,7 +8,7 @@ class KernelGroup(Group):
         os.makedirs(group_dir, exist_ok=True)
 
         with open(os.path.join(group_dir, "CMakeLists.txt"), mode="w+") as src:
-            src.write("")
+            _write_if_different(src, "")
 
     def generate_loader_dir(self, build_root):
         return KernelLoader().generateGroupLoader(self.dg)
