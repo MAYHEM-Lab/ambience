@@ -27,16 +27,16 @@ inline void proc_req_queue(ExecutorT&& executor, kernel_interface& iface) {
 
                      if (!util::is_flag_set(elem.common.flags, elem_flag::req)) {
                          // Response for a request we made.
-
                          auto& res = elem.res;
-                         if (res.user_ptr) {
-                             auto& continuation =
-                                 *static_cast<tos::function_ref<void()>*>(res.user_ptr);
-                             continuation();
-                         }
+                         auto& continuation =
+                             *static_cast<tos::function_ref<void()>*>(res.user_ptr);
+                         continuation();
                      } else {
-                         executor(req, [&elem, &iface] {
-                             respond<true>(*iface.user_iface, elem);
+                         if (!req.user_ptr) {
+                             tos::debug::log(req.channel, req.arg_ptr, req.ret_ptr, req.user_ptr);
+                         }
+                         executor(req, [ptr = req.user_ptr, &iface] {
+                             respond<true>(*iface.user_iface, ptr);
                          });
                      }
                  });

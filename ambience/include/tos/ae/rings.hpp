@@ -186,13 +186,12 @@ void req_elem::awaiter<FromHost>::await_suspend(std::coroutine_handle<> handle) 
 }
 
 template<bool FromHypervisor>
-void respond(interface& iface, ring_elem& el) {
-    auto el_idx = std::distance(iface.elems, &el);
+void respond(interface& iface, void* user_ptr) {
+    auto el_idx = iface.allocate();
 
-    auto& req = el.req;
-    auto& res = el.res;
+    auto& res = iface.elems[el_idx].res;
 
-    res.user_ptr = req.user_ptr;
+    res.user_ptr = user_ptr;
     res.flags = elem_flag::in_use;
 
     submit_elem<FromHypervisor>(iface, el_idx);
