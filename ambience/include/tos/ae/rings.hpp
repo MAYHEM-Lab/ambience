@@ -25,6 +25,7 @@ struct elem {
     elem_flag flags;
 };
 
+struct interface;
 struct req_elem {
     void* user_ptr;
     elem_flag flags;
@@ -33,26 +34,31 @@ struct req_elem {
     const void* arg_ptr;
     void* ret_ptr;
 
-    auto operator co_await() {
-        struct awaiter {
-            bool await_ready() const noexcept {
-                return false;
-            }
+    template<bool FromHost>
+    struct awaiter {
+        bool await_ready() const noexcept {
+            return false;
+        }
 
-            void await_suspend(std::coroutine_handle<> handle) {
-                ref = coro_resumer(handle);
-                el->user_ptr = &ref;
-            }
+        void await_suspend(std::coroutine_handle<> handle);
 
-            bool await_resume() const {
-                return true;
-            }
+        bool await_resume() const {
+            return true;
+        }
 
-            req_elem* el;
-            tos::function_ref<void()> ref{[](void*) {}};
+        interface* iface;
+        int id;
+        req_elem* el;
+        tos::function_ref<void()> ref{[](void*) {}};
+    };
+
+    template <bool FromHost>
+    awaiter<FromHost> submit(interface* iface, int id, req_elem* el) {
+        return {
+            .iface = iface,
+            .id = id,
+            .el = el
         };
-
-        return awaiter{this};
     }
 };
 
@@ -158,6 +164,13 @@ submit_req(interface& iface, int channel, int proc, const void* params, void* re
     submit_elem<FromHypervisor>(iface, el_idx);
 
     return req_el;
+}
+
+template<bool FromHost>
+void req_elem::awaiter<FromHost>::await_suspend(std::coroutine_handle<> handle) {
+    ref = coro_resumer(handle);
+    el->user_ptr = &ref;
+    submit_elem<FromHost>(*this->iface, this->id);
 }
 
 template<bool FromHypervisor>

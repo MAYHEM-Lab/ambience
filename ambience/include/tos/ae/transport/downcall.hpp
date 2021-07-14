@@ -8,9 +8,8 @@
 namespace tos::ae {
 struct awaiter {
     auto operator co_await() {
-        tos::ae::submit_elem<true>(*g->iface.user_iface, id);
         g->notify_downcall();
-        return m_elem->operator co_await();
+        return m_elem->submit<true>(g->iface.user_iface, id, m_elem);
     }
 
     req_elem* m_elem;

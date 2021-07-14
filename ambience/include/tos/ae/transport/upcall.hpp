@@ -6,8 +6,7 @@
 namespace tos::ae {
 struct awaiter {
     auto operator co_await() const noexcept {
-        tos::ae::submit_elem<false>(*iface, id);
-        return m_elem->operator co_await();
+        return m_elem->submit<false>(iface, id, m_elem);
     }
 
     req_elem* m_elem;
