@@ -1,0 +1,5 @@
+namespace tos::ae;
+
+service agent {
+    start() -> bool;
+}

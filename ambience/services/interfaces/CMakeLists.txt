@@ -18,3 +18,5 @@ target_include_directories(filesystem_schema INTERFACE .)
 add_lidlc(machine_schema machine.lidl)
 
 add_lidlc(import_export_schema import_export.lidl)
+
+add_lidlc(agent_schema agent.lidl)
