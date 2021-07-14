@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scrollable.hpp"
+#include <tos/peripheral/uart_16550.hpp>
 
 namespace tos::bsp {
 struct digitalocean_vm_spec {
@@ -21,6 +22,8 @@ struct digitalocean_vm_spec {
                 ensure(tos::platform::take_irq(1));
                 tos::platform::set_irq(1, tos::free_function_ref(+kb_isr));
             }*/
+//            return force_get(tos::x86_64::uart_16550::open());
+
             return scrollable{};
         }
     };
