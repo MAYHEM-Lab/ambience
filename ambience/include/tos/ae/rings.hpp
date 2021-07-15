@@ -24,11 +24,6 @@ enum class elem_flag : uint8_t
     released = 8,
 };
 
-struct elem {
-    elem_flag flags;
-    void* user_ptr;
-};
-
 struct interface;
 struct req_elem {
     elem_flag flags;
@@ -62,15 +57,33 @@ struct req_elem {
     }
 };
 
+struct elem {
+    elem_flag flags;
+    void* user_ptr;
+};
+
 struct res_elem {
     elem_flag flags;
     void* user_ptr;
+};
+
+struct free_elem {
+    elem_flag flags;
+    void* user_ptr;
+    std::atomic<free_elem*> next_free;
 };
 
 union ring_elem {
     elem common;
     req_elem req;
     res_elem res;
+    free_elem free;
+
+    ring_elem() {
+    }
+    explicit ring_elem(const ring_elem& el) {
+        memcpy(this, &el, sizeof el);
+    }
 };
 
 struct ring {
@@ -93,22 +106,19 @@ struct interface {
 
     // This member is modified both by the host and the guest.
     // Due to preemption, we have to use an atomic here.
-    std::atomic<uint32_t> next_elem = 0;
+    std::atomic<free_elem*> free_head = nullptr;
 
     NO_INLINE
     uint16_t allocate_priv() {
-        static_assert(std::atomic<int>::is_always_lock_free);
-        auto res = next_elem.fetch_add(1, std::memory_order_seq_cst) % size;
-        int count = 0;
-        while (tos::util::is_flag_set(elems[res].common.flags, elem_flag::in_use)) {
-            if (count == size) {
-                while (true)
-                    ; // No space
-            }
-            res = next_elem.fetch_add(1, std::memory_order_seq_cst) % size;
-            ++count;
+        auto res = free_head.load();
+        if (res == nullptr) {
+            while (true)
+                ; // No space
         }
-        return res;
+        while (!free_head.compare_exchange_weak(res, res->next_free.load()))
+            ;
+        uint16_t idx = std::distance(elems, reinterpret_cast<ring_elem*>(res));
+        return idx;
     }
 
     template<bool FromHost>
@@ -118,6 +128,27 @@ struct interface {
 
     void release(int idx) {
         elems[idx].common.flags = elem_flag::released;
+
+        while (true) {
+            auto expect = free_head.load();
+            elems[idx].free.next_free.store(expect);
+            auto store = &elems[idx].free;
+            if (free_head.compare_exchange_weak(expect, store)) {
+                break;
+            }
+        }
+    }
+
+    interface(int size, ring_elem* elems, ring* guest_to_host, ring* host_to_guest)
+        : size{size}
+        , elems{elems}
+        , guest_to_host{guest_to_host}
+        , host_to_guest{host_to_guest} {
+        for (int i = 0; i < size - 1; ++i) {
+            elems[i].free.next_free.store(&elems[i + 1].free);
+        }
+        elems[size - 1].free.next_free.store(nullptr);
+        free_head.store(&elems[0].free);
     }
 };
 
