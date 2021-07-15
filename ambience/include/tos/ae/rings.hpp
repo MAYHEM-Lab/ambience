@@ -181,22 +181,22 @@ prepare_req(interface& iface, int channel, int proc, const void* params, void* r
     return {req_el, el_idx};
 }
 
-template<bool FromHypervisor>
+template<bool FromHost>
 void submit_elem(interface& iface, int el_idx) {
-    if constexpr (FromHypervisor) {
+    if constexpr (FromHost) {
         iface.host_to_guest->submit(el_idx, iface.size);
     } else {
         iface.guest_to_host->submit(el_idx, iface.size);
     }
 }
 
-template<bool FromHypervisor>
+template<bool FromHost>
 req_elem&
 submit_req(interface& iface, int channel, int proc, const void* params, void* res) {
     const auto& [req_el, el_idx] =
-        prepare_req<FromHypervisor>(iface, channel, proc, params, res);
+        prepare_req<FromHost>(iface, channel, proc, params, res);
 
-    submit_elem<FromHypervisor>(iface, el_idx);
+    submit_elem<FromHost>(iface, el_idx);
 
     return req_el;
 }
