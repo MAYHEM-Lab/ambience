@@ -18,7 +18,7 @@ public:
     }
 
     explicit omemory_stream(tos::span<char> buf)
-        : omemory_stream({reinterpret_cast<uint8_t*>(buf.data()), buf.size()}) {
+        : omemory_stream(tos::raw_cast<uint8_t>(buf)) {
     }
 
     constexpr size_t write(tos::span<const uint8_t> buf) {
