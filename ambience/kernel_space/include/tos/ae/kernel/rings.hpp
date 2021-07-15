@@ -21,21 +21,14 @@ inline void proc_req_queue(ExecutorT&& executor, kernel_interface& iface) {
         for_each(*iface.user_iface,
                  *iface.user_iface->guest_to_host,
                  iface.req_last_seen,
-                 iface.user_iface->size,
-                 [&iface, &executor](ring_elem& elem) {
-                     auto& req = elem.req;
-
+                 [&iface, &executor](const ring_elem& elem) {
                      if (!util::is_flag_set(elem.common.flags, elem_flag::req)) {
                          // Response for a request we made.
-                         auto& res = elem.res;
                          auto& continuation =
-                             *static_cast<tos::function_ref<void()>*>(res.user_ptr);
+                             *static_cast<tos::function_ref<void()>*>(elem.res.user_ptr);
                          continuation();
                      } else {
-                         if (!req.user_ptr) {
-                             tos::debug::log(req.channel, req.arg_ptr, req.ret_ptr, req.user_ptr);
-                         }
-                         executor(req, [ptr = req.user_ptr, &iface] {
+                         executor(elem.req, [ptr = elem.req.user_ptr, &iface] {
                              respond<true>(*iface.user_iface, ptr);
                          });
                      }

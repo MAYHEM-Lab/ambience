@@ -25,7 +25,7 @@ struct downcall_transport {
 
     awaiter execute(int proc_id, const void* args, void* res) {
         const auto& [req, id] =
-            prepare_req(*g->iface.user_iface, channel_id, proc_id, args, res);
+            prepare_req<true>(*g->iface.user_iface, channel_id, proc_id, args, res);
 
         return awaiter{
             .m_elem = &req,
