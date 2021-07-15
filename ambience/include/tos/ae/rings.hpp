@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <iterator>
 #include <new>
 #include <tos/barrier.hpp>
