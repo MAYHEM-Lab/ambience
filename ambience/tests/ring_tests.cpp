@@ -7,28 +7,24 @@ TEST_CASE("Allocate wrapping works") {
     tos::ae::interface_storage<8> storage;
     auto iface = storage.make_interface();
 
-    REQUIRE_EQ(0, iface.allocate());
-    REQUIRE_EQ(1, iface.allocate());
-    REQUIRE_EQ(2, iface.allocate());
-    REQUIRE_EQ(3, iface.allocate());
-    REQUIRE_EQ(4, iface.allocate());
-    REQUIRE_EQ(5, iface.allocate());
-    REQUIRE_EQ(6, iface.allocate());
-    REQUIRE_EQ(7, iface.allocate());
-    REQUIRE_EQ(0, iface.allocate());
+    REQUIRE_EQ(0, iface.allocate_priv());
+    REQUIRE_EQ(1, iface.allocate_priv());
+    REQUIRE_EQ(2, iface.allocate_priv());
+    REQUIRE_EQ(3, iface.allocate_priv());
+    REQUIRE_EQ(4, iface.allocate_priv());
+    REQUIRE_EQ(5, iface.allocate_priv());
+    REQUIRE_EQ(6, iface.allocate_priv());
+    REQUIRE_EQ(7, iface.allocate_priv());
+    iface.release(0);
+    REQUIRE_EQ(0, iface.allocate_priv());
 }
 
 TEST_CASE("Response queue is initialized correctly") {
     tos::ae::interface_storage<8> storage;
     auto iface = storage.make_interface();
 
-    REQUIRE_EQ(0, iface.res_last_seen);
-    REQUIRE_EQ(0,
-               for_each(iface,
-                        *iface.host_to_guest,
-                        iface.res_last_seen,
-                        iface.size,
-                        [](auto& idx) {}));
+    int last_seen = 0;
+    REQUIRE_EQ(0, for_each(iface, *iface.host_to_guest, last_seen, [](auto& idx) {}));
 }
 
 TEST_CASE("User submission works") {
