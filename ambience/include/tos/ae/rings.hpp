@@ -7,7 +7,6 @@
 #include <new>
 #include <tos/barrier.hpp>
 #include <tos/compiler.hpp>
-#include <tos/debug/debug.hpp>
 #include <tos/detail/coro.hpp>
 #include <tos/flags.hpp>
 #include <tos/function_ref.hpp>
@@ -129,11 +128,12 @@ uint16_t for_each(interface& iface, const ring& ring, uint16_t last_seen, const 
     auto head_backup = ring.head_idx;
 
     if (last_seen > head_backup) {
+//        tos::debug::log("Wrapped around", &iface, &ring, last_seen, head_backup);
         // The used ring has wrapped around.
         for (; last_seen != 0; ++last_seen) {
             auto idx = ring.elems[last_seen % iface.size];
-            auto elem = iface.elems[idx];
-            tos::debug::do_not_optimize(&elem);
+//            tos::debug::log("Index", &iface, &ring, idx);
+            ring_elem elem(iface.elems[idx]);
             iface.release(idx);
 
             fn(elem);
@@ -142,8 +142,8 @@ uint16_t for_each(interface& iface, const ring& ring, uint16_t last_seen, const 
 
     for (; last_seen < head_backup; ++last_seen) {
         auto idx = ring.elems[last_seen % iface.size];
-        auto elem = iface.elems[idx];
-        tos::debug::do_not_optimize(&elem);
+//        tos::debug::log("Index", &iface, &ring, idx);
+        ring_elem elem(iface.elems[idx]);
         iface.release(idx);
 
         fn(elem);
