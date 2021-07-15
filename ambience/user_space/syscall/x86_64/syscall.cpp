@@ -1,6 +1,7 @@
 #include <tos/ae/detail/syscall.hpp>
 #include <tos/ae/user_space.hpp>
 #include <tos/x86_64/assembly.hpp>
+#include <tos/mem_stream.hpp>
 
 namespace tos::ae {
 int low_level_output_t::write(tos::span<const uint8_t> data) {

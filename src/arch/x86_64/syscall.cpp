@@ -1,5 +1,6 @@
 #include <tos/x86_64/msr.hpp>
 #include <tos/x86_64/syscall.hpp>
+#include <tos/span.hpp>
 
 extern "C" {
 void raw_syscall_entry();
