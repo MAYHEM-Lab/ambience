@@ -15,7 +15,9 @@ struct preemptive_user_group_runner : group_runner {
     void run(kernel::group& group) override {
         auto& user_group = static_cast<kernel::user_group&>(group);
 
+        tos::debug::log("Running", user_group.iface.user_iface);
         auto preempted = m_erased_runner(*user_group.state);
+        tos::debug::log("Out", user_group.iface.user_iface, preempted);
         user_group.clear_runnable();
         post_run(user_group);
 

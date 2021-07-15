@@ -8,6 +8,7 @@
 #include <new>
 #include <tos/barrier.hpp>
 #include <tos/compiler.hpp>
+#include <tos/debug/log.hpp>
 #include <tos/detail/coro.hpp>
 #include <tos/flags.hpp>
 #include <tos/function_ref.hpp>
@@ -239,6 +240,7 @@ template<bool FromHost>
 void req_elem::awaiter<FromHost>::await_suspend(std::coroutine_handle<> handle) {
     ref = coro_resumer(handle);
     el->user_ptr = &ref;
+    tos::debug::log("Submitting", el->user_ptr);
     submit_elem<FromHost>(*this->iface, this->id);
 }
 
