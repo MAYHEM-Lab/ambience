@@ -15,14 +15,18 @@ struct preemptive_user_group_runner : group_runner {
     void run(kernel::group& group) override {
         auto& user_group = static_cast<kernel::user_group&>(group);
 
-        if (m_erased_runner(*user_group.state)) {
-            user_group.clear_runnable();
+        auto preempted = m_erased_runner(*user_group.state);
+        user_group.clear_runnable();
+        post_run(user_group);
+
+        if (preempted) {
             user_group.notify_downcall();
         } else {
-            user_group.clear_runnable();
+            if (user_group.iface.user_iface->res_last_seen !=
+                user_group.iface.user_iface->host_to_guest->head_idx) {
+                user_group.notify_downcall();
+            }
         }
-
-        post_run(user_group);
     }
 
     static void create(function_ref<bool(kern::tcb&)> runner) {
