@@ -38,9 +38,10 @@ TEST_CASE("User submission works") {
     submit_req<false>(iface, 1, 2, nullptr, nullptr);
     uint16_t req_last_seen = 0;
 
-    req_last_seen = for_each(
-        iface, *iface.guest_to_host, req_last_seen, iface.size, [](ring_elem& el) {
-            REQUIRE_EQ(elem_flag::req, el.req.flags);
+    req_last_seen =
+        for_each(iface, *iface.guest_to_host, req_last_seen, [](ring_elem& el) {
+            REQUIRE_EQ(tos::util::set_flag(elem_flag::req, elem_flag::in_use),
+                       el.req.flags);
             REQUIRE_EQ(1, el.req.channel);
             REQUIRE_EQ(2, el.req.procid);
             REQUIRE_EQ(nullptr, el.req.arg_ptr);
