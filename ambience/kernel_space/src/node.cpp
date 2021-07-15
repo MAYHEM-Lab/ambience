@@ -15,18 +15,28 @@ tos::ae::registry_base& get_registry() {
     return registry;
 }
 
-template <class T>
+template<class T>
 concept HasGroup = requires(T& t) {
     t.group;
 };
 
-tos::function_ref<void(tos::ae::kernel::group&)> make_runnable{[](tos::ae::kernel::group&, void*) {}};
+tos::function_ref<void(tos::ae::kernel::group&)> make_runnable{
+    [](tos::ae::kernel::group&, void*) {}};
+tos::function_ref<void(tos::span<const uint8_t>)> low_level_writer{
+    [](tos::span<const uint8_t>, void*) {}};
+
+void low_level_write(tos::span<const uint8_t> arg) {
+    low_level_writer(arg);
+}
 
 void maybe_init_xbee(tos::any_alarm& alarm);
 tos::expected<void, tos::common_error> kernel() {
     platform_support support;
 
     auto serial = support.init_serial();
+    auto writer = [&](tos::span<const uint8_t> arg) { serial.write(arg); };
+    low_level_writer = tos::function_ref<void(tos::span<const uint8_t>)>(writer);
+
     tos::println(serial, "ambience node");
     tos::debug::serial_sink sink(&serial);
     tos::debug::detail::any_logger logger(&sink);

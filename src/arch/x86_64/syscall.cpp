@@ -24,9 +24,15 @@ void initialize_syscall_support() {
 }
 } // namespace tos::x86_64
 
+void low_level_write(tos::span<const uint8_t>);
+
 extern "C" void syscall_entry(tos::x86_64::syscall_frame* frame) {
     frame->cs = 0x28 | 0x3;
     frame->ss = 0x20 | 0x3;
     frame->rsp += 8;
+    if (frame->rdi == 0xDEADBEEF) {
+        low_level_write(*(tos::span<const uint8_t>*)frame->rsi);
+        return;
+    }
     tos::x86_64::syscall_handler(*frame);
 }
