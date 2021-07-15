@@ -3,7 +3,6 @@
 #include "sink.hpp"
 #include <memory>
 #include <string_view>
-#include <tos/mutex.hpp>
 #include <tos/print.hpp>
 #include <tos/self_pointing.hpp>
 
@@ -19,9 +18,9 @@ public:
     }
 
     bool begin(log_level level) override {
-        if (!platform::interrupts_disabled()) {
+//        if (!platform::interrupts_disabled()) {
 //            m_prot->lock();
-        }
+//        }
         if (!m_tag.empty()) {
             tos::print(*m_serial, "[", m_tag, "] ", tos::no_separator());
         }
@@ -60,14 +59,14 @@ public:
 
     void end() override {
         tos::println(*m_serial);
-        if (!platform::interrupts_disabled()) {
+//        if (!platform::interrupts_disabled()) {
 //            m_prot->unlock();
-        }
+//        }
     }
 
 public:
     int seq = 0;
-    std::unique_ptr<tos::mutex> m_prot = std::make_unique<tos::mutex>();
+//    std::unique_ptr<tos::mutex> m_prot = std::make_unique<tos::mutex>();
     SerialT m_serial;
     std::string_view m_tag;
 };
