@@ -6,11 +6,9 @@ extern tos::ae::interface iface;
 tos::Task<bool> handle_req(tos::ae::req_elem el);
 
 namespace tos::ae {
-uint16_t res_last_seen = 0;
-
 void proc_res_queue(interface& iface) {
-    res_last_seen =
-        for_each(iface, *iface.host_to_guest, res_last_seen, [&](const ring_elem& elem) {
+    iface.res_last_seen = for_each(
+        iface, *iface.host_to_guest, iface.res_last_seen, [&](const ring_elem& elem) {
             if (!util::is_flag_set(elem.common.flags, elem_flag::req)) {
                 // Response for a request we made.
                 if (!elem.res.user_ptr) {

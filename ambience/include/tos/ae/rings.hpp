@@ -104,6 +104,8 @@ struct interface {
     ring* guest_to_host;
     ring* host_to_guest;
 
+    uint16_t res_last_seen = 0;
+
     // This member is modified both by the host and the guest.
     // Due to preemption, we have to use an atomic here.
     std::atomic<free_elem*> free_head = nullptr;
