@@ -4,16 +4,6 @@
 #include <tos/task.hpp>
 
 namespace tos::ae {
-struct awaiter {
-    auto operator co_await() const noexcept {
-        return m_elem->submit<false>(iface, id, m_elem);
-    }
-
-    req_elem* m_elem;
-    int id;
-    interface* iface;
-};
-
 template<int channel_id>
 struct static_channel_id {
     static constexpr auto get_channel_id() {
@@ -37,15 +27,11 @@ template<interface* iface, class ChannelSrc>
 struct upcall_transport_channel : ChannelSrc {
     using ChannelSrc::ChannelSrc;
 
-    awaiter execute(int proc_id, const void* args, void* res) {
+    auto execute(int proc_id, const void* args, void* res) {
         const auto& [req, id] =
             prepare_req<false>(*iface, ChannelSrc::get_channel_id(), proc_id, args, res);
 
-        return awaiter{
-            .m_elem = &req,
-            .id = id,
-            .iface = iface,
-        };
+        return req.template submit<false>(iface, id, &req);
     }
 };
 
