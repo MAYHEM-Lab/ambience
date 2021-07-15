@@ -49,8 +49,8 @@ struct async_calc_bench : tos::ae::agent::async_server {
             std::coroutine_handle<> m_handle;
         };
 
-        constexpr auto extent = 3'000;
-        constexpr auto concurrency = 30;
+        constexpr auto extent = 1'000;
+        constexpr auto concurrency = 10;
         countdown cd{.count = concurrency};
         for (int c = 0; c < concurrency; ++c) {
             tos::coro::make_detached([c, this, &cd]() -> tos::Task<void> {
