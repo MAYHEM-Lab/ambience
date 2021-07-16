@@ -77,7 +77,7 @@ class UserGroup(Group):
         template = env.get_template("user_group/CMakeLists.txt")
         return template.render({
             "group_name": self.name,
-            "schemas": (iface.module.cmake_target for iface in self.interfaceDeps()),
+            "schemas": self.cmake_targets(),
             "service_targets": (serv.impl.cmake_target for serv in self.servs)
         })
 
@@ -89,7 +89,7 @@ class UserGroup(Group):
             "external_deps": self.generateExternalDepsSection(),
             "service_inits": self._generate_init_section(),
             "group_init": f"::g = new tos::ae::group<{len(self.servs)}>(tos::ae::group<{len(self.servs)}>::make({', '.join(serv.name for serv in self.servs)}));",
-            "service_includes": (iface.get_include() for iface in self.interfaceDeps())
+            "service_includes": self.cxx_ordered_includes()
         })
 
     def generateLinker(self, memory: Memories):

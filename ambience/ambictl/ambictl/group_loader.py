@@ -25,13 +25,13 @@ class BundledElfLoader(GroupLoader):
         return {
             f"{group.group.name}.hpp": header_template.render({
                 "group_name": group.group.name,
-                "service_includes": (iface.get_include() for iface in group.group.interfaceDeps()),
+                "service_includes": group.group.cxx_ordered_includes(),
                 "services": {serv.name: serv.registry_type() for serv in group.group.servs},
                 "imported_services": {key.name: val - 1 for key, val in group.group.assignNumsToExternalDeps()}
             }),
             "loader.cpp": src_template.render({
                 "group_name": group.group.name,
-                "service_includes": (iface.get_include() for iface in group.group.interfaceDeps()),
+                "service_includes": group.group.cxx_ordered_includes(),
                 "service_types": (serv.registry_type() for serv in group.group.servs),
                 "service_names": (serv.name for serv in group.group.servs),
                 "imported_services": {key.name: val - 1 for key, val in group.group.assignNumsToExternalDeps()},
@@ -39,7 +39,7 @@ class BundledElfLoader(GroupLoader):
             "CMakeLists.txt": cmake_template.render({
                 "node_name": group.node.node.name,
                 "group_name": group.group.name,
-                "schemas": (iface.module.cmake_target for iface in group.group.interfaceDeps()),
+                "schemas": group.group.cmake_targets(),
                 "group_build_dir": self.user_src
             }),
             "exports.cpp": make_exports(group)
@@ -55,13 +55,13 @@ class InMemoryLoader(GroupLoader):
         return {
             f"{group.group.name}.hpp": header_template.render({
                 "group_name": group.group.name,
-                "service_includes": (iface.get_include() for iface in group.group.interfaceDeps()),
+                "service_includes": group.group.cxx_ordered_includes(),
                 "services": {serv.name: serv.impl.server_name() for serv in group.group.servs},
                 "imported_services": {key.name: val - 1 for key, val in group.group.assignNumsToExternalDeps()}
             }),
             "loader.cpp": src_template.render({
                 "group_name": group.group.name,
-                "service_includes": (iface.get_include() for iface in group.group.interfaceDeps()),
+                "service_includes": group.group.cxx_ordered_includes(),
                 "service_types": (serv.registry_type() for serv in group.group.servs),
                 "service_names": (serv.name for serv in group.group.servs),
                 "imported_services": {key.name: val - 1 for key, val in group.group.assignNumsToExternalDeps()},
@@ -70,7 +70,7 @@ class InMemoryLoader(GroupLoader):
             "CMakeLists.txt": cmake_template.render({
                 "node_name": group.node.node.name,
                 "group_name": group.group.name,
-                "schemas": (iface.module.cmake_target for iface in group.group.interfaceDeps()),
+                "schemas": group.group.cmake_targets(),
             }),
             "exports.cpp": make_exports(group)
         }
@@ -104,7 +104,7 @@ class KernelLoader(GroupLoader):
         return {
             f"{group.group.name}.hpp": header_template.render({
                 "group_name": group.group.name,
-                "service_includes": (iface.get_include() for iface in group.group.interfaceDeps()),
+                "service_includes": group.group.cxx_ordered_includes(),
                 "services": {serv.name: serv.registry_type() for serv in group.group.servs},
             }),
             "loader.cpp": src_template.render({
@@ -117,7 +117,7 @@ class KernelLoader(GroupLoader):
             "CMakeLists.txt": cmake_template.render({
                 "node_name": group.node.node.name,
                 "group_name": group.group.name,
-                "schemas": (iface.module.cmake_target for iface in group.group.interfaceDeps()),
+                "schemas": group.group.cmake_targets(),
                 "service_targets": (serv.impl.cmake_target for serv in group.group.servs if isinstance(serv, ServiceInstance))
             }),
             "exports.cpp": make_exports(group)

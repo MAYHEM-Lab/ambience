@@ -41,10 +41,12 @@ class NodeObject:
 class LidlModule:
     _abs_path: str
     cmake_target: str
+    deps: [LidlModule]
 
-    def __init__(self, abs_path: str, cmake_target: str):
+    def __init__(self, abs_path: str, cmake_target: str, deps: [LidlModule] = None):
         self._abs_path = abs_path
         self.cmake_target = cmake_target
+        self.deps = [] if deps is None else deps
 
     def absolute_import(self):
         return self._abs_path
@@ -54,6 +56,19 @@ class LidlModule:
 
     def get_service(self, name: str) -> ServiceInterface:
         return ServiceInterface(self, name)
+
+    def _cxx_include(self):
+        return os.path.splitext(self.file_name())[0] + "_generated.hpp"
+
+    def cxx_includes(self):
+        res = {}
+
+        for dep in self.deps:
+            res = {**res, **dep.cxx_includes()}
+
+        res[self._cxx_include()] = set(mod._cxx_include() for mod in self.deps)
+
+        return res
 
 
 import_export_mod = LidlModule("import_export.lidl", "import_export_schema")
@@ -79,8 +94,8 @@ class ServiceInterface:
     def sync_stub_client(self):
         return f"{self.absolute_name()}::stub_client"
 
-    def get_include(self):
-        return os.path.splitext(self.module.file_name())[0] + "_generated.hpp"
+    def cxx_interface_deps(self):
+        return self.module.cxx_interface_deps()
 
     def implement(self, name: str, *, sync: bool,
                   deps: Dict[str, ServiceInterface] = {}, cmake_target: str = "") -> Service:
@@ -185,13 +200,19 @@ class Group:
         self.servs.add(ins)
         ins.assigned_group = self
 
-    def interfaceDeps(self):
+    def _interfaceDeps(self):
         all_ifaces = {serv.get_interface(): set(serv.get_dependencies()) for serv in self.servs if
                       hasattr(serv, "get_dependencies")}
         for serv in self.servs:
             if serv.get_interface() not in all_ifaces:
                 all_ifaces[serv.get_interface()] = set()
         return toposort_flatten(all_ifaces, sort=False)
+
+    def cxx_ordered_includes(self):
+        return [iface.module._cxx_include() for iface in self._interfaceDeps()]
+
+    def cmake_targets(self):
+        return (iface.module.cmake_target for iface in self._interfaceDeps())
 
     def generateInitSigSection(self):
         unique_impls = set(s.impl for s in self.servs if hasattr(s, "impl"))
@@ -405,8 +426,8 @@ class Platform(abc.ABC):
     def make_deploy_node(self, node: Node, groups: [Group]):
         raise NotImplementedError()
 
-    def make_node(self, name: str, mems: Memories, exporters: [Exporter] = [], importers: [Importer] = []):
-        return Node(name, self, mems, exporters, importers)
+    def make_node(self, name: str, mems: Memories, exporters: [Exporter] = None, importers: [Importer] = None):
+        return Node(name, self, mems, [] if exporters is None else exporters, [] if importers is None else importers)
 
 
 class Node:
@@ -469,7 +490,7 @@ class DeployNode:
         template = env.get_template("node/registry.hpp")
         return template.render({
             "services": {serv.name: serv.registry_type() for serv in self.visibleServices()},
-            "service_includes": set(iface.get_include() for group in self.groups for iface in group.interfaceDeps()),
+            "service_includes": (includes for group in self.groups for includes in group.cxx_ordered_includes()),
             "exporter_includes": set(
                 (include for exporter in self.node.exporters for include in exporter.cxx_includes())).union(
                 set((include for importer in self.node.importers for include in importer.cxx_includes()))),
@@ -488,7 +509,7 @@ class DeployNode:
             _write_if_different(node_cmake, template.render({
                 "node_name": self.node.name,
                 "node_groups": (g.name for g in self.deploy_groups.keys()),
-                "schemas": set(iface.module.cmake_target for g in self.groups for iface in g.interfaceDeps()),
+                "schemas": set(target for g in self.groups for target in g.cmake_targets()),
                 "link_targets": set(
                     target for exporter in self.node.exporters for target in exporter.cmake_targets()).union(
                     set(target for importer in self.node.importers for target in importer.cmake_targets()))
