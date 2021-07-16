@@ -6,11 +6,14 @@
 #include <utility>
 
 namespace tos {
+template<class T>
+class TaskPromiseBase;
+
+template<class T, bool = std::is_reference_v<T>>
+class TaskPromise;
+
 template<typename T = void>
 class Task {
-    class TaskPromiseBase;
-    class TaskPromise;
-
 public:
     Task()
         : coroHandle(nullptr) {
@@ -27,7 +30,7 @@ public:
         }
     }
 
-    using promise_type = TaskPromise;
+    using promise_type = TaskPromise<T>;
     using promise_coro_handle = std::coroutine_handle<promise_type>;
 
     auto operator co_await() const& {
@@ -95,63 +98,89 @@ private:
         : coroHandle(coro) {
     }
 
+    friend class TaskPromise<T>;
     promise_coro_handle coroHandle;
+};
 
-    class TaskPromiseBase {
-    protected:
-        TaskPromiseBase() = default;
-        virtual ~TaskPromiseBase() = default;
+template<class T>
+class TaskPromiseBase {
+protected:
+    using promise_type = TaskPromise<T>;
+    using promise_coro_handle = std::coroutine_handle<promise_type>;
 
-        friend class Task;
-        std::coroutine_handle<> continuation;
+    TaskPromiseBase() = default;
+    virtual ~TaskPromiseBase() = default;
 
-    public:
-        std::suspend_always initial_suspend() const noexcept {
-            return {};
-        }
+    friend class Task<T>;
+    std::coroutine_handle<> continuation;
 
-        auto final_suspend() const noexcept {
-            struct FinalAwaiter {
-                bool await_ready() const noexcept {
-                    return false;
-                }
+public:
+    std::suspend_always initial_suspend() const noexcept {
+        return {};
+    }
 
-                std::coroutine_handle<>
-                await_suspend(promise_coro_handle coroHandle) noexcept {
-                    return coroHandle.promise().continuation;
-                }
+    auto final_suspend() const noexcept {
+        struct FinalAwaiter {
+            bool await_ready() const noexcept {
+                return false;
+            }
 
-                void await_resume() noexcept {
-                }
-            };
+            std::coroutine_handle<>
+            await_suspend(promise_coro_handle coroHandle) noexcept {
+                return coroHandle.promise().continuation;
+            }
 
-            return FinalAwaiter{};
-        }
-        void unhandled_exception() {
-        }
-    };
+            void await_resume() noexcept {
+            }
+        };
 
-    class TaskPromise : public TaskPromiseBase {
-        tos::late_constructed<T> m_value;
+        return FinalAwaiter{};
+    }
+    void unhandled_exception() {
+    }
+};
 
-    public:
-        template<class... ValT>
-        void return_value(ValT&&... value) {
-            m_value.emplace(std::forward<ValT>(value)...);
-        }
 
-        T&& result() {
-            return std::move(m_value.get());
-        }
+template<class T>
+class TaskPromise<T, false> : public TaskPromiseBase<T> {
+    tos::late_constructed<T> m_value;
 
-        Task get_return_object() noexcept {
-            return Task{promise_coro_handle::from_promise(*this)};
-        }
-    };
+public:
+    template<class... ValT>
+    void return_value(ValT&&... value) {
+        m_value.emplace(std::forward<ValT>(value)...);
+    }
+
+    T&& result() {
+        return std::move(m_value.get());
+    }
+
+    Task<T> get_return_object() noexcept {
+        return Task<T>{TaskPromiseBase<T>::promise_coro_handle::from_promise(*this)};
+    }
+};
+
+template<class T>
+class TaskPromise<T, true> : public TaskPromiseBase<T> {
+    std::remove_reference_t<T>* m_value;
+
+public:
+    template<class... ValT>
+    void return_value(T& value) {
+        m_value = &value;
+    }
+
+    T& result() {
+        return *m_value;
+    }
+
+    Task<T> get_return_object() noexcept {
+        return Task<T>{TaskPromiseBase<T>::promise_coro_handle::from_promise(*this)};
+    }
 };
 
 template<>
-class Task<void>::TaskPromise : public TaskPromiseBase {
+class TaskPromise<void, false> : public TaskPromiseBase<void> {
 public:
     void return_void() {
     }
@@ -159,8 +188,8 @@ public:
     void result() {
     }
 
-    Task get_return_object() noexcept {
-        return Task{promise_coro_handle::from_promise(*this)};
+    Task<void> get_return_object() noexcept {
+        return Task<void>{promise_coro_handle::from_promise(*this)};
     }
 };
 
