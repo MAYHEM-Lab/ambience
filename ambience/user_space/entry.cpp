@@ -56,6 +56,7 @@ detail::any_logger& default_log() {
 
     tos::debug::serial_sink sink(&tos::ae::low_level_output);
     tos::debug::detail::any_logger logger(&sink);
+    logger.set_log_level(tos::debug::log_level::error);
     g_logger = &logger;
     tos::debug::log("Call init syscall");
 
