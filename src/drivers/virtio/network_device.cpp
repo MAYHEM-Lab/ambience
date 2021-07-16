@@ -80,14 +80,15 @@ bool network_device::initialize(physical_page_allocator* palloc) {
         auto recv_mem = palloc->allocate(1, 1);
 
         auto mem = palloc->address_of(*recv_mem);
-        LOG(bool(tos::cur_arch::map_region(
+        auto map_res = tos::cur_arch::map_region(
             tos::cur_arch::get_current_translation_table(),
             {{uintptr_t(mem), ptrdiff_t(tos::cur_arch::page_size_bytes * 1)},
              tos::permissions::read_write},
             tos::user_accessible::no,
             tos::memory_types::normal,
             palloc,
-            mem)));
+            mem);
+        tos::ensure(map_res);
 
         auto buf_ptr = new (mem) buf{};
 

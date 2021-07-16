@@ -28,13 +28,14 @@ queue::queue(uint16_t sz, tos::physical_page_allocator& palloc)
 
     auto buf = palloc.address_of(*pages_ptr);
 
-    LOG(bool(tos::cur_arch::map_region(
+    auto map_res = tos::cur_arch::map_region(
         tos::cur_arch::get_current_translation_table(),
         {{uintptr_t(buf), ptrdiff_t(total_sz)}, tos::permissions::read_write},
         tos::user_accessible::no,
         tos::memory_types::normal,
         &palloc,
-        buf)));
+        buf);
+    LOG(bool(map_res));
 
     std::fill((char*)buf, (char*)buf + total_sz, 0);
     LOG("Buffer:", buf);

@@ -9,23 +9,23 @@ void apic_initialize(tos::physical_page_allocator& palloc) {
     auto seg =
         tos::segment{.range = {.base = apic_base, .size = tos::cur_arch::page_size_bytes},
                      .perms = tos::permissions::read_write};
-    Assert(tos::x86_64::map_region(table,
-                                   seg,
-                                   tos::user_accessible::no,
-                                   tos::memory_types::device,
-                                   &palloc,
-                                   reinterpret_cast<void*>(apic_base)));
+    tos::ensure(tos::x86_64::map_region(table,
+                                        seg,
+                                        tos::user_accessible::no,
+                                        tos::memory_types::device,
+                                        &palloc,
+                                        reinterpret_cast<void*>(apic_base)));
 
     // IOAPIC registers
     seg = tos::segment{
         .range = {.base = 0xfec00000, .size = tos::cur_arch::page_size_bytes},
         .perms = tos::permissions::read_write};
-    Assert(tos::x86_64::map_region(table,
-                                   seg,
-                                   tos::user_accessible::no,
-                                   tos::memory_types::device,
-                                   &palloc,
-                                   reinterpret_cast<void*>(0xfec00000)));
+    tos::ensure(tos::x86_64::map_region(table,
+                                        seg,
+                                        tos::user_accessible::no,
+                                        tos::memory_types::device,
+                                        &palloc,
+                                        reinterpret_cast<void*>(0xfec00000)));
 
     auto& apic_regs = tos::x86_64::get_apic_registers(apic_base);
     LOG((void*)(uintptr_t)apic_regs.id, (void*)(uintptr_t)apic_regs.version);
