@@ -11,6 +11,10 @@ SECTIONS
 {
     . = KERNEL_VMA;
 
+    .stivale2hdr ALIGN(4K) : {
+        KEEP(*(.stivale2hdr))
+    }
+
     __start = .;
     __text_start = .;
     .text :
@@ -47,6 +51,7 @@ SECTIONS
     *(.note.gnu.build-id)
   } : RODATA
 
+    . = ALIGN(4096);
    __data_start = .;
    .data :
    {
