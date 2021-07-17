@@ -2,7 +2,7 @@
 
 namespace {
 // TODO(#64) Get rid of the alignas
-[[gnu::section(".to_load.@OUTPUT_TARGET@")]] alignas(4096) uint8_t __embedded_data[] = {
+[[gnu::section(".to_load.@OUTPUT_TARGET@")]] alignas(4096) constexpr uint8_t __embedded_data[] = {
 #include <@OUTPUT_TARGET@.h>
 };
 } // namespace
