@@ -1,0 +1,5 @@
+namespace social_media;
+
+service accounts {
+    get_full_name(handle: string_view) -> string_view;
+}

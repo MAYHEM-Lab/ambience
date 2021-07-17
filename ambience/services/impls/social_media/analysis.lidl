@@ -1,0 +1,8 @@
+namespace social_media;
+
+import "./sm_common";
+
+service post_analysis {
+    get_hashtags(post: string_view) -> vector<common::int_range>;
+    get_mentions(post: string_view) -> vector<common::int_range>;
+}

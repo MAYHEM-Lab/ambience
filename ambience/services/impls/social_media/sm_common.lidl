@@ -1,0 +1,15 @@
+namespace social_media::common;
+
+struct int_range {
+    begin: i32;
+    end: i32;
+}
+
+struct post {
+    body: string;
+    user: string_view;
+    date: u64;
+    hashtags: vector<int_range>;
+    mentions: vector<int_range>;
+}
+

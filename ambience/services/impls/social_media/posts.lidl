@@ -1,0 +1,8 @@
+namespace social_media;
+
+import "./sm_common";
+
+service posts {
+    get_post(id: u64) -> common::post;
+    send_post(user: string_view, body: string_view) -> u64;
+}
