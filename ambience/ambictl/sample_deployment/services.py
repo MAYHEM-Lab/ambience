@@ -52,16 +52,38 @@ serv_instance(
     }
 )
 
-export(
-    service="bench_agent",
-    networks={
-        "udp-internet": 1894
-    }
+serv_instance(
+    name="analysis",
+    serv=basic_analyzer
 )
 
+serv_instance(
+    name="posts",
+    serv=posts_manager
+)
+
+serv_instance(
+    name="posts_agent",
+    serv=posts_bench_agent
+)
+
+# export(
+#     service="bench_agent",
+#     networks={
+#         "udp-internet": 1894
+#     }
+# )
+#
+# export(
+#     service="bench_agent2",
+#     networks={
+#         "udp-internet": 1895
+#     }
+# )
+
 export(
-    service="bench_agent2",
+    service="posts_agent",
     networks={
-        "udp-internet": 1895
+        "udp-internet": 1896
     }
 )

@@ -9,6 +9,10 @@ echo_mod = ambictl.LidlModule("//ambience/services/interfaces/echo.lidl", "echo_
 db_mod = ambictl.LidlModule("//ambience/services/interfaces/database.lidl", "database_schema")
 logger_mod = ambictl.LidlModule("//src/core/log.yaml", "log_schema")
 agent_mod = ambictl.LidlModule("//ambience/services/interfaces/agent.lidl", "agent_schema")
+sm_common_mod = ambictl.LidlModule("//ambience/services/impls/social_media/sm_common.lidl", "social_media_schema")
+accounts_mod = ambictl.LidlModule("//ambience/services/impls/social_media/accounts.lidl", "social_media_schema")
+posts_mod = ambictl.LidlModule("//ambience/services/impls/social_media/posts.lidl", "social_media_schema")
+analysis_mod = ambictl.LidlModule("//ambience/services/impls/social_media/analysis.lidl", "social_media_schema")
 
 calc_if = calculator_mod.get_service("tos::ae::services::calculator")
 logger_if = logger_mod.get_service("tos::services::logger")
@@ -19,6 +23,8 @@ block_mem_if = block_mem_mod.get_service("tos::ae::services::block_memory")
 echo_if = echo_mod.get_service("tos::ae::services::echo")
 db_if = fs_mod.get_service("tos::ae::services::sql_database")
 agent_if = agent_mod.get_service("tos::ae::agent")
+post_analysis_if = analysis_mod.get_service("social_media::post_analysis")
+posts_if = posts_mod.get_service("social_media::posts")
 
 basic_echo = echo_if.implement(
     name="basic_echo",
@@ -64,5 +70,30 @@ async_calc_bench_agent = agent_if.implement(
     sync=False,
     deps={
         "calc": calc_if
+    }
+)
+
+basic_analyzer = post_analysis_if.implement(
+    name="basic_analyzer",
+    cmake_target="basic_analyzer",
+    sync=False,
+    deps={}
+)
+
+posts_manager = posts_if.implement(
+    name="posts_manager",
+    cmake_target="posts_manager",
+    sync=False,
+    deps={
+        "analysis": post_analysis_if
+    }
+)
+
+posts_bench_agent = agent_if.implement(
+    name="posts_bench_agent",
+    cmake_target="posts_bench_agent",
+    sync=False,
+    deps={
+        "posts": posts_if
     }
 )

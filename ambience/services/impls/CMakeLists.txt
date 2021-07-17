@@ -12,3 +12,5 @@ add_subdirectory(littlefs)
 add_subdirectory(block_partition)
 add_subdirectory(ephemeral_block)
 add_subdirectory(basic_echo)
+
+add_subdirectory(social_media)

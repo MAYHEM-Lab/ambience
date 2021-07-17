@@ -25,7 +25,7 @@ group(
 
 deploy(
     node="sfo2_vm2",
-    groups=["sfo_vm2_priv", "sfo2_vm_calc_user", "sfo_vm2_agent2"]
+    groups=["", "posts", "posts_agent", "analysis"]
 )
 
 deploy(
