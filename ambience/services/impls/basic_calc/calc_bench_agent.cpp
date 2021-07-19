@@ -1,5 +1,6 @@
 #include <agent_generated.hpp>
 #include <calc_generated.hpp>
+#include <tos/coro/countdown.hpp>
 #include <tos/detail/poll.hpp>
 
 namespace {
@@ -9,49 +10,10 @@ struct async_calc_bench : tos::ae::agent::async_server {
     }
 
     tos::Task<bool> start() override {
-        struct countdown {
-            bool await_ready() const {
-                return count == 0;
-            }
-
-            void await_suspend(std::coroutine_handle<> handle) {
-                m_handle = handle;
-            }
-
-            void await_resume() {
-                m_handle.resume();
-            }
-
-            auto signal() {
-                struct awaiter {
-                    // When this returns false, await_suspend is called.
-                    // We want it to be called when cd->count == 0
-                    bool await_ready() const {
-                        return cd->count != 0;
-                    }
-
-                    std::coroutine_handle<>
-                    await_suspend(std::coroutine_handle<> handle) {
-                        return std::exchange(cd->m_handle, handle);
-                    }
-
-                    void await_resume() {
-                    }
-
-                    countdown* cd;
-                };
-
-                --count;
-                return awaiter{.cd = this};
-            }
-
-            int count;
-            std::coroutine_handle<> m_handle;
-        };
 
         constexpr auto extent = 1'000;
         constexpr auto concurrency = 10;
-        countdown cd{.count = concurrency};
+        tos::coro::countdown cd{.count = concurrency};
         for (int c = 0; c < concurrency; ++c) {
             tos::coro::make_detached([c, this, &cd]() -> tos::Task<void> {
                 for (int i = c * (extent / concurrency);
