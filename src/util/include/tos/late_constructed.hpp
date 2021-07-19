@@ -36,7 +36,7 @@ namespace tos {
  *      // no_moves.emplace(func(42)); <- does not compile
  *      no_moves.emplace_fn(func, 42); // workaround
  */
-template<class T>
+template<class T, bool = std::is_reference_v<T>>
 struct late_constructed {
     late_constructed() {
     }
@@ -75,5 +75,40 @@ private:
     union {
         T t;
     };
+};
+
+template<class T>
+struct late_constructed<T, true> {
+private:
+    using type = std::remove_reference_t<T>;
+
+public:
+    template<class FnT, class... ArgTs>
+    void emplace_fn(FnT&& fn, ArgTs&&... args) {
+        emplace(std::invoke(fn, std::forward<ArgTs>(args)...));
+    }
+
+    void emplace(T arg) {
+        m_internal.emplace(&arg);
+    }
+
+    operator T() {
+        return static_cast<T>(*m_internal.get());
+    }
+
+    operator const T() const {
+        return static_cast<T>(*m_internal.get());
+    }
+
+    T get() {
+        return static_cast<T>(*m_internal.get());
+    }
+
+    const T get() const {
+        return static_cast<T>(*m_internal.get());
+    }
+
+private:
+    late_constructed<type*> m_internal;
 };
 } // namespace tos
