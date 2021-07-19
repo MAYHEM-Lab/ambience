@@ -1,7 +1,13 @@
 #include <doctest.h>
+#include <tos/coro/meta.hpp>
 #include <tos/detail/poll.hpp>
-#include <tos/task.hpp>
 #include <tos/function_ref.hpp>
+#include <tos/task.hpp>
+#include <tos/coro/when_all.hpp>
+
+static_assert(std::is_same_v<
+              int,
+              std::remove_reference_t<tos::coro::meta::await_result_t<tos::Task<int>>>>);
 
 namespace tos {
 namespace {
@@ -29,7 +35,7 @@ TEST_CASE("task<int> works") {
 }
 
 bool coro_set = false;
-tos::function_ref<void()> fref{[](void*){}};
+tos::function_ref<void()> fref{[](void*) {}};
 
 Task<void> coro_resumer_test() {
     co_await make_coro_resumer(fref);
@@ -45,6 +51,25 @@ TEST_CASE("make_coro_resumer works") {
     fref();
 
     REQUIRE(coro_set);
+}
+
+Task<int> a() {
+    co_return 63;
+}
+
+Task<int> b() {
+    co_return 42;
+}
+
+Task<void> c() {
+    auto&& [a_res, b_res] = co_await tos::coro::when_all(a(), b());
+    REQUIRE_EQ(63, a_res);
+    REQUIRE_EQ(42, b_res);
+}
+
+TEST_CASE("when_all works") {
+    auto x = tos::coro::make_pollable(c());
+    x.run();
 }
 } // namespace
 } // namespace tos
