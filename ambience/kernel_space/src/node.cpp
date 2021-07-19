@@ -40,6 +40,7 @@ tos::expected<void, tos::common_error> kernel() {
     tos::println(serial, "ambience node");
     tos::debug::serial_sink sink(&serial);
     tos::debug::detail::any_logger logger(&sink);
+    logger.set_log_level(tos::debug::log_level::info);
     tos::debug::set_default_log(&logger);
 
     tos::debug::log("Logger initialized");
