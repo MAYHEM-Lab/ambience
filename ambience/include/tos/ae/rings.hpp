@@ -240,7 +240,7 @@ template<bool FromHost>
 void req_elem::awaiter<FromHost>::await_suspend(std::coroutine_handle<> handle) {
     ref = coro_resumer(handle);
     el->user_ptr = &ref;
-    tos::debug::log("Submitting", el->user_ptr);
+//    tos::debug::log("Submitting", this->iface, el->arg_ptr, el->ret_ptr, el->user_ptr);
     submit_elem<FromHost>(*this->iface, this->id);
 }
 
