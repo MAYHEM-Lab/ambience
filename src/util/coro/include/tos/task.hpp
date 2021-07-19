@@ -33,37 +33,7 @@ public:
     using promise_type = TaskPromise<T>;
     using promise_coro_handle = std::coroutine_handle<promise_type>;
 
-    auto operator co_await() const& {
-        struct awaiter {
-            awaiter(promise_coro_handle coro)
-                : coro(coro) {
-            }
-
-            bool await_ready() const noexcept {
-                return false;
-            }
-            std::coroutine_handle<> await_suspend(std::coroutine_handle<> continuation) {
-                this->coro.promise().continuation = continuation;
-
-                return this->coro;
-            }
-
-            decltype(auto) await_resume() {
-                if constexpr (!std::is_void_v<decltype(this->coro.promise().result())>) {
-                    return std::move(this->coro.promise().result());
-                } else {
-                    this->coro.promise().result();
-                }
-            }
-
-        private:
-            promise_coro_handle coro;
-        };
-
-        return awaiter{this->coroHandle};
-    }
-
-    auto operator co_await() const&& {
+    auto operator co_await() const {
         struct awaiter {
             awaiter(promise_coro_handle coro)
                 : coro(coro) {
@@ -151,8 +121,8 @@ public:
         m_value.emplace(std::forward<ValT>(value)...);
     }
 
-    T&& result() {
-        return std::move(m_value.get());
+    T& result() {
+        return m_value.get();
     }
 
     Task<T> get_return_object() noexcept {
@@ -192,5 +162,4 @@ public:
         return Task<void>{promise_coro_handle::from_promise(*this)};
     }
 };
-
 } // namespace tos
