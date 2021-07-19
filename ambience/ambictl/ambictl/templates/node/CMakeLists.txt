@@ -1,11 +1,3 @@
-if (${TOS_ARCH} MATCHES "i386")
-    include(AddIso)
-
-    add_i386_loader({{node_name}}-loader ${CMAKE_BINARY_DIR}/../cmake-build-barex64 {{node_name}}_kernel)
-    add_iso({{node_name}}-iso {{node_name}}-loader)
-    return()
-endif()
-
 add_library({{node_name}}_common INTERFACE)
 target_include_directories({{node_name}}_common INTERFACE .)
 
@@ -25,3 +17,7 @@ add_subdirectory(loaders)
 {% for group in node_groups %}
 target_link_libraries({{node_name}}_kernel PRIVATE {{group}}_loader)
 {% endfor %}
+
+if (${TOS_ARCH} MATCHES "x86_64")
+add_iso({{node_name}}-iso {{node_name}}_kernel)
+endif()

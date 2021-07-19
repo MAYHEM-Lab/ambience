@@ -29,16 +29,7 @@ class x86_64(Platform):
         cmake_proc = subprocess.Popen(args, cwd=conf_dir)
         cmake_proc.wait()
 
-        loader_dir = os.path.join(source_dir, f"cmake-build-barex86")
-        os.makedirs(loader_dir, exist_ok=True)
-        args = ["cmake", "-G", "Ninja", f"-DTOS_CPU=x86/bare", "-DCMAKE_BUILD_TYPE=MinSizeRel",
-                "-DENABLE_LTO=ON", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache", "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
-                source_dir]
-        print(args)
-        cmake_proc = subprocess.Popen(args, cwd=loader_dir)
-        cmake_proc.wait()
-
-        return (user_conf_dir, conf_dir, loader_dir)
+        return (user_conf_dir, conf_dir)
 
     def make_deploy_node(self, node: Node, groups: [Group]):
         res = DeployNode(node, groups)
