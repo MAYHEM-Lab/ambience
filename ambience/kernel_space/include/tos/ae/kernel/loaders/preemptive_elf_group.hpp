@@ -21,7 +21,8 @@ struct preemptive_elf_group {
         auto res = do_load(info.elf_body,
                            *platform_args.trampoline,
                            *platform_args.page_alloc,
-                           *platform_args.table);
+                           *platform_args.table,
+                           info.name);
         if (res) {
             expose_services_to_group(info.services, *res);
         }
@@ -32,6 +33,7 @@ private:
     static std::unique_ptr<user_group> do_load(span<const uint8_t> elf_body,
                                                interrupt_trampoline& trampoline,
                                                physical_page_allocator& palloc,
-                                               cur_arch::translation_table& root_table);
+                                               cur_arch::translation_table& root_table,
+                                               std::string_view name);
 };
 } // namespace tos::ae::kernel

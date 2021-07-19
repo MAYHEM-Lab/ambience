@@ -6,7 +6,8 @@
 namespace tos::ae::kernel {
 std::unique_ptr<user_group> start_group(tos::span<uint8_t> stack,
                                         void (*entry)(),
-                                        tos::interrupt_trampoline& trampoline) {
+                                        tos::interrupt_trampoline& trampoline,
+                                        std::string_view name) {
     auto& self = *tos::self();
 
     auto res = std::make_unique<user_group>();
@@ -42,6 +43,7 @@ std::unique_ptr<user_group> start_group(tos::span<uint8_t> stack,
         pre_sched();
         entry();
     });
+    set_name(*res->state, name);
 
     tos::swap_context(self, *res->state, tos::int_guard{});
 

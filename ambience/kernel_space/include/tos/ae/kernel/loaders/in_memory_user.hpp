@@ -18,7 +18,9 @@ struct in_memory_group {
     static std::unique_ptr<user_group> load(const GroupDescription& desc,
                                             const PlatformArgs& platform_args) {
         auto res = do_load_preemptive_in_memory_group(
-            reinterpret_cast<void (*)()>(desc.start_address), *platform_args.trampoline);
+            reinterpret_cast<void (*)()>(desc.start_address),
+            *platform_args.trampoline,
+            desc.name);
         if (res) {
             expose_services_to_group(desc.services, *res);
         }
@@ -26,7 +28,7 @@ struct in_memory_group {
     }
 
 private:
-    static std::unique_ptr<user_group>
-    do_load_preemptive_in_memory_group(void (*entry)(), interrupt_trampoline& trampoline);
+    static std::unique_ptr<user_group> do_load_preemptive_in_memory_group(
+        void (*entry)(), interrupt_trampoline& trampoline, std::string_view name);
 };
 } // namespace tos::ae::kernel

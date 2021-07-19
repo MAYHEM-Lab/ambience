@@ -1,7 +1,7 @@
+#include <tos/ae/kernel/start_group.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/arch.hpp>
 #include <tos/interrupt_trampoline.hpp>
-#include <tos/ae/kernel/start_group.hpp>
 
 namespace tos::ae::kernel {
 namespace {
@@ -17,8 +17,10 @@ void switch_to_el0(void (*el0_fn)(), void* stack, size_t stack_size) {
 }
 } // namespace
 
-std::unique_ptr<user_group>
-start_group(span<uint8_t> stack, void (*entry)(), interrupt_trampoline& trampoline) {
+std::unique_ptr<user_group> start_group(span<uint8_t> stack,
+                                        void (*entry)(),
+                                        interrupt_trampoline& trampoline,
+                                        std::string_view name) {
     auto& self = *tos::self();
 
     auto res = std::make_unique<user_group>();
@@ -35,6 +37,7 @@ start_group(span<uint8_t> stack, void (*entry)(), interrupt_trampoline& trampoli
 
     res->state = &suspended_launch(
         alloc_stack, [&] { switch_to_el0(entry, stack.data(), stack.size()); });
+    set_name(*res->state, name);
 
     swap_context(self, *res->state, int_guard{});
 

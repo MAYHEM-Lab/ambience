@@ -15,10 +15,11 @@ void switch_to_user(void* user_code) {
 } // namespace
 
 std::unique_ptr<user_group>
-start_group(span<uint8_t> stack, void (*entry)(), interrupt_trampoline& trampoline) {
+start_group(span<uint8_t> stack, void (*entry)(), interrupt_trampoline& trampoline,
+            std::string_view name) {
     LOG("Entry point:", (void*)entry);
     auto& user_thread = tos::suspended_launch(stack, switch_to_user, (void*)entry);
-    set_name(user_thread, "User thread");
+    set_name(user_thread, name);
 
     auto& self = *tos::self();
 

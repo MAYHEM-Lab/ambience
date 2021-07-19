@@ -6,6 +6,7 @@
 namespace {
 struct descr {
     using loader = tos::ae::kernel::in_memory_group;
+    static constexpr std::string_view name = "{{group_name}}";
     static constexpr auto start_address = {{start_addr}};
     static constexpr auto services = tos::meta::list<{{service_types | join("::service_type, ")}}::service_type > {};
 };

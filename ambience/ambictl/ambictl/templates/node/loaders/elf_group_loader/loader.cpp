@@ -10,6 +10,7 @@
 namespace {
 struct descr {
     using loader = tos::ae::kernel::preemptive_elf_group;
+    static constexpr std::string_view name = "{{group_name}}";
     static constexpr auto& elf_body = {{group_name}}_elf;
     static constexpr auto services = tos::meta::list<{{service_types | join("::service_type, ")}}::service_type > {};
 };

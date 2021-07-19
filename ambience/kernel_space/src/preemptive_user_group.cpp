@@ -91,7 +91,8 @@ std::unique_ptr<kernel::user_group>
 preemptive_elf_group::do_load(span<const uint8_t> elf_body,
                               interrupt_trampoline& trampoline,
                               physical_page_allocator& palloc,
-                              cur_arch::translation_table& root_table) {
+                              cur_arch::translation_table& root_table,
+                              std::string_view name) {
     auto elf_res = tos::elf::elf64::from_buffer(elf_body);
     if (!elf_res) {
         LOG_ERROR("Could not parse payload!");
@@ -116,8 +117,8 @@ preemptive_elf_group::do_load(span<const uint8_t> elf_body,
 
     auto stack = force_get(stack_res);
 
-    auto res =
-        start_group(stack, reinterpret_cast<void (*)()>(elf.header().entry), trampoline);
+    auto res = start_group(
+        stack, reinterpret_cast<void (*)()>(elf.header().entry), trampoline, name);
 
     if (res) {
         res->runner = &preemptive_user_group_runner::instance();
