@@ -12,7 +12,7 @@ void proc_res_queue(interface& iface) {
         iface, *iface.host_to_guest, iface.res_last_seen, [&](const ring_elem& elem) {
             if (!util::is_flag_set(elem.common.flags, elem_flag::req)) {
                 // Response for a request we made.
-                tos::debug::log("User ptr", &iface, elem.res.user_ptr);
+                tos::debug::trace("User ptr", &iface, elem.res.user_ptr);
 
                 auto& continuation =
                     *static_cast<tos::function_ref<void()>*>(elem.res.user_ptr);
@@ -21,7 +21,7 @@ void proc_res_queue(interface& iface) {
                 // We have a request to serve.
                 tos::coro::make_detached(handle_req(elem.req),
                                          [&iface, ptr = elem.req.user_ptr]() {
-                                             tos::debug::log("Responding", &iface, ptr);
+                                             tos::debug::trace("Responding", &iface, ptr);
                                              respond<false>(iface, ptr);
                                          });
             }
