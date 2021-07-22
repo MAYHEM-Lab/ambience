@@ -60,7 +60,7 @@ void init_pci(tos::physical_page_allocator& palloc, tos::ae::registry_base& regi
                 bd->initialize(&palloc);
                 auto base_serv = init_virtio_blk(bd);
                 auto blk_serv =
-                    init_block_partiton(base_serv, base_serv->get_block_count() / 2, 100);
+                    init_block_partiton(base_serv, base_serv->get_block_count() / 4 * 1, base_serv->get_block_count() / 4 * 3);
 
                 registry.register_service("node_block", base_serv);
                 registry.register_service("fs_block", blk_serv);
