@@ -5,12 +5,20 @@
 #include <tos/interrupt_trampoline.hpp>
 
 namespace tos::ae::kernel {
-template<class... ServTs>
-void expose_services_to_group(meta::list<ServTs...>, user_group& group) {
+template<class... ServTs, std::size_t... Is>
+void do_expose_services_to_group(meta::list<ServTs...>,
+                                 std::index_sequence<Is...>,
+                                 user_group& group) {
     ((group.channels.push_back(
          std::make_unique<typename ServTs::template async_zerocopy_client<
-             tos::ae::downcall_transport>>(group, 0))),
+             tos::ae::downcall_transport>>(group, Is))),
      ...);
+}
+
+template<class... ServTs>
+void expose_services_to_group(meta::list<ServTs...> servs, user_group& group) {
+    return do_expose_services_to_group(
+        servs, std::make_index_sequence<sizeof...(ServTs)>{}, group);
 }
 
 struct in_memory_group {
