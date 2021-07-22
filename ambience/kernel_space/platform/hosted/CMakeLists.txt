@@ -6,4 +6,5 @@ target_sources(
         platform_support.cpp
         udp_transport.cpp
         udp_host.cpp
+        unix_domain.cpp
 )

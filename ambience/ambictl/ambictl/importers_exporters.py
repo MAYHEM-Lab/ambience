@@ -26,6 +26,7 @@ class LwipUdpImporter(Importer):
     def registry_type(self):
         return "tos::ae::lwip_udp_importer"
 
+
 class LwipUdpExporter(Exporter):
     allocation: Dict
     next: int
@@ -84,6 +85,7 @@ class HostedUdpImporter(Importer):
     def registry_type(self):
         return "tos::ae::hosted_udp_importer"
 
+
 class HostedUdpExporter(Exporter):
     allocation: Dict
     next: int
@@ -112,6 +114,58 @@ class HostedUdpExporter(Exporter):
 
     def registry_type(self):
         return "tos::ae::hosted_udp_exporter"
+
+
+class HostedUnixDomainImporter(Importer):
+    def __init__(self):
+        super().__init__(self.__class__.__name__, NetworkType.UnixDomain)
+
+    def make_import(self, service, config) -> Import:
+        return Import(self, service, config)
+
+    def import_from(self, export: Export):
+        iface = export.instance.get_interface()
+        conf = export.config
+        return self.make_import(iface, conf)
+
+    def import_string(self, import_: Import):
+        return f"tos::ae::unix_domain_importer::import_service<{import_.interface.absolute_name()}>(\"{import_.config}\")"
+
+    def cxx_includes(self):
+        return ["tos/ae/transport/hosted/unix_domain.hpp"]
+
+    def registry_type(self):
+        return "tos::ae::unix_domain_importer"
+
+
+class HostedUnixDomainExporter(Exporter):
+    allocation: Dict
+    next: int
+
+    def __init__(self):
+        super().__init__(self.__class__.__name__, NetworkType.UnixDomain)
+        self.allocation = {}
+        self.next = 1
+
+    def get_port_for_service(self, service):
+        if service not in self.allocation:
+            self.allocation[service] = self.next
+            self.next = self.next + 1
+        return self.allocation[service]
+
+    def export_service(self, service, config) -> Export:
+        if config is None:
+            config = f"/tmp/ambience_socket{self.get_port_for_service(service)}"
+        return Export(self, service, config)
+
+    def export_service_string(self, export):
+        return f"new tos::ae::unix_export(tos::ae::service_host(co_await registry.wait<\"{export.instance.name}\">()), \"{export.config}\");"
+
+    def cxx_includes(self):
+        return ["tos/ae/transport/hosted/unix_domain.hpp"]
+
+    def registry_type(self):
+        return "tos::ae::unix_domain_exporter"
 
 
 class XbeeExporter(Exporter):
@@ -149,6 +203,7 @@ class XbeeExporter(Exporter):
 
     def cmake_targets(self):
         return ["ae_xbee_transports"]
+
 
 class XbeeImporter(Importer):
     serial_type: str
