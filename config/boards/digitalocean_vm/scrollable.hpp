@@ -16,7 +16,7 @@ struct scrollable : tos::self_pointing<scrollable> {
     int write(tos::span<const uint8_t> data) {
         for (auto c : data) {
             if (c == '\n') {
-                if (m_lines.size() == m_max_lines) {
+                if (int(m_lines.size()) == m_max_lines) {
                     m_lines.pop_front();
                     m_lines_base += 1;
                 }
@@ -37,11 +37,11 @@ struct scrollable : tos::self_pointing<scrollable> {
     }
 
     bool scroll_down() {
-        if (m_top_line == m_lines.size() - 1) {
+        if (m_top_line == int(m_lines.size()) - 1) {
             return false;
         }
         m_top_line += 1;
-        if (m_top_line == m_lines.size() - 1) {
+        if (m_top_line == int(m_lines.size()) - 1) {
             m_locked = true;
         }
         draw();
