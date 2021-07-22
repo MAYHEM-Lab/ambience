@@ -27,7 +27,6 @@ void tcb::operator()() {
     case context_codes::suspend:
         break;
     case context_codes::do_exit:
-        // TODO(#34): Potentially a use-after-free. See the issue.
         std::destroy_at(this);
         break;
     case context_codes::scheduled:

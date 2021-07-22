@@ -75,9 +75,7 @@ struct deleter {
         : m_stack_base{stack_base} {
     }
 
-    ~deleter() {
-        delete[] get_task_base();
-    }
+    ~deleter();
 
     char* get_task_base() const {
         return reinterpret_cast<char*>(m_stack_base);
