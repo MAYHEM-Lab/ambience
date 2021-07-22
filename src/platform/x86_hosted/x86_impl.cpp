@@ -38,6 +38,9 @@ USED int main() {
 
     while (true) {
         auto res = tos::global::sched.schedule(tos::int_guard{});
+        if (res == tos::exit_reason::restart) {
+            break;
+        }
         if (io.stopped()) {
             io.restart();
         }
@@ -45,12 +48,8 @@ USED int main() {
             io.run_one();
         }
         io.poll();
-        if (res == tos::exit_reason::restart) {
-            break;
-        }
     }
 
-    io.run();
     return 0;
 }
 }

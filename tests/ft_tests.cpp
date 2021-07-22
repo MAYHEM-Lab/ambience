@@ -61,9 +61,7 @@ TEST_CASE("lambda with args") {
 TEST_CASE("New threads are runnable by default") {
     semaphore wait{0};
 
-    auto& t = launch(alloc_stack, [&] {
-        wait.up();
-    });
+    auto& t = launch(alloc_stack, [&] { wait.up(); });
 
     this_thread::yield();
 
@@ -74,7 +72,7 @@ TEST_CASE("New threads are runnable by default") {
 TEST_CASE("Suspended launch works") {
     semaphore wait{0};
     bool explicitly_scheduled = false;
-    auto& t = suspended_launch(alloc_stack, [&]{
+    auto& t = suspended_launch(alloc_stack, [&] {
         REQUIRE(explicitly_scheduled); // should _not_ be reached!
         wait.up();
     });
