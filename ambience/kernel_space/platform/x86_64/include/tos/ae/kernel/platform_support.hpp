@@ -7,6 +7,7 @@
 #include <tos/paging/physical_page_allocator.hpp>
 #include <tos/preemption.hpp>
 #include <tos/board.hpp>
+#include <tos/x86_64/assembly.hpp>
 
 struct platform_group_args {
     tos::physical_page_allocator* page_alloc;
@@ -45,6 +46,13 @@ public:
 
     auto operator()(tos::preempt_ops::get_odi_t) -> auto& {
         return m_odi;
+    }
+
+    void operator()(tos::preempt_ops::pre_switch_t, tos::kern::tcb&) {
+        tos::x86_64::tlb_flush();
+    }
+
+    void operator()(tos::preempt_ops::post_switch_t, tos::kern::tcb&) {
     }
 
     auto operator()(tos::preempt_ops::set_syscall_handler_t, auto&& arg) {
