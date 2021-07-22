@@ -26,6 +26,15 @@ agent_if = agent_mod.get_service("tos::ae::agent")
 post_analysis_if = analysis_mod.get_service("social_media::post_analysis")
 posts_if = posts_mod.get_service("social_media::posts")
 
+ephemeral_block = block_mem_if.implement(
+    name="ephemeral_block",
+    cmake_target="ephemeral_block",
+    sync=True,
+    deps={
+
+    }
+)
+
 basic_echo = echo_if.implement(
     name="basic_echo",
     cmake_target="basic_echo",
