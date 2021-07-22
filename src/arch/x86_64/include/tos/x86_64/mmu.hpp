@@ -203,4 +203,9 @@ inline expected<void, mmu_errors> map_region(translation_table& root,
 
     return {};
 }
+
+NO_INLINE
+inline void tlb_flush() {
+    tos::x86_64::write_cr3(tos::x86_64::read_cr3());
+}
 } // namespace tos::x86_64
