@@ -37,8 +37,7 @@ struct impl final : public tos::ae::services::block_memory::sync_server {
     }
 
     bool erase(const int32_t& block) override {
-        std::vector<uint8_t> buffer(get_block_size(), 0xff);
-        return write(block, 0, buffer);
+        return true;
     }
 
     bool
