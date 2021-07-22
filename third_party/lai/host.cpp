@@ -38,11 +38,11 @@ void laihost_free(void* ptr, size_t) {
 }
 
 void* laihost_map(size_t address, size_t count) {
-    LOG("map", (void*)address, (void*)count);
+    LOG_TRACE("map", (void*)address, (void*)count);
     auto addr_bkp = address;
     address = tos::align_nearest_down_pow2(address, tos::x86_64::page_size_bytes);
     count = tos::align_nearest_up_pow2(count, tos::x86_64::page_size_bytes);
-    LOG("map", (void*)address, (void*)count);
+    LOG_TRACE("map", (void*)address, (void*)count);
 
     auto& root = tos::x86_64::get_current_translation_table();
     auto segment = tos::segment{.range = {.base = address, .size = ptrdiff_t(count)},
@@ -54,7 +54,7 @@ void* laihost_map(size_t address, size_t count) {
         res = tos::x86_64::mark_resident(
             root, segment.range, tos::memory_types::normal, (void*)address);
         if (res) {
-            LOG("returning", (void*)addr_bkp);
+            LOG_TRACE("returning", (void*)addr_bkp);
 
             return (void*)addr_bkp;
         }
