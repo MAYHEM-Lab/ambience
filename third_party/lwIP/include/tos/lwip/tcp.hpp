@@ -102,7 +102,7 @@ inline auto acceptor(tcp_socket& sock) {
         std::coroutine_handle<void()> m_resume;
     };
 
-    return awaiter{&sock};
+    return awaiter{.m_sock = &sock};
 }
 
 /**
