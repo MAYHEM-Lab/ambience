@@ -1,6 +1,7 @@
 #include <analysis_generated.hpp>
 #include <posts_generated.hpp>
 #include <tos/coro/when_all.hpp>
+#include <tos/debug/log.hpp>
 #include <unordered_map>
 
 namespace social_media {
@@ -23,22 +24,26 @@ struct posts_manager : posts::async_server {
             lidl::create_vector<common::int_range>(response_builder, post.mentions));
     }
 
+    int count = 0;
     tos::Task<uint64_t> send_post(std::string_view user, std::string_view body) override {
+//        if ((count++ % 10000) == 0) {
+//            tos::debug::log("Req", count, user, ":", body);
+//        }
         if (m_posts.size() > 1000) {
             m_posts.erase(m_posts.begin());
         }
 
-        std::array<uint8_t, 1024> hashtags_response;
+        std::array<uint8_t, 128> hashtags_response;
         lidl::message_builder hashtags_response_builder{hashtags_response};
 
-        std::array<uint8_t, 1024> mentions_response;
+        std::array<uint8_t, 128> mentions_response;
         lidl::message_builder mentions_response_builder{mentions_response};
 
         auto&& [hashtags, mentions] = co_await tos::coro::when_all(
             m_analysis->get_hashtags(body, hashtags_response_builder),
             m_analysis->get_mentions(body, mentions_response_builder));
 
-//        tos::debug::trace(hashtags.size(), mentions.size());
+        //        tos::debug::trace(hashtags.size(), mentions.size());
 
         auto res = m_posts.emplace(m_next++,
                                    post_data{.user = std::string(user),
@@ -58,7 +63,7 @@ struct posts_manager : posts::async_server {
         std::vector<common::int_range> mentions;
     };
 
-    uint64_t m_next;
+    uint64_t m_next = 1;
     std::unordered_map<uint64_t, post_data> m_posts;
     social_media::post_analysis::async_server* m_analysis;
 };

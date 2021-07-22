@@ -1,5 +1,5 @@
 namespace tos::ae;
 
 service agent {
-    start() -> bool;
+    start(param: i64) -> bool;
 }

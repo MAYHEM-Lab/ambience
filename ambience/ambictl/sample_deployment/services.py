@@ -2,7 +2,21 @@ serv_instance(
     name="fs",
     serv=littlefs,
     deps={
-        "block": "fs_block.local"
+        "block": "fs_block.localnode"
+    }
+)
+
+serv_instance(
+    name="fs_blok",
+    serv=ephemeral_block,
+    deps={}
+)
+
+serv_instance(
+    name="fs2",
+    serv=littlefs,
+    deps={
+        "block": "fs_blok"
     }
 )
 
@@ -59,12 +73,19 @@ serv_instance(
 
 serv_instance(
     name="posts",
-    serv=posts_manager
+    serv=posts_manager,
+    deps={
+        "analysis": "analysis"
+    }
 )
 
 serv_instance(
     name="posts_agent",
-    serv=posts_bench_agent
+    serv=posts_bench_agent,
+    deps={
+        "posts": "posts",
+        "fs": "fs2"
+    }
 )
 
 # export(

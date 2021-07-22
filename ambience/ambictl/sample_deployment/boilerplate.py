@@ -103,6 +103,7 @@ posts_bench_agent = agent_if.implement(
     cmake_target="posts_bench_agent",
     sync=False,
     deps={
-        "posts": posts_if
+        "posts": posts_if,
+        "fs": fs_if
     }
 )

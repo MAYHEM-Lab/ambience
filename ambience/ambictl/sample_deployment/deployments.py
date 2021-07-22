@@ -1,7 +1,39 @@
-deploy(
-    node="hosted",
-    groups=["echo"]
+deploy_to = "linux"
+
+group(
+    name="posts_group",
+    services=[
+        # "analysis",
+        "posts",
+    ]
 )
+
+if deploy_to == "linux":
+    deploy(
+        node="hosted",
+        groups=["posts_group"]
+    )
+
+    group(
+        name="hosted2_priv",
+        services=["fs_blok", "fs2", "posts_agent"]
+    )
+
+    deploy(
+        node="hosted3",
+        groups=["analysis"]
+    )
+
+    deploy(
+        node="hosted2",
+        groups=["hosted2_priv"]
+    )
+else:
+    deploy(
+        node="sfo2_vm2",
+        groups=["fs2", "posts_group", "posts_agent"]
+    )
+
 
 deploy(
     node="sfo2_vm1",
@@ -23,15 +55,10 @@ group(
     services=["calc3"]
 )
 
-deploy(
-    node="sfo2_vm2",
-    groups=["", "posts", "posts_agent", "analysis"]
-)
-
-deploy(
-    node="mcu1",
-    groups=["", "calc"]
-)
+# deploy(
+#     node="mcu1",
+#     groups=["", "calc"]
+# )
 
 # deploy(
 #     node="qemu_vm1",
