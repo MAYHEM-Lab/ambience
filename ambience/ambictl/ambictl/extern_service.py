@@ -20,3 +20,6 @@ class ExternService(Instance):
 
     def __repr__(self):
         return f"ExternService({self.name})"
+
+    def is_async(self):
+        return not self.sync

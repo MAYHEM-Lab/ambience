@@ -122,11 +122,11 @@ def _finalize_platforms():
         _finalize_platform(platform)
 
 
-def node(*, name, platform, exporters=None):
+def node(*, name, platform, exporters=None, importers=None):
     _nodes[name] = {
         "name": name,
         "platform": platform,
-        "importers": [],
+        "importers": importers if importers else [],
         "exporters": exporters if exporters else [],
         "node_services": [],
         "memories": None
@@ -240,8 +240,8 @@ def _finalize_service(serv):
             serv["deps"][name] = node_services[name]
 
     for name, dep in serv["deps"].items():
-        if dep.endswith(".local"):
-            serv["deps"][name] = dep[:-5] + _nodes[serv["node"]]["name"]
+        if dep.endswith(".localnode"):
+            serv["deps"][name] = dep[:-9] + _nodes[serv["node"]]["name"]
             dep = serv["deps"][name]
         if service_iface(_instances[dep]) != serv["serv"].dependency_type(name):
             raise RuntimeError(
@@ -286,12 +286,13 @@ def _finalize_group_step1(group):
         return
 
     for serv in group["services"]:
+        print(f"{serv} to {group['node']}")
         _instances[serv]["group"] = group
         _instances[serv]["node"] = group["node"]
 
 
 def _finalize_group_step2(group, privileged):
-    servs = set(_finalize_service(_instances[serv]) for serv in group["services"])
+    servs = [_finalize_service(_instances[serv]) for serv in group["services"]]
 
     res = None
     if privileged:

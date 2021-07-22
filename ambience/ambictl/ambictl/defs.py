@@ -94,6 +94,9 @@ class ServiceInterface:
     def sync_stub_client(self):
         return f"{self.absolute_name()}::stub_client"
 
+    def async_zerocopy_client(self):
+        return f"{self.absolute_name()}::async_zerocopy_client"
+
     def cxx_interface_deps(self):
         return self.module.cxx_interface_deps()
 
@@ -177,6 +180,10 @@ class Instance:
         raise NotImplementedError(f"registry_type not implemented in {self.__class__.__name__}")
 
     @abc.abstractmethod
+    def is_async(self):
+        raise NotImplementedError(f"is_async not implemented in {self.__class__.__name__}")
+
+    @abc.abstractmethod
     def cxx_includes(self):
         raise NotImplementedError()
 
@@ -190,14 +197,14 @@ class Group:
     servs: Set[Instance]
     dg: DeployGroup
 
-    def __init__(self, name: str, servs: Set[Instance]) -> None:
+    def __init__(self, name: str, servs: List[Instance]) -> None:
         self.name = name
         self.servs = servs
         for serv in self.servs:
             serv.assigned_group = self
 
     def add_service(self, ins: Instance):
-        self.servs.add(ins)
+        self.servs.append(ins)
         ins.assigned_group = self
 
     def _interfaceDeps(self):
@@ -271,6 +278,7 @@ class NetworkType(enum.Enum):
     UDP = 0
     TCP = 1
     XBee = 2
+    UnixDomain = 3
 
 
 class Network:
@@ -280,12 +288,12 @@ class Network:
     exporters: [Exporter]  # These can provide services to the network
     hop_cost: int
 
-    def __init__(self, name: str, net_type: NetworkType):
+    def __init__(self, name: str, net_type: NetworkType, *, hop_cost=1000):
         self.name = name
         self.net_type = net_type
         self.importers = []
         self.exporters = []
-        self.hop_cost = 1
+        self.hop_cost = hop_cost
 
     def exporting_nodes(self):
         return set(exp.assigned_node for exp in self.exporters)
@@ -479,7 +487,7 @@ class DeployNode:
     def __init__(self, node: Node, groups: List[Group]):
         self.node = node
         self.groups = groups
-        self.deploy_groups = {g: DeployGroup(self, g, 32) for g in self.groups}
+        self.deploy_groups = {g: DeployGroup(self, g, 512) for g in self.groups}
         self.target_name = None
         self.objects = {}
 

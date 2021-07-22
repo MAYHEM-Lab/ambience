@@ -21,7 +21,8 @@ def extract_readelf(build_dir: str) -> str:
 def read_seg_sizes(binary_path: str):
     with open(binary_path, 'rb') as file:
         elffile = ELFFile(file)
-        return elffile.get_segment(0).header.p_memsz, elffile.get_segment(1).header.p_memsz
+        return 1024*1024, 32*1024*1024
+        #return elffile.get_segment(0).header.p_memsz, elffile.get_segment(1).header.p_memsz
 
 
 def read_entry_point(binary_path: str):

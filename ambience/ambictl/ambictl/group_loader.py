@@ -2,17 +2,20 @@ from .defs import *
 from .imported_service import ImportedService
 from .service_instance import ServiceInstance
 
+
 def make_exports(group: DeployGroup):
     src_template = env.get_template("node/loaders/export_common.cpp")
 
     exported_servs = list(serv for serv in group.group.servs if len(serv.exports) > 0)
     export_strings = (export.cxx_export_string() for serv in exported_servs for export in serv.exports.values())
-    export_includes = (exporter.get_cxx_include() for exporter in set(export.exporter for serv in exported_servs for export in serv.exports.values()))
+    export_includes = (exporter.get_cxx_include() for exporter in
+                       set(export.exporter for serv in exported_servs for export in serv.exports.values()))
 
     return src_template.render({
         "group_name": group.group.name,
         "export_strings": export_strings,
     })
+
 
 class BundledElfLoader(GroupLoader):
     user_src: str = None
@@ -75,6 +78,7 @@ class InMemoryLoader(GroupLoader):
             "exports.cpp": make_exports(group)
         }
 
+
 class KernelLoader(GroupLoader):
     def generateGroupLoader(self, group: DeployGroup):
         src_template = env.get_template("node/loaders/in_kernel_loader/loader.cpp")
@@ -87,9 +91,27 @@ class KernelLoader(GroupLoader):
         initializers = []
         for serv in needs_init:
             if isinstance(serv, ServiceInstance):
-                dep_args = (f"co_await registry.wait<\"{dep.name}\">()" for (name, dep) in serv.deps.items())
+                dep_args = {}
+                for name, dep in serv.deps.items():
+                    dep_args[name] = f"co_await registry.wait<\"{dep.name}\">()"
+
+                    # Detect if all dependency sync-ness match here
+                    # If not, emit a bridge
+                    if serv.is_async() == dep.is_async():
+                        continue
+
+                    print(
+                        f"{serv.name}: Color mismatch for dependency {dep.name} ({serv.is_async()} -> {dep.is_async()})")
+                    init_includes.append("lidlrt/transport/sync_to_async.hpp")
+                    if serv.is_async():
+                        dep_args[
+                            name] = f"new {dep.get_interface().async_zerocopy_client()}<lidl::sync_to_async_bridge>({dep_args[name]})"
+                    else:
+                        raise NotImplementedError("Async to sync bridge not implemented!")
+
+                dep_args = dep_args.values()
                 init_str = f"init_{serv.impl.name}({', '.join(dep_args)})"
-                if not serv.impl.sync:
+                if serv.is_async():
                     init_str = f"co_await {init_str}"
                 init_str = f"registry.register_service<\"{serv.name}\">({init_str});"
                 initializers.append(init_str)
@@ -118,7 +140,8 @@ class KernelLoader(GroupLoader):
                 "node_name": group.node.node.name,
                 "group_name": group.group.name,
                 "schemas": group.group.cmake_targets(),
-                "service_targets": (serv.impl.cmake_target for serv in group.group.servs if isinstance(serv, ServiceInstance))
+                "service_targets": (serv.impl.cmake_target for serv in group.group.servs if
+                                    isinstance(serv, ServiceInstance))
             }),
             "exports.cpp": make_exports(group)
         }

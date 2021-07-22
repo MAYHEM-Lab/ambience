@@ -13,3 +13,6 @@ class ImportedService(Instance):
 
     def registry_type(self):
         return self._import.interface.sync_server_name()
+
+    def is_async(self):
+        return False

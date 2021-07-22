@@ -29,3 +29,6 @@ class ServiceInstance(Instance):
 
     def get_dependencies(self):
         return self.impl.deps.values()
+
+    def is_async(self):
+        return not self.impl.sync
