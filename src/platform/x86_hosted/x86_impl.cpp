@@ -39,7 +39,10 @@ USED int main() {
     while (true) {
         auto res = tos::global::sched.schedule(tos::int_guard{});
         if (io.stopped()) {
-            io.reset();
+            io.restart();
+        }
+        if (res == tos::exit_reason::idle || res == tos::exit_reason::power_down) {
+            io.run_one();
         }
         io.poll();
         if (res == tos::exit_reason::restart) {
