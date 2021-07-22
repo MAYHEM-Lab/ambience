@@ -10,7 +10,7 @@ find_llvm_toolchain(TRIPLE x86_64-none-elf SET)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-set(TOS_STM32_FLAGS "-target x86_64-none-elf -D__ELF__ -mno-red-zone -fno-stack-protector -fno-omit-frame-pointer -mno-avx")
+set(TOS_STM32_FLAGS "-target x86_64-none-elf -D__ELF__ -mno-red-zone -fno-stack-protector -fomit-frame-pointer -mno-avx")
 
 set(CMAKE_LINKER ${TOOLCHAIN_LD})
 message(STATUS ${CMAKE_LINKER})

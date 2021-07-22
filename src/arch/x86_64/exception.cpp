@@ -26,12 +26,12 @@ void div_by_zero_handler([[maybe_unused]] exception_frame* frame,
 void debug_handler([[maybe_unused]] exception_frame* frame,
                    [[maybe_unused]] uint64_t num) {
     LOG("Debug handler");
-    LOG_ERROR("Call stack:");
-    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
-    while (root) {
-        LOG_ERROR((void*)root->rip);
-        root = backtrace_next(*root);
-    }
+//    LOG_ERROR("Call stack:");
+//    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
+//    while (root) {
+//        LOG_ERROR((void*)root->rip);
+//        root = backtrace_next(*root);
+//    }
 
     while (true)
         ;
@@ -113,12 +113,12 @@ void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
               (void*)frame->ss);
     dump_registers(*frame);
 
-    LOG_ERROR("Call stack:");
-    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
-    while (root) {
-        LOG_ERROR((void*)root->rip);
-        root = backtrace_next(*root);
-    }
+//    LOG_ERROR("Call stack:");
+//    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
+//    while (root) {
+//        LOG_ERROR((void*)root->rip);
+//        root = backtrace_next(*root);
+//    }
 
     while (true)
         ;
@@ -149,12 +149,12 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
         }
     }
     LOG("Could not handle");
-    LOG_ERROR("Call stack:");
-    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
-    while (root) {
-        LOG_ERROR((void*)root->rip);
-        root = backtrace_next(*root);
-    }
+//    LOG_ERROR("Call stack:");
+//    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
+//    while (root) {
+//        LOG_ERROR((void*)root->rip);
+//        root = backtrace_next(*root);
+//    }
 
     while (true)
         ;
