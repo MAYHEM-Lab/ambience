@@ -93,7 +93,7 @@ private:
             if (++terminal_row == height) {
                 terminal_row = 0;
             }
-            auto r = get_row(terminal_row);
+//            auto r = get_row(terminal_row);
 //            std::fill(r.begin(), r.end(), vga_entry(' ', terminal_color));
             return;
         }
