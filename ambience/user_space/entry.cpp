@@ -35,6 +35,9 @@ detail::any_logger& default_log() {
 }
 }
 
+#if defined(__x86_64__)
+[[gnu::force_align_arg_pointer]]
+#endif
 [[gnu::used, noreturn]] extern "C" void _user_code() {
 //    auto data = tos::default_segments::data();
 //    auto data_start = reinterpret_cast<uint64_t*>(data.base);
@@ -56,7 +59,7 @@ detail::any_logger& default_log() {
 
     tos::debug::serial_sink sink(&tos::ae::low_level_output);
     tos::debug::detail::any_logger logger(&sink);
-    logger.set_log_level(tos::debug::log_level::error);
+    logger.set_log_level(tos::debug::log_level::log);
     g_logger = &logger;
     tos::debug::log("Call init syscall");
 
