@@ -86,6 +86,16 @@ public:
         m_current_holder = tos::this_thread::get_id();
     }
 
+    tos::Task<void> async_lock() noexcept {
+        if (m_current_holder == tos::this_thread::get_id()) {
+            ++m_depth;
+            co_return;
+        }
+        co_await m_base_mutex;
+        m_depth = 1;
+        m_current_holder = tos::this_thread::get_id();
+    }
+
     void unlock() noexcept {
         if (--m_depth == 0) {
             m_current_holder = {0};
