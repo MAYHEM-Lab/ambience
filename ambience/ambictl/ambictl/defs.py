@@ -94,6 +94,9 @@ class ServiceInterface:
     def sync_stub_client(self):
         return f"{self.absolute_name()}::stub_client"
 
+    def async_stub_client(self):
+        return f"{self.absolute_name()}::async_stub_client"
+
     def async_zerocopy_client(self):
         return f"{self.absolute_name()}::async_zerocopy_client"
 
@@ -350,6 +353,10 @@ class Importer(Instance):
     @abc.abstractmethod
     def import_string(self, import_: Import):
         pass
+
+    @abc.abstractmethod
+    def is_async(self):
+        return False
 
     def get_interface(self) -> ServiceInterface:
         return importer_if
