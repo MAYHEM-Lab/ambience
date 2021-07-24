@@ -1,3 +1,4 @@
+#include <tos/detail/poll.hpp>
 #include <tos/virtio/virtio_netif.hpp>
 
 namespace tos::virtio {
@@ -28,7 +29,7 @@ void net_if::read_thread(cancellation_token& tok) {
         //            tos::debug::log("Got packet", this, packet.size());
         auto p = pbuf_alloc(pbuf_layer::PBUF_RAW, packet.size(), pbuf_type::PBUF_POOL);
         if (!p) {
-            tos::debug::error("Could not allocate pbuf!");
+            tos::debug::error("Could not allocate pbuf!", packet.size());
             m_dev->return_packet(packet);
             continue;
         }
@@ -54,8 +55,10 @@ void net_if::read_thread(cancellation_token& tok) {
 }
 
 err_t net_if::link_output(pbuf* p) {
-//    tos::debug::trace("link_output", p->len, p->tot_len, "bytes");
-    m_dev->transmit_gather_callback([p]() mutable {
+    // Keep buffer alive during transmit, we'll return early
+    pbuf_ref(p);
+
+    tos::coro::make_detached(m_dev->async_transmit_gather_callback([p]() mutable {
         if (!p) {
             return tos::span<const uint8_t>(nullptr);
         }
@@ -63,7 +66,7 @@ err_t net_if::link_output(pbuf* p) {
             tos::span<const uint8_t>{static_cast<const uint8_t*>(p->payload), p->len};
         p = p->next;
         return res;
-    });
+    }), [p] { pbuf_free(p); });
     return ERR_OK;
 }
 } // namespace tos::virtio

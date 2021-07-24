@@ -30,6 +30,12 @@ public:
         this->transmit_gather_callback_impl(function_ref<span<const uint8_t>()>(fn));
     }
 
+    template<class Fn>
+    Task<void> async_transmit_gather_callback(Fn&& fn) {
+        return this->async_transmit_gather_callback_impl(
+            function_ref<span<const uint8_t>()>(fn));
+    }
+
     void transmit_gather(span<span<const uint8_t>> data);
     void transmit_packet(span<const uint8_t> data);
     Task<void> async_transmit_packet(span<const uint8_t> data);
@@ -39,6 +45,8 @@ protected:
 
 private:
     void transmit_gather_callback_impl(function_ref<span<const uint8_t>()> cb);
+    Task<void>
+    async_transmit_gather_callback_impl(function_ref<span<const uint8_t>()> cb);
     void isr();
 
     void queue_rx_buf(buf&);

@@ -249,6 +249,43 @@ void network_device::transmit_gather_callback_impl(
     header.sem.down();
 }
 
+Task<void> network_device::async_transmit_gather_callback_impl(
+    function_ref<span<const uint8_t>()> cb) {
+    auto& tx_queue = queue_at(1);
+
+    tx_header header{};
+
+    auto [header_idx, header_desc] = tx_queue.alloc();
+    header_desc->addr = reinterpret_cast<uintptr_t>(&header.header);
+    header_desc->len = sizeof header.header;
+    header_desc->flags = queue_flags::none;
+    header_desc->next = 0;
+
+    queue_descriptor* cur = header_desc;
+
+    auto data = cb();
+    while (!data.empty()) {
+        auto [body_idx, body_desc] = tx_queue.alloc();
+
+        cur->flags = queue_flags::next;
+        cur->next = body_idx;
+
+        body_desc->addr = reinterpret_cast<uintptr_t>(data.data());
+        body_desc->len = data.size();
+        body_desc->flags = queue_flags::none;
+        body_desc->next = 0;
+
+        cur = body_desc;
+        data = cb();
+    }
+
+    tx_queue.submit_available(header_idx);
+
+    transport().write_u16(notify_port_offset, 1);
+
+    co_await header.sem;
+}
+
 void network_device::transmit_packet(span<const uint8_t> data) {
     transmit_gather_callback([&, n = 0]() mutable {
         if (n++ == 0) {
