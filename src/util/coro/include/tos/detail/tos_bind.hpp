@@ -34,12 +34,14 @@ inline auto yield() {
         void await_suspend(std::coroutine_handle<> coro) {
             m_coro = coro;
             tos::kern::make_runnable(*this);
+            tos::kern::enable_interrupts();
         }
 
         void await_resume() {
         }
 
         void operator()() override {
+            tos::kern::disable_interrupts();
             m_coro.resume();
         }
 
