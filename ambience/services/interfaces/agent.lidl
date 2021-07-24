@@ -1,5 +1,12 @@
 namespace tos::ae;
 
+struct bench_result {
+    total: u64;
+    median: u64;
+    p90: u64;
+    p99: u64;
+}
+
 service agent {
-    start(param: i64) -> bool;
+    start(param: i64) -> bench_result;
 }

@@ -1,10 +1,10 @@
 #include <agent_generated.hpp>
+#include <file_system_generated.hpp>
 #include <posts_generated.hpp>
+#include <tos/barrier.hpp>
 #include <tos/coro/countdown.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/detail/poll.hpp>
-#include <file_system_generated.hpp>
-#include <tos/barrier.hpp>
 
 namespace social_media {
 namespace {
@@ -19,14 +19,17 @@ inline uint64_t rdtsc() {
 #endif
 }
 struct posts_bench_agent : tos::ae::agent::async_server {
-    posts_bench_agent(social_media::posts::async_server* posts_serv, tos::ae::services::filesystem::async_server* fs)
-        : m_posts_serv{posts_serv}, m_fs{fs} {
+    posts_bench_agent(social_media::posts::async_server* posts_serv,
+                      tos::ae::services::filesystem::async_server* fs)
+        : m_posts_serv{posts_serv}
+        , m_fs{fs} {
     }
 
 
-    tos::Task<bool> start(const int64_t& param) override {
+    tos::Task<tos::ae::bench_result> start(const int64_t& param) override {
         tos::debug::log("Posts bench agent with param", param);
-        constexpr auto extent = 1'000'000;
+        auto first = rdtsc();
+        constexpr auto extent = 10'000;
         const int concurrency = param;
         tos::coro::countdown cd{concurrency};
 
@@ -45,30 +48,29 @@ struct posts_bench_agent : tos::ae::agent::async_server {
                             auto after = rdtsc();
                             auto diff_cycles = after - before;
                             cycles[i] = diff_cycles;
+                            if ((i % 100) == 0) {
+                                tos::debug::log(c, i, "Resp in", cycles[i]);
+                            }
                         }
                         co_await cd.signal();
                     });
             }
         });
 
-//        auto handle = co_await m_fs->open("/experiment.bin");
-//
-//        tos::debug::log("Write:", co_await m_fs->write_file(handle, 0, tos::raw_cast<uint8_t>(tos::span(cycles))));
-//
-//        tos::debug::log("Close:", co_await m_fs->close_file(handle));
-
-        //        std::sort(cycles.begin(), cycles.end());
         std::nth_element(
             cycles.begin(), cycles.begin() + cycles.size() / 2, cycles.end());
-        tos::debug::log("Median", *(cycles.begin() + cycles.size() / 2));
-        std::nth_element(
-            cycles.begin(), cycles.begin() + cycles.size() / 100 * 90, cycles.end());
-        tos::debug::log("90th percentile", *(cycles.begin() + cycles.size() / 100 * 90));
-        std::nth_element(
-            cycles.begin(), cycles.begin() + cycles.size() / 100 * 99, cycles.end());
-        tos::debug::log("99th percentile", *(cycles.begin() + cycles.size() / 100 * 99));
-        //        tos::debug::log(extent/concurrency, "reqs in", total, "cycles");
-        co_return true;
+        std::nth_element(cycles.begin() + cycles.size() / 2,
+                         cycles.begin() + cycles.size() / 100 * 90,
+                         cycles.end());
+        std::nth_element(cycles.begin() + cycles.size() / 100 * 90,
+                         cycles.begin() + cycles.size() / 100 * 99,
+                         cycles.end());
+        auto end = rdtsc();
+
+        co_return tos::ae::bench_result{end - first,
+                                        *(cycles.begin() + cycles.size() / 2),
+                                        *(cycles.begin() + cycles.size() / 100 * 90),
+                                        *(cycles.begin() + cycles.size() / 100 * 99)};
     }
 
     social_media::posts::async_server* m_posts_serv;
@@ -78,6 +80,7 @@ struct posts_bench_agent : tos::ae::agent::async_server {
 } // namespace social_media
 
 tos::Task<tos::ae::agent::async_server*>
-init_posts_bench_agent(social_media::posts::async_server* posts_serv, tos::ae::services::filesystem::async_server* fs) {
+init_posts_bench_agent(social_media::posts::async_server* posts_serv,
+                       tos::ae::services::filesystem::async_server* fs) {
     co_return new social_media::posts_bench_agent(posts_serv, fs);
 }
