@@ -13,7 +13,7 @@ namespace {
 }
 #elif defined(TOS_PLATFORM_x86_64)
 namespace {
-[[gnu::section(".nozero")]] alignas(16) std::array<uint8_t, 1024 * 1024> heap_mem;
+[[gnu::section(".nozero")]] alignas(16) std::array<uint8_t, 32 * 1024 * 1024> heap_mem;
 }
 #elif defined(TOS_PLATFORM_stm32_hal) || defined(TOS_PLATFORM_nrf52)
 extern "C" {

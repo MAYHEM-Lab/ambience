@@ -6,7 +6,7 @@ tos::expected<tos::physical_page_allocator*, tos::cur_arch::mmu_errors>
 initialize_page_allocator() {
     auto& root_table = tos::cur_arch::get_current_translation_table();
 
-    constexpr auto page_num = 2048*10;
+    constexpr auto page_num = 2048*80;
     auto vmem_end = (void*)tos::default_segments::image().end();
 
     LOG("Image ends at", vmem_end);

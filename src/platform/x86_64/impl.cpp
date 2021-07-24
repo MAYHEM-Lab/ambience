@@ -170,12 +170,10 @@ void setup_tss(expanded_gdt_entry& entry) {
 }
 
 extern "C" {
-[[gnu::section(".nozero")]] alignas(
-    4096) std::array<tos::x86_64::table_entry, 512> p4_table;
-[[gnu::section(".nozero")]] alignas(
-    4096) std::array<tos::x86_64::table_entry, 512> p3_table;
+[[gnu::section(".nozero")]] translation_table p4_table;
+[[gnu::section(".nozero")]] translation_table p3_table;
 [[gnu::section(".nozero")]] translation_table p2_tables[1];
-[[gnu::section(".nozero")]] translation_table p1_tables[3];
+[[gnu::section(".nozero")]] translation_table p1_tables[20];
 }
 
 extern "C" {
