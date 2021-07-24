@@ -170,7 +170,7 @@
 /**
  * PBUF_POOL_SIZE: the number of buffers in the pbuf pool.
  */
-#define PBUF_POOL_SIZE                  128
+#define PBUF_POOL_SIZE                  256
 
 /*
    ---------------------------------
