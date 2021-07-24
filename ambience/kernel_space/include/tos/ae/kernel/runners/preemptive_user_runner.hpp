@@ -65,11 +65,14 @@ private:
                 auto& channel = group.exposed_services[req.channel - 1];
 
                 if (auto sync = get_if<tos::ae::sync_service_host>(&channel)) {
-                    tos::launch(tos::alloc_stack, [&group, sync, done, req] {
-                        sync->run_zerocopy(req.procid, req.arg_ptr, req.ret_ptr);
-                        group.notify_downcall();
-                        return done();
-                    });
+                    set_name(tos::launch(tos::stack_size_t{TOS_DEFAULT_STACK_SIZE/4},
+                                         [&group, sync, done, req] {
+                                             sync->run_zerocopy(
+                                                 req.procid, req.arg_ptr, req.ret_ptr);
+                                             group.notify_downcall();
+                                             return done();
+                                         }),
+                             "Sync handler");
                     return;
                 }
 
