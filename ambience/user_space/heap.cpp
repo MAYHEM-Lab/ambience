@@ -1,5 +1,6 @@
 #include <tos/allocator/free_list.hpp>
 #include <tos/debug/debug.hpp>
+#include <tos/debug/panic.hpp>
 
 [[gnu::section(".nozero")]] uint8_t heap[4096*7500];
 
@@ -12,8 +13,7 @@ void* operator new(size_t sz) {
     auto ptr = alloc().allocate(sz);
     if (ptr == nullptr) {
         tos::debug::do_not_optimize(&sz);
-        while (true);
-        // TODO: handle this via a panic
+        tos::debug::panic("Allocation failure");
     }
     return ptr;
 }
