@@ -103,6 +103,13 @@ serv_instance(
 # )
 
 export(
+    service="fs2",
+    networks={
+        "udp-internet": 1897
+    }
+)
+
+export(
     service="posts_agent",
     networks={
         "udp-internet": 1896

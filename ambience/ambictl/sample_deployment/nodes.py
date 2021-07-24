@@ -6,7 +6,7 @@ node(
     exporters=[
         exporter(
             network="udp-internet",
-            address="138.68.240.94",
+            address="138.68.28.13",
             native=LwipUdpExporter
         ),
         exporter(
@@ -52,7 +52,7 @@ node(
     exporters=[
         exporter(
             network="udp-internet",
-            address="127.0.0.1",
+            address="138.68.240.94",
             native=HostedUdpExporter
         ),
         # exporter(
@@ -74,7 +74,7 @@ node(
     exporters=[
         exporter(
             network="udp-internet",
-            address="127.0.0.1",
+            address="165.227.5.209",
             native=HostedUdpExporter
         ),
         # exporter(

@@ -1,18 +1,23 @@
 deploy_to = "linux"
 
-group(
-    name="posts_group",
-    services=[
-        # "analysis",
-        "posts",
-    ]
-)
-
 if deploy_to == "linux":
+    group(
+        name="posts_group",
+        services=[
+            "analysis",
+            "posts",
+        ]
+    )
+
     deploy(
         node="hosted",
         groups=["posts_group"]
     )
+
+    # deploy(
+    #     node="hosted3",
+    #     groups=["analysis"]
+    # )
 
     group(
         name="hosted2_priv",
@@ -20,25 +25,36 @@ if deploy_to == "linux":
     )
 
     deploy(
-        node="hosted3",
-        groups=["analysis"]
-    )
-
-    deploy(
         node="hosted2",
         groups=["hosted2_priv"]
     )
 else:
-    deploy(
-        node="sfo2_vm2",
-        groups=["fs2", "posts_group", "posts_agent"]
+    group(
+        name="posts_group",
+        services=[
+            "analysis",
+            "posts",
+        ]
     )
 
+    deploy(
+        node="sfo2_vm1",
+        groups=[
+            "fs",
+            "posts_group"
+        ]
+    )
 
-deploy(
-    node="sfo2_vm1",
-    groups=["fs", "calc2"]
-)
+    deploy(
+        node="sfo2_vm2",
+        groups=[
+            "fs2",
+            # "posts",
+            # "analysis",
+            "posts_agent"
+        ]
+    )
+
 
 group(
     name="sfo_vm2_priv",
