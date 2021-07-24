@@ -76,7 +76,7 @@ bool network_device::initialize(physical_page_allocator* palloc) {
     }
     LOG("Status:", transport().read_u16((have_msix() ? 4 : 0) + dev_status_offset));
 
-    for (int i = 0; i < 32; ++i) {
+    for (int i = 0; i < 200; ++i) {
         auto recv_mem = palloc->allocate(1, 1);
 
         auto mem = palloc->address_of(*recv_mem);
@@ -161,6 +161,7 @@ void network_device::isr() {
 
 span<uint8_t> network_device::take_packet() {
     m_rx_sem.down();
+    tos::int_guard ig(__builtin_return_address(0));
     queue_at(0).used_base->disable_irq();
     auto& b = received_packets.front();
     received_packets.pop_front();
