@@ -17,14 +17,17 @@ class LwipUdpImporter(Importer):
         return self.make_import(iface, conf)
 
     def import_string(self, import_: Import):
-        format = "new {}<tos::ae::udp_transport>{{tos::udp_endpoint_t{{tos::parse_ipv4_address(\"{}\"), {{{}}} }} }}"
-        return format.format(import_.interface.sync_stub_client(), import_.config["ip"], import_.config["port"])
+        format = "new {}<tos::ae::async_udp_transport>{{tos::udp_endpoint_t{{tos::parse_ipv4_address(\"{}\"), {{{}}} }} }}"
+        return format.format(import_.interface.async_stub_client(), import_.config["ip"], import_.config["port"])
 
     def cxx_includes(self):
         return ["tos/ae/transport/lwip/udp.hpp"]
 
     def registry_type(self):
         return "tos::ae::lwip_udp_importer"
+
+    def is_async(self):
+        return True
 
 
 class LwipUdpExporter(Exporter):
