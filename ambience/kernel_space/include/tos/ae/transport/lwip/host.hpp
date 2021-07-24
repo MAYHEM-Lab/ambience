@@ -30,6 +30,7 @@ private:
     void handle_one_req(tos::tcp_stream<tos::lwip::tcp_endpoint>& stream);
 
     void handle_one_req(const tos::udp_endpoint_t& from, tos::lwip::buffer& buf);
+    tos::Task<void> async_handle_one_req(tos::udp_endpoint_t from, tos::lwip::buffer buf);
 
     void serve_thread();
 
@@ -42,6 +43,14 @@ private:
     ServiceHost serv;
     tos::lwip::tcp_socket sock;
     tos::lwip::async_udp_socket udp_sock;
+
+    struct udp_response_info : list_node<udp_response_info> {
+        udp_endpoint_t to;
+        tos::span<const uint8_t> buf;
+        tos::semaphore done{0};
+    };
+
+    tos::intrusive_list<udp_response_info> m_async_responses;
 };
 
 extern template class lwip_host<sync_service_host>;

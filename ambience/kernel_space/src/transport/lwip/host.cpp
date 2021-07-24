@@ -1,8 +1,8 @@
+#include <tos/ae/detail/handle_req.hpp>
 #include <tos/ae/transport/lwip/host.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/detail/poll.hpp>
 #include <tos/lwip/common.hpp>
-#include <tos/ae/detail/handle_req.hpp>
 
 namespace tos::ae {
 template<class ServiceHost>
@@ -34,9 +34,7 @@ void lwip_host<ServiceHost>::operator()(tos::lwip::events::recvfrom_t,
                                         tos::lwip::async_udp_socket*,
                                         const tos::udp_endpoint_t& from,
                                         tos::lwip::buffer&& buf) {
-    tos::launch(tos::alloc_stack, [this, buf = std::move(buf), from]() mutable {
-        handle_one_req(from, buf);
-    });
+    tos::coro::make_detached(async_handle_one_req(from, std::move(buf)));
 }
 
 template<class ServiceHost>
@@ -78,10 +76,22 @@ void lwip_host<ServiceHost>::handle_one_req(const tos::udp_endpoint_t& from,
         sync_run_message(serv, req, response_builder);
         auto end = lwip::global::system_clock->now();
         udp_sock.send_to(response_builder.get_buffer(), from);
-//        tos::debug::log(
-//            "Request took",
-//            int(std::chrono::duration_cast<std::chrono::microseconds>(end - now).count()),
-//            "us");
+    }
+}
+
+template<class ServiceHost>
+tos::Task<void> lwip_host<ServiceHost>::async_handle_one_req(tos::udp_endpoint_t from,
+                                                             tos::lwip::buffer buf) {
+    if (buf.size() == buf.cur_bucket().size()) {
+        auto req = buf.cur_bucket();
+
+        std::array<uint8_t, 1024> resp;
+        lidl::message_builder response_builder{resp};
+
+        auto now = lwip::global::system_clock->now();
+        co_await async_run_message(serv, req, response_builder);
+        auto end = lwip::global::system_clock->now();
+        co_await udp_sock.async_send_to(response_builder.get_buffer(), from);
     }
 }
 
@@ -92,11 +102,20 @@ void lwip_host<ServiceHost>::serve_thread() {
             return;
         }
 
+        while (!m_async_responses.empty()) {
+            auto& info = m_async_responses.front();
+            m_async_responses.pop_front();
+            udp_sock.send_to(info.buf, info.to);
+            info.done.up();
+        }
+
         backlog_mut.lock();
-        auto sock = std::move(backlog.front());
-        backlog.pop_front();
+        while (!backlog.empty()) {
+            auto sock = std::move(backlog.front());
+            backlog.pop_front();
+            handle_one_req(*sock);
+        }
         backlog_mut.unlock();
-        handle_one_req(*sock);
     }
 }
 
