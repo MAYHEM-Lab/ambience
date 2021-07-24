@@ -21,7 +21,7 @@ private:
 };
 
 namespace coro {
-auto yield() {
+inline auto yield() {
     struct awaiter
         : tos::job
         , tos::int_guard {
