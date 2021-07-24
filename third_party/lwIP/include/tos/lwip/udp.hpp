@@ -39,6 +39,34 @@ public:
         return {};
     }
 
+    Task<expected<void, err_t>> async_send_to(span<const uint8_t> buf, const udp_endpoint_t& to) {
+        auto pbuf = pbuf_alloc(PBUF_TRANSPORT, buf.size(), PBUF_RAM);
+
+        if (!pbuf) {
+            co_return unexpected(ERR_MEM);
+        }
+
+        memcpy(pbuf->payload, buf.data(), buf.size());
+
+        co_await tos::lwip::lwip_lock.async_lock();
+
+        auto err = udp_sendto(
+            m_pcb,
+            pbuf,
+            reinterpret_cast<ip_addr_t*>(const_cast<uint8_t*>(&to.addr.addr[0])),
+            to.port.port);
+
+        pbuf_free(pbuf);
+
+        if (err != ERR_OK) {
+            tos::lwip::lwip_lock.unlock();
+            co_return unexpected(err);
+        }
+
+        tos::lwip::lwip_lock.unlock();
+        co_return expected<void, err_t>{};
+    }
+
     expected<void, err_t> send_to(span<const uint8_t> buf, const udp_endpoint_t& to) {
         auto pbuf = pbuf_alloc(PBUF_TRANSPORT, buf.size(), PBUF_RAM);
 
