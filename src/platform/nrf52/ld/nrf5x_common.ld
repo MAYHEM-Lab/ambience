@@ -27,9 +27,6 @@ SECTIONS
     *(.note.gnu.build-id)
   } > FLASH
 
-    .mem_section_dummy_rom :
-      {
-      }
       .sdh_ble_observers :
       {
         PROVIDE(__start_sdh_ble_observers = .);
@@ -122,6 +119,7 @@ SECTIONS
   .data :
   {
     . = ALIGN(4);
+    __data_start__ = .; /* Used by the NRF SDK */
     __data_start = .;
     *(.data)
     *(.data*)
@@ -129,11 +127,11 @@ SECTIONS
     . = ALIGN(4);
     __data_end = .;
   } > RAM
-  AT> FLASH : DATA
+  AT> FLASH
 
   .nozero (NOLOAD) : {
     *(.nozero*)
-  } >RAM : DATA
+  } >RAM
 
   /* Uninitialized data section */
   . = ALIGN(4);
@@ -148,7 +146,7 @@ SECTIONS
 
     . = ALIGN(4);
     __bss_end = .;
-  } >RAM : DATA
+  } >RAM
 
   PROVIDE (end = .);
   PROVIDE ( _end = . );
