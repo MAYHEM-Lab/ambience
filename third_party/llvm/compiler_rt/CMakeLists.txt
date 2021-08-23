@@ -21,8 +21,8 @@ set(COMPILER_RT_BUILD_CRT OFF CACHE STRING "")
 
 set(COMPILER_RT_OS_DIR "baremetal")
 
-set(CMAKE_C_STANDARD_LIBRARIES picolibc)
-set(CMAKE_CXX_STANDARD_LIBRARIES picolibc)
+set(CMAKE_C_STANDARD_LIBRARIES tos::libc)
+set(CMAKE_CXX_STANDARD_LIBRARIES tos::libc)
 
-link_libraries(picolibc)
+link_libraries(tos::libc)
 add_subdirectory(src)
