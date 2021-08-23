@@ -1,3 +1,5 @@
 add_subdirectory(compiler_rt)
 add_subdirectory(libcxx)
-add_subdirectory(libcxxabi)
+if (TOS_PROVIDE_LIBCXX)
+    add_subdirectory(libcxxabi)
+endif()
