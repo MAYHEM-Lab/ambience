@@ -219,4 +219,10 @@ inline uint64_t get_cntp_tval_el0() {
 inline void set_cntp_tval_el0(uint64_t val) {
     asm volatile("msr cntp_tval_el0, %0" : : "r"(val));
 }
+
+inline uint64_t get_cntvct_el0() {
+    uint64_t val;
+    asm volatile("mrs %0, cntvct_el0" : "=r" (val));
+    return val;
+}
 } // namespace tos::aarch64
