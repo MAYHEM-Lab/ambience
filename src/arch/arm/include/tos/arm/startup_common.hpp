@@ -1,15 +1,16 @@
 #pragma once
 
 #include <tos/arm/nvic.hpp>
+#include <tos/utility.hpp>
 
 namespace tos::arm {
 template<size_t IRQSize>
 struct [[gnu::packed]] nvic_vector {
     using func_ptr = void (*)();
     tos::arm::vector_table common = tos::arm::vector_table::default_table();
-    func_ptr ptrs[IRQSize];
+    func_ptr ptrs[align_nearest_up_pow2(IRQSize, 128) - 16];
 };
-}
+} // namespace tos::arm
 
 extern "C" {
 extern unsigned char _estack;
