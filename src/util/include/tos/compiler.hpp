@@ -36,3 +36,7 @@
 #undef PACKED
 #endif
 #define PACKED [[gnu::packed]]
+
+// Used to mark a trivially constructable global variable not to be zero initialized.
+// Using such an object without prior initialization is UB!
+#define NO_ZERO [[gnu::section(".nozero")]]
