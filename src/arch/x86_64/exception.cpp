@@ -9,8 +9,15 @@
 using namespace tos::x86_64;
 
 void dump_registers(const exception_frame& frame) {
-    tos::debug::error(
-        "RIP", (void*)frame.cs, ":", (void*)frame.rip, "\t", "RSP", (void*)frame.ss, ":", (void*)frame.rsp);
+    tos::debug::error("RIP",
+                      (void*)frame.cs,
+                      ":",
+                      (void*)frame.rip,
+                      "\t",
+                      "RSP",
+                      (void*)frame.ss,
+                      ":",
+                      (void*)frame.rsp);
     tos::debug::error("RBP", (void*)frame.rbp, "\t", "RAX", (void*)frame.rax);
     tos::debug::error("RBX", (void*)frame.rbx, "\t", "RDI", (void*)frame.rdi);
     tos::debug::error("RSI", (void*)frame.rsi, "\t", "RDX", (void*)frame.rdx);
@@ -26,12 +33,12 @@ void div_by_zero_handler([[maybe_unused]] exception_frame* frame,
 void debug_handler([[maybe_unused]] exception_frame* frame,
                    [[maybe_unused]] uint64_t num) {
     LOG("Debug handler");
-//    LOG_ERROR("Call stack:");
-//    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
-//    while (root) {
-//        LOG_ERROR((void*)root->rip);
-//        root = backtrace_next(*root);
-//    }
+    //    LOG_ERROR("Call stack:");
+    //    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
+    //    while (root) {
+    //        LOG_ERROR((void*)root->rip);
+    //        root = backtrace_next(*root);
+    //    }
 
     while (true)
         ;
@@ -113,12 +120,12 @@ void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
               (void*)frame->ss);
     dump_registers(*frame);
 
-//    LOG_ERROR("Call stack:");
-//    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
-//    while (root) {
-//        LOG_ERROR((void*)root->rip);
-//        root = backtrace_next(*root);
-//    }
+    //    LOG_ERROR("Call stack:");
+    //    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
+    //    while (root) {
+    //        LOG_ERROR((void*)root->rip);
+    //        root = backtrace_next(*root);
+    //    }
 
     while (true)
         ;
@@ -141,8 +148,7 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
         (void*)read_cr2());
     dump_registers(*frame);
     if (tos::global::cur_as) {
-        if (auto res =
-                tos::global::cur_as->m_backend->handle_memory_fault(*frame, read_cr2())) {
+        if (auto res = tos::global::cur_as->handle_memory_fault(*frame, read_cr2())) {
             if (force_get(res)) {
                 LOG("Handled correctly");
                 return;
@@ -150,12 +156,12 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
         }
     }
     LOG("Could not handle");
-//    LOG_ERROR("Call stack:");
-//    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
-//    while (root) {
-//        LOG_ERROR((void*)root->rip);
-//        root = backtrace_next(*root);
-//    }
+    //    LOG_ERROR("Call stack:");
+    //    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
+    //    while (root) {
+    //        LOG_ERROR((void*)root->rip);
+    //        root = backtrace_next(*root);
+    //    }
 
     while (true)
         ;

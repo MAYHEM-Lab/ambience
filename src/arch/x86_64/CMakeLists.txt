@@ -33,6 +33,12 @@ add_library(arch_x86_64
     include/tos/x86_64/apic.hpp
     apic.cpp
     include/tos/x86_64/fwd.hpp
+    include/tos/x86_64/mmu/table_entry.hpp
+    include/tos/x86_64/mmu/translation_table.hpp
+    include/tos/x86_64/mmu/common.hpp src/mmu/translation_table.cpp
+    include/tos/x86_64/mmu/detail/nested.hpp
+    include/tos/x86_64/mmu/detail/recursive_allocate.hpp
+    include/tos/x86_64/mmu/errors.hpp
 )
 target_include_directories(arch_x86_64 PUBLIC include)
 target_link_libraries(arch_x86_64 PUBLIC tos_util_core tos_pci tos::libcxx tos_address_space)

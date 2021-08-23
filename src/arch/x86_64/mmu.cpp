@@ -2,79 +2,22 @@
 #include <tos/flags.hpp>
 #include <tos/paging.hpp>
 #include <tos/x86_64/mmu.hpp>
+#include <tos/x86_64/mmu/detail/nested.hpp>
 
 namespace tos::x86_64 {
 translation_table& get_current_translation_table() {
     return *reinterpret_cast<translation_table*>(read_cr3());
 }
 
+using namespace tos::x86_64::detail;
+
 namespace {
-constexpr std::array<int, 5> level_bits = {9, 9, 9, 9, 12};
-
-constexpr auto level_masks = compute_level_masks(level_bits);
-constexpr auto level_bit_begins = compute_level_bit_begins(level_bits);
-constexpr auto level_bit_sums = compute_level_bit_sums(level_bits);
-
-constexpr int index_on_table(int level, uintptr_t address) {
-    return (address & level_masks[level]) >> level_bit_begins[level];
-}
-
-static_assert(level_bit_sums[4] == 12);
-static_assert(level_bit_sums[3] == 21);
-static_assert(level_bit_sums[2] == 30);
-static_assert(level_bit_sums[1] == 39);
-static_assert(level_bit_sums[0] == 48);
-
-static_assert(index_on_table(1, 1024 * 1024 * 1024 - 1) == 0);
-static_assert(index_on_table(1, 1024 * 1024 * 1024) == 1);
-static_assert(index_on_table(1, 1024 * 1024 * 1024 + 1) == 1);
-
-constexpr std::array<int, std::size(level_bits) - 1>
-pt_path_for_addr(uint64_t virt_addr) {
-    std::array<int, 4> path;
-    for (size_t i = 0; i < path.size(); ++i) {
-        path[i] = index_on_table(i, virt_addr);
-    }
-    return path;
-}
-
-static_assert(pt_path_for_addr(0) == std::array<int, 4>{0, 0, 0, 0});
-static_assert(pt_path_for_addr(1) == std::array<int, 4>{0, 0, 0, 0});
-static_assert(pt_path_for_addr(page_size_bytes) == std::array<int, 4>{0, 0, 0, 1});
-
-bool last_level(int level, const table_entry& entry) {
-    if (level == 3)
-        return true;
-    return entry.huge_page();
-}
-
-void do_traverse_table_entries(int level,
-                               uintptr_t begin,
-                               translation_table& table,
-                               function_ref<void(memory_range, table_entry&)> fn) {
-    for (size_t i = 0; i < table.size(); ++i) {
-        auto& entry = table[i];
-
-        if (!entry.valid()) {
-            continue;
-        }
-
-        auto beg = begin + i * (1ULL << level_bit_sums[level + 1]);
-
-        if (last_level(level, entry)) {
-            fn(memory_range{beg, ptrdiff_t(1ULL << level_bit_sums[level + 1])}, entry);
-            continue;
-        }
-
-        do_traverse_table_entries(level + 1, beg, table_at(entry), fn);
-    }
-}
 template<size_t N>
-expected<void, mmu_errors> recursive_allocate(translation_table& root,
-                                              permissions perms,
-                                              user_accessible allow_user,
-                                              const std::array<int, N>& path,
-                                              physical_page_allocator* palloc) {
+constexpr expected<void, mmu_errors> recursive_allocate(translation_table& root,
+                                                        permissions perms,
+                                                        user_accessible allow_user,
+                                                        const std::array<int, N>& path,
+                                                        physical_page_allocator* palloc) {
     if constexpr (N == 1) {
         if (root[path[0]].valid()) {
             tos::debug::error("Page already allocated");
@@ -147,7 +90,7 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
                                            physical_page_allocator* palloc) {
     for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
          addr += page_size_bytes) {
-        auto path = pt_path_for_addr(addr);
+        auto path = detail::pt_path_for_addr(addr);
         LOG_TRACE("Address", (void*)addr, path[0], path[1], path[2], path[3]);
         EXPECTED_TRYV(recursive_allocate(root, virt_seg.perms, allow_user, path, palloc));
     }
@@ -174,7 +117,9 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
             table = &table_at(elem);
         }
 
-        (*table)[path.back()].page_num(address_to_page(phys_addr) << page_size_log).valid(true);
+        (*table)[path.back()]
+            .page_num(address_to_page(phys_addr) << page_size_log)
+            .valid(true);
         if (type == memory_types::device) {
             // (*table)[path.back()]
             //     .shareable(tos::aarch64::shareable_values::outer)
