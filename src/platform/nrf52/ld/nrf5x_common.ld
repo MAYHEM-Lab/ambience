@@ -1,5 +1,10 @@
 ENTRY(g_pfnVectors)
 
+PHDRS {
+  RODATA PT_LOAD FLAGS(5);
+  DATA PT_LOAD;
+}
+
 SECTIONS
 {
     .text :
@@ -19,7 +24,7 @@ SECTIONS
 
         KEEP(*(.eh_frame*))
 
-    } > FLASH
+    } > FLASH : RODATA
 
   .gnu_build_id :
   {
@@ -27,32 +32,20 @@ SECTIONS
     *(.note.gnu.build-id)
   } > FLASH
 
-      .sdh_ble_observers :
+      .sdh_observers :
       {
         PROVIDE(__start_sdh_ble_observers = .);
         KEEP(*(SORT(.sdh_ble_observers*)))
         PROVIDE(__stop_sdh_ble_observers = .);
-      } > FLASH
-      .sdh_soc_observers :
-      {
         PROVIDE(__start_sdh_soc_observers = .);
         KEEP(*(SORT(.sdh_soc_observers*)))
         PROVIDE(__stop_sdh_soc_observers = .);
-      } > FLASH
-      .sdh_req_observers :
-      {
         PROVIDE(__start_sdh_req_observers = .);
         KEEP(*(SORT(.sdh_req_observers*)))
         PROVIDE(__stop_sdh_req_observers = .);
-      } > FLASH
-      .sdh_state_observers :
-      {
         PROVIDE(__start_sdh_state_observers = .);
         KEEP(*(SORT(.sdh_state_observers*)))
         PROVIDE(__stop_sdh_state_observers = .);
-      } > FLASH
-      .sdh_stack_observers :
-      {
         PROVIDE(__start_sdh_stack_observers = .);
         KEEP(*(SORT(.sdh_stack_observers*)))
         PROVIDE(__stop_sdh_stack_observers = .);
@@ -127,7 +120,7 @@ SECTIONS
     . = ALIGN(4);
     __data_end = .;
   } > RAM
-  AT> FLASH
+  AT> FLASH : DATA
 
   .nozero (NOLOAD) : {
     *(.nozero*)
