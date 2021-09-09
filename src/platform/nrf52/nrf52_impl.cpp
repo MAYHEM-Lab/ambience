@@ -75,8 +75,7 @@ extern "C" int main() {
 
     while (true) {
         {
-            tos::int_guard ig;
-            auto res = tos::global::sched.schedule(ig);
+            auto res = tos::global::sched.schedule(tos::int_guard{});
             if (res == tos::exit_reason::restart)
                 NVIC_SystemReset(); // reboot();
             if (res == tos::exit_reason::power_down || res == tos::exit_reason::idle) {
