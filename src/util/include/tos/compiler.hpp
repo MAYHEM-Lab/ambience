@@ -8,34 +8,42 @@
 #define TOS_TASK
 #endif
 
-#define ALWAYS_INLINE [[gnu::always_inline]] inline
-#define NO_INLINE     [[gnu::noinline]]
+#if defined(PACKED)
+#undef PACKED
+#endif
 
-#define TOS_EXPORT [[gnu::visibility("default")]]
-#define TOS_HIDDEN [[gnu::visibility("hidden")]]
-
-#define WEAK [[gnu::weak]]
-
-#define PURE [[gnu::pure]]
-
+#if defined(__GNUC__) || defined(__clang__)
+#define ALWAYS_INLINE     [[gnu::always_inline]] inline
+#define NO_INLINE         [[gnu::noinline]]
+#define WEAK              [[gnu::weak]]
+#define USED              [[gnu::used]]
+#define PACKED            [[gnu::packed]]
+#define PURE              [[gnu::pure]]
 #define TOS_UNREACHABLE() __builtin_unreachable()
+#endif
 
 #if defined(__GNUC__) && !defined(__clang__)
 #define TOS_NO_OPTIMIZE   [[gnu::optimize("-O0")]]
 #define TOS_SIZE_OPTIMIZE [[gnu::optimize("Os")]]
+#define TOS_GCC
 #elif defined(__clang__)
 #define TOS_NO_OPTIMIZE   [[clang::optnone]]
 #define TOS_SIZE_OPTIMIZE [[clang::minsize]]
+#define TOS_CLANG
+#elif defined(_MSC_VER)
+#define ALWAYS_INLINE __forceinline
+#define NO_INLINE __declspec(noinline)
+#define TOS_NO_OPTIMIZE
+#define TOS_SIZE_OPTIMIZE
+#define WEAK
+#define USED
+#define PACKED
+#define PURE
+#define TOS_UNREACHABLE() __assume(0)
+#define TOS_MSVC
 #endif
 
 #define ISR_AVAILABLE
-
-#define USED [[gnu::used]]
-
-#if defined(PACKED)
-#undef PACKED
-#endif
-#define PACKED [[gnu::packed]]
 
 // Used to mark a trivially constructable global variable not to be zero initialized.
 // Using such an object without prior initialization is UB!
