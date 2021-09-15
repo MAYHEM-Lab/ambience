@@ -1,11 +1,9 @@
 #pragma once
 
 #include <type_traits>
+#include <tos/meta/types.hpp>
 
 namespace tos::meta {
-template <class T> struct identity{
-    using type = T;
-};
 template <class...> struct list {};
 
 template<class T>
