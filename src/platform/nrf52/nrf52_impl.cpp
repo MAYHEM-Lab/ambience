@@ -43,6 +43,7 @@ extern "C" {
 void abort() {
     tos::debug::panic("abort called");
 }
+void __cxa_atexit() {}
 }
 
 extern "C" {
