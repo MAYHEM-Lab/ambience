@@ -100,6 +100,7 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 target_compile_definitions(tos_build_info PRIVATE TOS_GIT_SHA1=\"${GIT_SHA1}\")
 
 configure_file(arch.hpp.in include/tos/core/arch.hpp)
+configure_file(arch_fwd.hpp.in include/tos/core/arch_fwd.hpp)
 add_library(tos_arch_core src/stub.cpp)
 target_link_libraries(tos_arch_core PUBLIC arch_${TOS_ARCH})
 target_include_directories(tos_arch_core PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/include")
