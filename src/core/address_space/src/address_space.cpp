@@ -1,12 +1,14 @@
 #include <tos/address_space.hpp>
 #include <tos/arch.hpp>
+#include <type_traits>
 
 namespace tos {
-cur_arch::address_space* tos::address_space::self() {
+static_assert(std::is_base_of_v<address_space, cur_arch::address_space>);
+cur_arch::address_space* address_space::self() {
     return static_cast<cur_arch::address_space*>(this);
 }
 
-const cur_arch::address_space* tos::address_space::self() const {
+const cur_arch::address_space* address_space::self() const {
     return static_cast<const cur_arch::address_space*>(this);
 }
 
