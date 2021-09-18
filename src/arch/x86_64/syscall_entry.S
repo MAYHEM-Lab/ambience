@@ -37,7 +37,9 @@ raw_syscall_entry:
     push %r15
 
     mov %rsp, %rdi
+    sub $256, %rsp // SSE register space. We do not save them on syscalls, only on interrupts
     callq syscall_entry
+    add $256, %rsp
 
     pop %r15
     pop %r14
