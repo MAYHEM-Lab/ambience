@@ -89,13 +89,13 @@ union ring_elem {
 };
 
 struct ring {
-    uint16_t head_idx;
+    std::atomic<uint16_t> head_idx;
     uint16_t elems[];
 
     void submit(uint16_t elem_idx, int sz) {
-        tos::detail::memory_barrier();
-        elems[head_idx++ % sz] = elem_idx;
-        tos::detail::memory_barrier();
+        elems[head_idx % sz] = elem_idx;
+        head_idx.fetch_add(1, std::memory_order_release);
+//        ++head_idx;
     }
 };
 
@@ -160,7 +160,7 @@ template<class FnT>
 uint16_t for_each(interface& iface, const ring& ring, uint16_t last_seen, const FnT& fn) {
     // The head index may change during our processing due to preemption.
     // We'll make a note of it and process only until that.
-    auto head_backup = ring.head_idx;
+    auto head_backup = ring.head_idx.load(std::memory_order_acquire);
 
     if (last_seen > head_backup) {
 //        tos::debug::log("Wrapped around", &iface, &ring, last_seen, head_backup);
