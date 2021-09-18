@@ -31,8 +31,8 @@ class xbee_importer : public importer::sync_server {
             int retries = 5;
             tos::xbee::tx_status stat;
             while (retries-- > 0) {
-                auto tx_r =
-                    tos::xbee::read_tx_status(meta::deref(m_back_ptr->m_ser), meta::deref(m_back_ptr->m_alarm));
+                auto tx_r = tos::xbee::read_tx_status(meta::deref(m_back_ptr->m_ser),
+                                                      meta::deref(m_back_ptr->m_alarm));
                 if (tx_r) {
                     stat = tos::force_get(tx_r);
                     break;
