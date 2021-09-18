@@ -1,8 +1,9 @@
 #include <tos/allocator/free_list.hpp>
 #include <tos/debug/debug.hpp>
 #include <tos/debug/panic.hpp>
+#include <tos/compiler.hpp>
 
-[[gnu::section(".nozero")]] uint8_t heap[4096*7500];
+NO_ZERO uint8_t heap[4096*7500];
 
 auto& alloc() {
     static tos::memory::free_list alloc{heap};
