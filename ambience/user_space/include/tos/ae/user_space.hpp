@@ -14,4 +14,6 @@ struct low_level_output_t : self_pointing<low_level_output_t> {
     int write(tos::span<const uint8_t> data);
 };
 inline low_level_output_t low_level_output;
+
+uint64_t timestamp();
 } // namespace tos::ae

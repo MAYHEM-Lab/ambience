@@ -18,6 +18,10 @@ int low_level_output_t::write(tos::span<const uint8_t> data) {
     }
     return data.size();
 }
+
+uint64_t timestamp() {
+    return tos::x86_64::rdtsc();
+}
 } // namespace tos::ae
 
 namespace tos::ae::detail {
