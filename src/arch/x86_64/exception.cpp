@@ -130,7 +130,7 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
         // Fault from user space
     }
 
-    LOG("Failing thread:", get_name(*tos::self()));
+    LOG("Failing thread:", tos::self(), get_name(*tos::self()));
 
     LOG("Page fault!",
         (int)num,
@@ -139,6 +139,7 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
         (void*)frame->rip,
         "Fault address:",
         (void*)read_cr2());
+    dump_registers(*frame);
     if (tos::global::cur_as) {
         if (auto res =
                 tos::global::cur_as->m_backend->handle_memory_fault(*frame, read_cr2())) {
