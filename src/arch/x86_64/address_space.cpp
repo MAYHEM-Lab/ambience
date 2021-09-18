@@ -5,7 +5,7 @@
 namespace tos::x86_64 {
 expected<bool, mmu_errors>
 address_space::handle_memory_fault(const exception_frame& frame, uintptr_t fault_addr) {
-    auto mapping = space->containing_mapping(fault_addr);
+    auto mapping = containing_mapping(fault_addr);
 
     if (!mapping) {
         return false;

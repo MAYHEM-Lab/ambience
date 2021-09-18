@@ -124,9 +124,7 @@ void thread() {
     palloc->mark_unavailable({0x00080000, 0x000FFFFF - 0x00080000});
     LOG("Available:", palloc, palloc->remaining_page_count());
 
-    tos::cur_arch::address_space as;
-    as.m_table = &level0_table;
-    tos::address_space vas(as);
+    auto vas = tos::cur_arch::address_space::adopt(level0_table);
     tos::global::cur_as = &vas;
 
     tos::mapping mapping;

@@ -1,20 +1,29 @@
 #pragma once
 
+#include <tos/address_space.hpp>
 #include <tos/mapping.hpp>
 #include <tos/memory.hpp>
 #include <tos/x86_64/exception.hpp>
 #include <tos/x86_64/mmu.hpp>
 
 namespace tos::x86_64 {
-struct address_space {
+struct address_space final : tos::address_space {
     expected<void, mmu_errors> allocate_region(mapping& mapping,
                                                physical_page_allocator* palloc) {
-        mapping.backend_data = this;
         Assert(mapping.vm_segment.range.base % 4096 == 0);
         Assert(mapping.vm_segment.range.size % 4096 == 0);
         EXPECTED_TRYV(x86_64::allocate_region(
             *m_table, mapping.vm_segment, mapping.allow_user, palloc));
         return {};
+    }
+
+    auto do_mapping(tos::mapping& mapping, physical_page_allocator* arg) {
+        auto res = allocate_region(mapping, arg);
+        if (res) {
+            // Only modify internal state if the allocation succeeds.
+            add_mapping(mapping);
+        }
+        return res;
     }
 
     expected<void, mmu_errors>
@@ -31,7 +40,14 @@ struct address_space {
         return range;
     }
 
-    tos::address_space* space;
+    static address_space adopt(translation_table& table) {
+        return address_space{.m_table = &table};
+    }
+
+    friend void activate(address_space& to_activate) {
+        write_cr3(reinterpret_cast<uint64_t>(to_activate.m_table));
+    }
+
     translation_table* m_table;
 };
 } // namespace tos::x86_64

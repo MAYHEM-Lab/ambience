@@ -1,13 +1,13 @@
 #pragma once
 
+#include <tos/core/arch_fwd.hpp>
 #include <tos/memory.hpp>
 
 namespace tos {
 class backing_object;
-class address_space;
 struct mapping {
     backing_object* obj;
-    address_space* va;
+    cur_arch::address_space* va;
 
     segment vm_segment;
     memory_range obj_range;
@@ -22,4 +22,4 @@ struct mapping {
     void* backend_data;
     // copy on write flags etc can be here? or should it be per page?
 };
-}
+} // namespace tos

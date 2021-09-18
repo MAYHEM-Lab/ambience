@@ -10,10 +10,10 @@ bool physical_memory_backing::handle_memory_fault(const memory_fault& fault) {
 
     // We don't want to map the entire world just for a single word.
     // Get the containing fragment, and map only that.
-    auto fault_fragment = fault.map->va->m_backend->containing_fragment(
+    auto fault_fragment = fault.map->va->containing_fragment(
         {.base = fault.virt_addr, .size = sizeof(uintmax_t)});
 
-    fault.map->va->m_backend->mark_resident(
+    fault.map->va->mark_resident(
         *fault.map, fault_fragment, reinterpret_cast<void*>(fault.map->obj_range.base));
 
     return true;
