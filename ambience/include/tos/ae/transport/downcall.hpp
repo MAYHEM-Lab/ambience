@@ -3,6 +3,7 @@
 #include <tos/ae/kernel/rings.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/ae/rings.hpp>
+#include <tos/meta/types.hpp>
 #include <tos/task.hpp>
 
 namespace tos::ae {
@@ -18,7 +19,8 @@ struct awaiter {
 };
 
 struct downcall_transport {
-    explicit downcall_transport(kernel::user_group& g, int channel)
+    template<class ServiceT>
+    explicit downcall_transport(meta::id<ServiceT>, kernel::user_group& g, int channel)
         : g{&g}
         , channel_id{channel} {
     }

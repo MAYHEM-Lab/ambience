@@ -12,7 +12,7 @@ void do_expose_services_to_group(meta::list<ServTs...>,
                                  user_group& group) {
     ((group.channels.push_back(
          std::make_unique<typename ServTs::template async_zerocopy_client<
-             tos::ae::downcall_transport>>(group, Is))),
+             tos::ae::downcall_transport>>(meta::id<ServTs>{}, group, Is))),
      ...);
 }
 
