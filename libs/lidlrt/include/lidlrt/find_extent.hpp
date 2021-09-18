@@ -25,6 +25,10 @@ inline tos::span<const uint8_t> find_extent(const size_t& sz) {
     return tos::raw_cast(tos::monospan(sz));
 }
 
+inline tos::span<const uint8_t> find_extent(const unsigned long long& sz) {
+    return tos::raw_cast(tos::monospan(sz));
+}
+
 template<class ObjT>
 tos::span<const uint8_t> find_extent(const ObjT& obj);
 
