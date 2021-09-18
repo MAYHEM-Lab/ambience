@@ -2,8 +2,8 @@
 
 #include <cpuid.h>
 #include <cstdint>
-#include <tos/compiler.hpp>
 #include <tos/barrier.hpp>
+#include <tos/compiler.hpp>
 
 namespace tos::x86_64 {
 inline void breakpoint() {
@@ -143,5 +143,17 @@ inline uint64_t rdtsc() {
     __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
     return ((uint64_t)lo) | (((uint64_t)hi) << 32);
 #endif
+}
+
+inline void xsave(uint8_t* region, uint64_t rfbm) {
+    auto rfbm_lo = rfbm & 0xFFFFFFFF;
+    auto rfbm_hi = (rfbm >> 32) & 0xFFFFFFFF;
+    asm volatile("xsave %0" : : "m"(*region), "a"(rfbm_lo), "d"(rfbm_hi) : "memory");
+}
+
+inline void xrstor(uint8_t* region, uint64_t rfbm) {
+    auto rfbm_lo = rfbm & 0xFFFFFFFF;
+    auto rfbm_hi = (rfbm >> 32) & 0xFFFFFFFF;
+    asm volatile("xrstor %0" : : "m"(*region), "a"(rfbm_lo), "d"(rfbm_hi) : "memory");
 }
 } // namespace tos::x86_64
