@@ -73,6 +73,7 @@ void reset_post_irq() {
 
 extern "C" {
 [[gnu::used]] void irq_entry(tos::x86_64::exception_frame* frame, int num) {
+    tos::x86_64::global::cur_exception_frame = frame;
     tos::platform::irqs[num - 32](frame, num);
     if (tos::x86_64::apic_enabled) {
         tos::x86_64::get_current_apic_registers().eoi = 0;

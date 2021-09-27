@@ -47,4 +47,7 @@ struct page_fault : base_fault {
 };
 
 using fault_variant = mpark::variant<undefined_instruction, page_fault>;
+namespace global {
+extern exception_frame* cur_exception_frame;
+}
 } // namespace tos::x86_64

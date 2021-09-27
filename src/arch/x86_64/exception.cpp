@@ -6,6 +6,10 @@
 #include <tos/x86_64/exception.hpp>
 #include <tos/x86_64/mmu.hpp>
 
+namespace tos::x86_64::global {
+exception_frame* cur_exception_frame;
+}
+
 using namespace tos::x86_64;
 
 void dump_registers(const exception_frame& frame) {
