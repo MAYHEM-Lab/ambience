@@ -3,8 +3,10 @@
 #include <cmath>
 #include <string_view>
 #include <tos/debug/panic.hpp>
+#include <tos/late_constructed.hpp>
 #include <tos/memory.hpp>
 #include <tos/multiboot.hpp>
+#include <tos/physical_memory_backing.hpp>
 #include <tos/print.hpp>
 #include <tos/scheduler.hpp>
 #include <tos/self_pointing.hpp>
@@ -90,16 +92,16 @@ struct [[gnu::packed]] gdt_entries {
     expanded_gdt_entry expanded[1];
 };
 
-[[gnu::section(".nozero")]] gdt_entries gdt_entry_data;
+NO_ZERO gdt_entries gdt_entry_data;
 
-[[gnu::section(".nozero")]] struct [[gnu::packed]] {
+NO_ZERO struct [[gnu::packed]] {
     uint16_t sz;
     uint64_t ptr;
 } gdt;
 
-[[gnu::section(".nozero")]] tss tss_;
+NO_ZERO tss tss_;
 
-[[gnu::section(".nozero")]] tos::stack_storage<4096 * 8> interrupt_stack{};
+NO_ZERO tos::stack_storage<4096 * 8> interrupt_stack{};
 void setup_tss(expanded_gdt_entry& entry) {
     static_assert(sizeof(tss_) == 104);
     entry.zero()
@@ -170,10 +172,10 @@ void setup_tss(expanded_gdt_entry& entry) {
 }
 
 extern "C" {
-[[gnu::section(".nozero")]] translation_table p4_table;
-[[gnu::section(".nozero")]] translation_table p3_table;
-[[gnu::section(".nozero")]] translation_table p2_tables[1];
-[[gnu::section(".nozero")]] translation_table p1_tables[20];
+NO_ZERO translation_table p4_table;
+NO_ZERO translation_table p3_table;
+NO_ZERO translation_table p2_tables[1];
+NO_ZERO translation_table p1_tables[20];
 }
 
 extern "C" {
