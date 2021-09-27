@@ -49,7 +49,6 @@ public:
     }
 
     void operator()(tos::preempt_ops::pre_switch_t, tos::kern::tcb&) {
-        tos::x86_64::tlb_flush();
     }
 
     void operator()(tos::preempt_ops::post_switch_t, tos::kern::tcb&) {
