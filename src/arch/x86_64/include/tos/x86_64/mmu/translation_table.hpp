@@ -35,6 +35,14 @@ struct alignas(4096) translation_table {
         return entries.size();
     }
 
+    constexpr auto begin() const {
+        return entries.begin();
+    }
+
+    constexpr auto end() const {
+        return entries.end();
+    }
+
     constexpr auto begin() {
         return entries.begin();
     }
