@@ -41,7 +41,7 @@ add_library(arch_x86_64
     include/tos/x86_64/mmu/errors.hpp
 )
 target_include_directories(arch_x86_64 PUBLIC include)
-target_link_libraries(arch_x86_64 PUBLIC tos_util_core tos_pci tos::libcxx tos_address_space)
+target_link_libraries(arch_x86_64 PUBLIC tos_util_core tos_pci tos::libcxx tos_address_space quikshare)
 target_link_libraries(arch_x86_64 PRIVATE tos_arch_core tos_ft)
 target_compile_features(arch_x86_64 PUBLIC cxx_std_20)
 

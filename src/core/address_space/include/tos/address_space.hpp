@@ -8,12 +8,15 @@
 namespace tos {
 class address_space {
 public:
+    address_space() = default;
+    address_space(const address_space& rhs);
+
     mapping* containing_mapping(uintptr_t virt_addr);
 
     const auto& mappings() const;
 
 protected:
-    void add_mapping(tos::mapping& mapping);
+    void add_mapping(mapping& mapping);
 
     cur_arch::address_space* self();
     const cur_arch::address_space* self() const;

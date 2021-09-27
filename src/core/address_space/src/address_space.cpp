@@ -1,5 +1,6 @@
 #include <tos/address_space.hpp>
 #include <tos/arch.hpp>
+#include <tos/backing_object.hpp>
 #include <type_traits>
 
 namespace tos {
@@ -31,7 +32,17 @@ const auto& address_space::mappings() const {
     return m_mappings;
 }
 
+address_space::address_space(const address_space& rhs) {
+    for (auto& map : rhs.mappings()) {
+        auto our_mapping = new mapping;
+        memcpy(our_mapping, &map, sizeof map);
+        our_mapping->obj->clone_mapping(map, *our_mapping);
+        our_mapping->owned = true;
+        add_mapping(*our_mapping);
+    }
+}
+
 namespace global {
-cur_arch::address_space* cur_as;
+NO_ZERO cur_arch::address_space* cur_as;
 }
 } // namespace tos
