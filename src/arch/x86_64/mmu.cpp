@@ -1,3 +1,6 @@
+#include "tos/expected.hpp"
+#include "tos/x86_64/mmu/common.hpp"
+#include "tos/x86_64/mmu/translation_table.hpp"
 #include <tos/debug/log.hpp>
 #include <tos/flags.hpp>
 #include <tos/paging.hpp>
@@ -20,7 +23,7 @@ constexpr expected<void, mmu_errors> recursive_allocate(translation_table& root,
                                                         physical_page_allocator* palloc) {
     if constexpr (N == 1) {
         if (root[path[0]].valid()) {
-            tos::debug::error("Page already allocated");
+//            tos::debug::error("Page already allocated");
             return unexpected(mmu_errors::already_allocated);
         }
 
@@ -41,7 +44,7 @@ constexpr expected<void, mmu_errors> recursive_allocate(translation_table& root,
 
         return {};
     } else {
-        if (!root[path[0]].valid()) {
+        if (!root[path[0]].valid()) [[unlikely]] {
             if (!palloc) {
                 tos::debug::error("Need to allocate, but no allocator");
                 return unexpected(mmu_errors::page_alloc_fail);
@@ -75,7 +78,7 @@ constexpr expected<void, mmu_errors> recursive_allocate(translation_table& root,
                 .page_num(palloc->page_num(*page) << page_size_log)
                 .valid(true)
                 .writeable(true)
-                .allow_user(allow_user == user_accessible::yes);
+                .allow_user(true);
         }
 
         return recursive_allocate(
@@ -91,7 +94,7 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
     for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
          addr += page_size_bytes) {
         auto path = detail::pt_path_for_addr(addr);
-        LOG_TRACE("Address", (void*)addr, path[0], path[1], path[2], path[3]);
+//        LOG_TRACE("Address", (void*)addr, path[0], path[1], path[2], path[3]);
         EXPECTED_TRYV(recursive_allocate(root, virt_seg.perms, allow_user, path, palloc));
     }
 
@@ -166,5 +169,43 @@ permissions translate_permissions(const table_entry& entry) {
         perms = util::set_flag(perms, permissions::execute);
     }
     return perms;
+}
+
+namespace {
+expected<translation_table*, mmu_errors>
+do_clone(const translation_table& root, physical_page_allocator& palloc, int level) {
+    auto page_res = palloc.allocate(1);
+    if (!page_res) {
+        return unexpected(mmu_errors::page_alloc_fail);
+    }
+    EXPECTED_TRYV(map_page_ident(get_current_translation_table(), *page_res, palloc));
+    auto tbl = new (palloc.address_of(*page_res)) translation_table(root);
+    for (auto& entry : *tbl) {
+        if (!entry.valid()) {
+            continue;
+        }
+        if (last_level(level, entry)) {
+            // Not a table, nothing to do
+            continue;
+        }
+
+        auto clone_res = do_clone(table_at(entry), palloc, level + 1);
+        if (!clone_res) {
+            tos::debug::error("Clone failed");
+            while (true)
+                ;
+            // Oof
+        }
+        entry.page_num(address_to_page(force_get(clone_res)) << page_size_log);
+    }
+    return tbl;
+}
+} // namespace
+
+expected<translation_table*, mmu_errors> clone(const translation_table& root,
+                                               physical_page_allocator& palloc) {
+    // For every entry in a translation table, we copy it if it's a page and clone
+    // if it is a table.
+    return do_clone(root, palloc, 0);
 }
 } // namespace tos::x86_64
