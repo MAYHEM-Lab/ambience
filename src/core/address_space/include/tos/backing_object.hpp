@@ -7,7 +7,6 @@
 namespace tos {
 struct memory_fault;
 struct mapping;
-struct fault_frame;
 struct job;
 
 // Might be anonymous, a device or an abstract object.
@@ -18,6 +17,10 @@ public:
     virtual auto create_mapping(const segment& vm_segment,
                                 const memory_range& obj_range,
                                 tos::mapping& mapping) -> bool = 0;
+
+    auto clone_mapping(const mapping& original, mapping& mapping) -> bool {
+        return create_mapping(original.vm_segment, original.obj_range, mapping);
+    }
 
     virtual auto handle_memory_fault(const memory_fault& fault) -> bool = 0;
 
@@ -33,6 +36,5 @@ struct memory_fault {
     permissions access_perms;
 
     job* faulting_job;
-    fault_frame* frame;
 };
 } // namespace tos
