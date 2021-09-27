@@ -77,10 +77,10 @@ enum class memory_types
     device = 2
 };
 
-enum class user_accessible
+enum class user_accessible : uint8_t
 {
-    no,
-    yes
+    no = 0,
+    yes = 1
 };
 
 struct segment {
@@ -94,5 +94,6 @@ memory_range data();
 memory_range text();
 memory_range rodata();
 memory_range bss();
+memory_range bss_map();
 } // namespace default_segments
 } // namespace tos

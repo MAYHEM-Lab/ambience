@@ -15,6 +15,7 @@ extern uint8_t __rodata_end;
 
 extern uint8_t __bss_start;
 extern uint8_t __bss_end;
+extern uint8_t __bss_map_end;
 }
 
 namespace tos::default_segments {
@@ -44,6 +45,12 @@ memory_range rodata() {
 memory_range bss() {
     auto beg = reinterpret_cast<uintptr_t>(&__bss_start);
     auto end = reinterpret_cast<uintptr_t>(&__bss_end);
+    return {.base = beg, .size = ptrdiff_t(end - beg)};
+}
+
+memory_range bss_map() {
+    auto beg = reinterpret_cast<uintptr_t>(&__bss_start);
+    auto end = reinterpret_cast<uintptr_t>(&__bss_map_end);
     return {.base = beg, .size = ptrdiff_t(end - beg)};
 }
 } // namespace tos::default_segments
