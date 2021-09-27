@@ -80,6 +80,7 @@ SECTIONS
        *(.nozero.*);
        . = ALIGN(4096);
    } : DATA
+   __bss_map_end = .;
 
    __end = .;
 
