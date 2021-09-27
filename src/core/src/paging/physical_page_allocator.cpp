@@ -1,7 +1,11 @@
 #include <tos/algorithm.hpp>
 #include <tos/paging/physical_page_allocator.hpp>
+#include <tos/debug/log.hpp>
 
 namespace tos {
+namespace {
+physical_page_allocator* global_allocator;
+}
 physical_page_allocator::physical_page_allocator(size_t num_pages)
     : m_remaining{num_pages}
     , m_num_pages{num_pages} {
@@ -12,10 +16,16 @@ physical_page_allocator::physical_page_allocator(size_t num_pages)
     this_obj.base = reinterpret_cast<uintptr_t>(this);
     this_obj.size = sizeof *this + get_table().size_bytes();
     mark_unavailable(this_obj);
+    global_allocator = this;
+}
+
+physical_page_allocator* physical_page_allocator::instance() {
+    return global_allocator;
 }
 
 physical_page* physical_page_allocator::allocate(int count, int align) {
     if (static_cast<size_t>(count) > m_remaining) {
+        tos::debug::error("Page allocation failed!");
         return nullptr;
     }
 
@@ -23,11 +33,10 @@ physical_page* physical_page_allocator::allocate(int count, int align) {
         return nullptr;
 
     auto it = tos::consecutive_find_if(
-        get_table().begin(), get_table().end(), count, [](auto& p) {
-            return p.free();
-        });
+        get_table().begin(), get_table().end(), count, [](auto& p) { return p.free(); });
 
     if (it == get_table().end()) {
+        tos::debug::error("Page allocation failed!");
         return nullptr;
     }
 
@@ -47,6 +56,11 @@ void physical_page_allocator::free(span<physical_page> pages) {
 
 void* physical_page_allocator::address_of(const physical_page& page) const {
     return reinterpret_cast<void*>(page_num(page) * page_size());
+}
+
+memory_range physical_page_allocator::range_of(const physical_page& page) const {
+    return memory_range{.base = page_num(page) * page_size(),
+                        .size = std::ptrdiff_t(page_size())};
 }
 
 int physical_page_allocator::page_num(const physical_page& page) const {

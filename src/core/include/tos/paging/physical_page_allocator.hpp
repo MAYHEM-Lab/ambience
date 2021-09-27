@@ -8,6 +8,7 @@ namespace tos {
 struct mapping;
 struct physical_page : ref_counted<physical_page, int8_t, ignore_t> {
     const mapping* map;
+    list_node<physical_page> node;
 
     bool free() const {
         return reference_count() == 0;
@@ -28,6 +29,7 @@ public:
     // You **have to** map this physical memory to an address space before you can access
     // it!
     void* address_of(const physical_page& page) const;
+    memory_range range_of(const physical_page& page) const;
 
     int page_num(const physical_page& page) const;
 
@@ -49,6 +51,8 @@ public:
     size_t page_size() const {
         return 4096;
     }
+
+    static physical_page_allocator* instance();
 
 private:
     span<physical_page> get_table() {
