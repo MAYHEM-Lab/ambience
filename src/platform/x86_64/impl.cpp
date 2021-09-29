@@ -178,6 +178,8 @@ NO_ZERO translation_table p2_tables[1];
 NO_ZERO translation_table p1_tables[20];
 }
 
+NO_ZERO tos::x86_64::address_space boot_addr_space(tos::detail::dangerous_tag{});
+
 extern "C" {
 NO_INLINE
 void set_up_page_tables() {
@@ -227,10 +229,70 @@ void set_up_page_tables() {
                 return true;
             }
         }
+        return false;
         return tos::intersection(region, tos::default_segments::image()).has_value();
     };
 
-    for (int i = 0; i < 2; ++i) {
+    tos::physical_memory_backing allmem(
+        tos::segment{tos::memory_range{0, 0xFFFF'FFFF}, tos::permissions::all},
+        tos::memory_types::normal);
+
+
+    new (&boot_addr_space)
+        tos::x86_64::address_space(tos::x86_64::address_space::adopt(p4_table));
+    static tos::mapping text_map;
+    static tos::mapping ro_map;
+    static tos::mapping data_map;
+    static tos::mapping bss_map;
+    text_map.allow_user = tos::user_accessible::no;
+    ro_map.allow_user = tos::user_accessible::no;
+    data_map.allow_user = tos::user_accessible::no;
+    bss_map.allow_user = tos::user_accessible::yes;
+
+    {
+        auto text = tos::default_segments::text();
+        text.base = tos::align_nearest_down_pow2(text.base, 4096);
+        text.size = tos::align_nearest_up_pow2(text.size, 4096);
+        allmem.create_mapping(
+            tos::segment{text, tos::permissions::read_execute}, text, text_map);
+        auto map_res = boot_addr_space.do_mapping(text_map, nullptr);
+        boot_addr_space.mark_resident(
+            text_map, text_map.obj_range, reinterpret_cast<void*>(text.base));
+    }
+
+    {
+        auto text = tos::default_segments::rodata();
+        text.base = tos::align_nearest_down_pow2(text.base, 4096);
+        text.size = tos::align_nearest_up_pow2(text.size, 4096);
+        allmem.create_mapping(tos::segment{text, tos::permissions::read}, text, ro_map);
+        auto map_res = boot_addr_space.do_mapping(ro_map, nullptr);
+        boot_addr_space.mark_resident(
+            ro_map, ro_map.obj_range, reinterpret_cast<void*>(text.base));
+    }
+
+    {
+        auto text = tos::default_segments::data();
+        text.base = tos::align_nearest_down_pow2(text.base, 4096);
+        text.size = tos::align_nearest_up_pow2(text.size, 4096);
+        allmem.create_mapping(
+            tos::segment{text, tos::permissions::read_write}, text, data_map);
+        auto map_res = boot_addr_space.do_mapping(data_map, nullptr);
+        boot_addr_space.mark_resident(
+            data_map, data_map.obj_range, reinterpret_cast<void*>(text.base));
+    }
+
+    {
+        auto text = tos::default_segments::bss_map();
+        text.base = tos::align_nearest_down_pow2(text.base, 4096);
+        text.size = tos::align_nearest_up_pow2(text.size, 4096);
+        allmem.create_mapping(
+            tos::segment{text, tos::permissions::read_write}, text, bss_map);
+        auto map_res = boot_addr_space.do_mapping(bss_map, nullptr);
+        boot_addr_space.mark_resident(
+            bss_map, bss_map.obj_range, reinterpret_cast<void*>(text.base));
+    }
+
+    for (int i = 0; i < std::size(p1_tables); ++i) {
         auto& table = p1_tables[i];
         for (int j = 0; j < 512; ++j) {
             auto page_range = tos::memory_range{uintptr_t((i * 512 + j) << 12), 4096};
@@ -239,22 +301,17 @@ void set_up_page_tables() {
                 continue;
             }
 
-            table[j].zero().valid(true).page_num((i * 512 + j) << 12).allow_user(true);
-
-            if (tos::intersection(tos::default_segments::text(), page_range)) {
-                table[j].writeable(false).noexec(false);
-            } else {
-                table[j].noexec(true);
-                if (tos::intersection(tos::default_segments::rodata(), page_range)) {
-                    table[j].writeable(false);
-                } else {
-                    table[j].writeable(true);
-                }
-            }
+            table[j]
+                .zero()
+                .valid(true)
+                .page_num((i * 512 + j) << 12)
+                .allow_user(false)
+                .noexec(true)
+                .writeable(true);
         }
     }
 
-    tos::x86_64::write_cr3(reinterpret_cast<uint64_t>(&p4_table));
+    activate(boot_addr_space);
 }
 }
 } // namespace
