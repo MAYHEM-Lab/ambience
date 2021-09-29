@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tos/gfx2.hpp>
+#include <limits>
 
 namespace tos::gui {
 struct view_limits {

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <tos/function_ref.hpp>
