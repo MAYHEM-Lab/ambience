@@ -74,7 +74,7 @@ private:
     }
 };
 
-struct temporary_share {
+struct temporary_share : quik::share_base {
     temporary_share() = default;
     temporary_share(temporary_share&&) noexcept = default;
 
@@ -164,6 +164,9 @@ struct temporary_share {
 template<class... Ts>
 struct typed_share : temporary_share {
     std::tuple<Ts*...> ptrs;
+    void* get_tuple_ptr() override {
+        return &ptrs;
+    }
 };
 
 template<class... DataPtrTs>

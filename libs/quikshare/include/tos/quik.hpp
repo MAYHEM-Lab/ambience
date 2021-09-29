@@ -4,6 +4,11 @@
 #include <string_view>
 
 namespace tos::quik {
+struct share_base {
+    virtual void* get_tuple_ptr() = 0;
+    virtual ~share_base() = default;
+};
+
 template<class T>
 struct sharer;
 
