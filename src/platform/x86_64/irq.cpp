@@ -71,9 +71,20 @@ void reset_post_irq() {
 }
 } // namespace tos::platform
 
+bool enable_rip_rec = false;
+NO_ZERO uintptr_t rip_buffer[128 * 1024];
+int rip_idx = 0;
+
 extern "C" {
 [[gnu::used]] void irq_entry(tos::x86_64::exception_frame* frame, int num) {
     tos::x86_64::global::cur_exception_frame = frame;
+
+    // IRQ 12 is used for ODI, we don't care
+    if (num != 44 && enable_rip_rec) {
+        rip_buffer[rip_idx] = static_cast<uintptr_t>(frame->rip);
+        rip_idx = (rip_idx + 1) % std::size(rip_buffer);
+    }
+
     tos::platform::irqs[num - 32](frame, num);
     if (tos::x86_64::apic_enabled) {
         tos::x86_64::get_current_apic_registers().eoi = 0;
