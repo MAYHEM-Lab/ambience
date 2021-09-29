@@ -16,7 +16,8 @@ void switch_to_user(void* user_code) {
 
 std::unique_ptr<user_group>
 start_group(span<uint8_t> stack, void (*entry)(), interrupt_trampoline& trampoline,
-            std::string_view name) {
+            std::string_view name,
+            tos::cur_arch::address_space& as) {
     LOG("Entry point:", (void*)entry);
     auto& user_thread = tos::suspended_launch(stack, switch_to_user, (void*)entry);
     set_name(user_thread, name);
@@ -43,7 +44,10 @@ start_group(span<uint8_t> stack, void (*entry)(), interrupt_trampoline& trampoli
 
     x86_64::set_syscall_handler(cur_arch::syscall_handler_t(syshandler));
 
+    auto cur_as = tos::global::cur_as;
+    activate(as);
     tos::swap_context(self, user_thread, int_guard{});
+    activate(*cur_as);
 
     tos::debug::log("Group initialized, interface at", res->iface.user_iface);
 

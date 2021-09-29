@@ -2,7 +2,9 @@
 #include <tos/ae/kernel/runners/preemptive_user_runner.hpp>
 #include <tos/ae/kernel/start_group.hpp>
 #include <tos/ae/kernel/user_group.hpp>
+#include <tos/backing_object.hpp>
 #include <tos/elf.hpp>
+void dump_table(tos::cur_arch::translation_table& table);
 
 namespace tos::ae::kernel {
 namespace {
@@ -53,6 +55,15 @@ map_elf(const tos::elf::elf64& elf,
                                  tos::memory_types::normal,
                                  &palloc,
                                  base));
+
+        // The pages are mapped into the kernel as RW
+        //        vseg.perms = permissions::read_write;
+        EXPECTED_TRYV(map_region(x86_64::get_current_translation_table(),
+                                 vseg,
+                                 tos::user_accessible::no,
+                                 tos::memory_types::normal,
+                                 &palloc,
+                                 base));
     }
 
     return {};
@@ -83,6 +94,16 @@ create_and_map_stack(size_t stack_size,
         &palloc,
         stack_address));
 
+    EXPECTED_TRYV(map_region(
+        x86_64::get_current_translation_table(),
+        tos::segment{.range = {.base = reinterpret_cast<uintptr_t>(stack_address),
+                               .size = static_cast<ptrdiff_t>(stack_size)},
+                     tos::permissions::read_write},
+        tos::user_accessible::no,
+        tos::memory_types::normal,
+        &palloc,
+        stack_address));
+
     return tos::span<uint8_t>(static_cast<uint8_t*>(stack_address), stack_size);
 }
 } // namespace
@@ -100,15 +121,22 @@ preemptive_elf_group::do_load(span<const uint8_t> elf_body,
         return nullptr;
     }
 
+    auto root_as = tos::global::cur_as;
+    auto our_as = root_as->clone(palloc);
+    if (!our_as) {
+        LOG_ERROR("Could not clone address space!");
+        return nullptr;
+    }
+
     auto& elf = force_get(elf_res);
-    if (auto map_res = map_elf(elf, palloc, root_table); !map_res) {
+    if (auto map_res = map_elf(elf, palloc, *force_get(our_as)->m_table); !map_res) {
         auto& err = force_error(map_res);
         tos::debug::error("Could not map ELF!", int(err));
         return nullptr;
     }
 
-    auto stack_res =
-        create_and_map_stack(4 * tos::cur_arch::page_size_bytes, palloc, root_table);
+    auto stack_res = create_and_map_stack(
+        4 * tos::cur_arch::page_size_bytes, palloc, *force_get(our_as)->m_table);
 
     if (!stack_res) {
         tos::debug::error("Could not create and map stack!");
@@ -117,11 +145,19 @@ preemptive_elf_group::do_load(span<const uint8_t> elf_body,
 
     auto stack = force_get(stack_res);
 
-    auto res = start_group(
-        stack, reinterpret_cast<void (*)()>(elf.header().entry), trampoline, name);
+//    dump_table(*force_get(our_as)->m_table);
+
+    tos::debug::log(tos::global::cur_as, force_get(our_as).get());
+    auto res = start_group(stack,
+                           reinterpret_cast<void (*)()>(elf.header().entry),
+                           trampoline,
+                           name,
+                           *force_get(our_as));
+    tos::debug::log(tos::global::cur_as, force_get(our_as).get());
 
     if (res) {
         res->runner = &preemptive_user_group_runner::instance();
+        res->as = std::move(force_get(our_as));
     }
 
     return res;
