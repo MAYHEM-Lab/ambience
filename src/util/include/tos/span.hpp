@@ -6,7 +6,6 @@
 
 #include <array>
 #include <cstddef>
-#include <stddef.h>
 #if defined(__cpp_lib_string_view)
 #include <string_view>
 #endif
