@@ -52,7 +52,7 @@ tos::expected<void, idt_error> idt_setup() {
     return {};
 }
 
-[[gnu::section(".nozero")]] tos::stack_storage main_stack{};
+NO_ZERO tos::stack_storage main_stack{};
 } // namespace
 
 namespace {
