@@ -72,7 +72,7 @@ struct res_elem {
 struct free_elem {
     elem_flag flags;
     void* user_ptr;
-    std::atomic<free_elem*> next_free;
+    free_elem* next_free;
 };
 
 union ring_elem {
@@ -92,10 +92,14 @@ struct ring {
     std::atomic<uint16_t> head_idx;
     uint16_t elems[];
 
+    bool overflown(uint16_t last_seen) const;
+    bool empty(uint16_t last_seen) const;
+    ssize_t size(int ring_size, uint16_t last_seen) const;
+
     void submit(uint16_t elem_idx, int sz) {
         elems[head_idx % sz] = elem_idx;
         head_idx.fetch_add(1, std::memory_order_release);
-//        ++head_idx;
+        //        ++head_idx;
     }
 };
 
@@ -113,20 +117,21 @@ struct interface {
     std::atomic<free_elem*> free_head = nullptr;
 
     NO_INLINE
-    uint16_t allocate_priv() {
-        auto res = free_head.load();
+    int32_t allocate_priv() {
+        auto res = free_head.load(std::memory_order_acquire);
         if (res == nullptr) {
-            while (true)
-                ; // No space
+            // No space currently
+            return -1;
         }
-        while (!free_head.compare_exchange_weak(res, res->next_free.load()))
+        while (!free_head.compare_exchange_weak(
+            res, res->next_free, std::memory_order_release))
             ;
-        uint16_t idx = std::distance(elems, reinterpret_cast<ring_elem*>(res));
+        int32_t idx = std::distance(elems, reinterpret_cast<ring_elem*>(res));
         return idx;
     }
 
     template<bool FromHost>
-    uint16_t allocate() {
+    int32_t allocate() {
         return allocate_priv();
     }
 
@@ -134,10 +139,11 @@ struct interface {
         elems[idx].common.flags = elem_flag::released;
 
         while (true) {
-            auto expect = free_head.load();
-            elems[idx].free.next_free.store(expect);
+            auto expect = free_head.load(std::memory_order_acquire);
+            elems[idx].free.next_free = expect;
             auto store = &elems[idx].free;
-            if (free_head.compare_exchange_weak(expect, store)) {
+            if (free_head.compare_exchange_weak(
+                    expect, store, std::memory_order_release)) {
                 break;
             }
         }
@@ -149,12 +155,28 @@ struct interface {
         , guest_to_host{guest_to_host}
         , host_to_guest{host_to_guest} {
         for (int i = 0; i < size - 1; ++i) {
-            elems[i].free.next_free.store(&elems[i + 1].free);
+            elems[i].free.next_free = &elems[i + 1].free;
         }
-        elems[size - 1].free.next_free.store(nullptr);
-        free_head.store(&elems[0].free);
+        elems[size - 1].free.next_free = nullptr;
+        free_head.store(&elems[0].free, std::memory_order_release);
     }
 };
+
+inline bool ring::overflown(uint16_t last_seen) const {
+    return last_seen > head_idx.load(std::memory_order_acquire);
+}
+
+inline bool ring::empty(uint16_t last_seen) const {
+    return last_seen == head_idx.load(std::memory_order_acquire);
+}
+
+inline ssize_t ring::size(int ring_size, uint16_t last_seen) const {
+    auto res = head_idx.load(std::memory_order_acquire) - last_seen;
+    if (!overflown(last_seen)) {
+        return res;
+    }
+    return res + ring_size;
+}
 
 template<class FnT>
 uint16_t for_each(interface& iface, const ring& ring, uint16_t last_seen, const FnT& fn) {
@@ -163,11 +185,12 @@ uint16_t for_each(interface& iface, const ring& ring, uint16_t last_seen, const 
     auto head_backup = ring.head_idx.load(std::memory_order_acquire);
 
     if (last_seen > head_backup) {
-//        tos::debug::log("Wrapped around", &iface, &ring, last_seen, head_backup);
+        //        tos::debug::log("Wrapped around", &iface, &ring, last_seen,
+        //        head_backup);
         // The used ring has wrapped around.
         for (; last_seen != 0; ++last_seen) {
             auto idx = ring.elems[last_seen % iface.size];
-//            tos::debug::log("Index", &iface, &ring, idx);
+            //            tos::debug::log("Index", &iface, &ring, idx);
             ring_elem elem(iface.elems[idx]);
             iface.release(idx);
 
@@ -177,7 +200,7 @@ uint16_t for_each(interface& iface, const ring& ring, uint16_t last_seen, const 
 
     for (; last_seen < head_backup; ++last_seen) {
         auto idx = ring.elems[last_seen % iface.size];
-//        tos::debug::log("Index", &iface, &ring, idx);
+        //        tos::debug::log("Index", &iface, &ring, idx);
         ring_elem elem(iface.elems[idx]);
         iface.release(idx);
 
@@ -196,7 +219,10 @@ struct interface_storage {
     uint8_t res_arr[sizeof(ring) + N * sizeof(uint16_t)];
 
     interface make_interface() {
-        return interface{N, elems, new (&req_arr) ring{}, new (&res_arr) ring{}};
+        return interface {
+            N, elems, new (&req_arr) ring{}, new (&res_arr) ring {
+            }
+        };
     }
 };
 
@@ -204,6 +230,9 @@ template<bool FromHost>
 inline std::pair<req_elem&, int>
 prepare_req(interface& iface, int channel, int proc, const void* params, void* res) {
     auto el_idx = iface.allocate<FromHost>();
+    if (el_idx < 0) {
+        while (true);
+    }
     auto& req_el = iface.elems[el_idx].req;
 
     req_el.flags = tos::util::set_flag(elem_flag::req, elem_flag::in_use);
@@ -240,13 +269,17 @@ template<bool FromHost>
 void req_elem::awaiter<FromHost>::await_suspend(std::coroutine_handle<> handle) {
     ref = coro_resumer(handle);
     el->user_ptr = &ref;
-//    tos::debug::log("Submitting", this->iface, el->arg_ptr, el->ret_ptr, el->user_ptr);
+    //    tos::debug::log("Submitting", this->iface, el->arg_ptr, el->ret_ptr,
+    //    el->user_ptr);
     submit_elem<FromHost>(*this->iface, this->id);
 }
 
 template<bool FromHost>
 void respond(interface& iface, void* user_ptr) {
     auto el_idx = iface.allocate<FromHost>();
+    if (el_idx < 0) {
+        while (true);
+    }
 
     auto& res = iface.elems[el_idx].res;
 
