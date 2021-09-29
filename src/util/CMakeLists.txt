@@ -132,3 +132,4 @@ if(BUILD_TESTS)
 endif()
 
 add_subdirectory(coro)
+add_subdirectory(data)
