@@ -1,6 +1,6 @@
 #include <tos/algorithm.hpp>
-#include <tos/paging/physical_page_allocator.hpp>
 #include <tos/debug/log.hpp>
+#include <tos/paging/physical_page_allocator.hpp>
 
 namespace tos {
 namespace {
@@ -15,6 +15,9 @@ physical_page_allocator::physical_page_allocator(size_t num_pages)
     memory_range this_obj;
     this_obj.base = reinterpret_cast<uintptr_t>(this);
     this_obj.size = sizeof *this + get_table().size_bytes();
+    for (auto& page : get_table()) {
+        free_list.push_back(page);
+    }
     mark_unavailable(this_obj);
     global_allocator = this;
 }
@@ -32,23 +35,39 @@ physical_page* physical_page_allocator::allocate(int count, int align) {
     if (align != 1)
         return nullptr;
 
-    auto it = tos::consecutive_find_if(
-        get_table().begin(), get_table().end(), count, [](auto& p) { return p.free(); });
+    physical_page* base = nullptr;
+    if (count == 1) [[likely]] {
+        if (free_list.empty()) {
+            return nullptr;
+        }
 
-    if (it == get_table().end()) {
-        tos::debug::error("Page allocation failed!");
-        return nullptr;
+        base = &free_list.front();
+    } else {
+        auto it = tos::consecutive_find_if(get_table().begin(),
+                                           get_table().end(),
+                                           count,
+                                           [](auto& p) { return p.free(); });
+
+        if (it == get_table().end()) {
+            tos::debug::error("Page allocation failed!");
+            return nullptr;
+        }
+
+        base = &*it;
     }
 
     for (int i = 0; i < count; ++i) {
-        intrusive_ref(&*(it + i));
+        free_list.erase(free_list.unsafe_find(base[i]));
+        intrusive_ref(base + i);
     }
+
     m_remaining -= count;
-    return &*it;
+    return base;
 }
 
 void physical_page_allocator::free(span<physical_page> pages) {
     for (auto& pg : pages) {
+        free_list.push_front(pg);
         intrusive_unref(&pg);
         m_remaining += 1;
     }
@@ -75,6 +94,7 @@ void physical_page_allocator::mark_unavailable(const memory_range& len) {
     for (size_t i = begin_num; i < end_num; ++i) {
         m_remaining -= 1;
         intrusive_ref(&get_table()[i]);
+        free_list.erase(free_list.unsafe_find(get_table()[i]));
     }
 }
 

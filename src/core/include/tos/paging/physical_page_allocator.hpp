@@ -66,6 +66,7 @@ private:
     size_t m_remaining;
 
     size_t m_num_pages;
+    intrusive_list<physical_page, through_member<&physical_page::node>> free_list;
     physical_page m_table[];
 };
 } // namespace tos
