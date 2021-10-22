@@ -83,8 +83,7 @@ serv_instance(
     name="posts_agent",
     serv=posts_bench_agent,
     deps={
-        "posts": "posts",
-        "fs": "fs2"
+        "posts": "posts"
     }
 )
 
@@ -102,16 +101,16 @@ serv_instance(
 #     }
 # )
 
-export(
-    service="fs2",
-    networks={
-        "udp-internet": 1897
-    }
-)
+# export(
+#     service="fs2",
+#     networks={
+#         "udp-internet": 1897
+#     }
+# )
 
-export(
-    service="posts_agent",
-    networks={
-        "udp-internet": 1896
-    }
-)
+# export(
+#     service="posts_agent",
+#     networks={
+#         "udp-internet": 1896
+#     }
+# )

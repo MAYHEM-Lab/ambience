@@ -38,6 +38,7 @@ class x86_64(Platform):
 
 
 x86_64_pc = x86_64("x86_64_pc")
+x86_64_firecracker = x86_64("x86_64_firecracker")
 digitalocean_vm = x86_64("digitalocean_vm")
 
 
@@ -196,6 +197,19 @@ platform(
     name="x86_64_pc",
     inherit="x86_64",
     native=x86_64_pc,
+    importers=[
+        importer(
+            network="udp-internet",
+            native=LwipUdpImporter
+        ),
+    ]
+)
+
+
+platform(
+    name="x86_64_firecracker",
+    inherit="x86_64",
+    native=x86_64_firecracker,
     importers=[
         importer(
             network="udp-internet",

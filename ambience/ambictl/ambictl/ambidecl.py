@@ -69,13 +69,15 @@ def export(*, service, networks):
         "networks": networks
     }
 
+
 def _finalize_export(export):
     if "done" in export:
         return
 
-    serv = _instances[export["service"]]["instance"]
-    nets = {_networks[net]["native"]: conf for net, conf in export["networks"].items()}
-    node = _nodes[_instances[export["service"]]["node"]]["node"]
+    serv = _instance_by_name(export["service"])["instance"]
+    nets = {_networks[net]["native"]: conf for net,
+            conf in export["networks"].items()}
+    node = _nodes[_instance_by_name(export["service"])["node"]]["node"]
 
     for exporter in node.exporters:
         if exporter.assigned_network in nets:
@@ -134,7 +136,7 @@ def node(*, name, platform, exporters=None, importers=None):
 
 
 def _finalize_node(node):
-    if "done" in node:
+    if "node" in node:
         return
 
     platform = _platforms[node["platform"]]
@@ -146,8 +148,10 @@ def _finalize_node(node):
 
     node["memories"] = platform["memories"]
 
-    importers = [_finalize_importer(importer) for importer in node["importers"]]
-    exporters = [_finalize_exporter(exporter) for exporter in node["exporters"]]
+    importers = [_finalize_importer(importer)
+                 for importer in node["importers"]]
+    exporters = [_finalize_exporter(exporter)
+                 for exporter in node["exporters"]]
 
     res = platform["native"].make_node(
         name=node["name"],
@@ -160,7 +164,6 @@ def _finalize_node(node):
         res.node_services.append(serv)
 
     node["node"] = res
-    node["done"] = True
 
 
 def _finalize_nodes():
@@ -205,20 +208,22 @@ def deploy(*, node, groups):
     }
 
 
+def _instance_by_name(name):
+    return _instances[name]
+
+
 def _finalize_service(serv):
-    if "done" in serv:
+    if "instance" in serv:
         return serv["instance"]
 
     print(f"Finalizing service {serv['name']}")
 
     if "import" in serv:
-        serv["done"] = True
         serv["instance"] = serv["import"]
         return serv["instance"]
 
     if "extern" in serv:
         # Extern service, not much to do
-        serv["done"] = True
         serv["instance"] = serv["extern"]
         return serv["instance"]
 
@@ -243,36 +248,37 @@ def _finalize_service(serv):
         if dep.endswith(".localnode"):
             serv["deps"][name] = dep[:-9] + _nodes[serv["node"]]["name"]
             dep = serv["deps"][name]
-        if service_iface(_instances[dep]) != serv["serv"].dependency_type(name):
+        if service_iface(_instance_by_name(dep)) != serv["serv"].dependency_type(name):
             raise RuntimeError(
-                f"Dependency type mismatch for {name}. Expected {serv['serv'].dependency_type(name).full_serv_name}, got {service_iface(_instances[dep]).full_serv_name}")
+                f"Dependency type mismatch for {name}. Expected {serv['serv'].dependency_type(name).full_serv_name}, got {service_iface(_instance_by_name(dep)).full_serv_name}")
 
     for name, dep in serv["deps"].items():
-        _finalize_service(_instances[dep])
+        _finalize_service(_instance_by_name(dep))
 
     for name, dep in serv["deps"].items():
-        depins = _instances[dep]
-        if depins["node"] != serv["node"]:
+        dep_instance = _instance_by_name(dep)
+        if dep_instance["node"] != serv["node"]:
             print("Remote import")
-            imports = ambictl.make_remote_import(_nodes[serv["node"]]["node"], _nodes[depins["node"]]["node"],
-                                                 depins["instance"])
+            imports = ambictl.make_remote_import(_nodes[serv["node"]]["node"], _nodes[dep_instance["node"]]["node"],
+                                                 dep_instance["instance"])
             for node, svc in imports.items():
                 import_service(imprt=svc)
                 if not _nodes[node.name]["node"].deploy_node:
                     _nodes[node.name]["node"].node_services.append(svc)
                 else:
-                    _nodes[node.name]["node"].deploy_node.groups[0].add_service(svc)
+                    _nodes[node.name]["node"].deploy_node.groups[0].add_service(
+                        svc)
                 serv["deps"][name] = svc.name
 
     for name, dep in serv["deps"].items():
-        _finalize_service(_instances[dep])
+        _finalize_service(_instance_by_name(dep))
 
-    deps = {name: _instances[dep]["instance"] for name, dep in serv["deps"].items()}
+    deps = {name: _instance_by_name(dep)["instance"]
+            for name, dep in serv["deps"].items()}
     for name, dep in deps.items():
         if dep is None:
             raise RuntimeError(f"Unmet dependency {name}")
 
-    serv["done"] = True
     serv["instance"] = ambictl.ServiceInstance(
         name=serv["name"],
         impl=serv["serv"],
@@ -287,12 +293,13 @@ def _finalize_group_step1(group):
 
     for serv in group["services"]:
         print(f"{serv} to {group['node']}")
-        _instances[serv]["group"] = group
-        _instances[serv]["node"] = group["node"]
+        _instance_by_name(serv)["group"] = group
+        _instance_by_name(serv)["node"] = group["node"]
 
 
 def _finalize_group_step2(group, privileged):
-    servs = [_finalize_service(_instances[serv]) for serv in group["services"]]
+    servs = [_finalize_service(_instance_by_name(serv))
+             for serv in group["services"]]
 
     res = None
     if privileged:
@@ -342,7 +349,8 @@ def _finalize_deploy_step1(deploy):
             name=f"{node_serv.name}.{node['name']}",
             extern=node_serv
         )
-        _groups[deploy["groups"][0]]["services"].append(f"{node_serv.name}.{node['name']}")
+        _groups[deploy["groups"][0]]["services"].append(
+            f"{node_serv.name}.{node['name']}")
 
     for i, group_name in enumerate(deploy["groups"]):
         if group_name in _instances:
@@ -376,11 +384,13 @@ def _finalize():
     for deploy in _deploys:
         _finalize_deploy_step1(_deploys[deploy])
 
-    res = ambictl.Deployment([_finalize_deploy_step2(_deploys[deploy]) for deploy in _deploys])
+    res = ambictl.Deployment([_finalize_deploy_step2(
+        _deploys[deploy]) for deploy in _deploys])
 
     for export in _exports:
         _finalize_export(_exports[export])
 
     return res
+
 
 network(native=ambictl.Networks.Internet.UDP)

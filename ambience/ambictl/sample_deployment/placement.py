@@ -1,4 +1,4 @@
-deploy_to = "linux"
+deploy_to = "end_to_end"
 
 if deploy_to == "linux":
     group(
@@ -28,6 +28,45 @@ if deploy_to == "linux":
         node="hosted2",
         groups=["hosted2_priv"]
     )
+elif deploy_to == "nrf":
+    deploy(
+        node="nrf",
+        groups=[
+            "",
+            "posts",
+            "analysis",
+            "posts_agent"
+        ]
+    )
+elif deploy_to == "end_to_end":
+    deploy(
+        node="sfo2_vm1",
+        groups=[
+        ]
+    )
+
+    deploy(
+        node="sfo2_vm2",
+        groups=[
+            "",
+            "analysis",
+        ]
+    )
+
+    deploy(
+        node="hosted",
+        groups=[
+            "posts",
+        ]
+    )
+
+    deploy(
+        node="mcu1",
+        groups=[
+            "",
+            "posts_agent"
+        ]
+    )
 else:
     group(
         name="posts_group",
@@ -56,20 +95,20 @@ else:
     )
 
 
-group(
-    name="sfo_vm2_priv",
-    services=["bench_agent"]
-)
-
-group(
-    name="sfo_vm2_agent2",
-    services=["bench_agent2"]
-)
-
-group(
-    name="sfo2_vm_calc_user",
-    services=["calc3"]
-)
+# group(
+#     name="sfo_vm2_priv",
+#     services=["bench_agent"]
+# )
+#
+# group(
+#     name="sfo_vm2_agent2",
+#     services=["bench_agent2"]
+# )
+#
+# group(
+#     name="sfo2_vm_calc_user",
+#     services=["calc3"]
+# )
 
 # deploy(
 #     node="mcu1",

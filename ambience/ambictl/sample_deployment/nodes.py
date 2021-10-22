@@ -60,11 +60,11 @@ node(
         #     address="/",
         #     native=HostedUnixDomainExporter
         # )
-        # exporter(
-        #     network="xbee-home",
-        #     address="0x1234",
-        #     native=lambda: XbeeExporter("tos::hosted::usart*")
-        # ),
+        exporter(
+            network="xbee-home",
+            address="0x1234",
+            native=lambda: XbeeExporter("tos::hosted::usart*")
+        ),
     ]
 )
 
@@ -113,7 +113,13 @@ node(
         # )
     ]
 )
+
 node(
     name="mcu1",
     platform="stm32l4",
+)
+
+node(
+    name="nrf",
+    platform="nrf52840",
 )

@@ -494,7 +494,7 @@ class DeployNode:
     def __init__(self, node: Node, groups: List[Group]):
         self.node = node
         self.groups = groups
-        self.deploy_groups = {g: DeployGroup(self, g, 512) for g in self.groups}
+        self.deploy_groups = {g: DeployGroup(self, g, 64) for g in self.groups}
         self.target_name = None
         self.objects = {}
 
@@ -583,8 +583,8 @@ def compute_bases(node: DeployNode):
     for dg in node.deploy_groups.values():
         if dg.sizes is None:
             continue
-        print(cur_bases, dg.sizes)
+        print((hex(cur_bases[0]), hex(cur_bases[1])), dg.sizes)
         res[dg] = cur_bases
         cur_bases = tuple(sum(x) for x in zip(cur_bases, dg.sizes))
-        print(cur_bases)
+        print((hex(cur_bases[0]), hex(cur_bases[1])))
     return res

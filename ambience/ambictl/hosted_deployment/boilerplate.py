@@ -58,9 +58,6 @@ basic_calc = calc_if.implement(
     cmake_target="basic_calc",
     sync=False,
     deps={
-        "logger": logger_if,
-        "alarm": alarm_if,
-        "fs": fs_if
     }
 )
 

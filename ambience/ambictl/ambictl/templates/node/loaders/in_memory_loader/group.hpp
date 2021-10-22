@@ -1,10 +1,6 @@
 #pragma once
 
 #include <tos/ae/kernel/user_group.hpp>
-#include <tos/ae/service_host.hpp>
-#include <tos/arch.hpp>
-#include <tos/interrupt_trampoline.hpp>
-#include <tos/paging/physical_page_allocator.hpp>
 #include <tos/ae/kernel/platform_support.hpp>
 #include <tos/debug/assert.hpp>
 
@@ -18,8 +14,8 @@ struct {{group_name}} {
 
     {% for service_name in services %}
     auto {{service_name}}() -> auto& {
-    return static_cast<{{services[service_name]}}&>(
-        *group->channels[{{loop.index}} - 1]);
+        return static_cast<{{services[service_name]}}&>(
+            *group->channels[{{loop.index}} - 1]);
     }
     {% endfor %}
 

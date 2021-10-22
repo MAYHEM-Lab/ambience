@@ -38,6 +38,7 @@ class x86_64(Platform):
 
 
 x86_64_pc = x86_64("x86_64_pc")
+x86_64_firecracker = x86_64("x86_64_firecracker")
 digitalocean_vm = x86_64("digitalocean_vm")
 
 
@@ -155,6 +156,7 @@ class x86_hosted(Platform):
         os.makedirs(conf_dir, exist_ok=True)
         args = ["cmake", "-G", "Ninja", f"-DTOS_BOARD=hosted", "-DCMAKE_BUILD_TYPE=Release",
                 "-DENABLE_LTO=OFF", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache", "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+                "-DENABLE_RTTI=ON",
                 source_dir]
         print(args)
         env = os.environ.copy()
@@ -196,6 +198,19 @@ platform(
     name="x86_64_pc",
     inherit="x86_64",
     native=x86_64_pc,
+    importers=[
+        importer(
+            network="udp-internet",
+            native=LwipUdpImporter
+        ),
+    ]
+)
+
+
+platform(
+    name="x86_64_firecracker",
+    inherit="x86_64",
+    native=x86_64_firecracker,
     importers=[
         importer(
             network="udp-internet",

@@ -1,5 +1,3 @@
-#include <tos/ae/kernel/loaders/in_memory_user.hpp>
-#include <tos/ae/kernel/loading.hpp>
 #include <{{group_name}}.hpp>
 #include <registry.hpp>
 
