@@ -15,8 +15,8 @@ struct convert_types;
 
 template<class... Ts>
 struct convert_types<lidl::meta::list<Ts...>> {
-    using type = lidl::meta::list<decltype(&std::declval<Ts&>())...>;
-    using tuple_type = std::tuple<decltype(&std::declval<Ts&>())...>;
+    using type = lidl::meta::list<zerocopy_type_t<Ts>...>;
+    using tuple_type = std::tuple<zerocopy_type_t<Ts>...>;
 };
 
 template<class ServiceT, int ProcId>
@@ -38,12 +38,14 @@ constexpr auto async_zerocopy_translator() -> async_zerocopy_fn_t {
         constexpr auto& fn = proc_desc.async_function;
 
         auto do_call = [&serv = static_cast<typename ServiceT::async_server&>(serv_base),
-                        ret](auto*... vals) -> tos::Task<bool> {
+                        ret](auto... vals) -> tos::Task<bool> {
             if constexpr (is_ref) {
-                auto& res = co_await std::invoke(fn, serv, *vals...);
+                auto& res = co_await std::invoke(
+                    fn, serv, extractor<decltype(vals)>::extract(vals)...);
                 new (ret) ActualRetType(&res);
             } else {
-                new (ret) ActualRetType(co_await std::invoke(fn, serv, *vals...));
+                new (ret) ActualRetType(co_await std::invoke(
+                    fn, serv, extractor<decltype(vals)>::extract(vals)...));
             }
             co_return true;
         };
@@ -69,13 +71,15 @@ constexpr auto zerocopy_translator() -> zerocopy_fn_t {
                                std::add_pointer_t<std::remove_reference_t<RetType>>,
                                RetType>;
 
-        auto do_call = [&serv, ret](auto*... vals) -> bool {
+        auto do_call = [&serv, ret](auto... vals) -> bool {
             constexpr auto& fn = proc_desc.function;
             if constexpr (is_ref) {
-                auto& res = std::invoke(fn, serv, *vals...);
+                auto& res = std::invoke(
+                    fn, serv, extractor<decltype(vals)>::extract(vals)...);
                 new (ret) ActualRetType(&res);
             } else {
-                new (ret) ActualRetType(std::invoke(fn, serv, *vals...));
+                new (ret) ActualRetType(std::invoke(
+                    fn, serv, extractor<decltype(vals)>::extract(vals)...));
             }
             return true;
         };

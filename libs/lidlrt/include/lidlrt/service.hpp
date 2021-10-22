@@ -343,9 +343,65 @@ async_erased_procedure_runner_t make_async_erased_procedure_runner() {
     return &detail::async_request_handler<ServiceT, service_base>;
 }
 
-
 template<class ServiceT, class BaseServiceT = ServiceT>
 typed_union_procedure_runner_t<BaseServiceT> make_union_procedure_runner() {
     return &detail::union_caller<ServiceT, BaseServiceT>;
+}
+
+template<class T>
+struct extractor {
+    using type = T&;
+    static type extract(T& t) {
+        return t;
+    }
+};
+
+template<class T>
+struct extractor<T*> {
+    using type = T&;
+    static type extract(T* t) {
+        return *t;
+    }
+};
+
+template<class T>
+auto& extract(T& t) {
+    return extractor<T>::extract(t);
+}
+
+template<class T>
+struct zerocopy_type {
+    using type = std::add_pointer_t<T>;
+    static type make_param(T t) {
+        return &t;
+    }
+};
+
+template<>
+struct zerocopy_type<int32_t> {
+    using type = int32_t;
+    static type make_param(const int32_t& t) {
+        return t;
+    }
+};
+template<>
+struct zerocopy_type<const int32_t&> : zerocopy_type<int32_t> {};
+
+template<>
+struct zerocopy_type<int64_t> {
+    using type = int64_t;
+    static type make_param(const int64_t& t) {
+        return t;
+    }
+};
+template<>
+struct zerocopy_type<const int64_t&> : zerocopy_type<int64_t> {};
+
+template<class T>
+using zerocopy_type_t = typename zerocopy_type<T>::type;
+
+template<class... Ts>
+std::tuple<zerocopy_type_t<Ts>...> make_params_tuple(Ts&&... ts) {
+    return std::tuple(zerocopy_type<Ts>::make_param(ts)...);
 }
 } // namespace lidl
