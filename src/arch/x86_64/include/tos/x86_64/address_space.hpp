@@ -163,7 +163,7 @@ struct temporary_share : quik::share_base {
 
 template<class... Ts>
 struct typed_share : temporary_share {
-    std::tuple<Ts*...> ptrs;
+    std::tuple<Ts...> ptrs;
     void* get_tuple_ptr() override {
         return &ptrs;
     }
@@ -173,7 +173,7 @@ template<class... DataPtrTs>
 typed_share<DataPtrTs...> create_share(tos::cur_arch::address_space& from,
                                        tos::cur_arch::address_space& to,
                                        physical_page_allocator& palloc,
-                                       const std::tuple<DataPtrTs*...>& in_ptrs) {
+                                       const std::tuple<DataPtrTs...>& in_ptrs) {
     typed_share<DataPtrTs...> res;
     res.to = &to;
     res.palloc = &palloc;
