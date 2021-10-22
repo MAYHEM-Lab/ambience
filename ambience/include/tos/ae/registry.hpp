@@ -34,7 +34,7 @@ public:
     virtual bool register_service(std::string_view name, lidl::service_base* serv) = 0;
 
     virtual lidl::service_base* try_take(std::string_view name) = 0;
-    virtual tos::Task<lidl::service_base*> wait(std::string_view name);
+    virtual tos::Task<lidl::service_base*> wait(std::string_view name) = 0;
 
     template<class T>
     tos::Task<T*> wait(std::string_view name) {
