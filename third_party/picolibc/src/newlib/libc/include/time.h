@@ -77,6 +77,7 @@ struct tm
   int	tm_wday;
   int	tm_yday;
   int	tm_isdst;
+#define __TM_GMTOFF tm_gmtoff
 #ifdef __TM_GMTOFF
   long	__TM_GMTOFF;
 #endif

@@ -18,6 +18,14 @@
 #define FE_TONEAREST	0
 #endif
 
+#ifndef FE_DOWNWARD
+#define FE_DOWNWARD	1
+#endif
+
+#ifndef FE_UPWARD
+#define FE_UPWARD	2
+#endif
+
 #ifndef FE_ALL_EXCEPT
 #define FE_ALL_EXCEPT	0
 #endif
