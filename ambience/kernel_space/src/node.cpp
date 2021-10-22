@@ -30,7 +30,7 @@ void low_level_write(tos::span<const uint8_t> arg) {
 }
 
 void maybe_init_xbee(tos::any_alarm& alarm);
-tos::expected<void, tos::common_error> kernel() {
+tos::result<void> kernel() {
     platform_support support;
 
     auto serial = support.init_serial();
