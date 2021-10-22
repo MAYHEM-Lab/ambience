@@ -9,6 +9,7 @@ add_subdirectory(nrf52_thingy)
 add_subdirectory(hosted)
 add_subdirectory(digitalocean_vm)
 add_subdirectory(x86_64_pc)
+add_subdirectory(x86_64_firecracker)
 
 if (TOS_BOARD)
     add_library(tos_board board.cpp)

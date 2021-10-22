@@ -1,3 +1,4 @@
+#include <tos/debug/log.hpp>
 #include <tos/platform.hpp>
 #include <tos/x86_64/apic.hpp>
 #include <tos/x86_64/port.hpp>
@@ -5,6 +6,7 @@
 namespace tos::platform {
 namespace {
 void null_irq(x86_64::exception_frame*, int num) {
+    tos::debug::warn("Unhandled interrupt!", num);
 }
 
 void null_post_irq(x86_64::exception_frame*) {
