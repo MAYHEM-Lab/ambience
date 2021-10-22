@@ -101,6 +101,7 @@ function(find_llvm_toolchain)
     set(SEARCH_DIRS ${TOOLCHAIN_HINTS})
     list(APPEND SEARCH_DIRS /opt/x-tools)
     list(APPEND SEARCH_DIRS /opt/llvm)
+    list(APPEND SEARCH_DIRS /ambience/llvm)
     list(APPEND SEARCH_DIRS C:/x-tools)
 
     SUBDIRLIST(X_TOOLS_SUBS C:/x-tools)
