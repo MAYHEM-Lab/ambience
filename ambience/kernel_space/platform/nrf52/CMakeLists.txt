@@ -1,0 +1,3 @@
+target_sources(aekernel PRIVATE platform_support.cpp)
+target_link_libraries(aekernel PUBLIC tos_board block_partition)
+target_include_directories(aekernel PUBLIC include)
