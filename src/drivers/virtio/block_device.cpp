@@ -1,3 +1,4 @@
+#include <string_view>
 #include <tos/debug/log.hpp>
 #include <tos/platform.hpp>
 #include <tos/virtio/block_device.hpp>
@@ -32,10 +33,10 @@ bool block_device::initialize(tos::physical_page_allocator* palloc) {
     return true;
 }
 
-expected<void, int>
+result<void>
 block_device::write(uint64_t sector_id, span<const uint8_t> data, size_t offset) {
     if (offset != 0 || data.size() != sector_size_bytes()) {
-        return unexpected(-1);
+        return unexpected(const_string_error("bad offset or data size"));
     }
 
     auto& q = queue_at(0);
@@ -73,13 +74,13 @@ block_device::write(uint64_t sector_id, span<const uint8_t> data, size_t offset)
     if (c == 0) {
         return {};
     }
-    return unexpected(c);
+    return unexpected(const_string_error("bad return code"));
 }
 
-Task<expected<void, int>>
+async<void>
 block_device::async_write(uint64_t sector_id, span<const uint8_t> data, size_t offset) {
     if (offset != 0 || data.size() != sector_size_bytes()) {
-        co_return unexpected(-1);
+        co_return unexpected(const_string_error("bad offset or data size"));
     }
 
     auto& q = queue_at(0);
@@ -115,15 +116,15 @@ block_device::async_write(uint64_t sector_id, span<const uint8_t> data, size_t o
     co_await m_wait_sem;
 
     if (c == 0) {
-        co_return tos::expected<void, int>{};
+        co_return tos::result<void>{};
     }
-    co_return unexpected(c);
+    co_return unexpected(const_string_error("bad error code"));
 }
 
-expected<void, int>
+result<void>
 block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
     if (offset != 0 || data.size() != sector_size_bytes()) {
-        return unexpected(-1);
+        return unexpected(const_string_error("bad offset or data size"));
     }
 
     auto& q = queue_at(0);
@@ -161,14 +162,14 @@ block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
     if (c == 0) {
         return {};
     }
-    return unexpected(c);
+    return unexpected(const_string_error("bad error code"));
 }
 
-Task<expected<void, int>>
+async<void>
 block_device::async_read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
 
     if (offset != 0 || data.size() != sector_size_bytes()) {
-        co_return unexpected(-1);
+        co_return unexpected(const_string_error("bad offset or data size"));
     }
 
     auto& q = queue_at(0);
@@ -204,9 +205,9 @@ block_device::async_read(uint64_t sector_id, span<uint8_t> data, size_t offset) 
     co_await m_wait_sem;
 
     if (c == 0) {
-        co_return tos::expected<void, int>{};
+        co_return tos::result<void>{};
     }
-    co_return unexpected(c);
+    co_return unexpected(const_string_error("bad error code"));
 }
 
 size_t block_device::number_of_sectors() const {

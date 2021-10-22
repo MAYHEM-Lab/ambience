@@ -21,15 +21,15 @@ public:
      */
     size_t number_of_sectors() const;
 
-    expected<void, int>
+    result<void>
     write(uint64_t sector_id, span<const uint8_t> data, size_t offset);
 
-    Task<expected<void, int>>
+    async<void>
     async_write(uint64_t sector_id, span<const uint8_t> data, size_t offset);
 
-    expected<void, int> read(uint64_t sector_id, span<uint8_t> data, size_t offset);
+    result<void> read(uint64_t sector_id, span<uint8_t> data, size_t offset);
 
-    Task<expected<void, int>>
+    async<void>
     async_read(uint64_t sector_id, span<uint8_t> data, size_t offset);
 
     bool initialize(tos::physical_page_allocator* palloc) override;

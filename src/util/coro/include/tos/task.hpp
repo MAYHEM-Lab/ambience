@@ -3,6 +3,7 @@
 #include <cassert>
 #include <tos/detail/coro.hpp>
 #include <tos/late_constructed.hpp>
+#include <tos/result.hpp>
 #include <utility>
 
 namespace tos {
@@ -162,4 +163,7 @@ public:
         return Task<void>{promise_coro_handle::from_promise(*this)};
     }
 };
+
+template<class T>
+using async = Task<result<T>>;
 } // namespace tos
