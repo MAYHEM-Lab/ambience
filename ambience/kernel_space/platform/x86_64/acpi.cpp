@@ -84,7 +84,7 @@ void dumpMadt() {
         } else if (generic->type == 2) { // interrupt source override
             auto entry = (MadtIntOverrideEntry*)generic;
 
-            const char *bus, *polarity, *trigger;
+            const char *bus{}, *polarity{}, *trigger{};
             if (entry->bus == 0) {
                 bus = "ISA";
             } else {
@@ -147,10 +147,16 @@ acpi_rsdt_t* globalRsdtWindow;
 void do_acpi_stuff() {
     lai_rsdp_info rsdp_info;
     auto res = lai_bios_detect_rsdp(&rsdp_info);
+    if (res == 0) {
+        LOG_ERROR(res);
+        return;
+    }
+
     LOG(res,
         rsdp_info.acpi_version,
         (void*)rsdp_info.rsdp_address,
         (void*)rsdp_info.rsdt_address);
+
     acpi_ver = rsdp_info.acpi_version;
 
     lai_set_acpi_revision(rsdp_info.acpi_version);
@@ -167,6 +173,9 @@ void do_acpi_stuff() {
         //            auto rsdt = reinterpret_cast<acpi_rsdt_t *>(globalRsdtWindow);
         //            globalRsdtWindow = laihost_map(rsdp_info.rsdt_address,
         //            rsdt->header.length);
+    } else {
+        LOG_ERROR("Unknown acpi version", rsdp_info.acpi_version);
+        return;
     }
 
     LOG(res,
@@ -180,5 +189,5 @@ void do_acpi_stuff() {
     dumpMadt();
     void* madtWindow = laihost_scan("APIC", 0);
     assert(madtWindow);
-    auto madt = reinterpret_cast<acpi_header_t*>(madtWindow);
+    [[maybe_unused]] auto madt = reinterpret_cast<acpi_header_t*>(madtWindow);
 }

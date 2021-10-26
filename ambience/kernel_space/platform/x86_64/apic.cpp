@@ -41,7 +41,7 @@ void apic_initialize(tos::physical_page_allocator& palloc) {
     auto IOAPICID = tos::x86_64::ioapic_read((void*)0xfec00000, 0);
     LOG(IOAPICID);
     auto IOAPICVER = tos::x86_64::ioapic_read((void*)0xfec00000, 1);
-    LOG((void*)IOAPICVER);
+    LOG((void*)(uintptr_t)IOAPICVER);
 
     // Timer
     tos::x86_64::ioapic_set_irq(2, apic_regs.id, 32 + 0);
