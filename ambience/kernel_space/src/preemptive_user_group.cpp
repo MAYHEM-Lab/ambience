@@ -18,11 +18,11 @@ map_elf(const tos::elf::elf64& elf,
         }
 
         tos::debug::log("Load",
-                        (void*)(uint32_t)pheader.file_size,
+                        (void*)(uintptr_t)pheader.file_size,
                         "bytes from",
-                        (void*)(uint32_t)pheader.file_offset,
+                        (void*)(uintptr_t)pheader.file_offset,
                         "to",
-                        (void*)(uint32_t)pheader.virt_address);
+                        (void*)(uintptr_t)pheader.virt_address);
 
         auto seg = elf.segment(pheader);
 

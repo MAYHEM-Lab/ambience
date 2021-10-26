@@ -72,9 +72,9 @@ void lwip_host<ServiceHost>::handle_one_req(const tos::udp_endpoint_t& from,
         std::array<uint8_t, 2048> resp;
         lidl::message_builder response_builder{resp};
 
-        auto now = lwip::global::system_clock->now();
+        [[maybe_unused]] auto now = lwip::global::system_clock->now();
         sync_run_message(serv, req, response_builder);
-        auto end = lwip::global::system_clock->now();
+        [[maybe_unused]] auto end = lwip::global::system_clock->now();
         udp_sock.send_to(response_builder.get_buffer(), from);
     }
 }
@@ -88,9 +88,9 @@ tos::Task<void> lwip_host<ServiceHost>::async_handle_one_req(tos::udp_endpoint_t
         std::array<uint8_t, 1024> resp;
         lidl::message_builder response_builder{resp};
 
-        auto now = lwip::global::system_clock->now();
+        [[maybe_unused]] auto now = lwip::global::system_clock->now();
         co_await async_run_message(serv, req, response_builder);
-        auto end = lwip::global::system_clock->now();
+        [[maybe_unused]] auto end = lwip::global::system_clock->now();
         co_await udp_sock.async_send_to(response_builder.get_buffer(), from);
     }
 }

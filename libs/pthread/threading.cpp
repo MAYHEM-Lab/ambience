@@ -40,8 +40,8 @@ struct pthread_tcb : tos::kern::tcb {
 
     tos::semaphore join_sem{0};
     tos::semaphore exit_sem{0};
-    void* arg;
     void* (*entry)(void*);
+    void* arg;
     void* value_ptr;
 };
 

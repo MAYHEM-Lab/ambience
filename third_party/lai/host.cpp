@@ -52,7 +52,7 @@ void* laihost_map(size_t address, size_t count) {
 
     if (res || force_error(res) == tos::x86_64::mmu_errors::already_allocated) {
         res = tos::x86_64::mark_resident(
-            root, segment.range, tos::memory_types::normal, (void*)address);
+            root, segment.range, tos::memory_types::normal, tos::physical_address{address});
         if (res) {
             LOG_TRACE("returning", (void*)addr_bkp);
 
@@ -93,6 +93,7 @@ static void* scanRsdt(const char* name, size_t index) {
         for (int i = 0; i < numPtrs; i++) {
             auto tableWindow =
                 reinterpret_cast<acpi_header_t*>(mapTable(rsdt->tables[i]));
+            Assert(tableWindow);
             char sig[5];
             sig[4] = 0;
             memcpy(sig, tableWindow->signature, 4);
@@ -111,6 +112,7 @@ static void* scanRsdt(const char* name, size_t index) {
         for (int i = 0; i < numPtrs; i++) {
             auto tableWindow =
                 reinterpret_cast<acpi_header_t*>(mapTable(xsdt->tables[i]));
+            Assert(tableWindow);
             char sig[5];
             sig[4] = 0;
             memcpy(sig, tableWindow->signature, 4);
@@ -137,27 +139,27 @@ void* laihost_scan(const char* name, size_t index) {
     }
 }
 void laihost_outb(uint16_t addr, uint8_t val) {
-    LOG("outb", (void*)addr, (void*)val);
+    LOG("outb", (void*)(uintptr_t)addr, (void*)(uintptr_t)val);
     return tos::x86_64::port(addr).outb(val);
 }
 void laihost_outw(uint16_t addr, uint16_t val) {
-    LOG("outw", (void*)addr, (void*)val);
+    LOG("outw", (void*)(uintptr_t)addr, (void*)(uintptr_t)val);
     return tos::x86_64::port(addr).outw(val);
 }
 void laihost_outd(uint16_t addr, uint32_t val) {
-    LOG("outl", (void*)addr, (void*)val);
+    LOG("outl", (void*)(uintptr_t)addr, (void*)(uintptr_t)val);
     return tos::x86_64::port(addr).outl(val);
 }
 uint8_t laihost_inb(uint16_t addr) {
-    LOG("inb", (void*)addr);
+    LOG("inb", (void*)(uintptr_t)addr);
     return tos::x86_64::port(addr).inb();
 }
 uint16_t laihost_inw(uint16_t addr) {
-    LOG("inw", (void*)addr);
+    LOG("inw", (void*)(uintptr_t)addr);
     return tos::x86_64::port(addr).inw();
 }
 uint32_t laihost_ind(uint16_t addr) {
-    LOG("inl", (void*)addr);
+    LOG("inl", (void*)(uintptr_t)addr);
     return tos::x86_64::port(addr).inl();
 }
 void laihost_pci_writeb(uint16_t, uint8_t, uint8_t, uint8_t, uint16_t, uint8_t) {

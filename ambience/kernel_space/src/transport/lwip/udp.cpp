@@ -28,11 +28,11 @@ void udp_transport::operator()(tos::lwip::events::recvfrom_t,
 }
 
 tos::span<uint8_t> udp_transport::send_receive(tos::span<uint8_t> buffer) {
-    auto now = tos::lwip::global::system_clock->now();
-    auto res = m_sock.send_to(buffer, m_ep);
-    auto after = tos::lwip::global::system_clock->now();
+    [[maybe_unused]] auto now = tos::lwip::global::system_clock->now();
+    [[maybe_unused]] auto res = m_sock.send_to(buffer, m_ep);
+    [[maybe_unused]] auto after = tos::lwip::global::system_clock->now();
     m_wait.down();
-    auto later = tos::lwip::global::system_clock->now();
+    [[maybe_unused]] auto later = tos::lwip::global::system_clock->now();
     return m_buf.cur_bucket();
 }
 
@@ -65,11 +65,11 @@ void async_udp_transport::operator()(tos::lwip::events::recvfrom_t,
 }
 
 Task<span<uint8_t>> async_udp_transport::send_receive(tos::span<uint8_t> buffer) {
-    auto now = tos::lwip::global::system_clock->now();
-    auto res = co_await m_sock.async_send_to(buffer, m_ep);
-    auto after = tos::lwip::global::system_clock->now();
+    [[maybe_unused]] auto now = tos::lwip::global::system_clock->now();
+    [[maybe_unused]] auto res = co_await m_sock.async_send_to(buffer, m_ep);
+    [[maybe_unused]] auto after = tos::lwip::global::system_clock->now();
     co_await m_wait;
-    auto later = tos::lwip::global::system_clock->now();
+    [[maybe_unused]] auto later = tos::lwip::global::system_clock->now();
     co_return m_buf.cur_bucket();
 }
 

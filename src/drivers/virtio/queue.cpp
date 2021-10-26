@@ -1,3 +1,4 @@
+#include "tos/debug/panic.hpp"
 #include "tos/utility.hpp"
 #include <tos/arch.hpp>
 #include <tos/debug/log.hpp>
@@ -24,6 +25,7 @@ queue::queue(uint16_t sz, tos::physical_page_allocator& palloc)
 
     if (!pages_ptr) {
         LOG_ERROR("Could not allocate pages!");
+        tos::debug::panic("Could not allocate pages!");
     }
 
     auto buf = palloc.address_of(*pages_ptr);

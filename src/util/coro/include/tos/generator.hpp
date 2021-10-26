@@ -29,7 +29,7 @@ public:
     }
 
     Generator& operator=(Generator&& other) noexcept {
-        if (!this != other) {
+        if (this == other) {
             m_handle = other.m_handle;
             other.m_handle = nullptr;
         }
