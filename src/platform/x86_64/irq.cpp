@@ -45,7 +45,7 @@ tos::expected<void, irq_errors> take_irq(int line) {
     return {};
 }
 
-tos::expected<int, irq_errors> platform::allocate_irq() {
+tos::expected<int, irq_errors> allocate_irq() {
     for (int i = 0; i < 16; ++i) {
         if (take_irq(i)) {
             return i;
@@ -54,7 +54,7 @@ tos::expected<int, irq_errors> platform::allocate_irq() {
     return unexpected(irq_errors{});
 }
 
-void platform::free_irq(int line) {
+void free_irq(int line) {
     Assert(allocated_irqs & (1 << line));
     allocated_irqs &= ~(1 << line);
 }
