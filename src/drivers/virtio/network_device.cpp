@@ -192,7 +192,7 @@ void network_device::transmit_gather(span<span<const uint8_t>> data) {
 
     queue_descriptor* cur = header_desc;
 
-    for (int i = 0; i < data.size(); ++i) {
+    for (int i = 0; i < static_cast<int>(data.size()); ++i) {
         auto [body_idx, body_desc] = tx_queue.alloc();
 
         cur->flags = queue_flags::next;
