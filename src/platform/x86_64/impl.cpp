@@ -5,7 +5,6 @@
 #include <tos/debug/panic.hpp>
 #include <tos/late_constructed.hpp>
 #include <tos/memory.hpp>
-#include <tos/multiboot.hpp>
 #include <tos/physical_memory_backing.hpp>
 #include <tos/print.hpp>
 #include <tos/scheduler.hpp>
