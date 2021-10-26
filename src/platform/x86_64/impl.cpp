@@ -252,7 +252,7 @@ void set_up_page_tables() {
             tos::segment{text, tos::permissions::read_execute}, text, text_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(text_map, nullptr);
         boot_addr_space.mark_resident(
-            text_map, text_map.obj_range, reinterpret_cast<void*>(text.base));
+            text_map, text_map.obj_range, tos::physical_address(text.base));
     }
 
     {
@@ -262,7 +262,7 @@ void set_up_page_tables() {
         allmem.create_mapping(tos::segment{text, tos::permissions::read}, text, ro_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(ro_map, nullptr);
         boot_addr_space.mark_resident(
-            ro_map, ro_map.obj_range, reinterpret_cast<void*>(text.base));
+            ro_map, ro_map.obj_range, tos::physical_address(text.base));
     }
 
     {
@@ -273,7 +273,7 @@ void set_up_page_tables() {
             tos::segment{text, tos::permissions::read_write}, text, data_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(data_map, nullptr);
         boot_addr_space.mark_resident(
-            data_map, data_map.obj_range, reinterpret_cast<void*>(text.base));
+            data_map, data_map.obj_range, tos::physical_address(text.base));
     }
 
     {
@@ -284,7 +284,7 @@ void set_up_page_tables() {
             tos::segment{text, tos::permissions::read_write}, text, bss_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(bss_map, nullptr);
         boot_addr_space.mark_resident(
-            bss_map, bss_map.obj_range, reinterpret_cast<void*>(text.base));
+            bss_map, bss_map.obj_range, tos::physical_address(text.base));
     }
 
     for (int i = 0; i < static_cast<int>(std::size(p1_tables)); ++i) {

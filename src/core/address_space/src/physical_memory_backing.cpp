@@ -14,7 +14,7 @@ bool physical_memory_backing::handle_memory_fault(const memory_fault& fault) {
         {.base = fault.virt_addr, .size = sizeof(uintmax_t)});
 
     fault.map->va->mark_resident(
-        *fault.map, fault_fragment, reinterpret_cast<void*>(fault.map->obj_range.base));
+        *fault.map, fault_fragment, physical_address{fault.map->obj_range.base});
 
     return true;
 }

@@ -32,7 +32,7 @@ address_space::empty(physical_page_allocator& palloc) {
         return unexpected(mmu_errors::page_alloc_fail);
     }
     map_page_ident(get_current_translation_table(), *root_page, palloc);
-    auto root_table = new (palloc.address_of(*root_page)) translation_table{};
+    auto root_table = new (palloc.address_of(*root_page).direct_mapped()) translation_table{};
     return address_space{*root_table};
 }
 

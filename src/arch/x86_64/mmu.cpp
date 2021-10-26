@@ -23,7 +23,7 @@ constexpr expected<void, mmu_errors> recursive_allocate(translation_table& root,
                                                         physical_page_allocator* palloc) {
     if constexpr (N == 1) {
         if (root[path[0]].valid()) {
-//            tos::debug::error("Page already allocated");
+            //            tos::debug::error("Page already allocated");
             return unexpected(mmu_errors::already_allocated);
         }
 
@@ -56,22 +56,22 @@ constexpr expected<void, mmu_errors> recursive_allocate(translation_table& root,
                 return unexpected(mmu_errors::page_alloc_fail);
             }
 
-            auto res = map_region(get_current_translation_table(),
-                                  segment{.range = {.base = reinterpret_cast<uintptr_t>(
-                                                        palloc->address_of(*page)),
-                                                    .size = page_size_bytes},
-                                          permissions::read_write},
-                                  user_accessible::no,
-                                  memory_types::normal,
-                                  palloc,
-                                  palloc->address_of(*page));
+            auto res =
+                map_region(get_current_translation_table(),
+                           segment{.range = {.base = palloc->address_of(*page).address(),
+                                             .size = page_size_bytes},
+                                   permissions::read_write},
+                           user_accessible::no,
+                           memory_types::normal,
+                           palloc,
+                           palloc->address_of(*page));
 
             if (!res) {
                 palloc->free({page, 1});
                 return unexpected(force_error(res));
             }
 
-            memset(palloc->address_of(*page), 0, page_size_bytes);
+            memset(palloc->address_of(*page).direct_mapped(), 0, page_size_bytes);
 
             root[path[0]]
                 .zero()
@@ -94,7 +94,7 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
     for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
          addr += page_size_bytes) {
         auto path = detail::pt_path_for_addr(addr);
-//        LOG_TRACE("Address", (void*)addr, path[0], path[1], path[2], path[3]);
+        //        LOG_TRACE("Address", (void*)addr, path[0], path[1], path[2], path[3]);
         EXPECTED_TRYV(recursive_allocate(root, virt_seg.perms, allow_user, path, palloc));
     }
 
@@ -104,7 +104,8 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
 expected<void, mmu_errors> mark_resident(translation_table& root,
                                          const memory_range& range,
                                          memory_types type,
-                                         void* phys_addr) {
+                                         physical_address phys) {
+    void* phys_addr = (char*)phys.address();
     for (uintptr_t addr = range.base; addr != range.end();
          addr += page_size_bytes, phys_addr = (char*)phys_addr + page_size_bytes) {
         auto path = pt_path_for_addr(addr);
@@ -179,7 +180,7 @@ do_clone(const translation_table& root, physical_page_allocator& palloc, int lev
         return unexpected(mmu_errors::page_alloc_fail);
     }
     EXPECTED_TRYV(map_page_ident(get_current_translation_table(), *page_res, palloc));
-    auto tbl = new (palloc.address_of(*page_res)) translation_table(root);
+    auto tbl = new (palloc.address_of(*page_res).direct_mapped()) translation_table(root);
     for (auto& entry : *tbl) {
         if (!entry.valid()) {
             continue;

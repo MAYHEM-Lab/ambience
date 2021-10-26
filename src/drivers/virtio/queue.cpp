@@ -37,12 +37,12 @@ queue::queue(uint16_t sz, tos::physical_page_allocator& palloc)
         buf);
     LOG(bool(map_res));
 
-    std::fill((char*)buf, (char*)buf + total_sz, 0);
-    LOG("Buffer:", buf);
+    std::fill((char*)buf.direct_mapped(), (char*)buf.direct_mapped() + total_sz, 0);
+    LOG("Buffer:", buf.direct_mapped());
 
-    descriptors_base = reinterpret_cast<queue_descriptor*>(buf);
-    available_base = reinterpret_cast<queue_available*>((char*)buf + descriptor_sz);
-    used_base = reinterpret_cast<volatile queue_used*>((char*)buf + desc_avail_sz);
+    descriptors_base = reinterpret_cast<queue_descriptor*>(buf.direct_mapped());
+    available_base = reinterpret_cast<queue_available*>((char*)buf.direct_mapped() + descriptor_sz);
+    used_base = reinterpret_cast<volatile queue_used*>((char*)buf.direct_mapped() + desc_avail_sz);
 
     LOG(descriptors_base, available_base, (void*)used_base);
 }

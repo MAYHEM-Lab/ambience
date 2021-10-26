@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tos/paging/physical_page_allocator.hpp"
 #include "tos/x86_64/mmu/common.hpp"
 #include <forward_list>
 #include <tos/address_space.hpp>
@@ -35,7 +36,7 @@ struct address_space final : tos::address_space {
     void remove_mapping(mapping& mapping);
 
     expected<void, mmu_errors>
-    mark_resident(mapping& mapping, memory_range subrange, void* phys_addr) {
+    mark_resident(mapping& mapping, memory_range subrange, physical_address phys_addr) {
         return x86_64::mark_resident(*m_table, subrange, mapping.mem_type, phys_addr);
     }
 
@@ -89,7 +90,7 @@ struct temporary_share : quik::share_base {
     };
     std::forward_list<share_page> pages;
 
-    void* raw_allocate(size_t sz, size_t align) {
+    physical_address raw_allocate(size_t sz, size_t align) {
         if (sz >= page_size_bytes) {
             return nullptr;
         }
@@ -98,9 +99,9 @@ struct temporary_share : quik::share_base {
         }
         auto base = palloc->address_of(*pages.front().page);
         auto res =
-            static_cast<std::byte*>(base) + (page_size_bytes - pages.front().space);
+            base.addr + (page_size_bytes - pages.front().space);
         pages.front().space -= sz;
-        return res;
+        return physical_address{res};
     }
 
     // Map the pages into the target.
@@ -119,7 +120,7 @@ struct temporary_share : quik::share_base {
         auto& elem = pages.emplace_front();
         elem.owned = false;
         elem.space = 0;
-        elem.page = palloc->info(reinterpret_cast<void*>(page_base_address_in_from));
+        elem.page = palloc->info(physical_address{page_base_address_in_from});
         return &elem;
     }
 

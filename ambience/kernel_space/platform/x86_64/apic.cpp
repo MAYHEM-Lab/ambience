@@ -14,7 +14,7 @@ void apic_initialize(tos::physical_page_allocator& palloc) {
                                         tos::user_accessible::no,
                                         tos::memory_types::device,
                                         &palloc,
-                                        reinterpret_cast<void*>(apic_base)));
+                                        tos::physical_address(apic_base)));
 
     // IOAPIC registers
     seg = tos::segment{
@@ -25,7 +25,7 @@ void apic_initialize(tos::physical_page_allocator& palloc) {
                                         tos::user_accessible::no,
                                         tos::memory_types::device,
                                         &palloc,
-                                        reinterpret_cast<void*>(0xfec00000)));
+                                        tos::physical_address(0xfec00000)));
 
     auto& apic_regs = tos::x86_64::get_apic_registers(apic_base);
     LOG((void*)(uintptr_t)apic_regs.id, (void*)(uintptr_t)apic_regs.version);

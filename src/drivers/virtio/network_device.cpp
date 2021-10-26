@@ -90,7 +90,7 @@ bool network_device::initialize(physical_page_allocator* palloc) {
             mem);
         tos::ensure(map_res);
 
-        auto buf_ptr = new (mem) buf{};
+        auto buf_ptr = new (mem.direct_mapped()) buf{};
 
         queue_rx_buf(*buf_ptr);
     }

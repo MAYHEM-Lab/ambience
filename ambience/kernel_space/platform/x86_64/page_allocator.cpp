@@ -6,7 +6,7 @@ tos::expected<tos::physical_page_allocator*, tos::cur_arch::mmu_errors>
 initialize_page_allocator() {
     auto& root_table = tos::cur_arch::get_current_translation_table();
 
-    constexpr auto page_num = 2048*80;
+    constexpr auto page_num = 2048 * 80;
     auto vmem_end = (void*)tos::default_segments::image().end();
 
     LOG("Image ends at", vmem_end);
@@ -26,7 +26,10 @@ initialize_page_allocator() {
     LOG("Allocated", allocator_space, "bytes");
 
     EXPECTED_TRYV(tos::cur_arch::mark_resident(
-        root_table, allocator_segment.range, tos::memory_types::normal, vmem_end));
+        root_table,
+        allocator_segment.range,
+        tos::memory_types::normal,
+        tos::physical_address{reinterpret_cast<uintptr_t>(vmem_end)}));
     LOG("Marked resident", allocator_space, "bytes");
 
     auto palloc = new (vmem_end) tos::physical_page_allocator(page_num);

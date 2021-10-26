@@ -30,7 +30,7 @@ map_elf(const tos::elf::elf64& elf,
         if (pheader.file_size < pheader.virt_size) {
             auto pages = pheader.virt_size / tos::cur_arch::page_size_bytes;
             auto p = palloc.allocate(pages);
-            base = palloc.address_of(*p);
+            base = palloc.address_of(*p).direct_mapped();
         }
 
         LOG((void*)pheader.virt_address,
@@ -54,7 +54,7 @@ map_elf(const tos::elf::elf64& elf,
                                  tos::user_accessible::yes,
                                  tos::memory_types::normal,
                                  &palloc,
-                                 base));
+                                 physical_address{reinterpret_cast<uintptr_t>(base)}));
 
         // The pages are mapped into the kernel as RW
         //        vseg.perms = permissions::read_write;
@@ -63,7 +63,7 @@ map_elf(const tos::elf::elf64& elf,
                                  tos::user_accessible::no,
                                  tos::memory_types::normal,
                                  &palloc,
-                                 base));
+                                 physical_address{reinterpret_cast<uintptr_t>(base)}));
     }
 
     return {};
@@ -82,11 +82,11 @@ create_and_map_stack(size_t stack_size,
     }
 
     auto stack_address = palloc.address_of(*stack_pages);
-    tos::debug::log("Stack at", stack_address);
+    tos::debug::log("Stack at", stack_address.direct_mapped());
 
     EXPECTED_TRYV(map_region(
         root_table,
-        tos::segment{.range = {.base = reinterpret_cast<uintptr_t>(stack_address),
+        tos::segment{.range = {.base =  stack_address.address(),
                                .size = static_cast<ptrdiff_t>(stack_size)},
                      tos::permissions::read_write},
         tos::user_accessible::yes,
@@ -96,7 +96,7 @@ create_and_map_stack(size_t stack_size,
 
     EXPECTED_TRYV(map_region(
         x86_64::get_current_translation_table(),
-        tos::segment{.range = {.base = reinterpret_cast<uintptr_t>(stack_address),
+        tos::segment{.range = {.base =  stack_address.address(),
                                .size = static_cast<ptrdiff_t>(stack_size)},
                      tos::permissions::read_write},
         tos::user_accessible::no,
@@ -104,7 +104,7 @@ create_and_map_stack(size_t stack_size,
         &palloc,
         stack_address));
 
-    return tos::span<uint8_t>(static_cast<uint8_t*>(stack_address), stack_size);
+    return tos::span<uint8_t>(static_cast<uint8_t*>(stack_address.direct_mapped()), stack_size);
 }
 } // namespace
 

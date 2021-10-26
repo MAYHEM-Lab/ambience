@@ -30,7 +30,7 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
 expected<void, mmu_errors> mark_resident(translation_table& root,
                                          const memory_range& range,
                                          memory_types type,
-                                         void* phys_addr);
+                                         physical_address phys_addr);
 
 expected<void, mmu_errors> mark_nonresident(translation_table& root,
                                             const memory_range& virt_range);
@@ -46,7 +46,7 @@ inline expected<void, mmu_errors> map_region(translation_table& root,
                                              user_accessible user_access,
                                              memory_types mem_type,
                                              physical_page_allocator* palloc,
-                                             void* phys_base) {
+                                             physical_address phys_base) {
     EXPECTED_TRYV(allocate_region(root, vseg, user_access, palloc));
 
     EXPECTED_TRYV(mark_resident(root, vseg.range, mem_type, phys_base));

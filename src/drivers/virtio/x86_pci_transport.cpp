@@ -263,7 +263,7 @@ private:
                                       user_accessible::no,
                                       memory_types::device,
                                       g_palloc,
-                                      (void*)map_addr);
+                                      physical_address(map_addr));
         Assert(res);
 
         auto msix_vec = (uint32_t*)map_addr;

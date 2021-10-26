@@ -96,4 +96,26 @@ memory_range rodata();
 memory_range bss();
 memory_range bss_map();
 } // namespace default_segments
+
+struct physical_address {
+    uintptr_t addr;
+
+    explicit constexpr physical_address(uintptr_t addr) : addr{addr} {}
+    constexpr physical_address(std::nullptr_t) : addr{0} {}
+
+    constexpr operator bool() {
+        return addr != 0;
+    }
+
+    uintptr_t address() const {
+        return addr;
+    }
+
+    // Returns a pointer to void to the physical address.
+    // Use of the returned pointer assumes the address is mapped direct to the current
+    // virtual address space.
+    void* direct_mapped() const {
+        return reinterpret_cast<void*>(addr);
+    }
+};
 } // namespace tos
