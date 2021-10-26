@@ -28,7 +28,7 @@ public:
     // Returns a pointer to the **physical memory** for the given page.
     // You **have to** map this physical memory to an address space before you can access
     // it!
-    void* address_of(const physical_page& page) const;
+    physical_address address_of(const physical_page& page) const;
     memory_range range_of(const physical_page& page) const;
 
     int page_num(const physical_page& page) const;
@@ -37,7 +37,7 @@ public:
     void mark_unavailable(const memory_range& len);
 
     physical_page* info(int32_t page_num);
-    physical_page* info(void* ptr);
+    physical_page* info(physical_address ptr);
 
 
     static constexpr size_t size_for_pages(size_t num_pages) {

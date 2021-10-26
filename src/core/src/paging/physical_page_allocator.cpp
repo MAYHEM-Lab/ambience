@@ -73,8 +73,8 @@ void physical_page_allocator::free(span<physical_page> pages) {
     }
 }
 
-void* physical_page_allocator::address_of(const physical_page& page) const {
-    return reinterpret_cast<void*>(page_num(page) * page_size());
+physical_address physical_page_allocator::address_of(const physical_page& page) const {
+    return physical_address{page_num(page) * page_size()};
 }
 
 memory_range physical_page_allocator::range_of(const physical_page& page) const {
@@ -98,8 +98,8 @@ void physical_page_allocator::mark_unavailable(const memory_range& len) {
     }
 }
 
-physical_page* physical_page_allocator::info(void* ptr) {
-    return info(reinterpret_cast<uintptr_t>(ptr) / page_size());
+physical_page* physical_page_allocator::info(physical_address ptr) {
+    return info(ptr.addr / page_size());
 }
 
 physical_page* physical_page_allocator::info(int32_t page_num) {
