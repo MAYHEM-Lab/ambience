@@ -26,3 +26,4 @@ target_sources(lai PRIVATE
     host.cpp
 )
 target_link_libraries(lai PUBLIC tos_debug_core tos_ft)
+target_compile_options(lai PUBLIC -Wno-c11-extensions -Wno-typedef-redefinition -Wno-newline-eof -Wno-gnu-statement-expression)
