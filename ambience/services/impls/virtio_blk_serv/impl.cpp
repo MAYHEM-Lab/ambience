@@ -42,7 +42,7 @@ struct impl final : public tos::ae::services::block_memory::sync_server {
 
     bool
     write(const int32_t& block, const int32_t& offset, tos::span<uint8_t> data) override {
-        if (data.size() != get_block_size()) {
+        if (static_cast<int>(data.size()) != get_block_size()) {
             std::vector<uint8_t> buffer(get_block_size());
             m_blk_dev->read(block, buffer, 0);
             tos::safe_span_copy(tos::span(buffer).slice(offset, data.size()),
@@ -60,7 +60,7 @@ struct impl final : public tos::ae::services::block_memory::sync_server {
     bool buffered_write(const int32_t& block,
                         const int32_t& offset,
                         tos::span<uint8_t> data) override {
-        if (data.size() != get_block_size()) {
+        if (static_cast<int>(data.size()) != get_block_size()) {
             return false;
         }
 
