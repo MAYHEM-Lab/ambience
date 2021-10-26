@@ -250,7 +250,7 @@ void set_up_page_tables() {
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
             tos::segment{text, tos::permissions::read_execute}, text, text_map);
-        auto map_res = boot_addr_space.do_mapping(text_map, nullptr);
+        [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(text_map, nullptr);
         boot_addr_space.mark_resident(
             text_map, text_map.obj_range, reinterpret_cast<void*>(text.base));
     }
@@ -260,7 +260,7 @@ void set_up_page_tables() {
         text.base = tos::align_nearest_down_pow2(text.base, 4096);
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(tos::segment{text, tos::permissions::read}, text, ro_map);
-        auto map_res = boot_addr_space.do_mapping(ro_map, nullptr);
+        [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(ro_map, nullptr);
         boot_addr_space.mark_resident(
             ro_map, ro_map.obj_range, reinterpret_cast<void*>(text.base));
     }
@@ -271,7 +271,7 @@ void set_up_page_tables() {
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
             tos::segment{text, tos::permissions::read_write}, text, data_map);
-        auto map_res = boot_addr_space.do_mapping(data_map, nullptr);
+        [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(data_map, nullptr);
         boot_addr_space.mark_resident(
             data_map, data_map.obj_range, reinterpret_cast<void*>(text.base));
     }
@@ -282,12 +282,12 @@ void set_up_page_tables() {
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
             tos::segment{text, tos::permissions::read_write}, text, bss_map);
-        auto map_res = boot_addr_space.do_mapping(bss_map, nullptr);
+        [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(bss_map, nullptr);
         boot_addr_space.mark_resident(
             bss_map, bss_map.obj_range, reinterpret_cast<void*>(text.base));
     }
 
-    for (int i = 0; i < std::size(p1_tables); ++i) {
+    for (int i = 0; i < static_cast<int>(std::size(p1_tables)); ++i) {
         auto& table = p1_tables[i];
         for (int j = 0; j < 512; ++j) {
             auto page_range = tos::memory_range{uintptr_t((i * 512 + j) << 12), 4096};
