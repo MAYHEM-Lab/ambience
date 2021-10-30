@@ -7,6 +7,9 @@
 #include <utility>
 
 namespace tos {
+template<class T>
+class TaskPromiseBase;
+
 template<class T, bool = std::is_reference_v<T>>
 class TaskPromise;
 
@@ -65,6 +68,7 @@ private:
         : m_handle(coro) {
     }
 
+    friend class TaskPromiseBase<T>;
     friend class TaskPromise<T>;
     promise_coro_handle m_handle{};
 };
