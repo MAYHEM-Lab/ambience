@@ -6,3 +6,7 @@ if (TOS)
     target_link_libraries(lidl_rt INTERFACE tos_util_core)
     target_compile_definitions(lidl_rt INTERFACE TOS)
 endif()
+
+function(add_lidl_dependency)
+    
+endfunction()
