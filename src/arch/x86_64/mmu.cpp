@@ -105,7 +105,7 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
                                          const memory_range& range,
                                          memory_types type,
                                          physical_address phys) {
-    void* phys_addr = (char*)phys.address();
+    void* phys_addr = phys.direct_mapped();
     for (uintptr_t addr = range.base; addr != range.end();
          addr += page_size_bytes, phys_addr = (char*)phys_addr + page_size_bytes) {
         auto path = pt_path_for_addr(addr);
