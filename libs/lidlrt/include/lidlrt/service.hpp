@@ -7,7 +7,6 @@
 #include <cstring>
 #include <lidlrt/builder.hpp>
 #include <lidlrt/meta.hpp>
-#include <lidlrt/status.hpp>
 #include <string_view>
 #include <tos/task.hpp>
 #include <tuple>
