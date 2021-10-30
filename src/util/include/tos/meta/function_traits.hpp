@@ -4,8 +4,6 @@
 #include <tos/meta/types.hpp>
 
 namespace tos::meta {
-template <class...> struct list {};
-
 template<class T>
 struct function_traits;
 
