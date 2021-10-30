@@ -94,19 +94,32 @@ memory_range data();
 memory_range text();
 memory_range rodata();
 memory_range bss();
+
+// We support NOZERO sections which store objects with static lifetimes, but do not get
+// zero initialized, and therefore do not end up in .bss
+// So we use the bss segment to zero initialize, but bss_map to map all of the global
+// variables.
 memory_range bss_map();
 } // namespace default_segments
 
+// This type models a memory address in physical memory.
+// Objects of this type often are not directly dereference-able,
+// hence, this type does not implement a pointer interface.
+// A dereferenceable pointer can be acquired by going through an
+// address space.
+// In case of no virtual memory or direct-mapped virtual address
+// spaces, this type provides a `direct_mapped` member.
 struct physical_address {
     uintptr_t addr;
 
     explicit constexpr physical_address(uintptr_t addr) : addr{addr} {}
     constexpr physical_address(std::nullptr_t) : addr{0} {}
 
-    constexpr operator bool() {
+    constexpr explicit operator bool() {
         return addr != 0;
     }
 
+    [[nodiscard]]
     uintptr_t address() const {
         return addr;
     }
@@ -114,6 +127,7 @@ struct physical_address {
     // Returns a pointer to void to the physical address.
     // Use of the returned pointer assumes the address is mapped direct to the current
     // virtual address space.
+    [[nodiscard]]
     void* direct_mapped() const {
         return reinterpret_cast<void*>(addr);
     }
