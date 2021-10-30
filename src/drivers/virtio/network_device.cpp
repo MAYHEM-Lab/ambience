@@ -82,7 +82,7 @@ bool network_device::initialize(physical_page_allocator* palloc) {
         auto mem = palloc->address_of(*recv_mem);
         auto map_res = tos::cur_arch::map_region(
             tos::cur_arch::get_current_translation_table(),
-            {{uintptr_t(mem), ptrdiff_t(tos::cur_arch::page_size_bytes * 1)},
+            {{mem.address(), ptrdiff_t(tos::cur_arch::page_size_bytes * 1)},
              tos::permissions::read_write},
             tos::user_accessible::no,
             tos::memory_types::normal,

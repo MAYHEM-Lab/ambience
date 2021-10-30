@@ -32,7 +32,7 @@ queue::queue(uint16_t sz, tos::physical_page_allocator& palloc)
 
     auto map_res = tos::cur_arch::map_region(
         tos::cur_arch::get_current_translation_table(),
-        {{uintptr_t(buf), ptrdiff_t(total_sz)}, tos::permissions::read_write},
+        {{buf.address(), ptrdiff_t(total_sz)}, tos::permissions::read_write},
         tos::user_accessible::no,
         tos::memory_types::normal,
         &palloc,
@@ -43,8 +43,10 @@ queue::queue(uint16_t sz, tos::physical_page_allocator& palloc)
     LOG("Buffer:", buf.direct_mapped());
 
     descriptors_base = reinterpret_cast<queue_descriptor*>(buf.direct_mapped());
-    available_base = reinterpret_cast<queue_available*>((char*)buf.direct_mapped() + descriptor_sz);
-    used_base = reinterpret_cast<volatile queue_used*>((char*)buf.direct_mapped() + desc_avail_sz);
+    available_base =
+        reinterpret_cast<queue_available*>((char*)buf.direct_mapped() + descriptor_sz);
+    used_base = reinterpret_cast<volatile queue_used*>((char*)buf.direct_mapped() +
+                                                       desc_avail_sz);
 
     LOG(descriptors_base, available_base, (void*)used_base);
 }
