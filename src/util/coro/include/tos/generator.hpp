@@ -14,7 +14,7 @@ public:
     using promise_coro_handle = std::coroutine_handle<promise_type>;
 
     Generator() = default;
-    Generator(promise_type& promise)
+    explicit Generator(promise_type& promise)
         : m_handle(promise_coro_handle::from_promise(promise)) {
     }
 
@@ -29,21 +29,20 @@ public:
     }
 
     Generator& operator=(Generator&& other) noexcept {
-        if (this == other) {
-            m_handle = other.m_handle;
-            other.m_handle = nullptr;
+        if (this == &other) {
+            m_handle = std::exchange(other.m_handle, nullptr);
         }
 
         return *this;
     }
 
-    Generator(const Generator&) = delete;
-    Generator& operator=(const Generator&) = delete;
-
     struct iterator_type;
+    struct iterator_sentinel {};
 
     iterator_type begin();
-    iterator_type end();
+    iterator_sentinel end() {
+        return {};
+    }
 
 private:
     explicit Generator(promise_coro_handle coroutine) noexcept
@@ -57,6 +56,8 @@ template<typename T>
 struct Generator<T>::GeneratorPromiseType {
     const T* value;
 
+    static void* operator new(size_t);
+
     Generator<T> get_return_object() {
         return Generator<T>{promise_coro_handle::from_promise(*this)};
     }
@@ -65,12 +66,12 @@ struct Generator<T>::GeneratorPromiseType {
         return {};
     }
 
-    std::suspend_always final_suspend() noexcept {
+    std::suspend_never final_suspend() noexcept {
         return {};
     }
 
     std::suspend_always yield_value(const T& valRef) noexcept {
-        this->value = std::addressof(valRef);
+        value = std::addressof(valRef);
         return {};
     }
 
@@ -98,12 +99,12 @@ struct Generator<T>::iterator_type {
 
     promise_coro_handle m_handle;
 
-    bool operator==(const iterator_type& other) const {
-        return m_handle == other;
+    bool operator==(const iterator_sentinel& other) const {
+        return !m_handle;
     }
 
-    bool operator!=(const iterator_type& other) const {
-        return m_handle != other.m_handle;
+    bool operator!=(const iterator_sentinel& other) const {
+        return m_handle;
     }
 
     iterator_type& operator++() {
@@ -129,22 +130,16 @@ struct Generator<T>::iterator_type {
 
 template<typename T>
 typename Generator<T>::iterator_type Generator<T>::begin() {
-    if (not this->m_handle) {
+    if (!m_handle) {
         return iterator_type{nullptr};
     }
 
-    this->m_handle.resume();
+    m_handle.resume();
 
-    if (this->m_handle.done()) {
+    if (m_handle.done()) {
         return iterator_type{nullptr};
     }
 
-    return iterator_type{this->m_handle};
+    return iterator_type{m_handle};
 }
-
-template<typename T>
-typename Generator<T>::iterator_type Generator<T>::end() {
-    return iterator_type{nullptr};
-}
-
 } // namespace tos
