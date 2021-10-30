@@ -12,15 +12,15 @@ add_library(ae_usergroup
     src/user_group.cpp
 )
 
-target_link_libraries(ae_usergroup PUBLIC aekernellib)
+target_link_libraries(ae_usergroup PUBLIC aekernellib quikshare)
 
 if (${TOS_ARCH} MATCHES "x86_64" OR ${TOS_ARCH} MATCHES "aarch64")
-    target_sources(aekernellib PRIVATE src/preemptive_user_group.cpp)
-    target_sources(aekernellib PRIVATE src/in_memory_user_group.cpp)
-    target_sources(aekernellib PRIVATE "src/start_group_${TOS_ARCH}.cpp")
+    target_sources(ae_usergroup PRIVATE src/preemptive_user_group.cpp)
+    target_sources(ae_usergroup PRIVATE src/in_memory_user_group.cpp)
+    target_sources(ae_usergroup PRIVATE "src/start_group_${TOS_ARCH}.cpp")
 elseif(${TOS_ARCH} MATCHES "arm")
-    target_sources(aekernellib PRIVATE src/in_memory_user_group.cpp)
-    target_sources(aekernellib PRIVATE src/start_group_arm.cpp)
+    target_sources(ae_usergroup PRIVATE src/in_memory_user_group.cpp)
+    target_sources(ae_usergroup PRIVATE src/start_group_arm.cpp)
 endif()
 
 add_library(aekernel "")
