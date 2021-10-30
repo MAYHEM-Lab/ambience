@@ -1,7 +1,10 @@
 #pragma once
 
+#include "tos/span.hpp"
+#include <lidlrt/concepts.hpp>
 #include <lidlrt/string.hpp>
 #include <lidlrt/vector.hpp>
+#include <type_traits>
 #include <utility>
 
 namespace lidl::meta::detail {
@@ -29,8 +32,20 @@ inline tos::span<const uint8_t> find_extent(const unsigned long long& sz) {
     return tos::raw_cast(tos::monospan(sz));
 }
 
-template<class ObjT>
+template<Struct ObjT>
 tos::span<const uint8_t> find_extent(const ObjT& obj);
+
+tos::span<const uint8_t> find_extent(const Union auto& obj);
+
+template<class T>
+tos::span<const uint8_t> find_extent(const lidl::vector<T>& obj);
+tos::span<const uint8_t> find_extent(const lidl::string& str);
+
+template<class T>
+requires std::is_pod_v<T>
+tos::span<const uint8_t> find_extent(const T& t) {
+    return tos::raw_cast<const uint8_t>(tos::monospan(t));
+}
 
 template<class T>
 tos::span<const uint8_t> find_extent(const lidl::vector<T>& vec) {
@@ -47,25 +62,31 @@ inline tos::span<const uint8_t> find_extent(const lidl::string& str) {
 
 template<class ObjT, class... Members, std::size_t... Is>
 tos::span<const uint8_t> aggregate_extent(const ObjT& obj,
-                                      std::index_sequence<Is...>,
-                                      const std::tuple<Members...>& members) {
-    return bounding_span(
-        find_extent((obj.*std::get<Is>(members).const_function)())...);
+                                          std::index_sequence<Is...>,
+                                          const std::tuple<Members...>& members) {
+    return bounding_span(find_extent((obj.*std::get<Is>(members).const_function)())...);
 }
 
-template<class ObjT>
+template<Struct ObjT>
 tos::span<const uint8_t> find_extent(const ObjT& obj) {
     using traits = struct_traits<ObjT>;
-    using members_tuple_t = std::remove_const_t<std::remove_reference_t<decltype(traits::members)>>;
+    using members_tuple_t =
+        std::remove_const_t<std::remove_reference_t<decltype(traits::members)>>;
     static constexpr size_t members_size = std::tuple_size_v<members_tuple_t>;
-    return bounding_span(tos::raw_cast<const uint8_t>(tos::monospan(obj)),
-                         aggregate_extent(obj, std::make_index_sequence<members_size>{}, traits::members));
+    return bounding_span(
+        tos::raw_cast<const uint8_t>(tos::monospan(obj)),
+        aggregate_extent(obj, std::make_index_sequence<members_size>{}, traits::members));
+}
+
+tos::span<const uint8_t> find_extent(const Union auto& obj) {
+    auto active = visit([](auto& member) { return find_extent(member); }, obj);
+    return bounding_span(tos::raw_cast<const uint8_t>(tos::monospan(obj)), active);
 }
 
 template<class ObjT>
 std::pair<tos::span<const uint8_t>, ptrdiff_t> find_extent_and_position(const ObjT& obj) {
     auto __extent = find_extent(obj);
-    auto __ptr    = reinterpret_cast<const uint8_t*>(&obj);
+    auto __ptr = reinterpret_cast<const uint8_t*>(&obj);
     return {__extent, __ptr - __extent.begin()};
 }
 } // namespace lidl::meta::detail
