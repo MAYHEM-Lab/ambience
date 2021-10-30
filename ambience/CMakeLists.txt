@@ -1,7 +1,6 @@
 add_library(
   aecommon
   src/common.cpp
-  include/tos/ae/entry.hpp
   include/tos/ae/service_host.hpp
   include/tos/ae/group.hpp
   include/tos/ae/transport/downcall.hpp
