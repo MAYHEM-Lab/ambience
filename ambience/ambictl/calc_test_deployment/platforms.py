@@ -14,7 +14,7 @@ class x86_64(Platform):
         user_conf_dir = os.path.join(source_dir, f"cmake-build-barex64-user")
         os.makedirs(user_conf_dir, exist_ok=True)
         args = ["cmake", "-G", "Ninja", f"-DTOS_CPU=x86_64/ae_user", "-DCMAKE_BUILD_TYPE=Release",
-                "-DENABLE_LTO=ON", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache", "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+                "-DENABLE_LTO=ON",
                 source_dir]
         print(args)
         cmake_proc = subprocess.Popen(args, cwd=user_conf_dir)
@@ -23,7 +23,7 @@ class x86_64(Platform):
         conf_dir = os.path.join(source_dir, f"cmake-build-barex64")
         os.makedirs(conf_dir, exist_ok=True)
         args = ["cmake", "-G", "Ninja", f"-DTOS_BOARD={self.board_name}", "-DCMAKE_BUILD_TYPE=Release",
-                "-DENABLE_LTO=ON", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache", "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+                "-DENABLE_LTO=ON",
                 source_dir]
         print(args)
         cmake_proc = subprocess.Popen(args, cwd=conf_dir)
