@@ -7,6 +7,7 @@
 #include <tos/debug/debug.hpp>
 #include <tos/meta/types.hpp>
 #include <tos/task.hpp>
+#include <tos/quik.hpp>
 
 namespace tos::ae {
 struct downcall_transport {
