@@ -6,8 +6,8 @@
 #include <tos/ae/rings.hpp>
 #include <tos/debug/debug.hpp>
 #include <tos/meta/types.hpp>
-#include <tos/task.hpp>
 #include <tos/quik.hpp>
+#include <tos/task.hpp>
 
 namespace tos::ae {
 struct downcall_transport {
@@ -33,17 +33,12 @@ struct downcall_transport {
 
         auto translated_args =
             ipc_area_vtbl[proc_id].do_share(*tos::global::cur_as, *g->as, args, res);
-        //        tos::debug::log("Mapped args from", args, "to", translated_args.get());
+
         const auto& [req, id] = prepare_req<true>(*g->iface.user_iface,
                                                   channel_id,
                                                   proc_id,
                                                   translated_args->get_tuple_ptr(),
                                                   res);
-
-        //      auto ipc_size = ipc_area_vtbl[proc_id](args);
-        //    auto region = new uint8_t[ipc_size];
-        //  tos::debug::do_not_optimize(region);
-        // delete[] region;
 
         return awaiter{.m_elem = &req,
                        .id = id,
