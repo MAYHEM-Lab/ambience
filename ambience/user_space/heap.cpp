@@ -22,3 +22,11 @@ void* operator new(size_t sz) {
 void operator delete(void* pt) {
     alloc().free(pt);
 }
+
+void* operator new[](size_t sz) {
+    return operator new(sz);
+}
+
+void operator delete[](void* ptr) {
+    operator delete(ptr);
+}
