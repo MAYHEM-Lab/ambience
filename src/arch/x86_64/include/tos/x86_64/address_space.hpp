@@ -173,11 +173,10 @@ struct typed_share : temporary_share {
 template<class... DataPtrTs>
 typed_share<DataPtrTs...> create_share(tos::cur_arch::address_space& from,
                                        tos::cur_arch::address_space& to,
-                                       physical_page_allocator& palloc,
                                        const std::tuple<DataPtrTs...>& in_ptrs) {
     typed_share<DataPtrTs...> res;
     res.to = &to;
-    res.palloc = &palloc;
+    res.palloc = physical_page_allocator::instance();
     quik::perform_share(res, in_ptrs);
     res.finalize();
     return res;

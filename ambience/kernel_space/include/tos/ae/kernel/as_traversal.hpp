@@ -5,6 +5,7 @@
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/arch.hpp>
 #include <tos/meta/algorithm.hpp>
+#include <tos/quik.hpp>
 
 namespace tos::ae {
 template<class ServiceT, int ProcId>
@@ -21,7 +22,7 @@ struct procedure_decision {
                                                       void* ret_ptr) {
         auto& typed_tuple = *static_cast<const ArgsTupleType*>(args_tuple);
         auto res = cur_arch::create_share(
-            from_space, to_space, *physical_page_allocator::instance(), typed_tuple);
+            from_space, to_space, typed_tuple);
         return std::make_unique<decltype(res)>(std::move(res));
     }
 };
