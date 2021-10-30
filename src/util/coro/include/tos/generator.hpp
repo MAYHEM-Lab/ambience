@@ -100,11 +100,11 @@ struct Generator<T>::iterator_type {
     promise_coro_handle m_handle;
 
     bool operator==(const iterator_sentinel& other) const {
-        return !m_handle;
+        return m_handle == nullptr;
     }
 
     bool operator!=(const iterator_sentinel& other) const {
-        return m_handle;
+        return m_handle != nullptr;
     }
 
     iterator_type& operator++() {
