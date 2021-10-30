@@ -60,14 +60,13 @@
 
 #pragma once
 
+#include <tos/meta/types.hpp>
 #include <type_traits>
 #include <utility>
 
 namespace tos {
 template<class T>
-struct ct {
-    using type = T;
-};
+using ct = meta::identity<T>;
 
 template<class KeyT, class ValT>
 struct el_t {
