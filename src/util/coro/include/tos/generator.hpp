@@ -66,7 +66,7 @@ struct Generator<T>::GeneratorPromiseType {
         return {};
     }
 
-    std::suspend_never final_suspend() noexcept {
+    std::suspend_always final_suspend() noexcept {
         return {};
     }
 
