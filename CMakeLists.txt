@@ -33,7 +33,7 @@ add_subdirectory(${TOS_PROJECT_ROOT}/config/boards EXCLUDE_FROM_ALL)
 add_subdirectory(${TOS_PROJECT_ROOT}/libs)
 add_subdirectory(${TOS_PROJECT_ROOT}/src)
 add_subdirectory(${TOS_PROJECT_ROOT}/apps EXCLUDE_FROM_ALL)
-add_subdirectory(${TOS_PROJECT_ROOT}/third_party)
+add_subdirectory(${TOS_PROJECT_ROOT}/third_party EXCLUDE_FROM_ALL)
 add_subdirectory(${TOS_PROJECT_ROOT}/staging EXCLUDE_FROM_ALL)
 
 if (BUILD_EXAMPLES)
