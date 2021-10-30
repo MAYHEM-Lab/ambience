@@ -12,18 +12,6 @@ if (NOT ${CLANG_FORMAT_BIN} MATCHES "NOTFOUND")
     message(STATUS "Found clang-format")
 endif()
 
-define_property(
-    TARGET
-    PROPERTY LIDL_SCHEMA_HEADERS
-    BRIEF_DOCS "Header name of the schema"
-    FULL_DOCS "Header name of the schema")
-
-define_property(
-    TARGET
-    PROPERTY LIDL_DEP_HEADERS
-    BRIEF_DOCS "Header name of the schema"
-    FULL_DOCS "Header name of the schema")
-
 if (NOT ${LIDLC_BIN} MATCHES "NOTFOUND")
     function(add_lidlc Name)
         set(LIDLC_OUTPUTS)
@@ -60,13 +48,6 @@ if (NOT ${LIDLC_BIN} MATCHES "NOTFOUND")
         target_include_directories(${Name} INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
         target_link_libraries(${Name} INTERFACE lidl_rt)
         add_dependencies(${Name} ${Name}_IMPL)
-        #set_property(TARGET ${Name} PROPERTY LIDL_SCHEMA_HEADERS ${LIDLC_OUTPUTS})
-    endfunction()
-
-    function(add_lidl_dependency Target Dep)
-        target_link_libraries(${Target} INTERFACE ${Dep})
-#        set_property(TARGET ${Target} APPEND PROPERTY LIDL_DEP_HEADERS "$<TARGET_PROPERTY:${Dep},LIDL_DEP_HEADERS>")
-#        add_custom_target(dump_deps_${Target} COMMAND ${CMAKE_COMMAND} -E echo "$<TARGET_PROPERTY:${Target},LIDL_DEP_HEADERS>")
     endfunction()
 else()
     function(add_lidlc Name)
