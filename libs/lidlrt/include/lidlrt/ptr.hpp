@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <iterator>
 
 namespace lidl {
 template<class T>
