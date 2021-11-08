@@ -1,4 +1,7 @@
 #pragma once
+
+#include <lidlrt/builder.hpp>
+#include <lidlrt/ptr.hpp>
 #include <lidlrt/traits.hpp>
 #include <tos/span.hpp>
 
