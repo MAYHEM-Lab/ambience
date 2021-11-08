@@ -52,6 +52,7 @@ struct alignas(4096) translation_table {
     }
 
 private:
-    std::array<table_entry, 512> entries;
+    // Zero initialized
+    std::array<table_entry, 512> entries{};
 };
 } // namespace tos::x86_64
