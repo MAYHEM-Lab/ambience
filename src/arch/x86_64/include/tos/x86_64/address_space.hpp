@@ -86,6 +86,7 @@ struct temporary_share : quik::share_base {
     struct share_page {
         physical_page* page;
         bool owned : 1;
+        bool readonly : 1;
         uint16_t space : 13;
     };
     std::forward_list<share_page> pages;
@@ -95,7 +96,9 @@ struct temporary_share : quik::share_base {
             return nullptr;
         }
         if (pages.empty() || pages.front().space < sz) {
-            add_page();
+            if (!add_page()) {
+                return physical_address{0UL};
+            }
         }
         auto base = palloc->address_of(*pages.front().page);
         auto res =
@@ -111,7 +114,7 @@ struct temporary_share : quik::share_base {
             map_page_ident(*to->m_table,
                            *page.page,
                            *palloc,
-                           page.owned ? permissions::read_write : permissions::read,
+                           page.readonly ? permissions::read : permissions::read_write,
                            user_accessible::yes);
         }
     }
@@ -119,6 +122,16 @@ struct temporary_share : quik::share_base {
     share_page* map_read_only(uintptr_t page_base_address_in_from) {
         auto& elem = pages.emplace_front();
         elem.owned = false;
+        elem.readonly = true;
+        elem.space = 0;
+        elem.page = palloc->info(physical_address{page_base_address_in_from});
+        return &elem;
+    }
+
+    share_page* map_read_write(uintptr_t page_base_address_in_from) {
+        auto& elem = pages.emplace_front();
+        elem.owned = false;
+        elem.readonly = false;
         elem.space = 0;
         elem.page = palloc->info(physical_address{page_base_address_in_from});
         return &elem;
@@ -138,6 +151,7 @@ struct temporary_share : quik::share_base {
 
         auto& elem = pages.emplace_front();
         elem.owned = true;
+        elem.readonly = false;
         elem.space = page_size_bytes;
         elem.page = alloc;
         return &elem;
@@ -146,7 +160,7 @@ struct temporary_share : quik::share_base {
     template<class T, class... Args>
     T* allocate(Args&&... args) {
         auto ptr = raw_allocate(sizeof(T), alignof(T));
-        return new (ptr) T(std::forward<Args>(args)...);
+        return new (ptr.direct_mapped()) T(std::forward<Args>(args)...);
     }
 
     ~temporary_share() {
