@@ -48,7 +48,12 @@ struct event_log {
         new (buf) trace_event(event);
     }
 
-    Generator<std::pair<const detail::model_vtbl*, const void*>> iter_events();
+    Generator<std::pair<const detail::model_vtbl*, const void*>> iter_events() {
+        for (auto [ptr, size] : m_alloc.allocations()) {
+            auto ev = static_cast<trace_event*>(ptr);
+            co_yield std::pair(detail::ev_vtbl_start + ev->m_evt_id, ev->m_data);
+        }
+    }
 
 private:
     struct trace_event {
@@ -92,16 +97,17 @@ private:
         Generator<std::pair<void*, SizeType>> allocations() {
             uint8_t* first = head;
 
-            while (first >= m_storage.begin() && first < m_storage.end()) {
+            do {
                 auto len = *reinterpret_cast<SizeType*>(first);
                 co_yield std::pair<void*, int>(first, len);
                 first += len;
-            }
+            } while (first != tail);
         }
 
         // [size of allocation] [...data...] [size of next allocation] [...data...]
         span<uint8_t> m_storage;
         uint8_t* head = nullptr;
+        uint8_t* tail = nullptr;
         uint8_t* end = m_storage.begin();
     };
 
