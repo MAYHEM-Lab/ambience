@@ -50,7 +50,7 @@ public:
                 return m_self_handle;
             }
 
-            decltype(auto) await_resume() {
+            T await_resume() {
                 if constexpr (!std::is_void_v<T>) {
                     return std::move(m_self_handle.promise().result());
                 }

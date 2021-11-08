@@ -62,7 +62,7 @@ Task<int> b() {
 }
 
 Task<void> c() {
-    auto&& [a_res, b_res] = co_await tos::coro::when_all(a(), b());
+    auto [a_res, b_res] = co_await tos::coro::when_all(a(), b());
     REQUIRE_EQ(63, a_res);
     REQUIRE_EQ(42, b_res);
 }
