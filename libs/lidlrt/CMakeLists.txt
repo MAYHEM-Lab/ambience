@@ -7,6 +7,6 @@ if (TOS)
     target_compile_definitions(lidl_rt INTERFACE TOS)
 endif()
 
-function(add_lidl_dependency)
-    
+function(add_lidl_dependency from to)
+    target_link_libraries(${from} INTERFACE ${to})
 endfunction()
