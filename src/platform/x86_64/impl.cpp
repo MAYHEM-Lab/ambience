@@ -170,7 +170,7 @@ extern "C" {
 NO_ZERO translation_table p4_table;
 NO_ZERO translation_table p3_table;
 NO_ZERO translation_table p2_tables[1];
-NO_ZERO translation_table p1_tables[20];
+NO_ZERO translation_table p1_tables[128];
 }
 
 NO_ZERO tos::x86_64::address_space boot_addr_space(tos::detail::dangerous_tag{});
