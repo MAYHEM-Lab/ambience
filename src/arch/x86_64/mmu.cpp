@@ -51,7 +51,7 @@ constexpr expected<void, mmu_errors> recursive_allocate(translation_table& root,
             }
 
             auto page = palloc->allocate(1);
-            if (page == nullptr) {
+            if (!page) {
                 tos::debug::error("Page allocator failed");
                 return unexpected(mmu_errors::page_alloc_fail);
             }
@@ -179,12 +179,16 @@ do_clone(const translation_table& root, physical_page_allocator& palloc, int lev
     if (!page_res) {
         return unexpected(mmu_errors::page_alloc_fail);
     }
+
     EXPECTED_TRYV(map_page_ident(get_current_translation_table(), *page_res, palloc));
+
     auto tbl = new (palloc.address_of(*page_res).direct_mapped()) translation_table(root);
+
     for (auto& entry : *tbl) {
         if (!entry.valid()) {
             continue;
         }
+
         if (last_level(level, entry)) {
             // Not a table, nothing to do
             continue;
@@ -193,9 +197,7 @@ do_clone(const translation_table& root, physical_page_allocator& palloc, int lev
         auto clone_res = do_clone(table_at(entry), palloc, level + 1);
         if (!clone_res) {
             tos::debug::error("Clone failed");
-            while (true)
-                ;
-            // Oof
+            return clone_res;
         }
         entry.page_num(address_to_page(force_get(clone_res)) << page_size_log);
     }
