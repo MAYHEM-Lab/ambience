@@ -1,3 +1,5 @@
+unset(BUILD_TESTS)
+
 add_subdirectory(picolibc)
 add_subdirectory(llvm)
 add_subdirectory(cmsis-core)
