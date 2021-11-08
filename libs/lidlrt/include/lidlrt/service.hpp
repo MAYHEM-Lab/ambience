@@ -10,6 +10,7 @@
 #include <string_view>
 #include <tos/task.hpp>
 #include <tuple>
+#include <lidlrt/concepts.hpp>
 
 namespace lidl {
 template<class T>
@@ -348,6 +349,12 @@ typed_union_procedure_runner_t<BaseServiceT> make_union_procedure_runner() {
 }
 
 template<class T>
+struct extractor;
+
+template<class T>
+struct zerocopy_type;
+
+template<class T>
 struct extractor {
     using type = T&;
     static type extract(T& t) {
@@ -371,8 +378,32 @@ auto& extract(T& t) {
 template<class T>
 struct zerocopy_type {
     using type = std::add_pointer_t<T>;
-    static type make_param(T t) {
+    static type make_param(T& t) {
         return &t;
+    }
+};
+
+template<>
+struct zerocopy_type<std::string_view> {
+    using type = std::string_view;
+    static type make_param(std::string_view t) {
+        return t;
+    }
+};
+
+template<>
+struct zerocopy_type<const std::string_view&> {
+    using type = std::string_view;
+    static type make_param(std::string_view t) {
+        return t;
+    }
+};
+
+template<>
+struct zerocopy_type<std::string_view&> {
+    using type = std::string_view;
+    static type make_param(std::string_view t) {
+        return t;
     }
 };
 
