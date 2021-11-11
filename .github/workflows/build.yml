@@ -19,7 +19,7 @@ jobs:
       uses: FatihBAKIR/cache@v2
       with:
         path: /opt/llvm
-        key: ${{ runner.os }}-llvm-12
+        key: ${{ runner.os }}-llvm-13
 
     - name: Cache CCache
       id: cache-ccache-dir
@@ -31,9 +31,9 @@ jobs:
     - name: Download LLVM
       if: steps.cache-llvm.outputs.cache-hit != 'true'
       run: >
-        wget https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz &&
-        tar xf clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz &&
-        sudo mv clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04 /opt/llvm
+        wget https://github.com/llvm/llvm-project/releases/download/llvmorg-13.0.0/clang+llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz &&
+        tar xf clang+llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz &&
+        sudo mv clang+llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04 /opt/llvm
 
     - name: Download lidlc
       run: wget http://cs.ucsb.edu/~bakir/lidlc && chmod +x lidlc && sudo mv lidlc /usr/local/bin/
