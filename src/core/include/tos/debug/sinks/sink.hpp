@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string_view>
 #include <tos/debug/detail/log_level.hpp>
+#include <tos/memory.hpp>
 
 namespace tos::debug::detail {
 struct any_sink {
@@ -66,6 +67,14 @@ struct any_sink {
 
     void add(void* f) {
         add(static_cast<const void*>(f));
+    }
+
+    void add(physical_address addr) {
+        add(reinterpret_cast<const void*>(addr.address()));
+    }
+
+    void add(virtual_address addr) {
+        add(reinterpret_cast<const void*>(addr.address()));
     }
 };
 
