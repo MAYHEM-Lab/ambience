@@ -2,6 +2,7 @@
 
 #include "tos/paging/physical_page_allocator.hpp"
 #include "tos/x86_64/mmu/common.hpp"
+#include "tos/x86_64/mmu/errors.hpp"
 #include <forward_list>
 #include <tos/address_space.hpp>
 #include <tos/function_ref.hpp>
@@ -88,6 +89,7 @@ struct temporary_share : quik::share_base {
         physical_page* page;
         bool owned : 1;
         bool readonly : 1;
+        bool unmap : 1;
         uint16_t space : 13;
     };
     std::forward_list<share_page> pages;
@@ -102,28 +104,41 @@ struct temporary_share : quik::share_base {
             }
         }
         auto base = palloc->address_of(*pages.front().page);
-        auto res =
-            base.addr + (page_size_bytes - pages.front().space);
+        auto res = base.addr + (page_size_bytes - pages.front().space);
         pages.front().space -= sz;
         return physical_address{res};
     }
 
     // Map the pages into the target.
-    void finalize() {
+    bool finalize() {
         for (auto& page : pages) {
-            //            tos::debug::log("Mapping page", palloc->address_of(*page.page));
-            map_page_ident(*to->m_table,
-                           *page.page,
-                           *palloc,
-                           page.readonly ? permissions::read : permissions::read_write,
-                           user_accessible::yes);
+            auto res = map_page_ident(*to->m_table,
+                                      *page.page,
+                                      *palloc,
+                                      page.readonly ? permissions::read
+                                                    : permissions::read_write,
+                                      user_accessible::yes);
+
+            if (res) {
+                continue;
+            }
+
+            auto err = force_error(res);
+            if (err == mmu_errors::already_allocated) {
+                page.unmap = false;
+                continue;
+            }
+
+            return false;
         }
+        return true;
     }
 
     share_page* map_read_only(uintptr_t page_base_address_in_from) {
         auto& elem = pages.emplace_front();
         elem.owned = false;
         elem.readonly = true;
+        elem.unmap = true;
         elem.space = 0;
         elem.page = palloc->info(physical_address{page_base_address_in_from});
         return &elem;
@@ -133,6 +148,7 @@ struct temporary_share : quik::share_base {
         auto& elem = pages.emplace_front();
         elem.owned = false;
         elem.readonly = false;
+        elem.unmap = true;
         elem.space = 0;
         elem.page = palloc->info(physical_address{page_base_address_in_from});
         return &elem;
@@ -153,6 +169,7 @@ struct temporary_share : quik::share_base {
         auto& elem = pages.emplace_front();
         elem.owned = true;
         elem.readonly = false;
+        elem.unmap = true;
         elem.space = page_size_bytes;
         elem.page = alloc;
         return &elem;
@@ -166,10 +183,15 @@ struct temporary_share : quik::share_base {
 
     ~temporary_share() {
         for (auto& page : pages) {
+            if (page.unmap) {
+                mark_nonresident(*to->m_table,
+                                 identity_map(palloc->range_of(*page.page)));
+            }
+
             if (!page.owned) {
                 continue;
             }
-            mark_nonresident(*to->m_table, identity_map(palloc->range_of(*page.page)));
+
             mark_nonresident(get_current_translation_table(),
                              identity_map(palloc->range_of(*page.page)));
             palloc->free({page.page, 1});
