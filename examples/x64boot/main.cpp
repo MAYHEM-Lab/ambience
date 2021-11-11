@@ -58,6 +58,8 @@ struct on_demand_interrupt {
     }
 };
 
+void low_level_write(tos::span<unsigned char const>) {}
+
 void thread() {
     auto& self = *tos::self();
 

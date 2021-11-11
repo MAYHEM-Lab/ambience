@@ -1,4 +1,4 @@
-name: self-hosted-build
+name: self-hosted-build-debug
 
 on: [push, pull_request]
 
