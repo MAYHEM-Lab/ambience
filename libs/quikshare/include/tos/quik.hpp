@@ -57,6 +57,17 @@ struct sharer<std::string_view> {
 };
 
 template<class T>
+struct sharer<tos::span<T>> {
+    template<class ShareT>
+    static tos::span<T> do_share(ShareT& share, const tos::span<T>& data) {
+        LOG("Sharing span", data);
+        auto ptr = share.raw_allocate(data.size(), 1);
+        memcpy(ptr.direct_mapped(), data.data(), data.size());
+        return tos::span<T>(static_cast<T*>(ptr.direct_mapped()), data.size());
+    }
+};
+
+template<class T>
 struct verbatim_sharer {
     template<class ShareT>
     static T do_share(ShareT& share, const T& arg) {
