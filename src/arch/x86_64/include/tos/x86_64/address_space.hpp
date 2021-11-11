@@ -165,10 +165,10 @@ struct temporary_share : quik::share_base {
 
     ~temporary_share() {
         for (auto& page : pages) {
-            mark_nonresident(*to->m_table, palloc->range_of(*page.page));
             if (!page.owned) {
                 continue;
             }
+            mark_nonresident(*to->m_table, palloc->range_of(*page.page));
             mark_nonresident(get_current_translation_table(),
                              palloc->range_of(*page.page));
             palloc->free({page.page, 1});
