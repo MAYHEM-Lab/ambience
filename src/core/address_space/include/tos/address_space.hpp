@@ -11,7 +11,7 @@ public:
     address_space() = default;
     address_space(const address_space& rhs);
 
-    mapping* containing_mapping(virtual_address virt_addr);
+    mapping* containing_mapping(virtual_address virt_addr) const;
 
     const auto& mappings() const;
 

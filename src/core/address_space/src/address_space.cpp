@@ -14,7 +14,7 @@ const cur_arch::address_space* address_space::self() const {
     return static_cast<const cur_arch::address_space*>(this);
 }
 
-mapping* address_space::containing_mapping(virtual_address virt_addr) {
+mapping* address_space::containing_mapping(virtual_address virt_addr) const {
     for (auto& mapping : m_mappings) {
         if (contains(mapping.vm_segment.range, virt_addr)) {
             return &mapping;
