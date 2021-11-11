@@ -17,7 +17,7 @@ struct address_space final : tos::address_space {
 
     expected<void, mmu_errors> allocate_region(mapping& mapping,
                                                physical_page_allocator* palloc) {
-        Assert(mapping.vm_segment.range.base % page_size_bytes == 0);
+        Assert(mapping.vm_segment.range.base.address() % page_size_bytes == 0);
         Assert(mapping.vm_segment.range.size % page_size_bytes == 0);
         EXPECTED_TRYV(x86_64::allocate_region(
             *m_table, mapping.vm_segment, mapping.allow_user, palloc));
@@ -36,16 +36,17 @@ struct address_space final : tos::address_space {
     void remove_mapping(mapping& mapping);
 
     expected<void, mmu_errors>
-    mark_resident(mapping& mapping, memory_range subrange, physical_address phys_addr) {
+    mark_resident(mapping& mapping, virtual_range subrange, physical_address phys_addr) {
         return x86_64::mark_resident(*m_table, subrange, mapping.mem_type, phys_addr);
     }
 
     expected<bool, mmu_errors> handle_memory_fault(const exception_frame& frame,
-                                                   uintptr_t fault_addr);
+                                                   virtual_address fault_addr);
 
-    static memory_range containing_fragment(memory_range range) {
+    static virtual_range containing_fragment(virtual_range range) {
         range.size = align_nearest_up_pow2(range.size, page_size_bytes);
-        range.base = align_nearest_down_pow2(range.base, page_size_bytes);
+        range.base = virtual_address(
+            align_nearest_down_pow2(range.base.address(), page_size_bytes));
         return range;
     }
 
@@ -168,9 +169,9 @@ struct temporary_share : quik::share_base {
             if (!page.owned) {
                 continue;
             }
-            mark_nonresident(*to->m_table, palloc->range_of(*page.page));
+            mark_nonresident(*to->m_table, identity_map(palloc->range_of(*page.page)));
             mark_nonresident(get_current_translation_table(),
-                             palloc->range_of(*page.page));
+                             identity_map(palloc->range_of(*page.page)));
             palloc->free({page.page, 1});
         }
     }

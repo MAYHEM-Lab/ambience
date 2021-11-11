@@ -14,7 +14,7 @@ struct job;
 // to in an address space.
 class backing_object {
 public:
-    virtual auto create_mapping(const segment& vm_segment,
+    virtual auto create_mapping(const virtual_segment& vm_segment,
                                 const memory_range& obj_range,
                                 tos::mapping& mapping) -> bool = 0;
 
@@ -32,7 +32,7 @@ struct memory_fault {
 
     bool non_resident : 1;
 
-    uintptr_t virt_addr;
+    virtual_address virt_addr;
     permissions access_perms;
 
     job* faulting_job;

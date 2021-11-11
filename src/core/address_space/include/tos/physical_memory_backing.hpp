@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tos/memory.hpp"
 #include <tos/backing_object.hpp>
 
 namespace tos {
@@ -9,17 +10,17 @@ namespace tos {
 // address space with different permissions.
 class physical_memory_backing : public backing_object {
 public:
-    explicit constexpr physical_memory_backing(const segment& phys_seg, memory_types type)
+    explicit constexpr physical_memory_backing(const physical_segment& phys_seg, memory_types type)
         : m_seg{phys_seg}
         , m_type{type} {
     }
 
     bool handle_memory_fault([[maybe_unused]] const memory_fault& fault) override;
 
-    constexpr auto create_mapping(const segment& vm_segment,
+    constexpr auto create_mapping(const virtual_segment& vm_segment,
                                   const memory_range& obj_range,
                                   tos::mapping& mapping) -> bool override {
-        if (!contains(m_seg.range, obj_range)) {
+        if (!contains(to_memory_range(m_seg.range), obj_range)) {
             return false;
         }
 
@@ -36,7 +37,7 @@ public:
     }
 
 private:
-    segment m_seg;
+    physical_segment m_seg;
     memory_types m_type;
 };
 } // namespace tos

@@ -9,7 +9,7 @@ struct mapping {
     backing_object* obj;
     cur_arch::address_space* va;
 
-    segment vm_segment; // Where this mapping is in the address space.
+    virtual_segment vm_segment; // Where this mapping is in the address space.
     memory_range obj_range; // Where this mapping is in the backing object.
 
     user_accessible allow_user : 1;

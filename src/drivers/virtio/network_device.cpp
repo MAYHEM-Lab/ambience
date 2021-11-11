@@ -1,5 +1,6 @@
 #include "common/inet/tcp_ip.hpp"
 #include "tos/intrusive_list.hpp"
+#include "tos/memory.hpp"
 #include "tos/semaphore.hpp"
 #include <cstring>
 #include <tos/debug/log.hpp>
@@ -82,8 +83,8 @@ bool network_device::initialize(physical_page_allocator* palloc) {
         auto mem = palloc->address_of(*recv_mem);
         auto map_res = tos::cur_arch::map_region(
             tos::cur_arch::get_current_translation_table(),
-            {{mem.address(), ptrdiff_t(tos::cur_arch::page_size_bytes * 1)},
-             tos::permissions::read_write},
+            identity_map(physical_segment{palloc->range_of(*recv_mem),
+                                          tos::permissions::read_write}),
             tos::user_accessible::no,
             tos::memory_types::normal,
             palloc,

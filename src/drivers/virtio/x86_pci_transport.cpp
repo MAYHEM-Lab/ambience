@@ -1,3 +1,4 @@
+#include "tos/memory.hpp"
 #include <deque>
 #include <tos/debug/log.hpp>
 #include <tos/function_ref.hpp>
@@ -254,9 +255,9 @@ private:
         }
         LOG((void*)map_addr);
 
-        auto segment =
-            tos::segment{.range = {.base = map_addr, .size = x86_64::page_size_bytes},
-                         .perms = permissions::read_write};
+        auto segment = tos::virtual_segment{
+            .range = {.base = virtual_address(map_addr), .size = x86_64::page_size_bytes},
+            .perms = permissions::read_write};
         auto& root = x86_64::get_current_translation_table();
         auto res = x86_64::map_region(root,
                                       segment,

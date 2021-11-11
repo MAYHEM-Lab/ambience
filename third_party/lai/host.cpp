@@ -1,3 +1,4 @@
+#include "tos/memory.hpp"
 #include <acpispec/tables.h>
 #include <lai/host.h>
 #include <tos/debug/log.hpp>
@@ -45,14 +46,17 @@ void* laihost_map(size_t address, size_t count) {
     LOG_TRACE("map", (void*)address, (void*)count);
 
     auto& root = tos::x86_64::get_current_translation_table();
-    auto segment = tos::segment{.range = {.base = address, .size = ptrdiff_t(count)},
-                                .perms = tos::permissions::read_write};
+    auto segment = tos::virtual_segment{
+        .range = {.base = tos::virtual_address(address), .size = ptrdiff_t(count)},
+        .perms = tos::permissions::read_write};
     auto res =
         tos::x86_64::allocate_region(root, segment, tos::user_accessible::no, g_palloc);
 
     if (res || force_error(res) == tos::x86_64::mmu_errors::already_allocated) {
-        res = tos::x86_64::mark_resident(
-            root, segment.range, tos::memory_types::normal, tos::physical_address{address});
+        res = tos::x86_64::mark_resident(root,
+                                         segment.range,
+                                         tos::memory_types::normal,
+                                         tos::physical_address{address});
         if (res) {
             LOG_TRACE("returning", (void*)addr_bkp);
 
@@ -68,8 +72,9 @@ void* laihost_map(size_t address, size_t count) {
 void laihost_unmap(void* pointer, size_t count) {
     pointer = tos::align_nearest_down_pow2(pointer, tos::x86_64::page_size_bytes);
     count = tos::align_nearest_up_pow2(count, tos::x86_64::page_size_bytes);
-    auto range = tos::memory_range{.base = reinterpret_cast<uintptr_t>(pointer),
-                                   .size = ptrdiff_t(count)};
+    auto range = tos::virtual_range{
+        .base = tos::virtual_address(reinterpret_cast<uintptr_t>(pointer)),
+        .size = ptrdiff_t(count)};
     auto& root = tos::x86_64::get_current_translation_table();
 
     ensure(tos::x86_64::mark_nonresident(root, range));

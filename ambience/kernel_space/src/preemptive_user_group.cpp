@@ -1,3 +1,4 @@
+#include "tos/memory.hpp"
 #include <tos/ae/kernel/loaders/preemptive_elf_group.hpp>
 #include <tos/ae/kernel/runners/preemptive_user_runner.hpp>
 #include <tos/ae/kernel/start_group.hpp>
@@ -39,15 +40,7 @@ map_elf(const tos::elf::elf64& elf,
             pheader.file_size,
             base);
 
-        tos::permissions perms = tos::permissions::read_write;
-        if (tos::util::is_flag_set(pheader.attrs, tos::elf::segment_attrs::execute)) {
-            perms = tos::permissions::read_execute;
-        }
-
-        auto vseg =
-            tos::segment{.range = {.base = pheader.virt_address,
-                                   .size = static_cast<ptrdiff_t>(pheader.virt_size)},
-                         .perms = perms};
+        auto vseg = pheader.virtual_segment();
 
         EXPECTED_TRYV(map_region(root_table,
                                  vseg,
@@ -86,9 +79,9 @@ create_and_map_stack(size_t stack_size,
 
     EXPECTED_TRYV(map_region(
         root_table,
-        tos::segment{.range = {.base =  stack_address.address(),
-                               .size = static_cast<ptrdiff_t>(stack_size)},
-                     tos::permissions::read_write},
+        identity_map(tos::physical_segment{
+            .range = {.base = stack_address, .size = static_cast<ptrdiff_t>(stack_size)},
+            tos::permissions::read_write}),
         tos::user_accessible::yes,
         tos::memory_types::normal,
         &palloc,
@@ -96,15 +89,16 @@ create_and_map_stack(size_t stack_size,
 
     EXPECTED_TRYV(map_region(
         x86_64::get_current_translation_table(),
-        tos::segment{.range = {.base =  stack_address.address(),
-                               .size = static_cast<ptrdiff_t>(stack_size)},
-                     tos::permissions::read_write},
+        identity_map(tos::physical_segment{
+            .range = {.base = stack_address, .size = static_cast<ptrdiff_t>(stack_size)},
+            tos::permissions::read_write}),
         tos::user_accessible::no,
         tos::memory_types::normal,
         &palloc,
         stack_address));
 
-    return tos::span<uint8_t>(static_cast<uint8_t*>(stack_address.direct_mapped()), stack_size);
+    return tos::span<uint8_t>(static_cast<uint8_t*>(stack_address.direct_mapped()),
+                              stack_size);
 }
 } // namespace
 
@@ -145,7 +139,7 @@ preemptive_elf_group::do_load(span<const uint8_t> elf_body,
 
     auto stack = force_get(stack_res);
 
-//    dump_table(*force_get(our_as)->m_table);
+    //    dump_table(*force_get(our_as)->m_table);
 
     tos::debug::log(tos::global::cur_as, force_get(our_as).get());
     auto res = start_group(stack,

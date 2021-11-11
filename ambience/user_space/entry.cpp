@@ -46,8 +46,8 @@ detail::any_logger& default_log() {
 //    std::copy_n(&_sidata, data.size, data_start);
 
     auto bss = tos::default_segments::bss();
-    auto bss_start = reinterpret_cast<uint64_t*>(bss.base);
-    auto bss_end = reinterpret_cast<uint64_t*>(bss.end());
+    auto bss_start = reinterpret_cast<uint64_t*>(bss.base.direct_mapped());
+    auto bss_end = reinterpret_cast<uint64_t*>(bss.end().direct_mapped());
 
     std::uninitialized_value_construct_n(iface.elems, iface.size);
 

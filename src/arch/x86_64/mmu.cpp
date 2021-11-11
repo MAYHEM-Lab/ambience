@@ -1,4 +1,5 @@
 #include "tos/expected.hpp"
+#include "tos/memory.hpp"
 #include "tos/x86_64/mmu/common.hpp"
 #include "tos/x86_64/mmu/translation_table.hpp"
 #include <tos/debug/log.hpp>
@@ -56,15 +57,7 @@ constexpr expected<void, mmu_errors> recursive_allocate(translation_table& root,
                 return unexpected(mmu_errors::page_alloc_fail);
             }
 
-            auto res =
-                map_region(get_current_translation_table(),
-                           segment{.range = {.base = palloc->address_of(*page).address(),
-                                             .size = page_size_bytes},
-                                   permissions::read_write},
-                           user_accessible::no,
-                           memory_types::normal,
-                           palloc,
-                           palloc->address_of(*page));
+            auto res = map_page_ident(get_current_translation_table(), *page, *palloc);
 
             if (!res) {
                 palloc->free({page, 1});
@@ -88,10 +81,11 @@ constexpr expected<void, mmu_errors> recursive_allocate(translation_table& root,
 } // namespace
 
 expected<void, mmu_errors> allocate_region(translation_table& root,
-                                           const segment& virt_seg,
+                                           const virtual_segment& virt_seg,
                                            user_accessible allow_user,
                                            physical_page_allocator* palloc) {
-    for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
+    for (uintptr_t addr = virt_seg.range.base.address();
+         addr != virt_seg.range.end().address();
          addr += page_size_bytes) {
         auto path = detail::pt_path_for_addr(addr);
         //        LOG_TRACE("Address", (void*)addr, path[0], path[1], path[2], path[3]);
@@ -102,11 +96,11 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
 }
 
 expected<void, mmu_errors> mark_resident(translation_table& root,
-                                         const memory_range& range,
+                                         const virtual_range& range,
                                          memory_types type,
                                          physical_address phys) {
     void* phys_addr = phys.direct_mapped();
-    for (uintptr_t addr = range.base; addr != range.end();
+    for (uintptr_t addr = range.base.address(); addr != range.end().address();
          addr += page_size_bytes, phys_addr = (char*)phys_addr + page_size_bytes) {
         auto path = pt_path_for_addr(addr);
 
@@ -139,8 +133,8 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
 }
 
 expected<void, mmu_errors> mark_nonresident(translation_table& root,
-                                            const memory_range& virt_range) {
-    for (uintptr_t addr = virt_range.base; addr != virt_range.end();
+                                            const virtual_range& virt_range) {
+    for (uintptr_t addr = virt_range.base.address(); addr != virt_range.end().address();
          addr += page_size_bytes) {
         auto path = pt_path_for_addr(addr);
 

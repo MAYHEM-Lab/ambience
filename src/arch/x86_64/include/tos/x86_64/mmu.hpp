@@ -23,17 +23,17 @@ void traverse_table_entries(translation_table& table, FnT&& fn) {
 }
 
 expected<void, mmu_errors> allocate_region(translation_table& root,
-                                           const segment& virt_seg,
+                                           const virtual_segment& virt_seg,
                                            user_accessible allow_user,
                                            physical_page_allocator* palloc);
 
 expected<void, mmu_errors> mark_resident(translation_table& root,
-                                         const memory_range& range,
+                                         const virtual_range& range,
                                          memory_types type,
                                          physical_address phys_addr);
 
 expected<void, mmu_errors> mark_nonresident(translation_table& root,
-                                            const memory_range& virt_range);
+                                            const virtual_range& virt_range);
 
 expected<const table_entry*, mmu_errors> entry_for_address(const translation_table& root,
                                                            uintptr_t virt_addr);
@@ -42,7 +42,7 @@ expected<translation_table*, mmu_errors> clone(const translation_table& root,
                                                physical_page_allocator& palloc);
 
 inline expected<void, mmu_errors> map_region(translation_table& root,
-                                             const segment& vseg,
+                                             const virtual_segment& vseg,
                                              user_accessible user_access,
                                              memory_types mem_type,
                                              physical_page_allocator* palloc,
@@ -61,12 +61,14 @@ map_page_ident(translation_table& root,
                permissions perms = permissions::read_write,
                user_accessible user_access = user_accessible::no,
                memory_types mem_type = memory_types::normal) {
+    const auto physical_seg =
+        physical_segment{.range = palloc.range_of(page), .perms = perms};
     return map_region(root,
-                      segment{.range = palloc.range_of(page), .perms = perms},
+                      identity_map(physical_seg),
                       user_access,
                       mem_type,
                       &palloc,
-                      palloc.address_of(page));
+                      physical_seg.range.base);
 }
 
 NO_INLINE

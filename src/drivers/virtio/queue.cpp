@@ -1,4 +1,5 @@
 #include "tos/debug/panic.hpp"
+#include "tos/memory.hpp"
 #include "tos/utility.hpp"
 #include <tos/arch.hpp>
 #include <tos/debug/log.hpp>
@@ -32,7 +33,8 @@ queue::queue(uint16_t sz, tos::physical_page_allocator& palloc)
 
     auto map_res = tos::cur_arch::map_region(
         tos::cur_arch::get_current_translation_table(),
-        {{buf.address(), ptrdiff_t(total_sz)}, tos::permissions::read_write},
+        identity_map(physical_segment{physical_range{buf, ptrdiff_t(total_sz)},
+                                      tos::permissions::read_write}),
         tos::user_accessible::no,
         tos::memory_types::normal,
         &palloc,

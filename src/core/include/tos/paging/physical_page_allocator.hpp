@@ -29,12 +29,12 @@ public:
     // You **have to** map this physical memory to an address space before you can access
     // it!
     physical_address address_of(const physical_page& page) const;
-    memory_range range_of(const physical_page& page) const;
+    physical_range range_of(const physical_page& page) const;
 
     int page_num(const physical_page& page) const;
 
     // Marks the given range of physical memory as unavailable.
-    void mark_unavailable(const memory_range& len);
+    void mark_unavailable(const physical_range& len);
 
     physical_page* info(int32_t page_num);
     physical_page* info(physical_address ptr);

@@ -1,4 +1,5 @@
 #include "private.hpp"
+#include "tos/memory.hpp"
 #include <tos/x86_64/apic.hpp>
 #include <tos/x86_64/pic.hpp>
 
@@ -6,26 +7,28 @@ void apic_initialize(tos::physical_page_allocator& palloc) {
     auto apic_base = tos::x86_64::get_apic_base_address();
     LOG((void*)apic_base, (void*)tos::x86_64::rdmsr(tos::x86_64::msrs::ia32_apic_base));
     auto& table = tos::cur_arch::get_current_translation_table();
-    auto seg =
-        tos::segment{.range = {.base = apic_base, .size = tos::cur_arch::page_size_bytes},
-                     .perms = tos::permissions::read_write};
+    auto seg = tos::physical_segment{
+        .range = {tos::physical_address(apic_base), tos::cur_arch::page_size_bytes},
+        .perms = tos::permissions::read_write};
     tos::ensure(tos::x86_64::map_region(table,
-                                        seg,
+                                        identity_map(seg),
                                         tos::user_accessible::no,
                                         tos::memory_types::device,
                                         &palloc,
                                         tos::physical_address(apic_base)));
 
+    using namespace tos::address_literals;
+
     // IOAPIC registers
-    seg = tos::segment{
-        .range = {.base = 0xfec00000, .size = tos::cur_arch::page_size_bytes},
+    seg = tos::physical_segment{
+        .range = {.base = 0xfec00000_physical, .size = tos::cur_arch::page_size_bytes},
         .perms = tos::permissions::read_write};
     tos::ensure(tos::x86_64::map_region(table,
-                                        seg,
+                                        identity_map(seg),
                                         tos::user_accessible::no,
                                         tos::memory_types::device,
                                         &palloc,
-                                        tos::physical_address(0xfec00000)));
+                                        0xfec00000_physical));
 
     auto& apic_regs = tos::x86_64::get_apic_registers(apic_base);
     LOG((void*)(uintptr_t)apic_regs.id, (void*)(uintptr_t)apic_regs.version);

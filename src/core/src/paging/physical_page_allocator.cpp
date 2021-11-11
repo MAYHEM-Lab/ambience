@@ -12,8 +12,8 @@ physical_page_allocator::physical_page_allocator(size_t num_pages)
     for (auto& page : get_table()) {
         new (&page) physical_page();
     }
-    memory_range this_obj;
-    this_obj.base = reinterpret_cast<uintptr_t>(this);
+    physical_range this_obj;
+    this_obj.base = physical_address(reinterpret_cast<uintptr_t>(this));
     this_obj.size = sizeof *this + get_table().size_bytes();
     for (auto& page : get_table()) {
         free_list.push_back(page);
@@ -77,18 +77,18 @@ physical_address physical_page_allocator::address_of(const physical_page& page) 
     return physical_address{page_num(page) * page_size()};
 }
 
-memory_range physical_page_allocator::range_of(const physical_page& page) const {
-    return memory_range{.base = page_num(page) * page_size(),
-                        .size = std::ptrdiff_t(page_size())};
+physical_range physical_page_allocator::range_of(const physical_page& page) const {
+    return physical_range{.base = physical_address(page_num(page) * page_size()),
+                          .size = std::ptrdiff_t(page_size())};
 }
 
 int physical_page_allocator::page_num(const physical_page& page) const {
     return std::distance(get_table().data(), &page);
 }
 
-void physical_page_allocator::mark_unavailable(const memory_range& len) {
-    auto begin_num = align_nearest_down_pow2(len.base, page_size()) / page_size();
-    auto end_num = align_nearest_up_pow2(len.end(), page_size()) / page_size();
+void physical_page_allocator::mark_unavailable(const physical_range& len) {
+    auto begin_num = align_nearest_down_pow2(len.base.address(), page_size()) / page_size();
+    auto end_num = align_nearest_up_pow2(len.end().address(), page_size()) / page_size();
     begin_num = std::min<int>(m_num_pages, begin_num);
     end_num = std::min<int>(m_num_pages, end_num);
     for (size_t i = begin_num; i < end_num; ++i) {

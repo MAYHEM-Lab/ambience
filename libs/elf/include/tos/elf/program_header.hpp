@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <tos/elf/common.hpp>
+#include <tos/flags.hpp>
+#include <tos/memory.hpp>
 
 namespace tos::elf {
 template<class T>
@@ -17,6 +19,22 @@ struct program_header<uint64_t> {
     alignas(8) uint64_t file_size;
     alignas(8) uint64_t virt_size;
     alignas(8) uint64_t alignment;
+
+    constexpr tos::virtual_address virtual_address() const {
+        return tos::virtual_address(virt_address);
+    }
+
+    constexpr tos::virtual_range virtual_range() const {
+        return tos::virtual_range{virtual_address(), static_cast<ptrdiff_t>(virt_size)};
+    }
+
+    constexpr tos::virtual_segment virtual_segment() const {
+        tos::permissions perms = tos::permissions::read_write;
+        if (tos::util::is_flag_set(attrs, tos::elf::segment_attrs::execute)) {
+            perms = tos::permissions::read_execute;
+        }
+        return tos::virtual_segment{virtual_range(), perms};
+    }
 };
 
 using elf64_program_header = program_header<uint64_t>;

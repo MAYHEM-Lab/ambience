@@ -206,30 +206,23 @@ void set_up_page_tables() {
             .allow_user(true);
     }
 
-    static constexpr tos::memory_range io_regions[] = {
-        {0x00000000, 0x000003FF - 0x00000000},
-        {0x00000400, 0x000004FF - 0x00000400},
-        {0x00080000, 0x0009FFFF - 0x00080000},
-        {0x000A0000, 0x000BFFFF - 0x000A0000},
-        {0x000C0000, 0x000C7FFF - 0x000C0000},
-        {0x000C8000, 0x000EFFFF - 0x000C8000},
-        {0x000F0000, 0x000FFFFF - 0x000F0000},
-        {0x00F00000, 0x00FFFFFF - 0x00F00000},
-        {0xC0000000, 0xFFFFFFFF - 0xC0000000},
-    };
+    using namespace tos::address_literals;
 
-    auto is_mapped = [](const tos::memory_range& region) -> bool {
-        for (auto& io_reg : io_regions) {
-            if (tos::intersection(region, io_reg)) {
-                return true;
-            }
-        }
-        return false;
-        return tos::intersection(region, tos::default_segments::image()).has_value();
+    static constexpr tos::physical_range io_regions[] = {
+        {0x00000000_physical, 0x000003FF - 0x00000000},
+        {0x00000400_physical, 0x000004FF - 0x00000400},
+        {0x00080000_physical, 0x0009FFFF - 0x00080000},
+        {0x000A0000_physical, 0x000BFFFF - 0x000A0000},
+        {0x000C0000_physical, 0x000C7FFF - 0x000C0000},
+        {0x000C8000_physical, 0x000EFFFF - 0x000C8000},
+        {0x000F0000_physical, 0x000FFFFF - 0x000F0000},
+        {0x00F00000_physical, 0x00FFFFFF - 0x00F00000},
+        {0xC0000000_physical, 0xFFFFFFFF - 0xC0000000},
     };
 
     tos::physical_memory_backing allmem(
-        tos::segment{tos::memory_range{0, 0xFFFF'FFFF}, tos::permissions::all},
+        tos::physical_segment{tos::physical_range{0_physical, 0xFFFF'FFFF},
+                              tos::permissions::all},
         tos::memory_types::normal);
 
 
@@ -246,51 +239,74 @@ void set_up_page_tables() {
 
     {
         auto text = tos::default_segments::text();
-        text.base = tos::align_nearest_down_pow2(text.base, 4096);
+        text.base = tos::physical_address(
+            tos::align_nearest_down_pow2(text.base.address(), 4096));
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
-            tos::segment{text, tos::permissions::read_execute}, text, text_map);
+            identity_map(tos::physical_segment{text, tos::permissions::read_execute}),
+            to_memory_range(text),
+            text_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(text_map, nullptr);
         boot_addr_space.mark_resident(
-            text_map, text_map.obj_range, tos::physical_address(text.base));
+            text_map, text_map.vm_segment.range, tos::physical_address(text.base));
     }
 
     {
         auto text = tos::default_segments::rodata();
-        text.base = tos::align_nearest_down_pow2(text.base, 4096);
+        text.base = tos::physical_address(
+            tos::align_nearest_down_pow2(text.base.address(), 4096));
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
-        allmem.create_mapping(tos::segment{text, tos::permissions::read}, text, ro_map);
+        allmem.create_mapping(
+            identity_map(tos::physical_segment{text, tos::permissions::read}),
+            to_memory_range(text),
+            ro_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(ro_map, nullptr);
         boot_addr_space.mark_resident(
-            ro_map, ro_map.obj_range, tos::physical_address(text.base));
+            ro_map, ro_map.vm_segment.range, tos::physical_address(text.base));
     }
 
     {
         auto text = tos::default_segments::data();
-        text.base = tos::align_nearest_down_pow2(text.base, 4096);
+        text.base = tos::physical_address(
+            tos::align_nearest_down_pow2(text.base.address(), 4096));
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
-            tos::segment{text, tos::permissions::read_write}, text, data_map);
+            identity_map(tos::physical_segment{text, tos::permissions::read_write}),
+            to_memory_range(text),
+            data_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(data_map, nullptr);
         boot_addr_space.mark_resident(
-            data_map, data_map.obj_range, tos::physical_address(text.base));
+            data_map, data_map.vm_segment.range, tos::physical_address(text.base));
     }
 
     {
         auto text = tos::default_segments::bss_map();
-        text.base = tos::align_nearest_down_pow2(text.base, 4096);
+        text.base = tos::physical_address(
+            tos::align_nearest_down_pow2(text.base.address(), 4096));
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
-            tos::segment{text, tos::permissions::read_write}, text, bss_map);
+            identity_map(tos::physical_segment{text, tos::permissions::read_write}),
+            to_memory_range(text),
+            bss_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(bss_map, nullptr);
         boot_addr_space.mark_resident(
-            bss_map, bss_map.obj_range, tos::physical_address(text.base));
+            bss_map, bss_map.vm_segment.range, tos::physical_address(text.base));
     }
+
+    auto is_mapped = [](const tos::virtual_range& region) -> bool {
+        for (auto& io_reg : io_regions) {
+            if (intersection(region, identity_map(io_reg))) {
+                return true;
+            }
+        }
+        return false;
+    };
 
     for (int i = 0; i < static_cast<int>(std::size(p1_tables)); ++i) {
         auto& table = p1_tables[i];
         for (int j = 0; j < 512; ++j) {
-            auto page_range = tos::memory_range{uintptr_t((i * 512 + j) << 12), 4096};
+            auto page_range = tos::virtual_range{
+                tos::virtual_address(uintptr_t((i * 512 + j) << 12)), 4096};
 
             if (!is_mapped(page_range)) {
                 continue;
@@ -342,8 +358,8 @@ extern void (*end_ctors[])(void);
     set_up_page_tables();
 
     auto bss = tos::default_segments::bss();
-    auto bss_start = reinterpret_cast<uint64_t*>(bss.base);
-    auto bss_end = reinterpret_cast<uint64_t*>(bss.end());
+    auto bss_start = reinterpret_cast<uint64_t*>(bss.base.direct_mapped());
+    auto bss_end = reinterpret_cast<uint64_t*>(bss.end().direct_mapped());
 
     // Zero out BSS
     std::fill(bss_start, bss_end, 0);
