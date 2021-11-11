@@ -1,0 +1,19 @@
+namespace tos::ae::services;
+
+service ByteStore {
+    get(key: string_view) -> span<u8>;
+    has(key: string_view) -> bool;
+    put(key: string_view, val: span<u8>) -> bool;
+    erase(key: string_view) -> bool;
+}
+
+union Value {
+    num: f64;
+    text: string;
+}
+
+service KVStore {
+    get(key: string_view) -> Value;
+    has(key: string_view) -> bool;
+    put(key: string_view, val: Value) -> bool;
+}
