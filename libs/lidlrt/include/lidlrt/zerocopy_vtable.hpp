@@ -74,12 +74,12 @@ constexpr auto zerocopy_translator() -> zerocopy_fn_t {
         auto do_call = [&serv, ret](auto... vals) -> bool {
             constexpr auto& fn = proc_desc.function;
             if constexpr (is_ref) {
-                auto& res = std::invoke(
-                    fn, serv, extractor<decltype(vals)>::extract(vals)...);
+                auto& res =
+                    std::invoke(fn, serv, extractor<decltype(vals)>::extract(vals)...);
                 new (ret) ActualRetType(&res);
             } else {
-                new (ret) ActualRetType(std::invoke(
-                    fn, serv, extractor<decltype(vals)>::extract(vals)...));
+                new (ret) ActualRetType(
+                    std::invoke(fn, serv, extractor<decltype(vals)>::extract(vals)...));
             }
             return true;
         };
@@ -124,4 +124,8 @@ constexpr async_zerocopy_vtable_t make_async_zerocopy_vtable() {
     return detail::do_make_async_zerocopy_vtable<ServiceT>(
         std::make_index_sequence<std::tuple_size_v<decltype(ServDesc::procedures)>>{});
 }
+
+template<class T>
+inline constexpr async_zerocopy_vtable_t
+    async_vtable = make_async_zerocopy_vtable<T>();
 } // namespace lidl

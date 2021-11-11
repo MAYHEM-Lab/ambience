@@ -28,4 +28,13 @@ struct union_traits;
 
 template <class ModuleT>
 struct module_traits;
+
+struct sync_service_base;
+struct async_service_base;
+
+template <class T>
+struct is_sync_service : std::is_base_of<sync_service_base, T> {};
+
+template <class T>
+struct is_async_service : std::is_base_of<async_service_base, T> {};
 }

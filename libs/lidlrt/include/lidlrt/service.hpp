@@ -6,11 +6,11 @@
 
 #include <cstring>
 #include <lidlrt/builder.hpp>
+#include <lidlrt/concepts.hpp>
 #include <lidlrt/meta.hpp>
 #include <string_view>
 #include <tos/task.hpp>
 #include <tuple>
-#include <lidlrt/concepts.hpp>
 
 namespace lidl {
 template<class T>
@@ -52,13 +52,17 @@ template<class T>
 class rpc_param_traits;
 
 class service_base {
-public:
-    virtual ~service_base() = default;
 };
 
-class sync_service_base : public service_base {};
+class sync_service_base : public service_base {
+public:
+    virtual ~sync_service_base() = default;
+};
 
-class async_service_base : public service_base {};
+class async_service_base : public service_base {
+public:
+    virtual ~async_service_base() = default;
+};
 
 template<class T>
 tos::span<uint8_t> as_span(T&);
@@ -380,6 +384,30 @@ struct zerocopy_type {
     using type = std::add_pointer_t<T>;
     static type make_param(T& t) {
         return &t;
+    }
+};
+
+template<class T>
+struct zerocopy_type<tos::span<T>> {
+    using type = tos::span<T>;
+    static type make_param(tos::span<T> t) {
+        return t;
+    }
+};
+
+template<class T>
+struct zerocopy_type<const tos::span<T>&> {
+    using type = tos::span<T>;
+    static type make_param(tos::span<T> t) {
+        return t;
+    }
+};
+
+template<class T>
+struct zerocopy_type<tos::span<T>&> {
+    using type = tos::span<T>;
+    static type make_param(tos::span<T> t) {
+        return t;
     }
 };
 
