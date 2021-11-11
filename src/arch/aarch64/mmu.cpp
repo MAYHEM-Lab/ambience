@@ -1,3 +1,4 @@
+#include "tos/memory.hpp"
 #include <numeric>
 #include <tos/aarch64/assembly.hpp>
 #include <tos/aarch64/mmu.hpp>
@@ -60,6 +61,10 @@ pt_path_for_addr(uint64_t virt_addr) {
     return path;
 }
 
+constexpr auto pt_path_for_addr(virtual_address addr) {
+    return pt_path_for_addr(addr.address());
+}
+
 static_assert(pt_path_for_addr(0) == std::array<int, 3>{0, 0, 0});
 static_assert(pt_path_for_addr(1) == std::array<int, 3>{0, 0, 0});
 static_assert(pt_path_for_addr(4096) == std::array<int, 3>{0, 0, 1});
@@ -103,22 +108,15 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
             if (page == nullptr) {
                 return unexpected(mmu_errors::page_alloc_fail);
             }
-            auto res = map_region(get_current_translation_table(),
-                                  segment{.range = {.base = reinterpret_cast<uintptr_t>(
-                                      palloc->address_of(*page)),
-                                      .size = 4096},
-                                      permissions::read_write},
-                                  user_accessible::no,
-                                  memory_types::normal,
-                                  palloc,
-                                  palloc->address_of(*page));
+
+            auto res = map_page_ident(get_current_translation_table(), *page, *palloc);
 
             if (!res) {
                 palloc->free({page, 1});
                 return unexpected(force_error(res));
             }
 
-            memset(palloc->address_of(*page), 0, 4096);
+            memset(palloc->address_of(*page).direct_mapped(), 0, 4096);
 
             root[path[0]]
                 .zero()
@@ -141,10 +139,11 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
 } // namespace
 
 expected<void, mmu_errors> allocate_region(translation_table& root,
-                                           const segment& virt_seg,
+                                           const virtual_segment& virt_seg,
                                            user_accessible allow_user,
                                            physical_page_allocator* palloc) {
-    for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
+    for (uintptr_t addr = virt_seg.range.base.address();
+         addr != virt_seg.range.end().address();
          addr += 4096) {
         auto path = pt_path_for_addr(addr);
 
@@ -158,11 +157,12 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
 }
 
 expected<void, mmu_errors> mark_resident(translation_table& root,
-                                         const segment& virt_seg,
+                                         const virtual_segment& virt_seg,
                                          memory_types type,
-                                         void* phys_addr) {
-    for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
-         addr += 4096, phys_addr = (char*)phys_addr + 4096) {
+                                         physical_address phys_addr) {
+    for (uintptr_t addr = virt_seg.range.base.address();
+         addr != virt_seg.range.end().address();
+         addr += 4096, phys_addr = (char*)phys_addr.direct_mapped() + 4096) {
         auto path = pt_path_for_addr(addr);
 
         translation_table* table = &root;
@@ -190,8 +190,9 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
 }
 
 expected<void, mmu_errors> mark_nonresident(translation_table& root,
-                                            const segment& virt_seg) {
-    for (uintptr_t addr = virt_seg.range.base; addr != virt_seg.range.end();
+                                            const virtual_segment& virt_seg) {
+    for (uintptr_t addr = virt_seg.range.base.address();
+         addr != virt_seg.range.end().address();
          addr += 4096) {
         auto path = pt_path_for_addr(addr);
 
@@ -208,7 +209,7 @@ expected<void, mmu_errors> mark_nonresident(translation_table& root,
 }
 
 expected<const table_entry*, mmu_errors> entry_for_address(const translation_table& root,
-                                                           uintptr_t virt_addr) {
+                                                           virtual_address virt_addr) {
     auto path = pt_path_for_addr(virt_addr);
 
     const translation_table* table = &root;
@@ -240,21 +241,22 @@ expected<translation_table*, mmu_errors> clone_level(int level,
         return unexpected(mmu_errors::page_alloc_fail);
     }
 
-    EXPECTED_TRYV(allocate_region(
-        get_current_translation_table(),
-        {{reinterpret_cast<uint64_t>(palloc.address_of(*table_page)), 4096},
-         permissions::read_write},
-        user_accessible::no,
-        &palloc));
+    EXPECTED_TRYV(
+        allocate_region(get_current_translation_table(),
+                        identity_map(physical_segment{palloc.range_of(*table_page),
+                                                      permissions::read_write}),
+                        user_accessible::no,
+                        &palloc));
 
     EXPECTED_TRYV(
         mark_resident(get_current_translation_table(),
-                      {{reinterpret_cast<uint64_t>(palloc.address_of(*table_page)), 4096},
-                       permissions::read_write},
+                      identity_map(physical_segment{palloc.range_of(*table_page),
+                                                    permissions::read_write}),
                       memory_types::normal,
                       palloc.address_of(*table_page)));
 
-    auto table_ptr = new (palloc.address_of(*table_page)) translation_table;
+    auto table_ptr =
+        new (palloc.address_of(*table_page).direct_mapped()) translation_table;
     *table_ptr = existing;
 
     for (auto& entry : *table_ptr) {

@@ -27,13 +27,13 @@ alignas(4096) tos::stack_storage _el1_stack;
 
 void mmu_init() {
     using namespace tos::aarch64;
-    auto io_region = tos::memory_range{tos::bcm2837::IO_BASE,
-                                       tos::bcm2837::IO_END - tos::bcm2837::IO_BASE};
+    auto io_region = tos::physical_range{tos::physical_address(tos::bcm2837::IO_BASE),
+                                         tos::bcm2837::IO_END - tos::bcm2837::IO_BASE};
     auto arm_core_region =
-        tos::memory_range{tos::bcm2837::ARM_CTL_ADDRESS,
-                          tos::bcm2837::ARM_CTL_END - tos::bcm2837::ARM_CTL_ADDRESS};
+        tos::physical_range{tos::physical_address(tos::bcm2837::ARM_CTL_ADDRESS),
+                            tos::bcm2837::ARM_CTL_END - tos::bcm2837::ARM_CTL_ADDRESS};
 
-    tos::memory_range ranges[] = {
+    tos::physical_range ranges[] = {
         io_region,
         arm_core_region,
         tos::default_segments::data(),
@@ -80,14 +80,15 @@ void mmu_init() {
             .allow_user(true)
             .noexec(true);
 
-        if (contains(io_region, page << 21) || contains(arm_core_region, page << 21)) {
+        if (contains(io_region, tos::physical_address(page << 21)) ||
+            contains(arm_core_region, tos::physical_address(page << 21))) {
             pud2[0].shareable(tos::aarch64::shareable_values::outer).mair_index(PT_DEV);
         } else {
             pud2[0].shareable(tos::aarch64::shareable_values::inner).mair_index(PT_MEM);
         }
 
         if (std::any_of(std::begin(ranges), std::end(ranges), [page](auto& range) {
-                return contains(range, page << 21);
+                return contains(range, tos::physical_address(page << 21));
             })) {
             pud2[0].valid(true);
         }
@@ -108,13 +109,14 @@ void mmu_init() {
     for (page_id_t page = 1; page < 512; page++) {
         l2s[page]
             .zero()
-            .page_num(tos::aarch64::address_to_page(page << 21))
+            .page_num(tos::aarch64::address_to_page(tos::physical_address(page << 21)))
             .page(false)
             .accessed(true)
             .allow_user(true)
             .noexec(true);
 
-        if (contains(io_region, page << 21) || contains(arm_core_region, page << 21)) {
+        if (contains(io_region, tos::physical_address(page << 21)) ||
+            contains(arm_core_region, tos::physical_address(page << 21))) {
             l2s[page]
                 .shareable(tos::aarch64::shareable_values::outer)
                 .mair_index(PT_DEV)
@@ -124,23 +126,25 @@ void mmu_init() {
         }
 
         if (std::any_of(std::begin(ranges), std::end(ranges), [page](auto& range) {
-                return contains(range, page << 21);
+                return contains(range, tos::physical_address(page << 21));
             })) {
             l2s[page].valid(true);
         }
 
-        if (contains(tos::default_segments::rodata(), page << 21)) {
+        if (contains(tos::default_segments::rodata(),
+                     tos::physical_address(page << 21))) {
             l2s[page].readonly(true).noexec(true);
         }
 
-        if (contains(tos::default_segments::bss(), page << 21)) {
+        if (contains(tos::default_segments::bss(), tos::physical_address(page << 21))) {
             l2s[page].noexec(true);
         }
     }
     // identity L3
     for (int r = 0; r < 512; r++) {
         if (!std::any_of(std::begin(ranges), std::end(ranges), [r](auto& range) {
-                return contains(range, tos::aarch64::page_to_address(r));
+                return contains(range,
+                                tos::physical_address(tos::aarch64::page_to_address(r)));
             })) {
             continue;
         }
@@ -161,17 +165,20 @@ void mmu_init() {
          * the same time.
          */
 
-        if (!contains(tos::default_segments::text(), tos::aarch64::page_to_address(r))) {
+        if (!contains(tos::default_segments::text(),
+                      tos::physical_address(tos::aarch64::page_to_address(r)))) {
             l3s[r].noexec(true).allow_user(true);
         } else {
             l3s[r].readonly(true).allow_user(true);
         }
 
-        if (contains(tos::default_segments::rodata(), tos::aarch64::page_to_address(r))) {
+        if (contains(tos::default_segments::rodata(),
+                     tos::physical_address(tos::aarch64::page_to_address(r)))) {
             l3s[r].readonly(true).noexec(true);
         }
 
-        if (contains(tos::default_segments::bss(), tos::aarch64::page_to_address(r))) {
+        if (contains(tos::default_segments::bss(),
+                     tos::physical_address(tos::aarch64::page_to_address(r)))) {
             l3s[r].noexec(true);
         }
     }

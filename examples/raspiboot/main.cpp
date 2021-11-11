@@ -1,3 +1,4 @@
+#include "tos/memory.hpp"
 #include <alarm1_generated.hpp>
 #include <arch/drivers.hpp>
 #include <common/clock.hpp>
@@ -317,7 +318,7 @@ public:
         memcpy(res.addr.data(), mac->m_Address, 6);
         return res;
     }
-    
+
 private:
     TSMSC951xDevice* m_ptr;
 };
@@ -350,7 +351,7 @@ tos::expected<void, usb_errors> usb_task() {
 
     LOG("Initialize lwip");
     lwip_init();
-    tos::lwip::basic_interface interface{eth.get()};
+    tos::lwip::basic_interface interface { eth.get() };
     set_default(interface);
     interface.up();
 
@@ -394,10 +395,12 @@ struct rt_dynamism {
 class dynamic_service_host {
 public:
     template<class BaseServT>
-    auto register_service(std::unique_ptr<std::common_type_t<typename BaseServT::sync_server>>&& serv) {
+    auto register_service(
+        std::unique_ptr<std::common_type_t<typename BaseServT::sync_server>>&& serv) {
         return register_service(
-            rt_dynamism{lidl::make_erased_procedure_runner<typename BaseServT::sync_server>(),
-                        make_zerocopy_vtable<BaseServT>()},
+            rt_dynamism{
+                lidl::make_erased_procedure_runner<typename BaseServT::sync_server>(),
+                make_zerocopy_vtable<BaseServT>()},
             std::move(serv));
     }
 
@@ -524,9 +527,11 @@ void raspi_main() {
 
     dump_table(level0_table);
 
+    using namespace tos::address_literals;
     auto op_res = tos::aarch64::allocate_region(
         level0_table,
-        tos::segment{{4096, 4096 * 5}, tos::permissions::read_write},
+        identity_map(tos::physical_segment{{4096_physical, 4096 * 5},
+                                           tos::permissions::read_write}),
         tos::user_accessible::no,
         nullptr);
     if (!op_res) {
@@ -535,9 +540,10 @@ void raspi_main() {
 
     op_res = tos::aarch64::mark_resident(
         level0_table,
-        tos::segment{{4096, 4096 * 5}, tos::permissions::read_write},
+        identity_map(tos::physical_segment{{4096_physical, 4096 * 5},
+                                           tos::permissions::read_write}),
         tos::memory_types::normal,
-        (void*)4096);
+        4096_physical);
     if (!op_res) {
         LOG_ERROR("Could not mark resident ...");
     }
@@ -552,8 +558,7 @@ void raspi_main() {
         level0_table, [&](tos::memory_range range, tos::aarch64::table_entry& entry) {
             LOG_TRACE(
                 "Making [", (void*)range.base, ",", (void*)range.end(), "] unavailable");
-
-            palloc->mark_unavailable(range);
+            palloc->mark_unavailable({tos::physical_address(range.base), range.size});
         });
     {
         tos::raspi3::property_channel_tags_builder builder;
@@ -587,8 +592,8 @@ void raspi_main() {
 
     op_res = tos::aarch64::allocate_region(
         level0_table,
-        tos::segment{{(uintptr_t)palloc->address_of(*p), 4096},
-                     tos::permissions::read_write},
+        identity_map(
+            tos::physical_segment{palloc->range_of(*p), tos::permissions::read_write}),
         tos::user_accessible::no,
         nullptr);
     if (!op_res) {
@@ -597,8 +602,8 @@ void raspi_main() {
 
     op_res = tos::aarch64::mark_resident(
         level0_table,
-        tos::segment{{(uintptr_t)palloc->address_of(*p), 4096},
-                     tos::permissions::read_write},
+        identity_map(
+            tos::physical_segment{palloc->range_of(*p), tos::permissions::read_write}),
         tos::memory_types::normal,
         palloc->address_of(*p));
     if (!op_res) {
@@ -607,7 +612,7 @@ void raspi_main() {
 
     tos::aarch64::tlb_invalidate_all();
 
-    (*(int*)palloc->address_of(*p)) = 42;
+    (*(int*)palloc->address_of(*p).direct_mapped()) = 42;
 
     dump_table(level0_table);
 
@@ -703,10 +708,9 @@ void raspi_main() {
     tos::aarch64::traverse_table_entries(
         *user_ctx.m_trans_table,
         [](const tos::memory_range& range, tos::aarch64::table_entry& entry) {
-            if (tos::intersection(
-                    range,
-                    tos::memory_range{reinterpret_cast<uintptr_t>(&el0_stack),
-                                      sizeof(el0_stack)})) {
+            if (intersection(range,
+                             tos::memory_range{reinterpret_cast<uintptr_t>(&el0_stack),
+                                               sizeof(el0_stack)})) {
                 LOG("Allowing access to stack [",
                     (void*)range.base,
                     ",",
@@ -724,12 +728,12 @@ void raspi_main() {
                           "] inaccessible");
                 entry.allow_user(false);
             }
-            if (tos::contains(range, reinterpret_cast<uintptr_t>(&el0_stack)) ||
-                tos::contains(range,
-                              reinterpret_cast<uintptr_t>(&el0_stack) +
-                                  sizeof(el0_stack) - 1) ||
-                tos::contains(
-                    range, reinterpret_cast<uintptr_t>(&el0_stack) + sizeof(el0_stack))) {
+            if (contains(range, reinterpret_cast<uintptr_t>(&el0_stack)) ||
+                contains(range,
+                         reinterpret_cast<uintptr_t>(&el0_stack) + sizeof(el0_stack) -
+                             1) ||
+                contains(range,
+                         reinterpret_cast<uintptr_t>(&el0_stack) + sizeof(el0_stack))) {
                 LOG_TRACE("Allowing access to stack [",
                           (void*)range.base,
                           ",",

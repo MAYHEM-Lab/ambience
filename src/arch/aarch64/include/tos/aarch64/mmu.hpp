@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tos/memory.hpp"
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -22,6 +23,14 @@ constexpr page_id_t address_to_page(uintptr_t ptr, size_t page_size = page_size_
 
 inline page_id_t address_to_page(const volatile void* ptr) {
     return address_to_page(reinterpret_cast<uintptr_t>(ptr));
+}
+
+inline page_id_t address_to_page(virtual_address addr) {
+    return address_to_page(addr.address());
+}
+
+inline page_id_t address_to_page(physical_address addr) {
+    return address_to_page(addr.address());
 }
 
 template<uint64_t Pos, uint64_t Len, class Type = uint64_t>
@@ -250,20 +259,20 @@ struct vm_page_attributes {
 };
 
 expected<void, mmu_errors> allocate_region(translation_table& root,
-                                           const segment& virt_seg,
+                                           const virtual_segment& virt_seg,
                                            user_accessible allow_user,
                                            physical_page_allocator* palloc);
 
 expected<void, mmu_errors> mark_resident(translation_table& root,
-                                         const segment& virt_seg,
+                                         const virtual_segment& virt_seg,
                                          memory_types type,
-                                         void* phys_addr);
+                                         physical_address phys_addr);
 
 expected<void, mmu_errors> mark_nonresident(translation_table& root,
-                                            const segment& virt_seg);
+                                            const virtual_segment& virt_seg);
 
 expected<const table_entry*, mmu_errors> entry_for_address(const translation_table& root,
-                                                           uintptr_t virt_addr);
+                                                           virtual_address virt_addr);
 
 expected<translation_table*, mmu_errors>
 recursive_table_clone(const translation_table& existing, physical_page_allocator& palloc);
@@ -280,11 +289,11 @@ void traverse_table_entries(translation_table& table, FnT&& fn) {
 }
 
 inline expected<void, mmu_errors> map_region(translation_table& root,
-                                             const segment& vseg,
+                                             const virtual_segment& vseg,
                                              user_accessible user_access,
                                              memory_types mem_type,
                                              physical_page_allocator* palloc,
-                                             void* phys_base) {
+                                             physical_address phys_base) {
     EXPECTED_TRYV(allocate_region(root, vseg, user_access, palloc));
 
     EXPECTED_TRYV(mark_resident(root, vseg, mem_type, phys_base));
@@ -293,4 +302,22 @@ inline expected<void, mmu_errors> map_region(translation_table& root,
 
     return {};
 }
+
+inline expected<void, mmu_errors>
+map_page_ident(translation_table& root,
+               physical_page& page,
+               physical_page_allocator& palloc,
+               permissions perms = permissions::read_write,
+               user_accessible user_access = user_accessible::no,
+               memory_types mem_type = memory_types::normal) {
+    const auto physical_seg =
+        physical_segment{.range = palloc.range_of(page), .perms = perms};
+    return map_region(root,
+                      identity_map(physical_seg),
+                      user_access,
+                      mem_type,
+                      &palloc,
+                      physical_seg.range.base);
+}
+
 } // namespace tos::aarch64
