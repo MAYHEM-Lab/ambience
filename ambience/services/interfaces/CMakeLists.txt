@@ -20,3 +20,7 @@ add_lidlc(machine_schema machine.lidl)
 add_lidlc(import_export_schema import_export.lidl)
 
 add_lidlc(agent_schema agent.lidl)
+
+add_lidlc(kvstore_schema kvstore.lidl)
+
+add_lidlc(networking_schema networking.lidl)

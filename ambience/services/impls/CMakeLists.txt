@@ -7,5 +7,7 @@ add_subdirectory(littlefs)
 add_subdirectory(block_partition)
 add_subdirectory(ephemeral_block)
 add_subdirectory(basic_echo)
+add_subdirectory(inmem_kv)
+add_subdirectory(lwip_udp_socket)
 
 add_subdirectory(social_media)
