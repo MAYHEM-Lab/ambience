@@ -12,7 +12,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - name: Install deps
-      run: sudo apt-get update && sudo apt-get install -y cmake wget xz-utils ninja-build tar gcc-10 g++-10 libboost-all-dev ccache
+      run: sudo apt-get update && sudo apt-get install -y cmake wget xz-utils ninja-build tar gcc-11 g++-11 libboost-all-dev ccache
 
     - name: Cache LLVM
       id: cache-llvm
@@ -50,8 +50,8 @@ jobs:
         $GITHUB_WORKSPACE
       working-directory: /tmp/cmake-build-debug
       env:
-        CC: gcc-10
-        CXX: g++-10
+        CC: gcc-11
+        CXX: g++-11
 
     - name: Build hosted debug
       run: ninja
