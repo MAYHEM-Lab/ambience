@@ -1,0 +1,24 @@
+namespace tos::services;
+
+struct ip_port {
+    port: u16;
+}
+
+struct ipv4_addr {
+    addr: array<u8, 4>;
+}
+
+struct udpv4_endpoint {
+    addr: ipv4_addr;
+    port: ip_port;
+}
+
+struct recvfrom_res {
+    data: vector<u8>;
+    from: udpv4_endpoint;
+}
+
+service udp_socket {
+    send_to(data: span<u8>, to: udpv4_endpoint) -> bool;
+    recv_from() -> recvfrom_res;
+}

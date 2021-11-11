@@ -1,0 +1,2 @@
+add_service(lwip_udp_socket networking impl.cpp)
+target_link_libraries(lwip_udp_socket PRIVATE lwipcore)
