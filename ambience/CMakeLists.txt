@@ -15,9 +15,9 @@ target_include_directories(aecommon PUBLIC include)
 target_link_libraries(aecommon PUBLIC tos_util_core tos_caplets)
 
 add_subdirectory(boot)
-add_subdirectory(services)
 add_subdirectory(user_space)
 add_subdirectory(kernel_space)
+add_subdirectory(services)
 
 if(BUILD_TESTS)
   enable_testing()
