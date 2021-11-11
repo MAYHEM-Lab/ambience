@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tos/core/arch_fwd.hpp>
+#include <tos/intrusive_list.hpp>
 #include <tos/memory.hpp>
 
 namespace tos {
@@ -10,7 +11,7 @@ struct mapping {
     cur_arch::address_space* va;
 
     virtual_segment vm_segment; // Where this mapping is in the address space.
-    memory_range obj_range; // Where this mapping is in the backing object.
+    memory_range obj_range;     // Where this mapping is in the backing object.
 
     user_accessible allow_user : 1;
     memory_types mem_type : 2;

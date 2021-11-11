@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tos/expected.hpp>
+#include <tos/intrusive_list.hpp>
 #include <tos/intrusive_ptr.hpp>
 #include <tos/memory.hpp>
 

@@ -9,8 +9,6 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <tos/intrusive_list.hpp>
-#include <tos/intrusive_ptr.hpp>
 #include <tos/span.hpp>
 
 namespace tos {
