@@ -5,10 +5,9 @@
 #include "tos/debug/debug.hpp"
 #include "tos/expected.hpp"
 #include "tos/thread.hpp"
-
 #include <arch/drivers.hpp>
-#include <tos/arm/mpu.hpp>
 #include <optional>
+#include <tos/arm/mpu.hpp>
 #include <tos/barrier.hpp>
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
@@ -101,12 +100,8 @@ void mpu_task() {
     //    LOG("Accessing nullptr!");
     //    *ptr = 42;
 
-    memory_range end_of_stack{reinterpret_cast<uintptr_t>(&stack), 32};
-    LOG("Marking [",
-        (void*)end_of_stack.base,
-        ",",
-        (void*)end_of_stack.end(),
-        ") as inaccessible");
+    virtual_range end_of_stack{virtual_address(reinterpret_cast<uintptr_t>(&stack)), 32};
+    LOG("Marking [", end_of_stack.base, ",", end_of_stack.end(), ") as inaccessible");
     mpu.set_region(2, end_of_stack, tos::permissions::none);
     Assert(mpu.get_region(2));
 
@@ -114,14 +109,14 @@ void mpu_task() {
     //    recursive_sum(10000);
 
     LOG("Marking", 128, "bytes as inaccessible at", &foo);
-    auto set_res =
-        mpu.set_region(0,
-                       {.base = reinterpret_cast<uintptr_t>(&foo), .size = 128},
-                       tos::permissions::none);
+    auto set_res = mpu.set_region(
+        0,
+        {.base = virtual_address(reinterpret_cast<uintptr_t>(&foo)), .size = 128},
+        tos::permissions::none);
     Assert(set_res);
     auto region = mpu.get_region(0);
     Assert(region);
-    LOG("Region:", reinterpret_cast<void*>(region->base), ",", region->size);
+    LOG("Region:", region->base, ",", region->size);
 
     LOG("Attempting access to", static_cast<void*>(&foo[128]));
     tos::debug::do_not_optimize(foo[128] = 5);
