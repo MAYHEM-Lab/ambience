@@ -1,3 +1,4 @@
+#include "tos/memory.hpp"
 #include <cstddef>
 #include <deque>
 #include <tos/address_space.hpp>
@@ -87,16 +88,19 @@ void thread() {
     auto cr3 = tos::x86_64::read_cr3();
     LOG("Page table at:", (void*)cr3);
 
+    using namespace tos::address_literals;
+
     tos::physical_memory_backing pmem(
-        tos::segment{tos::memory_range{.base = 0, .size = 1'000'000'000},
-                     tos::permissions::all},
+        tos::physical_segment{
+            tos::physical_range{.base = 0_physical, .size = 1'000'000'000},
+            tos::permissions::all},
         tos::memory_types::normal);
 
     auto& level0_table = tos::cur_arch::get_current_translation_table();
 
     dump_table(level0_table);
 
-    auto vmem_end = (void*)tos::default_segments::image().end();
+    auto vmem_end = tos::default_segments::image().end();
 
     LOG("Image ends at", vmem_end);
 
@@ -106,22 +110,23 @@ void thread() {
     LOG("Physpage allocator would need", allocator_space, "bytes");
 
     auto allocator_segment =
-        tos::segment{tos::memory_range{uintptr_t(vmem_end), ptrdiff_t(allocator_space)},
-                     tos::permissions::read_write};
+        tos::physical_segment{tos::physical_range{tos::default_segments::image().end(),
+                                                  ptrdiff_t(allocator_space)},
+                              tos::permissions::read_write};
 
     auto op_res =
         tos::cur_arch::map_region(tos::cur_arch::get_current_translation_table(),
-                                  allocator_segment,
+                                  identity_map(allocator_segment),
                                   tos::user_accessible::no,
                                   tos::memory_types::normal,
                                   nullptr,
                                   vmem_end);
     LOG(bool(op_res));
 
-    auto palloc = new (vmem_end) tos::physical_page_allocator(1024);
+    auto palloc = new (vmem_end.direct_mapped()) tos::physical_page_allocator(1024);
     palloc->mark_unavailable(tos::default_segments::image());
-    palloc->mark_unavailable({0, tos::cur_arch::page_size_bytes});
-    palloc->mark_unavailable({0x00080000, 0x000FFFFF - 0x00080000});
+    palloc->mark_unavailable({0_physical, tos::cur_arch::page_size_bytes});
+    palloc->mark_unavailable({0x00080000_physical, 0x000FFFFF - 0x00080000});
     LOG("Available:", palloc, palloc->remaining_page_count());
 
     auto vas = tos::cur_arch::address_space::adopt(level0_table);
@@ -129,9 +134,10 @@ void thread() {
 
     tos::mapping mapping;
     Assert(pmem.create_mapping(
-        tos::segment{
-            tos::memory_range{.base = 0x1200000, .size = tos::cur_arch::page_size_bytes},
-            tos::permissions::read_write},
+        identity_map(tos::physical_segment{
+            tos::physical_range{.base = 0x1200000_physical,
+                                .size = tos::cur_arch::page_size_bytes},
+            tos::permissions::read_write}),
         tos::memory_range{.base = 0x200000, .size = tos::cur_arch::page_size_bytes},
         mapping));
 
