@@ -1,0 +1,33 @@
+name: self-hosted-build
+
+on: [push, pull_request]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  self-hosted-build:
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+
+    steps:
+      - uses: FatihBAKIR/checkout@v2
+
+      - name: Clear hosted debug cache
+        run: rm -f /tmp/cmake-build-debug/CMakeCache.txt
+
+      - name: Generate hosted debug build
+        run: >
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DTOS_BOARD=hosted
+          $GITHUB_WORKSPACE
+        working-directory: /tmp/cmake-build-debug
+        env:
+          CC: gcc
+          CXX: g++
+
+      - name: Build hosted debug
+        run: ninja
+        working-directory: /tmp/cmake-build-debug
+
+      - name: Run tests
+        run: ctest --rerun-failed --output-on-failure
+        working-directory: /tmp/cmake-build-debug
