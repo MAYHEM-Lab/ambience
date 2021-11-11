@@ -5,19 +5,10 @@
 #include <tos/coro/countdown.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/detail/poll.hpp>
+#include <tos/ae/user_space.hpp>
 
 namespace social_media {
 namespace {
-inline uint64_t rdtsc() {
-    tos::detail::memory_barrier();
-#if __has_builtin(__builtin_ia32_rdtsc)
-    return __builtin_ia32_rdtsc();
-#else
-    uint32_t hi, lo;
-    __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
-    return ((uint64_t)lo) | (((uint64_t)hi) << 32);
-#endif
-}
 struct posts_bench_agent : tos::ae::agent::async_server {
     posts_bench_agent(social_media::posts::async_server* posts_serv,
                       tos::ae::services::filesystem::async_server* fs)
@@ -28,7 +19,7 @@ struct posts_bench_agent : tos::ae::agent::async_server {
 
     tos::Task<tos::ae::bench_result> start(const int64_t& param) override {
         tos::debug::log("Posts bench agent with param", param);
-        auto first = rdtsc();
+        auto first = tos::ae::timestamp();
         constexpr auto extent = 10'000;
         const int concurrency = param;
         tos::coro::countdown cd{concurrency};
@@ -42,10 +33,10 @@ struct posts_bench_agent : tos::ae::agent::async_server {
                         for (int i = c * (extent / concurrency);
                              i < (c + 1) * (extent / concurrency);
                              ++i) {
-                            auto before = rdtsc();
+                            auto before = tos::ae::timestamp();
                             auto id = co_await m_posts_serv->send_post(
                                 "foobar", "Hello @bulut #meow!");
-                            auto after = rdtsc();
+                            auto after = tos::ae::timestamp();
                             auto diff_cycles = after - before;
                             cycles[i] = diff_cycles;
                             if ((i % 100) == 0) {
@@ -65,7 +56,7 @@ struct posts_bench_agent : tos::ae::agent::async_server {
         std::nth_element(cycles.begin() + cycles.size() / 100 * 90,
                          cycles.begin() + cycles.size() / 100 * 99,
                          cycles.end());
-        auto end = rdtsc();
+        auto end = tos::ae::timestamp();
 
         co_return tos::ae::bench_result{end - first,
                                         *(cycles.begin() + cycles.size() / 2),
