@@ -33,11 +33,14 @@ struct sharer<const T*> {
 template<>
 struct sharer<lidl::message_builder*> {
     template<class ShareT>
-    static lidl::message_builder* do_share(ShareT& share, lidl::message_builder* builder) {
+    static lidl::message_builder* do_share(ShareT& share,
+                                           lidl::message_builder* builder) {
         auto buf = builder->get_buffer();
-        share.map_read_write(align_nearest_down_pow2(reinterpret_cast<uintptr_t>(buf.data()), 4096));
+        share.map_read_write(
+            align_nearest_down_pow2(reinterpret_cast<uintptr_t>(buf.data()), 4096));
         // This should not be mapped, but a new one cretead!
-        share.map_read_write(align_nearest_down_pow2(reinterpret_cast<uintptr_t>(builder), 4096));
+        share.map_read_write(
+            align_nearest_down_pow2(reinterpret_cast<uintptr_t>(builder), 4096));
         return builder;
     }
 };
@@ -87,7 +90,7 @@ template<class ShareT, class... DataPtrTs, std::size_t... Is>
 auto perform_share(ShareT& share,
                    const std::tuple<DataPtrTs...>& in_ptrs,
                    std::index_sequence<Is...>) {
-    share.ptrs = std::tuple<DataPtrTs...>(
+    return share.template allocate<std::tuple<DataPtrTs...>>(
         sharer<DataPtrTs>::do_share(share, lidl::extract(std::get<Is>(in_ptrs)))...);
 }
 } // namespace detail
