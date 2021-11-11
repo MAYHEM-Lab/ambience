@@ -47,9 +47,9 @@ public:
     size_t num_supported_regions() const;
     size_t min_region_size() const;
 
-    std::optional<tos::memory_range> get_region(int region_id);
+    std::optional<tos::virtual_range> get_region(int region_id);
     tos::expected<void, mpu_errors> set_region(int region_id,
-                                               const memory_range& region,
+                                               const virtual_range& region,
                                                permissions perms,
                                                bool shareable = true,
                                                uint8_t subregion_disable = 0,

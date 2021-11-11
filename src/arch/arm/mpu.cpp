@@ -1,3 +1,4 @@
+#include "tos/memory.hpp"
 #include <tos/arm/cmsis.hpp>
 #include <tos/arm/mpu.hpp>
 #include <tos/arm/nvic.hpp>
@@ -61,7 +62,7 @@ size_t mpu::num_supported_regions() const {
     return (type_reg & MPU_TYPE_DREGION_Msk) >> MPU_TYPE_DREGION_Pos;
 }
 
-std::optional<tos::memory_range> mpu::get_region(int region_id) {
+std::optional<tos::virtual_range> mpu::get_region(int region_id) {
     MPU->RNR = region_id;
 
     dmb();
@@ -73,11 +74,11 @@ std::optional<tos::memory_range> mpu::get_region(int region_id) {
     uintptr_t base = MPU->RBAR;
     ptrdiff_t size = 1 << (((MPU->RASR & MPU_RASR_SIZE_Msk) >> MPU_RASR_SIZE_Pos) + 1);
 
-    return tos::memory_range{/*.base =*/base, /*.size =*/size};
+    return tos::virtual_range{/*.base =*/virtual_address(base), /*.size =*/size};
 }
 
 tos::expected<void, mpu_errors> mpu::set_region(int region_id,
-                                                const tos::memory_range& region,
+                                                const tos::virtual_range& region,
                                                 permissions perms,
                                                 bool shareable,
                                                 uint8_t subregion_disable,
@@ -105,7 +106,7 @@ tos::expected<void, mpu_errors> mpu::set_region(int region_id,
     rasr.size = size_field;
     rasr.enable = enable;
 
-    const uint32_t tmp_rbar = region.base | MPU_RBAR_VALID_Msk | region_id;
+    const uint32_t tmp_rbar = region.base.address() | MPU_RBAR_VALID_Msk | region_id;
 
     MPU->RBAR = tmp_rbar;
 

@@ -102,11 +102,13 @@ void monitor_task() {
     tos::arm::mpu mpu;
     auto pre_sched = [&] {
         mpu.enable();
-        mpu.set_region(0,
-                       {reinterpret_cast<uintptr_t>(&store), sizeof(store)},
-                       tos::permissions::read_write);
         mpu.set_region(
-            1, {0x800'00'00, 1024 * 1024}, tos::permissions::read_execute, false);
+            0,
+            {tos::virtual_address(reinterpret_cast<uintptr_t>(&store)), sizeof(store)},
+            tos::permissions::read_write);
+        using namespace tos::address_literals;
+        mpu.set_region(
+            1, {0x800'00'00_virtual, 1024 * 1024}, tos::permissions::read_execute, false);
         tos::arm::exception::set_svc_handler(
             tos::arm::exception::svc_handler_t(task_svc_handler));
 

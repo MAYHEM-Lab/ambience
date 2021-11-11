@@ -1,6 +1,5 @@
 #pragma once
 
-#include <tos/ae/kernel/as_traversal.hpp>
 #include <tos/ae/kernel/runners/group_runner.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/detail/poll.hpp>

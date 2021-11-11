@@ -1,7 +1,7 @@
+#include <tos/ae/kernel/start_group.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/arch.hpp>
 #include <tos/interrupt_trampoline.hpp>
-#include <tos/ae/kernel/start_group.hpp>
 
 namespace tos::ae::kernel {
 std::unique_ptr<user_group> start_group(tos::span<uint8_t> stack,
@@ -29,10 +29,12 @@ std::unique_ptr<user_group> start_group(tos::span<uint8_t> stack,
     auto pre_sched = [&] {
         // mpu.enable();
         mpu.set_region(0,
-                       {reinterpret_cast<uintptr_t>(stack.data()),
+                       {virtual_address(reinterpret_cast<uintptr_t>(stack.data())),
                         static_cast<ptrdiff_t>(stack.size())},
                        permissions::read_write);
-        mpu.set_region(1, {0x800'00'00, 1024 * 1024}, permissions::read_execute, false);
+        using namespace tos::address_literals;
+        mpu.set_region(
+            1, {0x800'00'00_virtual, 1024 * 1024}, permissions::read_execute, false);
         arm::exception::set_svc_handler(arm::exception::svc_handler_t(task_svc_handler));
 
         arm::set_control(1);

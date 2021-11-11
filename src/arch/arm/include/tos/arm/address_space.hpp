@@ -16,13 +16,13 @@ struct address_space final : tos::address_space {
     }
 
     expected<void, mpu_errors>
-    mark_resident(mapping& mapping, memory_range subrange, physical_address phys_addr) {
+    mark_resident(mapping& mapping, virtual_range subrange, physical_address phys_addr) {
         // As there is no virtual memory with an MPU, the physical address must be the
         // same with allocation address (i.e. virtual address), therefore we just ignore
         // it.
         // Subrange support could be implemented in theory, but we don't support it yet.
         Assert(mapping.vm_segment.range == subrange);
-        Assert(subrange.base == phys_addr.address());
+        Assert(subrange.base == identity_map(phys_addr));
         mpu().enable_region(1);
         return {};
     }
@@ -32,7 +32,7 @@ struct address_space final : tos::address_space {
         mpu().enable();
     }
 
-    memory_range containing_fragment(const memory_range& range) const;
+    virtual_range containing_fragment(const virtual_range& range) const;
 };
 
 template<class... DataPtrTs>

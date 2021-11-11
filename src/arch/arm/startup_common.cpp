@@ -12,7 +12,7 @@ extern void (*end_ctors[])(void);
 namespace {
 void copy_initialized_memory() {
     const auto data = tos::default_segments::data();
-    auto data_start = reinterpret_cast<uint64_t*>(data.base);
+    auto data_start = reinterpret_cast<uint64_t*>(data.base.direct_mapped());
 
     // Copy initialized data
     std::copy_n(&_sidata, data.size, data_start);
@@ -20,8 +20,8 @@ void copy_initialized_memory() {
 
 void zero_out_bss() {
     auto bss = tos::default_segments::bss();
-    auto bss_start = reinterpret_cast<uint64_t*>(bss.base);
-    auto bss_end = reinterpret_cast<uint64_t*>(bss.end());
+    auto bss_start = reinterpret_cast<uint64_t*>(bss.base.direct_mapped());
+    auto bss_end = reinterpret_cast<uint64_t*>(bss.end().direct_mapped());
 
     // Zero out BSS
     std::fill(bss_start, bss_end, 0);
