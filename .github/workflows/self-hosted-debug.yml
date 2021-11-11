@@ -12,6 +12,9 @@ jobs:
     steps:
       - uses: FatihBAKIR/checkout@v2
 
+      - name: Create hosted debug build dir
+        run: mkdir -p /tmp/cmake-build-debug
+        
       - name: Clear hosted debug cache
         run: rm -f /tmp/cmake-build-debug/CMakeCache.txt
 
