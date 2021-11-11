@@ -33,6 +33,8 @@ class span {
 public:
     using iterator = T*;
 
+    constexpr span() : span(nullptr) {}
+
     /**
      * Constructs an empty span
      */
