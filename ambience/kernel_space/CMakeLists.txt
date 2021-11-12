@@ -1,9 +1,9 @@
 add_library(
-  aekernellib include/tos/ae/kernel/syscall.hpp include/tos/ae/kernel/rings.hpp
-              include/tos/ae/kernel/address_space.hpp stub.cpp
+  aekernellib include/tos/ae/kernel/rings.hpp
+              stub.cpp
               include/tos/ae/kernel/runners/group_runner.hpp
               include/tos/ae/kernel/group.hpp)
-target_link_libraries(aekernellib PUBLIC aecommon tos_arch_core tos_ft tos_elf)
+target_link_libraries(aekernellib PUBLIC aecommon tos_arch_core tos_ft)
 target_include_directories(aekernellib PUBLIC include)
 
 if (${TOS_ARCH_HAVE_ADDRESS_SPACE})
@@ -13,7 +13,7 @@ if (${TOS_ARCH_HAVE_ADDRESS_SPACE})
         src/user_group.cpp
     )
 
-    target_link_libraries(ae_usergroup PUBLIC aekernellib quikshare)
+    target_link_libraries(ae_usergroup PUBLIC aekernellib quikshare tos_elf)
 
     if (${TOS_ARCH} MATCHES "x86_64" OR ${TOS_ARCH} MATCHES "aarch64")
         target_sources(ae_usergroup PRIVATE src/preemptive_user_group.cpp)
