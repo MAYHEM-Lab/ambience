@@ -1,0 +1,24 @@
+name: self-hosted-ambience-integration
+
+on: [push, pull_request]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  self-hosted-ambience-integration:
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+
+    steps:
+      - uses: FatihBAKIR/checkout@v2
+
+      - name: Install ambictl dependencies
+        run: pip3 install -r $GITHUB_WORKSPACE/ambience/ambictl/requirements.txt
+
+      - name: Build limine-install
+        run: make limine-install
+        working-directory: $GITHUB_WORKSPACE/third_party/limine/binaries
+
+      - name: Build calc_deployment
+        run: python3 build.py calc_test_deployment
+        working-directory: $GITHUB_WORKSPACE/ambience/ambictl
