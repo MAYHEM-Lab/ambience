@@ -1,0 +1,3 @@
+add_executable(dict_tests dict_tests.cpp)
+target_link_libraries(dict_tests PUBLIC standalone_tests_main tos_meta_object)
+add_test(NAME dict_tests COMMAND dict_tests)
