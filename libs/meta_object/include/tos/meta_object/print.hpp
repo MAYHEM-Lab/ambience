@@ -8,7 +8,11 @@ namespace tos::meta_object {
 template<class Stream>
 constexpr void print(Stream& str, const KeyValue auto& kv) {
     using tos::print;
-    print(str, kv.key(), ':', kv.value());
+    print(str, '"');
+    print(str, kv.key());
+    print(str, '"');
+    print(str, ' ');
+    print(str, ':', kv.value());
 }
 
 template<class StreamT, KeyValue... KVs>

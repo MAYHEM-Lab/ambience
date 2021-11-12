@@ -13,7 +13,7 @@ TEST_CASE("dictionary printing works") {
     };
     print(str, d);
     auto x = std::string_view((const char*)str.get().data(), str.get().size());
-    REQUIRE_EQ("{foo : 42}", x);
+    REQUIRE_EQ("{\"foo\" : 42}", x);
 }
 } // namespace
 } // namespace tos::meta_object
