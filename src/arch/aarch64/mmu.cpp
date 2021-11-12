@@ -162,7 +162,7 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
                                          physical_address phys_addr) {
     for (uintptr_t addr = virt_seg.range.base.address();
          addr != virt_seg.range.end().address();
-         addr += 4096, phys_addr = (char*)phys_addr.direct_mapped() + 4096) {
+         addr += 4096, phys_addr = phys_addr + 4096) {
         auto path = pt_path_for_addr(addr);
 
         translation_table* table = &root;

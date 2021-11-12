@@ -2,6 +2,7 @@
 
 #include <tos/ae/kernel/group.hpp>
 #include <tos/ae/kernel/rings.hpp>
+#include <tos/arch.hpp>
 #include <tos/tcb.hpp>
 
 namespace tos::ae::kernel {

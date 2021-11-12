@@ -6,6 +6,7 @@
 
 #include <tos/compiler.hpp>
 #include <tos/core/arch.hpp>
+#include <tos/core/arch_fwd.hpp>
 
 namespace tos::arch {
 using cur_arch::get_stack_ptr;

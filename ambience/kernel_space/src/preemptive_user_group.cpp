@@ -51,7 +51,7 @@ map_elf(const tos::elf::elf64& elf,
 
         // The pages are mapped into the kernel as RW
         //        vseg.perms = permissions::read_write;
-        EXPECTED_TRYV(map_region(x86_64::get_current_translation_table(),
+        EXPECTED_TRYV(map_region(cur_arch::get_current_translation_table(),
                                  vseg,
                                  tos::user_accessible::no,
                                  tos::memory_types::normal,
@@ -88,7 +88,7 @@ create_and_map_stack(size_t stack_size,
         stack_address));
 
     EXPECTED_TRYV(map_region(
-        x86_64::get_current_translation_table(),
+        cur_arch::get_current_translation_table(),
         identity_map(tos::physical_segment{
             .range = {.base = stack_address, .size = static_cast<ptrdiff_t>(stack_size)},
             tos::permissions::read_write}),

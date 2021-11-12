@@ -26,7 +26,7 @@ fault_handler_t _fault_handler{[](const fault_variant& fault, stack_frame_t&, vo
                 tos::aarch64::semihosting::write0("\n");
 
                 auto& pt = get_current_translation_table();
-                auto entry_res = entry_for_address(pt, abort.data_addr);
+                auto entry_res = entry_for_address(pt, virtual_address(abort.data_addr));
                 if (!entry_res) {
                     switch (force_error(entry_res)) {
                     case mmu_errors::not_allocated:
@@ -51,7 +51,7 @@ fault_handler_t _fault_handler{[](const fault_variant& fault, stack_frame_t&, vo
                     tos::itoa(abort.return_address, 16).data());
                 tos::aarch64::semihosting::write0("\n");
                 auto& pt = get_current_translation_table();
-                auto entry_res = entry_for_address(pt, abort.instr_addr);
+                auto entry_res = entry_for_address(pt, virtual_address(abort.instr_addr));
                 if (!entry_res) {
                     switch (force_error(entry_res)) {
                     case mmu_errors::not_allocated:

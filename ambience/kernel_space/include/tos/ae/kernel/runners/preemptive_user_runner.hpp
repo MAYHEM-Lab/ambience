@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tos/address_space.hpp>
 #include <tos/ae/kernel/runners/group_runner.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/detail/poll.hpp>
