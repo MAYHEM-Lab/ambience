@@ -22,9 +22,9 @@ struct read_returns_expected
 template<class CharT, class StreamT>
 span<CharT> read_until(StreamT& str, span<const CharT> until, span<CharT> buffer) {
     for (size_t i = 0; i < buffer.size(); ++i) {
-        auto raw_res = str->read(tos::raw_cast<uint8_t>(buffer.slice(i, 1)));
+        auto raw_res = str->read(tos::raw_cast<CharT>(buffer.slice(i, 1)));
 
-        span<uint8_t> res{nullptr};
+        span<uint8_t> res{};
         if constexpr (detail::read_returns_expected<StreamT>{}) {
             if (!raw_res) {
                 return buffer.slice(0, i);
@@ -37,6 +37,11 @@ span<CharT> read_until(StreamT& str, span<const CharT> until, span<CharT> buffer
         if (res.empty()) {
             return buffer.slice(0, i);
         }
+
+        if (i < until.size()) {
+            continue;
+        }
+        
         if (buffer.slice(i - until.size() + 1, until.size()) == until) {
             return buffer.slice(0, i + 1);
         }
