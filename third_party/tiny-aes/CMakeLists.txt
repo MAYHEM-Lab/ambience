@@ -2,6 +2,7 @@ add_library(tinyaes src/aes.c)
 target_include_directories(tinyaes PUBLIC src/)
 target_link_libraries(tinyaes PUBLIC tos::libc)
 
+return()
 if (BUILD_TESTS)
     add_executable(tinyaes_test src/test.c)
     target_link_libraries(tinyaes_test PUBLIC tinyaes)
