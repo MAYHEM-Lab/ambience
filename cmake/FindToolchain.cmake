@@ -99,6 +99,7 @@ function(find_llvm_toolchain)
     endif()
 
     set(SEARCH_DIRS ${TOOLCHAIN_HINTS})
+    list(APPEND SEARCH_DIRS /home/fatih/llvm-project/build)
     list(APPEND SEARCH_DIRS /opt/x-tools)
     list(APPEND SEARCH_DIRS /opt/llvm)
     list(APPEND SEARCH_DIRS /ambience/llvm)
