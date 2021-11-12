@@ -1,7 +1,5 @@
 #pragma once
 
-#include <fmt/compile.h>
-#include <fmt/format.h>
 #include <tos/fixed_string.hpp>
 #include <tos/print.hpp>
 #include <type_traits>
