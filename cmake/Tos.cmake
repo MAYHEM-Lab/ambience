@@ -47,8 +47,10 @@ set(TOS_FLAGS "-Wall -Wextra -Wpedantic \
 if (NOT ${TOS_PLATFORM} MATCHES "hosted")
     set(TOS_FLAGS "${TOS_FLAGS} -ffreestanding")
 else()
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        set(TOS_CXX_FLAGS "-lc++abi -stdlib=libc++ -fuse-ld=lld")
+    if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            set(TOS_CXX_FLAGS "-lc++abi -stdlib=libc++ -fuse-ld=lld")
+        endif()
     endif()
 endif()
 
