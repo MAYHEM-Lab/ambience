@@ -16,9 +16,7 @@ jobs:
         run: pip3 install -r $GITHUB_WORKSPACE/ambience/ambictl/requirements.txt
 
       - name: Build limine-install
-        run: make limine-install
-        working-directory: $GITHUB_WORKSPACE/third_party/limine/binaries
+        run: cd $GITHUB_WORKSPACE/third_party/limine/binaries && make limine-install
 
       - name: Build calc_deployment
-        run: python3 build.py calc_test_deployment
-        working-directory: $GITHUB_WORKSPACE/ambience/ambictl
+        run: cd $GITHUB_WORKSPACE/ambience/ambictl && python3 build.py calc_test_deployment
