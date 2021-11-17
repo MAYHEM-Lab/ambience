@@ -11,6 +11,34 @@ struct countdown {
     countdown(countdown&&) = delete;
 
     template<class Fn>
+    static auto start(int n, Fn&& fn) {
+        struct awaiter {
+            bool await_ready() const {
+                return false;
+            }
+
+            void await_suspend(std::coroutine_handle<> handle) {
+                cd.m_handle = handle;
+                (fn)(cd);
+            }
+
+            void await_resume() {
+                cd.m_handle.resume();
+            }
+
+            awaiter(int n, Fn&& fn)
+                : cd{n}
+                , fn{std::forward<Fn>(fn)} {
+            }
+
+            countdown cd;
+            Fn fn;
+        };
+
+        return awaiter{n, std::forward<Fn>(fn)};
+    }
+
+    template<class Fn>
     auto start(const Fn& fn) {
         struct awaiter {
             bool await_ready() const {
