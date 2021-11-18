@@ -17,8 +17,9 @@ struct polymorphic_allocator {
 namespace detail {
 template<class T>
 struct erased_allocator : polymorphic_allocator {
-    explicit erased_allocator(T t)
-        : m_alloc{std::move(t)} {
+    template <class... Ts>
+    explicit erased_allocator(Ts&&... ts)
+        : m_alloc{std::forward<Ts>(ts)...} {
     }
 
     void* allocate(size_t size) override {

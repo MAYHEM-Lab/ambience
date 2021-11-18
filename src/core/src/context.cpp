@@ -35,7 +35,7 @@ namespace tos {
 namespace {
 auto make_allocator() {
 #if defined(TOS_PLATFORM_raspi) || defined(TOS_PLATFORM_x86_64)
-    return memory::erase_allocator(memory::free_list{heap_mem});
+    return memory::detail::erased_allocator<memory::free_list>(heap_mem);
 #elif defined(TOS_PLATFORM_stm32_hal) || defined(TOS_PLATFORM_nrf52)
     return memory::erase_allocator(memory::free_list{heap_memory()});
 #else
