@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <optional>
 
 namespace tos::memory {
 class mallocator {
