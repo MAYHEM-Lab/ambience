@@ -72,9 +72,9 @@ void* free_list::allocate(size_t size) {
 #if defined(TOS_FREE_LIST_VERBOSE)
     LOG("Before", this, m_used);
 #endif
-    m_used += sz;
-    m_peak = std::max(m_used, m_peak);
-    auto header = new (&*first_fit) allocation_header{.size = sz};
+    m_used_ctr.inc(sz);
+    m_peak_memory.max(m_used_ctr.get());
+    auto header = new (&*first_fit) allocation_header{sz};
 #if defined(TOS_FREE_LIST_VERBOSE)
     LOG("After", this, m_used, header + 1);
 #endif
@@ -137,7 +137,7 @@ void free_list::free(void* ptr) {
 
     auto new_header = new (header) free_header(size);
     add_block(*new_header);
-    m_used -= size;
+    m_used_ctr.dec(size);
 }
 
 bool is_contiguous(const free_header& first, const free_header& next) {
