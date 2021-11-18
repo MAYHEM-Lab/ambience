@@ -6,6 +6,7 @@
 #include <tos/detail/poll.hpp>
 #include <tos/late_constructed.hpp>
 #include <tos/preemption.hpp>
+#include <tos/debug/trace/counter.hpp>
 
 namespace tos::ae {
 struct preemptive_user_group_runner : group_runner {
@@ -26,10 +27,13 @@ struct preemptive_user_group_runner : group_runner {
         user_group.clear_runnable();
         post_run(user_group);
         // tos::debug::log("Post ran");
+        ctx_switch.inc();
+
         if (preempted == user_reason::error) {
             LOG("User space failed!");
         } else if (preempted == user_reason::preempt) {
             user_group.notify_downcall();
+            preempt.inc();
         } else {
             // The group yielded before draining its queue, can still run
             if (!user_group.iface.user_iface->host_to_guest->empty(
@@ -98,6 +102,9 @@ private:
 
     static late_constructed<preemptive_user_group_runner> m_instance;
     function_ref<user_reason(kern::tcb&)> m_erased_runner;
+
+    trace::counter preempt{"preemptive_user_runner_preemption"};
+    trace::counter ctx_switch{"preemptive_user_runner_ctx_switch"};
 };
 
 inline late_constructed<preemptive_user_group_runner>
