@@ -104,9 +104,6 @@ using typed_async_union_procedure_runner_t =
                         typename ServiceT::service_type::wire_types::call_union&,
                         lidl::message_builder&);
 
-template<class>
-class print;
-
 namespace detail {
 template<class ServiceT, class BaseServT = ServiceT>
 tos::Task<bool>
