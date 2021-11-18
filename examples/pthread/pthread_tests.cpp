@@ -47,7 +47,7 @@ void test_pthread_attr_destroy() {
     pthread_attr_t attr;
     auto result = pthread_attr_destroy(&attr);
     Assert(attr.stack_addr == nullptr);
-    Assert(attr.stack_size == -1);
+    Assert(static_cast<int>(attr.stack_size) == -1);
     Assert(result == 0);
     LOG("PASSED test_pthread_attr_destroy()");
 }
