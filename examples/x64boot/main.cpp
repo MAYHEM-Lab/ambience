@@ -61,8 +61,6 @@ struct on_demand_interrupt {
 void low_level_write(tos::span<unsigned char const>) {}
 
 void thread() {
-    auto& self = *tos::self();
-
     auto uart_res = tos::x86_64::uart_16550::open();
     if (!uart_res) {
         tos::debug::panic("Could not open the uart");
@@ -85,7 +83,7 @@ void thread() {
 
     LOG(tos::x86_64::cpuid::manufacturer().data());
     on_demand_interrupt odi{};
-    auto trampoline = tos::make_interrupt_trampoline(odi);
+    [[maybe_unused]] auto trampoline = tos::make_interrupt_trampoline(odi);
 
     auto cr3 = tos::x86_64::read_cr3();
     LOG("Page table at:", (void*)cr3);
