@@ -5,6 +5,7 @@
 namespace tos::ubsan::handlers {
 struct ubsan_handlers {
     virtual void error() = 0;
+    virtual ~ubsan_handlers() = default;
 };
 
 struct null_handlers : ubsan_handlers {
