@@ -10,6 +10,7 @@
 #include "vector.hpp"
 #include <lidlrt/find_extent.hpp>
 #include <tos/fixed_string.hpp>
+#include <tos/task.hpp>
 
 #ifndef LIDL_ASSERT
 #ifdef TOS
@@ -37,3 +38,8 @@
 #endif
 #endif
 #endif
+
+namespace lidl {
+using tos::fixed_string;
+using tos::Task;
+}

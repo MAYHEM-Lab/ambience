@@ -3,8 +3,8 @@
 #include <lidlrt/meta.hpp>
 #include <lidlrt/service.hpp>
 #include <lidlrt/traits.hpp>
-#include <lidlrt/union.hpp>
 #include <type_traits>
+#include <tos/fixed_string.hpp>
 
 namespace lidl {
 template<class T>
@@ -47,4 +47,9 @@ concept AsyncService = is_async_service<T>::value;
 
 template<class T>
 concept Service = SyncService<T> || AsyncService<T>;
+
+template<class U, class T>
+concept NamedVisitor = requires(T&& t) {
+    t.template operator()<tos::fixed_string("foo")>(std::declval<U&&>());
+};
 } // namespace lidl

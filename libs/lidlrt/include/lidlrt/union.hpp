@@ -2,6 +2,8 @@
 
 #include <lidlrt/meta.hpp>
 #include <lidlrt/traits.hpp>
+#include <lidlrt/concepts.hpp>
+#include <tos/fixed_string.hpp>
 
 namespace lidl {
 template<class T>
@@ -14,6 +16,15 @@ constexpr auto index_of() -> typename UnionType::alternatives {
     using types = typename traits::types;
     return static_cast<typename UnionType::alternatives>(
         meta::list_index_of<Type, types>::value);
+}
+
+template <tos::fixed_string name, class T, class VisitorT>
+decltype(auto) do_visit(const T& t, const VisitorT& visitor) {
+    if constexpr (NamedVisitor<const T&, VisitorT>) {
+        return visitor.template operator()<name>(t);
+    } else {
+        return visitor(t);
+    }
 }
 } // namespace detail
 
