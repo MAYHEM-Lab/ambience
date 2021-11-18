@@ -34,7 +34,7 @@ struct posts_bench_agent : tos::ae::agent::async_server {
                              i < (c + 1) * (extent / concurrency);
                              ++i) {
                             auto before = tos::ae::timestamp();
-                            auto id = co_await m_posts_serv->send_post(
+                            [[maybe_unused]] auto id = co_await m_posts_serv->send_post(
                                 "foobar", "Hello @bulut #meow!");
                             auto after = tos::ae::timestamp();
                             auto diff_cycles = after - before;
