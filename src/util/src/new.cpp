@@ -10,11 +10,11 @@
 using tos::allocator_component;
 
 namespace tos {
-void out_of_memory_handler();
+void out_of_memory_handler(int sz);
 
 [[gnu::weak]]
-void out_of_memory_handler() {
-    LOG_WARN("Memory allocation failed!");
+void out_of_memory_handler(int sz) {
+    LOG_WARN("Memory allocation failed!", sz);
 }
 }
 
@@ -79,11 +79,11 @@ void* operator new(size_t sz) {
     if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
         auto res = alloc->allocator->allocate(sz);
         if (res == nullptr) {
-            tos::out_of_memory_handler();
+            tos::out_of_memory_handler(sz);
         }
         return res;
     }
-    tos::out_of_memory_handler();
+    tos::out_of_memory_handler(sz);
     return nullptr;
 }
 
@@ -91,11 +91,11 @@ void* operator new[](size_t sz) {
     if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
         auto res = alloc->allocator->allocate(sz);
         if (res == nullptr) {
-            tos::out_of_memory_handler();
+            tos::out_of_memory_handler(sz);
         }
         return res;
     }
-    tos::out_of_memory_handler();
+    tos::out_of_memory_handler(sz);
     return nullptr;
 }
 
@@ -103,11 +103,11 @@ void* operator new(size_t sz, const std::nothrow_t&) noexcept {
     if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
         auto res = alloc->allocator->allocate(sz);
         if (res == nullptr) {
-            tos::out_of_memory_handler();
+            tos::out_of_memory_handler(sz);
         }
         return res;
     }
-    tos::out_of_memory_handler();
+    tos::out_of_memory_handler(sz);
     return nullptr;
 }
 
@@ -115,11 +115,11 @@ void* operator new[](size_t sz, const std::nothrow_t&) noexcept {
     if (auto alloc = tos::current_context().get_component<allocator_component>(); alloc) {
         auto res = alloc->allocator->allocate(sz);
         if (res == nullptr) {
-            tos::out_of_memory_handler();
+            tos::out_of_memory_handler(sz);
         }
         return res;
     }
-    tos::out_of_memory_handler();
+    tos::out_of_memory_handler(sz);
     return nullptr;
 }
 
