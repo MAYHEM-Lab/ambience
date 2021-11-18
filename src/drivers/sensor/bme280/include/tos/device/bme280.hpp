@@ -99,15 +99,15 @@ public:
         settings_sel |= BME280_STANDBY_SEL;
         settings_sel |= BME280_FILTER_SEL;
 
-        auto rslt = bme280_set_sensor_settings(settings_sel, &m_dev);
+        [[maybe_unused]] auto rslt = bme280_set_sensor_settings(settings_sel, &m_dev);
     }
 
     void sleep() {
-        auto rslt = bme280_set_sensor_mode(BME280_SLEEP_MODE, &m_dev);
+        [[maybe_unused]] auto rslt = bme280_set_sensor_mode(BME280_SLEEP_MODE, &m_dev);
     }
 
     void enable() {
-        auto rslt = bme280_set_sensor_mode(BME280_NORMAL_MODE, &m_dev);
+        [[maybe_unused]] auto rslt = bme280_set_sensor_mode(BME280_NORMAL_MODE, &m_dev);
     }
 
     tos::expected<bme280_data, read_errors> read(components what = components::all) {
