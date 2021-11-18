@@ -2,6 +2,7 @@
 
 #include <lidlrt/meta.hpp>
 #include <lidlrt/service.hpp>
+#include <tos/out_ptr.hpp>
 
 namespace lidl {
 using zerocopy_fn_t = bool (*)(lidl::service_base&, const void* params, void* ret);
@@ -20,80 +21,91 @@ struct convert_types<lidl::meta::list<Ts...>> {
 };
 
 template<class ServiceT, int ProcId>
-constexpr auto async_zerocopy_translator() -> async_zerocopy_fn_t {
-    return [](lidl::service_base& serv_base,
-              const void* args,
-              void* ret) -> tos::Task<bool> {
-        using ServDesc = lidl::service_descriptor<ServiceT>;
-        constexpr auto& proc_desc = std::get<ProcId>(ServDesc::procedures);
-        using ProcTraits = lidl::procedure_traits<decltype(proc_desc.function)>;
-        using ArgsTupleType =
-            typename convert_types<typename ProcTraits::param_types>::tuple_type;
-        using RetType = typename ProcTraits::return_type;
-        constexpr bool is_ref = std::is_reference_v<RetType>;
-        using ActualRetType =
-            std::conditional_t<is_ref,
-                               std::add_pointer_t<std::remove_reference_t<RetType>>,
-                               RetType>;
-        constexpr auto& fn = proc_desc.async_function;
+struct zerocopy_translator {
+    using ServDesc = lidl::service_descriptor<ServiceT>;
+    static constexpr auto& proc_desc = std::get<ProcId>(ServDesc::procedures);
+    using ProcTraits = lidl::procedure_traits<decltype(proc_desc.function)>;
+    using ArgsTupleType =
+        typename convert_types<typename ProcTraits::param_types>::tuple_type;
+    using RetType = typename ProcTraits::return_type;
+    static constexpr bool is_ref = std::is_reference_v<RetType>;
+    using ActualRetType =
+        std::conditional_t<is_ref,
+                           std::add_pointer_t<std::remove_reference_t<RetType>>,
+                           RetType>;
 
-        auto do_call = [&serv = static_cast<typename ServiceT::async_server&>(serv_base),
-                        ret](auto... vals) -> tos::Task<bool> {
+    // using CallUnionType = typename ServiceT::wire_types::call_union;
+    // using CallUnionTraits = union_traits<CallUnionType>;
+    // using CallStructType =
+    //     decltype(std::invoke(std::declval<const CallUnionType&>(),
+    //                          std::get<ProcId>(CallUnionTraits::members).const_function));
+
+    static auto async_typed(typename ServiceT::async_server& serv,
+                            const ArgsTupleType* args,
+                            tos::out_ptr<ActualRetType> ret) -> tos::Task<bool> {
+        auto do_call = [&serv, ret](auto&&... vals) -> tos::Task<bool> {
             if constexpr (is_ref) {
-                auto& res = co_await std::invoke(
-                    fn, serv, extractor<decltype(vals)>::extract(vals)...);
+                auto& res =
+                    co_await std::invoke(proc_desc.async_function,
+                                         serv,
+                                         extractor<decltype(vals)>::extract(vals)...);
                 new (ret) ActualRetType(&res);
             } else {
-                new (ret) ActualRetType(co_await std::invoke(
-                    fn, serv, extractor<decltype(vals)>::extract(vals)...));
+                new (ret) ActualRetType(
+                    co_await std::invoke(proc_desc.async_function,
+                                         serv,
+                                         extractor<decltype(vals)>::extract(vals)...));
             }
             co_return true;
         };
 
-        auto& args_tuple = *static_cast<const ArgsTupleType*>(args);
-        co_return co_await std::apply(do_call, args_tuple);
+        co_return co_await std::apply(do_call, *args);
     };
-}
 
-template<class ServiceT, int ProcId>
-constexpr auto zerocopy_translator() -> zerocopy_fn_t {
-    return [](lidl::service_base& serv_base, const void* args, void* ret) -> bool {
-        auto& serv = static_cast<typename ServiceT::sync_server&>(serv_base);
-        using ServDesc = lidl::service_descriptor<ServiceT>;
-        constexpr auto& proc_desc = std::get<ProcId>(ServDesc::procedures);
-        using ProcTraits = lidl::procedure_traits<decltype(proc_desc.function)>;
-        using ArgsTupleType =
-            typename convert_types<typename ProcTraits::param_types>::tuple_type;
-        using RetType = typename ProcTraits::return_type;
-        static constexpr bool is_ref = std::is_reference_v<RetType>;
-        using ActualRetType =
-            std::conditional_t<is_ref,
-                               std::add_pointer_t<std::remove_reference_t<RetType>>,
-                               RetType>;
-
-        auto do_call = [&serv, ret](auto... vals) -> bool {
-            constexpr auto& fn = proc_desc.function;
+    static constexpr auto sync_typed(typename ServiceT::sync_server& serv,
+                                     const ArgsTupleType* args,
+                                     tos::out_ptr<ActualRetType> ret) -> bool {
+        auto do_call = [&serv, ret](auto&&... vals) -> bool {
             if constexpr (is_ref) {
-                auto& res =
-                    std::invoke(fn, serv, extractor<decltype(vals)>::extract(vals)...);
+                auto& res = std::invoke(proc_desc.function,
+                                        serv,
+                                        extractor<decltype(vals)>::extract(vals)...);
                 new (ret) ActualRetType(&res);
             } else {
                 new (ret) ActualRetType(
-                    std::invoke(fn, serv, extractor<decltype(vals)>::extract(vals)...));
+                    std::invoke(proc_desc.function,
+                                serv,
+                                extractor<decltype(vals)>::extract(vals)...));
             }
             return true;
         };
 
-        auto& args_tuple = *static_cast<const ArgsTupleType*>(args);
-        return std::apply(do_call, args_tuple);
+        return std::apply(do_call, *args);
     };
-}
+
+    static auto async_untyped(lidl::service_base& serv_base,
+                              const void* args,
+                              tos::out_ptr<void> ret) -> tos::Task<bool> {
+        return async_typed(static_cast<typename ServiceT::async_server&>(serv_base),
+                           static_cast<const ArgsTupleType*>(args),
+                           static_cast<tos::out_ptr<ActualRetType>>(ret));
+    };
+
+    static constexpr auto sync_untyped(lidl::service_base& serv_base,
+                                       const void* args,
+                                       tos::out_ptr<void> ret) -> bool {
+        return sync_typed(static_cast<typename ServiceT::sync_server&>(serv_base),
+                          static_cast<const ArgsTupleType*>(args),
+                          static_cast<tos::out_ptr<ActualRetType>>(ret));
+    };
+};
 
 template<class ServiceT, size_t... Is>
-constexpr zerocopy_fn_t vt[] = {zerocopy_translator<ServiceT, Is>()...};
+constexpr zerocopy_fn_t vt[] = {&zerocopy_translator<ServiceT, Is>::sync_untyped...};
 
 template<class ServiceT, size_t... Is>
-constexpr async_zerocopy_fn_t avt[] = {async_zerocopy_translator<ServiceT, Is>()...};
+constexpr async_zerocopy_fn_t avt[] = {
+    &zerocopy_translator<ServiceT, Is>::async_untyped...};
 
 template<class ServiceT, size_t... Is>
 constexpr tos::span<const zerocopy_fn_t>
@@ -126,6 +138,5 @@ constexpr async_zerocopy_vtable_t make_async_zerocopy_vtable() {
 }
 
 template<class T>
-inline constexpr async_zerocopy_vtable_t
-    async_vtable = make_async_zerocopy_vtable<T>();
+inline constexpr async_zerocopy_vtable_t async_vtable = make_async_zerocopy_vtable<T>();
 } // namespace lidl
