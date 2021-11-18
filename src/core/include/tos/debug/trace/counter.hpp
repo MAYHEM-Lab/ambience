@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tos/memory.hpp"
+#include "tos/utility.hpp"
 #include <atomic>
 #include <cstdint>
 #include <string_view>
@@ -92,7 +93,8 @@ named(std::string_view, BaseMetric&&) -> named<BaseMetric>;
 
 struct metric : list_node<metric> {
     struct visitor {
-        virtual Task<void> operator()(std::string_view name, const basic_counter& cnt) = 0;
+        virtual Task<void> operator()(std::string_view name,
+                                      const basic_counter& cnt) = 0;
         virtual Task<void> operator()(std::string_view name, const basic_gauge& cnt) = 0;
         virtual Task<void> operator()(std::string_view name,
                                       const basic_atomic_counter& cnt) = 0;
@@ -102,11 +104,13 @@ struct metric : list_node<metric> {
     template<class VisitorT>
     Task<void> visit(VisitorT& vis) {
         struct visitor_impl : visitor {
-            Task<void> operator()(std::string_view name, const basic_counter& cnt) override {
+            Task<void> operator()(std::string_view name,
+                                  const basic_counter& cnt) override {
                 return (*m_vis)(name, cnt);
             }
 
-            Task<void> operator()(std::string_view name, const basic_gauge& cnt) override {
+            Task<void> operator()(std::string_view name,
+                                  const basic_gauge& cnt) override {
                 return (*m_vis)(name, cnt);
             }
 
@@ -149,6 +153,7 @@ struct registerable
     template<class... Args>
     explicit registerable(Args&&... args)
         : BaseMetric(std::forward<Args>(args)...) {
+        register_at();
     }
 
     void register_at(trace::registry& registry = global::trace_registry()) {
