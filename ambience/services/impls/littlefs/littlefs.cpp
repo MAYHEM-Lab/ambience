@@ -85,7 +85,7 @@ struct littlefs : tos::ae::services::filesystem::sync_server {
             return {reinterpret_cast<uintptr_t>(it->second)};
         }
         auto file_ptr = new refcounted_lfs_file;
-        auto open_res =
+        [[maybe_unused]] auto open_res =
             lfs_file_open(&m_lfs, &file_ptr->file, str.c_str(), LFS_O_RDWR | LFS_O_CREAT);
         //        printf("open %s: %d, %p", str.c_str(), open_res, file_ptr);
         open_files.emplace(std::move(str), file_ptr);
@@ -98,7 +98,7 @@ struct littlefs : tos::ae::services::filesystem::sync_server {
                                  lidl::message_builder& response_builder) override {
         auto file_ptr = reinterpret_cast<refcounted_lfs_file*>(file.priv());
         auto buffer = response_builder.allocate(len, 1);
-        auto seek_res = lfs_file_seek(&m_lfs, &file_ptr->file, at, LFS_SEEK_SET);
+        [[maybe_unused]] auto seek_res = lfs_file_seek(&m_lfs, &file_ptr->file, at, LFS_SEEK_SET);
         //        printf("seek %p: %d", file_ptr, seek_res);
         auto read_res = lfs_file_read(&m_lfs, &file_ptr->file, buffer, len);
         //        printf("read %p, %d, %d: %d", file_ptr, at, len, read_res);
@@ -109,12 +109,12 @@ struct littlefs : tos::ae::services::filesystem::sync_server {
                     const uint32_t& at,
                     tos::span<uint8_t> data) override {
         auto file_ptr = reinterpret_cast<refcounted_lfs_file*>(file.priv());
-        auto seek_res = lfs_file_seek(&m_lfs, &file_ptr->file, at, LFS_SEEK_SET);
+        [[maybe_unused]] auto seek_res = lfs_file_seek(&m_lfs, &file_ptr->file, at, LFS_SEEK_SET);
         //        printf("seek %p: %d", file_ptr, seek_res);
         auto res = lfs_file_write(&m_lfs, &file_ptr->file, data.data(), data.size());
         //        printf("write %p, %d, %p, %d: %d", file_ptr, at, data.data(),
         //        data.size(), res);
-        return res == data.size();
+        return res == static_cast<int>(data.size());
     }
 
     bool close_file(const tos::ae::services::file_handle& file) override {
