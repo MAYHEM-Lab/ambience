@@ -11,4 +11,15 @@ using id = identity<T>;
 
 template<class...>
 struct list {};
+
+template<template<class...> class, class>
+struct apply;
+
+template<template<class...> class To, class... Ts>
+struct apply<To, list<Ts...>> {
+    using type = To<Ts...>;
+};
+
+template<template<class...> class To, class List>
+using apply_t = typename apply<To, List>::type;
 } // namespace tos::meta

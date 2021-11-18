@@ -20,12 +20,12 @@ constexpr auto mem_fn() {
         to_ptr<typename Traits::class_t, typename Traits::ret_t, typename Traits::arg_ts>;
     if constexpr (Traits::is_const) {
         return static_cast<typename Ptr::ptr_type>(
-            [](const typename Traits::class_t& instance, auto... args) {
+            [](const typename Traits::class_t& instance, auto... args) -> decltype(auto) {
                 return (instance.*MemberFun)(args...);
             });
     } else {
         return static_cast<typename Ptr::ptr_type>(
-            [](typename Traits::class_t& instance, auto... args) {
+            [](typename Traits::class_t& instance, auto... args) -> decltype(auto) {
                 return (instance.*MemberFun)(args...);
             });
     }
