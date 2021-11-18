@@ -30,7 +30,7 @@ void* hello_world(void*) {
 
 void test_pthread_create() {
     pthread_t thread1;
-    pthread_t thread2;
+    // pthread_t thread2;
     auto result = pthread_create(&thread1, nullptr, &hello_world, nullptr);
     Assert(result == 0);
     // result = pthread_create(&thread2, nullptr, &hello_world, nullptr);
