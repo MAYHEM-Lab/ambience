@@ -7,19 +7,19 @@ enum class context_codes : uint8_t
 {
     saved = 0,
     /**
-     * the running thread yielded
+     * the running context yielded
      */
     yield,
     /**
-     * the running thread has been suspended
+     * the running context has been suspended
      */
     suspend,
     /**
-     * a thread exited
+     * the running context exited
      */
     do_exit,
     /**
-     * this thread was assigned the cpu
+     * this context was assigned the cpu
      */
     scheduled
 };
