@@ -51,7 +51,7 @@ void wasm_task() {
     uint32_t ptr = std::distance(mem, reinterpret_cast<uint8_t*>(&cap));
     const void* args[] = {&ptr};
 
-    auto res = m3_Call(run, 1, args);
+    [[maybe_unused]] auto res = m3_Call(run, 1, args);
 
     bool result;
     const void* ret_ptrs[] = {&result};

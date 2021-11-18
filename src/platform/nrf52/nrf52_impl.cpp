@@ -52,6 +52,7 @@ extern void (*start_ctors[])();
 extern void (*end_ctors[])();
 void _start() {
     main();
+    TOS_UNREACHABLE();
 }
 }
 extern "C" int main() {

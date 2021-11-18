@@ -739,6 +739,7 @@ else ()
       if("${arch}" STREQUAL "riscv32")
         list(APPEND BUILTIN_CFLAGS -fforce-enable-int128)
       endif()
+      list(APPEND BUILTIN_CFLAGS -Wno-pedantic -Wno-incompatible-pointer-types -Wno-visibility)
 
       add_compiler_rt_runtime(clang_rt.builtins
                               STATIC
