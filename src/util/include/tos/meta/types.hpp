@@ -12,6 +12,9 @@ using id = identity<T>;
 template<class...>
 struct list {};
 
+template<auto...>
+struct values {};
+
 template<template<class...> class, class>
 struct apply;
 
