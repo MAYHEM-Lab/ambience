@@ -34,6 +34,8 @@ void lwip_host<ServiceHost>::operator()(tos::lwip::events::recvfrom_t,
                                         tos::lwip::async_udp_socket*,
                                         const tos::udp_endpoint_t& from,
                                         tos::lwip::buffer&& buf) {
+    received_req_cnt.inc();
+    bytes_received.inc(buf.size());
     tos::coro::make_detached(async_handle_one_req(from, std::move(buf)));
 }
 
@@ -76,6 +78,8 @@ void lwip_host<ServiceHost>::handle_one_req(const tos::udp_endpoint_t& from,
         sync_run_message(serv, req, response_builder);
         [[maybe_unused]] auto end = lwip::global::system_clock->now();
         udp_sock.send_to(response_builder.get_buffer(), from);
+        bytes_sent.inc(response_builder.get_buffer().size());
+        handled_req_cnt.inc();
     }
 }
 
@@ -92,6 +96,8 @@ tos::Task<void> lwip_host<ServiceHost>::async_handle_one_req(tos::udp_endpoint_t
         co_await async_run_message(serv, req, response_builder);
         [[maybe_unused]] auto end = lwip::global::system_clock->now();
         co_await udp_sock.async_send_to(response_builder.get_buffer(), from);
+        bytes_sent.inc(response_builder.get_buffer().size());
+        handled_req_cnt.inc();
     }
 }
 

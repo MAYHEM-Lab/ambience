@@ -4,6 +4,7 @@
 #include <deque>
 #include <tos/ae/exporter.hpp>
 #include <tos/ae/service_host.hpp>
+#include <tos/debug/trace/counter.hpp>
 #include <tos/lwip/tcp.hpp>
 #include <tos/lwip/tcp_stream.hpp>
 #include <tos/lwip/udp.hpp>
@@ -43,6 +44,11 @@ private:
     ServiceHost serv;
     tos::lwip::tcp_socket sock;
     tos::lwip::async_udp_socket udp_sock;
+
+    trace::counter received_req_cnt{"lwip_host_received_req_cnt"};
+    trace::counter handled_req_cnt{"lwip_host_handled_req_cnt"};
+    trace::counter bytes_received{"lwip_host_bytes_received"};
+    trace::counter bytes_sent{"lwip_host_bytes_sent"};
 
     struct udp_response_info : list_node<udp_response_info> {
         udp_endpoint_t to;
