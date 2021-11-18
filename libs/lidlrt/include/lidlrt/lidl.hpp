@@ -9,6 +9,7 @@
 #include "union.hpp"
 #include "vector.hpp"
 #include <lidlrt/find_extent.hpp>
+#include <tos/fixed_string.hpp>
 
 #ifndef LIDL_ASSERT
 #ifdef TOS
