@@ -61,7 +61,7 @@ protected:
     void on_set_context(context& new_ctx) override;
 
 public:
-    void operator()() override;
+    void operator()() override final;
 
 private:
     processor_context* m_ctx;
