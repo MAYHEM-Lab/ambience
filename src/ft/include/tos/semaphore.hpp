@@ -68,6 +68,8 @@ public:
 
     sem_ret down(cancellation_token& cancel) noexcept;
 
+    void down(basic_fiber& fib) & noexcept;
+
     /**
      * Decrements the shared counter and blocks for up
      * to the given amount of time if the counter is
@@ -206,6 +208,17 @@ inline void semaphore_base<CountT>::up() noexcept {
     detail::memory_barrier();
     tos::int_guard ig(__builtin_return_address(0));
     up_isr();
+    detail::memory_barrier();
+}
+
+template<class CountT>
+inline void semaphore_base<CountT>::down(basic_fiber& fib) & noexcept {
+    detail::memory_barrier();
+    tos::int_guard ig(__builtin_return_address(0));
+    m_count = m_count - 1;
+    if (m_count < 0) {
+        m_wait.wait(fib, ig);
+    }
     detail::memory_barrier();
 }
 

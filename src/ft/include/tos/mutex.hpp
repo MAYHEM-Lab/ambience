@@ -41,12 +41,16 @@ public:
         m_sem.down();
     }
 
-    bool try_lock(const no_interrupts& = tos::int_guard{}) {
-        return try_down_isr(m_sem);
+    void lock(basic_fiber& fib) noexcept {
+        m_sem.down(fib);
     }
 
     auto operator co_await() {
         return m_sem.operator co_await();
+    }
+
+    bool try_lock(const no_interrupts& = tos::int_guard{}) {
+        return try_down_isr(m_sem);
     }
 
     /**

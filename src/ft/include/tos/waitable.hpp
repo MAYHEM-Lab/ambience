@@ -4,6 +4,7 @@
 #include <tos/debug/assert.hpp>
 #include <tos/debug/debug.hpp>
 #include <tos/detail/coro.hpp>
+#include <tos/fiber.hpp>
 #include <tos/ft.hpp>
 #include <tos/interrupt.hpp>
 #include <tos/scheduler.hpp>
@@ -26,6 +27,8 @@ struct waitable {
     void wait(const int_guard&);
 
     bool wait(const int_guard&, cancellation_token& cancel);
+
+    void wait(basic_fiber& fib, const int_guard&);
 
     /**
      * Wakes all of the threads that are waiting on
@@ -131,6 +134,26 @@ inline bool waitable::wait(const int_guard& ig, cancellation_token& cancel) {
     kern::suspend_self(ig);
 
     return res;
+}
+
+inline void waitable::wait(basic_fiber& fib, const int_guard&) {
+    struct inline_job : job {
+        inline_job(basic_fiber& fib)
+            : job(current_context())
+            , m_fib(&fib) {
+        }
+
+        void operator()() override {
+            m_fib->resume();
+        }
+
+        basic_fiber* m_fib;
+    };
+
+    inline_job j{fib};
+    fib.suspend([&]{
+        add(j);
+    });
 }
 
 inline auto waitable::add(job& t) -> waiter_handle {
