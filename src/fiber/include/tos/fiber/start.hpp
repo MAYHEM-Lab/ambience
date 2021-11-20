@@ -34,7 +34,7 @@ struct non_owning {
     struct fib : basic_fiber {
         NO_INLINE [[noreturn]] void start() {
             m_fn(*this);
-            suspend();
+            suspend_final(context_codes::do_exit);
             TOS_UNREACHABLE();
         }
 
@@ -58,7 +58,7 @@ struct owning {
     struct fib : basic_fiber {
         NO_INLINE [[noreturn]] void start() {
             m_fn(*this);
-            suspend();
+            suspend_final(context_codes::do_exit);
             TOS_UNREACHABLE();
         }
 
