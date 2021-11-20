@@ -7,7 +7,7 @@
 
 namespace tos::fiber {
 namespace detail {
-template <class FibT>
+template<class FibT>
 [[noreturn]] inline void fiber_start(void* fib_ptr) {
     auto cur_fib = static_cast<FibT*>(fib_ptr);
     cur_fib->start();
@@ -15,7 +15,7 @@ template <class FibT>
 }
 
 template<class FibT, class... Args>
-auto setup_stack(span<uint8_t> stack, Args&&... args) {
+FibT* setup_stack(span<uint8_t> stack, Args&&... args) {
     auto res = new (stack.end() - sizeof(FibT)) FibT{std::forward<Args>(args)..., stack};
     stack = stack.slice(0, stack.size() - sizeof(FibT));
 
@@ -48,7 +48,7 @@ struct non_owning {
     };
 
     template<class StartFn>
-    static auto start(span<uint8_t> stack, StartFn&& fn) {
+    static fib<StartFn>* start(span<uint8_t> stack, StartFn&& fn) {
         return detail::setup_stack<fib<StartFn>>(stack, std::forward<StartFn>(fn));
     }
 };

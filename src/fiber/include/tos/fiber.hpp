@@ -2,3 +2,4 @@
 
 #include <tos/fiber/basic_fiber.hpp>
 #include <tos/fiber/start.hpp>
+#include <tos/fiber/unique_fiber.hpp>
