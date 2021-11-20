@@ -1,34 +1,17 @@
 #pragma once
 
 #include "tos/stack_storage.hpp"
+#include <cstring>
 #include <tos/compiler.hpp>
 #include <tos/fiber/basic_fiber.hpp>
 
 namespace tos::fiber {
 namespace detail {
-auto setup_fiber_init_stack(span<uint8_t> stack, basic_fiber* fib_ptr) {
-    auto ptr_pos = stack.end() - sizeof fib_ptr;
-    memcpy(ptr_pos, &fib_ptr, sizeof fib_ptr);
-    ptr_pos = stack.end() - 2 * sizeof fib_ptr;
-    memcpy(ptr_pos, &fib_ptr, sizeof fib_ptr);
-    ptr_pos = stack.end() - 3 * sizeof fib_ptr;
-    memcpy(ptr_pos, &fib_ptr, sizeof fib_ptr);
-    ptr_pos = stack.end() - 4 * sizeof fib_ptr;
-    memcpy(ptr_pos, &fib_ptr, sizeof fib_ptr);
-    ptr_pos = stack.end() - 5 * sizeof fib_ptr;
-    memcpy(ptr_pos, &fib_ptr, sizeof fib_ptr);
-
-    return std::pair(
-        +[]() {
-            basic_fiber* cur_fib;
-            auto sp = cur_arch::get_stack_ptr();
-            memcpy(&cur_fib, sp, sizeof cur_fib);
-            // cur_arch::set_stack_ptr(static_cast<char*>(sp) + sizeof cur_fib);
-            cur_fib->start();
-            TOS_UNREACHABLE();
-        },
-        stack.end() - sizeof fib_ptr);
-};
+[[noreturn]] inline void fiber_start(void* fib_ptr) {
+    auto cur_fib = static_cast<basic_fiber*>(fib_ptr);
+    cur_fib->start();
+    TOS_UNREACHABLE();
+}
 
 template<class FibT, class... Args>
 auto setup_stack(span<uint8_t> stack, Args&&... args) {
@@ -37,11 +20,9 @@ auto setup_stack(span<uint8_t> stack, Args&&... args) {
 
     auto ctx_ptr = new (stack.end() - sizeof(processor_context)) processor_context;
     stack = stack.slice(0, stack.size() - sizeof(processor_context));
-
-    auto [entry_point, sp] = detail::setup_fiber_init_stack(stack, res);
-
-    start(*ctx_ptr, entry_point, sp);
     res->set_processor_state(*ctx_ptr);
+
+    start(*ctx_ptr, &fiber_start, res, stack.end());
 
     return res;
 }
@@ -50,9 +31,10 @@ auto setup_stack(span<uint8_t> stack, Args&&... args) {
 struct non_owning {
     template<class StartFn>
     struct fib : basic_fiber {
-        NO_INLINE
-        void start() {
+        NO_INLINE [[noreturn]] void start() {
             m_fn(*this);
+            suspend();
+            TOS_UNREACHABLE();
         }
 
         fib(StartFn&& fn, span<uint8_t> stack)
@@ -73,9 +55,10 @@ struct non_owning {
 struct owning {
     template<class StartFn>
     struct fib : basic_fiber {
-        NO_INLINE
-        void start() {
+        NO_INLINE [[noreturn]] void start() {
             m_fn(*this);
+            suspend();
+            TOS_UNREACHABLE();
         }
 
         fib(StartFn&& fn, span<uint8_t> stack)
@@ -92,7 +75,7 @@ struct owning {
     };
 
     template<class StartFn>
-    static auto start(stack_size_t stack_sz, StartFn&& fn) {
+    static fib<StartFn>* start(stack_size_t stack_sz, StartFn&& fn) {
         auto stack = new (std::nothrow) uint8_t[stack_sz.sz];
         if (!stack) {
             return nullptr;

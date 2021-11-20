@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <tos/processor_context.hpp>
 
 namespace tos {
@@ -19,8 +20,11 @@ struct basic_fiber {
         return suspend([] {});
     }
 
+    template<class FnT>
+    [[noreturn]] void suspend_final(FnT&& before_switch);
+
     virtual ~basic_fiber() = default;
-    virtual void start() = 0;
+    [[noreturn]] virtual void start() = 0;
 
     /**
      * Returns a reference to the context of the task.
@@ -42,13 +46,10 @@ private:
     // If the fiber is executing, this stores the context of our resumer.
     // If the fiber is suspended, this stores the context of us.
     processor_context* m_ctx;
-
-    template<class StartFn>
-    friend basic_fiber& start(span<uint8_t> stack, StartFn&& fn);
 };
 
 template<class FnT>
-inline void basic_fiber::resume(FnT&& before_switch) {
+void basic_fiber::resume(FnT&& before_switch) {
     processor_context caller_ctx;
     auto fiber_ctx = std::exchange(m_ctx, &caller_ctx);
     auto save_res = save_ctx(caller_ctx);
@@ -71,7 +72,7 @@ inline void basic_fiber::resume(FnT&& before_switch) {
 
 #define save_fib_context(fib, ctx) (fib).set_processor_state((ctx)), save_ctx(ctx)
 template<class FnT>
-inline auto basic_fiber::suspend(FnT&& before_switch) -> suspend_t {
+auto basic_fiber::suspend(FnT&& before_switch) -> suspend_t {
     auto caller_ctx_ptr = m_ctx;
     processor_context ctx;
 
@@ -79,6 +80,34 @@ inline auto basic_fiber::suspend(FnT&& before_switch) -> suspend_t {
         before_switch();
         switch_context(*caller_ctx_ptr, context_codes::suspend);
     }
+}
+template<class FnT>
+[[noreturn]] void basic_fiber::suspend_final(FnT&& before_switch) {
+    switch_context(*m_ctx, context_codes::suspend);
+}
+
+// Transfers control symmetrically to the resume fiber from the currently
+// executing suspend fiber.
+// Behaviour is undefined if basic_fiber is not currently executing.
+// Upon resume suspending, the caller of suspend will be resumed.
+// In other words:
+//      
+//      a: b.resume():
+//      b: swap_fibers(b, c);
+//      c: c.suspend();
+//      a is resumed
+template <class FnT>
+void swap_fibers(basic_fiber& suspend, basic_fiber& resume, FnT&& before_switch) {
+    processor_context context;
+
+    auto caller_ctx_ptr = &suspend.get_processor_state();
+    auto resume_ctx_ptr = &resume.get_processor_state();
+
+    resume.set_processor_state(*caller_ctx_ptr);
+    suspend.set_processor_state(context);
+
+    before_switch();
+    swap_context(context, *resume_ctx_ptr);
 }
 } // namespace tos
 #undef save_fib_context
