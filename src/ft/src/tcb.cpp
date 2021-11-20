@@ -3,6 +3,9 @@
 #include <tos/tcb.hpp>
 
 namespace tos::kern {
+namespace {
+    processor_context backup_state;
+}
 tcb::tcb(context& ctx)
     : job(ctx) {
     if (auto threads = get_context().get_component<threads_component>(); threads) {
@@ -17,7 +20,7 @@ tcb::~tcb() {
 }
 
 void tcb::operator()() {
-    auto save_res = save_ctx(global::thread_state.backup_state);
+    auto save_res = save_ctx(backup_state);
 
     switch (save_res) {
     case context_codes::saved:
@@ -51,7 +54,7 @@ void thread_exit() {
 
     // no need to save the current context, we'll exit
 
-    switch_context(global::thread_state.backup_state, context_codes::do_exit);
+    switch_context(backup_state, context_codes::do_exit);
 }
 
 void suspend_self(const no_interrupts&) {
@@ -63,7 +66,7 @@ void suspend_self(const no_interrupts&) {
 
     processor_context ctx;
     if (save_context(*self(), ctx) == context_codes::saved) {
-        switch_context(global::thread_state.backup_state, context_codes::suspend);
+        switch_context(backup_state, context_codes::suspend);
     }
 }
 
@@ -92,14 +95,14 @@ void swap_context(kern::tcb& current, kern::tcb& to, const no_interrupts&) {
 namespace tos::this_thread {
 void block_forever() {
     kern::disable_interrupts();
-    switch_context(global::thread_state.backup_state, context_codes::suspend);
+    switch_context(tos::kern::backup_state, context_codes::suspend);
 }
 
 void yield(const no_interrupts&) {
     processor_context ctx;
     if (save_context(*self(), ctx) == context_codes::saved) {
         kern::make_runnable(*self());
-        switch_context(global::thread_state.backup_state, context_codes::yield);
+        switch_context(tos::kern::backup_state, context_codes::yield);
     }
 }
 } // namespace tos::this_thread

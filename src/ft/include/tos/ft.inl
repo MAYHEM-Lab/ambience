@@ -17,7 +17,6 @@
 
 namespace tos {
 struct threading_state {
-    processor_context backup_state;
     kern::tcb* current_thread;
     int8_t num_threads = 0;
 };
