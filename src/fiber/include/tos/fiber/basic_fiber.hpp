@@ -21,7 +21,8 @@ struct basic_fiber {
     }
 
     template<class FnT>
-    [[noreturn]] void suspend_final(FnT&& before_switch);
+    [[noreturn]] void suspend_final(FnT&& before_switch,
+                                    context_codes code = context_codes::suspend);
 
     virtual ~basic_fiber() = default;
 
@@ -81,8 +82,8 @@ auto basic_fiber::suspend(FnT&& before_switch) -> suspend_t {
     }
 }
 template<class FnT>
-[[noreturn]] void basic_fiber::suspend_final(FnT&& before_switch) {
-    switch_context(*m_ctx, context_codes::suspend);
+[[noreturn]] void basic_fiber::suspend_final(FnT&& before_switch, context_codes code) {
+    switch_context(*m_ctx, code);
 }
 
 // Transfers control symmetrically to the resume fiber from the currently
@@ -90,12 +91,12 @@ template<class FnT>
 // Behaviour is undefined if basic_fiber is not currently executing.
 // Upon resume suspending, the caller of suspend will be resumed.
 // In other words:
-//      
+//
 //      a: b.resume():
 //      b: swap_fibers(b, c);
 //      c: c.suspend();
 //      a is resumed
-template <class FnT>
+template<class FnT>
 void swap_fibers(basic_fiber& suspend, basic_fiber& resume, FnT&& before_switch) {
     processor_context context;
 
