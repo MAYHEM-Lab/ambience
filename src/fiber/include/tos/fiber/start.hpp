@@ -23,7 +23,7 @@ auto setup_stack(span<uint8_t> stack, Args&&... args) {
     stack = stack.slice(0, stack.size() - sizeof(processor_context));
     res->set_processor_state(*ctx_ptr);
 
-    start(*ctx_ptr, &fiber_start, res, stack.end());
+    start(*ctx_ptr, &fiber_start<FibT>, res, stack.end());
 
     return res;
 }
