@@ -53,6 +53,7 @@ public:
         global::thread_state.current_thread = m_target;
         auto switch_to = &m_target->get_processor_state();
         m_target->set_processor_state(m_isr_tcb.get_processor_state());
+        m_isr_tcb.set_processor_state(m_isr_ctx);
         switch_context(*switch_to, tos::context_codes::scheduled);
     }
 

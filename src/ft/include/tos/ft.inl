@@ -180,8 +180,4 @@ auto& launch(stack_storage<StSz>& stack, FuncT&& func, ArgTs&&... args) {
     return raw_launch<lambda_task>(
         stack, std::forward<FuncT>(func), std::forward<ArgTs>(args)...);
 }
-
-inline void this_thread::exit(void*) {
-    kern::thread_exit();
-}
 } // namespace tos

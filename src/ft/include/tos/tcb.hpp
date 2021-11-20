@@ -11,6 +11,7 @@
 #include <tos/processor_context.hpp>
 #include <tos/utility.hpp>
 #include <utility>
+#include <tos/fiber/basic_fiber.hpp>
 
 namespace tos::kern {
 /**
@@ -20,24 +21,9 @@ namespace tos::kern {
  * extend this class to implement required functionality such
  * as starting threads or passing arguments.
  */
-struct alignas(alignof(std::max_align_t)) tcb : public job {
+struct alignas(alignof(std::max_align_t)) tcb : public job, public basic_fiber {
     explicit tcb(context& ctx);
-    /**
-     * Returns a reference to the context of the task.
-     *
-     * The function can either be called to store the current
-     * context, or to resume execution from the context.
-     *
-     * @return execution context of the task
-     */
-    processor_context& get_processor_state() {
-        return *m_ctx;
-    }
-
-    void set_processor_state(processor_context& buf) {
-        m_ctx = &buf;
-    }
-
+    
     /**
      * The threading subsystem does not know about the concrete time
      * at the destruction of a task, so the destructor must be virtual
@@ -62,9 +48,6 @@ protected:
 
 public:
     void operator()() override final;
-
-private:
-    processor_context* m_ctx;
 };
 
 inline void set_name(tcb& t, std::string_view name) {

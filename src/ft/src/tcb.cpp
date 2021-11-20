@@ -1,11 +1,9 @@
+#include "tos/fiber/basic_fiber.hpp"
 #include <tos/components/threads.hpp>
 #include <tos/ft.hpp>
 #include <tos/tcb.hpp>
 
 namespace tos::kern {
-namespace {
-    processor_context backup_state;
-}
 tcb::tcb(context& ctx)
     : job(ctx) {
     if (auto threads = get_context().get_component<threads_component>(); threads) {
@@ -20,22 +18,7 @@ tcb::~tcb() {
 }
 
 void tcb::operator()() {
-    auto save_res = save_ctx(backup_state);
-
-    switch (save_res) {
-    case context_codes::saved:
-        global::thread_state.current_thread = this;
-        switch_context(*m_ctx, context_codes::scheduled);
-    case context_codes::yield:
-    case context_codes::suspend:
-        break;
-    case context_codes::do_exit:
-        std::destroy_at(this);
-        break;
-    case context_codes::scheduled:
-        tos::debug::panic("Should not happen");
-    }
-
+    basic_fiber::resume([this] { global::thread_state.current_thread = this; });
     global::thread_state.current_thread = nullptr;
 }
 
@@ -49,14 +32,6 @@ void tcb::on_set_context(context& new_ctx) {
     }
 }
 
-void thread_exit() {
-    kern::disable_interrupts();
-
-    // no need to save the current context, we'll exit
-
-    switch_context(backup_state, context_codes::do_exit);
-}
-
 void suspend_self(const no_interrupts&) {
 #ifdef TOS_FEATURE_TCB_HAVE_LOG_BLOCK_POINT
     if (self()->log_block_point) {
@@ -64,10 +39,7 @@ void suspend_self(const no_interrupts&) {
     }
 #endif
 
-    processor_context ctx;
-    if (save_context(*self(), ctx) == context_codes::saved) {
-        switch_context(backup_state, context_codes::suspend);
-    }
+    self()->suspend();
 }
 
 thread_id_t start(tcb& t, void (*entry)()) {
@@ -84,25 +56,22 @@ thread_id_t start(tcb& t, void (*entry)()) {
 
 namespace tos {
 void swap_context(kern::tcb& current, kern::tcb& to, const no_interrupts&) {
-    processor_context context;
-
-    current.set_processor_state(context);
-    global::thread_state.current_thread = &to;
-    swap_context(context, to.get_processor_state());
+    swap_fibers(current, to, [&to] { global::thread_state.current_thread = &to; });
 }
 } // namespace tos
 
 namespace tos::this_thread {
-void block_forever() {
-    kern::disable_interrupts();
-    switch_context(tos::kern::backup_state, context_codes::suspend);
+void yield(const no_interrupts&) {
+    self()->suspend([] { kern::make_runnable(*self()); });
 }
 
-void yield(const no_interrupts&) {
-    processor_context ctx;
-    if (save_context(*self(), ctx) == context_codes::saved) {
-        kern::make_runnable(*self());
-        switch_context(tos::kern::backup_state, context_codes::yield);
-    }
+void block_forever() {
+    kern::disable_interrupts();
+    self()->suspend_final([] {}, context_codes::suspend);
+}
+
+void exit(void*) {
+    kern::disable_interrupts();
+    self()->suspend_final([] {}, context_codes::do_exit);
 }
 } // namespace tos::this_thread
