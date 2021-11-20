@@ -28,13 +28,13 @@ void tos_main() {
                 // important - query flags (and --exit) rely on the
                 // user doing this
                 // propagate the result of the tests
-                exit(res);
+                std::_Exit(res);
                 return res;
             }
-            exit(res);
+            std::_Exit(res);
         } catch (std::exception& error) {
             std::cerr << error.what() << '\n';
-            exit(1);
+            std::_Exit(1);
         }
     });
 }
