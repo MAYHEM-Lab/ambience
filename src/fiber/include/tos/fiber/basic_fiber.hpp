@@ -40,6 +40,9 @@ struct basic_fiber {
         m_ctx = &buf;
     }
 
+    virtual void destroy() {}
+    virtual ~basic_fiber() = default;
+
 private:
     // If the fiber is executing, this stores the context of our resumer.
     // If the fiber is suspended, this stores the context of us.
@@ -60,7 +63,7 @@ void basic_fiber::resume(FnT&& before_switch) {
     case context_codes::suspend:
         break;
     case context_codes::do_exit:
-        std::destroy_at(this);
+        this->destroy();
         break;
     case context_codes::scheduled:
         TOS_UNREACHABLE();
