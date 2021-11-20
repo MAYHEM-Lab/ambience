@@ -26,8 +26,8 @@ TEST_CASE("swap_context works") {
     REQUIRE(f2);
     f2->resume();
     REQUIRE_EQ(42, x);
-    std::destroy_at(f2);
-    std::destroy_at(f1);
+    f2->destroy();
+    f1->destroy();
 }
 } // namespace
 } // namespace tos::fiber

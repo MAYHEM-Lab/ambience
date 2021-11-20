@@ -43,6 +43,8 @@ struct non_owning {
             , m_full_stack(stack) {
         }
 
+        void destroy() {}
+
         StartFn m_fn;
         span<uint8_t> m_full_stack;
     };
@@ -67,7 +69,7 @@ struct owning {
             , m_full_stack(stack) {
         }
 
-        ~fib() {
+        void destroy() {
             delete[] m_full_stack.data();
         }
 

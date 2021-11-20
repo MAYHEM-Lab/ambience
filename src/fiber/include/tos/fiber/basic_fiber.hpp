@@ -24,8 +24,6 @@ struct basic_fiber {
     [[noreturn]] void suspend_final(FnT&& before_switch,
                                     context_codes code = context_codes::suspend);
 
-    virtual ~basic_fiber() = default;
-
     /**
      * Returns a reference to the context of the task.
      *
