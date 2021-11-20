@@ -24,7 +24,6 @@ struct basic_fiber {
     [[noreturn]] void suspend_final(FnT&& before_switch);
 
     virtual ~basic_fiber() = default;
-    [[noreturn]] virtual void start() = 0;
 
     /**
      * Returns a reference to the context of the task.
