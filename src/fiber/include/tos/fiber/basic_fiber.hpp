@@ -59,7 +59,6 @@ void basic_fiber::resume(FnT&& before_switch) {
         before_switch();
         switch_context(*fiber_ctx, context_codes::scheduled);
         TOS_UNREACHABLE();
-    case context_codes::yield:
     case context_codes::suspend:
         break;
     case context_codes::do_exit:

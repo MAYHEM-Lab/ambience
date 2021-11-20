@@ -7,10 +7,6 @@ enum class context_codes : uint8_t
 {
     saved = 0,
     /**
-     * the running context yielded
-     */
-    yield,
-    /**
      * the running context has been suspended
      */
     suspend,
