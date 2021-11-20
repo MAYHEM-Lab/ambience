@@ -1,3 +1,4 @@
+enable_language(ASM)
 add_library(arch_aarch64
         aarch64.cpp
         mmu.cpp
@@ -9,6 +10,7 @@ add_library(arch_aarch64
         include/tos/aarch64/semihosting.hpp
         semihosting.cpp
         include/tos/aarch64/generic_timer.hpp
+        call_trampoline.S
 )
 target_include_directories(arch_aarch64 PUBLIC include)
 target_compile_features(arch_aarch64 PUBLIC cxx_std_20)
