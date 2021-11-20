@@ -1,3 +1,5 @@
+enable_language(ASM)
+
 add_library(arch_arm "")
 target_include_directories(arch_arm PUBLIC include)
 target_sources(arch_arm PRIVATE
@@ -20,6 +22,7 @@ target_sources(arch_arm PRIVATE
         include/tos/arm/cyccnt_clock.hpp
         startup_common.cpp
         include/tos/arm/startup_common.hpp
+        call_trampoline.S
 )
 target_link_libraries(arch_arm PUBLIC tos_util_core cmsis::core tos_drivers tos_mmio tos::libcxx tos_address_space tos_mem)
 target_compile_features(arch_arm PUBLIC cxx_std_20)
