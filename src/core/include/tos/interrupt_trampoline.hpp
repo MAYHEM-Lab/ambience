@@ -51,7 +51,9 @@ public:
         kern::disable_interrupts();
         global::should_enable = true;
         global::thread_state.current_thread = m_target;
-        switch_context(m_target->get_processor_state(), tos::context_codes::scheduled);
+        auto switch_to = &m_target->get_processor_state();
+        m_target->set_processor_state(m_isr_tcb.get_processor_state());
+        switch_context(*switch_to, tos::context_codes::scheduled);
     }
 
     template<class InISR>
