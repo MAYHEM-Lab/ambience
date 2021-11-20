@@ -20,9 +20,7 @@ struct basic_fiber {
         return suspend([] {});
     }
 
-    template<class FnT>
-    [[noreturn]] void suspend_final(FnT&& before_switch,
-                                    context_codes code = context_codes::suspend);
+    [[noreturn]] void suspend_final(context_codes code = context_codes::suspend);
 
     /**
      * Returns a reference to the context of the task.
@@ -40,7 +38,8 @@ struct basic_fiber {
         m_ctx = &buf;
     }
 
-    virtual void destroy() {}
+    virtual void destroy() {
+    }
     virtual ~basic_fiber() = default;
 
 private:
@@ -81,8 +80,8 @@ auto basic_fiber::suspend(FnT&& before_switch) -> suspend_t {
         switch_context(*caller_ctx_ptr, context_codes::suspend);
     }
 }
-template<class FnT>
-[[noreturn]] void basic_fiber::suspend_final(FnT&& before_switch, context_codes code) {
+
+[[noreturn]] inline void basic_fiber::suspend_final(context_codes code) {
     switch_context(*m_ctx, code);
 }
 

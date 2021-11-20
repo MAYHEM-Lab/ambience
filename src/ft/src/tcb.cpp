@@ -67,11 +67,11 @@ void yield(const no_interrupts&) {
 
 void block_forever() {
     kern::disable_interrupts();
-    self()->suspend_final([] {}, context_codes::suspend);
+    self()->suspend_final(context_codes::suspend);
 }
 
 void exit(void*) {
     kern::disable_interrupts();
-    self()->suspend_final([] {}, context_codes::do_exit);
+    self()->suspend_final(context_codes::do_exit);
 }
 } // namespace tos::this_thread
