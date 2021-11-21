@@ -44,6 +44,36 @@ TEST_CASE("registered_fiber works with 2 fibers") {
     REQUIRE_EQ(45, x);
 }
 
+TEST_CASE("registered_fiber works with 2 fibers and multiple suspends") {
+    int x = 1;
+    auto f1 = unique(tos::fiber::registered_owning::start(
+        stack_size_t{TOS_DEFAULT_STACK_SIZE}, [&](auto& fib) {
+            fib.suspend();
+            REQUIRE_EQ(&fib, tos::fiber::current_fiber());
+            x = 42;
+            fib.suspend();
+            REQUIRE_EQ(&fib, tos::fiber::current_fiber());
+            x = 48;
+            fib.suspend();
+        }));
+    auto f2 = unique(tos::fiber::registered_owning::start(
+        stack_size_t{TOS_DEFAULT_STACK_SIZE}, [&](auto& fib) {
+            fib.suspend();
+            REQUIRE_EQ(&fib, tos::fiber::current_fiber());
+            x = 45;
+            fib.suspend();
+        }));
+    f1->resume();
+    f2->resume();
+
+    f1->resume();
+    REQUIRE_EQ(42, x);
+    f2->resume();
+    REQUIRE_EQ(45, x);
+    f1->resume();
+    REQUIRE_EQ(48, x);
+}
+
 TEST_CASE("registered_fiber works with nested resumes") {
     int x = 1;
     auto f1 = unique(tos::fiber::registered_owning::start(
