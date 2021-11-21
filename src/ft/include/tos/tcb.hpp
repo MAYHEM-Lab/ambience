@@ -21,7 +21,7 @@ namespace tos::kern {
  * extend this class to implement required functionality such
  * as starting threads or passing arguments.
  */
-struct alignas(alignof(std::max_align_t)) tcb : public job, public basic_fiber {
+struct alignas(alignof(std::max_align_t)) tcb : public job, public basic_fiber<tcb> {
     explicit tcb(context& ctx);
     
     /**

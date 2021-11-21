@@ -31,10 +31,10 @@ FibT* setup_stack(span<uint8_t> stack, Args&&... args) {
 
 struct non_owning {
     template<class StartFn>
-    struct fib : basic_fiber {
+    struct fib : basic_fiber<void> {
         NO_INLINE [[noreturn]] void start() {
             m_fn(*this);
-            suspend_final(context_codes::do_exit);
+            this->suspend_final(context_codes::do_exit);
             TOS_UNREACHABLE();
         }
 
@@ -53,12 +53,13 @@ struct non_owning {
     }
 };
 
+template <Fiber BaseFib = basic_fiber<void>>
 struct owning {
     template<class StartFn>
-    struct fib : basic_fiber {
+    struct fib : BaseFib {
         NO_INLINE [[noreturn]] void start() {
             m_fn(*this);
-            suspend_final(context_codes::do_exit);
+            this->suspend_final(context_codes::do_exit);
             TOS_UNREACHABLE();
         }
 
@@ -67,7 +68,7 @@ struct owning {
             , m_full_stack(stack) {
         }
 
-        void destroy() override {
+        void destroy() {
             delete[] m_full_stack.data();
         }
 

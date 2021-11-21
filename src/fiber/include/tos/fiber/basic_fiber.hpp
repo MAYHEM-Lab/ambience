@@ -1,14 +1,30 @@
 #pragma once
 
 #include <memory>
+#include <tos/concepts.hpp>
+#include <tos/function_ref.hpp>
 #include <tos/processor_context.hpp>
 
 namespace tos {
-struct basic_fiber {
+struct any_fiber {
+    virtual void suspend() = 0;
+    virtual void resume() = 0;
+    virtual void destroy() = 0;
+    virtual ~any_fiber() = default;
+};
+
+template<class T>
+struct basic_fiber;
+
+template<class T>
+concept Fiber = DerivedFrom<T, any_fiber>;
+
+template<class CrtpT>
+struct basic_fiber : any_fiber {
     template<class FnT>
     void resume(FnT&&);
 
-    void resume() {
+    void resume() override {
         resume([] {});
     }
 
@@ -16,9 +32,11 @@ struct basic_fiber {
     template<class FnT>
     suspend_t suspend(FnT&&);
 
-    suspend_t suspend() {
+    suspend_t suspend() override {
         return suspend([] {});
     }
+
+    void destroy() override {}
 
     [[noreturn]] void suspend_final(context_codes code = context_codes::suspend);
 
@@ -38,18 +56,30 @@ struct basic_fiber {
         m_ctx = &buf;
     }
 
-    virtual void destroy() {
+    void run_on_resume() {
+        if constexpr(requires (CrtpT& t) { t.on_resume(); }) {
+            self()->on_resume();
+        }
     }
-    virtual ~basic_fiber() = default;
 
 private:
+    CrtpT* self() {
+        return static_cast<CrtpT*>(this);
+    }
+
     // If the fiber is executing, this stores the context of our resumer.
     // If the fiber is suspended, this stores the context of us.
     processor_context* m_ctx;
 };
 
+template<Fiber FibT>
+function_ref<void()> fiber_resumer(FibT& fib) {
+    return tos::mem_function_ref<static_cast<void (FibT::*)()>(&FibT::resume)>(fib);
+}
+
+template<class T>
 template<class FnT>
-void basic_fiber::resume(FnT&& before_switch) {
+void basic_fiber<T>::resume(FnT&& before_switch) {
     processor_context caller_ctx;
     auto fiber_ctx = std::exchange(m_ctx, &caller_ctx);
     auto save_res = save_ctx(caller_ctx);
@@ -70,18 +100,25 @@ void basic_fiber::resume(FnT&& before_switch) {
 }
 
 #define save_fib_context(fib, ctx) (fib).set_processor_state((ctx)), save_ctx(ctx)
+template<class T>
 template<class FnT>
-auto basic_fiber::suspend(FnT&& before_switch) -> suspend_t {
+auto basic_fiber<T>::suspend(FnT&& before_switch) -> suspend_t {
     auto caller_ctx_ptr = m_ctx;
     processor_context ctx;
 
     if (save_fib_context(*this, ctx) == context_codes::saved) {
         before_switch();
+        if constexpr(requires (T& t) { t.before_suspend(); }) {
+            self()->before_suspend();
+        }
         switch_context(*caller_ctx_ptr, context_codes::suspend);
     }
+
+    run_on_resume();
 }
 
-[[noreturn]] inline void basic_fiber::suspend_final(context_codes code) {
+template<class T>
+[[noreturn]] inline void basic_fiber<T>::suspend_final(context_codes code) {
     switch_context(*m_ctx, code);
 }
 
@@ -107,6 +144,8 @@ void swap_fibers(Fiber auto& suspend, Fiber auto& resume, FnT&& before_switch) {
 
     before_switch();
     swap_context(context, *resume_ctx_ptr);
+
+    resume.run_on_resume();
 }
 } // namespace tos
 #undef save_fib_context
