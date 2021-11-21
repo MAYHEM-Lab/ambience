@@ -23,7 +23,7 @@ inline void registered_fiber::on_resume() {
 }
 
 inline void registered_fiber::on_suspend() {
-    auto self = current_fiber(*m_old);
+    [[maybe_unused]] auto self = current_fiber(*m_old);
     // assert(self == this);
 }
 
