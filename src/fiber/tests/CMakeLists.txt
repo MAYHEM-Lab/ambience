@@ -1,3 +1,7 @@
 add_executable(fiber_tests fiber_tests.cpp)
-target_link_libraries(fiber_tests PRIVATE tos_fiber tos_fiber_single_thread standalone_tests_main)
+target_link_libraries(fiber_tests PRIVATE tos_fiber standalone_tests_main)
 add_test(NAME fiber_tests COMMAND fiber_tests)
+
+add_executable(registered_fiber_tests registered_fiber_tests.cpp)
+target_link_libraries(registered_fiber_tests PRIVATE tos_fiber tos_fiber_single_thread standalone_tests_main)
+add_test(NAME registered_fiber_tests COMMAND registered_fiber_tests)
