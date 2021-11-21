@@ -35,7 +35,7 @@ TEST_CASE("registered_fiber works") {
     auto f = unique(tos::fiber::registered_owning::start(
         stack_size_t{TOS_DEFAULT_STACK_SIZE}, [&](auto& fib) {
             fib.suspend();
-            REQUIRE_EQ(&fib, &tos::fiber::current_fiber());
+            REQUIRE_EQ(&fib, tos::fiber::current_fiber());
             x = 42;
             fib.suspend();
         }));
