@@ -7,11 +7,16 @@ namespace tos::fiber {
 struct registered_fiber : public basic_fiber<registered_fiber> {
     void on_resume();
     void on_suspend();
+    void on_start();
     registered_fiber* m_old;
 };
 
 registered_fiber* current_fiber();
 registered_fiber* current_fiber(registered_fiber& fib);
+
+inline void registered_fiber::on_start() {
+    on_resume();
+}
 
 inline void registered_fiber::on_resume() {
     m_old = current_fiber(*this);

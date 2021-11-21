@@ -36,6 +36,7 @@ struct non_owning {
     template<class StartFn>
     struct fib : basic_fiber<void> {
         NO_INLINE [[noreturn]] void start() {
+            this->run_on_start();
             m_fn(*this);
             this->suspend_final(context_codes::do_exit);
             TOS_UNREACHABLE();
@@ -61,6 +62,7 @@ struct owning {
     template<class StartFn>
     struct fib : BaseFib {
         NO_INLINE [[noreturn]] void start() {
+            this->run_on_start();
             m_fn(*this);
             this->suspend_final(context_codes::do_exit);
             TOS_UNREACHABLE();

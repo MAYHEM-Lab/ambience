@@ -68,6 +68,12 @@ struct basic_fiber : any_fiber {
         }
     }
 
+    void run_on_start() {
+        if constexpr(requires (CrtpT& t) { t.on_start(); }) {
+            self()->on_start();
+        }
+    }
+
 private:
     CrtpT* self() {
         return static_cast<CrtpT*>(this);
