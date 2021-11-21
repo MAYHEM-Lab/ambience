@@ -10,6 +10,7 @@
 #include <tos/compiler.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/detail/coro.hpp>
+#include <tos/fiber/basic_fiber.hpp>
 #include <tos/flags.hpp>
 #include <tos/function_ref.hpp>
 
@@ -46,6 +47,9 @@ struct req_elem {
         bool await_resume() const {
             return true;
         }
+
+        template<Fiber FibT>
+        void fiber_suspend(FibT& fib);
 
         interface* iface;
         int id;
@@ -231,7 +235,8 @@ inline std::pair<req_elem&, int>
 prepare_req(interface& iface, int channel, int proc, const void* params, void* res) {
     auto el_idx = iface.allocate<FromHost>();
     if (el_idx < 0) {
-        while (true);
+        while (true)
+            ;
     }
     auto& req_el = iface.elems[el_idx].req;
 
@@ -269,16 +274,24 @@ template<bool FromHost>
 void req_elem::awaiter<FromHost>::await_suspend(std::coroutine_handle<> handle) {
     ref = coro_resumer(handle);
     el->user_ptr = &ref;
-    //    tos::debug::log("Submitting", this->iface, el->arg_ptr, el->ret_ptr,
-    //    el->user_ptr);
     submit_elem<FromHost>(*this->iface, this->id);
+}
+
+template<bool FromHost>
+template<Fiber FibT>
+void req_elem::awaiter<FromHost>::fiber_suspend(FibT& fib) {
+    ref = fiber_resumer(fib);
+    el->user_ptr = &ref;
+    submit_elem<FromHost>(*this->iface, this->id);
+    fib.suspend();
 }
 
 template<bool FromHost>
 void respond(interface& iface, void* user_ptr) {
     auto el_idx = iface.allocate<FromHost>();
     if (el_idx < 0) {
-        while (true);
+        while (true)
+            ;
     }
 
     auto& res = iface.elems[el_idx].res;

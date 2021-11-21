@@ -2,6 +2,7 @@
 
 #include <tos/ae/rings.hpp>
 #include <tos/task.hpp>
+#include <tos/fiber/this_fiber.hpp>
 
 namespace tos::ae {
 template<int channel_id>
@@ -35,6 +36,20 @@ struct upcall_transport_channel : ChannelSrc {
     }
 };
 
+template<interface* iface, class ChannelSrc>
+struct sync_upcall_transport_channel : ChannelSrc {
+    using ChannelSrc::ChannelSrc;
+
+    auto execute(int proc_id, const void* args, void* res) {
+        const auto& [req, id] =
+            prepare_req<false>(*iface, ChannelSrc::get_channel_id(), proc_id, args, res);
+
+        auto awaiter = req.template submit<false>(iface, id, &req);
+        awaiter.fiber_suspend(*fiber::current_fiber());
+        return awaiter.await_resume();
+    }
+};
+
 template<interface* iface>
 struct upcall_transport {
     template<class Service, int channel>
@@ -49,6 +64,21 @@ struct upcall_transport {
     static auto get_service(int channel) {
         using ChannelT = upcall_transport_channel<iface, dynamic_channel_id>;
         using StubT = typename Service::template async_zerocopy_client<ChannelT>;
+        return new StubT(channel);
+    }
+
+    template<class Service, int channel>
+    static auto get_sync_service() {
+        using ChannelT = sync_upcall_transport_channel<iface, static_channel_id<channel>>;
+        using StubT = typename Service::template zerocopy_client<ChannelT>;
+        static constexpr StubT instance{};
+        return const_cast<StubT*>(&instance);
+    }
+
+    template<class Service>
+    static auto get_sync_service(int channel) {
+        using ChannelT = sync_upcall_transport_channel<iface, dynamic_channel_id>;
+        using StubT = typename Service::template zerocopy_client<ChannelT>;
         return new StubT(channel);
     }
 };

@@ -21,6 +21,7 @@ target_link_libraries(
          tos_print
          lidl_log_sink
          cxxabi_static
+         tos_fiber_single_thread
 )
 target_link_libraries(ae_user_space PRIVATE tos_mem)
 target_compile_definitions(ae_user_space PUBLIC __ambience__)
