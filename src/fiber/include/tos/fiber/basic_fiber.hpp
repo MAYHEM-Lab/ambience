@@ -96,7 +96,7 @@ auto basic_fiber::suspend(FnT&& before_switch) -> suspend_t {
 //      c: c.suspend();
 //      a is resumed
 template<class FnT>
-void swap_fibers(basic_fiber& suspend, basic_fiber& resume, FnT&& before_switch) {
+void swap_fibers(Fiber auto& suspend, Fiber auto& resume, FnT&& before_switch) {
     processor_context context;
 
     auto caller_ctx_ptr = &suspend.get_processor_state();
