@@ -57,19 +57,19 @@ struct basic_fiber : any_fiber {
     }
 
     void run_on_resume() {
-        if constexpr(requires (CrtpT& t) { t.on_resume(); }) {
+        if constexpr(requires (CrtpT* t) { t->on_resume(); }) {
             self()->on_resume();
         }
     }
 
     void run_on_suspend() {
-        if constexpr(requires (CrtpT& t) { t.on_suspend(); }) {
+        if constexpr(requires (CrtpT* t) { t->on_suspend(); }) {
             self()->on_suspend();
         }
     }
 
     void run_on_start() {
-        if constexpr(requires (CrtpT& t) { t.on_start(); }) {
+        if constexpr(requires (CrtpT* t) { t->on_start(); }) {
             self()->on_start();
         }
     }

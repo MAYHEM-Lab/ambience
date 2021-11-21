@@ -30,11 +30,13 @@ FibT* setup_stack(span<uint8_t> stack, Args&&... args) {
 
     return res;
 }
+
+struct empty_fiber : basic_fiber<empty_fiber> {};
 } // namespace detail
 
 struct non_owning {
     template<class StartFn>
-    struct fib : basic_fiber<void> {
+    struct fib : detail::empty_fiber {
         NO_INLINE [[noreturn]] void start() {
             this->run_on_start();
             m_fn(*this);
@@ -57,7 +59,7 @@ struct non_owning {
     }
 };
 
-template <Fiber BaseFib = basic_fiber<void>>
+template <Fiber BaseFib = detail::empty_fiber>
 struct owning {
     template<class StartFn>
     struct fib : BaseFib {
