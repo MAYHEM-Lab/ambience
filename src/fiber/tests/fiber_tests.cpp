@@ -3,6 +3,7 @@
 #include "tos/stack_storage.hpp"
 #include <doctest.h>
 #include <tos/fiber.hpp>
+#include <tos/fiber/this_fiber.hpp>
 
 namespace tos::fiber {
 namespace {
@@ -26,6 +27,20 @@ TEST_CASE("swap_context works") {
                       [f1 = f1.get()](auto& fib) { swap_fibers(fib, *f1, [] {}); }));
     REQUIRE(f2);
     f2->resume();
+    REQUIRE_EQ(42, x);
+}
+
+TEST_CASE("registered_fiber works") {
+    int x = 1;
+    auto f = unique(tos::fiber::registered_owning::start(
+        stack_size_t{TOS_DEFAULT_STACK_SIZE}, [&](auto& fib) {
+            fib.suspend();
+            REQUIRE_EQ(&fib, &tos::fiber::current_fiber());
+            x = 42;
+            fib.suspend();
+        }));
+    f->resume();
+    f->resume();
     REQUIRE_EQ(42, x);
 }
 } // namespace
