@@ -41,7 +41,7 @@ public:
         m_sem.down();
     }
 
-    void lock(basic_fiber& fib) noexcept {
+    void lock(Fiber auto& fib) noexcept {
         m_sem.down(fib);
     }
 

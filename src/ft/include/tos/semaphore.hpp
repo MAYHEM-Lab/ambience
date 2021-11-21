@@ -68,7 +68,7 @@ public:
 
     sem_ret down(cancellation_token& cancel) noexcept;
 
-    void down(basic_fiber& fib) & noexcept;
+    void down(Fiber auto& fib) & noexcept;
 
     /**
      * Decrements the shared counter and blocks for up
@@ -212,7 +212,7 @@ inline void semaphore_base<CountT>::up() noexcept {
 }
 
 template<class CountT>
-inline void semaphore_base<CountT>::down(basic_fiber& fib) & noexcept {
+inline void semaphore_base<CountT>::down(Fiber auto& fib) & noexcept {
     detail::memory_barrier();
     tos::int_guard ig(__builtin_return_address(0));
     m_count = m_count - 1;

@@ -28,7 +28,8 @@ struct waitable {
 
     bool wait(const int_guard&, cancellation_token& cancel);
 
-    void wait(basic_fiber& fib, const int_guard&);
+    template<Fiber FibT>
+    void wait(FibT& fib, const int_guard&);
 
     /**
      * Wakes all of the threads that are waiting on
@@ -136,9 +137,10 @@ inline bool waitable::wait(const int_guard& ig, cancellation_token& cancel) {
     return res;
 }
 
-inline void waitable::wait(basic_fiber& fib, const int_guard&) {
+template<Fiber FibT>
+inline void waitable::wait(FibT& fib, const int_guard&) {
     struct inline_job : job {
-        inline_job(basic_fiber& fib)
+        inline_job(FibT& fib)
             : job(current_context())
             , m_fib(&fib) {
         }
@@ -147,13 +149,11 @@ inline void waitable::wait(basic_fiber& fib, const int_guard&) {
             m_fib->resume();
         }
 
-        basic_fiber* m_fib;
+        FibT* m_fib;
     };
 
     inline_job j{fib};
-    fib.suspend([&]{
-        add(j);
-    });
+    fib.suspend([&] { add(j); });
 }
 
 inline auto waitable::add(job& t) -> waiter_handle {
