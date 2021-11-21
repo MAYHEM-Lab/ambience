@@ -18,7 +18,7 @@ tcb::~tcb() {
 }
 
 void tcb::operator()() {
-    basic_fiber::resume([this] { global::thread_state.current_thread = this; });
+    this->resume([this] { global::thread_state.current_thread = this; });
     global::thread_state.current_thread = nullptr;
 }
 
