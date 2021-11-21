@@ -8,6 +8,9 @@
 namespace tos::fiber {
 namespace detail {
 template<class FibT>
+#if defined(__x86_64__)
+[[gnu::force_align_arg_pointer]]
+#endif
 [[noreturn]] inline void fiber_start(void* fib_ptr) {
     auto cur_fib = static_cast<FibT*>(fib_ptr);
     cur_fib->start();
