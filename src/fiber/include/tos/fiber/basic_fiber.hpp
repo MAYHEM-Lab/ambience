@@ -62,6 +62,12 @@ struct basic_fiber : any_fiber {
         }
     }
 
+    void run_on_suspend() {
+        if constexpr(requires (CrtpT& t) { t.on_suspend(); }) {
+            self()->on_suspend();
+        }
+    }
+
 private:
     CrtpT* self() {
         return static_cast<CrtpT*>(this);
@@ -108,9 +114,7 @@ auto basic_fiber<T>::suspend(FnT&& before_switch) -> suspend_t {
 
     if (save_fib_context(*this, ctx) == context_codes::saved) {
         before_switch();
-        if constexpr(requires (T& t) { t.before_suspend(); }) {
-            self()->before_suspend();
-        }
+        run_on_suspend();
         switch_context(*caller_ctx_ptr, context_codes::suspend);
     }
 
@@ -143,9 +147,10 @@ void swap_fibers(Fiber auto& suspend, Fiber auto& resume, FnT&& before_switch) {
     suspend.set_processor_state(context);
 
     before_switch();
+    suspend.run_on_suspend();
     swap_context(context, *resume_ctx_ptr);
 
-    resume.run_on_resume();
+    suspend.run_on_resume();
 }
 } // namespace tos
 #undef save_fib_context

@@ -9,7 +9,7 @@ registered_fiber* current_fiber() {
     return cur_fiber;
 }
 
-void current_fiber(registered_fiber& fib) {
-    cur_fiber = &fib;
+registered_fiber* current_fiber(registered_fiber& fib) {
+    return std::exchange(cur_fiber, &fib);
 }
 }
