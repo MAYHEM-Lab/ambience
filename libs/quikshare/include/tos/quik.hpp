@@ -20,6 +20,11 @@ struct sharer;
 
 template<lidl::RefObject T>
 struct sharer<const T*> {
+    static size_t compute_size(const T* obj) {
+        auto [extent, pos] = lidl::meta::detail::find_extent_and_position(*obj);
+        return extent.size();
+    }
+
     template<class ShareT>
     static const T* do_share(ShareT& share, const T* obj) {
         auto [extent, pos] = lidl::meta::detail::find_extent_and_position(*obj);
@@ -32,6 +37,10 @@ struct sharer<const T*> {
 
 template<>
 struct sharer<lidl::message_builder*> {
+    static size_t compute_size(lidl::message_builder* obj) {
+        return 0;
+    }
+
     template<class ShareT>
     static lidl::message_builder* do_share(ShareT& share,
                                            lidl::message_builder* builder) {
@@ -50,6 +59,10 @@ struct sharer<const T> : sharer<T> {};
 
 template<>
 struct sharer<std::string_view> {
+    static size_t compute_size(const std::string_view& obj) {
+        return obj.size();
+    }
+
     template<class ShareT>
     static std::string_view do_share(ShareT& share, const std::string_view& sv_in_from) {
         auto ptr = share.raw_allocate(sv_in_from.size(), 1);
@@ -61,10 +74,14 @@ struct sharer<std::string_view> {
 
 template<class T>
 struct sharer<tos::span<T>> {
+    static size_t compute_size(const tos::span<T>& obj) {
+        return obj.size_bytes();
+    }
+
     template<class ShareT>
     static tos::span<T> do_share(ShareT& share, const tos::span<T>& data) {
         LOG("Sharing span", data);
-        auto ptr = share.raw_allocate(data.size(), 1);
+        auto ptr = share.raw_allocate(data.size_bytes(), 1);
         memcpy(ptr.direct_mapped(), data.data(), data.size());
         return tos::span<T>(static_cast<T*>(ptr.direct_mapped()), data.size());
     }
@@ -72,6 +89,10 @@ struct sharer<tos::span<T>> {
 
 template<class T>
 struct verbatim_sharer {
+    constexpr static size_t compute_size(const T&) {
+        return 0;
+    }
+
     template<class ShareT>
     static T do_share(ShareT& share, const T& arg) {
         return arg;
@@ -86,6 +107,12 @@ template<>
 struct sharer<int32_t> : verbatim_sharer<int32_t> {};
 
 namespace detail {
+template<class... DataPtrTs, std::size_t... Is>
+size_t compute_size(const std::tuple<DataPtrTs...>& in_ptrs, std::index_sequence<Is...>) {
+    return sizeof in_ptrs +
+           (sharer<DataPtrTs>::compute_size(lidl::extract(std::get<Is>(in_ptrs))) + ...);
+}
+
 template<class ShareT, class... DataPtrTs, std::size_t... Is>
 auto perform_share(ShareT& share,
                    const std::tuple<DataPtrTs...>& in_ptrs,
@@ -94,6 +121,12 @@ auto perform_share(ShareT& share,
         sharer<DataPtrTs>::do_share(share, lidl::extract(std::get<Is>(in_ptrs)))...);
 }
 } // namespace detail
+
+template<class... DataPtrTs>
+size_t compute_size(const std::tuple<DataPtrTs...>& in_ptrs) {
+    return detail::compute_size(in_ptrs,
+                                std::make_index_sequence<sizeof...(DataPtrTs)>{});
+}
 
 template<class ShareT, class... DataPtrTs>
 auto perform_share(ShareT& share, const std::tuple<DataPtrTs...>& in_ptrs) {
