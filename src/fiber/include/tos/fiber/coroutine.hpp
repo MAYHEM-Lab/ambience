@@ -46,8 +46,8 @@ auto co_adapt(CallableT&& callable, Args&&... args) {
     return co_adapt(fn);
 }
 
-template<class Awaitable, Fiber FibT>
-auto fiber_await(FibT& fiber, Awaitable&& awaitable) {
+template<class Awaitable>
+auto fiber_await(any_fiber& fiber, Awaitable&& awaitable) {
     bool suspended = false;
 
     decltype(awaitable.operator co_await().await_resume()) res;
