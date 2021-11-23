@@ -1,7 +1,10 @@
 #pragma once
 
+#include "tos/compiler.hpp"
 #include "tos/detail/poll.hpp"
+#include <coroutine>
 #include <tos/fiber/this_fiber.hpp>
+#include <tos/detail/coro.hpp>
 
 namespace tos::fiber {
 template<class CallableT, class... Args>
@@ -24,8 +27,8 @@ auto co_adapt(CallableT&& callable) {
             return m_ret;
         }
 
-        awaiter(auto&& callable)
-            : m_callable{std::forward<decltype(callable)>(callable)} {
+        awaiter(decltype(callable)&& callable)
+            : m_callable{std::move(callable)} {
         }
 
         ret_type m_ret;
@@ -47,15 +50,16 @@ template<class Awaitable, Fiber FibT>
 auto fiber_await(FibT& fiber, Awaitable&& awaitable) {
     bool suspended = false;
 
-    decltype(awaitable.operator co_await()) res;
+    decltype(awaitable.operator co_await().await_resume()) res;
 
-    auto x = tos::coro::make_pollable(std::forward<Awaitable>(awaitable), [&](auto&& val) {
-        // We are either completing synchronously, or the fiber is suspended.
-        res = std::move(val);
-        if (suspended) {
-            fiber.resume();
-        }
-    });
+    auto x =
+        tos::coro::make_pollable(std::forward<Awaitable>(awaitable), [&](auto&& val) {
+            // We are either completing synchronously, or the fiber is suspended.
+            res = std::move(val);
+            if (suspended) {
+                fiber.resume();
+            }
+        });
 
     if (!x.run()) {
         suspended = true;

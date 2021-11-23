@@ -1,3 +1,4 @@
+#include "tos/detail/tos_bind.hpp"
 #include "tos/stack_storage.hpp"
 #include <doctest.h>
 #include <tos/fiber/coroutine.hpp>
@@ -6,6 +7,7 @@
 namespace tos::fiber {
 namespace {
 tos::Task<int> foo() {
+    co_await tos::coro::yield();
     co_return 42;
 }
 

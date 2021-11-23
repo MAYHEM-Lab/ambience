@@ -82,8 +82,8 @@ private:
     coro_handle handle_;
 };
 
-template<class T, class BeforeFin = tos::ignore_t>
-pollable make_pollable(Task<T> x, BeforeFin fin = {}) {
+template<class AwaitableT, class BeforeFin = tos::ignore_t>
+pollable make_pollable(AwaitableT x, BeforeFin fin = {}) {
     if constexpr (std::is_invocable_v<BeforeFin>) {
         co_await x;
         fin();
