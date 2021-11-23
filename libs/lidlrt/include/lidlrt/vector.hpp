@@ -24,15 +24,15 @@ public:
         return tos::span<T>(data(), size());
     }
 
-    [[nodiscard]] tos::span<const T> span() const {
-        return tos::span<const T>(data(), size());
+    [[nodiscard]] tos::span<T> span() const {
+        return tos::span<T>(data(), size());
     }
 
     operator tos::span<T>() {
         return span();
     }
 
-    operator tos::span<const T>() const {
+    operator tos::span<T>() const {
         return span();
     }
 
@@ -84,14 +84,8 @@ private:
         return reinterpret_cast<T*>(potential_begin);
     }
 
-    const T* data() const {
-        auto potential_begin = reinterpret_cast<const char*>(
-            (&m_len) + 1); // the string begins after the length.
-        // Align the begin pointer for the type.
-        while (reinterpret_cast<uintptr_t>(potential_begin) % alignof(T) != 0) {
-            ++potential_begin;
-        }
-        return reinterpret_cast<const T*>(potential_begin);
+    T* data() const {
+        return const_cast<vector*>(this)->data();
     }
 
     int16_t m_len;
