@@ -84,8 +84,12 @@ private:
 
 template<class T, class BeforeFin = tos::ignore_t>
 pollable make_pollable(Task<T> x, BeforeFin fin = {}) {
-    co_await x;
-    fin();
+    if constexpr (std::is_invocable_v<BeforeFin>) {
+        co_await x;
+        fin();
+    } else {
+        fin(co_await x);
+    }
     co_return;
 }
 
