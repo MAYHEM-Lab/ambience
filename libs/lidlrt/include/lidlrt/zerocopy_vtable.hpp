@@ -45,16 +45,12 @@ struct zerocopy_translator {
                             tos::out_ptr<ActualRetType> ret) -> tos::Task<bool> {
         auto do_call = [&serv, ret](auto&&... vals) -> tos::Task<bool> {
             if constexpr (is_ref) {
-                auto& res =
-                    co_await std::invoke(proc_desc.async_function,
-                                         serv,
-                                         extractor<decltype(vals)>::extract(vals)...);
+                auto& res = co_await std::invoke(
+                    proc_desc.async_function, serv, extract(vals)...);
                 new (ret) ActualRetType(&res);
             } else {
-                new (ret) ActualRetType(
-                    co_await std::invoke(proc_desc.async_function,
-                                         serv,
-                                         extractor<decltype(vals)>::extract(vals)...));
+                new (ret) ActualRetType(co_await std::invoke(
+                    proc_desc.async_function, serv, extract(vals)...));
             }
             co_return true;
         };
@@ -67,15 +63,11 @@ struct zerocopy_translator {
                                      tos::out_ptr<ActualRetType> ret) -> bool {
         auto do_call = [&serv, ret](auto&&... vals) -> bool {
             if constexpr (is_ref) {
-                auto& res = std::invoke(proc_desc.function,
-                                        serv,
-                                        extractor<decltype(vals)>::extract(vals)...);
+                auto& res = std::invoke(proc_desc.function, serv, extract(vals)...);
                 new (ret) ActualRetType(&res);
             } else {
                 new (ret) ActualRetType(
-                    std::invoke(proc_desc.function,
-                                serv,
-                                extractor<decltype(vals)>::extract(vals)...));
+                    std::invoke(proc_desc.function, serv, extract(vals)...));
             }
             return true;
         };

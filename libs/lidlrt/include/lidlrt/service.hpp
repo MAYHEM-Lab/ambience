@@ -372,8 +372,21 @@ struct extractor<T*> {
 };
 
 template<class T>
+struct extractor<T* const> {
+    using type = T&;
+    static type extract(T* const t) {
+        return *t;
+    }
+};
+
+template<class T>
 auto& extract(T& t) {
     return extractor<T>::extract(t);
+}
+
+template<class T>
+auto& extract(const T& t) {
+    return extractor<T>::extract(const_cast<T&>(t));
 }
 
 template<class T>
