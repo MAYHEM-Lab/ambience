@@ -8,6 +8,7 @@
 #include <tos/self_pointing.hpp>
 
 namespace tos::ae {
+void done_callback(void* ptr);
 void proc_res_queue(interface& iface);
 
 struct low_level_output_t : self_pointing<low_level_output_t> {
@@ -17,3 +18,5 @@ inline low_level_output_t low_level_output;
 
 uint64_t timestamp();
 } // namespace tos::ae
+
+void dispatch_request(const tos::ae::req_elem& el);

@@ -90,7 +90,7 @@ class UserGroup(Group):
             "service_init_sigs": self.generateInitSigSection(),
             "external_deps": self.generateExternalDepsSection(),
             "service_inits": self._generate_init_section(),
-            "group_init": f"::g = new tos::ae::group<{len(self.servs)}>(tos::ae::group<{len(self.servs)}>::make({', '.join(serv.name for serv in self.servs)}));",
+            "group_init": f"::g = new tos::ae::group({', '.join(serv.name for serv in self.servs)});",
             "service_includes": self.cxx_ordered_includes()
         })
 

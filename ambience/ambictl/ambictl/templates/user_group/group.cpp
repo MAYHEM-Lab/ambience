@@ -6,12 +6,13 @@
 #include <tos/task.hpp>
 
 extern tos::ae::interface iface;
-auto transport = tos::ae::upcall_transport<&iface>{};
-
+namespace {
+constexpr auto transport = tos::ae::upcall_transport<&iface>{};
 tos::ae::group<{{group.servs|length}}>* g;
+}
 
-tos::Task<bool> handle_req(tos::ae::req_elem el) {
-    return tos::ae::run_req(*g, el);
+void dispatch_request(const tos::ae::req_elem& el) {
+    g->run_req(el);
 }
 
 {{service_init_sigs}}

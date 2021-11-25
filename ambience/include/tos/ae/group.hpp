@@ -1,33 +1,95 @@
 #pragma once
 
+#include "tos/stack_storage.hpp"
 #include <tos/ae/rings.hpp>
 #include <tos/ae/service_host.hpp>
 #include <tos/ae/user_space.hpp>
+#include <tos/detail/poll.hpp>
+#include <tos/fiber/this_fiber.hpp>
 
 namespace tos::ae {
+inline void dispatch_sync_service(const void* serv_ptr, const tos::ae::req_elem& el) {
+    auto fn = [serv = static_cast<const sync_service_host*>(serv_ptr),
+               ptr = el.user_ptr,
+               &el](auto& fib) {
+        serv->run_zerocopy(el.procid, el.arg_ptr, el.ret_ptr);
+        done_callback(ptr);
+    };
+    // This fiber will release its stack once the request completes.
+    auto f = fiber::registered_owning::start(stack_size_t{TOS_DEFAULT_STACK_SIZE}, fn);
+    f->resume();
+}
+
+inline void dispatch_async_service(const void* serv_ptr, const tos::ae::req_elem& el) {
+    auto coro = [](const async_service_host* serv,
+                   const tos::ae::req_elem& el,
+                   void* ptr) -> coro::detached {
+        co_await serv->run_zerocopy(el.procid, el.arg_ptr, el.ret_ptr);
+        done_callback(ptr);
+    };
+    coro(static_cast<const async_service_host*>(serv_ptr), el, el.user_ptr);
+}
+
 template<size_t Count>
 struct group {
-    template<class... Services>
-    static group make(Services*... servs) {
-        return group(servs...);
+    explicit group(lidl::Service auto*... servs)
+        : m_services{service_data(servs)...} {
     }
 
-    tos::Task<bool> run_proc(int channel, int proc, const void* arg, void* res) const {
-        auto& serv = m_services[channel];
-        return serv.run_zerocopy(proc, arg, res);
+    void run_req(const tos::ae::req_elem& el) const {
+        auto& serv = m_services[el.channel];
+        serv.fn(&serv, el);
     }
 
 private:
-    template<class... Services>
-    explicit group(Services*... servs)
-        : m_services{async_service_host(servs)...} {
-    }
+    struct service_data {
+        explicit service_data(lidl::AsyncService auto* serv)
+            : async{serv}
+            , fn{&dispatch_async_service} {
+        }
+        explicit service_data(lidl::SyncService auto* serv)
+            : sync{serv}
+            , fn{&dispatch_sync_service} {
+        }
 
-    std::array<async_service_host, Count> m_services;
+        union {
+            sync_service_host sync;
+            async_service_host async;
+        };
+        void (*fn)(const void*, const tos::ae::req_elem& el);
+    };
+
+    std::array<service_data, Count> m_services;
 };
 
-template<size_t N>
-auto run_req(const tos::ae::group<N>& grp, tos::ae::req_elem el) {
-    return grp.run_proc(el.channel, el.procid, el.arg_ptr, el.ret_ptr);
+group(lidl::Service auto*... servs) -> group<sizeof...(servs)>;
+
+template <class T>
+typename T::async_server* get_async(typename T::async_server* serv) {
+    return serv;
+}
+
+template <class T>
+typename T::sync_server* get_sync(typename T::sync_server* serv) {
+    return serv;
+}
+
+template <class T>
+typename T::async_server* get_async(typename T::sync_server* serv) {
+    // Return wrapper
+}
+
+template <class T>
+typename T::sync_server* get_sync(typename T::async_server* serv) {
+    // Return wrapper
+}
+
+template <bool Async, class T>
+auto get_as(T* t) {
+    if constexpr (Async) {
+        return get_async(t);
+    } else {
+        return get_sync(t);
+    }
 }
 } // namespace tos::ae

@@ -1,12 +1,17 @@
+#include "tos/ae/rings.hpp"
 #include <tos/ae/user_space.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/detail/poll.hpp>
 #include <tos/function_ref.hpp>
 
 extern tos::ae::interface iface;
-tos::Task<bool> handle_req(tos::ae::req_elem el);
 
 namespace tos::ae {
+void done_callback(void* ptr) {
+    tos::debug::trace("Responding", &iface, ptr);
+    respond<false>(iface, ptr);
+}
+
 void proc_res_queue(interface& iface) {
     iface.res_last_seen = for_each(
         iface, *iface.host_to_guest, iface.res_last_seen, [&](const ring_elem& elem) {
@@ -19,11 +24,7 @@ void proc_res_queue(interface& iface) {
                 continuation();
             } else {
                 // We have a request to serve.
-                tos::coro::make_detached(handle_req(elem.req),
-                                         [&iface, ptr = elem.req.user_ptr]() {
-                                             tos::debug::trace("Responding", &iface, ptr);
-                                             respond<false>(iface, ptr);
-                                         });
+                dispatch_request(elem.req);
             }
         });
 }
