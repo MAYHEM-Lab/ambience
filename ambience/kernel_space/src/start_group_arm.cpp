@@ -7,7 +7,8 @@ namespace tos::ae::kernel {
 std::unique_ptr<user_group> start_group(tos::span<uint8_t> stack,
                                         void (*entry)(),
                                         tos::interrupt_trampoline& trampoline,
-                                        std::string_view name) {
+                                        std::string_view name,
+                                        cur_arch::address_space&) {
     auto& self = *tos::self();
 
     auto res = std::make_unique<user_group>();

@@ -6,6 +6,7 @@
 #include <tos/mapping.hpp>
 #include <tos/memory.hpp>
 #include <tos/paging/physical_page_allocator.hpp>
+#include <tos/quik.hpp>
 
 namespace tos::arm {
 struct address_space final : tos::address_space {
@@ -35,8 +36,22 @@ struct address_space final : tos::address_space {
     virtual_range containing_fragment(const virtual_range& range) const;
 };
 
+struct common_share : quik::share_base {};
+
+template<class... Ts>
+struct typed_share : common_share {
+    std::tuple<Ts...>* ptrs;
+    void* get_tuple_ptr() override {
+        return ptrs;
+    }
+};
+
 template<class... DataPtrTs>
-auto create_share(address_space& from,
-                  address_space& to,
-                  const std::tuple<DataPtrTs...>& in_ptrs);
+typed_share<DataPtrTs...> create_share(address_space& from,
+                                       address_space& to,
+                                       const std::tuple<DataPtrTs...>& in_ptrs) {
+    typed_share<DataPtrTs...> share;
+    share.ptrs = const_cast<std::tuple<DataPtrTs...>*>(&in_ptrs);
+    return share;
+}
 } // namespace tos::arm

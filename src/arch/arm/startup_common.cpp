@@ -1,7 +1,7 @@
 #include <algorithm>
+#include <tos/arm/startup_common.hpp>
 #include <tos/compiler.hpp>
 #include <tos/memory.hpp>
-#include <tos/arm/startup_common.hpp>
 
 extern "C" {
 extern uint64_t _sidata;
@@ -9,6 +9,7 @@ extern void (*start_ctors[])(void);
 extern void (*end_ctors[])(void);
 }
 
+namespace tos {
 namespace {
 void copy_initialized_memory() {
     const auto data = tos::default_segments::data();
@@ -32,7 +33,6 @@ void call_global_ctors() {
 }
 } // namespace
 
-namespace tos {
 void boot_initialize() {
     copy_initialized_memory();
     zero_out_bss();
