@@ -2,7 +2,6 @@
 
 #include "tos/compiler.hpp"
 #include "tos/detail/poll.hpp"
-#include <coroutine>
 #include <tos/fiber/this_fiber.hpp>
 #include <tos/detail/coro.hpp>
 
