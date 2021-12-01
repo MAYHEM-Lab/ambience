@@ -59,7 +59,9 @@ if(ENABLE_UBSAN)
 endif()
 
 if(BUILD_TESTS)
-    set(TOS_FLAGS "${TOS_FLAGS} -fsanitize=address")
+    if (${TOS_PLATFORM} MATCHES "hosted")
+        set(TOS_FLAGS "${TOS_FLAGS} -fsanitize=address")
+    endif()
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
