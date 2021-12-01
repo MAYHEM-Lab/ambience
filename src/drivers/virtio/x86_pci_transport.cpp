@@ -1,4 +1,5 @@
 #include "tos/memory.hpp"
+#include "tos/paging/physical_page_allocator.hpp"
 #include <deque>
 #include <tos/debug/log.hpp>
 #include <tos/function_ref.hpp>
@@ -10,7 +11,6 @@
 #include <tos/x86_64/pci.hpp>
 #include <tos/x86_64/pic.hpp>
 
-extern tos::physical_page_allocator* g_palloc;
 namespace tos::virtio {
 namespace {
 struct msix_cap_data {
@@ -263,7 +263,7 @@ private:
                                       segment,
                                       user_accessible::no,
                                       memory_types::device,
-                                      g_palloc,
+                                      physical_page_allocator::instance(),
                                       physical_address(map_addr));
         Assert(res);
 

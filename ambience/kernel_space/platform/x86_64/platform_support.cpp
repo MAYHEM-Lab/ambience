@@ -5,7 +5,6 @@
 #include <tos/lwip/common.hpp>
 #include <tos/lwip/lwip.hpp>
 
-tos::physical_page_allocator* g_palloc;
 tos::ae::registry_base& get_registry();
 
 template<class TimerT>
@@ -29,8 +28,6 @@ uint64_t calibrate_tsc(TimerT& timer) {
 
 void platform_support::stage2_init() {
     m_palloc = force_get(initialize_page_allocator());
-
-    g_palloc = m_palloc;
 
     apic_initialize(*m_palloc);
 
@@ -58,9 +55,6 @@ void platform_support::stage2_init() {
 
     tos::ae::preemptive_user_group_runner::create(
         tos::mem_function_ref<&tos::preempter<platform_support>::run>(*p));
-
-    //    tos::ae::preemptive_user_group_runner::create(
-    //        tos::make_erased_preemptive_runner(*this));
 
     do_machine_impl();
 }

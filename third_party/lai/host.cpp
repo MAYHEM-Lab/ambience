@@ -1,4 +1,5 @@
 #include "tos/memory.hpp"
+#include "tos/paging/physical_page_allocator.hpp"
 #include <acpispec/tables.h>
 #include <lai/host.h>
 #include <tos/debug/log.hpp>
@@ -6,7 +7,6 @@
 #include <tos/x86_64/mmu.hpp>
 #include <tos/x86_64/port.hpp>
 
-extern tos::physical_page_allocator* g_palloc;
 extern acpi_rsdt_t* globalRsdtWindow;
 extern int acpi_ver;
 
@@ -49,8 +49,10 @@ void* laihost_map(size_t address, size_t count) {
     auto segment = tos::virtual_segment{
         .range = {.base = tos::virtual_address(address), .size = ptrdiff_t(count)},
         .perms = tos::permissions::read_write};
-    auto res =
-        tos::x86_64::allocate_region(root, segment, tos::user_accessible::no, g_palloc);
+    auto res = tos::x86_64::allocate_region(root,
+                                            segment,
+                                            tos::user_accessible::no,
+                                            tos::physical_page_allocator::instance());
 
     if (res || force_error(res) == tos::x86_64::mmu_errors::already_allocated) {
         res = tos::x86_64::mark_resident(root,
