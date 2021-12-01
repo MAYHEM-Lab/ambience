@@ -14,6 +14,7 @@ public:
     explicit free_list(span<uint8_t> buffer);
 
     void* allocate(size_t size);
+    void* realloc(void* oldptr, size_t size);
     void free(void* ptr);
     std::optional<size_t> in_use() const {
         return m_used;

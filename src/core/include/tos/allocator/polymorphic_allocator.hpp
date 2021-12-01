@@ -7,6 +7,7 @@
 namespace tos::memory {
 struct polymorphic_allocator {
     virtual void* allocate(size_t size) = 0;
+    virtual void* realloc(void* oldptr, size_t newsz) = 0;
     virtual void free(void* ptr) = 0;
     virtual std::optional<size_t> in_use() const {
         return {};
@@ -26,6 +27,10 @@ struct erased_allocator : polymorphic_allocator {
         return (&m_alloc)->allocate(size);
     }
 
+    void* realloc(void* oldptr, size_t newsize) override {
+        return (&m_alloc)->realloc(oldptr, newsize);
+    }
+    
     void free(void* ptr) override {
         return (&m_alloc)->free(ptr);
     }
