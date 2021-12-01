@@ -494,7 +494,7 @@ class DeployNode:
     def __init__(self, node: Node, groups: List[Group]):
         self.node = node
         self.groups = groups
-        self.deploy_groups = {g: DeployGroup(self, g, 64) for g in self.groups}
+        self.deploy_groups = {g: DeployGroup(self, g, queue_size=64) for g in self.groups}
         self.target_name = None
         self.objects = {}
 
