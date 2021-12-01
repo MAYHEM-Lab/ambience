@@ -11,6 +11,9 @@ public:
     }
     void free(void*) {
     }
+    void* realloc(void*, size_t) {
+        return nullptr;
+    }
     std::optional<size_t> in_use() const {
         return {};
     }
