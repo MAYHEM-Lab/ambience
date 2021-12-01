@@ -407,8 +407,7 @@ namespace meta
         constexpr std::size_t range_distance_(T begin, T end)
         {
             return begin <= end ? static_cast<std::size_t>(end - begin)
-                                : throw "The start of the integer_sequence must not be "
-                                        "greater than the end";
+                                : -1;
         }
 
         template <std::size_t End, typename State, indices_strategy_ Status_>
