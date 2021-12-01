@@ -1,0 +1,7 @@
+set(RANGES_ASSERTIONS OFF)
+set(RANGES_DEBUG_INFO OFF)
+set(RANGES_NATIVE OFF)
+set(RANGES_BUILD_CALENDAR_EXAMPLE OFF)
+set(RANGES_ENABLE_WERROR OFF)
+add_subdirectory(src)
+target_link_libraries(range-v3 INTERFACE tos::libcxx)
