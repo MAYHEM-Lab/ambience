@@ -242,6 +242,7 @@ sem_ret semaphore_base<CountT>::down(cancellation_token& cancel) noexcept {
     if (m_count < 0) {
         auto wait_res = m_wait.wait(ig, cancel);
         if (wait_res) {
+            ++m_count;
             res = sem_ret::cancelled;
         }
     }
