@@ -18,7 +18,7 @@ std::unique_ptr<user_group>
 start_group(span<uint8_t> stack, void (*entry)(), interrupt_trampoline& trampoline,
             std::string_view name,
             tos::cur_arch::address_space& as) {
-    LOG("Entry point:", (void*)entry);
+    LOG(name, "Entry point:", (void*)entry);
     auto& user_thread = tos::suspended_launch(stack, switch_to_user, (void*)entry);
     set_name(user_thread, name);
 

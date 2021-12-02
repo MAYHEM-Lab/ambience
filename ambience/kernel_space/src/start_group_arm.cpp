@@ -9,6 +9,7 @@ std::unique_ptr<user_group> start_group(tos::span<uint8_t> stack,
                                         tos::interrupt_trampoline& trampoline,
                                         std::string_view name,
                                         cur_arch::address_space&) {
+    LOG(name, "Entry point:", (void*)entry);
     auto& self = *tos::self();
 
     auto res = std::make_unique<user_group>();
