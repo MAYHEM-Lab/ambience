@@ -60,7 +60,7 @@ tos::result<void> kernel() {
     maybe_init_xbee(support.get_chrono().alarm);
 #endif
 
-    auto groups = init_all_groups(support.make_args());
+    [[maybe_unused]] auto groups = init_all_groups(support.make_args());
     tos::debug::log("Groups initialized");
 
     tos::semaphore run_sem{0};
