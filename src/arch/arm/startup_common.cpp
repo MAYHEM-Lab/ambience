@@ -21,11 +21,11 @@ void copy_initialized_memory() {
 
 void zero_out_bss() {
     auto bss = tos::default_segments::bss();
-    auto bss_start = reinterpret_cast<uint64_t*>(bss.base.direct_mapped());
-    auto bss_end = reinterpret_cast<uint64_t*>(bss.end().direct_mapped());
+    auto bss_start = reinterpret_cast<uint8_t*>(bss.base.direct_mapped());
 
     // Zero out BSS
-    std::fill(bss_start, bss_end, 0);
+    memset(bss_start, 0, bss.size);
+    // std::fill(bss_start, bss_end, 0);
 }
 
 void call_global_ctors() {
