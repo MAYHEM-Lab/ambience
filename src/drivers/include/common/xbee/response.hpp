@@ -124,6 +124,8 @@ struct xbee_response {
             "got_msb"_s + s::event<events::byte> / store_lsb<ResType>{} = "got_len"_s,
             "got_len"_s + s::event<events::byte>[is_type_correct_t<ResType>{}] =
                 "api_id"_s,
+            "got_len"_s + s::event<events::byte>[!is_type_correct_t<ResType>{}] =
+                "null"_s,
             "api_id"_s + s::event<events::pl_done> = "got_payload"_s,
             "got_payload"_s + s::event<events::byte> = X);
     }
