@@ -5,6 +5,7 @@
 #pragma once
 
 #include "gpio.hpp"
+#include "tos/fixed_fifo.hpp"
 #include "tos/semaphore.hpp"
 #include <common/driver_base.hpp>
 #include <common/usart.hpp>
@@ -37,36 +38,45 @@ public:
 
     template<class AlarmT>
     tos::span<uint8_t>
-    read(tos::span<uint8_t> buf, AlarmT& alarm, std::chrono::milliseconds to) {
+    read(tos::span<uint8_t> b, AlarmT& alarm, std::chrono::milliseconds to) {
         lock_guard lk{m_read_busy};
 
-        auto err = nrfx_uarte_rx(m_dev, buf.data(), buf.size());
-
-        if (err != NRFX_SUCCESS) {
-            return span<uint8_t>();
+        size_t total = 0;
+        auto len = b.size();
+        auto buf = b.data();
+        while (total < len) {
+            auto res = m_read_sync.down(alarm, to);
+            if (res == sem_ret::timeout) {
+                break;
+            }
+            *buf = rx_buf.pop();
+            ++buf;
+            ++total;
         }
-
-        auto wait_res = m_read_sync.down(alarm, to);
-        if (wait_res == sem_ret::normal) {
-            return buf;
-        }
-
-        nrfx_uarte_rx_abort(m_dev);
-        return span<uint8_t>();
+        return b.slice(0, total);
     }
 
     ~uart();
 
 private:
+    void default_read_cb(uint8_t data) {
+        rx_buf.push_isr(data);
+        m_read_sync.up_isr();
+    }
+
     void handle_callback(const void* p_event);
 
     tos::mutex m_write_busy;
-    tos::semaphore m_write_sync;
+    tos::semaphore m_write_sync{0};
 
     tos::mutex m_read_busy;
-    tos::semaphore m_read_sync;
+    tos::semaphore m_read_sync{0};
 
     const nrfx_uarte_t* m_dev;
+
+    tos::basic_fixed_fifo<uint8_t, 64, tos::ring_buf> rx_buf;
+    uint8_t m_recv_byte;
+    uint8_t m_recv_byte2;
 };
 } // namespace nrf52
 

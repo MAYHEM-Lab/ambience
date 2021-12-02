@@ -2,6 +2,7 @@
 // Created by Mehmet Fatih BAKIR on 07/06/2018.
 //
 
+#include "tos/debug/log.hpp"
 #include <arch/usart.hpp>
 
 namespace tos {
@@ -19,9 +20,7 @@ uart::uart(const nrfx_uarte_t& dev,
            usart_constraint&& config,
            gpio::pin_type rx,
            gpio::pin_type tx) noexcept
-    : m_write_sync{0}
-    , m_read_sync{0}
-    , m_dev{&dev} {
+    : m_dev{&dev} {
     nrfx_uarte_config_t conf{};
 
     conf.interrupt_priority = 7;
@@ -42,10 +41,22 @@ uart::uart(const nrfx_uarte_t& dev,
         });
 
     if (res != NRFX_SUCCESS) {
+        LOG_ERROR("Could not init uart", res);
         // TODO: report error
     }
 
     tos::kern::refresh_interrupts();
+
+    auto err = nrfx_uarte_rx(m_dev, &m_recv_byte, 1);
+    if (err != NRFX_SUCCESS) {
+        while (true)
+            ;
+    }
+    err = nrfx_uarte_rx(m_dev, &m_recv_byte2, 1);
+    if (err != NRFX_SUCCESS) {
+        while (true)
+            ;
+    }
 }
 
 void uart::handle_callback(const void* event) {
@@ -54,16 +65,17 @@ void uart::handle_callback(const void* event) {
     if (p_event->type == NRFX_UARTE_EVT_TX_DONE) {
         m_write_sync.up_isr();
     } else if (p_event->type == NRFX_UARTE_EVT_RX_DONE) {
-        m_read_sync.up_isr();
+        auto& ev = p_event->data.rxtx;
+        default_read_cb(*ev.p_data);
+        nrfx_uarte_rx(m_dev, ev.p_data, ev.bytes);
     }
 }
 
 int uart::write(span<const uint8_t> buf) {
     lock_guard lk{m_write_busy};
 
-    nrfx_err_t err;
     if (nrfx_is_in_ram(buf.data())) {
-        err = nrfx_uarte_tx(m_dev, buf.data(), buf.size());
+        auto err = nrfx_uarte_tx(m_dev, buf.data(), buf.size());
         if (err != NRFX_SUCCESS) {
             return -1;
             // TODO: report error
@@ -76,25 +88,25 @@ int uart::write(span<const uint8_t> buf) {
             auto len = std::min<size_t>(32, buf.size());
             std::copy_n(buf.begin(), len, std::begin(tbuf));
             buf = buf.slice(len);
-            err = nrfx_uarte_tx(m_dev, tbuf, len);
+            auto err = nrfx_uarte_tx(m_dev, tbuf, len);
             m_write_sync.down();
         }
     }
     return buf.size();
 }
 
-span<uint8_t> uart::read(span<uint8_t> buf) {
+span<uint8_t> uart::read(span<uint8_t> b) {
     lock_guard lk{m_read_busy};
-
-    auto err = nrfx_uarte_rx(m_dev, buf.data(), buf.size());
-
-    if (err != NRFX_SUCCESS) {
-        return span<uint8_t>();
+    size_t total = 0;
+    auto len = b.size();
+    auto buf = b.data();
+    while (total < len) {
+        m_read_sync.down();
+        *buf = rx_buf.pop();
+        ++buf;
+        ++total;
     }
-
-    m_read_sync.down();
-
-    return buf;
+    return b.slice(0, total);
 }
 
 uart::~uart() {
