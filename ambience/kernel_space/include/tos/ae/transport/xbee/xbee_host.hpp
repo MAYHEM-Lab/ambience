@@ -50,6 +50,7 @@ private:
     }
 
     void read_thread() {
+        auto fid = tos::xbee::frame_id_t{1};
         while (!cancellation_token::system().is_cancelled()) {
             auto recv_retry = [&] {
                 while (true) {
@@ -61,19 +62,21 @@ private:
             };
             auto p = recv_retry();
 
-            std::array<uint8_t, 2048> buf;
+            std::array<uint8_t, 512> buf;
             lidl::message_builder rb{buf};
 
             m_num_calls++;
             run_message_on_channel(0, tos::const_span_cast(p.data()), rb);
 
             tos::xbee_s1 x(meta::deref(m_serial));
-            tos::xbee::tx16_req req{p.from(), rb.get_buffer(), tos::xbee::frame_id_t{1}};
+            tos::xbee::tx16_req req{p.from(), rb.get_buffer(), fid};
+            fid.id++;
             x.transmit(req);
 
             using namespace std::chrono_literals;
             int retries = 5;
             tos::xbee::tx_status stat;
+            stat.status = tos::xbee::tx_status::statuses::no_ack;
             while (retries-- > 0) {
                 auto tx_r = tos::xbee::read_tx_status(meta::deref(m_serial),
                                                       meta::deref(m_alarm));
@@ -82,7 +85,10 @@ private:
                     break;
                 }
             }
-            tos::debug::log(int(stat.status));
+            if (stat.status == tos::xbee::tx_status::statuses::no_ack) {
+                tos::debug::log("Failed to send");
+            }
+            // tos::debug::log(int(stat.status));
         }
     }
 
@@ -98,13 +104,15 @@ public:
     }
 
     void export_service(const sync_service_host& h, const export_args& args) override {
-        m_sync_hosts.push_back(*new host<sync_service_host>(
-            static_cast<const xbee_export_args&>(args).channel, h));
+        auto& arg = static_cast<const xbee_export_args&>(args);
+        LOG("Exporting sync service over xbee at", arg.channel);
+        m_sync_hosts.push_back(*new host<sync_service_host>(arg.channel, h));
     }
 
     void export_service(const async_service_host& h, const export_args& args) override {
-        m_async_hosts.push_back(*new host<async_service_host>(
-            static_cast<const xbee_export_args&>(args).channel, h));
+        auto& arg = static_cast<const xbee_export_args&>(args);
+        LOG("Exporting async service over xbee at", arg.channel);
+        m_async_hosts.push_back(*new host<async_service_host>(arg.channel, h));
     }
 };
 } // namespace tos::ae
