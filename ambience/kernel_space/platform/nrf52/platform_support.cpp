@@ -3,6 +3,7 @@
 #include <tos/ae/kernel/runners/preemptive_user_runner.hpp>
 #include <tos/ae/registry.hpp>
 #include <tos/arm/core.hpp>
+#include <arch/drivers.hpp>
 
 tos::ae::registry_base& get_registry();
 
@@ -10,6 +11,7 @@ void platform_support::stage1_init() {
 }
 
 void platform_support::stage2_init() {
+    tos::nrf52::gpio g;
     tos::arm::SCB::DEMCR.write(tos::arm::SCB::DEMCR.read() | 0x01000000);
 
     tos::arm::DWT::LAR.write(0xC5ACCE55);
