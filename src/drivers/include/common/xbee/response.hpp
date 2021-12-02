@@ -229,6 +229,12 @@ public:
         return std::move(m_pl);
     }
 
+    std::string_view state() const {
+        std::string_view res;
+        sm.visit_current_states([&](auto&& state) { res = state.c_str(); });
+        return res;
+    }
+
 private:
     bool m_escape{false};
 
