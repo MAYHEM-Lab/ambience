@@ -7,6 +7,7 @@
 #include <lidlrt/find_extent.hpp>
 #include <lidlrt/service.hpp>
 #include <string_view>
+#include <tos/memory.hpp>
 #include <utility>
 
 namespace tos::quik {
@@ -65,9 +66,10 @@ struct sharer<std::string_view> {
 
     template<class ShareT>
     static std::string_view do_share(ShareT& share, const std::string_view& sv_in_from) {
-        auto ptr = share.raw_allocate(sv_in_from.size(), 1);
-        memcpy(ptr.direct_mapped(), sv_in_from.data(), sv_in_from.size());
-        return std::string_view(static_cast<const char*>(ptr.direct_mapped()),
+        auto base = share.map_read_only(
+            virtual_range{virtual_address(reinterpret_cast<uintptr_t>(sv_in_from.data())),
+                          static_cast<ptrdiff_t>(sv_in_from.size())});
+        return std::string_view(reinterpret_cast<const char*>(base.address()),
                                 sv_in_from.size());
     }
 };
@@ -80,7 +82,6 @@ struct sharer<tos::span<T>> {
 
     template<class ShareT>
     static tos::span<T> do_share(ShareT& share, const tos::span<T>& data) {
-        LOG("Sharing span", data);
         auto ptr = share.raw_allocate(data.size_bytes(), 1);
         memcpy(ptr.direct_mapped(), data.data(), data.size());
         return tos::span<T>(static_cast<T*>(ptr.direct_mapped()), data.size());

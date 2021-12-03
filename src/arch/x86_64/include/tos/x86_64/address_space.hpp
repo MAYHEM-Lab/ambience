@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tos/paging/physical_page_allocator.hpp"
+#include "tos/utility.hpp"
 #include "tos/x86_64/mmu/common.hpp"
 #include "tos/x86_64/mmu/errors.hpp"
 #include <forward_list>
@@ -134,7 +135,24 @@ struct temporary_share : quik::share_base {
         return true;
     }
 
-    share_page* map_read_only(uintptr_t page_base_address_in_from) {
+    physical_address traverse_from_address(virtual_address addr) {
+        // Assume direct-mapping
+        return physical_address{addr.address()};
+    }
+
+    virtual_address copy_read_only(virtual_range range_in_from) {
+        auto ptr = raw_allocate(range_in_from.size, 1);
+        memcpy(ptr.direct_mapped(),
+               reinterpret_cast<void*>(range_in_from.base.address()),
+               range_in_from.size);
+        return virtual_address(ptr.address());
+    }
+
+    virtual_address map_read_only(virtual_range range_in_from) {
+        if (range_in_from.base.address() % page_size_bytes != 0 ||
+            range_in_from.size % page_size_bytes != 0) {
+            return copy_read_only(range_in_from);
+        }
         auto& elem = pages.emplace_front();
         elem.owned = false;
         elem.readonly = true;
