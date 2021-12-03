@@ -158,18 +158,18 @@ struct temporary_share : quik::share_base {
         elem.readonly = true;
         elem.unmap = true;
         elem.space = 0;
-        elem.page = palloc->info(physical_address{page_base_address_in_from});
-        return &elem;
+        elem.page = palloc->info(physical_address{range_in_from.base.address()});
+        return range_in_from.base;
     }
 
-    share_page* map_read_write(uintptr_t page_base_address_in_from) {
+    virtual_address map_read_write(virtual_range range_in_from) {
         auto& elem = pages.emplace_front();
         elem.owned = false;
         elem.readonly = false;
         elem.unmap = true;
         elem.space = 0;
-        elem.page = palloc->info(physical_address{page_base_address_in_from});
-        return &elem;
+        elem.page = palloc->info(physical_address{range_in_from.base.address()});
+        return range_in_from.base;
     }
 
     share_page* add_page() {
