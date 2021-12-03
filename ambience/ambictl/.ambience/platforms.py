@@ -243,6 +243,7 @@ platform(
     node_services=[
         ExternService("logger", logger_if, sync=True),
         ExternService("alarm", alarm_if, sync=False),
+        ExternService("weather_sensor", weather_sensor_if, sync=True),
     ]
 )
 

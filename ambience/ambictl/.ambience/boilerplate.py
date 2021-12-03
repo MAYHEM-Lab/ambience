@@ -13,6 +13,9 @@ sm_common_mod = ambictl.LidlModule("//ambience/services/impls/social_media/sm_co
 accounts_mod = ambictl.LidlModule("//ambience/services/impls/social_media/accounts.lidl", "social_media_schema")
 posts_mod = ambictl.LidlModule("//ambience/services/impls/social_media/posts.lidl", "social_media_schema")
 analysis_mod = ambictl.LidlModule("//ambience/services/impls/social_media/analysis.lidl", "social_media_schema")
+kvstore_mod = ambictl.LidlModule("//ambience/services/impls/social_media/kvstore.lidl", "kvstore_schema")
+networking_mod = ambictl.LidlModule("//ambience/services/impls/social_media/networking.lidl", "networking_schema")
+weather_sensor_mod = ambictl.LidlModule("//ambience/services/interfaces/weather_sensor.lidl", "weather_sensor_schema")
 
 calc_if = calculator_mod.get_service("tos::ae::services::calculator")
 logger_if = logger_mod.get_service("tos::services::logger")
@@ -25,6 +28,27 @@ db_if = fs_mod.get_service("tos::ae::services::sql_database")
 agent_if = agent_mod.get_service("tos::ae::agent")
 post_analysis_if = analysis_mod.get_service("social_media::post_analysis")
 posts_if = posts_mod.get_service("social_media::posts")
+kvstore_if = kvstore_mod.get_service("tos::ae::services::KVStore")
+bytestore_if = kvstore_mod.get_service("tos::ae::services::ByteStore")
+udp_socket_if = networking_mod.get_service("tos::services::udp_socket")
+weather_sensor_if = weather_sensor_mod.get_service("tos::ae::services::weather_sensor")
+
+null_weather_sensor = weather_sensor_if.implement(
+    name="null_weather_sensor",
+    cmake_target="mock_weather_sensor",
+    sync=False,
+    deps={}
+)
+
+weather_sampler = agent_if.implement(
+    name="weather_sampler",
+    cmake_target="weather_sampler",
+    sync=False,
+    deps={
+        "alarm": alarm_if,
+        "sensor": weather_sensor_if
+    }
+)
 
 ephemeral_block = block_mem_if.implement(
     name="ephemeral_block",
@@ -40,7 +64,6 @@ basic_echo = echo_if.implement(
     cmake_target="basic_echo",
     sync=True,
     deps={
-        "logger": logger_if
     }
 )
 
@@ -103,3 +126,32 @@ posts_bench_agent = agent_if.implement(
         "posts": posts_if
     }
 )
+
+fatih_kvstore = bytestore_if.implement(
+    name="fatih_kvstore",
+    cmake_target="fatih_kvstore",
+    sync=False,
+    deps={}
+)
+
+inmem_kv = kvstore_if.implement(
+    name="inmem_kv",
+    cmake_target="inmem_kv",
+    sync=False,
+    deps={}
+)
+
+inmem_bytestore = bytestore_if.implement(
+    name="inmem_bytestore",
+    cmake_target="inmem_kv",
+    sync=False,
+    deps={}
+)
+
+lwip_udp_socket = udp_socket_if.implement(
+    name="lwip_udp_socket",
+    cmake_target="lwip_udp_socket",
+    sync=False,
+    deps={}
+)
+

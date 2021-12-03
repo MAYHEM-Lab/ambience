@@ -9,5 +9,7 @@ add_subdirectory(ephemeral_block)
 add_subdirectory(basic_echo)
 add_subdirectory(inmem_kv)
 add_subdirectory(lwip_udp_socket)
+add_subdirectory(mock_weather_sensor)
+add_subdirectory(weather_sampler)
 
 add_subdirectory(social_media)

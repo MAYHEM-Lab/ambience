@@ -24,3 +24,7 @@ add_lidlc(agent_schema agent.lidl)
 add_lidlc(kvstore_schema kvstore.lidl)
 
 add_lidlc(networking_schema networking.lidl)
+
+add_lidlc(weather_sensor_schema weather_sensor.lidl)
+
+add_lidlc(random_schema random.lidl)

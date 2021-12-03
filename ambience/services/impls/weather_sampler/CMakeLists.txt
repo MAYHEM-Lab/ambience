@@ -1,0 +1,2 @@
+add_service(weather_sampler agent sampler.cpp)
+target_link_libraries(weather_sampler PUBLIC weather_sensor_schema alarm_schema)

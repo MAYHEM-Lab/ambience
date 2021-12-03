@@ -1,0 +1,2 @@
+add_service(mock_weather_sensor weather_sensor mock_weather_sensor.cpp)
+target_link_libraries(mock_weather_sensor PUBLIC random_schema)
