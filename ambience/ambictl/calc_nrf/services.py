@@ -12,3 +12,10 @@ serv_instance(
         "calc": "calc"
     }
 )
+
+export(
+    service="bench_agent",
+    networks={
+        "xbee-home": 0
+    }
+)
