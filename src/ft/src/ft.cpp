@@ -14,7 +14,7 @@ tos::context& current_context() {
 }
 
 namespace kern {
-deleter::~deleter() {
+void deleter::destroy() {
     /**
      * We free the stack later here because the tcb potentially lives in the memory we
      * are deleting here, and there are still other destructors to run.

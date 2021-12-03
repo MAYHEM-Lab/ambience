@@ -61,6 +61,10 @@ struct mixin_tcb
     using deleter_type = Deleter;
     using starter_type = Starter;
 
+    void destroy() override {
+        Deleter::destroy();
+    }
+
     template<class... StarterArg>
     explicit mixin_tcb(uint8_t* stack_base, StarterArg&&... starter)
         : tcb(current_context())
@@ -74,7 +78,7 @@ struct deleter {
         : m_stack_base{stack_base} {
     }
 
-    ~deleter();
+    void destroy();
 
     char* get_task_base() const {
         return reinterpret_cast<char*>(m_stack_base);
@@ -84,6 +88,7 @@ struct deleter {
 };
 
 struct no_delete {
+    void destroy() {};
     explicit no_delete(uint8_t*) {
     }
 };
