@@ -36,6 +36,15 @@ struct fixed_string {
         return std::string_view(val, N - 1);
     }
 
+    template<size_t M>
+    friend constexpr fixed_string<N + M> operator+(const fixed_string<N>& l,
+                                                   const fixed_string<M>& r) {
+        fixed_string<N + M> res{};
+        auto end = std::copy(std::begin(l.val), std::end(l.val), std::begin(res.val));
+        std::copy(std::begin(r.val), std::end(r.val), end);
+        return res;
+    }
+
     friend auto operator<=>(const fixed_string&, const fixed_string&) = default;
 };
 
