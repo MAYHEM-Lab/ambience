@@ -1,5 +1,6 @@
 #pragma once
 
+#include <boost/hana/detail/variadic/foldl1.hpp>
 #include <functional>
 #include <tuple>
 
@@ -21,18 +22,20 @@ template<template<class...> class TupleT,
          class BinopT,
          std::size_t... Is,
          class... Ts>
-constexpr T accumulate_impl(const TupleT<Ts...>& tuple,
-                            T init,
-                            BinopT&& binop,
-                            std::index_sequence<Is...>) {
-    return ((init = binop(std::move(init), std::get<Is>(tuple))), ...), init;
+constexpr auto accumulate_impl(const TupleT<Ts...>& tuple,
+                               T init,
+                               BinopT&& binop,
+                               std::index_sequence<Is...>) {
+    return boost::hana::detail::variadic::foldl(
+        std::forward<BinopT>(binop), init, std::get<Is>(tuple)...);
+    // return ((init = binop(std::move(init), std::get<Is>(tuple))), ...), init;
 }
 
 template<template<class...> class TupleT,
          class T,
          class... Ts,
          class BinopT = std::plus<>>
-constexpr T accumulate(const TupleT<Ts...>& tuple, T init, BinopT&& binop = {}) {
+constexpr auto accumulate(const TupleT<Ts...>& tuple, T init, BinopT&& binop = {}) {
     return accumulate_impl(tuple,
                            std::move(init),
                            std::forward<BinopT>(binop),
