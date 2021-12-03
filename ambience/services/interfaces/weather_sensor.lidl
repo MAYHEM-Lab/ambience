@@ -1,0 +1,11 @@
+namespace tos::ae::services;
+
+struct weather_sample {
+    temperature: f32;
+    humidity: f32;
+    pressure: f32;
+}
+
+service weather_sensor {
+    sample() -> weather_sample;
+}

@@ -1,0 +1,7 @@
+namespace tos::ae::services;
+
+service rng {
+    seed(val: u64) -> bool;
+    
+    randbytes(len: i32) -> span<u8>;
+}
