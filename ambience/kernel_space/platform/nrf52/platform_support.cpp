@@ -20,6 +20,12 @@ void platform_support::stage2_init() {
 
     tos::ae::preemptive_user_group_runner::create(
         tos::make_erased_preemptive_runner(*this));
+
+    auto drv = new tos::device::bme280::driver(tos::bsp::board_spec::bme280::open());
+    drv->set_config();
+    drv->enable();
+    auto wrapper = new tos::device::bme280::sensor_wrapper(drv);
+    get_registry().register_service("weather_sensor", wrapper);
 }
 
 platform_group_args platform_support::make_args() {
