@@ -7,6 +7,7 @@
 #include "constants.hpp"
 #include "types.hpp"
 #include <boost/sml.hpp>
+#include <chrono>
 #include <stddef.h>
 #include <tos/expected.hpp>
 #include <tos/span.hpp>
@@ -311,6 +312,24 @@ tos::expected<xbee::recv16, xbee_errors> receive(StreamT& str, AlarmT& alarm) {
     while (!parser.finished()) {
         std::array<uint8_t, 1> rbuf;
         auto r = str.read(rbuf);
+        if (r.size() != 1) {
+            // xbee is non responsive
+            return unexpected(xbee_errors::xbee_non_responsive);
+        }
+        parser.consume(rbuf[0]);
+    }
+    return std::move(parser).get_payload();
+}
+
+template<class StreamT, class AlarmT>
+tos::expected<xbee::recv16, xbee_errors>
+receive(StreamT& str, AlarmT& alarm, std::chrono::milliseconds ms) {
+    using namespace std::chrono_literals;
+    xbee::sm_response_parser<tos::xbee::recv16, tos::xbee::recv_alloc<tos::xbee::recv16>>
+        parser({});
+    while (!parser.finished()) {
+        std::array<uint8_t, 1> rbuf;
+        auto r = str.read(rbuf, alarm, ms);
         if (r.size() != 1) {
             // xbee is non responsive
             return unexpected(xbee_errors::xbee_non_responsive);
