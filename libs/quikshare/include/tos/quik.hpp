@@ -19,6 +19,20 @@ struct share_base {
 template<class T>
 struct sharer;
 
+template <lidl::ValStruct T>
+struct sharer<const T*> {
+    static size_t compute_size(const T* obj) {
+        return sizeof(T);
+    }
+
+    template <class ShareT>
+    static const T* do_share(ShareT& share, const T& obj) {
+        auto ptr = share.raw_allocate(sizeof(T), alignof(T));
+        memcpy(ptr.direct_mapped(), &obj, sizeof(T));
+        return static_cast<const T*>(ptr.direct_mapped());
+    }
+};
+
 template<lidl::RefObject T>
 struct sharer<const T*> {
     static size_t compute_size(const T* obj) {
