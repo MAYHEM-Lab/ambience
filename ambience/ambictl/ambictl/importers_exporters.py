@@ -199,7 +199,7 @@ class XbeeExporter(Exporter):
         return f"(co_await registry.wait<\"{self.name}\">())->export_service(tos::ae::service_host(co_await registry.wait<\"{export.instance.name}\">()), tos::ae::xbee_export_args{{.channel = {export.config}}});"
 
     def cxx_includes(self):
-        return ["tos/ae/transport/xbee/xbee_host.hpp", "arch/drivers.hpp"]
+        return ["tos/ae/transport/xbee/xbee_host.hpp", "tos/board.hpp"]
 
     def registry_type(self):
         return f"tos::ae::xbee_exporter<{self.serial_type}, {self.alarm_type}>"
@@ -232,7 +232,7 @@ class XbeeImporter(Importer):
         return f"(co_await registry.wait<\"{self.name}\">())->import_service<{import_.interface.absolute_name()}>(tos::ae::xbee_import_args{{.addr={{{import_.config['addr']}}}, .channel={import_.config['channel']}}})"
 
     def cxx_includes(self):
-        return ["tos/ae/transport/xbee/xbee_transport.hpp", "arch/drivers.hpp"]
+        return ["tos/ae/transport/xbee/xbee_transport.hpp", "tos/board.hpp"]
 
     def registry_type(self):
         return f"tos::ae::xbee_importer<{self.serial_type}, {self.alarm_type}>"

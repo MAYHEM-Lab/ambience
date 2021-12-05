@@ -1,8 +1,13 @@
 from graphviz import Digraph
-from ambictl import defs, sample_group
+import sys
+from ambictl.defs import *
+from ambictl.loading import *
+from ambictl.ambidecl import *
+import mkbuild
+import pwd
 
 
-def to_graph(nodes: [defs.DeployNode], logical: bool = False) -> Digraph:
+def to_graph(nodes: [DeployNode], logical: bool = False) -> Digraph:
     g = Digraph(comment="")
 
     if logical:
@@ -23,12 +28,15 @@ def to_graph(nodes: [defs.DeployNode], logical: bool = False) -> Digraph:
     for node in nodes:
         for group in node.groups:
             for serv in group.servs:
-                for dep in serv.deps.values():
-                    g.edge(f"node_s{serv.name}", f"node_s{dep.name}")
+                if hasattr(serv, "deps"):
+                    for dep in serv.deps.values():
+                        g.edge(f"node_s{serv.name}", f"node_s{dep.name}")
 
     return g
 
-
 if __name__ == "__main__":
-    nodes = sample_group.sample_deployment()
-    print(to_graph(nodes, logical=False))
+    dir = sys.argv[1]
+    load_dir(dir)
+    deployment = ambidecl._finalize()
+    print(to_graph(deployment.nodes, logical=False))
+    
