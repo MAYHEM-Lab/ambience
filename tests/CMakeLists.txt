@@ -33,6 +33,9 @@ target_link_libraries(streams_test PUBLIC standalone_tests_main tos_print tos_ut
 add_executable(timer_multiplexer_tests timer_multiplexer_tests.cpp)
 target_link_libraries(timer_multiplexer_tests PUBLIC standalone_tests_main tos_timer)
 
+add_executable(functional_tests functional_tests.cpp)
+target_link_libraries(functional_tests PUBLIC standalone_tests_main tos_util_core)
+
 add_test(NAME xbee_tests COMMAND xbee_tests)
 add_test(NAME intrusive_list_tests COMMAND intrusive_tests)
 add_test(NAME utilities_tests COMMAND util_tests)
@@ -44,6 +47,7 @@ add_test(NAME function_ref_tests COMMAND function_ref_tests)
 add_test(NAME print_tests COMMAND print_tests)
 add_test(NAME streams_test COMMAND streams_test)
 add_test(NAME timer_multiplexer_tests COMMAND timer_multiplexer_tests)
+add_test(NAME functional_tests COMMAND functional_tests)
 
 add_subdirectory(io)
 add_subdirectory(context)
