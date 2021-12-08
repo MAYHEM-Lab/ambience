@@ -63,33 +63,4 @@ private:
 };
 
 group(lidl::Service auto*... servs) -> group<sizeof...(servs)>;
-
-template <class T>
-typename T::async_server* get_async(typename T::async_server* serv) {
-    return serv;
-}
-
-template <class T>
-typename T::sync_server* get_sync(typename T::sync_server* serv) {
-    return serv;
-}
-
-template <class T>
-typename T::async_server* get_async(typename T::sync_server* serv) {
-    // Return wrapper
-}
-
-template <class T>
-typename T::sync_server* get_sync(typename T::async_server* serv) {
-    // Return wrapper
-}
-
-template <bool Async, class T>
-auto get_as(T* t) {
-    if constexpr (Async) {
-        return get_async(t);
-    } else {
-        return get_sync(t);
-    }
-}
 } // namespace tos::ae
