@@ -112,6 +112,11 @@ public:
         return force_get(*this);
     }
 
+    template<class U = T, std::enable_if_t<!std::is_same_v<void, U>>* = nullptr>
+    decltype(auto) get_or(U&& t) && {
+        return std::move(m_internal).value_or(std::move(t));
+    }
+
     using value_type = typename internal_t::value_type;
     using error_type = typename internal_t::error_type;
 
