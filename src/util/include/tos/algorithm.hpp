@@ -31,4 +31,14 @@ template<class Iter>
 Iter consecutive_find(Iter first, Iter last, std::size_t n) {
     return consecutive_find_if(first, last, n, std::equal_to<decltype(*first)>{});
 }
+
+template<typename _InputIterator, typename _OutputIterator, typename _UnaryOperation>
+_OutputIterator transform_n(_InputIterator __first,
+                            size_t __n,
+                            _OutputIterator __result,
+                            _UnaryOperation __op) {
+    return std::generate_n(__result, __n, [&__first, &__op]() -> decltype(auto) {
+        return __op(*__first++);
+    });
+}
 } // namespace tos
