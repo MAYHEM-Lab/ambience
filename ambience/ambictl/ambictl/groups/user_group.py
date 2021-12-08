@@ -33,6 +33,10 @@ def read_entry_point(binary_path: str):
 
 
 class UserGroup(Group):
+    def override_registry_type(self, inst: Instance):
+        # Services running in user space always appear as async to the kernel
+        return "async"
+
     def _uniqueDeps(self) -> Set[Instance]:
         return set(dep for serv in self.servs for dep in serv.deps.values())
 
@@ -50,10 +54,16 @@ class UserGroup(Group):
             raise RuntimeError("Not all dependencies are met!")
         return list((y, x + 1) for x, y in enumerate(self.uniqueExternalDeps()))
 
+    def generateSyncExternalDepsSection(self):
+        numbering = self.assignNumsToExternalDeps()
+        return "\n".join(
+            f"[[maybe_unused]] auto ext_dep{num}_sync = transport.get_sync_service<{serv.get_interface().absolute_name()}, {num}>();" for serv, num in
+            numbering)
+
     def generateExternalDepsSection(self):
         numbering = self.assignNumsToExternalDeps()
         return "\n".join(
-            f"auto ext_dep{num} = transport.get_service<{serv.get_interface().absolute_name()}, {num}>();" for serv, num in
+            f"[[maybe_unused]] auto ext_dep{num}_async = transport.get_service<{serv.get_interface().absolute_name()}, {num}>();" for serv, num in
             numbering)
 
     def _generate_init_section(self):
@@ -70,8 +80,8 @@ class UserGroup(Group):
         res = []
         for s in toposort(dep_dict):
             for serv in s:
-                args = (serv_name_mapping[dep] for dep in serv.deps.values())
-                res.append(f"auto {serv.name} = co_await init_{serv.impl.name}({', '.join(args)});")
+                args = (serv_name_mapping[dep] + ("_async" if serv.is_async() else "_sync") for dep in serv.deps.values())
+                res.append(f"auto {serv.name} = {'co_await ' if serv.is_async() else ''}init_{serv.impl.name}({', '.join(args)});")
 
         return res
 
@@ -88,7 +98,7 @@ class UserGroup(Group):
         return template.render({
             "group": self,
             "service_init_sigs": self.generateInitSigSection(),
-            "external_deps": self.generateExternalDepsSection(),
+            "external_deps": self.generateExternalDepsSection() + "\n" + self.generateSyncExternalDepsSection(),
             "service_inits": self._generate_init_section(),
             "group_init": f"::g = new tos::ae::group({', '.join(serv.name for serv in self.servs)});",
             "service_includes": self.cxx_ordered_includes()

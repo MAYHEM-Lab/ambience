@@ -22,6 +22,13 @@ class ServiceInstance(Instance):
         # if not self.assigned_group.privileged:
         #     return self.impl.iface.async_server_name()
 
+        override = self.assigned_group.override_registry_type(self)
+        if override is not None:
+            if override == "async":
+                return self.impl.iface.async_server_name()
+            else:
+                return self.impl.iface.sync_server_name()
+        
         return self.impl.server_name()
 
     def get_interface(self) -> ServiceInterface:
