@@ -73,7 +73,7 @@ struct basic_fiber : any_fiber {
             self()->on_start();
         }
     }
-
+    
 private:
     CrtpT* self() {
         return static_cast<CrtpT*>(this);
@@ -86,7 +86,7 @@ private:
 
 template<Fiber FibT>
 function_ref<void()> fiber_resumer(FibT& fib) {
-    return tos::mem_function_ref<static_cast<void (FibT::*)()>(&FibT::resume)>(fib);
+    return tos::mem_function_ref<&any_fiber::resume>(fib);
 }
 
 template<class T>
