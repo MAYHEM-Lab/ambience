@@ -36,7 +36,15 @@ struct virtual_address {
 
     constexpr friend virtual_address operator+(const virtual_address& base,
                                                std::ptrdiff_t diff) {
-        return virtual_address{base.address() + diff};
+        auto copy = base;
+        copy += diff;
+        return copy;
+    }
+
+    constexpr friend virtual_address& operator+=(virtual_address& base,
+                                                 std::ptrdiff_t diff) {
+        base.addr += diff;
+        return base;
     }
 
     constexpr friend std::ptrdiff_t operator-(const virtual_address& left,
@@ -158,6 +166,10 @@ using virtual_range = mem_range<virtual_address, std::ptrdiff_t>;
 
 inline virtual_range identity_map(const physical_range& range) {
     return virtual_range{.base = identity_map(range.base), .size = range.size};
+}
+
+inline virtual_range map_at(const physical_range& range, virtual_address at) {
+    return virtual_range{.base = at, .size = range.size};
 }
 
 template<class BaseT, class SizeT>
