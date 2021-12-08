@@ -465,6 +465,76 @@ struct zerocopy_type<int64_t> {
 template<>
 struct zerocopy_type<const int64_t&> : zerocopy_type<int64_t> {};
 
+template<>
+struct zerocopy_type<bool> {
+    using type = bool;
+    static type make_param(const bool& t) {
+        return t;
+    }
+};
+template<>
+struct zerocopy_type<const bool&> : zerocopy_type<bool> {};
+
+template<>
+struct zerocopy_type<float> {
+    using type = float;
+    static type make_param(const float& t) {
+        return t;
+    }
+};
+template<>
+struct zerocopy_type<const float&> : zerocopy_type<float> {};
+
+template<>
+struct zerocopy_type<double> {
+    using type = double;
+    static type make_param(const double& t) {
+        return t;
+    }
+};
+template<>
+struct zerocopy_type<const double&> : zerocopy_type<double> {};
+
+template<>
+struct zerocopy_type<uint8_t> {
+    using type = uint8_t;
+    static type make_param(const uint8_t& t) {
+        return t;
+    }
+};
+template<>
+struct zerocopy_type<const uint8_t&> : zerocopy_type<uint8_t> {};
+
+template<>
+struct zerocopy_type<uint16_t> {
+    using type = uint16_t;
+    static type make_param(const uint16_t& t) {
+        return t;
+    }
+};
+template<>
+struct zerocopy_type<const uint16_t&> : zerocopy_type<uint16_t> {};
+
+template<>
+struct zerocopy_type<int16_t> {
+    using type = int16_t;
+    static type make_param(const int16_t& t) {
+        return t;
+    }
+};
+template<>
+struct zerocopy_type<const int16_t&> : zerocopy_type<int16_t> {};
+
+template<>
+struct zerocopy_type<uint32_t> {
+    using type = uint32_t;
+    static type make_param(const uint32_t& t) {
+        return t;
+    }
+};
+template<>
+struct zerocopy_type<const uint32_t&> : zerocopy_type<uint32_t> {};
+
 template<class T>
 using zerocopy_type_t = typename zerocopy_type<T>::type;
 

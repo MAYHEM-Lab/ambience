@@ -115,11 +115,25 @@ struct verbatim_sharer {
 };
 
 template<>
+struct sharer<float> : verbatim_sharer<float> {};
+template<>
 struct sharer<double> : verbatim_sharer<double> {};
 template<>
 struct sharer<int64_t> : verbatim_sharer<int64_t> {};
 template<>
 struct sharer<int32_t> : verbatim_sharer<int32_t> {};
+template<>
+struct sharer<uint32_t> : verbatim_sharer<uint32_t> {};
+template<>
+struct sharer<bool> : verbatim_sharer<bool> {};
+template<>
+struct sharer<uint16_t> : verbatim_sharer<uint16_t> {};
+template<>
+struct sharer<int16_t> : verbatim_sharer<int16_t> {};
+template<>
+struct sharer<uint8_t> : verbatim_sharer<uint8_t> {};
+template<>
+struct sharer<int8_t> : verbatim_sharer<int8_t> {};
 
 namespace detail {
 template<class... DataPtrTs, std::size_t... Is>
