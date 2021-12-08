@@ -32,7 +32,7 @@ struct countdown {
             }
 
             countdown cd;
-            Fn fn;
+            std::remove_reference_t<Fn> fn;
         };
 
         return awaiter{n, std::forward<Fn>(fn)};
