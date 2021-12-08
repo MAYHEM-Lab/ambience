@@ -16,6 +16,7 @@ analysis_mod = ambictl.LidlModule("//ambience/services/impls/social_media/analys
 kvstore_mod = ambictl.LidlModule("//ambience/services/impls/social_media/kvstore.lidl", "kvstore_schema")
 networking_mod = ambictl.LidlModule("//ambience/services/impls/social_media/networking.lidl", "networking_schema")
 weather_sensor_mod = ambictl.LidlModule("//ambience/services/interfaces/weather_sensor.lidl", "weather_sensor_schema")
+dns_mod = ambictl.LidlModule("//ambience/services/interfaces/dns.lidl", "dns_schema")
 
 calc_if = calculator_mod.get_service("tos::ae::services::calculator")
 logger_if = logger_mod.get_service("tos::services::logger")
@@ -32,6 +33,43 @@ kvstore_if = kvstore_mod.get_service("tos::ae::services::KVStore")
 bytestore_if = kvstore_mod.get_service("tos::ae::services::ByteStore")
 udp_socket_if = networking_mod.get_service("tos::services::udp_socket")
 weather_sensor_if = weather_sensor_mod.get_service("tos::ae::services::weather_sensor")
+dns_if = dns_mod.get_service("tos::ae::services::dns")
+
+dns_bench_agent = agent_if.implement(
+    name="dns_bench_agent",
+    cmake_target="dns_bench_agent",
+    sync=False,
+    deps={
+        "dns": dns_if
+    }
+)
+
+final_dns_resolver = dns_if.implement(
+    name="final_dns_resolver",
+    cmake_target="dns_servers",
+    sync=False,
+    deps={}
+)
+
+async_recursive_dns_resolver = dns_if.implement(
+    name="async_recursive_dns_resolver",
+    cmake_target="dns_servers",
+    sync=False,
+    deps={
+        "b1": dns_if,
+        "b2": dns_if,
+    }
+)
+
+sync_recursive_dns_resolver = dns_if.implement(
+    name="sync_recursive_dns_resolver",
+    cmake_target="dns_servers",
+    sync=True,
+    deps={
+        "b1": dns_if,
+        "b2": dns_if,
+    }
+)
 
 null_weather_sensor = weather_sensor_if.implement(
     name="null_weather_sensor",

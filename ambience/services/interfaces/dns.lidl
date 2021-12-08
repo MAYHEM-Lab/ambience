@@ -1,0 +1,5 @@
+namespace tos::ae::services;
+
+service dns {
+    resolve(hostname: string_view, type: string_view) -> string_view;
+}

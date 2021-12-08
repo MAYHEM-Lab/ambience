@@ -28,3 +28,5 @@ add_lidlc(networking_schema networking.lidl)
 add_lidlc(weather_sensor_schema weather_sensor.lidl)
 
 add_lidlc(random_schema random.lidl)
+
+add_lidlc(dns_schema dns.lidl)
