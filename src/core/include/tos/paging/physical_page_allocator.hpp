@@ -32,6 +32,8 @@ public:
     physical_address address_of(const physical_page& page) const;
     physical_range range_of(const physical_page& page) const;
 
+    physical_range range_of(span<const physical_page> pages) const;
+
     int page_num(const physical_page& page) const;
 
     // Marks the given range of physical memory as unavailable.
@@ -39,7 +41,6 @@ public:
 
     physical_page* info(int32_t page_num);
     physical_page* info(physical_address ptr);
-
 
     static constexpr size_t size_for_pages(size_t num_pages) {
         return sizeof(physical_page_allocator) + num_pages * sizeof(physical_page);
