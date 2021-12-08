@@ -32,12 +32,15 @@ physical_page* physical_page_allocator::allocate(int count, int align) {
         return nullptr;
     }
 
-    if (align != 1)
+    if (align != 1) {
+        tos::debug::error("Page allocation failed, bad alignment!");
         return nullptr;
+    }
 
     physical_page* base = nullptr;
     if (count == 1) [[likely]] {
         if (free_list.empty()) {
+            tos::debug::error("Page allocation failed!");
             return nullptr;
         }
 
