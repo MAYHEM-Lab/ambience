@@ -19,13 +19,13 @@ struct share_base {
 template<class T>
 struct sharer;
 
-template <lidl::ValStruct T>
+template<lidl::ValStruct T>
 struct sharer<const T*> {
     static size_t compute_size(const T* obj) {
         return sizeof(T);
     }
 
-    template <class ShareT>
+    template<class ShareT>
     static const T* do_share(ShareT& share, const T& obj) {
         auto ptr = share.raw_allocate(sizeof(T), alignof(T));
         memcpy(ptr.direct_mapped(), &obj, sizeof(T));
@@ -60,12 +60,19 @@ struct sharer<lidl::message_builder*> {
     static lidl::message_builder* do_share(ShareT& share,
                                            lidl::message_builder& builder) {
         auto buf = builder.get_buffer();
-        share.map_read_write(
+        auto aligned_base = virtual_address(
             align_nearest_down_pow2(reinterpret_cast<uintptr_t>(buf.data()), 4096));
-        // This should not be mapped, but a new one cretead!
-        share.map_read_write(
-            align_nearest_down_pow2(reinterpret_cast<uintptr_t>(&builder), 4096));
-        return &builder;
+
+        auto diff = reinterpret_cast<uintptr_t>(buf.data()) - aligned_base.address();
+
+        auto aligned_range = virtual_range{aligned_base, 4096};
+        auto newbase = share.map_read_write(aligned_range);
+
+        tos::span<uint8_t> newspan(reinterpret_cast<uint8_t*>(newbase.address() + diff), builder.size());
+        auto res = share.raw_allocate(sizeof(lidl::message_builder),
+                                      alignof(lidl::message_builder));
+        auto res_ptr = res.direct_mapped();
+        return new (res_ptr) lidl::message_builder(newspan);
     }
 };
 
@@ -96,9 +103,10 @@ struct sharer<tos::span<T>> {
 
     template<class ShareT>
     static tos::span<T> do_share(ShareT& share, const tos::span<T>& data) {
-        auto ptr = share.raw_allocate(data.size_bytes(), 1);
-        memcpy(ptr.direct_mapped(), data.data(), data.size());
-        return tos::span<T>(static_cast<T*>(ptr.direct_mapped()), data.size());
+        auto base = share.map_read_only(
+            virtual_range{virtual_address(reinterpret_cast<uintptr_t>(data.data())),
+                          static_cast<ptrdiff_t>(data.size_bytes())});
+        return tos::span<T>(reinterpret_cast<T*>(base.address()), data.size());
     }
 };
 
