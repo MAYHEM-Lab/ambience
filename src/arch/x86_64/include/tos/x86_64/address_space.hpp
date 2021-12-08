@@ -82,43 +82,49 @@ struct temporary_share : quik::share_base {
     temporary_share() = default;
     temporary_share(temporary_share&&) noexcept = default;
 
-    //    tos::x86_64::address_space* from;
+    tos::x86_64::address_space* from;
     tos::x86_64::address_space* to;
     physical_page_allocator* palloc;
 
     struct share_page {
-        physical_page* page;
+        virtual_address map_at;
+        span<physical_page> pages;
+        uint32_t space : 24;
         bool owned : 1;
         bool readonly : 1;
         bool unmap : 1;
-        uint16_t space : 13;
     };
     std::forward_list<share_page> pages;
 
     physical_address raw_allocate(size_t sz, size_t align) {
-        if (sz >= page_size_bytes) {
-            return nullptr;
-        }
         if (pages.empty() || pages.front().space < sz) {
-            if (!add_page()) {
+            if (!add_page(align_nearest_up_pow2(sz, page_size_bytes) / page_size_bytes)) {
                 return physical_address{0UL};
             }
         }
-        auto base = palloc->address_of(*pages.front().page);
-        auto res = base.addr + (page_size_bytes - pages.front().space);
+
+        auto base = palloc->range_of(pages.front().pages);
+        auto res = base.base + (base.size - pages.front().space);
         pages.front().space -= sz;
-        return physical_address{res};
+        return res;
     }
 
     // Map the pages into the target.
     bool finalize() {
         for (auto& page : pages) {
-            auto res = map_page_ident(*to->m_table,
-                                      *page.page,
-                                      *palloc,
-                                      page.readonly ? permissions::read
-                                                    : permissions::read_write,
-                                      user_accessible::yes);
+            auto prange = palloc->range_of(page.pages);
+            virtual_range vrange = map_at(prange, page.map_at);
+
+            virtual_segment virtseg{.range = vrange,
+                                    .perms = page.readonly ? permissions::read
+                                                           : permissions::read_write};
+
+            auto res = map_region(*to->m_table,
+                                  virtseg,
+                                  user_accessible::yes,
+                                  memory_types::normal,
+                                  palloc,
+                                  prange.base);
 
             if (res) {
                 continue;
@@ -127,6 +133,7 @@ struct temporary_share : quik::share_base {
             auto err = force_error(res);
             if (err == mmu_errors::already_allocated) {
                 page.unmap = false;
+                // tos::debug::log("already allocated");
                 continue;
             }
 
@@ -136,8 +143,8 @@ struct temporary_share : quik::share_base {
     }
 
     physical_address traverse_from_address(virtual_address addr) {
-        // Assume direct-mapping
-        return physical_address{addr.address()};
+        using namespace address_literals;
+        return resident_address(*from->m_table, addr).get_or(0_physical);
     }
 
     virtual_address copy_read_only(virtual_range range_in_from) {
@@ -153,43 +160,52 @@ struct temporary_share : quik::share_base {
             range_in_from.size % page_size_bytes != 0) {
             return copy_read_only(range_in_from);
         }
+        auto physical = traverse_from_address(range_in_from.base);
+        auto page_count = range_in_from.size / page_size_bytes;
         auto& elem = pages.emplace_front();
         elem.owned = false;
         elem.readonly = true;
         elem.unmap = true;
         elem.space = 0;
-        elem.page = palloc->info(physical_address{range_in_from.base.address()});
+        elem.pages = {palloc->info(physical), size_t(page_count)};
+        elem.map_at = range_in_from.base;
         return range_in_from.base;
     }
 
     virtual_address map_read_write(virtual_range range_in_from) {
+        auto physical = traverse_from_address(range_in_from.base);
         auto& elem = pages.emplace_front();
         elem.owned = false;
         elem.readonly = false;
         elem.unmap = true;
         elem.space = 0;
-        elem.page = palloc->info(physical_address{range_in_from.base.address()});
-        return range_in_from.base;
+        elem.pages = {palloc->info(physical), 1};
+        elem.map_at = range_in_from.base;
+        return elem.map_at;
     }
 
-    share_page* add_page() {
-        auto alloc = palloc->allocate(1);
+    share_page* add_page(int contiguous = 1) {
+        auto alloc = palloc->allocate(contiguous);
 
         if (!alloc) {
             return nullptr;
         }
 
-        if (!map_page_ident(get_current_translation_table(), *alloc, *palloc)) {
-            palloc->free({alloc, 1});
+        auto pages = span<physical_page>{alloc, size_t(contiguous)};
+
+        auto map_res = map_page_ident(get_current_translation_table(), pages, *palloc);
+        if (!map_res) {
+            palloc->free(pages);
             return nullptr;
         }
 
-        auto& elem = pages.emplace_front();
+        auto& elem = this->pages.emplace_front();
         elem.owned = true;
         elem.readonly = false;
         elem.unmap = true;
-        elem.space = page_size_bytes;
-        elem.page = alloc;
+        elem.space = page_size_bytes * contiguous;
+        elem.pages = pages;
+        elem.map_at = force_get(map_res).base;
         return &elem;
     }
 
@@ -201,18 +217,19 @@ struct temporary_share : quik::share_base {
 
     ~temporary_share() {
         for (auto& page : pages) {
+            auto prange = palloc->range_of(page.pages);
+            virtual_range vrange = map_at(prange, page.map_at);
+
             if (page.unmap) {
-                mark_nonresident(*to->m_table,
-                                 identity_map(palloc->range_of(*page.page)));
+                mark_nonresident(*to->m_table, vrange);
             }
 
             if (!page.owned) {
                 continue;
             }
 
-            mark_nonresident(get_current_translation_table(),
-                             identity_map(palloc->range_of(*page.page)));
-            palloc->free({page.page, 1});
+            mark_nonresident(get_current_translation_table(), vrange);
+            palloc->free(page.pages);
         }
     }
 };
@@ -230,6 +247,7 @@ typed_share<DataPtrTs...> create_share(tos::cur_arch::address_space& from,
                                        tos::cur_arch::address_space& to,
                                        const std::tuple<DataPtrTs...>& in_ptrs) {
     typed_share<DataPtrTs...> res;
+    res.from = &from;
     res.to = &to;
     res.palloc = physical_page_allocator::instance();
     res.ptrs = quik::perform_share(res, in_ptrs);

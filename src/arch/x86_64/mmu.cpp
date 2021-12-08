@@ -1,6 +1,7 @@
 #include "tos/expected.hpp"
 #include "tos/memory.hpp"
 #include "tos/x86_64/mmu/common.hpp"
+#include "tos/x86_64/mmu/errors.hpp"
 #include "tos/x86_64/mmu/translation_table.hpp"
 #include <tos/debug/log.hpp>
 #include <tos/flags.hpp>
@@ -204,5 +205,28 @@ expected<translation_table*, mmu_errors> clone(const translation_table& root,
     // For every entry in a translation table, we copy it if it's a page and clone
     // if it is a table.
     return do_clone(root, palloc, 0);
+}
+
+expected<physical_address, mmu_errors> resident_address(const translation_table& root,
+                                                        virtual_address addr) {
+    auto path = pt_path_for_addr(addr.address());
+
+    const translation_table* table = &root;
+    // The last index takes us to the actual page, we'll set that now.
+    for (size_t i = 0; i < path.size() - 1; ++i) {
+        auto& elem = (*table)[path[i]];
+        if (!elem.valid()) {
+            return unexpected(mmu_errors::not_allocated);
+        }
+
+        table = &table_at(elem);
+    }
+    
+    if (!(*table)[path.back()].valid()) {
+        return unexpected(mmu_errors::not_allocated);
+    }
+
+    auto num = (*table)[path.back()].page_num();
+    return physical_address(page_to_address(num));
 }
 } // namespace tos::x86_64

@@ -41,6 +41,9 @@ expected<const table_entry*, mmu_errors> entry_for_address(const translation_tab
 expected<translation_table*, mmu_errors> clone(const translation_table& root,
                                                physical_page_allocator& palloc);
 
+expected<physical_address, mmu_errors> resident_address(const translation_table& root,
+                                                        virtual_address addr);
+
 inline expected<void, mmu_errors> map_region(translation_table& root,
                                              const virtual_segment& vseg,
                                              user_accessible user_access,
@@ -54,21 +57,29 @@ inline expected<void, mmu_errors> map_region(translation_table& root,
     return {};
 }
 
-inline expected<void, mmu_errors>
+inline expected<virtual_range, mmu_errors>
+map_page_ident(translation_table& root,
+               tos::span<physical_page> pages,
+               physical_page_allocator& palloc,
+               permissions perms = permissions::read_write,
+               user_accessible user_access = user_accessible::no,
+               memory_types mem_type = memory_types::normal) {
+    const auto physical_seg =
+        physical_segment{.range = palloc.range_of(pages), .perms = perms};
+    auto virt_seg = identity_map(physical_seg);
+    EXPECTED_TRYV(map_region(
+        root, virt_seg, user_access, mem_type, &palloc, physical_seg.range.base));
+    return virt_seg.range;
+}
+
+inline expected<virtual_range, mmu_errors>
 map_page_ident(translation_table& root,
                physical_page& page,
                physical_page_allocator& palloc,
                permissions perms = permissions::read_write,
                user_accessible user_access = user_accessible::no,
                memory_types mem_type = memory_types::normal) {
-    const auto physical_seg =
-        physical_segment{.range = palloc.range_of(page), .perms = perms};
-    return map_region(root,
-                      identity_map(physical_seg),
-                      user_access,
-                      mem_type,
-                      &palloc,
-                      physical_seg.range.base);
+    return map_page_ident(root, {&page, 1}, palloc, perms, user_access, mem_type);
 }
 
 NO_INLINE
