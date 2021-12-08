@@ -6,6 +6,7 @@
 
 #include <tos/ubench/state.hpp>
 #include <tos/compiler.hpp>
+#include <boost/preprocessor.hpp>
 
 namespace tos::bench {
 template<class ClockT>
@@ -65,4 +66,8 @@ void run_global_benchmarks(T& benchmarker) {
 }
 } // namespace tos::bench
 
+
+#include <boost/preprocessor/cat.hpp>
+#include <boost/preprocessor/stringize.hpp>
 #define BENCHMARK(name) USED inline ::tos::bench::benchmark name##__{#name, &name}
+#define BENCHMARK_PARAMS(bench_name, name) USED inline ::tos::bench::benchmark bench_name##__ {#bench_name, &name}
