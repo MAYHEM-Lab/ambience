@@ -17,7 +17,7 @@ template<typename T = void>
 class Task {
 public:
     Task() = default;
-    Task(Task& t) = delete;
+    Task(const Task& t) = delete;
 
     Task(Task&& t) noexcept
         : m_handle(std::exchange(t.m_handle, {})) {
