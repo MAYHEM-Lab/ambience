@@ -21,6 +21,7 @@ start_group(span<uint8_t> stack, void (*entry)(), interrupt_trampoline& trampoli
     LOG(name, "Entry point:", (void*)entry);
     auto& user_thread = tos::suspended_launch(stack, switch_to_user, (void*)entry);
     set_name(user_thread, name);
+    LOG("Launched suspended", &user_thread);
 
     auto& self = *tos::self();
 
@@ -49,7 +50,7 @@ start_group(span<uint8_t> stack, void (*entry)(), interrupt_trampoline& trampoli
     tos::swap_context(self, user_thread, int_guard{});
     activate(*cur_as);
 
-    tos::debug::log("Group initialized, interface at", res->iface.user_iface);
+    tos::debug::log("Group initialized, interface at", res->iface.user_iface, res->iface.user_iface->size);
 
     return res;
 }
