@@ -1,3 +1,4 @@
+#include <new>
 #include <tos/allocator/free_list.hpp>
 #include <tos/debug/debug.hpp>
 #include <tos/debug/panic.hpp>
@@ -24,6 +25,10 @@ void operator delete(void* pt) {
 }
 
 void* operator new[](size_t sz) {
+    return operator new(sz);
+}
+
+void* operator new[](size_t sz, const std::nothrow_t&) {
     return operator new(sz);
 }
 
