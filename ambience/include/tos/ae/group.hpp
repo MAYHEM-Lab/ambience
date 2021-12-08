@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tos/debug/log.hpp"
 #include "tos/stack_storage.hpp"
 #include <tos/ae/rings.hpp>
 #include <tos/ae/service_host.hpp>
@@ -17,6 +18,9 @@ inline void dispatch_sync_service(const void* serv_ptr, const tos::ae::req_elem&
     };
     // This fiber will release its stack once the request completes.
     auto f = fiber::registered_owning::start(stack_size_t{TOS_DEFAULT_STACK_SIZE}, fn);
+    if (!f) {
+        tos::debug::error("Failed allocation");
+    }
     f->resume();
 }
 
