@@ -91,11 +91,15 @@ int physical_page_allocator::page_num(const physical_page& page) const {
 }
 
 void physical_page_allocator::mark_unavailable(const physical_range& len) {
-    auto begin_num = align_nearest_down_pow2(len.base.address(), page_size()) / page_size();
+    auto begin_num =
+        align_nearest_down_pow2(len.base.address(), page_size()) / page_size();
     auto end_num = align_nearest_up_pow2(len.end().address(), page_size()) / page_size();
     begin_num = std::min<int>(m_num_pages, begin_num);
     end_num = std::min<int>(m_num_pages, end_num);
     for (size_t i = begin_num; i < end_num; ++i) {
+        if (i >= m_num_pages) {
+            return;
+        }
         m_remaining -= 1;
         intrusive_ref(&get_table()[i]);
         free_list.erase(free_list.unsafe_find(get_table()[i]));
