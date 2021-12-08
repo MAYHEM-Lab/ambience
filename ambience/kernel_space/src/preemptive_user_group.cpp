@@ -17,6 +17,15 @@ map_elf(const tos::elf::elf64& elf,
         if (pheader.type != tos::elf::segment_type::load) {
             continue;
         }
+        palloc.mark_unavailable(
+            physical_range{physical_address{pheader.virtual_range().base.address()},
+                           pheader.virtual_range().size});
+    }
+
+    for (auto pheader : elf.program_headers()) {
+        if (pheader.type != tos::elf::segment_type::load) {
+            continue;
+        }
 
         tos::debug::log("Load",
                         (void*)(uintptr_t)pheader.file_size,
@@ -26,13 +35,8 @@ map_elf(const tos::elf::elf64& elf,
                         (void*)(uintptr_t)pheader.virt_address);
 
         auto seg = elf.segment(pheader);
-
+    
         void* base = const_cast<uint8_t*>(seg.data());
-        if (pheader.file_size < pheader.virt_size) {
-            auto pages = pheader.virt_size / tos::cur_arch::page_size_bytes;
-            auto p = palloc.allocate(pages);
-            base = palloc.address_of(*p).direct_mapped();
-        }
 
         LOG((void*)pheader.virt_address,
             pheader.virt_size,
@@ -41,6 +45,7 @@ map_elf(const tos::elf::elf64& elf,
             base);
 
         auto vseg = pheader.virtual_segment();
+        vseg.range.size = pheader.file_size;
 
         EXPECTED_TRYV(map_region(root_table,
                                  vseg,
@@ -48,7 +53,6 @@ map_elf(const tos::elf::elf64& elf,
                                  tos::memory_types::normal,
                                  &palloc,
                                  physical_address{reinterpret_cast<uintptr_t>(base)}));
-
         // The pages are mapped into the kernel as RW
         //        vseg.perms = permissions::read_write;
         EXPECTED_TRYV(map_region(cur_arch::get_current_translation_table(),
@@ -57,6 +61,33 @@ map_elf(const tos::elf::elf64& elf,
                                  tos::memory_types::normal,
                                  &palloc,
                                  physical_address{reinterpret_cast<uintptr_t>(base)}));
+
+        // If the file size is smaller than the virtual size, we put zero-pages after the
+        // initialized part.
+        if (pheader.file_size == pheader.virt_size) {
+            continue;
+        }
+
+        const auto pages =
+            (pheader.virt_size - pheader.file_size) / tos::cur_arch::page_size_bytes;
+        const auto p = tos::span<physical_page>(palloc.allocate(pages), pages);
+        const auto range = palloc.range_of(p);
+        LOG(range.base, range.end());
+        vseg.range.base += vseg.range.size;
+        vseg.range.size = pheader.virt_size - pheader.file_size;
+        EXPECTED_TRYV(map_region(root_table,
+                                 vseg,
+                                 tos::user_accessible::yes,
+                                 tos::memory_types::normal,
+                                 &palloc,
+                                 range.base));
+
+        EXPECTED_TRYV(map_region(cur_arch::get_current_translation_table(),
+                                 vseg,
+                                 tos::user_accessible::no,
+                                 tos::memory_types::normal,
+                                 &palloc,
+                                 range.base));
     }
 
     return {};
@@ -74,8 +105,12 @@ create_and_map_stack(size_t stack_size,
         return tos::unexpected(cur_arch::mmu_errors::page_alloc_fail);
     }
 
-    auto stack_address = palloc.address_of(*stack_pages);
-    tos::debug::log("Stack at", stack_address.direct_mapped());
+    auto stack_region = palloc.range_of({stack_pages, page_count});
+    auto stack_address = stack_region.base;
+    tos::debug::log("Stack at",
+                    stack_address.direct_mapped(),
+                    "-",
+                    stack_region.end().direct_mapped());
 
     EXPECTED_TRYV(map_region(
         root_table,
@@ -141,13 +176,11 @@ preemptive_elf_group::do_load(span<const uint8_t> elf_body,
 
     //    dump_table(*force_get(our_as)->m_table);
 
-    tos::debug::log(tos::global::cur_as, force_get(our_as).get());
     auto res = start_group(stack,
                            reinterpret_cast<void (*)()>(elf.header().entry),
                            trampoline,
                            name,
                            *force_get(our_as));
-    tos::debug::log(tos::global::cur_as, force_get(our_as).get());
 
     if (res) {
         res->runner = &preemptive_user_group_runner::instance();
