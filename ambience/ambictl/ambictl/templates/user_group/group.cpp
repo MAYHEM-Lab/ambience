@@ -7,7 +7,7 @@
 
 extern tos::ae::interface iface;
 namespace {
-constexpr auto transport = tos::ae::upcall_transport<&iface>{};
+[[maybe_unused]] constexpr auto transport = tos::ae::upcall_transport<&iface>{};
 tos::ae::group<{{group.servs|length}}>* g;
 }
 
@@ -22,4 +22,5 @@ tos::Task<void> task() {
     {{init}}
     {% endfor %}
     {{group_init}}
+    co_return;
 }
