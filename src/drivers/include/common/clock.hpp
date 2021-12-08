@@ -81,8 +81,8 @@ public:
     }
 
     time_point now() const override {
-        return any_steady_clock::time_point{
-            std::chrono::duration_cast<duration>(m_impl->now().time_since_epoch())};
+        return any_steady_clock::time_point{std::chrono::duration_cast<duration>(
+            meta::deref(m_impl).now().time_since_epoch())};
     }
 
     ClockT m_impl;
