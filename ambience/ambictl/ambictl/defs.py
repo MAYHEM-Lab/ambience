@@ -229,6 +229,10 @@ class Group:
         return "\n".join(s.cxx_init_signature() for s in unique_impls)
 
     @abc.abstractmethod
+    def override_registry_type(self, ins):
+        return None
+
+    @abc.abstractmethod
     def generate_group_dir(self, build_root):
         raise NotImplementedError()
 
