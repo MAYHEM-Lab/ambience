@@ -4,6 +4,7 @@
 #include <cstring>
 #include <tos/compiler.hpp>
 #include <tos/fiber/basic_fiber.hpp>
+#include <type_traits>
 
 namespace tos::fiber {
 namespace detail {
@@ -49,7 +50,7 @@ struct non_owning {
             , m_full_stack(stack) {
         }
 
-        StartFn m_fn;
+        std::remove_reference_t<StartFn> m_fn;
         span<uint8_t> m_full_stack;
     };
 
@@ -79,7 +80,7 @@ struct owning {
             delete[] m_full_stack.data();
         }
 
-        StartFn m_fn;
+        std::remove_reference_t<StartFn> m_fn;
         span<uint8_t> m_full_stack;
     };
 
