@@ -71,7 +71,7 @@ struct upcall_transport {
     static auto get_sync_service() {
         using ChannelT = sync_upcall_transport_channel<iface, static_channel_id<channel>>;
         using StubT = typename Service::template zerocopy_client<ChannelT>;
-        static constexpr StubT instance{};
+        static StubT instance{};
         return const_cast<StubT*>(&instance);
     }
 
