@@ -8,7 +8,7 @@ extern tos::ae::interface iface;
 
 namespace tos::ae {
 void done_callback(void* ptr) {
-    tos::debug::trace("Responding", &iface, ptr);
+    // tos::debug::log("Responding", &iface, ptr);
     respond<false>(iface, ptr);
 }
 
@@ -17,12 +17,14 @@ void proc_res_queue(interface& iface) {
         iface, *iface.host_to_guest, iface.res_last_seen, [&](const ring_elem& elem) {
             if (!util::is_flag_set(elem.common.flags, elem_flag::req)) {
                 // Response for a request we made.
-                tos::debug::trace("User ptr", &iface, elem.res.user_ptr);
+                // tos::debug::log("User ptr", &iface, elem.res.user_ptr);
 
                 auto& continuation =
                     *static_cast<tos::function_ref<void()>*>(elem.res.user_ptr);
                 continuation();
             } else {
+                // tos::debug::log("Serving", &iface, elem.res.user_ptr);
+
                 // We have a request to serve.
                 dispatch_request(elem.req);
             }
