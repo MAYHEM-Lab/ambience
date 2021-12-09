@@ -16,15 +16,16 @@ struct preemptive_user_group_runner : group_runner {
     void run(kernel::group& group) override {
         auto& user_group = static_cast<kernel::user_group&>(group);
 
-        //        tos::debug::log("Running", user_group.iface.user_iface);
-        //        tos::debug::log(&group, user_group.state);
+        // tos::debug::log("Running", user_group.iface.user_iface);
+        // tos::debug::log(&group, user_group.state, cur_arch::get_stack_ptr());
         auto kern_space = tos::global::cur_as;
         activate(*user_group.as);
         auto preempted = m_erased_runner(*user_group.state);
         activate(*kern_space);
-        //        tos::debug::log("Out", user_group.iface.user_iface, preempted);
+        // tos::debug::log("Out", user_group.iface.user_iface, preempted);
         user_group.clear_runnable();
         post_run(user_group);
+        // tos::debug::log("Post ran");
 
         if (preempted) {
             user_group.notify_downcall();

@@ -9,6 +9,7 @@
 #include <tos/ft.hpp>
 #include <tos/print.hpp>
 #include <tos/result.hpp>
+#include <tos/ae/kernel/group.hpp>
 
 registry_t registry;
 tos::ae::registry_base& get_registry() {

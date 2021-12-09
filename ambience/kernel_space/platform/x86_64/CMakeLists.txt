@@ -26,6 +26,8 @@ target_link_libraries(
           block_partition
           kernel_schema
           machine_schema
+          ae_usergroup
+          agent_schema
 )
 
 target_include_directories(aekernel PUBLIC include)

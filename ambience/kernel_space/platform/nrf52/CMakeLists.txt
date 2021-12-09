@@ -1,3 +1,3 @@
 target_sources(aekernel PRIVATE platform_support.cpp)
-target_link_libraries(aekernel PUBLIC tos_board block_partition)
+target_link_libraries(aekernel PUBLIC tos_board block_partition ae_usergroup)
 target_include_directories(aekernel PUBLIC include)
