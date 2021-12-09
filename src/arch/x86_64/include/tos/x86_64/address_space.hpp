@@ -5,6 +5,7 @@
 #include "tos/x86_64/mmu/common.hpp"
 #include "tos/x86_64/mmu/errors.hpp"
 #include <forward_list>
+#include <map>
 #include <tos/address_space.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/mapping.hpp>
@@ -69,6 +70,8 @@ struct address_space final : tos::address_space {
     }
 
     translation_table* m_table;
+    std::map<virtual_address, int> mapped;
+    std::pair<virtual_address, int> cache;
 
 private:
     template<class... Ts>
@@ -114,7 +117,35 @@ struct temporary_share : quik::share_base {
         for (auto& page : pages) {
             auto prange = palloc->range_of(page.pages);
             virtual_range vrange = map_at(prange, page.map_at);
+            // tos::debug::log(
+            //     "map", vrange.base, vrange.end(), prange.base, page.unmap, page.owned);
 
+            if (!page.owned) {
+                if (to->cache.first == vrange.base) {
+                    if (to->cache.second++ == 0) {
+                        goto do_map;
+                    }
+                    continue;
+                }
+
+                auto tree_it = to->mapped.find(vrange.base);
+                if (tree_it != to->mapped.end()) {
+                    if (tree_it->second++ == 0) {
+                        goto do_map;
+                    }
+                    continue;
+                }
+
+                // tos::debug::log("inserting",
+                //                 to->cache.first,
+                //                 ",",
+                //                 to->cache.second,
+                //                 "for",
+                //                 vrange.base);
+                to->mapped.insert(to->cache);
+                to->cache = {vrange.base, 1};
+            }
+        do_map:
             virtual_segment virtseg{.range = vrange,
                                     .perms = page.readonly ? permissions::read
                                                            : permissions::read_write};
@@ -132,6 +163,7 @@ struct temporary_share : quik::share_base {
 
             auto err = force_error(res);
             if (err == mmu_errors::already_allocated) {
+                to->mapped.emplace(vrange.base, 1);
                 page.unmap = false;
                 // tos::debug::log("already allocated");
                 continue;
@@ -173,13 +205,17 @@ struct temporary_share : quik::share_base {
     }
 
     virtual_address map_read_write(virtual_range range_in_from) {
+        auto page_count = range_in_from.size / page_size_bytes;
+        if (page_count > 1) {
+            tos::debug::error("Multipage share, buggy");
+        }
         auto physical = traverse_from_address(range_in_from.base);
         auto& elem = pages.emplace_front();
         elem.owned = false;
         elem.readonly = false;
         elem.unmap = true;
         elem.space = 0;
-        elem.pages = {palloc->info(physical), 1};
+        elem.pages = {palloc->info(physical), size_t(page_count)};
         elem.map_at = range_in_from.base;
         return elem.map_at;
     }
@@ -219,6 +255,24 @@ struct temporary_share : quik::share_base {
         for (auto& page : pages) {
             auto prange = palloc->range_of(page.pages);
             virtual_range vrange = map_at(prange, page.map_at);
+
+            // tos::debug::log(
+            //     "unmap", vrange.base, vrange.end(), prange.base, page.unmap, page.owned);
+
+            if (!page.owned) {
+                if (to->cache.first == vrange.base) {
+                    to->cache.second--;
+                    if (to->cache.second != 0) {
+                        continue;
+                    }
+                }
+
+                auto it = to->mapped.find(vrange.base);
+                if (--it->second != 0) {
+                    // tos::debug::log("has more refs", to->mapped.count(vrange.base));
+                    continue;
+                }
+            }
 
             if (page.unmap) {
                 mark_nonresident(*to->m_table, vrange);
