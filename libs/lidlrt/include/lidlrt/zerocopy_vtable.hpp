@@ -55,7 +55,15 @@ struct zerocopy_translator {
             co_return true;
         };
 
-        co_return co_await std::apply(do_call, *args);
+        // For nullary functions we accept nullptr as the args parameter.
+        // Since we know it is an empty tuple, we'll just create one ourselves
+        // and pass it as our arguments.
+        if constexpr (std::tuple_size_v<ArgsTupleType> == 0) {
+            ArgsTupleType empty_args;
+            co_return co_await std::apply(do_call, empty_args);
+        } else {
+            co_return co_await std::apply(do_call, *args);
+        }
     };
 
     static constexpr auto sync_typed(typename ServiceT::sync_server& serv,
@@ -72,7 +80,15 @@ struct zerocopy_translator {
             return true;
         };
 
-        return std::apply(do_call, *args);
+        // For nullary functions we accept nullptr as the args parameter.
+        // Since we know it is an empty tuple, we'll just create one ourselves
+        // and pass it as our arguments.
+        if constexpr (std::tuple_size_v<ArgsTupleType> == 0) {
+            ArgsTupleType empty_args;
+            return std::apply(do_call, empty_args);
+        } else {
+            return std::apply(do_call, *args);
+        }
     };
 
     static auto async_untyped(lidl::service_base& serv_base,
@@ -131,4 +147,6 @@ constexpr async_zerocopy_vtable_t make_async_zerocopy_vtable() {
 
 template<class T>
 inline constexpr async_zerocopy_vtable_t async_vtable = make_async_zerocopy_vtable<T>();
+template<class T>
+inline constexpr zerocopy_vtable_t sync_vtable = make_zerocopy_vtable<T>();
 } // namespace lidl

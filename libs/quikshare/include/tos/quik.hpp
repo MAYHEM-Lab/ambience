@@ -170,6 +170,9 @@ size_t compute_size(const std::tuple<DataPtrTs...>& in_ptrs) {
 
 template<class ShareT, class... DataPtrTs>
 auto perform_share(ShareT& share, const std::tuple<DataPtrTs...>& in_ptrs) {
+    if constexpr (sizeof...(DataPtrTs) == 0) {
+        return static_cast<std::tuple<>*>(nullptr);
+    }
     return detail::perform_share(
         share, in_ptrs, std::make_index_sequence<sizeof...(DataPtrTs)>{});
 }
