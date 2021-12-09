@@ -14,6 +14,7 @@ add_subdirectory(io)
 add_subdirectory(predef)
 add_subdirectory(utility)
 add_subdirectory(mpl)
+add_subdirectory(intrusive)
 
 target_compile_definitions(boost_config INTERFACE BOOST_NO_CONFIG BOOST_NO_USER_CONFIG)
 target_compile_definitions(boost_config INTERFACE BOOST_DISABLE_THREADS)
