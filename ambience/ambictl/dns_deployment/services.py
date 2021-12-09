@@ -7,7 +7,7 @@ serv_instance(
 
 serv_instance(
     name="final_dns2",
-    serv=final_dns_resolver,
+    serv=final_dns_resolver2,
     deps={
     }
 )

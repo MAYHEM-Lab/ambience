@@ -10,3 +10,7 @@ struct bench_result {
 service agent {
     start(param: i64) -> bench_result;
 }
+
+service nullaryfn {
+    run() -> u64;
+}

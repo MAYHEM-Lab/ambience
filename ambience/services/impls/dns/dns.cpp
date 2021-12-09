@@ -37,6 +37,22 @@ struct final_dns_resolver : dns::async_server {
     std::unordered_map<std::string, std::string, string_hash, std::equal_to<>> m_cache{
         {"lidl.dev", "10.0.0.1"},
         {"google.com", "1.2.3.4"},
+    };
+};
+
+struct final_dns_resolver2 : dns::async_server {
+    tos::Task<std::string_view>
+    resolve(std::string_view hostname,
+            std::string_view type,
+            ::lidl::message_builder& response_builder) override {
+        if (auto it = m_cache.find(hostname); it != m_cache.end()) {
+            co_return lidl::create_string(response_builder, it->second);
+        }
+
+        co_return "";
+    }
+
+    std::unordered_map<std::string, std::string, string_hash, std::equal_to<>> m_cache{
         {"example.com", "8.8.8.8"},
         {"a6e.org", "123.234.231.123"},
     };
@@ -103,6 +119,10 @@ struct sync_recursive_dns_resolver : dns::sync_server {
 
 tos::Task<tos::ae::services::dns::async_server*> init_final_dns_resolver() {
     co_return new tos::ae::services::final_dns_resolver;
+}
+
+tos::Task<tos::ae::services::dns::async_server*> init_final_dns_resolver2() {
+    co_return new tos::ae::services::final_dns_resolver2;
 }
 
 tos::Task<tos::ae::services::dns::async_server*>

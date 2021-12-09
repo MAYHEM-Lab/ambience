@@ -27,6 +27,7 @@ block_mem_if = block_mem_mod.get_service("tos::ae::services::block_memory")
 echo_if = echo_mod.get_service("tos::ae::services::echo")
 db_if = fs_mod.get_service("tos::ae::services::sql_database")
 agent_if = agent_mod.get_service("tos::ae::agent")
+nullaryfn_if = agent_mod.get_service("tos::ae::nullaryfn")
 post_analysis_if = analysis_mod.get_service("social_media::post_analysis")
 posts_if = posts_mod.get_service("social_media::posts")
 kvstore_if = kvstore_mod.get_service("tos::ae::services::KVStore")
@@ -35,6 +36,13 @@ udp_socket_if = networking_mod.get_service("tos::services::udp_socket")
 weather_sensor_if = weather_sensor_mod.get_service("tos::ae::services::weather_sensor")
 dns_if = dns_mod.get_service("tos::ae::services::dns")
 
+timestamp = nullaryfn_if.implement(
+    name="timestamp",
+    cmake_target="timestamp",
+    sync=False,
+    deps={}
+)
+
 dns_bench_agent = agent_if.implement(
     name="dns_bench_agent",
     cmake_target="dns_bench_agent",
@@ -42,6 +50,13 @@ dns_bench_agent = agent_if.implement(
     deps={
         "dns": dns_if
     }
+)
+
+final_dns_resolver2 = dns_if.implement(
+    name="final_dns_resolver2",
+    cmake_target="dns_servers",
+    sync=False,
+    deps={}
 )
 
 final_dns_resolver = dns_if.implement(
