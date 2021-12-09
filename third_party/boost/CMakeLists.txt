@@ -10,6 +10,8 @@ add_subdirectory(integer)
 add_subdirectory(preprocessor)
 add_subdirectory(detail)
 add_subdirectory(container_hash)
+add_subdirectory(io)
+add_subdirectory(predef)
 
 target_compile_definitions(boost_config INTERFACE BOOST_NO_CONFIG BOOST_NO_USER_CONFIG)
 target_compile_definitions(boost_config INTERFACE BOOST_DISABLE_THREADS)
