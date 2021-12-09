@@ -65,10 +65,13 @@ struct sharer<lidl::message_builder*> {
 
         auto diff = reinterpret_cast<uintptr_t>(buf.data()) - aligned_base.address();
 
-        auto aligned_range = virtual_range{aligned_base, 4096};
+        auto aligned_range = virtual_range{
+            aligned_base,
+            align_nearest_up_pow2<ptrdiff_t>(builder.capacity() + diff, 4096)};
         auto newbase = share.map_read_write(aligned_range);
 
-        tos::span<uint8_t> newspan(reinterpret_cast<uint8_t*>(newbase.address() + diff), builder.size());
+        tos::span<uint8_t> newspan(reinterpret_cast<uint8_t*>(newbase.address() + diff),
+                                   builder.capacity());
         auto res = share.raw_allocate(sizeof(lidl::message_builder),
                                       alignof(lidl::message_builder));
         auto res_ptr = res.direct_mapped();
