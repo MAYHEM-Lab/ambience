@@ -133,7 +133,7 @@ target_include_directories(tos_libcxx PUBLIC include)
 target_link_libraries(tos_libcxx PUBLIC tos::libc tos_pthread)
 endif()
 
-add_library(base_libcxx src/compile.cpp)
+add_library(base_libcxx compile.cpp)
 if (TOS_PROVIDE_LIBCXX)
     target_link_libraries(base_libcxx PUBLIC tos_libcxx)
     if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -147,6 +147,6 @@ add_library(tos::libcxx ALIAS base_libcxx)
 
 tos_install(base_libcxx)
 
-add_executable(libcpp_test src/libcpp_test.cpp)
+add_executable(libcpp_test libcpp_test.cpp)
 target_link_libraries(libcpp_test PUBLIC tos_core tos::libcxx)
 set_target_properties(libcpp_test PROPERTIES CXX_EXTENSIONS OFF)
