@@ -93,7 +93,13 @@ if(NOT ${TOS_CORE} MATCHES "aarch64")
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_UNICODE_CHARS)
 endif()
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STOF)
-target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIO)
+
+# stdio related definitions
+#target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIO)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_FGETPOS_FSETPOS)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE)
+target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIN)
+
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDOUT)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_STDIN)
 target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE)
