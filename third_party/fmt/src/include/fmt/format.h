@@ -1134,19 +1134,6 @@ inline auto format_uint(It out, UInt value, int num_digits, bool upper = false)
   return detail::copy_str_noinline<Char>(buffer, buffer + num_digits, out);
 }
 
-// A converter from UTF-8 to UTF-16.
-class utf8_to_utf16 {
- private:
-  basic_memory_buffer<wchar_t> buffer_;
-
- public:
-  FMT_API explicit utf8_to_utf16(string_view s);
-  operator basic_string_view<wchar_t>() const { return {&buffer_[0], size()}; }
-  auto size() const -> size_t { return buffer_.size() - 1; }
-  auto c_str() const -> const wchar_t* { return &buffer_[0]; }
-  auto str() const -> std::wstring { return {&buffer_[0], size()}; }
-};
-
 namespace dragonbox {
 
 // Type-specific information that Dragonbox uses.

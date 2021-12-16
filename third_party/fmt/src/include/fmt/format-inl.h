@@ -15,7 +15,6 @@
 #include <cmath>
 #include <cstdarg>
 #include <cstring>  // std::memmove
-#include <cwchar>
 #include <exception>
 
 #ifndef FMT_STATIC_THOUSANDS_SEPARATOR
@@ -2524,20 +2523,6 @@ template <> struct formatter<detail::bigint> {
     return out;
   }
 };
-
-FMT_FUNC detail::utf8_to_utf16::utf8_to_utf16(string_view s) {
-  for_each_codepoint(s, [this](uint32_t cp, int error) {
-    if (error != 0) FMT_THROW(std::runtime_error("invalid utf8"));
-    if (cp <= 0xFFFF) {
-      buffer_.push_back(static_cast<wchar_t>(cp));
-    } else {
-      cp -= 0x10000;
-      buffer_.push_back(static_cast<wchar_t>(0xD800 + (cp >> 10)));
-      buffer_.push_back(static_cast<wchar_t>(0xDC00 + (cp & 0x3FF)));
-    }
-  });
-  buffer_.push_back(0);
-}
 
 FMT_FUNC void format_system_error(detail::buffer<char>& out, int error_code,
                                   const char* message) FMT_NOEXCEPT {
