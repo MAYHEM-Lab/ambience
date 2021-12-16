@@ -71,7 +71,36 @@ struct address_space final : tos::address_space {
 
     translation_table* m_table;
     std::map<virtual_address, int> mapped;
-    std::pair<virtual_address, int> cache;
+    std::pair<virtual_address, int> cache{};
+
+    // Returns the previous value before increment
+    int increment(virtual_address addr) {
+        if (cache.first == addr) {
+            return cache.second++;
+        }
+
+        auto tree_it = mapped.find(addr);
+        if (tree_it != mapped.end()) {
+            return tree_it->second++;
+        }
+
+        // Neither cached, nor in the tree, we'll insert the cache into the tree and
+        // make this element the cache.
+        // tos::debug::log("inserting", cache.first, ",", cache.second, "for", addr);
+        mapped.insert(cache);
+        cache = {addr, 1};
+        return 0;
+    }
+
+    // Returns the current value after decrement
+    int decrement(virtual_address addr) {
+        if (cache.first == addr) {
+            return --cache.second;
+        }
+
+        auto it = mapped.find(addr);
+        return --it->second;
+    }
 
 private:
     template<class... Ts>
@@ -121,30 +150,11 @@ struct temporary_share : quik::share_base {
             //     "map", vrange.base, vrange.end(), prange.base, page.unmap, page.owned);
 
             if (!page.owned) {
-                if (to->cache.first == vrange.base) {
-                    if (to->cache.second++ == 0) {
+                if (to->increment(vrange.base) == 0) {
                         goto do_map;
                     }
                     continue;
                 }
-
-                auto tree_it = to->mapped.find(vrange.base);
-                if (tree_it != to->mapped.end()) {
-                    if (tree_it->second++ == 0) {
-                        goto do_map;
-                    }
-                    continue;
-                }
-
-                // tos::debug::log("inserting",
-                //                 to->cache.first,
-                //                 ",",
-                //                 to->cache.second,
-                //                 "for",
-                //                 vrange.base);
-                to->mapped.insert(to->cache);
-                to->cache = {vrange.base, 1};
-            }
         do_map:
             virtual_segment virtseg{.range = vrange,
                                     .perms = page.readonly ? permissions::read
@@ -163,7 +173,6 @@ struct temporary_share : quik::share_base {
 
             auto err = force_error(res);
             if (err == mmu_errors::already_allocated) {
-                to->mapped.emplace(vrange.base, 1);
                 page.unmap = false;
                 // tos::debug::log("already allocated");
                 continue;
@@ -260,16 +269,8 @@ struct temporary_share : quik::share_base {
             //     "unmap", vrange.base, vrange.end(), prange.base, page.unmap, page.owned);
 
             if (!page.owned) {
-                if (to->cache.first == vrange.base) {
-                    to->cache.second--;
-                    if (to->cache.second != 0) {
-                        continue;
-                    }
-                }
-
-                auto it = to->mapped.find(vrange.base);
-                if (--it->second != 0) {
-                    // tos::debug::log("has more refs", to->mapped.count(vrange.base));
+                if (auto remaining = to->decrement(vrange.base); remaining != 0) {
+                    // tos::debug::log("has more refs", remaining);
                     continue;
                 }
             }
