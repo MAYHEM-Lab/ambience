@@ -1,7 +1,3 @@
-if (${TOS_ARCH} MATCHES avr)
-    return()
-endif()
-
 add_library(tos_gfx
         stub.cpp
         include/tos/gfx/dimensions.hpp
