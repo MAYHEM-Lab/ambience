@@ -9,6 +9,7 @@ struct timestamper : tos::ae::nullaryfn::async_server {
 #ifdef __x86_64__
         co_return tos::x86_64::rdtsc();
 #endif
+        co_return 0;
     }
 };
 } // namespace
