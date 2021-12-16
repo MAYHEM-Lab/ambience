@@ -74,6 +74,9 @@ add_library(tos_libcxx
     include/any
 )
 
+configure_file(include/__config_site.in ${CMAKE_CURRENT_BINARY_DIR}/__config_site @ONLY)
+target_include_directories(tos_libcxx PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+
 # These are detected automatically by the config header:
 #target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_EXCEPTIONS)
 #target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_RTTI)
