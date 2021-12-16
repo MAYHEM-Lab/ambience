@@ -1756,15 +1756,15 @@ auto write(OutputIt out, T value, basic_format_specs<Char> specs,
   if (const_check(!is_supported_floating_point(value))) return out;
   float_specs fspecs = parse_float_type_spec(specs);
   fspecs.sign = specs.sign;
-  if (signbit(value)) {  // value < 0 is false for NaN so use signbit.
+  if (std::signbit(value)) {  // value < 0 is false for NaN so use signbit.
     fspecs.sign = sign::minus;
     value = -value;
   } else if (fspecs.sign == sign::minus) {
     fspecs.sign = sign::none;
   }
 
-  if (!isfinite(value))
-    return write_nonfinite(out, isinf(value), specs, fspecs);
+  if (!std::isfinite(value))
+    return write_nonfinite(out, std::isinf(value), specs, fspecs);
 
   if (specs.align == align::numeric && fspecs.sign) {
     auto it = reserve(out, 1);
@@ -1817,7 +1817,7 @@ auto write(OutputIt out, T value) -> OutputIt {
   static const auto specs = basic_format_specs<Char>();
   uint mask = exponent_mask<floaty>();
   if ((bits & mask) == mask)
-    return write_nonfinite(out, isinf(value), specs, fspecs);
+    return write_nonfinite(out, std::isinf(value), specs, fspecs);
 
   auto dec = dragonbox::to_decimal(static_cast<floaty>(value));
   return write_float(out, dec, specs, fspecs, static_cast<Char>('.'));
