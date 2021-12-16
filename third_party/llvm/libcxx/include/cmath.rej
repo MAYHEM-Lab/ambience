@@ -1,0 +1,40 @@
+***************
+*** 531,537 ****
+  #if _LIBCPP_STD_VER > 14
+  inline _LIBCPP_INLINE_VISIBILITY float       hypot(       float x,       float y,       float z ) { return sqrt(x*x + y*y + z*z); }
+  inline _LIBCPP_INLINE_VISIBILITY double      hypot(      double x,      double y,      double z ) { return sqrt(x*x + y*y + z*z); }
+  inline _LIBCPP_INLINE_VISIBILITY long double hypot( long double x, long double y, long double z ) { return sqrt(x*x + y*y + z*z); }
+  
+  template <class _A1, class _A2, class _A3>
+  inline _LIBCPP_INLINE_VISIBILITY
+--- 531,539 ----
+  #if _LIBCPP_STD_VER > 14
+  inline _LIBCPP_INLINE_VISIBILITY float       hypot(       float x,       float y,       float z ) { return sqrt(x*x + y*y + z*z); }
+  inline _LIBCPP_INLINE_VISIBILITY double      hypot(      double x,      double y,      double z ) { return sqrt(x*x + y*y + z*z); }
++ #if !defined(_LIBCPP_HAS_NO_LONG_DOUBLE)
+  inline _LIBCPP_INLINE_VISIBILITY long double hypot( long double x, long double y, long double z ) { return sqrt(x*x + y*y + z*z); }
++ #endif
+  
+  template <class _A1, class _A2, class _A3>
+  inline _LIBCPP_INLINE_VISIBILITY
+***************
+*** 633,640 ****
+  constexpr double
+  lerp(double __a, double __b, double __t)                _NOEXCEPT { return __lerp(__a, __b, __t); }
+  
+  constexpr long double
+  lerp(long double __a, long double __b, long double __t) _NOEXCEPT { return __lerp(__a, __b, __t); }
+  
+  #endif // _LIBCPP_STD_VER > 17
+  
+--- 635,644 ----
+  constexpr double
+  lerp(double __a, double __b, double __t)                _NOEXCEPT { return __lerp(__a, __b, __t); }
+  
++ #if !defined(_LIBCPP_HAS_NO_LONG_DOUBLE)
+  constexpr long double
+  lerp(long double __a, long double __b, long double __t) _NOEXCEPT { return __lerp(__a, __b, __t); }
++ #endif
+  
+  #endif // _LIBCPP_STD_VER > 17
+  

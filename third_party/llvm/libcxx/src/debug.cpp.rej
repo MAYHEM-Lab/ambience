@@ -1,0 +1,18 @@
+***************
+*** 31,38 ****
+    return msg;
+  }
+  _LIBCPP_NORETURN void __libcpp_abort_debug_function(__libcpp_debug_info const& info) {
+-     std::fprintf(stderr, "%s\n", info.what().c_str());
+-     std::abort();
+  }
+  
+  _LIBCPP_SAFE_STATIC __libcpp_debug_function_type
+--- 31,37 ----
+    return msg;
+  }
+  _LIBCPP_NORETURN void __libcpp_abort_debug_function(__libcpp_debug_info const& info) {
++     while (true);
+  }
+  
+  _LIBCPP_SAFE_STATIC __libcpp_debug_function_type
