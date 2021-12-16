@@ -76,8 +76,14 @@ private:
 };
 
 template<class T, class Access>
-class intrusive_list_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
+class intrusive_list_iterator {
 public:
+    using value_type = T;
+    using difference_type = int;
+    using pointer = T*;
+    using reference = T&;
+    using iterator_category = std::bidirectional_iterator_tag;
+
     constexpr T& operator*() {
         return Access::template reverse<T>(*m_curr);
     }
