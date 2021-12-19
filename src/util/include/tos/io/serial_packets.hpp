@@ -10,6 +10,7 @@
 #include <tos/io/packet.hpp>
 #include <tos/mutex.hpp>
 #include <tos/semaphore.hpp>
+#include <tos/ft.hpp>
 
 namespace tos::io {
 struct port_data : list_node<port_data> {

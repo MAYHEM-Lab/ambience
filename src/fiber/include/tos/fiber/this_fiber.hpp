@@ -1,7 +1,10 @@
 #pragma once
 
+#include "tos/detail/coro.hpp"
+#include "tos/stack_storage.hpp"
 #include <tos/fiber/basic_fiber.hpp>
 #include <tos/fiber/start.hpp>
+#include <utility>
 
 namespace tos::fiber {
 struct registered_fiber : public basic_fiber<registered_fiber> {

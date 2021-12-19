@@ -12,6 +12,8 @@
 #include <tos/event.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/intrusive_list.hpp>
+#include <tos/thread.hpp>
+#include <tos/scheduler.hpp>
 
 namespace tos {
 struct sleeper : list_node<sleeper> {

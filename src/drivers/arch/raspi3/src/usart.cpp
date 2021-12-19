@@ -1,6 +1,7 @@
 #include <arch/mailbox.hpp>
 #include <arch/usart.hpp>
 #include <tos/soc/bcm2837.hpp>
+#include <tos/debug/debug.hpp>
 
 using namespace tos::bcm2837;
 namespace tos::raspi3 {

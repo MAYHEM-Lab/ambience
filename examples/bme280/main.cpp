@@ -7,6 +7,7 @@
 #include <tos/expected.hpp>
 #include <tos/mem_stream.hpp>
 #include <tos/print.hpp>
+#include <tos/ft.hpp>
 
 auto delay = [](std::chrono::microseconds us) {
     uint32_t end = (us.count() * (tos::stm32::ahb_clock / 1'000'000)) / 13.3;

@@ -5,6 +5,7 @@
 #include <arch/drivers.hpp>
 #include <common/clock.hpp>
 #include <tos/print.hpp>
+#include <tos/ft.hpp>
 
 void clock_main() {
     auto timer = tos::open(tos::devs::timer<2>);

@@ -4,6 +4,7 @@
 #include <tos/detail/poll.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/semaphore.hpp>
+#include <tos/ft.hpp>
 
 namespace tos::ae {
 inline void sync_run_message(async_service_host& serv,

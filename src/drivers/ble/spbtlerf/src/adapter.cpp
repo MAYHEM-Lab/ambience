@@ -8,6 +8,7 @@ extern "C" {
 #include <common/ble/address.hpp>
 #include <common/spi.hpp>
 #include <tos/device/spbtlerf/adapter.hpp>
+#include <tos/ft.hpp>
 
 namespace tos::device::spbtle {
 namespace {

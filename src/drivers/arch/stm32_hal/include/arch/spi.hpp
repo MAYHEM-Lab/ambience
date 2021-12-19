@@ -15,6 +15,7 @@
 #include <tos/expected.hpp>
 #include <tos/semaphore.hpp>
 #include <tos/span.hpp>
+#include <tos/scheduler.hpp>
 
 namespace tos::stm32 {
 namespace detail {

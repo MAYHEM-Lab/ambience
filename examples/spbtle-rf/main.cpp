@@ -19,6 +19,7 @@
 #include <tos/intrusive_ptr.hpp>
 #include <tos/print.hpp>
 #include <tos/uuid.hpp>
+#include <tos/ft.hpp>
 
 class calc_impl : public tos::examples::calculator::sync_server {
     int32_t multiply(const int32_t& a, const int32_t& b) override {

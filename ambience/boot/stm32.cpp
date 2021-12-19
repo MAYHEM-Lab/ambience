@@ -3,6 +3,7 @@
 #include <tos/arm/assembly.hpp>
 #include <tos/arm/nvic.hpp>
 #include <tos/board.hpp>
+#include <tos/ft.hpp>
 
 using bs = tos::bsp::board_spec;
 
