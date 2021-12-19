@@ -77,6 +77,8 @@ add_library(tos_libcxx
 configure_file(include/__config_site.in ${CMAKE_CURRENT_BINARY_DIR}/__config_site @ONLY)
 target_include_directories(tos_libcxx PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
+target_include_directories(tos_libcxx PRIVATE src)
+
 # These are detected automatically by the config header:
 #target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_EXCEPTIONS)
 #target_compile_definitions(tos_libcxx PUBLIC _LIBCPP_NO_RTTI)
@@ -129,7 +131,7 @@ endif()
 target_compile_definitions(tos_libcxx PUBLIC TOS)
 target_compile_definitions(tos_libcxx PUBLIC TOS_PLATFORM_${TOS_PLATFORM_NAME})
 
-target_compile_features(tos_libcxx PUBLIC cxx_std_17)
+target_compile_features(tos_libcxx PUBLIC cxx_std_20)
 target_include_directories(tos_libcxx PUBLIC include)
 target_link_libraries(tos_libcxx PUBLIC tos::libc tos_pthread)
 endif()
