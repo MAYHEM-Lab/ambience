@@ -11,7 +11,7 @@ struct mapping {
     cur_arch::address_space* va;
 
     virtual_segment vm_segment; // Where this mapping is in the address space.
-    memory_range obj_range;     // Where this mapping is in the backing object.
+    uintptr_t obj_base;
 
     user_accessible allow_user : 1;
     memory_types mem_type : 2;

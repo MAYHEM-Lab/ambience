@@ -46,9 +46,9 @@ void* laihost_map(size_t address, size_t count) {
     LOG_TRACE("map", (void*)address, (void*)count);
 
     auto& root = tos::x86_64::get_current_translation_table();
-    auto segment = tos::virtual_segment{
-        .range = {.base = tos::virtual_address(address), .size = ptrdiff_t(count)},
-        .perms = tos::permissions::read_write};
+    auto segment =
+        tos::virtual_segment{.range = {tos::virtual_address(address), ptrdiff_t(count)},
+                             .perms = tos::permissions::read_write};
     auto res = tos::x86_64::allocate_region(root,
                                             segment,
                                             tos::user_accessible::no,
@@ -75,8 +75,7 @@ void laihost_unmap(void* pointer, size_t count) {
     pointer = tos::align_nearest_down_pow2(pointer, tos::x86_64::page_size_bytes);
     count = tos::align_nearest_up_pow2(count, tos::x86_64::page_size_bytes);
     auto range = tos::virtual_range{
-        .base = tos::virtual_address(reinterpret_cast<uintptr_t>(pointer)),
-        .size = ptrdiff_t(count)};
+        tos::virtual_address(reinterpret_cast<uintptr_t>(pointer)), ptrdiff_t(count)};
     auto& root = tos::x86_64::get_current_translation_table();
 
     ensure(tos::x86_64::mark_nonresident(root, range));

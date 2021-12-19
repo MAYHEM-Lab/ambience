@@ -81,12 +81,12 @@ physical_address physical_page_allocator::address_of(const physical_page& page) 
 }
 
 physical_range physical_page_allocator::range_of(const physical_page& page) const {
-    return physical_range{.base = physical_address(page_num(page) * page_size()),
-                          .size = std::ptrdiff_t(page_size())};
+    return physical_range{physical_address(page_num(page) * page_size()),
+                          std::ptrdiff_t(page_size())};
 }
 physical_range physical_page_allocator::range_of(span<const physical_page> pages) const {
-    return physical_range{.base = physical_address(page_num(pages.front()) * page_size()),
-                          .size = std::ptrdiff_t(page_size() * pages.size())};
+    return physical_range{physical_address(page_num(pages.front()) * page_size()),
+                          std::ptrdiff_t(page_size() * pages.size())};
 }
 
 int physical_page_allocator::page_num(const physical_page& page) const {

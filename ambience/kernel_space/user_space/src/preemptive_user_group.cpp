@@ -35,7 +35,7 @@ map_elf(const tos::elf::elf64& elf,
                         (void*)(uintptr_t)pheader.virt_address);
 
         auto seg = elf.segment(pheader);
-    
+
         void* base = const_cast<uint8_t*>(seg.data());
 
         LOG((void*)pheader.virt_address,
@@ -112,25 +112,25 @@ create_and_map_stack(size_t stack_size,
                     "-",
                     stack_region.end().direct_mapped());
 
-    EXPECTED_TRYV(map_region(
-        root_table,
-        identity_map(tos::physical_segment{
-            .range = {.base = stack_address, .size = static_cast<ptrdiff_t>(stack_size)},
-            tos::permissions::read_write}),
-        tos::user_accessible::yes,
-        tos::memory_types::normal,
-        &palloc,
-        stack_address));
+    EXPECTED_TRYV(
+        map_region(root_table,
+                   identity_map(tos::physical_segment{
+                       .range = {stack_address, static_cast<ptrdiff_t>(stack_size)},
+                       tos::permissions::read_write}),
+                   tos::user_accessible::yes,
+                   tos::memory_types::normal,
+                   &palloc,
+                   stack_address));
 
-    EXPECTED_TRYV(map_region(
-        cur_arch::get_current_translation_table(),
-        identity_map(tos::physical_segment{
-            .range = {.base = stack_address, .size = static_cast<ptrdiff_t>(stack_size)},
-            tos::permissions::read_write}),
-        tos::user_accessible::no,
-        tos::memory_types::normal,
-        &palloc,
-        stack_address));
+    EXPECTED_TRYV(
+        map_region(cur_arch::get_current_translation_table(),
+                   identity_map(tos::physical_segment{
+                       .range = {stack_address, static_cast<ptrdiff_t>(stack_size)},
+                       tos::permissions::read_write}),
+                   tos::user_accessible::no,
+                   tos::memory_types::normal,
+                   &palloc,
+                   stack_address));
 
     return tos::span<uint8_t>(static_cast<uint8_t*>(stack_address.direct_mapped()),
                               stack_size);

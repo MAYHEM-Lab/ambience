@@ -244,7 +244,7 @@ void set_up_page_tables() {
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
             identity_map(tos::physical_segment{text, tos::permissions::read_execute}),
-            to_memory_range(text),
+            text.base.address(),
             text_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(text_map, nullptr);
         boot_addr_space.mark_resident(
@@ -258,7 +258,7 @@ void set_up_page_tables() {
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
             identity_map(tos::physical_segment{text, tos::permissions::read}),
-            to_memory_range(text),
+            text.base.address(),
             ro_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(ro_map, nullptr);
         boot_addr_space.mark_resident(
@@ -272,7 +272,7 @@ void set_up_page_tables() {
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
             identity_map(tos::physical_segment{text, tos::permissions::read_write}),
-            to_memory_range(text),
+            text.base.address(),
             data_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(data_map, nullptr);
         boot_addr_space.mark_resident(
@@ -286,7 +286,7 @@ void set_up_page_tables() {
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
             identity_map(tos::physical_segment{text, tos::permissions::read_write}),
-            to_memory_range(text),
+            text.base.address(),
             bss_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(bss_map, nullptr);
         boot_addr_space.mark_resident(

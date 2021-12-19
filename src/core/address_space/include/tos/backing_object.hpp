@@ -15,12 +15,14 @@ struct job;
 class backing_object {
 public:
     virtual auto create_mapping(const virtual_segment& vm_segment,
-                                const memory_range& obj_range,
+                                uintptr_t obj_base,
                                 tos::mapping& mapping) -> bool = 0;
 
     auto clone_mapping(const mapping& original, mapping& mapping) -> bool {
-        return create_mapping(original.vm_segment, original.obj_range, mapping);
+        return create_mapping(original.vm_segment, original.obj_base, mapping);
     }
+
+    virtual auto free_mapping(const tos::mapping& mapping) -> bool = 0;
 
     virtual auto handle_memory_fault(const memory_fault& fault) -> bool = 0;
 

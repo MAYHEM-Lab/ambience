@@ -91,9 +91,8 @@ void thread() {
     using namespace tos::address_literals;
 
     tos::physical_memory_backing pmem(
-        tos::physical_segment{
-            tos::physical_range{.base = 0_physical, .size = 1'000'000'000},
-            tos::permissions::all},
+        tos::physical_segment{tos::physical_range{0_physical, 1'000'000'000},
+                              tos::permissions::all},
         tos::memory_types::normal);
 
     auto& level0_table = tos::cur_arch::get_current_translation_table();
@@ -135,10 +134,9 @@ void thread() {
     tos::mapping mapping;
     Assert(pmem.create_mapping(
         identity_map(tos::physical_segment{
-            tos::physical_range{.base = 0x1200000_physical,
-                                .size = tos::cur_arch::page_size_bytes},
+            tos::physical_range{0x1200000_physical, tos::cur_arch::page_size_bytes},
             tos::permissions::read_write}),
-        tos::memory_range{.base = 0x200000, .size = tos::cur_arch::page_size_bytes},
+        0x200000,
         mapping));
 
     vas.do_mapping(mapping, palloc);

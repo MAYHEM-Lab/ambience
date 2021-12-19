@@ -256,7 +256,7 @@ private:
         LOG((void*)map_addr);
 
         auto segment = tos::virtual_segment{
-            .range = {.base = virtual_address(map_addr), .size = x86_64::page_size_bytes},
+            .range = {virtual_address(map_addr), x86_64::page_size_bytes},
             .perms = permissions::read_write};
         auto& root = x86_64::get_current_translation_table();
         auto res = x86_64::map_region(root,

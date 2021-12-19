@@ -111,7 +111,7 @@ void mpu_task() {
     LOG("Marking", 128, "bytes as inaccessible at", &foo);
     auto set_res = mpu.set_region(
         0,
-        {.base = virtual_address(reinterpret_cast<uintptr_t>(&foo)), .size = 128},
+        {virtual_address(reinterpret_cast<uintptr_t>(&foo)), 128},
         tos::permissions::none);
     Assert(set_res);
     auto region = mpu.get_region(0);

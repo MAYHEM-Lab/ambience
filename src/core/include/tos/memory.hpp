@@ -110,6 +110,12 @@ struct mem_range {
     BaseT base;
     SizeT size;
 
+    constexpr mem_range() = default;
+    constexpr mem_range(BaseT base, SizeT size)
+        : base{base}
+        , size{size} {
+    }
+
     [[nodiscard]] constexpr auto end() const {
         return base + size;
     }
@@ -165,18 +171,18 @@ using physical_range = mem_range<physical_address, std::ptrdiff_t>;
 using virtual_range = mem_range<virtual_address, std::ptrdiff_t>;
 
 inline virtual_range identity_map(const physical_range& range) {
-    return virtual_range{.base = identity_map(range.base), .size = range.size};
+    return virtual_range{identity_map(range.base), range.size};
 }
 
 inline virtual_range map_at(const physical_range& range, virtual_address at) {
-    return virtual_range{.base = at, .size = range.size};
+    return virtual_range{at, range.size};
 }
 
 template<class BaseT, class SizeT>
 constexpr std::enable_if_t<!std::is_same_v<mem_range<BaseT, SizeT>, memory_range>,
                            memory_range>
 to_memory_range(const mem_range<BaseT, SizeT>& range) {
-    return memory_range{.base = range.base.address(), .size = range.size};
+    return memory_range{range.base.address(), range.size};
 }
 
 enum class permissions : uint8_t

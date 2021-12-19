@@ -21,7 +21,7 @@ void apic_initialize(tos::physical_page_allocator& palloc) {
 
     // IOAPIC registers
     seg = tos::physical_segment{
-        .range = {.base = 0xfec00000_physical, .size = tos::cur_arch::page_size_bytes},
+        .range = {0xfec00000_physical, tos::cur_arch::page_size_bytes},
         .perms = tos::permissions::read_write};
     tos::ensure(tos::x86_64::map_region(table,
                                         identity_map(seg),

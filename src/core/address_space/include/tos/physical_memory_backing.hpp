@@ -10,7 +10,8 @@ namespace tos {
 // address space with different permissions.
 class physical_memory_backing : public backing_object {
 public:
-    explicit constexpr physical_memory_backing(const physical_segment& phys_seg, memory_types type)
+    explicit constexpr physical_memory_backing(const physical_segment& phys_seg,
+                                               memory_types type)
         : m_seg{phys_seg}
         , m_type{type} {
     }
@@ -18,9 +19,11 @@ public:
     bool handle_memory_fault([[maybe_unused]] const memory_fault& fault) override;
 
     constexpr auto create_mapping(const virtual_segment& vm_segment,
-                                  const memory_range& obj_range,
+                                  uintptr_t obj_base,
                                   tos::mapping& mapping) -> bool override {
-        if (!contains(to_memory_range(m_seg.range), obj_range)) {
+        if (!contains(
+                m_seg.range,
+                physical_range(physical_address(obj_base), vm_segment.range.size))) {
             return false;
         }
 
@@ -30,9 +33,13 @@ public:
 
         mapping.obj = this;
         mapping.vm_segment = vm_segment;
-        mapping.obj_range = obj_range;
+        mapping.obj_base = obj_base;
         mapping.mem_type = m_type;
 
+        return true;
+    }
+
+    constexpr auto free_mapping(const tos::mapping& mapping) -> bool override {
         return true;
     }
 
