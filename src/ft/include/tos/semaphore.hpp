@@ -280,4 +280,9 @@ template<class CountT>
 inline tos::function_ref<void()> make_semaphore_upper(semaphore_base<CountT>& sem) {
     return mem_function_ref<&semaphore_base<CountT>::up>(sem);
 }
+
+template<class CountT>
+inline tos::function_ref<void()> make_semaphore_isr_upper(semaphore_base<CountT>& sem) {
+    return mem_function_ref<&semaphore_base<CountT>::up_isr>(sem);
+}
 } // namespace tos
