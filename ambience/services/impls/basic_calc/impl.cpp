@@ -14,8 +14,18 @@ struct impl : tos::ae::services::calculator::async_server {
         co_return x + y;
     }
 };
+
+struct sync_impl : tos::ae::services::calculator::sync_server {
+    int32_t add(const int32_t& x, const int32_t& y) override {
+        return x + y;
+    }
+};
 } // namespace
 
 tos::Task<tos::ae::services::calculator::async_server*> init_basic_calc() {
     co_return new impl;
+}
+
+tos::ae::services::calculator::async_server* init_sync_basic_calc() {
+    return new impl;
 }
