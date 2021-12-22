@@ -7,6 +7,7 @@
 #include <tos/compiler.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/waitable.hpp>
+#include <tos/threading_state.hpp>
 
 namespace tos {
 enum class sem_ret
