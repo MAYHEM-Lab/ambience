@@ -151,10 +151,10 @@ struct temporary_share : quik::share_base {
 
             if (!page.owned) {
                 if (to->increment(vrange.base) == 0) {
-                        goto do_map;
-                    }
-                    continue;
+                    goto do_map;
                 }
+                continue;
+            }
         do_map:
             virtual_segment virtseg{.range = vrange,
                                     .perms = page.readonly ? permissions::read
