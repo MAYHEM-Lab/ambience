@@ -275,7 +275,8 @@ ISR_AVAILABLE inline void semaphore_base<CountT>::up_isr() noexcept {
     m_wait.signal_one();
 }
 
-inline tos::function_ref<void()> make_semaphore_upper(semaphore& sem) {
-    return mem_function_ref<&semaphore::up>(sem);
+template<class CountT>
+inline tos::function_ref<void()> make_semaphore_upper(semaphore_base<CountT>& sem) {
+    return mem_function_ref<&semaphore_base<CountT>::up>(sem);
 }
 } // namespace tos
