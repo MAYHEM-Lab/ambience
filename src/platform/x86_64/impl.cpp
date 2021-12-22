@@ -79,6 +79,7 @@ void enable_sse() {
     // https://en.wikipedia.org/wiki/Control_register#CR4
     auto cr4 = read_cr4();
     cr4 |= (1 << 9) | (1 << 10); // OSFXSR | OSXMMEXCPT
+    cr4 |= (1 << 8); // PCE Performance-Monitoring Counter enable 
     write_cr4(cr4);
 }
 
@@ -170,7 +171,7 @@ extern "C" {
 NO_ZERO translation_table p4_table;
 NO_ZERO translation_table p3_table;
 NO_ZERO translation_table p2_tables[1];
-NO_ZERO translation_table p1_tables[128];
+NO_ZERO translation_table p1_tables[256];
 }
 
 NO_ZERO tos::x86_64::address_space boot_addr_space(tos::detail::dangerous_tag{});
