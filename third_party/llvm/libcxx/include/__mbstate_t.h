@@ -32,7 +32,8 @@
 #elif __has_include(<sys/_types/_mbstate_t.h>)
 #   include <sys/_types/_mbstate_t.h> // works on Darwin
 #else
-#   error "The library was configured without support for wide-characters, but we don't know how to get the definition of mbstate_t without <wchar.h> on your platform."
+struct mbstate_t{};
+// #   error "The library was configured without support for wide-characters, but we don't know how to get the definition of mbstate_t without <wchar.h> on your platform."
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
