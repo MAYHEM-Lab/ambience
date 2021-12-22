@@ -16,7 +16,13 @@ public:
     void* realloc(void* oldptr, size_t newsz) {
         return ::realloc(oldptr, newsz);
     }
+    std::optional<size_t> peak_use() const {
+        return {};
+    }
     std::optional<size_t> in_use() const {
+        return {};
+    }
+    std::optional<size_t> capacity() const {
         return {};
     }
 };

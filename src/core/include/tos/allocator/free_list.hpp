@@ -19,6 +19,13 @@ public:
     std::optional<size_t> in_use() const {
         return m_used;
     }
+    std::optional<size_t> peak_use() const {
+        return m_peak;
+    }
+    std::optional<size_t> capacity() const {
+        return m_buffer.size();
+    }
+
 
     [[nodiscard]]
     size_t available_memory() const {
