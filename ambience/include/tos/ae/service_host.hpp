@@ -4,13 +4,38 @@
 #include <nonstd/variant.hpp>
 
 namespace tos::ae {
-struct sync_service_host {
+struct async_dynamic_host {
+    lidl::async_zerocopy_vtable_t zerocopy_vtable;
+    lidl::async_erased_procedure_runner_t message_runner;
+
+    template<lidl::AsyncService ServiceT>
+    static constexpr async_dynamic_host host_for() {
+        return async_dynamic_host{
+            .zerocopy_vtable =
+                lidl::make_async_zerocopy_vtable<typename ServiceT::service_type>(),
+            .message_runner = lidl::make_async_erased_procedure_runner<
+                typename ServiceT::service_type::async_server>()};
+    }
+};
+struct sync_dynamic_host {
+    lidl::zerocopy_vtable_t zerocopy_vtable;
+    lidl::erased_procedure_runner_t message_runner;
+
+    template<lidl::SyncService ServiceT>
+    static constexpr sync_dynamic_host host_for() {
+        return sync_dynamic_host{
+            .zerocopy_vtable =
+                lidl::make_zerocopy_vtable<typename ServiceT::service_type>(),
+            .message_runner = lidl::make_erased_procedure_runner<
+                typename ServiceT::service_type::sync_server>()};
+    }
+};
+
+struct sync_service_host : sync_dynamic_host {
     template<class ServiceT>
     explicit sync_service_host(ServiceT* serv)
-        : impl{serv}
-        , zerocopy_vtable{lidl::make_zerocopy_vtable<typename ServiceT::service_type>()}
-        , message_runner{lidl::make_erased_procedure_runner<
-              typename ServiceT::service_type::sync_server>()} {
+        : sync_dynamic_host(sync_dynamic_host::host_for<ServiceT>())
+        , impl{serv} {
     }
 
     bool run_zerocopy(int proc, const void* arg, void* res) const {
@@ -23,18 +48,13 @@ struct sync_service_host {
     }
 
     lidl::sync_service_base* impl;
-    lidl::zerocopy_vtable_t zerocopy_vtable;
-    lidl::erased_procedure_runner_t message_runner;
 };
 
-struct async_service_host {
+struct async_service_host : async_dynamic_host {
     template<class ServiceT>
     explicit async_service_host(ServiceT* serv)
-        : impl{serv}
-        , zerocopy_vtable{lidl::make_async_zerocopy_vtable<
-              typename ServiceT::service_type>()}
-        , message_runner{lidl::make_async_erased_procedure_runner<
-              typename ServiceT::service_type::async_server>()} {
+        : async_dynamic_host(async_dynamic_host::host_for<ServiceT>())
+        , impl{serv} {
     }
 
     tos::Task<bool> run_zerocopy(int proc, const void* arg, void* res) const {
@@ -47,8 +67,6 @@ struct async_service_host {
     }
 
     lidl::async_service_base* impl;
-    lidl::async_zerocopy_vtable_t zerocopy_vtable;
-    lidl::async_erased_procedure_runner_t message_runner;
 };
 
 template<
