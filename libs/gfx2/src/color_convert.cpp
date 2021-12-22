@@ -17,6 +17,11 @@ rgb8 color_convert(const mono8& from) {
     return {from.col(), from.col(), from.col()};
 }
 
+template <>
+rgb8 color_convert(const argb8& from) {
+    return rgb8{from.red(), from.green(), from.blue()};
+}
+
 template<>
 mono8 color_convert(const binary_color& from) {
     return {from.col() ? 255 : 0};

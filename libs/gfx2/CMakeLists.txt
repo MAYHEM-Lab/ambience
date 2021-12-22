@@ -1,7 +1,7 @@
 include(lidlc)
 
 add_lidlc(painter_schema painter.lidl)
-add_lidlc(gfx_schema gfx.yaml)
+add_lidlc(gfx_schema gfx.lidl)
 
 add_library(
   tos_gfx2

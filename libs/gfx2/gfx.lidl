@@ -1,0 +1,53 @@
+namespace tos::gfx2;
+
+struct point {
+    x: i16;
+    y: i16;
+}
+
+struct size {
+    width: i16;
+    height: i16;
+}
+
+struct line {
+    p0: point;
+    p1: point;
+}
+
+// This type represents an axis aligned rectangle.
+struct rectangle {
+    corner: point; // Stores the top left corner of the rectangle.
+    dims: size;
+}
+
+// This color represents a binary color. Since lidl does not support any sub-byte data representation yet, binary colors
+// are stored as booleans, and occupying a byte each. This means that vectors of binary_colors are not very efficient
+// as of yet.
+struct binary_color {
+    col: bool;
+}
+
+struct rgb8 {
+    red: u8;
+    green: u8;
+    blue: u8;
+}
+
+struct argb8 {
+    alpha: u8;
+    red: u8;
+    green: u8;
+    blue: u8;
+}
+
+struct mono8 {
+    col: u8;
+}
+
+union color {
+    binary: binary_color;
+    rgb: rgb8;
+    mono: mono8;
+    argb: argb8;
+}
