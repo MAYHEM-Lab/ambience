@@ -17,6 +17,8 @@ add_library(tos_ft
         include/tos/components/threads.hpp
         src/components/threads.cpp
         include/tos/suspended_launch.hpp
+        src/waitable.cpp
+        src/core_waitable.cpp
 )
 
 target_link_libraries(tos_ft PUBLIC tos_util_core tos_coro)
