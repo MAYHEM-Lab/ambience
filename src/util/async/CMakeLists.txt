@@ -1,0 +1,3 @@
+add_library(tos_async async.cpp)
+target_include_directories(tos_async PUBLIC include)
+target_link_libraries(tos_async PUBLIC tos_util_core)
