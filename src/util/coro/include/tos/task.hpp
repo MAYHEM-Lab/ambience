@@ -155,6 +155,6 @@ public:
     }
 };
 
-template<class T>
-using async = Task<result<T>>;
+// template<class T>
+// using async = Task<result<T>>;
 } // namespace tos

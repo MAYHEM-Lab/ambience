@@ -77,7 +77,7 @@ block_device::write(uint64_t sector_id, span<const uint8_t> data, size_t offset)
     return unexpected(const_string_error("bad return code"));
 }
 
-async<void>
+Task<result<void>>
 block_device::async_write(uint64_t sector_id, span<const uint8_t> data, size_t offset) {
     if (offset != 0 || data.size() != sector_size_bytes()) {
         co_return unexpected(const_string_error("bad offset or data size"));
@@ -165,7 +165,7 @@ block_device::read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
     return unexpected(const_string_error("bad error code"));
 }
 
-async<void>
+Task<result<void>>
 block_device::async_read(uint64_t sector_id, span<uint8_t> data, size_t offset) {
 
     if (offset != 0 || data.size() != sector_size_bytes()) {
