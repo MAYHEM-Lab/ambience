@@ -31,7 +31,9 @@ target_link_libraries(arch_arm PUBLIC
 target_compile_features(arch_arm PUBLIC cxx_std_20)
 target_link_libraries(arch_arm PUBLIC "-u __aeabi_d2iz -u __aeabi_dmul -u __udivmoddi4 -u __divmoddi4 -u __aeabi_dadd -u __aeabi_d2lz -u __aeabi_l2d -u __aeabi_dsub -u __aeabi_d2uiz -u __aeabi_ui2d -u __aeabi_i2d -u __aeabi_ddiv -u __aeabi_f2d -u __aeabi_d2f -u __aeabi_ul2f -u __aeabi_ul2d -u __aeabi_l2f -u __aeabi_d2ulz -u __aeabi_f2ulz -u __aeabi_f2lz -u __aeabi_dcmpun")
 
-if (${CMAKE_C_COMPILER_TARGET} MATCHES "armv7")
+if (${CMAKE_C_COMPILER_TARGET} MATCHES "armv7e")
+    target_link_libraries(arch_arm PUBLIC clang_rt.builtins-armv7em)
+elseif (${CMAKE_C_COMPILER_TARGET} MATCHES "armv7")
     target_link_libraries(arch_arm PUBLIC clang_rt.builtins-armv7m)
 endif()
 
