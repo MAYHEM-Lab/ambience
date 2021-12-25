@@ -1,4 +1,5 @@
 #include <arch/drivers.hpp>
+#include <tos/ft.hpp>
 
 void tcp_task() {
     auto uart = tos::open(tos::devs::usart<0>, tos::uart::default_115200);
