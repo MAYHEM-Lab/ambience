@@ -4,34 +4,17 @@
 #include <stdint.h>
 #include <sys/errno.h>
 
-#define PTHREAD_STACK_MIN TOS_DEFAULT_STACK_SIZE
+#include <tos/pthread/thread.h>
+#include <tos/pthread/semaphore.h>
+#include <tos/pthread/mutex.h>
+#include <tos/pthread/condvar.h>
+#include <tos/pthread/rwlock.h>
 
-#define TOS_MUTEX_SIZE      4 * sizeof(uintptr_t)
-#define TOS_MUTEX_ALIGNMENT _Alignof(max_align_t)
-
-#define TOS_COND_SIZE      4 * sizeof(uintptr_t)
-#define TOS_COND_ALIGNMENT _Alignof(max_align_t)
-
-#define TOS_RW_SIZE      8 * sizeof(uintptr_t)
-#define TOS_RW_ALIGNMENT _Alignof(max_align_t)
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
-/* STRUCTS */
-
-// Condition Variable
-
-struct pthread_cond_t {
-    _Alignas(TOS_COND_ALIGNMENT) char cond_buffer[TOS_COND_SIZE];
-};
-
-#define PTHREAD_COND_INITIALIZER { { } }
-
-typedef void* pthread_condattr_t;
-
-// Pthread
 typedef void* pthread_t;
 
 struct pthread_attr_t {
