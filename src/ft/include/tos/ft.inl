@@ -44,6 +44,11 @@ struct mixin_tcb
         Deleter::destroy();
     }
 
+    void start() {
+        run_on_start();
+        Starter::start();
+    }
+
     template<class... StarterArg>
     explicit mixin_tcb(uint8_t* stack_base, StarterArg&&... starter)
         : tcb(current_context())
