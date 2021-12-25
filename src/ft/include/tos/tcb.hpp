@@ -44,6 +44,9 @@ struct alignas(alignof(std::max_align_t)) tcb : public job, public basic_fiber<t
     tos::list_node<tcb> m_siblings;
 
 public:
+    // Called by basic_fiber
+    void on_start();
+    void on_resume();
     void operator()() override final;
 };
 

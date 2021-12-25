@@ -4,8 +4,16 @@
 #include <tos/tcb.hpp>
 
 namespace tos::kern {
+void tcb::on_start() {
+    on_resume();
+}
+
+void tcb::on_resume() {
+    global::thread_state.current_thread = this;
+}
+
 void tcb::operator()() {
-    this->resume([this] { global::thread_state.current_thread = this; });
+    this->resume();
     global::thread_state.current_thread = nullptr;
 }
 
@@ -33,7 +41,7 @@ thread_id_t start(tcb& t, void (*entry)(void*)) {
 
 namespace tos {
 void swap_context(kern::tcb& current, kern::tcb& to, const no_interrupts&) {
-    swap_fibers(current, to, [&to] { global::thread_state.current_thread = &to; });
+    swap_fibers(current, to);
 }
 } // namespace tos
 

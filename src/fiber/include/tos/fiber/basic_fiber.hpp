@@ -58,19 +58,19 @@ struct basic_fiber : any_fiber {
 
     void run_on_resume() {
         if constexpr(requires (CrtpT* t) { t->on_resume(); }) {
-            self()->on_resume();
+            this->self()->on_resume();
         }
     }
 
     void run_on_suspend() {
         if constexpr(requires (CrtpT* t) { t->on_suspend(); }) {
-            self()->on_suspend();
+            this->self()->on_suspend();
         }
     }
 
     void run_on_start() {
         if constexpr(requires (CrtpT* t) { t->on_start(); }) {
-            self()->on_start();
+            this->self()->on_start();
         }
     }
     
@@ -136,7 +136,7 @@ template<class T>
 
 // Transfers control symmetrically to the resume fiber from the currently
 // executing suspend fiber.
-// Behaviour is undefined if basic_fiber is not currently executing.
+// Behaviour is undefined if suspend is not currently executing.
 // Upon resume suspending, the caller of suspend will be resumed.
 // In other words:
 //
@@ -144,8 +144,7 @@ template<class T>
 //      b: swap_fibers(b, c);
 //      c: c.suspend();
 //      a is resumed
-template<class FnT>
-void swap_fibers(Fiber auto& suspend, Fiber auto& resume, FnT&& before_switch) {
+void swap_fibers(Fiber auto& suspend, Fiber auto& resume) {
     processor_context context;
 
     auto caller_ctx_ptr = &suspend.get_processor_state();
@@ -154,7 +153,6 @@ void swap_fibers(Fiber auto& suspend, Fiber auto& resume, FnT&& before_switch) {
     resume.set_processor_state(*caller_ctx_ptr);
     suspend.set_processor_state(context);
 
-    before_switch();
     suspend.run_on_suspend();
     swap_context(context, *resume_ctx_ptr);
 
