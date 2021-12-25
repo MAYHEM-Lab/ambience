@@ -12,7 +12,7 @@ add_library(tos_memory
         include/tos/allocator/polymorphic_allocator.hpp
         include/tos/allocator/malloc.hpp
         include/tos/allocator/null_allocator.hpp)
-target_link_libraries(tos_memory PUBLIC tos_util_core)
+target_link_libraries(tos_memory PUBLIC tos_util_core tos_debug_log)
 target_include_directories(tos_memory PUBLIC include)
 
 if (BUILD_TESTS)
