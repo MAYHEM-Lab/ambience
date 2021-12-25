@@ -42,7 +42,7 @@ add_library(tos_debug_log
         include/tos/debug/sinks/async_sink.hpp
 )
 target_include_directories(tos_debug_log PUBLIC include)
-target_link_libraries(tos_debug_log PUBLIC tos_util_core tos_print)
+target_link_libraries(tos_debug_log PUBLIC tos_util_core tos_print fmt)
 
 include(lidlc)
 
