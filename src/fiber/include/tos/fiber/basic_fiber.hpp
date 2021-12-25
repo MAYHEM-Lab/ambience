@@ -126,6 +126,7 @@ auto basic_fiber<T>::suspend(FnT&& before_switch) -> suspend_t {
 
     run_on_resume();
 }
+#undef save_fib_context
 
 template<class T>
 [[noreturn]] inline void basic_fiber<T>::suspend_final(context_codes code) {
@@ -160,4 +161,3 @@ void swap_fibers(Fiber auto& suspend, Fiber auto& resume, FnT&& before_switch) {
     suspend.run_on_resume();
 }
 } // namespace tos
-#undef save_fib_context
