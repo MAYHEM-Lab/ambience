@@ -11,11 +11,15 @@
 
 namespace tos {
 namespace detail {
+struct dangerous_tag {};
+
 template<bool Checked = false>
 struct function_ref_base;
 
 template<>
 struct function_ref_base<false> {
+    function_ref_base(detail::dangerous_tag) {}
+
     template<class RetT, class... ArgTs>
     function_ref_base(RetT (*fun)(ArgTs...), void* data)
         : m_function_ptr(reinterpret_cast<void (*)(void*)>(fun))
@@ -39,8 +43,6 @@ private:
     void (*m_function_ptr)(void*);
     void* m_data;
 };
-
-struct dangerous_tag {};
 } // namespace detail
 
 template<class RetT, class... ArgTs>
@@ -107,6 +109,8 @@ public:
     function_ref(detail::dangerous_tag, const detail::function_ref_base<false>& base)
         : function_ref_base<false>(base) {
     }
+
+    function_ref(detail::dangerous_tag) : function_ref_base<false>(detail::dangerous_tag{}) {}
 
 private:
     internal_funptr_t fun() const {
