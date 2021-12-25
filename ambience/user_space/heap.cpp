@@ -34,7 +34,7 @@ void* operator new[](size_t sz) {
     return operator new(sz);
 }
 
-void* operator new[](size_t sz, const std::nothrow_t&) {
+void* operator new[](size_t sz, const std::nothrow_t&) noexcept {
     return operator new(sz);
 }
 
