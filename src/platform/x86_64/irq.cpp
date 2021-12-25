@@ -41,6 +41,7 @@ tos::expected<void, irq_errors> take_irq(int line) {
     if (allocated_irqs & (1 << line)) {
         return unexpected(irq_errors{});
     }
+    LOG_FORMAT("Give IRQ{}", line);
     allocated_irqs |= (1 << line);
     return {};
 }
