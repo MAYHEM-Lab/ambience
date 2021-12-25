@@ -38,6 +38,17 @@ concept PrePostHandler = requires(T t) {
     t(preempt_ops::post_switch, std::declval<kern::tcb&>());
 };
 
+namespace global {
+    inline function_ref<bool()> user_on_error([](void*) { return false; });
+}
+
+enum class user_reason
+{
+    voluntary,
+    preempt,
+    error,
+};
+
 template<PreemptionContext PreemptContext>
 struct preempter {
     void setup(PreemptContext& ctx, int ticks) {
@@ -46,6 +57,20 @@ struct preempter {
 
         tmr.set_callback(tos::mem_function_ref<&preempter::preempt>(*this));
         tmr.set_frequency(1000 / ticks);
+        global::user_on_error = mem_function_ref<&preempter::error>(*this);
+    }
+
+    bool error() {
+        timer().disable();
+
+        if constexpr (PrePostHandler<PreemptContext>) {
+            ctx()(preempt_ops::post_switch, *m_thread);
+        }
+
+        m_exit_reason = user_reason::error;
+        ctx()(preempt_ops::return_to_thread_from_irq, *m_thread, *m_self);
+        
+        return true;
     }
 
     void preempt() {
@@ -55,7 +80,7 @@ struct preempter {
             ctx()(preempt_ops::post_switch, *m_thread);
         }
 
-        m_preempted = true;
+        m_exit_reason = user_reason::preempt;
         ctx()(preempt_ops::return_to_thread_from_irq, *m_thread, *m_self);
     }
 
@@ -66,11 +91,11 @@ struct preempter {
             ctx()(preempt_ops::post_switch, *m_thread);
         }
 
-        m_preempted = false;
+        m_exit_reason = user_reason::voluntary;
         tos::swap_context(*m_thread, *m_self, tos::int_ctx{});
     }
 
-    bool run(kern::tcb& thread) {
+    user_reason run(kern::tcb& thread) {
         m_self = tos::self();
         m_thread = &thread;
         ctx()(preempt_ops::get_odi)([this](auto&&...) {
@@ -85,7 +110,7 @@ struct preempter {
 
             tos::swap_context(*m_self, *m_thread, tos::int_ctx{});
         });
-        return m_preempted;
+        return m_exit_reason;
     }
 
     auto& timer() {
@@ -96,7 +121,7 @@ struct preempter {
         return *m_ctx;
     }
 
-    bool m_preempted;
+    user_reason m_exit_reason;
     kern::tcb* m_thread;
     kern::tcb* m_self;
     PreemptContext* m_ctx;

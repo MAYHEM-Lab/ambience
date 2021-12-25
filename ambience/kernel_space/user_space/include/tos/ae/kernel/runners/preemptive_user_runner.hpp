@@ -9,7 +9,7 @@
 
 namespace tos::ae {
 struct preemptive_user_group_runner : group_runner {
-    explicit preemptive_user_group_runner(function_ref<bool(kern::tcb&)> runner)
+    explicit preemptive_user_group_runner(function_ref<user_reason(kern::tcb&)> runner)
         : m_erased_runner{runner} {
     }
 
@@ -26,8 +26,9 @@ struct preemptive_user_group_runner : group_runner {
         user_group.clear_runnable();
         post_run(user_group);
         // tos::debug::log("Post ran");
-
-        if (preempted) {
+        if (preempted == user_reason::error) {
+            LOG("User space failed!");
+        } else if (preempted == user_reason::preempt) {
             user_group.notify_downcall();
         } else {
             // The group yielded before draining its queue, can still run
@@ -38,7 +39,7 @@ struct preemptive_user_group_runner : group_runner {
         }
     }
 
-    static void create(function_ref<bool(kern::tcb&)> runner) {
+    static void create(function_ref<user_reason(kern::tcb&)> runner) {
         m_instance.emplace(runner);
     }
 
@@ -96,7 +97,7 @@ private:
     }
 
     static late_constructed<preemptive_user_group_runner> m_instance;
-    function_ref<bool(kern::tcb&)> m_erased_runner;
+    function_ref<user_reason(kern::tcb&)> m_erased_runner;
 };
 
 inline late_constructed<preemptive_user_group_runner>
