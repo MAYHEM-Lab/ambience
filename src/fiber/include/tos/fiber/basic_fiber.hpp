@@ -129,6 +129,7 @@ auto basic_fiber<T>::suspend(FnT&& before_switch) -> suspend_t {
 
 template<class T>
 [[noreturn]] inline void basic_fiber<T>::suspend_final(context_codes code) {
+    run_on_suspend();
     switch_context(*m_ctx, code);
 }
 
