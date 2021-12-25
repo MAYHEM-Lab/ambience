@@ -21,12 +21,7 @@ concept Fiber = DerivedFrom<T, any_fiber>;
 
 template<class CrtpT>
 struct basic_fiber : any_fiber {
-    template<class FnT>
-    void resume(FnT&&);
-
-    void resume() override {
-        resume([] {});
-    }
+    void resume() override;
 
     using suspend_t = void;
     template<class FnT>
@@ -90,15 +85,13 @@ function_ref<void()> fiber_resumer(FibT& fib) {
 }
 
 template<class T>
-template<class FnT>
-void basic_fiber<T>::resume(FnT&& before_switch) {
+void basic_fiber<T>::resume() {
     processor_context caller_ctx;
     auto fiber_ctx = std::exchange(m_ctx, &caller_ctx);
     auto save_res = save_ctx(caller_ctx);
 
     switch (save_res) {
     case context_codes::saved:
-        before_switch();
         switch_context(*fiber_ctx, context_codes::scheduled);
         TOS_UNREACHABLE();
     case context_codes::suspend:
