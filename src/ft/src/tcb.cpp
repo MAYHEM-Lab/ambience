@@ -4,19 +4,6 @@
 #include <tos/tcb.hpp>
 
 namespace tos::kern {
-tcb::tcb(context& ctx)
-    : job(ctx) {
-    if (auto threads = get_context().get_component<threads_component>(); threads) {
-        threads->thread_created(*this);
-    }
-}
-
-tcb::~tcb() {
-    if (auto threads = get_context().get_component<threads_component>(); threads) {
-        threads->thread_exited(*this);
-    }
-}
-
 void tcb::operator()() {
     this->resume([this] { global::thread_state.current_thread = this; });
     global::thread_state.current_thread = nullptr;
