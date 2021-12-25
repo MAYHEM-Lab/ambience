@@ -25,8 +25,8 @@ thread_id_t start(tcb& t, void (*entry)()) {
 
     t.set_processor_state(*ctx_ptr);
 
-    make_runnable(t);
     global::thread_state.num_threads++;
+    make_runnable(t);
     return {reinterpret_cast<uintptr_t>(static_cast<tcb*>(&t))};
 }
 } // namespace tos::kern
