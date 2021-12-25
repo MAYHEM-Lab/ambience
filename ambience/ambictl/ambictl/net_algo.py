@@ -43,7 +43,7 @@ def import_path(client: Node, server: Node):
     nodes = all_nodes(graph)
 
     if server not in nodes:
-        raise RuntimeError("Server is unreachable from client!")
+        raise RuntimeError(f"Server({server.name}) is unreachable from client({client.name})!")
 
     g = Graph()
 

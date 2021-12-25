@@ -80,7 +80,7 @@ class UserGroup(Group):
         res = []
         for s in toposort(dep_dict):
             for serv in s:
-                args = (serv_name_mapping[dep] + ("_async" if serv.is_async() else "_sync") for dep in serv.deps.values())
+                args = (serv_name_mapping[dep] + (("_async" if serv.is_async() else "_sync") if dep in ext_deps else "") for dep in serv.deps.values())
                 res.append(f"auto {serv.name} = {'co_await ' if serv.is_async() else ''}init_{serv.impl.name}({', '.join(args)});")
 
         return res
