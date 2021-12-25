@@ -22,16 +22,6 @@ void tcb::operator()() {
     global::thread_state.current_thread = nullptr;
 }
 
-void tcb::on_set_context(context& new_ctx) {
-    if (auto threads = get_context().get_component<threads_component>(); threads) {
-        threads->thread_dissociated(*this);
-    }
-
-    if (auto threads = new_ctx.get_component<threads_component>(); threads) {
-        threads->thread_adopted(*this);
-    }
-}
-
 void suspend_self(const no_interrupts&) {
 #ifdef TOS_FEATURE_TCB_HAVE_LOG_BLOCK_POINT
     if (self()->log_block_point) {

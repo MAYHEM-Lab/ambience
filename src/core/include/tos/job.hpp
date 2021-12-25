@@ -14,9 +14,6 @@ public:
     virtual void operator()() = 0;
     virtual ~job() = default;
 
-protected:
-    virtual void on_set_context([[maybe_unused]] context& new_ctx) {}
-
 private:
     context* m_context;
 };

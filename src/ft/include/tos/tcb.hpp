@@ -43,9 +43,6 @@ struct alignas(alignof(std::max_align_t)) tcb : public job, public basic_fiber<t
 
     tos::list_node<tcb> m_siblings;
 
-protected:
-    void on_set_context(context& new_ctx) override;
-
 public:
     void operator()() override final;
 };

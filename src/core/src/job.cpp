@@ -5,7 +5,6 @@ job::job(context& ctx) : m_context{&ctx} {
 }
 
 void job::set_context(context& ctx) {
-    on_set_context(ctx);
     m_context = &ctx;
 }
 
