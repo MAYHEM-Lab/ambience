@@ -118,11 +118,11 @@ template<class TaskT>
 #if defined(__x86_64__)
 [[gnu::force_align_arg_pointer]]
 #endif
-void start_cur() {
-    static_cast<TaskT*>(self())->start();
+void start_cur(void* cur) {
+    static_cast<TaskT*>(static_cast<tcb*>(cur))->start();
 }
 
-thread_id_t start(tcb& t, void (*entry)());
+thread_id_t start(tcb& t, void (*entry)(void*));
 } // namespace kern
 
 template<class TaskType, class FuncT, class... ArgTs>

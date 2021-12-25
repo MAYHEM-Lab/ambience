@@ -19,9 +19,9 @@ void suspend_self(const no_interrupts&) {
     self()->suspend();
 }
 
-thread_id_t start(tcb& t, void (*entry)()) {
+thread_id_t start(tcb& t, void (*entry)(void*)) {
     auto ctx_ptr = new ((char*)&t - sizeof(processor_context)) processor_context;
-    start(*ctx_ptr, entry, &t);
+    start(*ctx_ptr, entry, &t, &t);
 
     t.set_processor_state(*ctx_ptr);
 
