@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <tos/compiler.hpp>
+#include <fmt/compile.h>
 
 namespace tos::debug {
 detail::any_logger& default_log();
@@ -87,6 +88,7 @@ ALWAYS_INLINE bool fatal(const Ts&... args) {
 #define LOG_ERROR(...)                                                                   \
     (::tos::debug::default_log().would_log(::tos::debug::log_level::error) &&            \
      ::tos::debug::error("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
+#define LOG_FORMAT(format_str, ...) LOG(fmt::format(FMT_COMPILE(format_str), __VA_ARGS__))
 #else
 #define LOG(...) false
 #define LOG_TRACE(...) false
