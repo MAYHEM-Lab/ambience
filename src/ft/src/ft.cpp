@@ -12,18 +12,4 @@ tos::context& current_context() {
         return default_context();
     return self()->get_context();
 }
-
-namespace kern {
-void deleter::destroy() {
-    /**
-     * We free the stack later here because the tcb potentially lives in the memory we
-     * are deleting here, and there are still other destructors to run.
-     */
-    auto lambda = [](char* ptr) -> tos::coro::detached {
-        co_await tos::coro::yield();
-        delete[] ptr;
-    };
-    lambda(get_task_base());
-}
-} // namespace kern
 } // namespace tos

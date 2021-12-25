@@ -13,8 +13,8 @@
 #include <tos/span.hpp>
 #include <tos/stack_storage.hpp>
 #include <tos/tcb.hpp>
-#include <type_traits>
 #include <tos/threading_state.hpp>
+#include <type_traits>
 
 namespace tos::this_thread {
 inline thread_id_t get_id() {
@@ -57,7 +57,9 @@ struct deleter {
         : m_stack_base{stack_base} {
     }
 
-    void destroy();
+    void destroy() {
+        delete[] get_task_base();
+    }
 
     char* get_task_base() const {
         return reinterpret_cast<char*>(m_stack_base);
@@ -67,7 +69,7 @@ struct deleter {
 };
 
 struct no_delete {
-    void destroy() {};
+    void destroy(){};
     explicit no_delete(uint8_t*) {
     }
 };
