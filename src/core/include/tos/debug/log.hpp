@@ -5,9 +5,9 @@
 #pragma once
 
 #include "detail/logger_base.hpp"
-
 #include <cstdint>
 #include <tos/compiler.hpp>
+#include <utility>
 #include <fmt/compile.h>
 
 namespace tos::debug {
@@ -68,31 +68,31 @@ ALWAYS_INLINE bool fatal(const Ts&... args) {
 }
 } // namespace tos::debug
 
-#define __S(x) #x
-#define __S_(x) __S(x)
+#define __S(x)      #x
+#define __S_(x)     __S(x)
 #define __S__LINE__ __S_(__LINE__)
 
 #if !defined(TOS_NO_LOG)
-#define LOG(...)                                                                         \
-    (::tos::debug::default_log().would_log(::tos::debug::log_level::log) &&              \
+#define LOG(...)                                                            \
+    (::tos::debug::default_log().would_log(::tos::debug::log_level::log) && \
      ::tos::debug::log("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
-#define LOG_TRACE(...)                                                                   \
-    (::tos::debug::default_log().would_log(::tos::debug::log_level::trace) &&            \
+#define LOG_TRACE(...)                                                        \
+    (::tos::debug::default_log().would_log(::tos::debug::log_level::trace) && \
      ::tos::debug::trace("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
-#define LOG_INFO(...)                                                                    \
-    (::tos::debug::default_log().would_log(::tos::debug::log_level::info) &&             \
+#define LOG_INFO(...)                                                        \
+    (::tos::debug::default_log().would_log(::tos::debug::log_level::info) && \
      ::tos::debug::info("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
-#define LOG_WARN(...)                                                                    \
-    (::tos::debug::default_log().would_log(::tos::debug::log_level::warning) &&          \
+#define LOG_WARN(...)                                                           \
+    (::tos::debug::default_log().would_log(::tos::debug::log_level::warning) && \
      ::tos::debug::warn("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
-#define LOG_ERROR(...)                                                                   \
-    (::tos::debug::default_log().would_log(::tos::debug::log_level::error) &&            \
+#define LOG_ERROR(...)                                                        \
+    (::tos::debug::default_log().would_log(::tos::debug::log_level::error) && \
      ::tos::debug::error("[" __FILE__ ":" __S__LINE__ "]", __VA_ARGS__))
 #define LOG_FORMAT(format_str, ...) LOG(fmt::format(FMT_COMPILE(format_str), __VA_ARGS__))
 #else
-#define LOG(...) false
+#define LOG(...)       false
 #define LOG_TRACE(...) false
-#define LOG_INFO(...) false
-#define LOG_WARN(...) false
+#define LOG_INFO(...)  false
+#define LOG_WARN(...)  false
 #define LOG_ERROR(...) false
 #endif
