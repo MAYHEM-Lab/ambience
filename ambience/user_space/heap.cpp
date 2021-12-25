@@ -21,8 +21,10 @@ void* operator new(size_t sz) {
     auto ptr = alloc().allocate(sz);
     if (ptr == nullptr) {
         tos::debug::do_not_optimize(&sz);
+        tos::debug::error("Allocation failure:", sz, alloc().in_use().value());
         tos::debug::panic("Allocation failure");
     }
+    // tos::debug::log("Alloc", sz, ptr, alloc().in_use().value());
     return ptr;
 }
 
