@@ -47,6 +47,13 @@ target_compile_definitions(nrf5-sdk-spim PUBLIC
         NRFX_SPIM0_ENABLED=1
         SPIM_LEGACY_SUPPORT=0)
 
+add_library(nrf5-sdk-gpiote
+        src/modules/nrfx/drivers/src/nrfx_gpiote.c)
+target_link_libraries(nrf5-sdk-gpiote PUBLIC nrf5-sdk-prs)
+target_compile_definitions(nrf5-sdk-gpiote PUBLIC
+        NRFX_GPIOTE_ENABLED=1
+        GPIOTE_LEGACY_SUPPORT=0)
+
 add_library(nrf5-sdk-nvmc
         src/modules/nrfx/drivers/src/nrfx_nvmc.c)
 target_link_libraries(nrf5-sdk-nvmc PUBLIC nrf5-sdk-prs)
@@ -61,6 +68,7 @@ target_link_libraries(nrf5-sdk-drivers INTERFACE
         nrf5-sdk-twim
         nrf5-sdk-spim
         nrf5-sdk-nvmc
+        nrf5-sdk-gpiote
         )
 
 add_library(nrf5-sdk
@@ -125,7 +133,7 @@ endif ()
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/mbr/headers)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/common)
 
-
+return()
 add_library(cc310_benchmark cc310_benchmark.cpp)
 target_link_libraries(cc310_benchmark PUBLIC nrf_cc310 ubench arch_drivers)
 add_benchmark(cc310_benchmark)
