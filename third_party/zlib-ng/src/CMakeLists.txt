@@ -986,9 +986,9 @@ endif()
 
 if(NOT DEFINED BUILD_SHARED_LIBS)
     add_library(zlib SHARED ${ZLIB_ALL_SRCS})
-    add_library(zlibstatic STATIC ${ZLIB_ALL_SRCS})
+    # add_library(zlibstatic STATIC ${ZLIB_ALL_SRCS})
 
-    set(ZLIB_INSTALL_LIBRARIES zlib zlibstatic)
+    # set(ZLIB_INSTALL_LIBRARIES zlib zlibstatic)
 else()
     add_library(zlib ${ZLIB_ALL_SRCS})
 
@@ -996,7 +996,7 @@ else()
         add_library(zlibstatic ALIAS zlib)
     endif()
 
-    set(ZLIB_INSTALL_LIBRARIES zlib)
+    # set(ZLIB_INSTALL_LIBRARIES zlib)
 endif()
 
 foreach(ZLIB_INSTALL_LIBRARY ${ZLIB_INSTALL_LIBRARIES})
