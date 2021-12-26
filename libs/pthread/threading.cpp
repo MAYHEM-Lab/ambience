@@ -31,6 +31,7 @@ struct pthread_tcb : tos::kern::tcb {
     }
 
     void start() {
+        run_on_start();
         tos::kern::enable_interrupts();
         std::invoke(entry, arg);
         join_sem.up();
