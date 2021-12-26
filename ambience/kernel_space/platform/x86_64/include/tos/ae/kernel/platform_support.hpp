@@ -59,8 +59,8 @@ public:
     }
 
     auto operator()(tos::preempt_ops::return_to_thread_from_irq_t,
-                    tos::kern::tcb& from,
-                    tos::kern::tcb& to) {
+                    tos::any_fiber& from,
+                    tos::any_fiber& to) {
         return_from = &from;
         return_to = &to;
         tos::platform::set_post_irq(
@@ -69,13 +69,13 @@ public:
 
     void do_return(tos::x86_64::exception_frame*) {
         tos::platform::reset_post_irq();
-        tos::swap_context(*return_from, *return_to, tos::int_ctx{});
+        tos::swap_fibers(*return_from, *return_to);
     }
 
     platform_group_args make_args();
 
-    tos::kern::tcb* return_from;
-    tos::kern::tcb* return_to;
+    tos::any_fiber* return_from;
+    tos::any_fiber* return_to;
 
     tos::physical_page_allocator* m_palloc;
 
