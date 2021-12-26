@@ -2,7 +2,6 @@
 
 #include <memory>
 #include <tos/concepts.hpp>
-#include <tos/function_ref.hpp>
 #include <tos/processor_context.hpp>
 
 namespace tos {
@@ -10,7 +9,29 @@ struct any_fiber {
     virtual void suspend() = 0;
     virtual void resume() = 0;
     virtual void destroy() = 0;
+
+    virtual void run_on_suspend() = 0;
+    virtual void run_on_resume() = 0;
+
+    [[noreturn]] virtual void suspend_final(context_codes code) = 0;
+
     virtual ~any_fiber() = default;
+
+    processor_context& get_processor_state() {
+        return *m_ctx;
+    }
+    void set_processor_state(processor_context& buf) {
+        m_ctx = &buf;
+    }
+
+    void suspend_final_unsafe() {
+        switch_context(*m_ctx, context_codes::suspend);
+    }
+
+protected:
+    // If the fiber is executing, this stores the context of our resumer.
+    // If the fiber is suspended, this stores the context of us.
+    processor_context* m_ctx;
 };
 
 template<class T>
@@ -21,62 +42,43 @@ concept Fiber = DerivedFrom<T, any_fiber>;
 
 template<class CrtpT>
 struct basic_fiber : any_fiber {
-    void resume() override;
+    void resume() override final;
 
     using suspend_t = void;
     template<class FnT>
     suspend_t suspend(FnT&&);
 
-    suspend_t suspend() override {
+    suspend_t suspend() override final {
         return suspend([] {});
     }
 
-    void destroy() override {}
-
-    [[noreturn]] void suspend_final(context_codes code = context_codes::suspend);
-
-    /**
-     * Returns a reference to the context of the task.
-     *
-     * The function can either be called to store the current
-     * context, or to resume execution from the context.
-     *
-     * @return execution context of the task
-     */
-    processor_context& get_processor_state() {
-        return *m_ctx;
+    void destroy() override {
     }
 
-    void set_processor_state(processor_context& buf) {
-        m_ctx = &buf;
-    }
+    [[noreturn]] void suspend_final(context_codes code = context_codes::suspend) override;
 
-    void run_on_resume() {
-        if constexpr(requires (CrtpT* t) { t->on_resume(); }) {
+    void run_on_resume() override final {
+        if constexpr (requires(CrtpT * t) { t->on_resume(); }) {
             this->self()->on_resume();
         }
     }
 
-    void run_on_suspend() {
-        if constexpr(requires (CrtpT* t) { t->on_suspend(); }) {
+    void run_on_suspend() override final {
+        if constexpr (requires(CrtpT * t) { t->on_suspend(); }) {
             this->self()->on_suspend();
         }
     }
 
     void run_on_start() {
-        if constexpr(requires (CrtpT* t) { t->on_start(); }) {
+        if constexpr (requires(CrtpT * t) { t->on_start(); }) {
             this->self()->on_start();
         }
     }
-    
+
 private:
     CrtpT* self() {
         return static_cast<CrtpT*>(this);
     }
-
-    // If the fiber is executing, this stores the context of our resumer.
-    // If the fiber is suspended, this stores the context of us.
-    processor_context* m_ctx;
 };
 
 template<Fiber FibT>
