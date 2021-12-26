@@ -24,4 +24,6 @@ void free_irq(int line);
 void set_irq(int num, irq_handler_t handler);
 void set_post_irq(tos::function_ref<void(x86_64::exception_frame*)> handler);
 void reset_post_irq();
+
+uintptr_t set_interrupt_rsp(uintptr_t stack_ptr);
 } // namespace tos::platform

@@ -328,6 +328,12 @@ void set_up_page_tables() {
 }
 } // namespace
 
+namespace tos::platform {
+uintptr_t set_interrupt_rsp(uintptr_t stack_ptr) {
+    return std::exchange(tss_.rsp[0], stack_ptr);
+}
+} // namespace tos::platform
+
 extern "C" {
 [[noreturn]] void _prestart() {
     setup_gdt();
