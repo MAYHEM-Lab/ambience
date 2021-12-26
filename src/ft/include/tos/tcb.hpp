@@ -67,4 +67,3 @@ inline std::string_view get_name(const tcb& t) {
 namespace tos {
 void swap_context(kern::tcb& current, kern::tcb& to, const no_interrupts&);
 }
-#define save_context(tcb, ctx) (tcb).set_processor_state((ctx)), save_ctx(ctx)

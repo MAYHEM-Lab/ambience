@@ -104,14 +104,14 @@ void basic_fiber<T>::resume() {
     }
 }
 
-#define save_fib_context(fib, ctx) (fib).set_processor_state((ctx)), save_ctx(ctx)
+#define save_context(fib, ctx) (fib).set_processor_state((ctx)), save_ctx(ctx)
 template<class T>
 template<class FnT>
 auto basic_fiber<T>::suspend(FnT&& before_switch) -> suspend_t {
     auto caller_ctx_ptr = m_ctx;
     processor_context ctx;
 
-    if (save_fib_context(*this, ctx) == context_codes::saved) {
+    if (save_context(*this, ctx) == context_codes::saved) {
         before_switch();
         run_on_suspend();
         switch_context(*caller_ctx_ptr, context_codes::suspend);
@@ -119,7 +119,6 @@ auto basic_fiber<T>::suspend(FnT&& before_switch) -> suspend_t {
 
     run_on_resume();
 }
-#undef save_fib_context
 
 template<class T>
 [[noreturn]] inline void basic_fiber<T>::suspend_final(context_codes code) {
