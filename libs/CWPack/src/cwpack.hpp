@@ -11,6 +11,7 @@ extern "C" {
 #include <cstddef>
 #include <string.h>
 #include <tos/span.hpp>
+#include <string_view>
 
 //#include <string>
 
@@ -22,10 +23,10 @@ class arr_packer;
 class map_packer {
 public:
     template<class ValT>
-    void insert(const char* name, ValT val);
+    void insert(std::string_view name, ValT val);
 
-    map_packer insert_map(const char* name, size_t len);
-    arr_packer insert_arr(const char* name, size_t len);
+    map_packer insert_map(std::string_view name, size_t len);
+    arr_packer insert_arr(std::string_view name, size_t len);
 
 private:
     friend class packer;
@@ -80,8 +81,7 @@ public:
         insert((uint32_t)val);
     }
 
-    void insert(const char* str);
-    void insert(span<const char> str);
+    void insert(std::string_view str);
     /*void insert(const std::string str)
     {
         return insert(str.c_str());
@@ -129,11 +129,7 @@ void packer::insert(uint32_t val) {
     cw_pack_unsigned(&m_ctx, val);
 }
 
-inline void packer::insert(const char* str) {
-    cw_pack_str(&m_ctx, str, strlen(str));
-}
-
-inline void packer::insert(tos::span<const char> str) {
+inline void packer::insert(std::string_view str) {
     cw_pack_str(&m_ctx, str.data(), str.size());
 }
 
@@ -158,7 +154,7 @@ inline map_packer::map_packer(packer& p, size_t len)
 }
 
 template<class ValT>
-void map_packer::insert(const char* name, ValT val) {
+void map_packer::insert(std::string_view name, ValT val) {
     if (m_done == m_len) {
         // TODO: error
     }
@@ -167,12 +163,12 @@ void map_packer::insert(const char* name, ValT val) {
     ++m_done;
 }
 
-map_packer map_packer::insert_map(const char* name, size_t len) {
+map_packer map_packer::insert_map(std::string_view name, size_t len) {
     m_packer.insert(name);
     return m_packer.insert_map(len);
 }
 
-arr_packer map_packer::insert_arr(const char* name, size_t len) {
+arr_packer map_packer::insert_arr(std::string_view name, size_t len) {
     m_packer.insert(name);
     return m_packer.insert_arr(len);
 }
