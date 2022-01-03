@@ -20,7 +20,7 @@ public:
         return m_used;
     }
     std::optional<size_t> peak_use() const {
-        return m_peak;
+        return peak_used_memory();
     }
     std::optional<size_t> capacity() const {
         return m_buffer.size();
