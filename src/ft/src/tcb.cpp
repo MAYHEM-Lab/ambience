@@ -1,4 +1,5 @@
 #include "tos/fiber/basic_fiber.hpp"
+#include <tos/compiler.hpp>
 #include <tos/components/threads.hpp>
 #include <tos/ft.hpp>
 #include <tos/tcb.hpp>
@@ -53,10 +54,12 @@ void yield(const no_interrupts&) {
 void block_forever() {
     kern::disable_interrupts();
     self()->suspend_final(context_codes::suspend);
+    TOS_UNREACHABLE();
 }
 
 void exit(void*) {
     kern::disable_interrupts();
     self()->suspend_final(context_codes::do_exit);
+    TOS_UNREACHABLE();
 }
 } // namespace tos::this_thread

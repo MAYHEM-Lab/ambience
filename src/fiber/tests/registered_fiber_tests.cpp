@@ -114,7 +114,7 @@ TEST_CASE("registered_fiber works with swap_fibers") {
         stack_size_t{TOS_DEFAULT_STACK_SIZE}, [&](auto& fib) {
             fib.suspend();
             REQUIRE_EQ(&fib, tos::fiber::current_fiber());
-            swap_fibers(fib, *f1, [] {});
+            swap_fibers(fib, *f1);
             REQUIRE_EQ(42, x);
             REQUIRE_EQ(&fib, tos::fiber::current_fiber());
             x = 45;

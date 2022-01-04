@@ -44,7 +44,7 @@ TEST_CASE("swap_context works") {
     REQUIRE(f1);
     auto f2 = unique(
         owning<>::start(stack_size_t{TOS_DEFAULT_STACK_SIZE},
-                        [f1 = f1.get()](auto& fib) { swap_fibers(fib, *f1, [] {}); }));
+                        [f1 = f1.get()](auto& fib) { swap_fibers(fib, *f1); }));
     REQUIRE(f2);
     f2->resume();
     REQUIRE_EQ(42, x);
