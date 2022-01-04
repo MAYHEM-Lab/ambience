@@ -187,7 +187,7 @@ async_union_caller(BaseServT& base_service,
                         auto& str = create_string(response, res);
                         const auto& r = create<result_type>(response, str);
                         create<results_union>(response, r);
-                    } else if constexpr (InstantiationOf<meta::remove_cref<decltype(res)>,
+                    } else if constexpr (tos::InstantiationOf<meta::remove_cref<decltype(res)>,
                                                         tos::span>) {
                         auto& str = create_vector(response, res);
                         const auto& r = create<result_type>(response, str);
@@ -284,7 +284,7 @@ bool union_caller(BaseServT& base_service,
                         auto& str = create_string(response, res);
                         const auto& r = create<result_type>(response, str);
                         create<results_union>(response, r);
-                    } else if constexpr (InstantiationOf<meta::remove_cref<decltype(res)>,
+                    } else if constexpr (tos::InstantiationOf<meta::remove_cref<decltype(res)>,
                                                         tos::span>) {
                         auto& str = create_vector(response, res);
                         const auto& r = create<result_type>(response, str);
