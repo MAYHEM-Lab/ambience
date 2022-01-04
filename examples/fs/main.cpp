@@ -1,25 +1,27 @@
 #include <arch/drivers.hpp>
-#include <lfs.h>
-#include <tos/expected.hpp>
-#include <tos/span.hpp>
 #include <iostream>
-#include <unistd.h>
+#include <lfs.h>
 #include <sys/mman.h>
+#include <tos/expected.hpp>
+#include <tos/ft.hpp>
+#include <tos/span.hpp>
+#include <unistd.h>
 
 enum class flash_errors
 {
 
 };
 
-using tos::span;
 using tos::expected;
+using tos::span;
 
 class in_memory_flash : public tos::non_copy_movable {
 public:
     using sector_id_t = uint16_t;
-    in_memory_flash(
-        tos::span<uint8_t> buffer,
-        size_t block_size) : m_buffer{buffer}, m_block_size{block_size} {}
+    in_memory_flash(tos::span<uint8_t> buffer, size_t block_size)
+        : m_buffer{buffer}
+        , m_block_size{block_size} {
+    }
 
     size_t sector_size_bytes() const {
         return m_block_size;
@@ -50,7 +52,6 @@ public:
     }
 
 private:
-
     span<uint8_t> sector_span(sector_id_t sector) {
         return m_buffer.slice(m_block_size * sector, m_block_size);
     }
@@ -67,6 +68,7 @@ public:
 
     ~lfs();
     lfs_t m_lfs{};
+
 private:
     lfs_config m_conf{};
     FlashT m_flash;
@@ -90,10 +92,10 @@ lfs<FlashT>::lfs(FlashT flash, bool format)
     m_conf.lookahead_buffer = new char[m_conf.lookahead_size];
 
     m_conf.read = [](const struct lfs_config* c,
-                   lfs_block_t block,
-                   lfs_off_t off,
-                   void* buffer,
-                   lfs_size_t size) {
+                     lfs_block_t block,
+                     lfs_off_t off,
+                     void* buffer,
+                     lfs_size_t size) {
         auto& self = *static_cast<lfs*>(c->context);
         auto buf = span(static_cast<uint8_t*>(buffer), size);
         auto res = self.m_flash->read(block, buf, off);
@@ -104,10 +106,10 @@ lfs<FlashT>::lfs(FlashT flash, bool format)
     };
 
     m_conf.prog = [](const struct lfs_config* c,
-                   lfs_block_t block,
-                   lfs_off_t off,
-                   const void* buffer,
-                   lfs_size_t size) {
+                     lfs_block_t block,
+                     lfs_off_t off,
+                     const void* buffer,
+                     lfs_size_t size) {
         auto& self = *static_cast<lfs*>(c->context);
         auto buf = span(static_cast<const uint8_t*>(buffer), size);
         auto res = self.m_flash->write(block, buf, off);
@@ -126,9 +128,7 @@ lfs<FlashT>::lfs(FlashT flash, bool format)
         return 0;
     };
 
-    m_conf.sync = [](const struct lfs_config* c) {
-        return 0;
-    };
+    m_conf.sync = [](const struct lfs_config* c) { return 0; };
 
     if (format) {
         lfs_format(&m_lfs, &m_conf);
@@ -140,7 +140,7 @@ lfs<FlashT>::lfs(FlashT flash, bool format)
     }
 }
 
-template <class FlashT>
+template<class FlashT>
 lfs<FlashT>::~lfs() {
     lfs_unmount(&m_lfs);
 }
@@ -149,9 +149,10 @@ lfs<FlashT>::~lfs() {
 
 void fs_task() {
     auto fd = open("/tmp/flash", O_RDWR);
-    ftruncate(fd, 64*2048);
-    auto ptr = static_cast<uint8_t*>(mmap(nullptr, 64 * 2048, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
-    in_memory_flash flash({ptr,64 * 2048}, 2048);
+    ftruncate(fd, 64 * 2048);
+    auto ptr = static_cast<uint8_t*>(
+        mmap(nullptr, 64 * 2048, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+    in_memory_flash flash({ptr, 64 * 2048}, 2048);
     tos::lfs::lfs fs(&flash);
 
     lfs_file_t file{};

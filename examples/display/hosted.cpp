@@ -3,6 +3,7 @@
 #include <tos/debug/dynamic_log.hpp>
 #include <tos/debug/sinks/clock_adapter.hpp>
 #include <tos/debug/sinks/serial_sink.hpp>
+#include <tos/ft.hpp>
 
 void display_task() {
     tos::hosted::display d({296, 128});
