@@ -128,7 +128,7 @@ struct preempter {
 };
 
 template<PreemptionContext PreemptContext>
-bool run_preemptively_for(PreemptContext& ctx, kern::tcb& thread) {
+user_reason run_preemptively_for(PreemptContext& ctx, kern::tcb& thread) {
     auto& self = *tos::self();
     auto& tmr = meta::deref(ctx(preempt_ops::get_timer));
 
@@ -169,13 +169,13 @@ bool run_preemptively_for(PreemptContext& ctx, kern::tcb& thread) {
         tos::swap_context(self, thread, tos::int_ctx{});
     });
 
-    return preempted;
+    return preempted ? user_reason::preempt : user_reason::voluntary;
 }
 
 template<PreemptionContext Ctx>
-function_ref<bool(kern::tcb&)> make_erased_preemptive_runner(Ctx& ctx) {
-    return function_ref<bool(kern::tcb&)>(
-        [](kern::tcb& thread, void* arg) -> bool {
+function_ref<user_reason(kern::tcb&)> make_erased_preemptive_runner(Ctx& ctx) {
+    return function_ref<user_reason(kern::tcb&)>(
+        [](kern::tcb& thread, void* arg) -> user_reason {
             return run_preemptively_for(*static_cast<Ctx*>(arg), thread);
         },
         &ctx);
