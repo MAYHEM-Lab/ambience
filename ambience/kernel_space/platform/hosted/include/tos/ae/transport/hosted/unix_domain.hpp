@@ -6,6 +6,7 @@
 #include <tos/ae/importer.hpp>
 #include <tos/intrusive_list.hpp>
 #include <tos/semaphore.hpp>
+#include <tos/ft.hpp>
 
 namespace tos::ae {
 

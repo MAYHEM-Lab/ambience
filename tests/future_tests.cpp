@@ -4,6 +4,7 @@
 
 #include "doctest.h"
 #include <tos/future.hpp>
+#include <tos/ft.hpp>
 
 TEST_CASE("future")
 {

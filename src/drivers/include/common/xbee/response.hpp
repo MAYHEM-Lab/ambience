@@ -11,6 +11,7 @@
 #include <stddef.h>
 #include <tos/expected.hpp>
 #include <tos/span.hpp>
+#include <cstring>
 
 namespace tos {
 namespace xbee {
