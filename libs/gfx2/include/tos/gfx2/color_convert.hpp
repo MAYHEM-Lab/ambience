@@ -20,14 +20,19 @@ mono8 color_convert(const rgb8& from);
 template<>
 binary_color color_convert(const mono8& from);
 
-template <>
+template<>
 rgb8 color_convert(const mono8& from);
 
-template <>
+template<>
 mono8 color_convert(const binary_color& from);
 
-template <>
+template<>
 rgb8 color_convert(const argb8& from);
+
+template<>
+inline binary_color color_convert(const argb8& from) {
+    return color_convert<binary_color>(color_convert<mono8>(color_convert<rgb8>(from)));
+}
 
 template<>
 inline binary_color color_convert(const rgb8& from) {
