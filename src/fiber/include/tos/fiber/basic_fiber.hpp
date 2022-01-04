@@ -3,6 +3,7 @@
 #include <memory>
 #include <tos/concepts.hpp>
 #include <tos/processor_context.hpp>
+#include <tos/function_ref.hpp>
 
 namespace tos {
 struct any_fiber {
