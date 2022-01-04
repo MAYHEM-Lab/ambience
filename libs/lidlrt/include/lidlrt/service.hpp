@@ -11,6 +11,7 @@
 #include <string_view>
 #include <tos/task.hpp>
 #include <tuple>
+#include <tos/concepts.hpp>
 
 namespace lidl {
 template<class T>
@@ -186,8 +187,8 @@ async_union_caller(BaseServT& base_service,
                         auto& str = create_string(response, res);
                         const auto& r = create<result_type>(response, str);
                         create<results_union>(response, r);
-                    } else if constexpr (std::is_same_v<meta::remove_cref<decltype(res)>,
-                                                        tos::span<uint8_t>>) {
+                    } else if constexpr (InstantiationOf<meta::remove_cref<decltype(res)>,
+                                                        tos::span>) {
                         auto& str = create_vector(response, res);
                         const auto& r = create<result_type>(response, str);
                         create<results_union>(response, r);
@@ -283,8 +284,8 @@ bool union_caller(BaseServT& base_service,
                         auto& str = create_string(response, res);
                         const auto& r = create<result_type>(response, str);
                         create<results_union>(response, r);
-                    } else if constexpr (std::is_same_v<meta::remove_cref<decltype(res)>,
-                                                        tos::span<uint8_t>>) {
+                    } else if constexpr (InstantiationOf<meta::remove_cref<decltype(res)>,
+                                                        tos::span>) {
                         auto& str = create_vector(response, res);
                         const auto& r = create<result_type>(response, str);
                         create<results_union>(response, r);
