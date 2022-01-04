@@ -19,7 +19,7 @@ jobs:
       uses: FatihBAKIR/cache@v2
       with:
         path: /opt/llvm
-        key: ${{ runner.os }}-llvm-14-a
+        key: ${{ runner.os }}-llvm-14-b
 
     - name: Cache CCache
       id: cache-ccache-dir
@@ -31,9 +31,9 @@ jobs:
     - name: Download LLVM
       if: steps.cache-llvm.outputs.cache-hit != 'true'
       run: >
-        wget http://build.a6e.org/clang-14.tar.gz &&
+        wget http://build.a6e.org/clang-14-fedora.tar.gz &&
         sudo mkdir /opt/llvm &&
-        sudo tar xf clang-14.tar.gz -C /opt/llvm
+        sudo tar xf clang-14-fedora.tar.gz -C /opt/llvm
 
     - name: Download lidlc
       run: wget http://cs.ucsb.edu/~bakir/lidlc && chmod +x lidlc && sudo mv lidlc /usr/local/bin/
