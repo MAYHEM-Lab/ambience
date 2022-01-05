@@ -14,8 +14,8 @@
 #include <tos/intrusive_list.hpp>
 #include <tos/late_constructed.hpp>
 #include <tos/lwip/lwip.hpp>
-#include <tos/track_ptr.hpp>
 #include <tos/task.hpp>
+#include <tos/track_ptr.hpp>
 
 namespace tos::lwip {
 class tcp_endpoint : public non_copyable {
@@ -29,7 +29,11 @@ public:
     void attach(EventHandlerT& cb);
 
     uint16_t send(span<const uint8_t>);
-    tos::Task<uint16_t> async_send(span<const uint8_t>);
+    tos::Task<err_t> async_send(span<const uint8_t>);
+
+    int available_send_buffer() const {
+        return tcp_sndbuf(m_conn);
+    }
 
     ~tcp_endpoint();
 
@@ -187,11 +191,11 @@ inline tcp_endpoint::tcp_endpoint(tcp_endpoint&& rhs) noexcept
 }
 
 inline tcp_endpoint::~tcp_endpoint() {
-    //    LOG_TRACE("tcp dtor called");
+    LOG_TRACE("tcp dtor called");
     if (!m_conn) {
         return;
     }
-    //    LOG_TRACE("closing");
+    LOG_TRACE("closing");
     tos::lock_guard lg{tos::lwip::lwip_lock};
 
     tcp_recv(m_conn, nullptr);
@@ -222,7 +226,7 @@ inline uint16_t tcp_endpoint::send(tos::span<const uint8_t> buf) {
     return buf.size();
 }
 
-inline tos::Task<uint16_t> tcp_endpoint::async_send(tos::span<const uint8_t> buf) {
+inline tos::Task<err_t> tcp_endpoint::async_send(tos::span<const uint8_t> buf) {
     if (!m_conn) {
         LOG_ERROR("erroneous call to send");
         co_return 0;
@@ -232,9 +236,9 @@ inline tos::Task<uint16_t> tcp_endpoint::async_send(tos::span<const uint8_t> buf
     tos::unique_lock lg{tos::lwip::lwip_lock, tos::adopt_lock};
 
     auto write_res = tcp_write(m_conn, buf.data(), buf.size(), 0);
-    //    LOG_TRACE("Write:", write_res);
+    LOG("Write:", write_res);
     if (write_res != ERR_OK) {
-        co_return 0;
+        co_return write_res;
     }
     //    auto out_res = tcp_output(m_conn);
     //    LOG_TRACE("Out:", out_res);

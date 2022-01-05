@@ -200,6 +200,12 @@ struct buffer {
         return {(const uint8_t*)m_root->payload + m_read_off, m_root->len - m_read_off};
     }
 
+    buffer pop_front() {
+        auto head = m_root;
+        m_root = pbuf_dechain(head);
+        return buffer(head);
+    }
+
 private:
     /**
      * Consumes the given number of bytes from the pbuf chain
