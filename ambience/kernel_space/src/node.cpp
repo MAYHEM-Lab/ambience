@@ -76,7 +76,7 @@ tos::result<void> kernel() {
         run_sem.down();
         auto& g = group_list.front();
         group_list.pop_front();
-        g.runner->run(g);
+        g.run();
     }
 
     return {};
