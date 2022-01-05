@@ -126,7 +126,6 @@ tos::Task<int> tcp_stream<BaseEndpointT>::async_write(tos::span<const uint8_t> b
         co_await m_busy;
         tos::unique_lock lk{m_busy, tos::adopt_lock};
         auto buffer_space = m_ep.available_send_buffer();
-        LOG(buffer_space, buf.size());
         auto sending = buf.slice(0, std::min<size_t>(buf.size(), buffer_space));
         auto to_send = co_await async_send(sending);
         if (to_send <= 0) {

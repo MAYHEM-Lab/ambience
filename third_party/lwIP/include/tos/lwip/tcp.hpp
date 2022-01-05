@@ -191,11 +191,11 @@ inline tcp_endpoint::tcp_endpoint(tcp_endpoint&& rhs) noexcept
 }
 
 inline tcp_endpoint::~tcp_endpoint() {
-    LOG_TRACE("tcp dtor called");
+    // LOG_TRACE("tcp dtor called");
     if (!m_conn) {
         return;
     }
-    LOG_TRACE("closing");
+    // LOG_TRACE("closing");
     tos::lock_guard lg{tos::lwip::lwip_lock};
 
     tcp_recv(m_conn, nullptr);
@@ -236,11 +236,10 @@ inline tos::Task<err_t> tcp_endpoint::async_send(tos::span<const uint8_t> buf) {
     tos::unique_lock lg{tos::lwip::lwip_lock, tos::adopt_lock};
 
     auto write_res = tcp_write(m_conn, buf.data(), buf.size(), 0);
-    LOG("Write:", write_res);
     if (write_res != ERR_OK) {
         co_return write_res;
     }
-    //    auto out_res = tcp_output(m_conn);
+    [[maybe_unused]] auto out_res = tcp_output(m_conn);
     //    LOG_TRACE("Out:", out_res);
     co_return buf.size();
 }
