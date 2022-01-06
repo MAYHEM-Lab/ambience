@@ -13,7 +13,7 @@ add_library(
   src/rings.cpp
 )
 target_include_directories(aecommon PUBLIC include)
-target_link_libraries(aecommon PUBLIC tos_util_core tos_caplets)
+target_link_libraries(aecommon PUBLIC tos_util_core tos_fiber tos_caplets)
 
 add_subdirectory(boot)
 add_subdirectory(user_space)
