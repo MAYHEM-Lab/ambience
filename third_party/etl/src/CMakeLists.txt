@@ -23,6 +23,7 @@ if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
    install(DIRECTORY include/${PROJECT_NAME}  DESTINATION include)
 endif()
 
+return()
 if (BUILD_TESTS)
   enable_testing()
   add_subdirectory(test) 
