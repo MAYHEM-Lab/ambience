@@ -5,6 +5,7 @@
 #include <memory>
 #include <tos/debug/detail/logger_base.hpp>
 #include <type_traits>
+#include <tos/append_only_ring.hpp>
 
 namespace tos::debug {
 constexpr auto max_event_size = 32;
@@ -67,51 +68,7 @@ private:
         uint8_t m_data[];
     };
 
-    template<class SizeType>
-    struct ring_allocator {
-        void* allocate(int size, int align = 1) {
-            auto alloc_sz = alloc_len(size, align);
-            if (m_storage.size() < alloc_sz) {
-                return nullptr;
-            }
-
-            if (std::distance(end, m_storage.end()) < alloc_sz) {
-                // wrap-around
-                // Must invalidate as many allocations as needed until we make enough
-                // space.
-            }
-
-            auto sz = new (end) SizeType(alloc_sz);
-            end = end + sz;
-            return sz + 1;
-        }
-
-        int alloc_len(int size, int align) {
-            return sizeof(SizeType) + size;
-        }
-
-        void free(void*) {
-            // free is a no-op
-        }
-
-        Generator<std::pair<void*, SizeType>> allocations() {
-            uint8_t* first = head;
-
-            do {
-                auto len = *reinterpret_cast<SizeType*>(first);
-                co_yield std::pair<void*, int>(first, len);
-                first += len;
-            } while (first != tail);
-        }
-
-        // [size of allocation] [...data...] [size of next allocation] [...data...]
-        span<uint8_t> m_storage;
-        uint8_t* head = nullptr;
-        uint8_t* tail = nullptr;
-        uint8_t* end = m_storage.begin();
-    };
-
-    ring_allocator<uint8_t> m_alloc;
+    append_only_ring<uint8_t> m_alloc;
 };
 
 struct string_event {
