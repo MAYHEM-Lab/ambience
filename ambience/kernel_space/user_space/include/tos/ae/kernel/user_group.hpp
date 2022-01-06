@@ -14,8 +14,6 @@ struct user_group : group {
     void notify_downcall();
     void clear_runnable();
 
-    int host_to_guest_queue_depth() const;
-
 private:
     bool m_runnable = false;
 };
