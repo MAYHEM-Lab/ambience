@@ -1,9 +1,14 @@
 namespace tos::ae;
 
-service group {
-    health_probe() -> bool;
+service user_group {
+    current_heap_use() -> u64;
+    peak_heap_use() -> u64;
+    heap_capacity() -> u64;
+
+    current_concurrency() -> u64;
+    max_concurrency() -> u64;
+
+    iface_capacity() -> u64;
+    queue_depth() -> u64;
 }
 
-service base_service {
-    health_probe() -> bool;
-}

@@ -1,6 +1,8 @@
+#include <group_generated.hpp>
 #include <list>
 #include <memory>
 #include <tos/ae/detail/syscall.hpp>
+#include <tos/ae/group.hpp>
 #include <tos/ae/user_space.hpp>
 #include <tos/debug/detail/logger_base.hpp>
 #include <tos/debug/log.hpp>
@@ -9,6 +11,36 @@
 #include <tos/memory.hpp>
 
 extern tos::ae::interface iface;
+
+namespace {
+struct user_group_impl : tos::ae::user_group::async_server {
+    tos::Task<uint64_t> current_heap_use() override {
+        co_return tos::ae::default_allocator().in_use().value();
+    }
+    tos::Task<uint64_t> peak_heap_use() override {
+        co_return tos::ae::default_allocator().peak_use().value();
+    }
+    tos::Task<uint64_t> heap_capacity() override {
+        co_return tos::ae::default_allocator().capacity().value();
+    }
+    tos::Task<uint64_t> current_concurrency() override {
+        co_return tos::ae::concurrency.get()[1];
+    }
+    tos::Task<uint64_t> max_concurrency() override {
+        co_return tos::ae::concurrency.get()[2];
+    }
+    tos::Task<uint64_t> iface_capacity() override {
+        co_return iface.size;
+    }
+    tos::Task<uint64_t> queue_depth() override {
+        co_return iface.host_to_guest_queue_depth();
+    }
+};
+} // namespace
+
+tos::Task<tos::ae::user_group::async_server*> init_user_group() {
+    co_return new user_group_impl;
+}
 
 tos::Task<void> task();
 
