@@ -66,6 +66,14 @@ ALWAYS_INLINE bool fatal(const Ts&... args) {
     return false;
 #endif
 }
+
+template<template<class...> class TupleT, class... Ts>
+bool log_tuple(const TupleT<Ts...>& tuple) {
+    return [&]<size_t... Is>(std::index_sequence<Is...>) {
+        return log(get<Is>(tuple)...);
+    }
+    (std::make_index_sequence<sizeof...(Ts)>());
+}
 } // namespace tos::debug
 
 #define __S(x)      #x
