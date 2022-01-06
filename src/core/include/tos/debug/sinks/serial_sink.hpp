@@ -54,7 +54,7 @@ public:
     }
 
     void add(double d) override {
-        tos::print(*m_serial, d, "");
+//        tos::print(*m_serial, d, "");
     }
 
     void end() override {
