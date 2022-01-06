@@ -21,8 +21,8 @@ inline uint64_t read_rbp() {
 }
 
 inline uint64_t read_rip() {
-    uint64_t res;
-    asm volatile("movq %%rip, %0" : "=r"(res));
+    uint64_t res=0;
+    // asm volatile("movq %%rip, %0" : "=r"(res));
     return res;
 }
 

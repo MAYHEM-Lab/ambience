@@ -20,8 +20,4 @@ std::optional<trace_elem> backtrace_next(uint64_t rbp) {
 
     return trace_elem{.rbp = prev_rbp, .rip = prev_rip};
 }
-
-trace_elem backtrace_current() {
-    return trace_elem{.rbp = read_rbp(), .rip = read_rip()};
-}
 } // namespace tos::x86_64
