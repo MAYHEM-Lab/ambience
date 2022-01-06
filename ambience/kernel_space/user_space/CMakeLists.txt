@@ -3,6 +3,7 @@ add_library(ae_usergroup
     include/tos/ae/kernel/user_group.hpp  
     src/user_group.cpp
     src/rings.cpp
+    src/downcall.cpp
 )
 
 target_include_directories(ae_usergroup PUBLIC include)

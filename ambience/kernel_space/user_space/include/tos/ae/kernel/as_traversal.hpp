@@ -21,8 +21,7 @@ struct procedure_decision {
                                                       const void* args_tuple,
                                                       void* ret_ptr) {
         auto& typed_tuple = *static_cast<const ArgsTupleType*>(args_tuple);
-        auto res = cur_arch::create_share(
-            from_space, to_space, typed_tuple);
+        auto res = cur_arch::create_share(from_space, to_space, typed_tuple);
         return std::make_unique<decltype(res)>(std::move(res));
     }
 };
@@ -39,15 +38,17 @@ struct sharer_vtbl {
 
 namespace detail {
 template<class ServiceT, std::size_t... Is>
-auto make_downcall_sharer(std::index_sequence<Is...>) {
-    static constexpr sharer_vtbl vtbl[] = {
-        sharer_vtbl{&procedure_decision<ServiceT, Is>::do_share}...};
-    return tos::span<const sharer_vtbl>(vtbl);
+inline constexpr auto vtbl = std::array<sharer_vtbl, sizeof...(Is)>{
+    sharer_vtbl{&procedure_decision<ServiceT, Is>::do_share}...};
+
+template<class ServiceT, std::size_t... Is>
+constexpr auto make_downcall_sharer(std::index_sequence<Is...>) {
+    return tos::span<const sharer_vtbl>(vtbl<ServiceT, Is...>);
 }
 } // namespace detail
 
 template<class ServiceT>
-auto make_downcall_sharer() {
+constexpr auto make_downcall_sharer() {
     using ServDesc = lidl::service_descriptor<ServiceT>;
 
     return detail::make_downcall_sharer<ServiceT>(

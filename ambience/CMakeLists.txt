@@ -3,8 +3,6 @@ add_library(
   src/common.cpp
   include/tos/ae/service_host.hpp
   include/tos/ae/group.hpp
-  include/tos/ae/transport/downcall.hpp
-  include/tos/ae/transport/upcall.hpp
   include/tos/ae/caplets_service_host.hpp
   include/tos/ae/registry.hpp
   include/tos/ae/exporter.hpp
