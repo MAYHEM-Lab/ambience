@@ -20,6 +20,7 @@
 #include <tos/x86_64/port.hpp>
 #include <tos/x86_64/syscall.hpp>
 #include <tos/x86_64/tss.hpp>
+#include <tos/debug/trace/metrics/counter.hpp>
 
 extern "C" {
 void __cxa_atexit(void (*)(void*), void*, void*) {
@@ -348,9 +349,9 @@ extern "C" {
     TOS_UNREACHABLE();
 }
 
+tos::trace::basic_counter woke;
 extern void (*start_ctors[])(void);
 extern void (*end_ctors[])(void);
-
 [[noreturn]] [[gnu::used]] [[gnu::force_align_arg_pointer]] void _post_start() {
     write_cr0(read_cr0() | 1 << 16); // WP bit, makes write protect work in ring0
 
@@ -393,9 +394,11 @@ extern void (*end_ctors[])(void);
 
             if (res == tos::exit_reason::power_down) {
                 hlt();
+                woke.inc();
             }
             if (res == tos::exit_reason::idle) {
                 hlt();
+                woke.inc();
             }
             if (res == tos::exit_reason::yield) {
             }
