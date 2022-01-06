@@ -13,6 +13,10 @@ namespace tos::ae::kernel {
 struct kernel_interface {
     tos::ae::interface* user_iface;
     uint16_t req_last_seen = 0;
+
+    int guest_to_host_queue_depth() const {
+        return user_iface->guest_to_host_queue_depth(req_last_seen);
+    }
 };
 
 template<class ExecutorT>

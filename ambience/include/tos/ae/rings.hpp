@@ -153,6 +153,9 @@ struct interface {
         }
     }
 
+    int host_to_guest_queue_depth() const;
+    int guest_to_host_queue_depth(uint16_t last_seen) const;
+
     interface(int size, ring_elem* elems, ring* guest_to_host, ring* host_to_guest)
         : size{size}
         , elems{elems}
@@ -274,6 +277,7 @@ template<bool FromHost>
 void req_elem::awaiter<FromHost>::await_suspend(std::coroutine_handle<> handle) {
     ref = coro_resumer(handle);
     el->user_ptr = &ref;
+    // tos::debug::log("Submitting", this->iface, el->user_ptr);
     submit_elem<FromHost>(*this->iface, this->id);
 }
 
@@ -282,6 +286,7 @@ template<Fiber FibT>
 void req_elem::awaiter<FromHost>::fiber_suspend(FibT& fib) {
     ref = fiber_resumer(fib);
     el->user_ptr = &ref;
+    // tos::debug::log("Submitting", this->iface, el->user_ptr);
     submit_elem<FromHost>(*this->iface, this->id);
     fib.suspend();
 }

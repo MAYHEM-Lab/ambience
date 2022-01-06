@@ -10,6 +10,7 @@ add_library(
   include/tos/ae/exporter.hpp
   include/tos/ae/importer.hpp
   include/tos/ae/detail/handle_req.hpp
+  src/rings.cpp
 )
 target_include_directories(aecommon PUBLIC include)
 target_link_libraries(aecommon PUBLIC tos_util_core tos_caplets)
