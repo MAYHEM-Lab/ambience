@@ -17,6 +17,7 @@ kvstore_mod = ambictl.LidlModule("//ambience/services/impls/social_media/kvstore
 networking_mod = ambictl.LidlModule("//ambience/services/impls/social_media/networking.lidl", "networking_schema")
 weather_sensor_mod = ambictl.LidlModule("//ambience/services/interfaces/weather_sensor.lidl", "weather_sensor_schema")
 dns_mod = ambictl.LidlModule("//ambience/services/interfaces/dns.lidl", "dns_schema")
+group_mod = ambictl.LidlModule("//ambience/services/interfaces/group.lidl", "group_schema")
 
 calc_if = calculator_mod.get_service("tos::ae::services::calculator")
 logger_if = logger_mod.get_service("tos::services::logger")
@@ -35,6 +36,14 @@ bytestore_if = kvstore_mod.get_service("tos::ae::services::ByteStore")
 udp_socket_if = networking_mod.get_service("tos::services::udp_socket")
 weather_sensor_if = weather_sensor_mod.get_service("tos::ae::services::weather_sensor")
 dns_if = dns_mod.get_service("tos::ae::services::dns")
+user_group_if = group_mod.get_service("tos::ae::user_group")
+
+user_group = user_group_if.implement(
+    name="user_group",
+    cmake_target="ae_user_space",
+    sync=False,
+    deps={}
+)
 
 timestamp = nullaryfn_if.implement(
     name="timestamp",
