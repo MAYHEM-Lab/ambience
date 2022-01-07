@@ -38,8 +38,19 @@ jobs:
     - name: Build
       run: ninja
       working-directory: /tmp/docs
+      
     - name: Upload docs
       uses: FatihBAKIR/upload-artifact@v2
       with:
         name: tosdoc
         path: /tmp/docs/tosdoc.tar.gz
+    
+    - name: Deploy
+      uses: appleboy/scp-action@master
+      with:
+        host: docs.a6e.org
+        username: fatih
+        port: 22
+        key: ${{ secrets.DOCS_DEPLOY_KEY }}
+        source: "/tmp/docs/*"
+        target: "/home/fatih/docs.a6e.org/www"
