@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tos/compiler.hpp>
+#include <cstdint>
 
 namespace tos::arm {
 inline bool interrupts_disabled() {
