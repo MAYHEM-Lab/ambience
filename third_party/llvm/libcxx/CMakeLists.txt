@@ -11,6 +11,7 @@ add_library(tos_libcxx
     src/atomic.cpp
     src/mutex.cpp
     src/condition_variable.cpp
+    src/new.cpp
 
     include/algorithm
     include/array
