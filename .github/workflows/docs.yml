@@ -46,7 +46,8 @@ jobs:
         path: /tmp/docs/tosdoc.tar.gz
         
     - name: Setup key
-      run: echo "$DOCS_DEPLOY_KEY" > /tmp/deploykey
+      run: 'echo "$DOCS_DEPLOY_KEY" > /tmp/deploykey'
+      shell: bash
       env:
         DOCS_DEPLOY_KEY: ${{ secrets.DOCS_DEPLOY_KEY }}
         
