@@ -55,4 +55,4 @@ jobs:
         DOCS_DEPLOY_KEY: ${{ secrets.DOCS_DEPLOY_KEY }}
         
     - name: Deploy
-      run: scp -v -oKexAlgorithms=+diffie-hellman-group1-sha1 -i /tmp/deploykey /tmp/docs fatih@docs.a6e.org:/home/fatih/docs.a6e.org/www/$GITHUB_SHA
+      run: scp -v -o StrictHostKeyChecking=no -oKexAlgorithms=+diffie-hellman-group1-sha1 -i /tmp/deploykey /tmp/docs fatih@docs.a6e.org:/home/fatih/docs.a6e.org/www/$GITHUB_SHA
