@@ -44,8 +44,11 @@ jobs:
       with:
         name: tosdoc
         path: /tmp/docs/tosdoc.tar.gz
-    
-    - name: Deploy
-      run: echo $DOCS_DEPLOY_KEY > /tmp/deploykey && chmod 600 /tmp/deploykey && scp -i /tmp/deploykey /tmp/docs fatih@docs.a6e.org:/home/fatih/docs.a6e.org/www/$GITHUB_SHA
+        
+    - name: Setup key
+      run: echo $DOCS_DEPLOY_KEY > /tmp/deploykey
       env:
         DOCS_DEPLOY_KEY: ${{ secrets.DOCS_DEPLOY_KEY }}
+        
+    - name: Deploy
+      run: chmod 600 /tmp/deploykey && scp -i /tmp/deploykey /tmp/docs fatih@docs.a6e.org:/home/fatih/docs.a6e.org/www/$GITHUB_SHA
