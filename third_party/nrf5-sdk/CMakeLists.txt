@@ -135,6 +135,16 @@ endif ()
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/mbr/headers)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/common)
 
+target_compile_options(nrf5-sdk PRIVATE 
+-Wno-gnu-zero-variadic-macro-arguments
+-Wno-expansion-to-defined
+-Wno-extra-semi
+)
+
+target_compile_options(nrf5-sdk-gpiote PRIVATE
+-Wno-gnu-zero-variadic-macro-arguments
+)
+
 return()
 add_library(cc310_benchmark cc310_benchmark.cpp)
 target_link_libraries(cc310_benchmark PUBLIC nrf_cc310 ubench arch_drivers)
