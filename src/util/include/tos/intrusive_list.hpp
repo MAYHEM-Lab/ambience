@@ -20,6 +20,15 @@ public:
     list_node() = default; // NOLINT
     list_node<T>* prev; // NOLINT
     list_node<T>* next; // NOLINT
+
+    bool is_linked() const {
+        return prev != nullptr && next != nullptr;
+    }
+
+    void unlink() {
+        prev = nullptr;
+        next = nullptr;
+    }
 };
 
 struct through_base {
