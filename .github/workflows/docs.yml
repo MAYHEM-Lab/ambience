@@ -46,11 +46,6 @@ jobs:
         path: /tmp/docs/tosdoc.tar.gz
     
     - name: Deploy
-      uses: FatihBAKIR/scp-action@master
-      with:
-        host: docs.a6e.org
-        username: fatih
-        port: 22
-        key: ${{ secrets.DOCS_DEPLOY_KEY }}
-        source: "/tmp/docs/"
-        target: "/home/fatih/docs.a6e.org/www"
+      run: echo $DOCS_DEPLOY_KEY > /tmp/deploykey && chmod 600 /tmp/deploykey && scp -i /tmp/deploykey /tmp/docs fatih@docs.a6e.org:/home/fatih/docs.a6e.org/www/$GITHUB_SHA
+      env:
+        DOCS_DEPLOY_KEY: ${{ secrets.DOCS_DEPLOY_KEY }}
