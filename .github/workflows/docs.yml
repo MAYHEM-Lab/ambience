@@ -52,5 +52,5 @@ jobs:
         username: fatih
         port: 22
         key: ${{ secrets.DOCS_DEPLOY_KEY }}
-        source: "/tmp/docs/*"
+        source: "/tmp/docs/"
         target: "/home/fatih/docs.a6e.org/www"
