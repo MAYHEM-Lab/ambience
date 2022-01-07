@@ -46,7 +46,7 @@ jobs:
         path: /tmp/docs/tosdoc.tar.gz
     
     - name: Deploy
-      uses: appleboy/scp-action@master
+      uses: FatihBAKIR/scp-action@master
       with:
         host: docs.a6e.org
         username: fatih
