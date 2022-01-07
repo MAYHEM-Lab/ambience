@@ -23,12 +23,7 @@ namespace debug {
  * logged and the system will be rebooted.
  *
  * Should be used only for fatal errors such as broken invariants.
- *
- * @tparam ErrorTagType type for an explanation for the crash
  */
-TOS_NO_OPTIMIZE [[noreturn]] inline void panic(const char* err) {
-    tos::debug::fatal(err);
-    tos::platform::force_reset();
-}
+[[noreturn]] void panic(const char* err);
 } // namespace debug
 } // namespace tos

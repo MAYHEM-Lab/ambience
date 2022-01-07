@@ -83,7 +83,9 @@ add_library(tos_debug
         include/tos/debug/debug.hpp
         include/tos/debug/stack_dump.hpp
         include/tos/debug/panic.hpp
-        src/debug.cpp)
+        src/debug.cpp
+        src/panic.cpp
+)
 target_link_libraries(tos_debug PUBLIC tos_debug_core tos_util_core tos_debug_log tos_platform tos_ft)
 
 add_library(tos_build_info
