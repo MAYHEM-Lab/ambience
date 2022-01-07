@@ -93,7 +93,9 @@ add_library(nrf5-sdk
         src/components/libraries/atomic_flags/nrf_atflags.c
         src/components/libraries/atomic/nrf_atomic.c
         src/components/libraries/sha256/sha256.c
-        src/components/libraries/pwr_mgmt/nrf_pwr_mgmt.c)
+        src/components/libraries/pwr_mgmt/nrf_pwr_mgmt.c
+        src/components/libraries/strerror/nrf_strerror.c
+)
 target_link_libraries(nrf5-sdk PUBLIC cmsis::core tos::libc)
 
 target_include_directories(nrf5-sdk PUBLIC include)
