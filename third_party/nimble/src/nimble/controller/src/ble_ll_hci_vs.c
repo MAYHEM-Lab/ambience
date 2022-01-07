@@ -107,6 +107,8 @@ ble_ll_hci_vs_register(struct ble_ll_hci_vs_cmd *cmds, uint32_t num_cmds)
     }
 }
 
+#include <os/util.h>
+
 void
 ble_ll_hci_vs_init(void)
 {
