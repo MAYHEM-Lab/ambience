@@ -1,7 +1,0 @@
-add_lidlc(caplets_bench_schema caplets_benchmark.lidl)
-add_lidl_dependency(caplets_bench_schema caplets_schema)
-add_lidl_dependency(caplets_bench_schema caplets_timeout_schema)
-
-add_library(caplets_bench bench.cpp)
-target_link_libraries(caplets_bench PUBLIC caplets_bench_schema tos_caplets ubench)
-add_benchmark(caplets_bench)

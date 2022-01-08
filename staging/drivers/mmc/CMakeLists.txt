@@ -1,1 +1,0 @@
-add_subdirectory(bcm283x_sdhost EXCLUDE_FROM_ALL)

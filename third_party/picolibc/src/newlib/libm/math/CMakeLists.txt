@@ -1,6 +1,0 @@
-target_sources(picolibc PRIVATE s_ceil.c)
-target_sources(picolibc PRIVATE sf_ceil.c)
-target_sources(picolibc PRIVATE e_sqrt.c)
-target_sources(picolibc PRIVATE ef_sqrt.c)
-target_sources(picolibc PRIVATE w_sqrt.c)
-target_sources(picolibc PRIVATE wf_sqrt.c)

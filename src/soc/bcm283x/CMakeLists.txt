@@ -1,2 +1,0 @@
-add_library(soc_bcm283x INTERFACE)
-target_include_directories(soc_bcm283x INTERFACE include)

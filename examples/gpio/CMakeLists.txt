@@ -1,2 +1,0 @@
-add_executable(portable_gpio main.cpp)
-target_link_libraries(portable_gpio PUBLIC tos_core tos_usart tos_print avr_drivers)

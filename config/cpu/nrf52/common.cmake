@@ -1,6 +1,0 @@
-set(TOS_ARCH arm)
-set(TOS_PLATFORM nrf52)
-set(TOS_DRIVERS nrf52)
-SET(TOS_CPU_ARCH cortex-m4)
-set(TOS_DEF_STACK 2048)
-set(TOS_TOOLCHAIN nrf52Toolchain)

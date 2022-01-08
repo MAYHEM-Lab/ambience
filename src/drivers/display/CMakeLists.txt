@@ -1,2 +1,0 @@
-add_subdirectory(stm32f7_ltdc)
-add_subdirectory(vga_text)

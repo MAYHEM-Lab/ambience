@@ -1,3 +1,0 @@
-add_executable(ring_tests ring_tests.cpp)
-target_link_libraries(ring_tests PRIVATE aecommon standalone_tests_main)
-add_test(NAME ring_tests COMMAND ring_tests)

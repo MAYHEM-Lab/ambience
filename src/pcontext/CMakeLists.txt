@@ -1,3 +1,0 @@
-add_library(tos_pcontext pcontext.cpp include/tos/processor_context.hpp)
-target_include_directories(tos_pcontext PUBLIC include)
-target_link_libraries(tos_pcontext PUBLIC tos_arch_core)

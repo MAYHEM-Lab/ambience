@@ -1,3 +1,0 @@
-add_library(flatbuffers INTERFACE)
-target_include_directories(flatbuffers INTERFACE include)
-target_link_libraries(flatbuffers INTERFACE base_libcxx)

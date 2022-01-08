@@ -1,8 +1,0 @@
-$lidlmeta:
-  name: tos::ae::boot
-
-boot_record:
-  type: structure
-  members:
-    offset: u64
-    boot_once: bool

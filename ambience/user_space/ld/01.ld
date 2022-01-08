@@ -1,6 +1,0 @@
-MEMORY {
-    ROM(rx) : ORIGIN = 0x8000000 + 128K, LENGTH = 96K
-    RAM(rw) : ORIGIN = 0x20000000 + 64K, LENGTH = 32K
-}
-
-INCLUDE group.ld

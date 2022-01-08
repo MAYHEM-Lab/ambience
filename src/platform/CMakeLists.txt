@@ -1,2 +1,0 @@
-add_subdirectory(${TOS_PLATFORM})
-set(TOS_PLATFORM_NAME ${TOS_PLATFORM} PARENT_SCOPE)

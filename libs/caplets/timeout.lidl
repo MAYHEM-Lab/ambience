@@ -1,9 +1,0 @@
-namespace caplets;
-
-struct Time {
-    ts: u64;
-}
-
-struct TimeoutConstraint {
-    expires_at: Time;
-}

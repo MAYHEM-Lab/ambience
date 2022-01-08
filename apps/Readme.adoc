@@ -1,3 +1,0 @@
-= Applications
-
-This folder is used to build applications with tos.

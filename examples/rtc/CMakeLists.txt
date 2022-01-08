@@ -1,2 +1,0 @@
-add_executable(stm32_rtc_demo main.cpp)
-target_link_libraries(stm32_rtc_demo PRIVATE tos_board stm32l4_rtc tos_dynamic_log tos_core)

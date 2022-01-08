@@ -1,9 +1,0 @@
-namespace tos::ae::services;
-
-import "tos_i2c";
-
-service i2c {
-    receive(addr: u8, data: span<u8>) -> tos::twi_rx_res;
-
-    transmit(addr: u8, data: span<u8>) -> tos::twi_tx_res;
-}

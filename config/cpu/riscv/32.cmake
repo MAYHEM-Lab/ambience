@@ -1,5 +1,0 @@
-set(TOS_ARCH riscv)
-set(TOS_PLATFORM riscv)
-#set(TOS_DRIVERS raspi3)
-set(TOS_DEF_STACK 8192*4)
-set(TOS_TOOLCHAIN RiscVToolchain)

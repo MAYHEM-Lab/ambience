@@ -1,5 +1,0 @@
-#include <{{header_path}}>
-
-namespace {{namespace}} {
-{{definitions}}
-} // namespace {{namespace}}

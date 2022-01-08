@@ -1,62 +1,8 @@
-ColumnLimit: 90
-IndentWidth: 4
-UseTab: Never
-
-AccessModifierOffset: -4
-BreakInheritanceList: BeforeComma
-BreakConstructorInitializers: BeforeComma
-
-NamespaceIndentation: None
-CompactNamespaces: false
-
-MaxEmptyLinesToKeep: 2
-
+# Run manually to reformat a file:
+# clang-format -i --style=file <file>
+Language: Cpp
+BasedOnStyle: Google
+IndentPPDirectives: AfterHash
+IndentCaseLabels: false
+AlwaysBreakTemplateDeclarations: false
 DerivePointerAlignment: false
-PointerAlignment: Left
-
-BinPackParameters: false
-BinPackArguments: false
-
-BreakBeforeBraces: Custom
-BraceWrapping:
-  AfterEnum: true
-  AfterStruct: false
-  AfterClass: false
-  SplitEmptyFunction: false
-  AfterControlStatement: false
-  AfterFunction: false
-  AfterNamespace: false
-  AfterExternBlock: false
-
-IncludeBlocks: Regroup
-SortIncludes: true
-
-IncludeCategories:
-  - Regex: '^(tos|common)/'
-    Priority: 1
-    SortPriority: 1
-  - Regex: '^(arch)/'
-    Priority: 2
-    SortPriority: 2
-  - Regex:           '.*'
-    Priority:        1
-    SortPriority:    0
-SpaceAfterLogicalNot: false
-SpaceAfterTemplateKeyword: false
-SpaceBeforeAssignmentOperators: true
-SpaceBeforeInheritanceColon: true
-SpaceBeforeParens: ControlStatements
-SpaceBeforeRangeBasedForLoopColon: true
-SpaceBeforeCpp11BracedList: false
-
-AllowShortLoopsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: None
-AllowShortLambdasOnASingleLine: true
-
-AlwaysBreakTemplateDeclarations: Yes
-
-AlignConsecutiveMacros: true
-AlignEscapedNewlines: true
-Standard: c++20
-
-ReflowComments: true

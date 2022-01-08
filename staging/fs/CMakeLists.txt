@@ -1,2 +1,0 @@
-add_subdirectory(vfs)
-add_subdirectory(cc32xx_nwp_fs)

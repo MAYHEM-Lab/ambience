@@ -1,2 +1,0 @@
-add_library(tos_mappedromfs mappedromfs.cpp)
-target_link_libraries(tos_mappedromfs PUBLIC tos_vfs)

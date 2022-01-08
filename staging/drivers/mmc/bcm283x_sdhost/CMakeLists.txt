@@ -1,3 +1,0 @@
-add_library(bcm283x_sdhost bcm283x_sdhost.cpp)
-target_include_directories(bcm283x_sdhost PUBLIC include)
-target_link_libraries(bcm283x_sdhost PUBLIC tos_drivers soc_bcm283x)

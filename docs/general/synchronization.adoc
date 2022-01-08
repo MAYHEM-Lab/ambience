@@ -1,7 +1,0 @@
-= Synchronization
-
-== Semaphores
-
-== Mutex
-
-== Events

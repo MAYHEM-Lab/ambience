@@ -1,1 +1,0 @@
-add_subdirectory(stm32f7_dma2d)

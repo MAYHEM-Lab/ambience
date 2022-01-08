@@ -1,3 +1,0 @@
-repo: https://github.com/boostorg/hana
-commit-hash: 07b42492765f7384e053c4761f4d0eda32b75834
-version: 1.6.0

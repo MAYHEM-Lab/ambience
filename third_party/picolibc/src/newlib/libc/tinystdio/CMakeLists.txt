@@ -1,5 +1,0 @@
-target_sources(picolibc PRIVATE vsnprintf.c)
-target_sources(picolibc PRIVATE filestrput.c)
-target_sources(picolibc PRIVATE vfprintf.c)
-target_sources(picolibc PRIVATE fputc.c)
-target_sources(picolibc PRIVATE snprintf.c)

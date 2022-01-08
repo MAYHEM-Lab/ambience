@@ -1,3 +1,0 @@
-add_library(nrf52_thingy_board INTERFACE)
-target_link_libraries(nrf52_thingy_board INTERFACE nrf52_drivers)
-target_include_directories(nrf52_thingy_board INTERFACE "..")

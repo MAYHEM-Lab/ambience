@@ -1,1 +1,0 @@
-target_sources(aekernel PRIVATE kernel.cpp syscall.cpp)

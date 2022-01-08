@@ -1,2 +1,0 @@
-add_subdirectory(hts221)
-add_subdirectory(bme280)

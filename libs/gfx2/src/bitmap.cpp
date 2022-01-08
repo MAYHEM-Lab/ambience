@@ -1,1 +1,0 @@
-#include <tos/gfx2/bitmap.hpp>

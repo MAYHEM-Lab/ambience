@@ -1,2 +1,0 @@
-target_sources(ae_user_space PRIVATE syscall.cpp)
-target_link_libraries(ae_user_space PRIVATE arch_x86_64)
