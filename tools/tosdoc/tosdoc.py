@@ -94,6 +94,7 @@ if __name__ == "__main__":
     ninja = Writer(open(os.path.join(build_dir, "build.ninja"), "w"))
     ninja.rule(name="tosdocc", command=make_compile_command(root_dir))
     ninja.rule(name="compress", command="tar zcf tosdoc.tar.gz -C {} $in".format(build_dir))
+    ninja.rule(name="sass", command="sass --no-source-map --style compressed $in $out")
 
     input_dirs = []
     implicits = []
@@ -111,9 +112,14 @@ if __name__ == "__main__":
         input_dirs.append(reldir)
         implicits.append(outpath)
         ninja.build(rule="tosdocc", inputs=[file], outputs=[outpath])
+    
+    assets_outputs = ["assets/tosdoc.css"]
 
-    shutil.rmtree(os.path.join(build_dir, "assets"), ignore_errors=True)
-    shutil.copytree(os.path.join(script_dir, "assets"), os.path.join(build_dir, "assets"))
+    ninja.build(
+        rule="sass", 
+        inputs=[os.path.join(script_dir, "tosdoc.scss")], 
+        outputs=assets_outputs
+    )
 
     print("Generating index...")
     index = make_index([os.path.relpath(file, root_dir).split(os.path.sep) for file in files])
@@ -122,7 +128,7 @@ if __name__ == "__main__":
 
     ninja.build(
         rule="compress",
-        inputs=list(set(input_dirs)) + ["index.html", "assets"] + generated,
+        inputs=list(set(input_dirs)) + ["index.html"] + assets_outputs + generated,
         outputs=[os.path.join(build_dir, "tosdoc.tar.gz")],
         implicit=implicits)
 

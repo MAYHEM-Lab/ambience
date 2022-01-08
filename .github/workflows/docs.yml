@@ -28,6 +28,12 @@ jobs:
     - name: Install requirements
       run: pip3 install -r $GITHUB_WORKSPACE/tools/tosdoc/requirements.txt
 
+    - name: Install sass
+      run: |
+        wget https://github.com/sass/dart-sass/releases/download/1.47.0/dart-sass-1.47.0-linux-x64.tar.gz
+        tar xf dart-sass-1.47.0-linux-x64.tar.gz
+        sudo mv dart-sass/sass /usr/bin/
+
     - name: Create build dir
       run: mkdir /tmp/docs
     
