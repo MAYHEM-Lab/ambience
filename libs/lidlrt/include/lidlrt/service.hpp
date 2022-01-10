@@ -536,6 +536,16 @@ struct zerocopy_type<uint32_t> {
 template<>
 struct zerocopy_type<const uint32_t&> : zerocopy_type<uint32_t> {};
 
+template<>
+struct zerocopy_type<uint64_t> {
+    using type = uint64_t;
+    static type make_param(const uint64_t& t) {
+        return t;
+    }
+};
+template<>
+struct zerocopy_type<const uint64_t&> : zerocopy_type<uint64_t> {};
+
 template<class T>
 using zerocopy_type_t = typename zerocopy_type<T>::type;
 
