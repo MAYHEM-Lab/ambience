@@ -41,6 +41,11 @@ public:
         m_sem.down();
     }
 
+    template<class AlarmT>
+    sem_ret lock(AlarmT& alarm, std::chrono::milliseconds ms) noexcept {
+        return m_sem.down(alarm, ms);
+    }
+
     void lock(Fiber auto& fib) noexcept {
         m_sem.down(fib);
     }
@@ -88,6 +93,34 @@ public:
         m_base_mutex.lock();
         m_depth = 1;
         m_current_holder = tos::this_thread::get_id();
+    }
+
+    template<class AlarmT>
+    sem_ret lock(AlarmT& alarm, std::chrono::milliseconds ms) noexcept {
+        if (m_current_holder == tos::this_thread::get_id()) {
+            ++m_depth;
+            return sem_ret::normal;
+        }
+        auto res = m_base_mutex.lock(alarm, ms);
+        if (res != sem_ret::normal) {
+            return res;
+        }
+        m_depth = 1;
+        m_current_holder = tos::this_thread::get_id();
+        return sem_ret::normal;
+    }
+
+    bool try_lock() noexcept {
+        if (m_current_holder == tos::this_thread::get_id()) {
+            ++m_depth;
+            return true;
+        }
+        if (!m_base_mutex.try_lock()) {
+            return false;
+        }
+        m_depth = 1;
+        m_current_holder = tos::this_thread::get_id();
+        return true;
     }
 
     tos::Task<void> async_lock() noexcept {
