@@ -41,18 +41,18 @@ void timer0::set_frequency(uint16_t hertz) {
 void timer0::write_ticks(uint32_t ticks) {
     nrfx_timer_compare(&tmrs[m_idx], NRF_TIMER_CC_CHANNEL0, ticks, true);
     nrfx_timer_clear(&tmrs[m_idx]);
-    tos::kern::refresh_interrupts();
+    // tos::kern::refresh_interrupts();
 }
 
 void timer0::enable() {
-    nrfx_timer_enable(&tmrs[m_idx]);
     write_ticks(m_ticks);
-    tos::kern::refresh_interrupts();
+    nrfx_timer_enable(&tmrs[m_idx]);
+    // tos::kern::refresh_interrupts();
 }
 
 void timer0::disable() {
     nrfx_timer_disable(&tmrs[m_idx]);
-    tos::kern::refresh_interrupts();
+    // tos::kern::refresh_interrupts();
 }
 
 uint32_t timer0::get_counter() const {
