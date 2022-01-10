@@ -1,0 +1,168 @@
+= TOOLCHAIN NOTES
+
+== Programmer Part
+. Make file ambience/services/interfaces/random.lidl and add
+  
+  namespace tos::ae::services;
+  service Random {
+      get_random() -> i32;
+  }
+
+. Make directory ambience/services/impls/basic_random/
+.. Make file ambience/services/impls/basic_random.cpp and add
+
+  #include "tos/task.hpp"
+  #include <cstdint>
+  #include <random_generated.hpp>
+  namespace tos::ae::services {
+     namespace {
+         struct basic_random : Random::async_server {
+             tos::Task<int32_t> get_random() override {
+                 co_return 1;
+             }
+         };
+     }
+  }
+  tos::Task<tos::ae::services::Random::async_server*> init_basic_random() {
+     co_return new tos::ae::services::basic_random;
+  }
+ 
+.. Make file ambience/services/impls/basic_random/CMakeLists.txt and add
+  
+  add_service(basic_random random basic_random.cpp)
+
+. Make file ambience/services/interfaces/calc.lidl
+
+  namespace tos::ae::services;
+  service calculator {
+      add(x: i32, y: i32) -> i32;
+      mult(x: i32, y: i32) -> i32;
+  }
+
+. Make directory ambience/services/impls/basic_calc/
+.. Make file ambience/services/impls/basic_calc/impl.cpp and add
+
+  #include <calc_generated.hpp>
+  #include <tos/task.hpp>
+  namespace {
+  struct impl : tos::ae::services::calculator::async_server {
+     tos::Task<int32_t> add(const int32_t& x, const int32_t& y) override {
+         co_return x + y;
+     }
+     tos::Task<int32_t> mult(const int32_t& x, const int32_t& y) override {
+         co_return x * y;
+     }
+  };
+  } // namespace
+  tos::Task<tos::ae::services::calculator::async_server*> init_basic_calc() {
+     co_return new impl;
+  }
+ 
+.. Make file ambience/services/impls/basic_calc/CMakeLists.txt and add
+
+  add_service(basic_calc calc impl.cpp)
+
+. Run the toolchain by passing in both interfaces and implementations.
+
+== Toolchain Part
+. Add to ambience/ambictl/.ambience/boilerplate.py
+
+  calculator_mod = ambictl.LidlModule("//ambience/services/interfaces/calc.lidl", "calc_schema")
+  random_mod = ambictl.LidlModule("//ambience/services/interfaces/random.lidl", "random_schema")
+
+  calc_if = calculator_mod.get_service("tos::ae::services::calculator")
+  random_if = random_mod.get_service("tos::ae::services::Random")
+
+  basic_calc = calc_if.implement(
+     name="basic_calc",
+     cmake_target="basic_calc",
+     sync=False,
+     deps={
+     }
+  )
+
+  basic_random = random_if.implement(
+     name="basic_random",
+     cmake_target="basic_random",
+     sync=False,
+     deps={}
+  )
+
+. Add to ambience/services/interfaces/CMakeLists.txt
+
+  add_lidlc(calc_schema calc.lidl)
+  add_lidlc(random_schema random.lidl)
+  
+. Add to ambience/services/impls/CMakeLists.txt
+
+  add_subdirectory(basic_calc)
+  add_subdirectory(basic_random)
+
+. Make directory ambience/ambictl/sierra_app_deployment/
+.. Make file ambience/ambictl/sierra_app_deployment/services.py and add
+
+  serv_instance(
+     name="rand",
+     serv=basic_random,
+     deps={
+     }
+  )
+
+  serv_instance(
+     name="calc",
+     serv=basic_calc,
+     deps={
+     }
+  )
+
+  export(
+     service="rand",
+     networks={
+         "udp-internet": 1230
+     }
+  )
+
+  export(
+     service="calc",
+     networks={
+         "udp-internet": 1231
+     }
+  )
+
+.. Make file ambience/ambictl/sierra_app_deployment/nodes.py and add
+
+  node(
+     name="vm",
+     platform="x86_64_pc",
+     exporters=[
+     exporter(
+         network="udp-internet",
+         address="127.0.0.1",
+         native=LwipUdpExporter
+     ),
+  ])
+
+.. Make file ambience/ambictl/sierra_app_deployment/placement.py and add
+
+  deploy(
+     node="vm",
+     groups=["", "rand", "calc"]
+  )
+
+. From cmake-build-barex64, run 
+
+  cmake ..
+  ninja basic_random
+
+. From ambience/ambictl/ run 
+
+  python3 ./build.py sierra_app_deployment
+
+. From /tos/ambience/services/interfaces/ run
+
+  /ambience/bin/lidlc -g py -f random.lidl -o '.'
+  /ambience/bin/lidlc -g py -f calc.lidl -o '.'
+
+. From tos/ run
+
+  qemu-system-x86_64 -cdrom /tmp/sierra/mydeployment/cmake-build-barex64/iso/vm-iso.iso -serial stdio -display none -no-reboot -no-shutdown -device virtio-net,netdev=network0,mac=66:66:66:66:66:66,host_mtu=65535 -netdev user,id=network0,hostfwd=udp::1230-:1230,hostfwd=udp::1231-:1231
