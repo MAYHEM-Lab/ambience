@@ -1,4 +1,7 @@
+#include "common.hpp"
 #include "tos/debug/log.hpp"
+#include "tos/interrupt.hpp"
+#include <chrono>
 #include <new>
 #include <nimble/nimble_npl.h>
 #include <tos/intrusive_list.hpp>
@@ -27,33 +30,55 @@ struct event : list_node<event> {
 
 struct event_queue {
     void push_event(event& ev) {
+        tos::int_guard ig;
         events.push_back(ev);
         sem.up();
     }
 
-    void remove_event(event& ev) {
+    bool remove_event(event& ev) {
+        tos::int_guard ig;
+
+        if (!ev.is_linked()) {
+            return false;
+        }
+
         auto down_res = try_down_isr(sem);
 
         if (!down_res) {
-            LOG_ERROR("");
-            return;
+            return false;
         }
 
         auto it = events.unsafe_find(ev);
         events.erase(it);
 
         ev.unlink();
+        return true;
     }
 
     bool empty() const {
         return events.empty();
     }
 
-    event& pop() {
-        sem.down();
+    event* pop() {
+        tos::int_guard ig;
+        sem.down(ig);
         auto& res = events.front();
         events.pop_front();
-        return res;
+        res.unlink();
+        return &res;
+    }
+
+    template<class... Args>
+    event* pop(Args&&... args) {
+        tos::int_guard ig;
+        auto down_res = sem.down(std::forward<Args>(args)..., ig);
+        if (down_res != sem_ret::normal) {
+            return nullptr;
+        }
+        auto& res = events.front();
+        events.pop_front();
+        res.unlink();
+        return &res;
     }
 
 private:
@@ -73,11 +98,24 @@ tos::nimble::event_queue& get_event_queue(ble_npl_eventq* ev) {
 
 extern "C" {
 void ble_npl_eventq_init(struct ble_npl_eventq* evq) {
+    static_assert(sizeof(tos::nimble::event_queue) <= BLE_NPL_EVENTQ_SIZE);
     new (&evq->buffer) tos::nimble::event_queue;
+    evq->initd = 0x12345678;
 }
 
 struct ble_npl_event* ble_npl_eventq_get(struct ble_npl_eventq* evq, ble_npl_time_t tmo) {
-    return get_event_queue(evq).pop().self();
+    if (tmo == BLE_NPL_TIME_FOREVER) {
+        return get_event_queue(evq).pop()->self();
+    } else if (tmo == 0) {
+        LOG_ERROR("Dunno");
+    } else {
+        auto el =
+            get_event_queue(evq).pop(*tos::nimble::alarm, std::chrono::milliseconds(tmo));
+        if (el) {
+            return el->self();
+        }
+    }
+    return nullptr;
 }
 
 void ble_npl_eventq_put(struct ble_npl_eventq* evq, struct ble_npl_event* ev) {
@@ -85,11 +123,15 @@ void ble_npl_eventq_put(struct ble_npl_eventq* evq, struct ble_npl_event* ev) {
 }
 
 void ble_npl_eventq_remove(struct ble_npl_eventq* evq, struct ble_npl_event* ev) {
+    tos::int_guard ig;
     get_event_queue(evq).remove_event(get_event(ev));
 }
 
 void ble_npl_event_init(struct ble_npl_event* ev, ble_npl_event_fn* fn, void* arg) {
-    new (&ev->buffer) tos::nimble::event(fn, arg);
+    static_assert(sizeof(tos::nimble::event) <= BLE_NPL_EVENT_SIZE);
+    auto ptr = new (&ev->buffer) tos::nimble::event(fn, arg);
+    ev->initd = 0x12345678;
+    Assert(ptr->self() == ev);
 }
 
 bool ble_npl_event_is_queued(struct ble_npl_event* ev) {
