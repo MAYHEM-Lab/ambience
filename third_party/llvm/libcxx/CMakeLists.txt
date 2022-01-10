@@ -12,6 +12,8 @@ add_library(tos_libcxx
     src/mutex.cpp
     src/condition_variable.cpp
     src/new.cpp
+    src/exception.cpp
+    src/stdexcept.cpp
 
     include/algorithm
     include/array

@@ -11,7 +11,7 @@ set(LIBCXXABI_SOURCES
   cxa_virtual.cpp
   # C++ STL files
   stdlib_exception.cpp
-  stdlib_stdexcept.cpp
+  # stdlib_stdexcept.cpp
   stdlib_typeinfo.cpp
   # Internal files
   abort_message.cpp
