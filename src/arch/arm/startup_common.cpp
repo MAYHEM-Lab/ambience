@@ -2,6 +2,7 @@
 #include <tos/arm/startup_common.hpp>
 #include <tos/compiler.hpp>
 #include <tos/memory.hpp>
+#include <cstring>
 
 extern "C" {
 extern uint64_t _sidata;
