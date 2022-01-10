@@ -4,7 +4,9 @@
 
 #include <app_util_platform.h>
 #include <nrf.h>
+#include <nrf52840.h>
 #include <nrf_pwr_mgmt.h>
+#include <system_nrf52840.h>
 #include <tos/arm/exception.hpp>
 #include <tos/interrupt.hpp>
 #include <tos/scheduler.hpp>
@@ -14,9 +16,13 @@
 #include "nrf_soc.h"
 #endif // SOFTDEVICE_PRESENT
 
+#include <tos/debug/trace/metrics/counter.hpp>
+
+tos::trace::basic_counter systicks;
+
 void tos_main();
 extern "C" void SysTick_Handler() {
-    while (true);
+    systicks.inc();
 }
 
 extern "C" void HardFault_Handler() {
@@ -71,6 +77,10 @@ extern "C" int main() {
     SCB->SHCSR |= SCB_SHCSR_BUSFAULTENA_Msk;
 
     SCB->SCR |= SCB_SCR_SEVONPEND_Msk;
+
+    SysTick_Config(SystemCoreClock / (1000 * 50));
+    NVIC_EnableIRQ(SysTick_IRQn);
+    NVIC_SetPriority(SysTick_IRQn, 0);
 
     tos_main();
 

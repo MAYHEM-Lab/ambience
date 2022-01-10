@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "ble.hpp"
 #include "flash.hpp"
 #include "gpio.hpp"
 #include "radio.hpp"

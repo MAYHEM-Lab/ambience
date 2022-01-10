@@ -12,8 +12,8 @@
 #include <tos/event.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/intrusive_list.hpp>
-#include <tos/thread.hpp>
 #include <tos/scheduler.hpp>
+#include <tos/thread.hpp>
 
 namespace tos {
 struct sleeper : list_node<sleeper> {
@@ -22,7 +22,6 @@ struct sleeper : list_node<sleeper> {
         , m_fun(fun) {
     }
 
-private:
     uint16_t sleep_ticks;
     function_ref<void()> m_fun;
 
@@ -82,6 +81,10 @@ public:
         return m_sleepers.insert(it, s);
     }
 
+    alarm_handle unsafe_find_handle(sleeper& s) {
+        return m_sleepers.unsafe_find(s);
+    }
+
     void cancel(alarm_handle it) {
         tos::int_guard no_int;
 
@@ -104,17 +107,24 @@ public:
     uint16_t time_to_ticks(std::chrono::milliseconds time) const {
         return time.count();
     }
+    
+    int sleeper_count() const {
+        return m_sleepers.size();
+    }
 
+    bool running = false;
 private:
     void start() {
         (*m_timer)->set_callback(
             {[](void* data) { static_cast<alarm*>(data)->tick_handler(); }, this});
         (*m_timer)->set_frequency(1000 / m_period);
         (*m_timer)->enable();
+        running = true;
     }
 
     void stop() {
         (*m_timer)->disable();
+        running = false;
     }
 
     void tick_handler() {
@@ -137,7 +147,8 @@ private:
         }
     }
 
-    int m_period = 1; // in milliseconds
+public:
+    const int m_period = 1; // in milliseconds
     intrusive_list<sleeper> m_sleepers;
     T m_timer;
 };
@@ -200,6 +211,8 @@ struct any_alarm {
      */
     virtual uint16_t time_to_ticks(std::chrono::milliseconds time) const = 0;
 
+    virtual alarm_handle unsafe_find_handle(sleeper& s) = 0;
+
     virtual ~any_alarm() = default;
 };
 
@@ -218,6 +231,10 @@ public:
         tos::this_thread::sleep_for(m_base_alarm, dur);
     }
 
+    alarm_handle unsafe_find_handle(sleeper& s) override {
+        return m_base_alarm->unsafe_find_handle(s);
+    }
+
     alarm_handle set_alarm(sleeper& s) override {
         return m_base_alarm->set_alarm(s);
     }
@@ -234,13 +251,12 @@ public:
         return m_base_alarm->time_to_ticks(time);
     }
 
-private:
     T m_base_alarm;
 };
 } // namespace detail
 
 template<class AlarmT>
-std::unique_ptr<any_alarm> erase_alarm(AlarmT&& alarm) {
+std::unique_ptr<detail::erased_alarm<AlarmT>> erase_alarm(AlarmT&& alarm) {
     return std::make_unique<detail::erased_alarm<AlarmT>>(std::forward<AlarmT>(alarm));
 }
 
