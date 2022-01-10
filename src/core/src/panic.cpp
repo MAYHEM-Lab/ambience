@@ -1,6 +1,7 @@
 #include "tos/compiler.hpp"
 #include <tos/arch.hpp>
 #include <tos/debug/panic.hpp>
+#include <tos/platform.hpp>
 
 namespace tos::debug {
 TOS_NO_OPTIMIZE
