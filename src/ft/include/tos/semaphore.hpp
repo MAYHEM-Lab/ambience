@@ -1,13 +1,14 @@
 #pragma once
 
+#include "tos/interrupt.hpp"
 #include <chrono>
 #include <common/alarm.hpp>
 #include <tos/barrier.hpp>
 #include <tos/cancellation_token.hpp>
 #include <tos/compiler.hpp>
 #include <tos/function_ref.hpp>
-#include <tos/waitable.hpp>
 #include <tos/threading_state.hpp>
+#include <tos/waitable.hpp>
 
 namespace tos {
 enum class sem_ret
@@ -59,7 +60,7 @@ public:
      * blocks the calling thread if the counter is
      * negative
      */
-    void down() & noexcept;
+    void down(const tos::int_guard& = tos::int_guard{}) & noexcept;
 
     /**
      * A temporary semaphore can't be blocked on
@@ -67,7 +68,8 @@ public:
      */
     void down() && = delete;
 
-    sem_ret down(cancellation_token& cancel) noexcept;
+    sem_ret down(cancellation_token& cancel,
+                 const tos::int_guard& = tos::int_guard{}) noexcept;
 
     void down(Fiber auto& fib) & noexcept;
 
@@ -85,7 +87,9 @@ public:
      * @return reason for the return
      */
     template<class AlarmT>
-    sem_ret down(AlarmT& alarm, std::chrono::milliseconds ms) noexcept;
+    sem_ret down(AlarmT& alarm,
+                 std::chrono::milliseconds ms,
+                 const tos::int_guard& = tos::int_guard{}) noexcept;
 
     /**
      * Initializes a semaphore with the given value
@@ -224,21 +228,20 @@ inline void semaphore_base<CountT>::down(Fiber auto& fib) & noexcept {
 }
 
 template<class CountT>
-inline void semaphore_base<CountT>::down() & noexcept {
+inline void semaphore_base<CountT>::down(const tos::int_guard& ni) & noexcept {
     detail::memory_barrier();
-    tos::int_guard ig(__builtin_return_address(0));
     m_count = m_count - 1;
     if (m_count < 0) {
-        m_wait.wait(ig);
+        m_wait.wait(ni);
     }
     detail::memory_barrier();
 }
 
 template<class CountT>
-sem_ret semaphore_base<CountT>::down(cancellation_token& cancel) noexcept {
+sem_ret semaphore_base<CountT>::down(cancellation_token& cancel,
+                                     const tos::int_guard& ig) noexcept {
     sem_ret res = sem_ret::normal;
     detail::memory_barrier();
-    tos::int_guard ig(__builtin_return_address(0));
     --m_count;
     if (m_count < 0) {
         auto wait_res = m_wait.wait(ig, cancel);
@@ -254,13 +257,14 @@ sem_ret semaphore_base<CountT>::down(cancellation_token& cancel) noexcept {
 template<class CountT>
 template<class AlarmT>
 sem_ret semaphore_base<CountT>::down(AlarmT& alarm,
-                                     std::chrono::milliseconds ms) noexcept {
+                                     std::chrono::milliseconds ms,
+                                     const tos::int_guard& ig) noexcept {
     cancellation_token token = cancellation_token::system().nest();
 
     sleeper s{uint16_t(ms.count()), make_canceller(token)};
     auto handle = alarm.set_alarm(s);
 
-    auto ret_val = down(token);
+    auto ret_val = down(token, ig);
 
     if (ret_val == sem_ret::normal) {
         alarm.cancel(handle);
