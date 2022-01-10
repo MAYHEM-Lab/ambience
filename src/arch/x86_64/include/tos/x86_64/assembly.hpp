@@ -6,6 +6,10 @@
 #include <tos/compiler.hpp>
 
 namespace tos::x86_64 {
+inline void nop() {
+    asm volatile("nop");
+}
+
 inline void breakpoint() {
     asm volatile("int3");
 }
