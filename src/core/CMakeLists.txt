@@ -78,6 +78,7 @@ add_library(tos_debug_core
         src/debug/core_assert.cpp)
 target_link_libraries(tos_debug_core PUBLIC tos_util_core tos_platform)
 target_include_directories(tos_debug_core PUBLIC include)
+target_link_libraries(tos_debug_core PRIVATE tos_debug)
 
 add_library(tos_debug
         include/tos/debug/debug.hpp
