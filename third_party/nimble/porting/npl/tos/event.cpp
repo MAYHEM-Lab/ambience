@@ -32,7 +32,7 @@ struct event_queue {
     void push_event(event& ev) {
         tos::int_guard ig;
         events.push_back(ev);
-        sem.up();
+        sem.up(ig);
     }
 
     bool remove_event(event& ev) {

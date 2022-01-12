@@ -74,6 +74,7 @@ void ble_npl_callout_stop(struct ble_npl_callout* co) {
 }
 
 bool ble_npl_callout_is_active(struct ble_npl_callout* co) {
+    tos::int_guard ig;
     return get_timer_info(co).s.has_value();
 }
 
