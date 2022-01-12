@@ -7,10 +7,13 @@
 #include "nimble/nimble_port.h"
 #include "tos/debug/debug.hpp"
 #include "tos/self_pointing.hpp"
+#include "tos/semaphore.hpp"
 #include "tos/stack_storage.hpp"
 #include "tos/thread.hpp"
+#include <cmath>
 #include <host/ble_hs.h>
 #include <host/util/util.h>
+#include <etl/list.h>
 #include <nimble/ble.h>
 #include <random>
 #include <services/gap/ble_svc_gap.h>
@@ -76,6 +79,18 @@ static uint16_t conn_handle;
 /* adv_event() calls advertise(), so forward declaration is required */
 static void advertise(void);
 
+tos::semaphore log_sem{0};
+etl::list<std::string, 100> log_strs;
+
+void async_log_task() {
+    while (true) {
+        log_sem.down();
+        auto str = std::move(log_strs.front());
+        log_strs.pop_front();
+        LOG(str);
+    }
+}
+
 tos::semaphore adv_sem{0};
 static int adv_event(struct ble_gap_event* event, void* arg) {
     switch (event->type) {
@@ -87,9 +102,13 @@ static int adv_event(struct ble_gap_event* event, void* arg) {
         break;
     case BLE_GAP_EVENT_CONNECT:
         assert(event->connect.status == 0);
-        LOG_FORMAT("connection {}; status={}",
-                   event->connect.status == 0 ? "established" : "failed",
-                   event->connect.status);
+        log_strs.push_back(
+            fmt::format(FMT_COMPILE("connection {}; status={}; {}"),
+                        event->connect.status == 0 ? "established" : "failed",
+                        event->connect.status,
+                        event->connect.conn_handle));
+        log_sem.up();
+        conn_handle = event->connect.conn_handle;
         break;
     case BLE_GAP_EVENT_CONN_UPDATE_REQ:
         /* connected device requests update of connection parameters,
@@ -160,8 +179,10 @@ void entry() {
     auto alarm = tos::erase_alarm(tos::alarm{&tim});
     tos::nimble::alarm = alarm.get();
 
+    tos::launch(tos::alloc_stack, async_log_task);
+
     LOG("Booted!!");
-    
+
     NRF_CLOCK->TASKS_LFCLKSTOP = 1;
     NRF_CLOCK->LFCLKSRC = 0;
     NRF_CLOCK->TASKS_LFCLKSTART = 1;
@@ -175,6 +196,8 @@ void entry() {
     tos::launch(ll_stak, nimble_port_ll_task_func, nullptr);
     tos::launch(hs_stak, nimble_port_run);
 
+    static std::atomic<bool> sync = false;
+
     ble_hs_cfg.sync_cb = [] {
         LOG("Sync callback");
         auto rc = ble_hs_util_ensure_addr(0);
@@ -185,11 +208,14 @@ void entry() {
         int len = 6;
         ble_hs_id_copy_addr(g_own_addr_type, mac.addr.data(), &len);
         LOG(tos::span<const uint8_t>(mac.addr));
-
-        advertise();
+        sync = true;
+        adv_sem.up_isr();
     };
 
-    ble_hs_cfg.reset_cb = [](auto x) { LOG("Reset callback", x); };
+    ble_hs_cfg.reset_cb = [](auto x) {
+        sync = false;
+        LOG("Reset callback", x);
+    };
 
     auto rc = ble_svc_gap_device_name_set(device_name);
     LOG(rc);
@@ -197,6 +223,9 @@ void entry() {
     while (true) {
         using namespace std::chrono_literals;
         adv_sem.down();
+        if (!sync) {
+            continue;
+        }
         // alarm->sleep_for(10s);
         // LOG("Wake",
         //     systicks.get(),
