@@ -92,20 +92,20 @@ terminate() _NOEXCEPT
     __terminate(get_terminate());
 }
 
-extern "C" {
-new_handler __cxa_new_handler = 0;
-}
+// extern "C" {
+// new_handler __cxa_new_handler = 0;
+// }
 
-new_handler
-set_new_handler(new_handler handler) _NOEXCEPT
-{
-    return __libcpp_atomic_exchange(&__cxa_new_handler, handler, _AO_Acq_Rel);
-}
+// new_handler
+// set_new_handler(new_handler handler) _NOEXCEPT
+// {
+//     return __libcpp_atomic_exchange(&__cxa_new_handler, handler, _AO_Acq_Rel);
+// }
 
-new_handler
-get_new_handler() _NOEXCEPT
-{
-    return __libcpp_atomic_load(&__cxa_new_handler, _AO_Acquire);
-}
+// new_handler
+// get_new_handler() _NOEXCEPT
+// {
+//     return __libcpp_atomic_load(&__cxa_new_handler, _AO_Acquire);
+// }
 
 }  // std
