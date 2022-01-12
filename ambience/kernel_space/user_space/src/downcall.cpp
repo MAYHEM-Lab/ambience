@@ -18,10 +18,11 @@ auto downcall_transport::execute(int proc_id, const void* args, void* res) -> aw
                    .id = id,
                    .transport = this,
                    .orig_args = args,
+                   .proc_id = proc_id,
                    .keep_args_alive = std::move(translated_args)};
 }
 
 downcall_transport::awaiter::~awaiter() {
-    transport->ipc_area_vtbl[m_elem->procid].finalize(*keep_args_alive, orig_args);
+    transport->ipc_area_vtbl[proc_id].finalize(*keep_args_alive, orig_args);
 }
 } // namespace tos::ae

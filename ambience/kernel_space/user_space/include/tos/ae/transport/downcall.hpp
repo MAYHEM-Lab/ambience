@@ -28,6 +28,7 @@ struct downcall_transport {
         int id;
         downcall_transport* transport;
         const void* orig_args;
+        int proc_id;
         std::unique_ptr<quik::share_base> keep_args_alive;
     };
 
