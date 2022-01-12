@@ -98,7 +98,7 @@ target_sources(nimble PRIVATE
     src/porting/nimble/src/os_msys_init.c
 )
 
-target_compile_options(nimble PRIVATE -fno-lto -fno-whole-program-vtables)
+# target_compile_options(nimble PRIVATE -fno-lto -fno-whole-program-vtables)
 target_link_libraries(nimble PUBLIC tos::libc nrf5-sdk)
 
 # target_include_directories(nimble PUBLIC include)
