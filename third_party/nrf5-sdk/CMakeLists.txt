@@ -73,28 +73,19 @@ target_link_libraries(nrf5-sdk-drivers INTERFACE
 
 add_library(nrf5-sdk
         src/modules/nrfx/mdk/system_nrf52.c
-        src/components/ble/ble_advertising/ble_advertising.c
-        src/components/ble/nrf_ble_gatt/nrf_ble_gatt.c
-        src/components/ble/nrf_ble_qwr/nrf_ble_qwr.c
-        src/components/ble/common/ble_advdata.c
-        src/components/ble/common/ble_conn_params.c
-        src/components/ble/common/ble_conn_state.c
-        src/components/ble/common/ble_srv_common.c
         src/components/libraries/util/app_error.c
         src/components/libraries/util/app_error_handler_gcc.c
         src/components/libraries/util/app_error_weak.c
-        src/components/ble/ble_services/ble_nus/ble_nus.c
-        src/components/softdevice/common/nrf_sdh_ble.c
-        src/components/softdevice/common/nrf_sdh.c
-        src/components/libraries/experimental_section_vars/nrf_section_iter.c
         src/components/libraries/timer/app_timer.c
         src/components/libraries/util/app_util_platform.c
-        src/components/ble/ble_link_ctx_manager/ble_link_ctx_manager.c
+
         src/components/libraries/atomic_flags/nrf_atflags.c
         src/components/libraries/atomic/nrf_atomic.c
         src/components/libraries/sha256/sha256.c
         src/components/libraries/pwr_mgmt/nrf_pwr_mgmt.c
         src/components/libraries/strerror/nrf_strerror.c
+
+        src/components/libraries/experimental_section_vars/nrf_section_iter.c
 )
 target_link_libraries(nrf5-sdk PUBLIC cmsis::core tos::libc)
 
@@ -117,23 +108,43 @@ target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/libraries/exper
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/libraries/util)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/libraries/pwr_mgmt)
 target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/libraries/mutex)
-target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble)
-target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble/common)
-target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble/ble_link_ctx_manager)
-target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble/nrf_ble_gatt)
-target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble/ble_advertising)
-target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble/nrf_ble_qwr)
-target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble/ble_services/ble_nus)
-#target_include_directories(nrf5-sdk ${SDK_ PUBLICRnts/drivers_nrf/nrf_soc_nosd)
-message(STATUS ${NRF52_SOFTDEV})
-if (${NRF52_SOFTDEV} MATCHES "S140")
-    target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/s140/headers)
-endif ()
-if (${NRF52_SOFTDEV} MATCHES "S132")
-    target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/s132/headers)
-endif ()
-target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/mbr/headers)
-target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/common)
+
+if (NRF52_SOFTDEV)
+    target_sources(nrf5-sdk PRIVATE
+        src/components/ble/ble_advertising/ble_advertising.c
+        src/components/ble/nrf_ble_gatt/nrf_ble_gatt.c
+        src/components/ble/nrf_ble_qwr/nrf_ble_qwr.c
+        src/components/ble/common/ble_advdata.c
+        src/components/ble/common/ble_conn_params.c
+        src/components/ble/common/ble_conn_state.c
+        src/components/ble/common/ble_srv_common.c
+        src/components/ble/ble_services/ble_nus/ble_nus.c
+        src/components/softdevice/common/nrf_sdh_ble.c
+        src/components/softdevice/common/nrf_sdh.c
+        src/components/ble/ble_link_ctx_manager/ble_link_ctx_manager.c
+    )
+
+    target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble)
+    target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble/common)
+    target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble/ble_link_ctx_manager)
+    target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble/nrf_ble_gatt)
+    target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble/ble_advertising)
+    target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble/nrf_ble_qwr)
+    target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/ble/ble_services/ble_nus)
+
+    #target_include_directories(nrf5-sdk ${SDK_ PUBLICRnts/drivers_nrf/nrf_soc_nosd)
+    message(STATUS ${NRF52_SOFTDEV})
+    if (${NRF52_SOFTDEV} MATCHES "S140")
+        target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/s140/headers)
+    endif ()
+    if (${NRF52_SOFTDEV} MATCHES "S132")
+        target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/s132/headers)
+    endif ()
+    target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/mbr/headers)
+    target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/softdevice/common)
+else()
+    target_include_directories(nrf5-sdk SYSTEM PUBLIC src/components/drivers_nrf/nrf_soc_nosd/)
+endif()
 
 target_compile_options(nrf5-sdk PRIVATE 
 -Wno-gnu-zero-variadic-macro-arguments
