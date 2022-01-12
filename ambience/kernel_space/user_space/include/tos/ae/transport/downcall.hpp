@@ -22,9 +22,12 @@ struct downcall_transport {
     struct awaiter {
         req_elem::awaiter<true> operator co_await();
 
+        ~awaiter();
+
         req_elem* m_elem;
         int id;
-        kernel::user_group* g;
+        downcall_transport* transport;
+        const void* orig_args;
         std::unique_ptr<quik::share_base> keep_args_alive;
     };
 

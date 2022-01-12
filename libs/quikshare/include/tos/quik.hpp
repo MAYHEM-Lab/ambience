@@ -77,6 +77,12 @@ struct sharer<lidl::message_builder*> {
         auto res_ptr = res.direct_mapped();
         return new (res_ptr) lidl::message_builder(newspan);
     }
+
+    template<class ShareT>
+    static void
+    finalize(ShareT&, lidl::message_builder& orig, lidl::message_builder& copy) {
+        orig = copy;
+    }
 };
 
 template<>
@@ -164,12 +170,40 @@ auto perform_share(ShareT& share,
     return share.template allocate<std::tuple<DataPtrTs...>>(
         sharer<DataPtrTs>::do_share(share, lidl::extract(std::get<Is>(in_ptrs)))...);
 }
+
+template<class ShareT, class... DataPtrTs, std::size_t... Is>
+auto finalize(ShareT& share,
+              const std::tuple<DataPtrTs...>& in_ptrs,
+              const std::tuple<DataPtrTs...>& out_ptrs,
+              std::index_sequence<Is...>) {
+    auto l = []<class T>(ShareT& share, T& i, T& o) {
+        if constexpr (requires(T) { sharer<T>::finalize(share, i, o); }) {
+            sharer<T>::finalize(share, i, o);
+        }
+    };
+    (l(share,
+       lidl::extract(std::get<Is>(in_ptrs)),
+       lidl::extract(std::get<Is>(out_ptrs))),
+     ...);
+}
 } // namespace detail
 
 template<class... DataPtrTs>
 size_t compute_size(const std::tuple<DataPtrTs...>& in_ptrs) {
     return detail::compute_size(in_ptrs,
                                 std::make_index_sequence<sizeof...(DataPtrTs)>{});
+}
+
+template<class ShareT, class... DataPtrTs>
+auto finalize(ShareT& share,
+              const std::tuple<DataPtrTs...>& in_ptrs,
+              const std::tuple<DataPtrTs...>& out_ptrs) {
+    if constexpr (sizeof...(DataPtrTs) == 0) {
+        return;
+    }
+
+    return detail::finalize(
+        share, in_ptrs, out_ptrs, std::make_index_sequence<sizeof...(DataPtrTs)>{});
 }
 
 template<class ShareT, class... DataPtrTs>

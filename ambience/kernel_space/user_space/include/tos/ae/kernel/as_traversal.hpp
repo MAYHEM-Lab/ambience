@@ -24,6 +24,12 @@ struct procedure_decision {
         auto res = cur_arch::create_share(from_space, to_space, typed_tuple);
         return std::make_unique<decltype(res)>(std::move(res));
     }
+
+    static void finalize(quik::share_base& share, const void* in_args) {
+        auto& typed_in_tuple = *static_cast<const ArgsTupleType*>(in_args);
+        auto& typed_out_tuple = *static_cast<const ArgsTupleType*>(share.get_tuple_ptr());
+        quik::finalize(share, typed_in_tuple, typed_out_tuple);
+    }
 };
 
 struct sharer_vtbl {
@@ -33,13 +39,17 @@ struct sharer_vtbl {
                                               const void*,
                                               void*);
 
+    using finalize_fn = void (*)(quik::share_base&, const void*);
+
     do_share_fn do_share;
+    finalize_fn finalize;
 };
 
 namespace detail {
 template<class ServiceT, std::size_t... Is>
 inline constexpr auto vtbl = std::array<sharer_vtbl, sizeof...(Is)>{
-    sharer_vtbl{&procedure_decision<ServiceT, Is>::do_share}...};
+    sharer_vtbl{&procedure_decision<ServiceT, Is>::do_share,
+                &procedure_decision<ServiceT, Is>::finalize}...};
 
 template<class ServiceT, std::size_t... Is>
 constexpr auto make_downcall_sharer(std::index_sequence<Is...>) {
