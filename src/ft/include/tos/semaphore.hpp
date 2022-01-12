@@ -43,7 +43,7 @@ public:
      *
      * From ISRs, prefer calling `up_isr`
      */
-    void up() noexcept;
+    void up(const no_interrupts& ni = tos::int_guard{}) noexcept;
 
     /**
      * Increments the shared counter and wakes up
@@ -209,9 +209,8 @@ using semaphore = semaphore_base<int16_t>;
 
 namespace tos {
 template<class CountT>
-inline void semaphore_base<CountT>::up() noexcept {
+inline void semaphore_base<CountT>::up(const no_interrupts& ni) noexcept {
     detail::memory_barrier();
-    tos::int_guard ig(__builtin_return_address(0));
     up_isr();
     detail::memory_barrier();
 }
