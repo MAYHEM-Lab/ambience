@@ -118,6 +118,12 @@ private:
     }
 
     void tick_handler() {
+        if (m_sleepers.empty()) {
+            // The interrupt may become pending while interrupts are disabled and the
+            // waiters become empty.
+            return;
+        }
+
         sleeper& front = m_sleepers.front();
         auto prev = front.sleep_ticks;
         front.sleep_ticks -= m_period;
