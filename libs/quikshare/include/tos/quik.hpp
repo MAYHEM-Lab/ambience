@@ -176,12 +176,12 @@ auto finalize(ShareT& share,
               const std::tuple<DataPtrTs...>& in_ptrs,
               const std::tuple<DataPtrTs...>& out_ptrs,
               std::index_sequence<Is...>) {
-    auto l = []<class T>(ShareT& share, T& i, T& o) {
-        if constexpr (requires(T) { sharer<T>::finalize(share, i, o); }) {
-            sharer<T>::finalize(share, i, o);
+    auto l = []<class DataPtrT, class T>(ShareT& share, T& i, T& o) {
+        if constexpr (requires(DataPtrT) { sharer<DataPtrT>::finalize(share, i, o); }) {
+            sharer<DataPtrT>::finalize(share, i, o);
         }
     };
-    (l(share,
+    (l.template operator()<DataPtrTs>(share,
        lidl::extract(std::get<Is>(in_ptrs)),
        lidl::extract(std::get<Is>(out_ptrs))),
      ...);
