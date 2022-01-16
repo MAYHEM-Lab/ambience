@@ -106,5 +106,21 @@ target_include_directories(nimble PUBLIC src/porting/nimble/include)
 
 add_subdirectory(porting/npl/tos)
 
+target_compile_options(nimble PRIVATE
+    -Wno-gnu-empty-struct
+    -Wno-extra-semi
+    -Wno-implicit-function-declaration
+    -Wno-gnu-zero-variadic-macro-arguments
+    -Wno-variadic-macros
+    -Wno-pointer-arith
+    -Wno-unused-but-set-variable
+    -Wno-sign-compare
+    -Wno-newline-eof
+    -Wno-sometimes-uninitialized
+    -Wno-empty-translation-unit
+)
+
+target_compile_features(nimble PUBLIC c_std_17)
+
 add_executable(nimble_test_compile test_compile.cpp)
 target_link_libraries(nimble_test_compile PRIVATE nimble)
