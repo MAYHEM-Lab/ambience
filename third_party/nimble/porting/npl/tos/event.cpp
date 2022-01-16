@@ -1,4 +1,5 @@
 #include "common.hpp"
+#include "tos/arm/assembly.hpp"
 #include "tos/debug/log.hpp"
 #include "tos/interrupt.hpp"
 #include <chrono>
@@ -13,11 +14,37 @@ struct event : list_node<event> {
     event(ble_npl_event_fn* fn, void* arg)
         : fn(fn)
         , arg(arg) {
-        unlink();
+        // unlink();
     }
 
     ble_npl_event_fn* fn;
     void* arg;
+    int outstanding = 0;
+    bool m_is_linked = false;
+
+    void link() {
+        if (is_linked()) {
+            LOG_ERROR(this, "Already linked!!!!");
+            while (true) {
+                arm::nop();
+            }
+        }
+        m_is_linked = true;
+    }
+
+    void unlink() {
+        if (!is_linked()) {
+            LOG_ERROR(this, "Already unlinked!!!!");
+            while (true) {
+                arm::nop();
+            }
+        }
+        m_is_linked = false;
+    }
+
+    bool is_linked() const {
+        return m_is_linked;
+    }
 
     void run() {
         fn(self());
@@ -31,20 +58,53 @@ struct event : list_node<event> {
 struct event_queue {
     void push_event(event& ev) {
         tos::int_guard ig;
+
+        LOG_TRACE("Push", &ev, ev.outstanding);
+        if (ev.is_linked()) {
+            LOG_TRACE("Already linked");
+            return;
+        }
+
+        ev.outstanding++;
+        if (ev.outstanding > 1) {
+            LOG_ERROR("Pushed multiple", &ev);
+            while (true) {
+                arm::nop();
+            }
+        }
+
         events.push_back(ev);
+        ev.link();
         sem.up(ig);
+
+        LOG_TRACE(&ev, "Push Success", ev.outstanding, events.size(), ev.is_linked(), ev.prev, ev.next);
     }
 
     bool remove_event(event& ev) {
+        LOG_TRACE("Rm", &ev, ev.outstanding);
+
         tos::int_guard ig;
 
+        if (!ev.is_linked() && ev.outstanding != 0) {
+            LOG_ERROR(&ev, "Not linked, but non-zero outstanding");
+            while (true) {
+                arm::nop();
+            }
+        }
+
         if (!ev.is_linked()) {
+            LOG_TRACE(&ev, "Not linked");
             return false;
         }
 
         auto down_res = try_down_isr(sem);
 
         if (!down_res) {
+            LOG_ERROR(&ev, "Cannot get sem, ERROR");
+            while (true) {
+                arm::nop();
+            }
+
             return false;
         }
 
@@ -52,6 +112,16 @@ struct event_queue {
         events.erase(it);
 
         ev.unlink();
+        ev.outstanding--;
+        if (ev.outstanding != 0) {
+            LOG_ERROR("Removed multiple!");
+            while (true) {
+                arm::nop();
+            }
+        }
+
+        LOG_TRACE(&ev, "Remove success");
+
         return true;
     }
 
@@ -65,6 +135,14 @@ struct event_queue {
         auto& res = events.front();
         events.pop_front();
         res.unlink();
+        LOG_TRACE("Rm", &res);
+        res.outstanding--;
+        if (res.outstanding != 0) {
+            LOG_ERROR("Removed multiple!");
+            while (true) {
+                arm::nop();
+            }
+        }
         return &res;
     }
 
@@ -78,6 +156,14 @@ struct event_queue {
         auto& res = events.front();
         events.pop_front();
         res.unlink();
+        res.outstanding--;
+        LOG_TRACE("Rm", &res, res.outstanding);
+        if (res.outstanding != 0) {
+            LOG_ERROR("Removed multiple!");
+            while (true) {
+                arm::nop();
+            }
+        }
         return &res;
     }
 

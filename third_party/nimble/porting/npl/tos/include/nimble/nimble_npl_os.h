@@ -15,7 +15,7 @@ typedef uint32_t ble_npl_time_t;
 typedef int32_t ble_npl_stime_t;
 
 struct ble_npl_event {
-    #define BLE_NPL_EVENT_SIZE (4 * sizeof(void*))
+    #define BLE_NPL_EVENT_SIZE (6 * sizeof(void*))
     _Alignas(_Alignof(void*)) char buffer[BLE_NPL_EVENT_SIZE];
     uint32_t initd;
 };
