@@ -59,9 +59,10 @@ struct event_queue {
     void push_event(event& ev) {
         tos::int_guard ig;
 
-        LOG_TRACE("Push", &ev, ev.outstanding);
+        ev.self()->debug&& LOG("Push", &ev, ev.outstanding);
+
         if (ev.is_linked()) {
-            LOG_TRACE("Already linked");
+            ev.self()->debug&&LOG("Already linked");
             return;
         }
 
@@ -77,11 +78,17 @@ struct event_queue {
         ev.link();
         sem.up(ig);
 
-        LOG_TRACE(&ev, "Push Success", ev.outstanding, events.size(), ev.is_linked(), ev.prev, ev.next);
+        ev.self()->debug&&LOG(&ev,
+                  "Push Success",
+                  ev.outstanding,
+                  events.size(),
+                  ev.is_linked(),
+                  ev.prev,
+                  ev.next);
     }
 
     bool remove_event(event& ev) {
-        LOG_TRACE("Rm", &ev, ev.outstanding);
+        ev.self()->debug&&LOG("Rm", &ev, ev.outstanding);
 
         tos::int_guard ig;
 
@@ -93,7 +100,7 @@ struct event_queue {
         }
 
         if (!ev.is_linked()) {
-            LOG_TRACE(&ev, "Not linked");
+            ev.self()->debug&&LOG(&ev, "Not linked");
             return false;
         }
 
@@ -120,7 +127,7 @@ struct event_queue {
             }
         }
 
-        LOG_TRACE(&ev, "Remove success");
+        ev.self()->debug&&LOG(&ev, "Remove success");
 
         return true;
     }
@@ -135,7 +142,7 @@ struct event_queue {
         auto& res = events.front();
         events.pop_front();
         res.unlink();
-        LOG_TRACE("Rm", &res);
+        res.self()->debug&&LOG("Rm", &res);
         res.outstanding--;
         if (res.outstanding != 0) {
             LOG_ERROR("Removed multiple!");
@@ -157,7 +164,7 @@ struct event_queue {
         events.pop_front();
         res.unlink();
         res.outstanding--;
-        LOG_TRACE("Rm", &res, res.outstanding);
+        res.self()->debug&&LOG("Rm", &res, res.outstanding);
         if (res.outstanding != 0) {
             LOG_ERROR("Removed multiple!");
             while (true) {
@@ -217,6 +224,7 @@ void ble_npl_event_init(struct ble_npl_event* ev, ble_npl_event_fn* fn, void* ar
     static_assert(sizeof(tos::nimble::event) <= BLE_NPL_EVENT_SIZE);
     auto ptr = new (&ev->buffer) tos::nimble::event(fn, arg);
     ev->initd = 0x12345678;
+    ev->debug = false;
     Assert(ptr->self() == ev);
 }
 
