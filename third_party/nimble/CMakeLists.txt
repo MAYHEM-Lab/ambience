@@ -83,6 +83,8 @@ target_sources(nimble PRIVATE
 
     src/nimble/host/services/gap/src/ble_svc_gap.c
 
+    src/nimble/host/services/gatt/src/ble_svc_gatt.c
+
     src/nimble/drivers/nrf52/src/ble_hw.c
     src/nimble/drivers/nrf52/src/ble_phy.c
     src/nimble/drivers/nrf52/src/ble_phy_trace.c
