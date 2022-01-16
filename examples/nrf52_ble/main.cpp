@@ -6,14 +6,15 @@
 #include "host/ble_uuid.h"
 #include "nimble/nimble_port.h"
 #include "tos/debug/debug.hpp"
+#include "tos/interrupt.hpp"
 #include "tos/self_pointing.hpp"
 #include "tos/semaphore.hpp"
 #include "tos/stack_storage.hpp"
 #include "tos/thread.hpp"
 #include <cmath>
+#include <etl/list.h>
 #include <host/ble_hs.h>
 #include <host/util/util.h>
-#include <etl/list.h>
 #include <nimble/ble.h>
 #include <random>
 #include <services/gap/ble_svc_gap.h>
@@ -47,7 +48,7 @@ struct itm : tos::self_pointing<itm> {
 
         NRF_CLOCK->TRACECONFIG =
             (NRF_CLOCK->TRACECONFIG & ~CLOCK_TRACECONFIG_TRACEPORTSPEED_Msk) |
-            (CLOCK_TRACECONFIG_TRACEPORTSPEED_4MHz
+            (CLOCK_TRACECONFIG_TRACEPORTSPEED_16MHz
              << CLOCK_TRACECONFIG_TRACEPORTSPEED_Pos);
 
         NRF_CLOCK->TRACECONFIG |= CLOCK_TRACECONFIG_TRACEMUX_Serial
@@ -62,6 +63,7 @@ struct itm : tos::self_pointing<itm> {
     }
 
     int write(tos::span<const uint8_t> data) {
+        tos::int_guard ig;
         for (auto c : data) {
             ITM_SendChar(c);
         }
@@ -95,19 +97,17 @@ tos::semaphore adv_sem{0};
 static int adv_event(struct ble_gap_event* event, void* arg) {
     switch (event->type) {
     case BLE_GAP_EVENT_ADV_COMPLETE:
-        LOG_FORMAT("Advertising completed, termination code: {}",
-                   event->adv_complete.reason);
+        // LOG_FORMAT("Advertising completed, termination code: {}",
+        //            event->adv_complete.reason);
         adv_sem.up();
         // advertise();
         break;
     case BLE_GAP_EVENT_CONNECT:
         assert(event->connect.status == 0);
-        log_strs.push_back(
-            fmt::format(FMT_COMPILE("connection {}; status={}; {}"),
-                        event->connect.status == 0 ? "established" : "failed",
-                        event->connect.status,
-                        event->connect.conn_handle));
-        log_sem.up();
+        LOG_FORMAT("connection {}; status={}; {}",
+                   event->connect.status == 0 ? "established" : "failed",
+                   event->connect.status,
+                   event->connect.conn_handle);
         conn_handle = event->connect.conn_handle;
         break;
     case BLE_GAP_EVENT_CONN_UPDATE_REQ:
@@ -159,20 +159,15 @@ static void advertise(void) {
     fields.name_is_complete = 1;
 
     auto rc = ble_gap_adv_set_fields(&fields);
-    LOG(rc);
-
-    LOG("Starting advertising...", rc);
-
     rc = ble_gap_adv_start(g_own_addr_type, NULL, 1000, &adv_params, adv_event, NULL);
-    LOG(rc);
 }
 
 void entry() {
-    // auto out = itm{};
-    auto out = bs::default_com::open();
+    auto out = itm{};
+    // auto out = bs::default_com::open();
     tos::debug::serial_sink uart_sink(&out);
     tos::debug::detail::any_logger uart_log{&uart_sink};
-    uart_log.set_log_level(tos::debug::log_level::trace);
+    uart_log.set_log_level(tos::debug::log_level::info);
     tos::debug::set_default_log(&uart_log);
 
     auto tim = tos::nrf52::timer0{1};
@@ -219,6 +214,14 @@ void entry() {
 
     auto rc = ble_svc_gap_device_name_set(device_name);
     LOG(rc);
+
+    tos::launch(tos::alloc_stack, [&]{
+        using namespace std::chrono_literals;
+        while (true) {
+            LOG("Tick");
+            tos::this_thread::sleep_for(*alarm, 10s);
+        }
+    });
 
     while (true) {
         using namespace std::chrono_literals;
