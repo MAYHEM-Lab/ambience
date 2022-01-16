@@ -1,6 +1,8 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
+#include <stdalign.h>
 
 #define BLE_NPL_OS_ALIGNMENT    4
 
@@ -16,19 +18,20 @@ typedef int32_t ble_npl_stime_t;
 
 struct ble_npl_event {
     #define BLE_NPL_EVENT_SIZE (6 * sizeof(void*))
-    _Alignas(_Alignof(void*)) char buffer[BLE_NPL_EVENT_SIZE];
+    alignas(alignof(void*)) char buffer[BLE_NPL_EVENT_SIZE];
     uint32_t initd;
+    bool debug;
 };
 
 struct ble_npl_eventq {
     #define BLE_NPL_EVENTQ_SIZE (5 * sizeof(void*))
-    _Alignas(_Alignof(void*)) char buffer[BLE_NPL_EVENTQ_SIZE];
+    alignas(alignof(void*)) char buffer[BLE_NPL_EVENTQ_SIZE];
     uint32_t initd;
 };
 
 struct ble_npl_callout {
     #define BLE_NPL_CALLOUT_SIZE (6 * sizeof(void*))
-    _Alignas(_Alignof(void*)) char buffer[BLE_NPL_CALLOUT_SIZE];
+    alignas(alignof(void*)) char buffer[BLE_NPL_CALLOUT_SIZE];
 
     ble_npl_time_t ticks;
     struct ble_npl_eventq *evq;
