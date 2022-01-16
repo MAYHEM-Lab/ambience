@@ -41,6 +41,10 @@ public:
     }
 
     void add(const void* ptr) override {
+        if (!ptr) {
+            tos::print(*m_serial, "nullptr", "");
+            return;
+        }
         tos::print(*m_serial, ptr, "");
     }
 
