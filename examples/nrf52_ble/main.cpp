@@ -161,6 +161,10 @@ void entry() {
     tos::nimble::alarm = alarm.get();
 
     LOG("Booted!!");
+    
+    NRF_CLOCK->TASKS_LFCLKSTOP = 1;
+    NRF_CLOCK->LFCLKSRC = 0;
+    NRF_CLOCK->TASKS_LFCLKSTART = 1;
 
     nimble_port_init();
     LOG("Init done");
