@@ -13,11 +13,14 @@
 #include "tos/thread.hpp"
 #include <cmath>
 #include <etl/list.h>
+#include <host/ble_gatt.h>
 #include <host/ble_hs.h>
 #include <host/util/util.h>
 #include <nimble/ble.h>
+#include <nrfx_clock.h>
 #include <random>
 #include <services/gap/ble_svc_gap.h>
+#include <services/gatt/ble_svc_gatt.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <tos/board.hpp>
@@ -159,7 +162,9 @@ static void advertise(void) {
     fields.name_is_complete = 1;
 
     auto rc = ble_gap_adv_set_fields(&fields);
+    LOG(rc);
     rc = ble_gap_adv_start(g_own_addr_type, NULL, 1000, &adv_params, adv_event, NULL);
+    LOG(rc);
 }
 
 void entry() {
@@ -174,18 +179,36 @@ void entry() {
     auto alarm = tos::erase_alarm(tos::alarm{&tim});
     tos::nimble::alarm = alarm.get();
 
+    using namespace std::chrono_literals;
+    tos::this_thread::sleep_for(*alarm, 5s);
+
     tos::launch(tos::alloc_stack, async_log_task);
 
     LOG("Booted!!");
 
-    NRF_CLOCK->TASKS_LFCLKSTOP = 1;
-    NRF_CLOCK->LFCLKSRC = 0;
-    NRF_CLOCK->TASKS_LFCLKSTART = 1;
+    static tos::semaphore clk_sem{0};
+
+    nrfx_clock_init([](nrfx_clock_evt_type_t evt) {
+        if (evt == NRFX_CLOCK_EVT_LFCLK_STARTED) {
+            LOG(evt);
+            clk_sem.up_isr();
+        }
+    });
+
+    nrfx_clock_enable();
+    nrfx_clock_lfclk_start();
+
+    clk_sem.down();
+
+    // NRF_CLOCK->TASKS_LFCLKSTOP = 1;
+    // NRF_CLOCK->LFCLKSRC = 0;
+    // NRF_CLOCK->TASKS_LFCLKSTART = 1;
 
     nimble_port_init();
     LOG("Init done");
 
     ble_svc_gap_init();
+    ble_svc_gatt_init();
 
     static tos::stack_storage<> ll_stak, hs_stak;
     tos::launch(ll_stak, nimble_port_ll_task_func, nullptr);
@@ -195,15 +218,31 @@ void entry() {
 
     ble_hs_cfg.sync_cb = [] {
         LOG("Sync callback");
-        auto rc = ble_hs_util_ensure_addr(0);
+        ble_addr_t addr;
+
+        /* generate new non-resolvable private address */
+
+        auto rc = ble_hs_id_gen_rnd(1, &addr);
+        LOG(rc);
+
+        /* set generated address */
+
+        rc = ble_hs_id_set_rnd(addr.val);
+        LOG(rc);
+
+        rc = ble_hs_util_ensure_addr(0);
         LOG(rc);
         rc = ble_hs_id_infer_auto(0, &g_own_addr_type);
         LOG(rc, g_own_addr_type);
-        tos::mac_addr_t mac;
         int len = 6;
+        tos::mac_addr_t mac;
+
         ble_hs_id_copy_addr(g_own_addr_type, mac.addr.data(), &len);
         LOG(tos::span<const uint8_t>(mac.addr));
         sync = true;
+
+        ble_gatts_start();
+
         adv_sem.up_isr();
     };
 
@@ -215,7 +254,7 @@ void entry() {
     auto rc = ble_svc_gap_device_name_set(device_name);
     LOG(rc);
 
-    tos::launch(tos::alloc_stack, [&]{
+    tos::launch(tos::alloc_stack, [&] {
         using namespace std::chrono_literals;
         while (true) {
             LOG("Tick");

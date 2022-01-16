@@ -60,6 +60,12 @@ target_link_libraries(nrf5-sdk-nvmc PUBLIC nrf5-sdk-prs)
 target_compile_definitions(nrf5-sdk-nvmc PUBLIC
         NRFX_NVMC_ENABLED=1)
 
+add_library(nrf5-sdk-clock
+        src/modules/nrfx/drivers/src/nrfx_clock.c)
+target_link_libraries(nrf5-sdk-clock PUBLIC nrf5-sdk-prs)
+target_compile_definitions(nrf5-sdk-clock PUBLIC
+        NRFX_CLOCK_ENABLED=1)
+
 add_library(nrf5-sdk-drivers INTERFACE)
 target_link_libraries(nrf5-sdk-drivers INTERFACE
         nrf5-sdk-prs
@@ -69,6 +75,7 @@ target_link_libraries(nrf5-sdk-drivers INTERFACE
         nrf5-sdk-spim
         nrf5-sdk-nvmc
         nrf5-sdk-gpiote
+        nrf5-sdk-clock
         )
 
 add_library(nrf5-sdk
