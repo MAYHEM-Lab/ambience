@@ -167,6 +167,8 @@ static void advertise(void) {
     LOG(rc);
 }
 
+void gatt_svr_register_cb(struct ble_gatt_register_ctxt* ctxt, void* arg);
+int gatt_svr_init(void);
 void entry() {
     auto out = itm{};
     // auto out = bs::default_com::open();
@@ -208,7 +210,7 @@ void entry() {
     LOG("Init done");
 
     ble_svc_gap_init();
-    ble_svc_gatt_init();
+    // ble_svc_gatt_init();
 
     static tos::stack_storage<> ll_stak, hs_stak;
     tos::launch(ll_stak, nimble_port_ll_task_func, nullptr);
@@ -241,8 +243,6 @@ void entry() {
         LOG(tos::span<const uint8_t>(mac.addr));
         sync = true;
 
-        ble_gatts_start();
-
         adv_sem.up_isr();
     };
 
@@ -250,6 +250,7 @@ void entry() {
         sync = false;
         LOG("Reset callback", x);
     };
+    ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
 
     auto rc = ble_svc_gap_device_name_set(device_name);
     LOG(rc);
@@ -261,6 +262,12 @@ void entry() {
             tos::this_thread::sleep_for(*alarm, 10s);
         }
     });
+
+    {
+        auto rc = gatt_svr_init();
+        LOG(rc);
+    }
+    ble_gatts_start();
 
     while (true) {
         using namespace std::chrono_literals;
