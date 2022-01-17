@@ -10,6 +10,7 @@
 #include <tos/span.hpp>
 #include <optional>
 #include <tos/expected.hpp>
+#include <tos/semaphore.hpp>
 
 namespace tos
 {
