@@ -45,6 +45,10 @@ public:
      */
     void up(const no_interrupts& ni = tos::int_guard{}) noexcept;
 
+    void up_thread() {
+        up(tos::int_guard{});
+    }
+
     /**
      * Increments the shared counter and wakes up
      * one thread if there's any
@@ -281,7 +285,7 @@ ISR_AVAILABLE inline void semaphore_base<CountT>::up_isr() noexcept {
 
 template<class CountT>
 inline tos::function_ref<void()> make_semaphore_upper(semaphore_base<CountT>& sem) {
-    return mem_function_ref<&semaphore_base<CountT>::up>(sem);
+    return mem_function_ref<&semaphore_base<CountT>::up_thread>(sem);
 }
 
 template<class CountT>
