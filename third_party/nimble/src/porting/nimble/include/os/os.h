@@ -55,6 +55,7 @@ typedef uint32_t os_sr_t;
 #include "os/os_error.h"
 #include "os/os_mbuf.h"
 #include "os/os_mempool.h"
+#include "os/util.h"
 
 #ifdef __cplusplus
 }
