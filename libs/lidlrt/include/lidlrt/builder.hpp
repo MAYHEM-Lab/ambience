@@ -7,7 +7,7 @@
 namespace lidl {
 struct message_builder {
 public:
-message_builder() = default;
+    message_builder() = default;
     message_builder(tos::span<uint8_t> buf)
         : m_buffer(buf)
         , m_cur_ptr(m_buffer.data()) {
