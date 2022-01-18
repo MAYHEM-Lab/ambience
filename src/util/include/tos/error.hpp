@@ -1,10 +1,10 @@
 #pragma once
 
+#include <cstring>
 #include <memory>
 #include <string_view>
 #include <tos/concepts.hpp>
 #include <type_traits>
-#include <cstring>
 
 namespace tos {
 template<class T>
@@ -54,20 +54,20 @@ public:
     template<Error T>
         any_error(T&& err) requires(
             !std::same_as<std::remove_const_t<std::remove_reference_t<T>>, any_error>) &&
-        (sizeof(T) >= sbo_size)
+        (sizeof(T) < sbo_size) && (std::is_trivially_move_constructible_v<T>) {
+        using model_type = model_impl<std::remove_const_t<std::remove_reference_t<T>>>;
+        sbo_init<model_type>(std::forward<T>(err));
+    }
+
+    template<Error T>
+    any_error(T&& err) requires(
+        !std::same_as<std::remove_const_t<std::remove_reference_t<T>>, any_error>)
         : m_model(std::make_unique<
                   model_impl<std::remove_const_t<std::remove_reference_t<T>>>>(
               std::forward<T>(err))) {
         mark_sbo(false);
     }
 
-    template<Error T>
-        any_error(T&& err) requires(
-            !std::same_as<std::remove_const_t<std::remove_reference_t<T>>, any_error>) &&
-        (sizeof(T) < sbo_size) {
-        using model_type = model_impl<std::remove_const_t<std::remove_reference_t<T>>>;
-        sbo_init<model_type>(std::forward<T>(err));
-    }
 
     any_error(any_error&& err) {
         if (err.is_sbo()) {
@@ -132,13 +132,13 @@ private:
 
     void mark_sbo(bool val) {
         auto last_byte = (char*)&m_sbo + sbo_size - 1;
-        *last_byte = 1;
+        *last_byte = val;
     }
 
     // Returns whether the current error is stored using the small buffer optimization.
     bool is_sbo() const {
         auto last_byte = (char*)&m_sbo + sbo_size - 1;
-        return *last_byte == 1;
+        return *last_byte;
     }
 
     const error_model* get_sbo_model() const {
