@@ -41,7 +41,7 @@ struct metric : list_node<metric> {
         };
         visitor_impl impl(vis);
         return do_visit(impl);
-    };
+    }
 
     virtual Task<void> do_visit(visitor& vis) = 0;
     virtual std::string_view label() const = 0;
