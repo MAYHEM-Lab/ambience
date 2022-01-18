@@ -5,14 +5,14 @@
 
 namespace tos {
 struct errno_err {
-    int errno;
+    int m_errno;
 
     constexpr std::string_view name() const {
         return "int_err";
     }
 
     constexpr std::string_view message() const {
-        switch (errno) {
+        switch (m_errno) {
         case EADDRINUSE:
             return "EADDRINUSE";
         }

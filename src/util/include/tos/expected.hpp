@@ -75,20 +75,12 @@ class expected {
 public:
     template<class U = T, typename = std::enable_if_t<std::is_same<U, void>{}>>
     constexpr expected()
-        : m_internal {
+        : m_internal{} {
     }
-    {}
 
     template<class U = T, typename = std::enable_if_t<!std::is_same<U, void>{}>>
     constexpr expected(default_construct_tag_t)
-        : m_internal {
-    }
-    {}
-
-    template<class U = T,
-             typename = std::enable_if_t<!is_expected<std::remove_reference_t<U>>{}>>
-    constexpr expected(U&& u)
-        : m_internal(std::forward<U>(u)) {
+        : m_internal{} {
     }
 
     template<class ErrU>
@@ -100,6 +92,12 @@ public:
     requires std::convertible_to<Err, ErrT>
     constexpr expected(Err&& err)
         : expected(unexpected(std::forward<Err>(err))) {
+    }
+
+    template<class U = T,
+             typename = std::enable_if_t<!is_expected<std::remove_reference_t<U>>{}>>
+    requires(!Error<U>) constexpr expected(U&& u)
+        : m_internal(std::forward<U>(u)) {
     }
 
     template<class OtherT, class OtherErr>
