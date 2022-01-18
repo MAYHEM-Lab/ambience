@@ -46,17 +46,36 @@ struct error_traits<T> {
     }
 };
 
-struct any_error { 
+struct any_error {
+    static inline constexpr auto sbo_size = 16;
+
 public:
     template<Error T>
-    any_error(T&& err) requires(
-        !std::same_as<std::remove_const_t<std::remove_reference_t<T>>, any_error>)
+        any_error(T&& err) requires(
+            !std::same_as<std::remove_const_t<std::remove_reference_t<T>>, any_error>) &&
+        (sizeof(T) >= sbo_size)
         : m_model(std::make_unique<
                   model_impl<std::remove_const_t<std::remove_reference_t<T>>>>(
               std::forward<T>(err))) {
+        mark_sbo(false);
     }
 
-    any_error(any_error&& err) = default;
+    template<Error T>
+        any_error(T&& err) requires(
+            !std::same_as<std::remove_const_t<std::remove_reference_t<T>>, any_error>) &&
+        (sizeof(T) < sbo_size) {
+        using model_type = model_impl<std::remove_const_t<std::remove_reference_t<T>>>;
+        sbo_init<model_type>(std::forward<T>(err));
+    }
+
+    any_error(any_error&& err) {
+        if (err.is_sbo()) {
+            memcpy(this, &err, sizeof err);
+            return;
+        }
+        m_model = std::move(err.m_model);
+        mark_sbo(false);
+    }
 
     std::string_view message() const {
         return get_model()->message();
@@ -64,6 +83,14 @@ public:
 
     std::string_view name() const {
         return get_model()->name();
+    }
+
+    ~any_error() {
+        if (is_sbo()) {
+            std::destroy_at(get_sbo_model());
+            return;
+        }
+        std::destroy_at(&m_model);
     }
 
 private:
@@ -91,9 +118,36 @@ private:
         }
     };
 
-    std::unique_ptr<error_model> m_model;
+    union {
+        std::unique_ptr<error_model> m_model;
+        std::aligned_storage_t<sbo_size, alignof(void*)> m_sbo;
+    };
 
-    error_model* get_model() const {
+    template<class T, class U>
+    void sbo_init(U&& val) {
+        new (&m_sbo) T(std::forward<U>(val));
+        mark_sbo(true);
+    }
+
+    void mark_sbo(bool val) {
+        auto last_byte = (char*)&m_sbo + sbo_size - 1;
+        *last_byte = 1;
+    }
+
+    // Returns whether the current error is stored using the small buffer optimization.
+    bool is_sbo() const {
+        auto last_byte = (char*)&m_sbo + sbo_size - 1;
+        return *last_byte == 1;
+    }
+
+    const error_model* get_sbo_model() const {
+        return reinterpret_cast<const error_model*>(&m_sbo);
+    }
+
+    const error_model* get_model() const {
+        if (is_sbo()) {
+            return get_sbo_model();
+        }
         return m_model.get();
     }
 };
