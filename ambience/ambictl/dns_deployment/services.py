@@ -13,6 +13,18 @@ serv_instance(
 )
 
 serv_instance(
+    name="sync_user_group",
+    serv=user_group,
+    deps={}
+)
+
+serv_instance(
+    name="async_user_group",
+    serv=user_group,
+    deps={}
+)
+
+serv_instance(
     name="sync_recursive",
     serv=sync_recursive_dns_resolver,
     deps={
@@ -59,6 +71,21 @@ export(
         "udp-internet": 1235,
     }
 )
+
+export(
+    service="sync_user_group",
+    networks={
+        "udp-internet": 1236,
+    }
+)
+
+export(
+    service="async_user_group",
+    networks={
+        "udp-internet": 1237,
+    }
+)
+
 
 # export(
 #     service="async_recursive",
