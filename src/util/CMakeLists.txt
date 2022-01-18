@@ -36,6 +36,7 @@ add_library(
   include/tos/result.hpp
   include/tos/meta/algorithm.hpp
   include/tos/meta/types.hpp
+  src/error.cpp
 )
 
 target_compile_features(tos_util_core PUBLIC cxx_std_20)
@@ -129,6 +130,10 @@ if(BUILD_TESTS)
   add_executable(cancellation_token_test src/cancellation_token_test.cpp)
   target_link_libraries(cancellation_token_test PUBLIC standalone_tests_main tos_cancellation_token)
   add_test(NAME cancellation_token_test COMMAND cancellation_token_test)
+
+  add_executable(error_test src/error_test.cpp)
+  target_link_libraries(error_test PUBLIC standalone_tests_main tos_util_core)
+  add_test(NAME error_test COMMAND error_test)
 endif()
 
 add_subdirectory(coro)
