@@ -6,6 +6,7 @@
 
 #include <tos/compiler.hpp>
 #include <tos/expected.hpp>
+#include <tos/result.hpp>
 
 namespace tos {
 namespace {
@@ -89,6 +90,33 @@ TEST_CASE("expected try works") {
         return {};
     };
     REQUIRE_EQ(false, bool(wrapping_op()));
+}
+
+expected<int, const_string_error> string_err_fn() {
+    return const_string_error("nope");
+}
+
+result<int> convert() {
+    return string_err_fn();
+}
+
+any_error just_err() {
+    return const_string_error("nope");
+}
+
+any_error fwd_err() {
+    auto err = just_err();
+    return err;
+}
+
+TEST_CASE("result works") {
+    auto res = convert();
+    REQUIRE_FALSE(res);
+}
+
+TEST_CASE("any_error works") {
+    auto err = fwd_err();
+    REQUIRE_EQ("nope", err.message());
 }
 } // namespace
 } // namespace tos

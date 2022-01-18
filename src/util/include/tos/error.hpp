@@ -2,6 +2,8 @@
 
 #include <memory>
 #include <string_view>
+#include <tos/concepts.hpp>
+#include <type_traits>
 
 namespace tos {
 template<class T>
@@ -44,10 +46,14 @@ struct error_traits<T> {
     }
 };
 
-struct any_error {
+struct any_error { 
+public:
     template<Error T>
-    any_error(T&& err)
-        : m_model(std::make_unique<model_impl<T>>(std::forward<T>(err))) {
+    any_error(T&& err) requires(
+        !std::same_as<std::remove_const_t<std::remove_reference_t<T>>, any_error>)
+        : m_model(std::make_unique<
+                  model_impl<std::remove_const_t<std::remove_reference_t<T>>>>(
+              std::forward<T>(err))) {
     }
 
     any_error(any_error&& err) = default;
@@ -71,8 +77,9 @@ private:
     struct model_impl
         : error_model
         , T {
-        model_impl(T&& err)
-            : T{std::forward<T>(err)} {
+        template<class U>
+        model_impl(U&& err)
+            : T{std::forward<U>(err)} {
         }
 
         std::string_view name() const override {
