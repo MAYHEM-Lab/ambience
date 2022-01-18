@@ -4,6 +4,7 @@
 #include <string_view>
 #include <tos/concepts.hpp>
 #include <type_traits>
+#include <cstring>
 
 namespace tos {
 template<class T>
@@ -70,7 +71,7 @@ public:
 
     any_error(any_error&& err) {
         if (err.is_sbo()) {
-            memcpy(this, &err, sizeof err);
+            memcpy(&m_sbo, &err.m_sbo, sizeof m_sbo);
             return;
         }
         m_model = std::move(err.m_model);
