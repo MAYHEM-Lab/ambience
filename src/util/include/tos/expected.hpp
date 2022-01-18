@@ -4,12 +4,14 @@
 
 #pragma once
 
+#include <concepts>
 #include <memory>
 #include <new>
 #include <nonstd/expected.hpp>
 #include <optional>
 #include <tos/compiler.hpp>
 #include <tos/debug/assert.hpp>
+#include <tos/error.hpp>
 #include <tos/utility.hpp>
 #include <type_traits>
 
@@ -73,13 +75,15 @@ class expected {
 public:
     template<class U = T, typename = std::enable_if_t<std::is_same<U, void>{}>>
     constexpr expected()
-        : m_internal{} {
+        : m_internal {
     }
+    {}
 
     template<class U = T, typename = std::enable_if_t<!std::is_same<U, void>{}>>
     constexpr expected(default_construct_tag_t)
-        : m_internal{} {
+        : m_internal {
     }
+    {}
 
     template<class U = T,
              typename = std::enable_if_t<!is_expected<std::remove_reference_t<U>>{}>>
@@ -90,6 +94,18 @@ public:
     template<class ErrU>
     constexpr expected(unexpected_t<ErrU>&& u)
         : m_internal{tl::make_unexpected(std::move(u.m_err))} {
+    }
+
+    template<Error Err>
+    requires std::convertible_to<Err, ErrT>
+    constexpr expected(Err&& err)
+        : expected(unexpected(std::forward<Err>(err))) {
+    }
+
+    template<class OtherT, class OtherErr>
+    requires std::convertible_to<OtherT, T> && std::convertible_to<OtherErr, ErrT>
+    constexpr expected(expected<OtherT, OtherErr>&& other)
+        : m_internal(other.m_internal) {
     }
 
     PURE constexpr explicit operator bool() const {
