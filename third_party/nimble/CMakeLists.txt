@@ -122,7 +122,7 @@ target_compile_options(nimble PRIVATE
     -Wno-empty-translation-unit
 )
 
-target_compile_features(nimble PUBLIC c_std_17)
+# target_compile_features(nimble PUBLIC c_std_17)
 
 add_executable(nimble_test_compile test_compile.cpp)
 target_link_libraries(nimble_test_compile PRIVATE nimble)
