@@ -125,7 +125,7 @@ constexpr std::array<T, N - 1> pop_back(const std::array<T, N>& arr) {
     return res;
 }
 
-template <class T>
+template<class T>
 constexpr T align_nearest_down_pow2(T val, size_t alignment) {
 #if __has_builtin(__builtin_align_down)
     return __builtin_align_down(val, alignment);
@@ -134,7 +134,7 @@ constexpr T align_nearest_down_pow2(T val, size_t alignment) {
 #endif
 }
 
-template <class T>
+template<class T>
 constexpr T align_nearest_up_pow2(T val, size_t alignment) {
 #if __has_builtin(__builtin_align_up)
     return __builtin_align_up(val, alignment);
