@@ -89,6 +89,14 @@ public:
         m_vtbl->dtor(get_model(), !is_sbo());
     }
 
+    template <class T>
+    friend const T* error_cast(const any_error& err) {
+        if (err.m_vtbl == &implement<T>::tbl) {
+            return static_cast<const T*>(err.get_model());
+        }
+        return nullptr;
+    }
+
 private:
     struct vtbl {
         bool is_sbo;
