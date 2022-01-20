@@ -87,6 +87,7 @@ union ring_elem {
 
     ring_elem() {
     }
+    
     explicit ring_elem(const ring_elem& el) {
         memcpy(this, &el, sizeof el);
     }
@@ -103,7 +104,6 @@ struct ring {
     void submit(uint16_t elem_idx, int sz) {
         elems[head_idx % sz] = elem_idx;
         head_idx.fetch_add(1, std::memory_order_release);
-        //        ++head_idx;
     }
 };
 
@@ -120,70 +120,15 @@ struct interface {
     // Due to preemption, we have to use an atomic here.
     std::atomic<free_elem*> free_head = nullptr;
 
-    NO_INLINE
-    int32_t allocate_priv() {
-        auto res = free_head.load(std::memory_order_acquire);
-        if (res == nullptr) {
-            // No space currently
-            return -1;
-        }
-        while (!free_head.compare_exchange_weak(
-            res, res->next_free, std::memory_order_release))
-            ;
-        int32_t idx = std::distance(elems, reinterpret_cast<ring_elem*>(res));
-        return idx;
-    }
+    int32_t allocate_entry();
 
-    template<bool FromHost>
-    int32_t allocate() {
-        return allocate_priv();
-    }
-
-    void release(int idx) {
-        elems[idx].common.flags = elem_flag::released;
-
-        while (true) {
-            auto expect = free_head.load(std::memory_order_acquire);
-            elems[idx].free.next_free = expect;
-            auto store = &elems[idx].free;
-            if (free_head.compare_exchange_weak(
-                    expect, store, std::memory_order_release)) {
-                break;
-            }
-        }
-    }
+    void release(int idx);
 
     int host_to_guest_queue_depth() const;
     int guest_to_host_queue_depth(uint16_t last_seen) const;
 
-    interface(int size, ring_elem* elems, ring* guest_to_host, ring* host_to_guest)
-        : size{size}
-        , elems{elems}
-        , guest_to_host{guest_to_host}
-        , host_to_guest{host_to_guest} {
-        for (int i = 0; i < size - 1; ++i) {
-            elems[i].free.next_free = &elems[i + 1].free;
-        }
-        elems[size - 1].free.next_free = nullptr;
-        free_head.store(&elems[0].free, std::memory_order_release);
-    }
+    interface(int size, ring_elem* elems, ring* guest_to_host, ring* host_to_guest);
 };
-
-inline bool ring::overflown(uint16_t last_seen) const {
-    return last_seen > head_idx.load(std::memory_order_acquire);
-}
-
-inline bool ring::empty(uint16_t last_seen) const {
-    return last_seen == head_idx.load(std::memory_order_acquire);
-}
-
-inline ssize_t ring::size(int ring_size, uint16_t last_seen) const {
-    auto res = head_idx.load(std::memory_order_acquire) - last_seen;
-    if (!overflown(last_seen)) {
-        return res;
-    }
-    return res + ring_size;
-}
 
 template<class FnT>
 uint16_t for_each(interface& iface, const ring& ring, uint16_t last_seen, const FnT& fn) {
@@ -217,41 +162,8 @@ uint16_t for_each(interface& iface, const ring& ring, uint16_t last_seen, const 
     return last_seen;
 }
 
-template<size_t N>
-struct interface_storage {
-    interface_storage() = default;
-
-    ring_elem elems[N]{};
-    uint8_t req_arr[sizeof(ring) + N * sizeof(uint16_t)];
-    uint8_t res_arr[sizeof(ring) + N * sizeof(uint16_t)];
-
-    interface make_interface() {
-        return interface {
-            N, elems, new (&req_arr) ring{}, new (&res_arr) ring {
-            }
-        };
-    }
-};
-
-template<bool FromHost>
-inline std::pair<req_elem&, int>
-prepare_req(interface& iface, int channel, int proc, const void* params, void* res) {
-    auto el_idx = iface.allocate<FromHost>();
-    if (el_idx < 0) {
-        while (true)
-            ;
-    }
-    auto& req_el = iface.elems[el_idx].req;
-
-    req_el.flags = tos::util::set_flag(elem_flag::req, elem_flag::in_use);
-
-    req_el.channel = channel;
-    req_el.procid = proc;
-    req_el.arg_ptr = params;
-    req_el.ret_ptr = res;
-
-    return {req_el, el_idx};
-}
+std::pair<req_elem&, int>
+prepare_req(interface& iface, int channel, int proc, const void* params, void* res);
 
 template<bool FromHost>
 void submit_elem(interface& iface, int el_idx) {
@@ -293,7 +205,7 @@ void req_elem::awaiter<FromHost>::fiber_suspend(FibT& fib) {
 
 template<bool FromHost>
 void respond(interface& iface, void* user_ptr) {
-    auto el_idx = iface.allocate<FromHost>();
+    auto el_idx = iface.allocate_entry();
     if (el_idx < 0) {
         while (true)
             ;
@@ -306,4 +218,20 @@ void respond(interface& iface, void* user_ptr) {
 
     submit_elem<FromHost>(iface, el_idx);
 }
+
+template<size_t N>
+struct interface_storage {
+    interface_storage() = default;
+
+    ring_elem elems[N]{};
+    uint8_t req_arr[sizeof(ring) + N * sizeof(uint16_t)];
+    uint8_t res_arr[sizeof(ring) + N * sizeof(uint16_t)];
+
+    interface make_interface() {
+        return interface {
+            N, elems, new (&req_arr) ring{}, new (&res_arr) ring {
+            }
+        };
+    }
+};
 } // namespace tos::ae
