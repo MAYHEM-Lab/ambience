@@ -148,4 +148,9 @@ static_assert(align_nearest_down_pow2(4096, 4096) == 4096);
 
 static_assert(align_nearest_up_pow2(4095, 4096) == 4096);
 static_assert(align_nearest_up_pow2(4096, 4096) == 4096);
+
+template<class T, class... ArgTs>
+constexpr T* construct_at(T* at, ArgTs&&... args) {
+    return new ((void*)at) T(std::forward<ArgTs>(args)...);
+}
 } // namespace tos
