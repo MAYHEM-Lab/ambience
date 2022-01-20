@@ -5,6 +5,7 @@
 #include <string_view>
 #include <tos/debug/detail/log_level.hpp>
 #include <tos/memory.hpp>
+#include <tos/error.hpp>
 
 namespace tos::debug::detail {
 struct any_sink {
@@ -75,6 +76,13 @@ struct any_sink {
 
     void add(virtual_address addr) {
         add(reinterpret_cast<const void*>(addr.address()));
+    }
+
+    template <Error T>
+    void add(const T& err) {
+        add(err.name());
+        add(":");
+        add(err.message());
     }
 };
 
