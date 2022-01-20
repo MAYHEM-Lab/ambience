@@ -1,5 +1,7 @@
+#include "tos/expected.hpp"
 #include <doctest.h>
 #include <tos/error.hpp>
+#include <tos/result.hpp>
 
 namespace tos {
 namespace {
@@ -32,6 +34,27 @@ TEST_CASE("enum error works") {
     auto err = fn();
     REQUIRE(err.name().ends_with("err_enum"));
     REQUIRE_EQ("bar", err.message());
+}
+
+enum class optin_enum {
+    a,
+    b
+};
+
+TOS_ERROR_ENUM(optin_enum);
+
+expected<int, optin_enum> fn2() {
+    return unexpected(optin_enum::a);
+}
+
+result<int> forward() {
+    return TRY(fn2());
+}
+
+TEST_CASE("implicit error enums work") {
+    auto v = forward();
+    REQUIRE_FALSE(v);
+    REQUIRE_EQ("a", force_error(v).message());
 }
 } // namespace
 } // namespace tos

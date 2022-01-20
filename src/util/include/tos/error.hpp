@@ -58,19 +58,36 @@ struct enum_error {
 
     T m_val;
 
-    constexpr std::string_view name() {
+    constexpr std::string_view name() const {
         return ctti::nameof_v<T>;
     }
 
-    constexpr std::string_view message() {
+    constexpr std::string_view message() const {
         return magic_enum::enum_name(m_val);
     }
 };
+
+namespace detail {
+template<class T>
+concept ImplicitEnumError = requires(const T& t) {
+    {tos_is_implicit_error_enum(t)};
+};
+
+#define TOS_ERROR_ENUM(type)                                 \
+    constexpr bool tos_is_implicit_error_enum(const type&) { \
+        return true;                                         \
+    }
+} // namespace detail
 
 struct any_error {
     static inline constexpr auto sbo_size = 3 * sizeof(void*);
 
 public:
+    template<detail::ImplicitEnumError T>
+    any_error(T val)
+        : any_error(enum_error<T>(val)) {
+    }
+
     template<Error T>
     any_error(T&& err) requires(
         !std::same_as<std::remove_const_t<std::remove_reference_t<T>>, any_error>) {

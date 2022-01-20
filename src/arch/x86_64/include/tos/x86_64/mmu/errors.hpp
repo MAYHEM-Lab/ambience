@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tos/error.hpp>
+
 namespace tos::x86_64 {
 enum class mmu_errors
 {
@@ -8,4 +10,6 @@ enum class mmu_errors
     not_allocated,
     bad_perms,
 };
+
+TOS_ERROR_ENUM(mmu_errors);
 }
