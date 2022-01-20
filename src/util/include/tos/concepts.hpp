@@ -16,4 +16,7 @@ concept InstantiationOf = is_instantiation<Template, T>::value;
 template<class Derived, class Base>
 concept DerivedFrom = std::is_base_of_v<Base, Derived> &&
     std::is_convertible_v<const volatile Derived*, const volatile Base*>;
+
+template <class T>
+concept Enumeration = std::is_enum_v<T>;
 } // namespace tos
