@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tos/expected.hpp"
 #include <cassert>
 #include <tos/detail/coro.hpp>
 #include <tos/late_constructed.hpp>
@@ -155,6 +156,20 @@ public:
     }
 };
 
+template<class T, class ErrorT>
+class TaskPromise<expected<T, ErrorT>, false>
+    : public TaskPromiseBase<expected<T, ErrorT>> {
+    tos::late_constructed<expected<T, ErrorT>> m_value;
+
+public:
+    void return_value(expected<T, ErrorT> val) {
+        m_value.emplace(std::move(val));
+    }
+
+    expected<T, ErrorT>& result() {
+        return m_value.get();
+    }
+};
 // template<class T>
 // using async = Task<result<T>>;
 } // namespace tos
