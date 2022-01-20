@@ -3,8 +3,9 @@
 
 #include "hash.hpp"
 #include "algorithm.hpp"
-#include <ostream>
+// #include <ostream>
 #include <string>
+#include <string_view>
 
 namespace ctti
 {
@@ -93,15 +94,19 @@ public:
         return operator()(begin_offset, size() - end_offset);
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const cstring& str)
-    {
-        for(const char c : str)
-        {
-            os << c;
-        }
-
-        return os;
+    constexpr operator std::string_view() const {
+        return std::string_view(_str, _length);
     }
+
+    // friend std::ostream& operator<<(std::ostream& os, const cstring& str)
+    // {
+    //     for(const char c : str)
+    //     {
+    //         os << c;
+    //     }
+
+    //     return os;
+    // }
 
 private:
     const char* _str;
