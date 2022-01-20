@@ -56,18 +56,18 @@ public:
     any_error(T&& err) requires(
         !std::same_as<std::remove_const_t<std::remove_reference_t<T>>, any_error>) {
         using error_type = std::remove_const_t<std::remove_reference_t<T>>;
+
         m_vtbl = &implement<error_type>::tbl;
-        if constexpr (sizeof(error_type) < sbo_size &&
-                      std::is_trivially_move_constructible_v<T>) {
+
+        if constexpr (implement<error_type>::tbl.is_sbo) {
             sbo_init<error_type>(std::forward<T>(err));
         } else {
             m_heap_ptr = new error_type(std::forward<T>(err));
-            mark_sbo(false);
         }
     }
 
     any_error(any_error&& err) {
-        memcpy(this, &err, sizeof *this);
+        memcpy(static_cast<void*>(this), &err, sizeof *this);
         if (is_sbo()) {
             return;
         }
@@ -91,6 +91,7 @@ public:
 
 private:
     struct vtbl {
+        bool is_sbo;
         std::string_view (*name)(const void*);
         std::string_view (*message)(const void*);
         void (*dtor)(const void*, bool del);
@@ -109,12 +110,14 @@ private:
         static void dtor(const void* ptr, bool del) {
             if (del) {
                 delete static_cast<const T*>(ptr);
-                return;   
+                return;
             }
             std::destroy_at(static_cast<const T*>(ptr));
         }
 
         static constexpr inline vtbl tbl{
+            .is_sbo = sizeof(T) <= sbo_size && 
+                      std::is_trivially_move_constructible_v<T>,
             .name = &name,
             .message = &message,
             .dtor = &dtor,
@@ -130,18 +133,11 @@ private:
     template<class T, class U>
     void sbo_init(U&& val) {
         new (&m_sbo) T(std::forward<U>(val));
-        mark_sbo(true);
-    }
-
-    void mark_sbo(bool val) {
-        auto last_byte = (char*)&m_sbo + sbo_size - 1;
-        *last_byte = val;
     }
 
     // Returns whether the current error is stored using the small buffer optimization.
     bool is_sbo() const {
-        auto last_byte = (char*)&m_sbo + sbo_size - 1;
-        return *last_byte;
+        return m_vtbl->is_sbo;
     }
 
     const void* get_sbo_model() const {
