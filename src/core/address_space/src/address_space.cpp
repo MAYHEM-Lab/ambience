@@ -24,12 +24,38 @@ mapping* address_space::containing_mapping(virtual_address virt_addr) const {
     return nullptr;
 }
 
+
+auto address_space::containing_mapping_range(virtual_range range) const
+    -> std::pair<list_it, list_it> {
+    auto front = containing_mapping(range.base);
+
+    if (!front) {
+        return {m_mappings.end(), m_mappings.end()};
+    }
+
+    auto begin = m_mappings.unsafe_find(*front);
+    for (auto it = begin; it != m_mappings.end(); ++it) {
+        if (contains(it->vm_segment.range, range.end())) {
+            return {begin, it};
+        }
+    }
+
+    return {begin, m_mappings.end()};
+}
+
 void address_space::add_mapping(mapping& mapping) {
-    m_mappings.push_back(mapping);
+    auto it = m_mappings.begin();
+    for (; it != m_mappings.end(); ++it) {
+        if (it->vm_segment.range.base > mapping.vm_segment.range.base) {
+            break;
+        }
+    }
+    
+    m_mappings.insert(it, mapping);
     mapping.va = self();
 }
 
-const auto& address_space::mappings() const {
+auto address_space::mappings() const -> const mapping_list_t& {
     return m_mappings;
 }
 

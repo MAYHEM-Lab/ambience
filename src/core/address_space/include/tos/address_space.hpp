@@ -8,12 +8,20 @@
 namespace tos {
 class address_space {
 public:
+    using mapping_list_t = intrusive_list<mapping, through_member<&mapping::va_list>>;
+    using list_it = mapping_list_t::iterator;
+
     address_space() = default;
     address_space(const address_space& rhs);
 
     mapping* containing_mapping(virtual_address virt_addr) const;
 
-    const auto& mappings() const;
+    // An address range can potentially span multiple mappings.
+    // This function returns a range of mappings that contain all the addresses in the
+    // given range.
+    std::pair<list_it, list_it> containing_mapping_range(virtual_range range) const;
+
+    const mapping_list_t& mappings() const;
 
 protected:
     void add_mapping(mapping& mapping);
@@ -22,7 +30,7 @@ protected:
     const cur_arch::address_space* self() const;
 
 private:
-    intrusive_list<mapping, through_member<&mapping::va_list>> m_mappings;
+    mapping_list_t m_mappings;
 };
 
 namespace global {
