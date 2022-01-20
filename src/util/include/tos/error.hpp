@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstring>
+#include <ctti/nameof.hpp>
+#include <magic_enum.hpp>
 #include <memory>
 #include <string_view>
 #include <tos/concepts.hpp>
@@ -48,6 +50,23 @@ struct error_traits<T> {
     }
 };
 
+template<Enumeration T>
+struct enum_error {
+    enum_error(T t)
+        : m_val{t} {
+    }
+
+    T m_val;
+
+    constexpr std::string_view name() {
+        return ctti::nameof_v<T>;
+    }
+
+    constexpr std::string_view message() {
+        return magic_enum::enum_name(m_val);
+    }
+};
+
 struct any_error {
     static inline constexpr auto sbo_size = 3 * sizeof(void*);
 
@@ -89,7 +108,7 @@ public:
         m_vtbl->dtor(get_model(), !is_sbo());
     }
 
-    template <class T>
+    template<class T>
     friend const T* error_cast(const any_error& err) {
         if (err.m_vtbl == &implement<T>::tbl) {
             return static_cast<const T*>(err.get_model());
@@ -124,8 +143,7 @@ private:
         }
 
         static constexpr inline vtbl tbl{
-            .is_sbo = sizeof(T) <= sbo_size && 
-                      std::is_trivially_move_constructible_v<T>,
+            .is_sbo = sizeof(T) <= sbo_size && std::is_trivially_move_constructible_v<T>,
             .name = &name,
             .message = &message,
             .dtor = &dtor,

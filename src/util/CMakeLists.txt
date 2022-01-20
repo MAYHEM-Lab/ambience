@@ -40,7 +40,7 @@ add_library(
 )
 
 target_compile_features(tos_util_core PUBLIC cxx_std_20)
-target_link_libraries(tos_util_core PUBLIC tos::libcxx tos_memory tos_coro hana tos_async)
+target_link_libraries(tos_util_core PUBLIC tos::libcxx tos_memory tos_coro hana tos_async ctti magic_enum)
 target_compile_definitions(tos_util_core PUBLIC TOS_DEFAULT_STACK_SIZE=${TOS_DEF_STACK})
 
 if (ENABLE_UBSAN)
