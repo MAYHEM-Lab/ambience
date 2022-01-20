@@ -18,8 +18,8 @@ template<class T>
 class list_node : public non_copy_movable {
 public:
     list_node() = default; // NOLINT
-    list_node<T>* prev; // NOLINT
-    list_node<T>* next; // NOLINT
+    list_node<T>* prev;    // NOLINT
+    list_node<T>* next;    // NOLINT
 };
 
 struct through_base {
@@ -152,6 +152,7 @@ public:
     intrusive_list& operator=(const intrusive_list&) = delete;
 
     using iterator_t = intrusive_list_iterator<T, Access>;
+    using iterator = iterator_t;
 
     constexpr intrusive_list shallow_copy() const noexcept {
         intrusive_list res;
@@ -383,23 +384,25 @@ constexpr auto intrusive_list<T, Access>::push_front(T& elem) noexcept -> iterat
 template<class T, class Access>
 constexpr auto intrusive_list<T, Access>::insert(intrusive_list::iterator_t at, T& elem)
     -> iterator_t {
-    auto& t = Access::template access<T>(elem);
+    auto& elem_node = Access::template access<T>(elem);
     if (at == begin()) {
         push_front(elem);
-        return iterator_t{&t};
+        return iterator_t{&elem_node};
     } else if (at == end()) {
         return push_back(elem);
     }
 
-    t.prev = at->prev;
-    at->prev = &t;
-    t.next = &(*at);
+    auto& at_node = Access::template access<T>(*at);
 
-    if (t.prev) {
-        t.prev->next = &t;
+    elem_node.prev = at_node.prev;
+    at_node.prev = &elem_node;
+    elem_node.next = &at_node;
+
+    if (elem_node.prev) {
+        elem_node.prev->next = &elem_node;
     }
 
-    return iterator_t{&t};
+    return iterator_t{&elem_node};
 }
 
 template<class T, class Access>
