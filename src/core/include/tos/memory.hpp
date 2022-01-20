@@ -34,6 +34,19 @@ struct virtual_address {
         return addr;
     }
 
+    constexpr friend virtual_address operator-(const virtual_address& base,
+                                               std::ptrdiff_t diff) {
+        auto copy = base;
+        copy -= diff;
+        return copy;
+    }
+
+    constexpr friend virtual_address& operator-=(virtual_address& base,
+                                                 std::ptrdiff_t diff) {
+        base.addr -= diff;
+        return base;
+    }
+
     constexpr friend virtual_address operator+(const virtual_address& base,
                                                std::ptrdiff_t diff) {
         auto copy = base;
