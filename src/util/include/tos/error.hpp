@@ -4,6 +4,7 @@
 #include <memory>
 #include <string_view>
 #include <tos/concepts.hpp>
+#include <tos/utility.hpp>
 #include <type_traits>
 
 namespace tos {
@@ -48,79 +49,81 @@ struct error_traits<T> {
 };
 
 struct any_error {
-    static inline constexpr auto sbo_size = 16;
+    static inline constexpr auto sbo_size = 3 * sizeof(void*);
 
 public:
     template<Error T>
-        any_error(T&& err) requires(
-            !std::same_as<std::remove_const_t<std::remove_reference_t<T>>, any_error>) &&
-        (sizeof(T) < sbo_size) && (std::is_trivially_move_constructible_v<T>) {
-        using model_type = model_impl<std::remove_const_t<std::remove_reference_t<T>>>;
-        sbo_init<model_type>(std::forward<T>(err));
-    }
-
-    template<Error T>
     any_error(T&& err) requires(
-        !std::same_as<std::remove_const_t<std::remove_reference_t<T>>, any_error>)
-        : m_model(std::make_unique<
-                  model_impl<std::remove_const_t<std::remove_reference_t<T>>>>(
-              std::forward<T>(err))) {
-        mark_sbo(false);
+        !std::same_as<std::remove_const_t<std::remove_reference_t<T>>, any_error>) {
+        using error_type = std::remove_const_t<std::remove_reference_t<T>>;
+        m_vtbl = &implement<error_type>::tbl;
+        if constexpr (sizeof(error_type) < sbo_size &&
+                      std::is_trivially_move_constructible_v<T>) {
+            sbo_init<error_type>(std::forward<T>(err));
+        } else {
+            m_heap_ptr = new error_type(std::forward<T>(err));
+            mark_sbo(false);
+        }
     }
-
 
     any_error(any_error&& err) {
-        if (err.is_sbo()) {
-            memcpy(&m_sbo, &err.m_sbo, sizeof m_sbo);
+        memcpy(this, &err, sizeof *this);
+        if (is_sbo()) {
             return;
         }
-        m_model = std::move(err.m_model);
-        mark_sbo(false);
+        err.m_heap_ptr = nullptr;
     }
 
     std::string_view message() const {
-        return get_model()->message();
+        return m_vtbl->message(get_model());
     }
 
     std::string_view name() const {
-        return get_model()->name();
+        return m_vtbl->name(get_model());
     }
 
     ~any_error() {
-        if (is_sbo()) {
-            std::destroy_at(get_sbo_model());
+        if (!get_model()) {
             return;
         }
-        std::destroy_at(&m_model);
+        m_vtbl->dtor(get_model(), !is_sbo());
     }
 
 private:
-    struct error_model {
-        virtual std::string_view name() const = 0;
-        virtual std::string_view message() const = 0;
-        virtual ~error_model() = default;
+    struct vtbl {
+        std::string_view (*name)(const void*);
+        std::string_view (*message)(const void*);
+        void (*dtor)(const void*, bool del);
     };
 
-    template<Error T>
-    struct model_impl
-        : error_model
-        , T {
-        template<class U>
-        model_impl(U&& err)
-            : T{std::forward<U>(err)} {
+    template<class T>
+    struct implement {
+        static std::string_view name(const void* ptr) {
+            return error_traits<T>::get_name(*static_cast<const T*>(ptr));
         }
 
-        std::string_view name() const override {
-            return error_traits<T>::get_name(static_cast<const T&>(*this));
+        static std::string_view message(const void* ptr) {
+            return error_traits<T>::get_message(*static_cast<const T*>(ptr));
         }
 
-        std::string_view message() const override {
-            return error_traits<T>::get_message(static_cast<const T&>(*this));
+        static void dtor(const void* ptr, bool del) {
+            if (del) {
+                delete static_cast<const T*>(ptr);
+                return;   
+            }
+            std::destroy_at(static_cast<const T*>(ptr));
         }
+
+        static constexpr inline vtbl tbl{
+            .name = &name,
+            .message = &message,
+            .dtor = &dtor,
+        };
     };
 
+    const vtbl* m_vtbl;
     union {
-        std::unique_ptr<error_model> m_model;
+        void* m_heap_ptr;
         std::aligned_storage_t<sbo_size, alignof(void*)> m_sbo;
     };
 
@@ -141,15 +144,15 @@ private:
         return *last_byte;
     }
 
-    const error_model* get_sbo_model() const {
-        return reinterpret_cast<const error_model*>(&m_sbo);
+    const void* get_sbo_model() const {
+        return &m_sbo;
     }
 
-    const error_model* get_model() const {
+    const void* get_model() const {
         if (is_sbo()) {
             return get_sbo_model();
         }
-        return m_model.get();
+        return m_heap_ptr;
     }
 };
 
