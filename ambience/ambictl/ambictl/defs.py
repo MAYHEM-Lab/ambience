@@ -17,7 +17,29 @@ env = Environment(
 
 
 def _write_if_different(file, content):
-    file.write(content)
+    if os.path.exists(file):
+        with open(file, 'r') as f:
+            lines = f.readlines()
+            file_text = "".join(lines)
+
+            # print('FNAME:')
+            # print(f.name)
+            # print('ORIGINAL:')
+            # print(file_text)
+            # print('NEW:')
+            # print(content)
+
+            # Only write to file if content is different
+            if file_text != content:
+                with open(file, 'w+') as w:
+                    w.write(content)
+                    print('[UPDATED]   ', f.name)
+            else:
+                print('[NO CHANGE] ', f.name)
+    else:
+        with open(file, 'w+') as w:
+            w.write(content)
+            print('[CREATED]   ', w.name)
 
 
 class NodeObject:
@@ -523,46 +545,46 @@ class DeployNode:
         loaders_dir = os.path.join(node_dir, "loaders")
         os.makedirs(loaders_dir, exist_ok=True)
 
-        with open(os.path.join(node_dir, "CMakeLists.txt"), "w+") as node_cmake:
-            template = env.get_template("node/CMakeLists.txt")
-            _write_if_different(node_cmake, template.render({
-                "node_name": self.node.name,
-                "node_groups": (g.name for g in self.deploy_groups.keys()),
-                "schemas": set(target for g in self.groups for target in g.cmake_targets()),
-                "link_targets": set(
-                    target for exporter in self.node.exporters for target in exporter.cmake_targets()).union(
-                    set(target for importer in self.node.importers for target in importer.cmake_targets()))
-            }))
+        node_cmake = os.path.join(node_dir, "CMakeLists.txt")
+        template = env.get_template("node/CMakeLists.txt")
+        _write_if_different(node_cmake, template.render({
+            "node_name": self.node.name,
+            "node_groups": (g.name for g in self.deploy_groups.keys()),
+            "schemas": set(target for g in self.groups for target in g.cmake_targets()),
+            "link_targets": set(
+                target for exporter in self.node.exporters for target in exporter.cmake_targets()).union(
+                set(target for importer in self.node.importers for target in importer.cmake_targets()))
+        }))
 
-        with open(os.path.join(loaders_dir, "CMakeLists.txt"), "w+") as groups_cmake:
-            template = env.get_template("node/loaders/CMakeLists.txt")
-            _write_if_different(groups_cmake, template.render({
-                "node_loaders": (g.name for g in self.deploy_groups.keys())
-            }))
+        groups_cmake = os.path.join(loaders_dir, "CMakeLists.txt")
+        template = env.get_template("node/loaders/CMakeLists.txt")
+        _write_if_different(groups_cmake, template.render({
+            "node_loaders": (g.name for g in self.deploy_groups.keys())
+        }))
 
-        with open(os.path.join(node_dir, "groups.hpp"), "w+") as node_src:
-            template = env.get_template("node/groups.hpp")
-            _write_if_different(node_src, template.render({
-                "groups": (group.name for group in self.deploy_groups),
-                "group_includes": (f"{group.name}.hpp" for group in self.deploy_groups)
-            }))
+        node_src = os.path.join(node_dir, "groups.hpp")
+        template = env.get_template("node/groups.hpp")
+        _write_if_different(node_src, template.render({
+            "groups": (group.name for group in self.deploy_groups),
+            "group_includes": (f"{group.name}.hpp" for group in self.deploy_groups)
+        }))
 
-        with open(os.path.join(node_dir, "groups.cpp"), "w+") as node_src:
-            template = env.get_template("node/groups.cpp")
-            _write_if_different(node_src, template.render({
-                "groups": list(group.name for group in self.deploy_groups)
-            }))
+        node_src = os.path.join(node_dir, "groups.cpp")
+        template = env.get_template("node/groups.cpp")
+        _write_if_different(node_src, template.render({
+            "groups": list(group.name for group in self.deploy_groups)
+        }))
 
-        with open(os.path.join(node_dir, "registry.hpp"), "w+") as node_src:
-            _write_if_different(node_src, self.generateRegistry())
+        node_src = os.path.join(node_dir, "registry.hpp")
+        _write_if_different(node_src, self.generateRegistry())
 
         for dg in self.deploy_groups.values():
             group_dir = os.path.join(loaders_dir, dg.group.name)
             os.makedirs(group_dir, exist_ok=True)
             loader = dg.group.generate_loader_dir("")
             for name, content in loader.items():
-                with open(os.path.join(group_dir, name), "w+") as group_src:
-                    _write_if_different(group_src, content)
+                group_src = os.path.join(group_dir, name)
+                _write_if_different(group_src, content)
 
     def post_generate(self, build_root, conf_dirs):
         for g in self.groups:

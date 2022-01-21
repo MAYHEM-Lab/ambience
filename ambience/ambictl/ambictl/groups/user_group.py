@@ -122,19 +122,26 @@ class UserGroup(Group):
     def generate_group_dir(self, build_root):
         subdir = os.path.join(build_root, self.name)
         os.makedirs(subdir, exist_ok=True)
-        with open(os.path.join(subdir, "null.cpp"), mode="w+") as src:
-            _write_if_different(src, "")
-        with open(os.path.join(subdir, "linker.ld"), mode="w+") as src:
-            _write_if_different(src, self.generateLinker(Memories(rom=(0, 1024*1024), ram=(1024*1024, 1024*1024))))
-        with open(os.path.join(subdir, "group.cpp"), mode="w+") as src:
-            _write_if_different(src, self.generateBody())
-        with open(os.path.join(subdir, "CMakeLists.txt"), mode="w+") as src:
-            _write_if_different(src, self.generateCmake())
-        with open(os.path.join(subdir, "interface.cpp"), mode="w+") as src:
-            _write_if_different(src, self.generateInterface(self.dg.queue_size))
+
+        src = os.path.join(subdir, "null.cpp")
+        _write_if_different(src, "")
+
+        src = os.path.join(subdir, "linker.ld")
+        _write_if_different(src, self.generateLinker(
+            Memories(rom=(0, 1024*1024), ram=(1024*1024, 1024*1024))))
+
+        src = os.path.join(subdir, "group.cpp")
+        _write_if_different(src, self.generateBody())
+
+        src = os.path.join(subdir, "CMakeLists.txt")
+        _write_if_different(src, self.generateCmake())
+
+        src = os.path.join(subdir, "interface.cpp")
+        _write_if_different(src, self.generateInterface(self.dg.queue_size))
+
         if self.dg.memories is not None:
-            with open(os.path.join(subdir, "linker.ld"), mode="w+") as src:
-                _write_if_different(src, self.generateLinker(self.dg.memories))
+            src = os.path.join(subdir, "linker.ld")
+            _write_if_different(src, self.generateLinker(self.dg.memories))
 
     def generate_loader_dir(self, build_root):
         return self.dg.node.node.platform.generateGroupLoader(self.dg)
