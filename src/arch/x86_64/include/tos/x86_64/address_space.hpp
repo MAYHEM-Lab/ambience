@@ -150,6 +150,8 @@ struct temporary_share : quik::share_base {
             // tos::debug::log(
             //     "map", vrange.base, vrange.end(), prange.base, page.unmap, page.owned);
 
+            bool tried_once = false;
+
             if (!page.owned) {
                 if (to->increment(vrange.base) == 0) {
                     goto do_map;
@@ -157,7 +159,6 @@ struct temporary_share : quik::share_base {
                 continue;
             }
 
-            bool tried_once = false;
         do_map:
             virtual_segment virtseg{.range = vrange,
                                     .perms = page.readonly ? permissions::read
