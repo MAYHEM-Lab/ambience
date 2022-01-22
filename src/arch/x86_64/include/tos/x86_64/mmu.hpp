@@ -35,8 +35,8 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
 expected<void, mmu_errors> mark_nonresident(translation_table& root,
                                             const virtual_range& virt_range);
 
-expected<const table_entry*, mmu_errors> entry_for_address(const translation_table& root,
-                                                           uintptr_t virt_addr);
+expected<table_entry*, mmu_errors> entry_for_address(translation_table& root,
+                                                     virtual_address virt_addr);
 
 expected<translation_table*, mmu_errors> clone(const translation_table& root,
                                                physical_page_allocator& palloc);

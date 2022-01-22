@@ -1,5 +1,6 @@
 #pragma once
 
+#include "magic_enum.hpp"
 #include "tos/paging/physical_page_allocator.hpp"
 #include "tos/utility.hpp"
 #include "tos/x86_64/mmu/common.hpp"
@@ -155,6 +156,8 @@ struct temporary_share : quik::share_base {
                 }
                 continue;
             }
+
+            bool tried_once = false;
         do_map:
             virtual_segment virtseg{.range = vrange,
                                     .perms = page.readonly ? permissions::read
@@ -173,9 +176,27 @@ struct temporary_share : quik::share_base {
 
             auto err = force_error(res);
             if (err == mmu_errors::already_allocated) {
-                page.unmap = false;
                 // tos::debug::log("already allocated");
-                continue;
+                auto entry =
+                    force_get(entry_for_address(*to->m_table, vrange.base));
+
+                // If the page is already mapped with a user accessible mapping, we cannot
+                // fix this here.
+                if (entry->allow_user() || tried_once) {
+                    tos::debug::warn("Tried to map to an existing mapping at",
+                                     vrange.base.address(),
+                                     vrange.size);
+                    tos::debug::warn(
+                        "Tried/existing permissions",
+                        magic_enum::enum_name(virtseg.perms),
+                        magic_enum::enum_name(translate_permissions(*entry)));
+                    page.unmap = false;
+                    continue;
+                }
+
+                entry->valid(false);
+                tried_once = true;
+                goto do_map;
             }
 
             return false;
@@ -266,7 +287,8 @@ struct temporary_share : quik::share_base {
             virtual_range vrange = map_at(prange, page.map_at);
 
             // tos::debug::log(
-            //     "unmap", vrange.base, vrange.end(), prange.base, page.unmap, page.owned);
+            //     "unmap", vrange.base, vrange.end(), prange.base, page.unmap,
+            //     page.owned);
 
             if (!page.owned) {
                 if (auto remaining = to->decrement(vrange.base); remaining != 0) {

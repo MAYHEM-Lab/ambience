@@ -2,6 +2,7 @@
 #include "tos/memory.hpp"
 #include "tos/x86_64/mmu/common.hpp"
 #include "tos/x86_64/mmu/errors.hpp"
+#include "tos/x86_64/mmu/table_entry.hpp"
 #include "tos/x86_64/mmu/translation_table.hpp"
 #include <tos/debug/log.hpp>
 #include <tos/flags.hpp>
@@ -200,6 +201,28 @@ do_clone(const translation_table& root, physical_page_allocator& palloc, int lev
 }
 } // namespace
 
+expected<table_entry*, mmu_errors> entry_for_address(translation_table& root,
+                                                     virtual_address virt_addr) {
+    auto path = pt_path_for_addr(virt_addr.address());
+    translation_table* table = &root;
+
+    for (size_t i = 0; i < path.size() - 1; ++i) {
+        auto& el = (*table)[path[i]];
+        if (!el.valid()) {
+            return unexpected(mmu_errors::not_allocated);
+        }
+
+        table = &table->table_at(path[i]);
+    }
+
+    auto& el = (*table)[path.back()];
+    if (!el.valid()) {
+        return unexpected(mmu_errors::not_allocated);
+    }
+
+    return &(*table)[path.back()];
+}
+
 expected<translation_table*, mmu_errors> clone(const translation_table& root,
                                                physical_page_allocator& palloc) {
     // For every entry in a translation table, we copy it if it's a page and clone
@@ -221,7 +244,7 @@ expected<physical_address, mmu_errors> resident_address(const translation_table&
 
         table = &table_at(elem);
     }
-    
+
     if (!(*table)[path.back()].valid()) {
         return unexpected(mmu_errors::not_allocated);
     }
