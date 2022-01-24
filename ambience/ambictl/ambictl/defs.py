@@ -22,24 +22,13 @@ def _write_if_different(file, content):
             lines = f.readlines()
             file_text = "".join(lines)
 
-            # print('FNAME:')
-            # print(f.name)
-            # print('ORIGINAL:')
-            # print(file_text)
-            # print('NEW:')
-            # print(content)
-
             # Only write to file if content is different
             if file_text != content:
                 with open(file, 'w+') as w:
                     w.write(content)
-                    print('[UPDATED]   ', f.name)
-            else:
-                print('[NO CHANGE] ', f.name)
     else:
         with open(file, 'w+') as w:
             w.write(content)
-            print('[CREATED]   ', w.name)
 
 
 class NodeObject:
