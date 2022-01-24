@@ -63,7 +63,7 @@ public:
 
         res.fifo_ctrl().outb(0xc7); // Enable FIFO, clear them, with 14-byte threshold
 
-        res.modem_ctrl().outb(0x0b); // IRQs enabled, RTS/DSR set
+        res.modem_ctrl().outb(0); // IRQs disabled, RTS/DSR unset
 
         //        res.modem_ctrl().outb(0x1e); // Set in loopback mode
         //
