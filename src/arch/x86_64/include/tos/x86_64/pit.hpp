@@ -7,6 +7,7 @@
 namespace tos::x86_64 {
 class pit {
 public:
+    void disable();
     void set_frequency(int freq);
 
     uint32_t get_period() const;

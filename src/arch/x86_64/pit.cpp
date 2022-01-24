@@ -1,9 +1,13 @@
+#include <tos/debug/log.hpp>
 #include <tos/x86_64/pic.hpp>
 #include <tos/x86_64/pit.hpp>
 #include <tos/x86_64/port.hpp>
-#include <tos/debug/log.hpp>
 
 namespace tos::x86_64 {
+void pit::disable() {
+    port(0x43).outw(0x32);
+}
+
 void pit::set_frequency(int freq) {
     // PIT ticks at a fixed 1.193182 MHz
     // 1193182 Hz
@@ -25,6 +29,7 @@ void pit::set_frequency(int freq) {
 uint32_t pit::get_period() const {
     return 0;
 }
+
 uint32_t pit::get_counter() const {
     tos::x86_64::port(0x43).outb(0);
     auto lo = tos::x86_64::port(0x40).inb();
