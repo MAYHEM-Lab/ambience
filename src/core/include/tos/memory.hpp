@@ -7,6 +7,7 @@
 #include <compare>
 #include <cstddef>
 #include <cstdint>
+#include <magic_enum.hpp>
 #include <memory>
 #include <optional>
 #include <tos/span.hpp>
@@ -114,7 +115,7 @@ struct physical_address {
     // Use of the returned pointer assumes the address is mapped direct to the current
     // virtual address space.
     [[nodiscard]] void* direct_mapped() const {
-        return reinterpret_cast<void*>(addr);
+        return reinterpret_cast<void*>(address());
     }
 };
 
@@ -209,6 +210,12 @@ enum class permissions : uint8_t
     all = 7
 };
 
+template<class StreamT>
+void print(StreamT& str, permissions perms) {
+    using tos::print;
+    return print(str, magic_enum::enum_name(perms));
+}
+
 enum class memory_types
 {
     // RAM, cachable
@@ -233,7 +240,6 @@ struct basic_segment {
 using segment = basic_segment<memory_range>;
 using physical_segment = basic_segment<physical_range>;
 using virtual_segment = basic_segment<virtual_range>;
-
 
 inline virtual_segment identity_map(const physical_segment& range) {
     return virtual_segment{.range = identity_map(range.range), .perms = range.perms};
