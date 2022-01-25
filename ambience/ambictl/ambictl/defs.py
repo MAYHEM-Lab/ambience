@@ -17,18 +17,18 @@ env = Environment(
 
 
 def _write_if_different(file, content):
+    # Check if content is the same; if so, exit early
     if os.path.exists(file):
         with open(file, 'r') as f:
             lines = f.readlines()
             file_text = "".join(lines)
 
-            # Only write to file if content is different
-            if file_text != content:
-                with open(file, 'w+') as w:
-                    w.write(content)
-    else:
-        with open(file, 'w+') as w:
-            w.write(content)
+            if file_text == content:
+                return
+    
+    # Otherwise write to file
+    with open(file, 'w+') as w:
+        w.write(content)
 
 
 class NodeObject:
