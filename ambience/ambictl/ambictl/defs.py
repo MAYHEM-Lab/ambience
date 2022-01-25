@@ -20,10 +20,7 @@ def _write_if_different(file, content):
     # Check if content is the same; if so, exit early
     if os.path.exists(file):
         with open(file, 'r') as f:
-            lines = f.readlines()
-            file_text = "".join(lines)
-
-            if file_text == content:
+            if f.read() == content:
                 return
     
     # Otherwise write to file
