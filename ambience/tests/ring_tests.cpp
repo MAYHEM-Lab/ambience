@@ -10,16 +10,16 @@ TEST_CASE("Allocate wrapping works") {
     tos::ae::interface_storage<8> storage;
     auto iface = storage.make_interface();
 
-    REQUIRE_EQ(0, iface.allocate_priv());
-    REQUIRE_EQ(1, iface.allocate_priv());
-    REQUIRE_EQ(2, iface.allocate_priv());
-    REQUIRE_EQ(3, iface.allocate_priv());
-    REQUIRE_EQ(4, iface.allocate_priv());
-    REQUIRE_EQ(5, iface.allocate_priv());
-    REQUIRE_EQ(6, iface.allocate_priv());
-    REQUIRE_EQ(7, iface.allocate_priv());
+    REQUIRE_EQ(0, iface.allocate_entry());
+    REQUIRE_EQ(1, iface.allocate_entry());
+    REQUIRE_EQ(2, iface.allocate_entry());
+    REQUIRE_EQ(3, iface.allocate_entry());
+    REQUIRE_EQ(4, iface.allocate_entry());
+    REQUIRE_EQ(5, iface.allocate_entry());
+    REQUIRE_EQ(6, iface.allocate_entry());
+    REQUIRE_EQ(7, iface.allocate_entry());
     iface.release(0);
-    REQUIRE_EQ(0, iface.allocate_priv());
+    REQUIRE_EQ(0, iface.allocate_entry());
 }
 
 TEST_CASE("Response queue is initialized correctly") {
