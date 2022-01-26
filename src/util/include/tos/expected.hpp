@@ -12,6 +12,7 @@
 #include <tos/compiler.hpp>
 #include <tos/debug/assert.hpp>
 #include <tos/error.hpp>
+#include <tos/ignore.hpp>
 #include <tos/utility.hpp>
 #include <type_traits>
 
@@ -216,13 +217,6 @@ typename T::value_type get_or(T&& t, U&& r) {
         [](auto&& res) -> decltype(auto) { return std::forward<decltype(res)>(res); },
         [&](auto&&) -> decltype(auto) { return r; });
 }
-
-struct ignore_t {
-    template<class... T>
-    void operator()(T&&...) const {
-    }
-};
-static constexpr ignore_t ignore{};
 
 template<class T, class E>
 void ensure(const expected<T, E>& expect) {
