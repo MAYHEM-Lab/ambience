@@ -178,7 +178,7 @@ template<bool FromHost>
 req_elem&
 submit_req(interface& iface, int channel, int proc, const void* params, void* res) {
     const auto& [req_el, el_idx] =
-        prepare_req<FromHost>(iface, channel, proc, params, res);
+        prepare_req(iface, channel, proc, params, res);
 
     submit_elem<FromHost>(iface, el_idx);
 
