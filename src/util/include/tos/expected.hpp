@@ -72,20 +72,22 @@ static constexpr default_construct_tag_t default_construct{};
 template<class T, class ErrT>
 class expected {
     using internal_t = tl::expected<T, ErrT>;
-    
-    template <class U, class ErrU>
+
+    template<class U, class ErrU>
     friend class expected;
-    
+
 public:
     template<class U = T, typename = std::enable_if_t<std::is_same<U, void>{}>>
     constexpr expected()
-        : m_internal{} {
+        : m_internal {
     }
+    {}
 
     template<class U = T, typename = std::enable_if_t<!std::is_same<U, void>{}>>
     constexpr expected(default_construct_tag_t)
-        : m_internal{} {
+        : m_internal {
     }
+    {}
 
     template<class ErrU>
     constexpr expected(unexpected_t<ErrU>&& u)
