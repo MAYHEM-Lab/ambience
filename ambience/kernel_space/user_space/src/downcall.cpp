@@ -11,7 +11,7 @@ auto downcall_transport::execute(int proc_id, const void* args, void* res) -> aw
     auto translated_args =
         ipc_area_vtbl[proc_id].do_share(*tos::global::cur_as, *g->as, args, res);
 
-    const auto& [req, id] = prepare_req<true>(
+    const auto& [req, id] = prepare_req(
         *g->iface.user_iface, channel_id, proc_id, translated_args->get_tuple_ptr(), res);
 
     return awaiter{.m_elem = &req,

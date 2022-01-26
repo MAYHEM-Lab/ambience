@@ -30,7 +30,7 @@ struct upcall_transport_channel : ChannelSrc {
 
     auto execute(int proc_id, const void* args, void* res) {
         const auto& [req, id] =
-            prepare_req<false>(*iface, ChannelSrc::get_channel_id(), proc_id, args, res);
+            prepare_req(*iface, ChannelSrc::get_channel_id(), proc_id, args, res);
 
         return req.template submit<false>(iface, id, &req);
     }
@@ -42,7 +42,7 @@ struct sync_upcall_transport_channel : ChannelSrc {
 
     auto execute(int proc_id, const void* args, void* res) {
         const auto& [req, id] =
-            prepare_req<false>(*iface, ChannelSrc::get_channel_id(), proc_id, args, res);
+            prepare_req(*iface, ChannelSrc::get_channel_id(), proc_id, args, res);
 
         auto awaiter = req.template submit<false>(iface, id, &req);
         awaiter.fiber_suspend(*fiber::current_fiber());
