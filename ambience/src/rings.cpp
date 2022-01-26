@@ -1,3 +1,4 @@
+#include <atomic>
 #include <tos/ae/rings.hpp>
 
 namespace tos::ae {
@@ -24,13 +25,14 @@ interface::interface(int size, ring_elem* elems, ring* guest_to_host, ring* host
 NO_INLINE
 int32_t interface::allocate_entry() {
     auto res = free_head.load(std::memory_order_acquire);
-    if (res == nullptr) {
-        // No space currently
-        return -1;
-    }
-    while (
-        !free_head.compare_exchange_weak(res, res->next_free, std::memory_order_release))
-        ;
+    do {
+        if (res == nullptr) {
+            // No space currently
+            return -1;
+        }
+    } while (!free_head.compare_exchange_weak(
+        res, res->next_free, std::memory_order_release, std::memory_order_acquire));
+
     int32_t idx = std::distance(elems, reinterpret_cast<ring_elem*>(res));
     return idx;
 }
@@ -38,14 +40,13 @@ int32_t interface::allocate_entry() {
 void interface::release(int idx) {
     elems[idx].common.flags = elem_flag::released;
 
-    while (true) {
-        auto expect = free_head.load(std::memory_order_acquire);
-        elems[idx].free.next_free = expect;
-        auto store = &elems[idx].free;
-        if (free_head.compare_exchange_weak(expect, store, std::memory_order_release)) {
-            break;
-        }
-    }
+    auto expect = free_head.load(std::memory_order_acquire);
+    auto store = &elems[idx].free;
+
+    do {
+        store->next_free = expect;
+    } while (!free_head.compare_exchange_weak(
+        expect, store, std::memory_order_release, std::memory_order_acquire));
 }
 
 bool ring::overflown(uint16_t last_seen) const {
