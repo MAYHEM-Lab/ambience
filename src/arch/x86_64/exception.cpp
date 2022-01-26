@@ -175,8 +175,9 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
     //        root = backtrace_next(*root);
     //    }
 
-    while (true)
-        ;
+    while (true) {
+        tos::x86_64::nop();
+    }
 }
 void x87_fpu_fault_handler([[maybe_unused]] exception_frame* frame,
                            [[maybe_unused]] uint64_t num) {
