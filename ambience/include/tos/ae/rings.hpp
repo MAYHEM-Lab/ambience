@@ -108,7 +108,7 @@ struct ring {
 };
 
 struct interface {
-    int size;
+    int32_t size;
 
     ring_elem* elems;
     ring* guest_to_host;
