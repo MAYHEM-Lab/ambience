@@ -2,6 +2,14 @@
 #include <tos/ae/transport/downcall.hpp>
 
 namespace tos::ae {
+downcall_transport::downcall_transport(tos::span<const sharer_vtbl> vtbl,
+                                       kernel::user_group& g,
+                                       int channel)
+    : g{&g}
+    , channel_id{channel}
+    , ipc_area_vtbl(vtbl) {
+}
+
 auto downcall_transport::awaiter::operator co_await() -> req_elem::awaiter<true> {
     transport->g->notify_downcall();
     return m_elem->submit<true>(transport->g->iface.user_iface, id, m_elem);

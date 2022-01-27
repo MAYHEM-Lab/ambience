@@ -13,11 +13,7 @@ namespace tos::ae {
 struct downcall_transport {
     explicit downcall_transport(tos::span<const sharer_vtbl> vtbl,
                                 kernel::user_group& g,
-                                int channel)
-        : g{&g}
-        , channel_id{channel}
-        , ipc_area_vtbl(vtbl) {
-    }
+                                int channel);
 
     struct awaiter {
         req_elem::awaiter<true> operator co_await();
