@@ -5,6 +5,7 @@
 namespace tos::x86_64 {
 enum class mmu_errors
 {
+    no_allocator,
     page_alloc_fail,
     already_allocated,
     not_allocated,

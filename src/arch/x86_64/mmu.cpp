@@ -50,7 +50,7 @@ constexpr expected<void, mmu_errors> recursive_allocate(translation_table& root,
         if (!root[path[0]].valid()) [[unlikely]] {
             if (!palloc) {
                 tos::debug::error("Need to allocate, but no allocator");
-                return unexpected(mmu_errors::page_alloc_fail);
+                return unexpected(mmu_errors::no_allocator);
             }
 
             auto page = palloc->allocate(1);
