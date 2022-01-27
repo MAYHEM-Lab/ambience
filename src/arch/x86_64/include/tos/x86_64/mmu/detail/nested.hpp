@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tos/memory.hpp"
 #include <array>
 #include <tos/function_ref.hpp>
 #include <tos/paging/level_computation.hpp>
@@ -34,6 +35,11 @@ pt_path_for_addr(uint64_t virt_addr) {
         path[i] = index_on_table(i, virt_addr);
     }
     return path;
+}
+
+constexpr std::array<int, std::size(level_bits) - 1>
+pt_path_for_addr(virtual_address addr) {
+    return pt_path_for_addr(addr.address());
 }
 
 static_assert(pt_path_for_addr(0) == std::array<int, 4>{0, 0, 0, 0});

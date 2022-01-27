@@ -95,11 +95,18 @@ struct physical_address {
         return addr;
     }
 
-    constexpr friend physical_address operator+(physical_address base,
+    constexpr friend physical_address operator+(const physical_address& base,
                                                 std::ptrdiff_t diff) {
-        return physical_address{base.address() + diff};
+        auto copy = base;
+        copy += diff;
+        return copy;
     }
 
+    constexpr friend physical_address& operator+=(physical_address& base,
+                                                  std::ptrdiff_t diff) {
+        base.addr += diff;
+        return base;
+    }
     constexpr friend std::ptrdiff_t operator-(const physical_address& left,
                                               const physical_address& right) {
         return left.address() - right.address();

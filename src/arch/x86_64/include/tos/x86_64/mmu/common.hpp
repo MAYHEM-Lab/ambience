@@ -22,6 +22,10 @@ inline page_id_t address_to_page(const volatile void* ptr) {
     return address_to_page(reinterpret_cast<uintptr_t>(ptr));
 }
 
+inline page_id_t address_to_page(physical_address addr) {
+    return address_to_page(addr.address());
+}
+
 struct translation_table;
 struct table_entry;
 

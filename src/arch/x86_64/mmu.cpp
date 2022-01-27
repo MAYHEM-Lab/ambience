@@ -86,8 +86,7 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
                                            const virtual_segment& virt_seg,
                                            user_accessible allow_user,
                                            physical_page_allocator* palloc) {
-    for (uintptr_t addr = virt_seg.range.base.address();
-         addr != virt_seg.range.end().address();
+    for (auto addr = virt_seg.range.base; addr != virt_seg.range.end();
          addr += page_size_bytes) {
         auto path = detail::pt_path_for_addr(addr);
         //        LOG_TRACE("Address", (void*)addr, path[0], path[1], path[2], path[3]);
@@ -100,10 +99,9 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
 expected<void, mmu_errors> mark_resident(translation_table& root,
                                          const virtual_range& range,
                                          memory_types type,
-                                         physical_address phys) {
-    void* phys_addr = phys.direct_mapped();
-    for (uintptr_t addr = range.base.address(); addr != range.end().address();
-         addr += page_size_bytes, phys_addr = (char*)phys_addr + page_size_bytes) {
+                                         physical_address phys_addr) {
+    for (auto addr = range.base; addr != range.end();
+         addr += page_size_bytes, phys_addr += page_size_bytes) {
         auto path = pt_path_for_addr(addr);
 
         translation_table* table = &root;
@@ -136,8 +134,7 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
 
 expected<void, mmu_errors> mark_nonresident(translation_table& root,
                                             const virtual_range& virt_range) {
-    for (uintptr_t addr = virt_range.base.address(); addr != virt_range.end().address();
-         addr += page_size_bytes) {
+    for (auto addr = virt_range.base; addr != virt_range.end(); addr += page_size_bytes) {
         auto path = pt_path_for_addr(addr);
 
         translation_table* table = &root;
@@ -203,7 +200,7 @@ do_clone(const translation_table& root, physical_page_allocator& palloc, int lev
 
 expected<table_entry*, mmu_errors> entry_for_address(translation_table& root,
                                                      virtual_address virt_addr) {
-    auto path = pt_path_for_addr(virt_addr.address());
+    auto path = pt_path_for_addr(virt_addr);
     translation_table* table = &root;
 
     for (size_t i = 0; i < path.size() - 1; ++i) {
@@ -232,7 +229,7 @@ expected<translation_table*, mmu_errors> clone(const translation_table& root,
 
 expected<physical_address, mmu_errors> resident_address(const translation_table& root,
                                                         virtual_address addr) {
-    auto path = pt_path_for_addr(addr.address());
+    auto path = pt_path_for_addr(addr);
 
     const translation_table* table = &root;
     // The last index takes us to the actual page, we'll set that now.
