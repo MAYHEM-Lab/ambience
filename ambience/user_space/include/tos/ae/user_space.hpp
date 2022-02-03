@@ -9,7 +9,7 @@
 #include <tos/allocator/polymorphic_allocator.hpp>
 
 namespace tos::ae {
-void done_callback(void* ptr);
+void done_callback(void* ptr, uintptr_t status);
 void proc_res_queue(interface& iface);
 
 struct low_level_output_t : self_pointing<low_level_output_t> {

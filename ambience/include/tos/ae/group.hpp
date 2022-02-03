@@ -17,14 +17,16 @@ inline void dispatch_sync_service(const void* serv_ptr, const tos::ae::req_elem&
                ptr = el.user_ptr,
                &el](auto& fib) {
         concurrency.inc();
-        serv->run_zerocopy(el.procid, el.arg_ptr, el.ret_ptr);
-        done_callback(ptr);
+        auto res = serv->run_zerocopy(el.procid, el.arg_ptr, el.ret_ptr);
+        done_callback(ptr, !res);
         concurrency.dec();
     };
     // This fiber will release its stack once the request completes.
     auto f = fiber::registered_owning::start(stack_size_t{TOS_DEFAULT_STACK_SIZE}, fn);
     if (!f) {
         tos::debug::error("Failed allocation");
+        done_callback(el.user_ptr, 2);
+        return;
     }
     f->resume();
 }
@@ -34,8 +36,8 @@ inline void dispatch_async_service(const void* serv_ptr, const tos::ae::req_elem
                    const tos::ae::req_elem& el,
                    void* ptr) -> coro::detached {
         concurrency.inc();
-        co_await serv->run_zerocopy(el.procid, el.arg_ptr, el.ret_ptr);
-        done_callback(ptr);
+        auto res = co_await serv->run_zerocopy(el.procid, el.arg_ptr, el.ret_ptr);
+        done_callback(ptr, !res);
         concurrency.dec();
     };
     coro(static_cast<const async_service_host*>(serv_ptr), el, el.user_ptr);

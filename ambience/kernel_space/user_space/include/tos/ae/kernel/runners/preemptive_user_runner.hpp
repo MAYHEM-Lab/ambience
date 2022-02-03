@@ -65,13 +65,13 @@ private:
                     }
 
                     group.notify_downcall();
-                    return done();
+                    return done(1);
                 }
 
                 if (group.exposed_services.size() <= req.channel - 1) [[unlikely]] {
                     LOG_ERROR("No such service!");
                     group.notify_downcall();
-                    return done();
+                    return done(1);
                 }
 
                 auto& channel = group.exposed_services[req.channel - 1];
@@ -82,7 +82,7 @@ private:
                                              sync->run_zerocopy(
                                                  req.procid, req.arg_ptr, req.ret_ptr);
                                              group.notify_downcall();
-                                             return done();
+                                             return done(0);
                                          }),
                              "Sync handler");
                     return;
@@ -94,7 +94,7 @@ private:
                     async->run_zerocopy(req.procid, req.arg_ptr, req.ret_ptr),
                     [&group, done] {
                         group.notify_downcall();
-                        done();
+                        done(0);
                     });
             },
             group.iface);

@@ -71,6 +71,7 @@ struct elem {
 struct res_elem {
     elem_flag flags;
     void* user_ptr;
+    uintptr_t status[3];
 };
 
 struct free_elem {
@@ -204,7 +205,8 @@ void req_elem::awaiter<FromHost>::fiber_suspend(FibT& fib) {
 }
 
 template<bool FromHost>
-void respond(interface& iface, void* user_ptr) {
+void
+respond(interface& iface, void* user_ptr, uintptr_t status) {
     auto el_idx = iface.allocate_entry();
     if (el_idx < 0) {
         while (true)
@@ -215,6 +217,7 @@ void respond(interface& iface, void* user_ptr) {
 
     res.user_ptr = user_ptr;
     res.flags = elem_flag::in_use;
+    res.status[0] = status;
 
     submit_elem<FromHost>(iface, el_idx);
 }

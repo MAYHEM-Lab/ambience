@@ -32,8 +32,8 @@ inline void proc_req_queue(ExecutorT&& executor, kernel_interface& iface) {
                              *static_cast<tos::function_ref<void()>*>(elem.res.user_ptr);
                          continuation();
                      } else {
-                         executor(elem.req, [ptr = elem.req.user_ptr, &iface] {
-                             respond<true>(*iface.user_iface, ptr);
+                         executor(elem.req, [ptr = elem.req.user_ptr, &iface](uintptr_t status) {
+                             respond<true>(*iface.user_iface, ptr, status);
                          });
                      }
                  });

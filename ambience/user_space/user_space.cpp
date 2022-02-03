@@ -7,9 +7,9 @@
 extern tos::ae::interface iface;
 
 namespace tos::ae {
-void done_callback(void* ptr) {
+void done_callback(void* ptr, uintptr_t status) {
     // tos::debug::log("Responding", &iface, ptr);
-    respond<false>(iface, ptr);
+    respond<false>(iface, ptr, status);
 }
 
 void proc_res_queue(interface& iface) {
