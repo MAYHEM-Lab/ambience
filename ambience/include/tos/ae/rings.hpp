@@ -11,6 +11,7 @@
 #include <tos/debug/log.hpp>
 #include <tos/detail/coro.hpp>
 #include <tos/error.hpp>
+#include <tos/expected.hpp>
 #include <tos/fiber/basic_fiber.hpp>
 #include <tos/flags.hpp>
 #include <tos/function_ref.hpp>
@@ -218,8 +219,7 @@ void req_elem::awaiter<FromHost>::fiber_suspend(FibT& fib) {
 }
 
 template<bool FromHost>
-expected<void, ring_errors>
-respond(interface& iface, void* user_ptr, uintptr_t status) {
+expected<void, ring_errors> respond(interface& iface, void* user_ptr, uintptr_t status) {
     auto el_idx = iface.allocate_entry();
     if (el_idx < 0) {
         return unexpected(ring_errors::out_of_space);
