@@ -60,21 +60,22 @@ TEST_CASE("Multithreading") {
     std::thread host([&] {
         auto last_seen = 0;
         while (run) {
-            last_seen = for_each(iface, *iface.guest_to_host, last_seen, [](ring_elem& el) {
-                tos::debug::do_not_optimize(&el);
-            });
+            last_seen =
+                for_each(iface, *iface.guest_to_host, last_seen, [](ring_elem& el) {
+                    tos::debug::do_not_optimize(&el);
+                });
         }
     });
 
     std::thread guest([&] {
         int i = 0;
         while (run) {
-            auto& req = submit_req<false>(iface, i++, 0, nullptr, nullptr);
+            auto* req = force_get(submit_req<false>(iface, i++, 0, nullptr, nullptr));
             std::this_thread::sleep_for(std::chrono::nanoseconds(425));
         }
     });
 
-    std::this_thread::sleep_for(std::chrono::seconds(20));
+    std::this_thread::sleep_for(std::chrono::seconds(5));
     run = false;
 
     host.join();
