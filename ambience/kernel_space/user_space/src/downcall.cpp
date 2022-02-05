@@ -11,6 +11,10 @@ downcall_transport::downcall_transport(tos::span<const sharer_vtbl> vtbl,
 }
 
 auto downcall_transport::awaiter::operator co_await() -> req_elem::awaiter<true> {
+    if (!m_elem) {
+        return req_elem::awaiter<true>{.el = nullptr};
+    }
+
     transport->g->notify_downcall();
     return m_elem->submit<true>(transport->g->iface.user_iface, id, m_elem);
 }
@@ -19,10 +23,19 @@ auto downcall_transport::execute(int proc_id, const void* args, void* res) -> aw
     auto translated_args =
         ipc_area_vtbl[proc_id].do_share(*tos::global::cur_as, *g->as, args, res);
 
-    const auto& [req, id] = prepare_req(
+    auto ring_res = prepare_req(
         *g->iface.user_iface, channel_id, proc_id, translated_args->get_tuple_ptr(), res);
 
-    return awaiter{.m_elem = &req,
+    if (!ring_res) {
+        tos::debug::error("Ring allocation failed");
+        return awaiter{
+            .m_elem = nullptr
+        };
+    }
+
+    const auto& [req, id] = force_get(ring_res);
+
+    return awaiter{.m_elem = req,
                    .id = id,
                    .transport = this,
                    .orig_args = args,

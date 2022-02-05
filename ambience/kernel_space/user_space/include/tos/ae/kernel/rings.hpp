@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tos/thread.hpp"
 #include <string_view>
 #include <tos/ae/rings.hpp>
 #include <tos/debug/log.hpp>
@@ -33,7 +34,9 @@ inline void proc_req_queue(ExecutorT&& executor, kernel_interface& iface) {
                          continuation();
                      } else {
                          executor(elem.req, [ptr = elem.req.user_ptr, &iface](uintptr_t status) {
-                             respond<true>(*iface.user_iface, ptr, status);
+                             while (!respond<true>(*iface.user_iface, ptr, status)) {
+                                 tos::this_thread::yield();
+                             }
                          });
                      }
                  });

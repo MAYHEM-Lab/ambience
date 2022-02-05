@@ -10,6 +10,7 @@
 #include <tos/compiler.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/detail/coro.hpp>
+#include <tos/error.hpp>
 #include <tos/fiber/basic_fiber.hpp>
 #include <tos/flags.hpp>
 #include <tos/function_ref.hpp>
@@ -27,6 +28,15 @@ enum class elem_flag : uint8_t
     released = 8,
 };
 
+enum class ring_errors
+{
+    none,
+    out_of_space,
+    draining,
+};
+
+TOS_ERROR_ENUM(ring_errors);
+
 struct interface;
 struct req_elem {
     elem_flag flags;
@@ -39,13 +49,16 @@ struct req_elem {
     template<bool FromHost>
     struct awaiter {
         bool await_ready() const noexcept {
-            return false;
+            return !el;
         }
 
         void await_suspend(std::coroutine_handle<> handle);
 
-        bool await_resume() const {
-            return true;
+        expected<void, ring_errors> await_resume() const {
+            if (!el) {
+                return unexpected(ring_errors::out_of_space);
+            }
+            return {};
         }
 
         template<Fiber FibT>
@@ -88,7 +101,7 @@ union ring_elem {
 
     ring_elem() {
     }
-    
+
     explicit ring_elem(const ring_elem& el) {
         memcpy(this, &el, sizeof el);
     }
@@ -163,7 +176,7 @@ uint16_t for_each(interface& iface, const ring& ring, uint16_t last_seen, const 
     return last_seen;
 }
 
-std::pair<req_elem&, int>
+expected<std::pair<req_elem*, int>, ring_errors>
 prepare_req(interface& iface, int channel, int proc, const void* params, void* res);
 
 template<bool FromHost>
@@ -176,10 +189,10 @@ void submit_elem(interface& iface, int el_idx) {
 }
 
 template<bool FromHost>
-req_elem&
+expected<req_elem*, ring_errors>
 submit_req(interface& iface, int channel, int proc, const void* params, void* res) {
     const auto& [req_el, el_idx] =
-        prepare_req(iface, channel, proc, params, res);
+        EXPECTED_TRY(prepare_req(iface, channel, proc, params, res));
 
     submit_elem<FromHost>(iface, el_idx);
 
@@ -205,12 +218,11 @@ void req_elem::awaiter<FromHost>::fiber_suspend(FibT& fib) {
 }
 
 template<bool FromHost>
-void
+expected<void, ring_errors>
 respond(interface& iface, void* user_ptr, uintptr_t status) {
     auto el_idx = iface.allocate_entry();
     if (el_idx < 0) {
-        while (true)
-            ;
+        return unexpected(ring_errors::out_of_space);
     }
 
     auto& res = iface.elems[el_idx].res;
@@ -220,6 +232,7 @@ respond(interface& iface, void* user_ptr, uintptr_t status) {
     res.status[0] = status;
 
     submit_elem<FromHost>(iface, el_idx);
+    return {};
 }
 
 template<size_t N>

@@ -65,13 +65,13 @@ ssize_t ring::size(int ring_size, uint16_t last_seen) const {
     return res + ring_size;
 }
 
-std::pair<req_elem&, int>
+expected<std::pair<req_elem*, int>, ring_errors>
 prepare_req(interface& iface, int channel, int proc, const void* params, void* res) {
     auto el_idx = iface.allocate_entry();
     if (el_idx < 0) {
-        while (true)
-            ;
+        return unexpected(ring_errors::out_of_space);
     }
+
     auto& req_el = iface.elems[el_idx].req;
 
     req_el.flags = tos::util::set_flag(elem_flag::req, elem_flag::in_use);
@@ -81,6 +81,6 @@ prepare_req(interface& iface, int channel, int proc, const void* params, void* r
     req_el.arg_ptr = params;
     req_el.ret_ptr = res;
 
-    return {req_el, el_idx};
+    return std::pair{&req_el, el_idx};
 }
 } // namespace tos::ae
