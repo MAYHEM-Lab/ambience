@@ -1,8 +1,8 @@
 #pragma once
 
 #include <tos/ae/rings.hpp>
-#include <tos/task.hpp>
 #include <tos/fiber/this_fiber.hpp>
+#include <tos/task.hpp>
 
 namespace tos::ae {
 template<int channel_id>
@@ -29,10 +29,15 @@ struct upcall_transport_channel : ChannelSrc {
     using ChannelSrc::ChannelSrc;
 
     auto execute(int proc_id, const void* args, void* res) {
-        const auto& [req, id] =
+        auto prep_res =
             prepare_req(*iface, ChannelSrc::get_channel_id(), proc_id, args, res);
+        if (!prep_res) {
+            while (true) {
+            }
+        }
+        const auto& [req, id] = force_get(prep_res);
 
-        return req.template submit<false>(iface, id, &req);
+        return req->template submit<false>(iface, id, req);
     }
 };
 
@@ -41,10 +46,15 @@ struct sync_upcall_transport_channel : ChannelSrc {
     using ChannelSrc::ChannelSrc;
 
     auto execute(int proc_id, const void* args, void* res) {
-        const auto& [req, id] =
+        auto prep_res =
             prepare_req(*iface, ChannelSrc::get_channel_id(), proc_id, args, res);
+        if (!prep_res) {
+            while (true) {
+            }
+        }
+        const auto& [req, id] = force_get(prep_res);
 
-        auto awaiter = req.template submit<false>(iface, id, &req);
+        auto awaiter = req->template submit<false>(iface, id, req);
         awaiter.fiber_suspend(*fiber::current_fiber());
         return awaiter.await_resume();
     }
