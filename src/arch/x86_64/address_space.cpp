@@ -1,3 +1,4 @@
+#include "tos/expected.hpp"
 #include "tos/memory.hpp"
 #include <tos/address_space.hpp>
 #include <tos/backing_object.hpp>
@@ -5,25 +6,25 @@
 #include <tos/x86_64/mmu.hpp>
 
 namespace tos::x86_64 {
-expected<bool, mmu_errors>
-address_space::handle_memory_fault(const exception_frame& frame, virtual_address fault_addr) {
+result<void> address_space::handle_memory_fault(const exception_frame& frame,
+                                                virtual_address fault_addr) {
     auto mapping = containing_mapping(fault_addr);
 
     if (!mapping) {
-        return false;
+        return unexpected(address_space_errors::no_mapping);
     }
 
     memory_fault fault;
     fault.map = mapping;
     fault.virt_addr = fault_addr;
 
-    if (!mapping->obj->handle_memory_fault(fault)) {
-        return false;
+    if (auto res = mapping->obj->handle_memory_fault(fault); !res) {
+        return res;
     }
 
     invlpg(fault_addr.address());
 
-    return true;
+    return {};
 }
 
 expected<address_space, mmu_errors>
@@ -33,7 +34,8 @@ address_space::empty(physical_page_allocator& palloc) {
         return unexpected(mmu_errors::page_alloc_fail);
     }
     map_page_ident(get_current_translation_table(), *root_page, palloc);
-    auto root_table = new (palloc.address_of(*root_page).direct_mapped()) translation_table{};
+    auto root_table =
+        new (palloc.address_of(*root_page).direct_mapped()) translation_table{};
     return address_space{*root_table};
 }
 

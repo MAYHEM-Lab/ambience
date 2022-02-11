@@ -44,7 +44,7 @@ struct address_space final : tos::address_space {
         return x86_64::mark_resident(*m_table, subrange, mapping.mem_type, phys_addr);
     }
 
-    expected<bool, mmu_errors> handle_memory_fault(const exception_frame& frame,
+    result<void> handle_memory_fault(const exception_frame& frame,
                                                    virtual_address fault_addr);
 
     static virtual_range containing_fragment(virtual_range range) {
