@@ -1,7 +1,9 @@
+#include "tos/platform.hpp"
 #include <tos/address_space.hpp>
 #include <tos/debug/log.hpp>
 #include <tos/ft.inl>
 #include <tos/preemption.hpp>
+#include <tos/scope_exit.hpp>
 #include <tos/x86_64/assembly.hpp>
 #include <tos/x86_64/backtrace.hpp>
 #include <tos/x86_64/exception.hpp>
@@ -156,9 +158,15 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
     dump_registers(*frame);
 
     if (tos::global::cur_as) {
-        if (auto res = tos::global::cur_as->handle_memory_fault(
-                *frame, tos::virtual_address(read_cr2()))) {
-            if (force_get(res)) {
+        auto orig_as = tos::global::cur_as;
+        auto kernel_as = &tos::platform::get_kernel_address_space();
+        activate(*kernel_as);
+        auto restore_as =
+            tos::make_scope_guard([orig_as]() noexcept { activate(*orig_as); });
+        LOG("Have address space");
+        if (auto res =
+                orig_as->handle_memory_fault(*frame, tos::virtual_address(read_cr2()))) {
+            if (res) {
                 LOG("Handled correctly");
                 return;
             }

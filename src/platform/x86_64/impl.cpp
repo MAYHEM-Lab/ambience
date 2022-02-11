@@ -1,4 +1,5 @@
 #include "stivale2.h"
+#include "tos/x86_64/address_space.hpp"
 #include <algorithm>
 #include <cmath>
 #include <string_view>
@@ -406,3 +407,9 @@ extern void (*end_ctors[])(void);
     }
 }
 }
+
+namespace tos::platform {
+x86_64::address_space& get_kernel_address_space() {
+    return boot_addr_space;
+}
+} // namespace tos::platform

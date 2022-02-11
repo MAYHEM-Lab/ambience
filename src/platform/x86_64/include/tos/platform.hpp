@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tos/core/arch_fwd.hpp>
 #include <tos/expected.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/x86_64/exception.hpp>
@@ -26,4 +27,6 @@ void set_post_irq(tos::function_ref<void(x86_64::exception_frame*)> handler);
 void reset_post_irq();
 
 uintptr_t set_interrupt_rsp(uintptr_t stack_ptr);
+
+x86_64::address_space& get_kernel_address_space();
 } // namespace tos::platform
