@@ -7,7 +7,23 @@
 namespace tos::aarch64 {
 struct address_space final : tos::address_space {
     expected<void, mmu_errors> allocate_region(mapping& mapping,
-                                               physical_page_allocator* palloc);
+                                               physical_page_allocator* palloc) {
+        Assert(mapping.vm_segment.range.base.address() % page_size_bytes == 0);
+        Assert(mapping.vm_segment.range.size % page_size_bytes == 0);
+        EXPECTED_TRYV(aarch64::allocate_region(
+            *m_table, mapping.vm_segment, mapping.allow_user, palloc));
+        return {};
+    }
+
+    auto do_mapping(mapping& mapping, physical_page_allocator* arg) {
+        auto res = allocate_region(mapping, arg);
+        if (res) {
+            // Only modify internal state if the allocation succeeds.
+            add_mapping(mapping);
+        }
+        return res;
+    }
+
     expected<void, mmu_errors>
     mark_resident(mapping& mapping, virtual_range subrange, physical_address phys_addr);
 
