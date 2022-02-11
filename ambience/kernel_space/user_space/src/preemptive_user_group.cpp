@@ -47,6 +47,12 @@ map_elf(const tos::elf::elf64& elf,
         auto vseg = pheader.virtual_segment();
         vseg.range.size = pheader.file_size;
 
+        if (tos::util::is_flag_set(vseg.perms, permissions::write) &&
+            tos::util::is_flag_set(vseg.perms, permissions::execute)) {
+            LOG_WARN("Write + Execute permission in ELF file.");
+            return unexpected(elf_errors::write_execute_segment);
+        }
+
         EXPECTED_TRYV(map_region(*root_table.m_table,
                                  vseg,
                                  tos::user_accessible::yes,
