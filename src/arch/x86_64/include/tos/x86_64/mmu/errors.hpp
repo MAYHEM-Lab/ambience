@@ -10,6 +10,7 @@ enum class mmu_errors
     already_allocated,
     not_allocated,
     bad_perms,
+    bad_alignment,
 };
 
 TOS_ERROR_ENUM(mmu_errors);

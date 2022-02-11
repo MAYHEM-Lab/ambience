@@ -1,11 +1,18 @@
 #pragma once
 
+#include "tos/error.hpp"
 #include <tos/core/arch_fwd.hpp>
 #include <tos/mapping.hpp>
 #include <tos/memory.hpp>
 #include <tos/paging/physical_page_allocator.hpp>
 
 namespace tos {
+enum class address_space_errors {
+    no_mapping,
+};
+
+TOS_ERROR_ENUM(address_space_errors);
+
 class address_space {
 public:
     using mapping_list_t = intrusive_list<mapping, through_member<&mapping::va_list>>;
