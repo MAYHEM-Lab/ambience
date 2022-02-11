@@ -7,6 +7,7 @@
 #include <tos/expected.hpp>
 #include <tos/function_ref.hpp>
 #include <tos/paging.hpp>
+#include <tos/error.hpp>
 
 namespace tos::aarch64 {
 static constexpr size_t page_size_bytes = 4096;
@@ -251,6 +252,8 @@ enum class mmu_errors
     not_allocated,
     bad_perms,
 };
+
+TOS_ERROR_ENUM(mmu_errors);
 
 struct vm_page_attributes {
     permissions perms;
