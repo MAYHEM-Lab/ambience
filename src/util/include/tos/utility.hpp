@@ -8,6 +8,7 @@
 #include <new>
 #include <stddef.h>
 #include <stdint.h>
+#include <tos/compiler.hpp>
 #include <type_traits>
 #include <utility>
 
@@ -152,5 +153,9 @@ static_assert(align_nearest_up_pow2(4096, 4096) == 4096);
 template<class T, class... ArgTs>
 constexpr T* construct_at(T* at, ArgTs&&... args) {
     return new ((void*)at) T(std::forward<ArgTs>(args)...);
+}
+
+[[noreturn]] inline void unreachable() {
+    TOS_UNREACHABLE();
 }
 } // namespace tos
