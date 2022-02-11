@@ -15,10 +15,9 @@ void dump_table(tos::cur_arch::translation_table& table);
 
 namespace tos::ae::kernel {
 namespace {
-tos::expected<void, cur_arch::mmu_errors>
-map_elf(const tos::elf::elf64& elf,
-        tos::physical_page_allocator& palloc,
-        tos::cur_arch::translation_table& root_table) {
+result<void> map_elf(const tos::elf::elf64& elf,
+                     tos::physical_page_allocator& palloc,
+                     tos::cur_arch::address_space& root_table) {
     for (auto pheader : elf.program_headers()) {
         if (pheader.type != tos::elf::segment_type::load) {
             continue;
