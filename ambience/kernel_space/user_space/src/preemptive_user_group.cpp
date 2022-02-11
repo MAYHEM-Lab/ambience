@@ -47,7 +47,7 @@ map_elf(const tos::elf::elf64& elf,
         auto vseg = pheader.virtual_segment();
         vseg.range.size = pheader.file_size;
 
-        EXPECTED_TRYV(map_region(root_table,
+        EXPECTED_TRYV(map_region(*root_table.m_table,
                                  vseg,
                                  tos::user_accessible::yes,
                                  tos::memory_types::normal,
@@ -75,7 +75,7 @@ map_elf(const tos::elf::elf64& elf,
         LOG(range.base, range.end());
         vseg.range.base += vseg.range.size;
         vseg.range.size = pheader.virt_size - pheader.file_size;
-        EXPECTED_TRYV(map_region(root_table,
+        EXPECTED_TRYV(map_region(*root_table.m_table,
                                  vseg,
                                  tos::user_accessible::yes,
                                  tos::memory_types::normal,
@@ -96,7 +96,7 @@ map_elf(const tos::elf::elf64& elf,
 tos::expected<tos::span<uint8_t>, cur_arch::mmu_errors>
 create_and_map_stack(size_t stack_size,
                      tos::physical_page_allocator& palloc,
-                     tos::cur_arch::translation_table& root_table) {
+                     tos::cur_arch::address_space& root_table) {
     stack_size = tos::align_nearest_up_pow2(stack_size, tos::cur_arch::page_size_bytes);
     auto page_count = stack_size / tos::cur_arch::page_size_bytes;
     auto stack_pages = palloc.allocate(page_count);
@@ -113,7 +113,7 @@ create_and_map_stack(size_t stack_size,
                     stack_region.end().direct_mapped());
 
     EXPECTED_TRYV(
-        map_region(root_table,
+        map_region(*root_table.m_table,
                    identity_map(tos::physical_segment{
                        .range = {stack_address, static_cast<ptrdiff_t>(stack_size)},
                        tos::permissions::read_write}),
@@ -158,14 +158,14 @@ preemptive_elf_group::do_load(span<const uint8_t> elf_body,
     }
 
     auto& elf = force_get(elf_res);
-    if (auto map_res = map_elf(elf, palloc, *force_get(our_as)->m_table); !map_res) {
+    if (auto map_res = map_elf(elf, palloc, *force_get(our_as)); !map_res) {
         auto& err = force_error(map_res);
         tos::debug::error("Could not map ELF!", int(err));
         return nullptr;
     }
 
     auto stack_res = create_and_map_stack(
-        4 * tos::cur_arch::page_size_bytes, palloc, *force_get(our_as)->m_table);
+        4 * tos::cur_arch::page_size_bytes, palloc, *force_get(our_as));
 
     if (!stack_res) {
         tos::debug::error("Could not create and map stack!");
