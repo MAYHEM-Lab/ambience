@@ -179,8 +179,6 @@ preemptive_elf_group::do_load(span<const uint8_t> elf_body,
 
     auto stack = force_get(stack_res);
 
-    //    dump_table(*force_get(our_as)->m_table);
-
     auto res = start_group(stack,
                            reinterpret_cast<void (*)()>(elf.header().entry),
                            trampoline,
