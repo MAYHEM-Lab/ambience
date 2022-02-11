@@ -139,8 +139,9 @@ void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
     }
 }
 
-void page_fault_handler([[maybe_unused]] exception_frame* frame,
-                        [[maybe_unused]] uint64_t num) {
+[[gnu::force_align_arg_pointer]] void
+page_fault_handler([[maybe_unused]] exception_frame* frame,
+                   [[maybe_unused]] uint64_t num) {
     if ((frame->cs & 0x3) == 0x3) {
         // Fault from user space
     }
@@ -158,20 +159,21 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
     dump_registers(*frame);
 
     if (tos::global::cur_as) {
-        auto orig_as = tos::global::cur_as;
-        auto kernel_as = &tos::platform::get_kernel_address_space();
-        activate(*kernel_as);
-        auto restore_as =
-            tos::make_scope_guard([orig_as]() noexcept { activate(*orig_as); });
-        LOG("Have address space");
-        if (auto res =
-                orig_as->handle_memory_fault(*frame, tos::virtual_address(read_cr2()))) {
-            if (res) {
-                LOG("Handled correctly");
-                return;
+        {
+            auto orig_as = tos::global::cur_as;
+            auto kernel_as = &tos::platform::get_kernel_address_space();
+            activate(*kernel_as);
+            auto restore_as =
+                tos::make_scope_guard([orig_as]() noexcept { activate(*orig_as); });
+            LOG("Have address space");
+            if (auto res = orig_as->handle_memory_fault(
+                    *frame, tos::virtual_address(read_cr2()))) {
+                if (res) {
+                    LOG("Handled correctly");
+                    return;
+                }
             }
         }
-
         if (tos::global::user_on_error()) {
             return;
         }
