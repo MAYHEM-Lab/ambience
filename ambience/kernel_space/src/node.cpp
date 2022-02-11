@@ -1,4 +1,3 @@
-#include "groups.hpp"
 #include "registry.hpp"
 #include <boost/hana/for_each.hpp>
 #include <tos/ae/kernel/platform_support.hpp>
@@ -28,6 +27,11 @@ tos::function_ref<void(tos::span<const uint8_t>)> low_level_writer{
 
 void low_level_write(tos::span<const uint8_t> arg) {
     low_level_writer(arg);
+}
+
+extern "C" {
+extern void (*start_group_inits[])(void);
+extern void (*end_group_inits[])(void);
 }
 
 void maybe_init_xbee(tos::any_alarm& alarm);
@@ -61,8 +65,17 @@ tos::result<void> kernel() {
     maybe_init_xbee(support.get_chrono().alarm);
 #endif
 
-    [[maybe_unused]] auto groups = init_all_groups(support.make_args());
-    tos::debug::log("Groups initialized");
+    std::for_each(start_group_inits, end_group_inits, [](auto x) { x(); });
+
+    LOG("Known group size", tos::ae::kernel::known_groups.size());
+    for (auto& known_group : tos::ae::kernel::known_groups) {
+        LOG("Known group:", known_group.name());
+        [](tos::ae::kernel::group_meta* meta, platform_support& support) -> tos::coro::detached {
+            auto ptr = co_await meta->load(support.make_args());
+            ptr.release();
+            LOG("Initialized:", meta->name());
+        }(&known_group, support);
+    }
 
     tos::semaphore run_sem{0};
     tos::intrusive_list<tos::ae::kernel::group> group_list;

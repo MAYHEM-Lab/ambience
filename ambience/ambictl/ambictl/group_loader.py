@@ -22,16 +22,9 @@ class BundledElfLoader(GroupLoader):
 
     def generateGroupLoader(self, group: DeployGroup):
         src_template = env.get_template("node/loaders/elf_group_loader/loader.cpp")
-        header_template = env.get_template("node/loaders/elf_group_loader/group.hpp")
         cmake_template = env.get_template("node/loaders/elf_group_loader/CMakeLists.txt")
 
         return {
-            f"{group.group.name}.hpp": header_template.render({
-                "group_name": group.group.name,
-                "service_includes": group.group.cxx_ordered_includes(),
-                "services": {serv.name: serv.registry_type() for serv in group.group.servs},
-                "imported_services": {key.name: val - 1 for key, val in group.group.assignNumsToExternalDeps()}
-            }),
             "loader.cpp": src_template.render({
                 "group_name": group.group.name,
                 "service_includes": group.group.cxx_ordered_includes(),
@@ -52,16 +45,9 @@ class BundledElfLoader(GroupLoader):
 class InMemoryLoader(GroupLoader):
     def generateGroupLoader(self, group: DeployGroup):
         src_template = env.get_template("node/loaders/in_memory_loader/loader.cpp")
-        header_template = env.get_template("node/loaders/in_memory_loader/group.hpp")
         cmake_template = env.get_template("node/loaders/in_memory_loader/CMakeLists.txt")
 
         return {
-            f"{group.group.name}.hpp": header_template.render({
-                "group_name": group.group.name,
-                "service_includes": group.group.cxx_ordered_includes(),
-                "services": {serv.name: serv.impl.server_name() for serv in group.group.servs},
-                "imported_services": {key.name: val - 1 for key, val in group.group.assignNumsToExternalDeps()}
-            }),
             "loader.cpp": src_template.render({
                 "group_name": group.group.name,
                 "service_includes": group.group.cxx_ordered_includes(),
@@ -82,7 +68,6 @@ class InMemoryLoader(GroupLoader):
 class KernelLoader(GroupLoader):
     def generateGroupLoader(self, group: DeployGroup):
         src_template = env.get_template("node/loaders/in_kernel_loader/loader.cpp")
-        header_template = env.get_template("node/loaders/in_kernel_loader/group.hpp")
         cmake_template = env.get_template("node/loaders/in_kernel_loader/CMakeLists.txt")
 
         needs_init = (serv for serv in group.group.servs if serv.needs_init())
@@ -124,11 +109,6 @@ class KernelLoader(GroupLoader):
                 raise NotImplementedError("Don't know how to load this type in the kernel")
 
         return {
-            f"{group.group.name}.hpp": header_template.render({
-                "group_name": group.group.name,
-                "service_includes": group.group.cxx_ordered_includes(),
-                "services": {serv.name: serv.registry_type() for serv in group.group.servs},
-            }),
             "loader.cpp": src_template.render({
                 "group_name": group.group.name,
                 "services": (serv.registry_type() for serv in group.group.servs),

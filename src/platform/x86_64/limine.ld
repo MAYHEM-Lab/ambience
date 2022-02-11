@@ -39,6 +39,9 @@ SECTIONS
         *(.ctors*)
         *(.ctors.*)
         end_ctors = .;
+        PROVIDE(start_group_inits = .);
+        KEEP(*(SORT(.group_init*)))
+        PROVIDE(end_group_inits = .);
         *(.to_load)
         *(.to_load.*)
         . = ALIGN(4096);

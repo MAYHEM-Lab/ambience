@@ -5,6 +5,9 @@
 #include <tos/ae/service_host.hpp>
 #include <tos/intrusive_list.hpp>
 #include <vector>
+#include <tos/debug/log.hpp>
+
+struct platform_group_args;
 
 namespace tos::ae::kernel {
 struct group : list_node<group> {
@@ -22,4 +25,14 @@ struct group : list_node<group> {
         runner->run(*this);
     }
 };
+
+struct group_meta : list_node<group_meta> {
+    virtual std::string_view name() const = 0;
+
+    virtual Task<std::unique_ptr<group>> load(const platform_group_args&) = 0;
+
+    virtual ~group_meta() = default;
+};
+
+inline intrusive_list<group_meta> known_groups{};
 } // namespace tos::ae::kernel

@@ -548,18 +548,18 @@ class DeployNode:
             "node_loaders": (g.name for g in self.deploy_groups.keys())
         }))
 
-        node_src = os.path.join(node_dir, "groups.hpp")
-        template = env.get_template("node/groups.hpp")
-        _write_if_different(node_src, template.render({
-            "groups": (group.name for group in self.deploy_groups),
-            "group_includes": (f"{group.name}.hpp" for group in self.deploy_groups)
-        }))
+        # node_src = os.path.join(node_dir, "groups.hpp")
+        # template = env.get_template("node/groups.hpp")
+        # _write_if_different(node_src, template.render({
+        #     "groups": (group.name for group in self.deploy_groups),
+        #     "group_includes": (f"{group.name}.hpp" for group in self.deploy_groups)
+        # }))
 
-        node_src = os.path.join(node_dir, "groups.cpp")
-        template = env.get_template("node/groups.cpp")
-        _write_if_different(node_src, template.render({
-            "groups": list(group.name for group in self.deploy_groups)
-        }))
+        # node_src = os.path.join(node_dir, "groups.cpp")
+        # template = env.get_template("node/groups.cpp")
+        # _write_if_different(node_src, template.render({
+        #     "groups": list(group.name for group in self.deploy_groups)
+        # }))
 
         node_src = os.path.join(node_dir, "registry.hpp")
         _write_if_different(node_src, self.generateRegistry())
