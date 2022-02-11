@@ -4,7 +4,7 @@
 #include <tos/physical_memory_backing.hpp>
 
 namespace tos {
-bool physical_memory_backing::handle_memory_fault(const memory_fault& fault) {
+result<void> physical_memory_backing::handle_memory_fault(const memory_fault& fault) {
     // This virtual region is backed directly by physical memory, so we can just mark it
     // as resident.
 
@@ -16,6 +16,6 @@ bool physical_memory_backing::handle_memory_fault(const memory_fault& fault) {
     fault.map->va->mark_resident(
         *fault.map, fault_fragment, physical_address{fault.map->obj_base});
 
-    return true;
+    return {};
 }
 } // namespace tos
