@@ -15,6 +15,55 @@ void dump_table(tos::cur_arch::translation_table& table);
 
 namespace tos::ae::kernel {
 namespace {
+struct elf_file_backing : tos::backing_object {
+    elf_file_backing(elf::elf64 file)
+        : elf_file{file} {
+    }
+    elf::elf64 elf_file;
+
+    auto create_mapping(const virtual_segment& vm_segment,
+                        uintptr_t obj_base,
+                        tos::mapping& mapping) -> result<void> override {
+        mapping.obj = this;
+        mapping.vm_segment = vm_segment;
+        mapping.obj_base = obj_base;
+        mapping.mem_type = memory_types::normal;
+
+        return {};
+    }
+
+    auto free_mapping(const tos::mapping& mapping) -> result<void> override {
+        return {};
+    }
+
+    auto handle_memory_fault(const memory_fault& fault) -> result<void> override {
+        for (auto pheader : elf_file.program_headers()) {
+            if (contains(pheader.virtual_range(), fault.virt_addr)) {
+                LOG("Found the segment", fault.virt_addr, pheader.virtual_range());
+
+                auto base = elf_file.segment(pheader).data();
+
+                LOG(fault.map->va,
+                    fault.map->va->m_table,
+                    (void*)pheader.virt_address,
+                    pheader.virt_size,
+                    (void*)pheader.file_offset,
+                    pheader.file_size,
+                    base);
+
+                EXPECTED_TRYV(fault.map->va->mark_resident(
+                    *fault.map,
+                    fault.map->vm_segment.range,
+                    physical_address{reinterpret_cast<uintptr_t>(base)}));
+
+                LOG("OK");
+                return {};
+            }
+        }
+
+        return unexpected(address_space_errors::no_mapping);
+    }
+};
 
 enum class elf_errors
 {
@@ -34,6 +83,8 @@ result<void> map_elf(const tos::elf::elf64& elf,
             physical_range{physical_address{pheader.virtual_range().base.address()},
                            pheader.virtual_range().size});
     }
+
+    auto backing = new elf_file_backing{elf};
 
     for (auto pheader : elf.program_headers()) {
         if (pheader.type != tos::elf::segment_type::load) {
@@ -66,20 +117,18 @@ result<void> map_elf(const tos::elf::elf64& elf,
             return unexpected(elf_errors::write_execute_segment);
         }
 
-        EXPECTED_TRYV(map_region(*root_table.m_table,
-                                 vseg,
-                                 tos::user_accessible::yes,
-                                 tos::memory_types::normal,
-                                 &palloc,
-                                 physical_address{reinterpret_cast<uintptr_t>(base)}));
-        // The pages are mapped into the kernel as RW
-        //        vseg.perms = permissions::read_write;
-        EXPECTED_TRYV(map_region(cur_arch::get_current_translation_table(),
-                                 vseg,
-                                 tos::user_accessible::no,
-                                 tos::memory_types::normal,
-                                 &palloc,
-                                 physical_address{reinterpret_cast<uintptr_t>(base)}));
+        auto seg_map = new mapping{};
+        seg_map->owned = true;
+        seg_map->allow_user = user_accessible::yes;
+        EXPECTED_TRYV(
+            backing->create_mapping(vseg, reinterpret_cast<uintptr_t>(base), *seg_map));
+        EXPECTED_TRYV(root_table.do_mapping(*seg_map, &palloc));
+
+        auto kernel_seg_map = new mapping{};
+        kernel_seg_map->owned = true;
+        kernel_seg_map->allow_user = user_accessible::no;
+        EXPECTED_TRYV(backing->clone_mapping(*seg_map, *kernel_seg_map));
+        EXPECTED_TRYV(global::cur_as->do_mapping(*kernel_seg_map, &palloc));
 
         // If the file size is smaller than the virtual size, we put zero-pages after the
         // initialized part.
