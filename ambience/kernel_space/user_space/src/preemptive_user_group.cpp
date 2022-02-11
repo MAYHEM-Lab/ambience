@@ -1,3 +1,9 @@
+#include "tos/address_space.hpp"
+#include "tos/debug/log.hpp"
+#include "tos/error.hpp"
+#include "tos/expected.hpp"
+#include "tos/flags.hpp"
+#include "tos/mapping.hpp"
 #include "tos/memory.hpp"
 #include <tos/ae/kernel/loaders/preemptive_elf_group.hpp>
 #include <tos/ae/kernel/runners/preemptive_user_runner.hpp>
@@ -27,7 +33,7 @@ map_elf(const tos::elf::elf64& elf,
             continue;
         }
 
-        tos::debug::log("Load",
+        tos::debug::log("Map",
                         (void*)(uintptr_t)pheader.file_size,
                         "bytes from",
                         (void*)(uintptr_t)pheader.file_offset,
