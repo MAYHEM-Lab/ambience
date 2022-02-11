@@ -1,4 +1,5 @@
 #include "tos/expected.hpp"
+#include "tos/flags.hpp"
 #include "tos/memory.hpp"
 #include <tos/address_space.hpp>
 #include <tos/backing_object.hpp>
@@ -7,7 +8,9 @@
 
 namespace tos::x86_64 {
 result<void> address_space::handle_memory_fault(const exception_frame& frame,
-                                                virtual_address fault_addr) {
+                                                virtual_address fault_addr,
+                                                bool is_write,
+                                                bool is_execute) {
     auto mapping = containing_mapping(fault_addr);
 
     if (!mapping) {
@@ -17,6 +20,10 @@ result<void> address_space::handle_memory_fault(const exception_frame& frame,
     memory_fault fault;
     fault.map = mapping;
     fault.virt_addr = fault_addr;
+    fault.access_perms = is_write     ? permissions::write
+                         : is_execute ? permissions::execute
+                                      : permissions::read;
+    fault.access_size = 8;
 
     if (auto res = mapping->obj->handle_memory_fault(fault); !res) {
         return res;

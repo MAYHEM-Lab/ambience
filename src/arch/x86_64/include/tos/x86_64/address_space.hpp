@@ -45,7 +45,9 @@ struct address_space final : tos::address_space {
     }
 
     result<void> handle_memory_fault(const exception_frame& frame,
-                                                   virtual_address fault_addr);
+                                     virtual_address fault_addr,
+                                     bool is_write,
+                                     bool is_execute);
 
     static virtual_range containing_fragment(virtual_range range) {
         range.size = align_nearest_up_pow2(range.size, page_size_bytes);

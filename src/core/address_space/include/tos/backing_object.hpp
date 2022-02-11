@@ -43,6 +43,8 @@ struct memory_fault {
     bool non_resident : 1;
 
     virtual_address virt_addr;
+
+    size_t access_size = 8;
     permissions access_perms;
 
     job* faulting_job;

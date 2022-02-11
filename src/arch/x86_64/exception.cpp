@@ -142,6 +142,15 @@ void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
 [[gnu::force_align_arg_pointer]] void
 page_fault_handler([[maybe_unused]] exception_frame* frame,
                    [[maybe_unused]] uint64_t num) {
+    /*
+        Error code bits:
+        31              15                             4               0
+        +---+--  --+---+-----+---+--  --+---+----+----+---+---+---+---+---+
+        |   Reserved   | SGX |   Reserved   | SS | PK | I | R | U | W | P |
+        +---+--  --+---+-----+---+--  --+---+----+----+---+---+---+---+---+
+        https://wiki.osdev.org/Exceptions#Page_Fault
+    */
+
     if ((frame->cs & 0x3) == 0x3) {
         // Fault from user space
     }
@@ -166,8 +175,10 @@ page_fault_handler([[maybe_unused]] exception_frame* frame,
             auto restore_as =
                 tos::make_scope_guard([orig_as]() noexcept { activate(*orig_as); });
             LOG("Have address space");
-            if (auto res = orig_as->handle_memory_fault(
-                    *frame, tos::virtual_address(read_cr2()))) {
+            if (auto res = orig_as->handle_memory_fault(*frame,
+                                                        tos::virtual_address(read_cr2()),
+                                                        frame->error_code & 0x02,
+                                                        frame->error_code & 0x10)) {
                 if (res) {
                     LOG("Handled correctly");
                     return;

@@ -43,6 +43,9 @@ struct elf_file_backing : tos::backing_object {
 
                 auto base = elf_file.segment(pheader).data();
 
+                auto range = fault.map->va->containing_fragment(
+                    {fault.virt_addr, static_cast<int>(fault.access_size)});
+
                 LOG(fault.map->va,
                     fault.map->va->m_table,
                     (void*)pheader.virt_address,
@@ -53,8 +56,9 @@ struct elf_file_backing : tos::backing_object {
 
                 EXPECTED_TRYV(fault.map->va->mark_resident(
                     *fault.map,
-                    fault.map->vm_segment.range,
-                    physical_address{reinterpret_cast<uintptr_t>(base)}));
+                    range,
+                    physical_address{reinterpret_cast<uintptr_t>(base) +
+                                     (range.base - fault.map->vm_segment.range.base)}));
 
                 LOG("OK");
                 return {};
