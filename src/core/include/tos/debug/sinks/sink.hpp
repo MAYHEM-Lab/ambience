@@ -78,6 +78,20 @@ struct any_sink {
         add(reinterpret_cast<const void*>(addr.address()));
     }
 
+    void add(const virtual_range& range) {
+        add("virtual_range[");
+        add(range.base);
+        add(", ");
+        add(range.end());
+        add(")");
+    }
+
+    void add(const any_error& err) {
+        add(err.name());
+        add(":");
+        add(err.message());
+    }
+
     template <Error T>
     void add(const T& err) {
         add(err.name());
