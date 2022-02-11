@@ -29,9 +29,15 @@ struct program_header<uint64_t> {
     }
 
     constexpr tos::virtual_segment virtual_segment() const {
-        tos::permissions perms = tos::permissions::read_write;
-        if (tos::util::is_flag_set(attrs, tos::elf::segment_attrs::execute)) {
-            perms = tos::permissions::read_execute;
+        auto perms = permissions::none;
+        if (util::is_flag_set(attrs, segment_attrs::read)) {
+            perms = util::set_flag(perms, permissions::read);
+        }
+        if (util::is_flag_set(attrs, segment_attrs::write)) {
+            perms = util::set_flag(perms, permissions::write);
+        }
+        if (util::is_flag_set(attrs, segment_attrs::execute)) {
+            perms = util::set_flag(perms, permissions::execute);
         }
         return tos::virtual_segment{virtual_range(), perms};
     }

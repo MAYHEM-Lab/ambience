@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tos/error.hpp"
 #include <tos/elf/header.hpp>
 #include <tos/elf/program_header.hpp>
 #include <tos/expected.hpp>
@@ -14,6 +15,8 @@ enum class errors
     bad_endian,
     bad_abi
 };
+
+TOS_ERROR_ENUM(errors);
 
 class elf64 {
 public:
