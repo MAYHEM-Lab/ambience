@@ -151,8 +151,7 @@ preemptive_elf_group::do_load(span<const uint8_t> elf_body,
                               std::string_view name) {
     auto elf_res = tos::elf::elf64::from_buffer(elf_body);
     if (!elf_res) {
-        LOG_ERROR("Could not parse payload!");
-        LOG_ERROR("Error code: ", int(force_error(elf_res)));
+        LOG_ERROR("Could not parse payload!", force_error(elf_res));
         return nullptr;
     }
 
@@ -166,7 +165,7 @@ preemptive_elf_group::do_load(span<const uint8_t> elf_body,
     auto& elf = force_get(elf_res);
     if (auto map_res = map_elf(elf, palloc, *force_get(our_as)); !map_res) {
         auto& err = force_error(map_res);
-        tos::debug::error("Could not map ELF!", int(err));
+        tos::debug::error("Could not map ELF!", err);
         return nullptr;
     }
 
