@@ -23,8 +23,8 @@ struct address_space final : tos::address_space {
                                                physical_page_allocator* palloc) {
         Assert(mapping.vm_segment.range.base.address() % page_size_bytes == 0);
         Assert(mapping.vm_segment.range.size % page_size_bytes == 0);
-        EXPECTED_TRYV(x86_64::allocate_region(
-            *m_table, mapping.vm_segment, mapping.allow_user, palloc));
+        EXPECTED_TRYV(
+            x86_64::allocate_region(*m_table, mapping.vm_segment.range, palloc));
         return {};
     }
 
@@ -39,9 +39,11 @@ struct address_space final : tos::address_space {
 
     void remove_mapping(mapping& mapping);
 
-    expected<void, mmu_errors>
-    mark_resident(mapping& mapping, virtual_range subrange, physical_address phys_addr) {
-        return x86_64::mark_resident(*m_table, subrange, mapping.mem_type, phys_addr);
+    expected<void, mmu_errors> mark_resident(mapping& mapping,
+                                             virtual_segment subsegment,
+                                             physical_address phys_addr) {
+        return x86_64::mark_resident(
+            *m_table, subsegment, mapping.mem_type, mapping.allow_user, phys_addr);
     }
 
     result<void> handle_memory_fault(const exception_frame& frame,

@@ -71,31 +71,12 @@ static_assert(pt_path_for_addr(4096) == std::array<int, 3>{0, 0, 1});
 
 template<size_t N>
 expected<void, mmu_errors> recursive_allocate(translation_table& root,
-                                              permissions perms,
-                                              user_accessible allow_user,
                                               const std::array<int, N>& path,
                                               physical_page_allocator* palloc) {
     if constexpr (N == 1) {
         if (root[path[0]].valid()) {
             return unexpected(mmu_errors::already_allocated);
         }
-
-        root[path[0]].zero().page(true).accessed(true);
-
-        if (!tos::util::is_flag_set(perms, permissions::write)) {
-            root[path[0]].readonly(true);
-        }
-
-        if (!tos::util::is_flag_set(perms, permissions::execute)) {
-            root[path[0]].noexec(true);
-        }
-
-        if (allow_user == user_accessible::yes) {
-            root[path[0]].allow_user(true);
-        }
-
-        tos::aarch64::dsb();
-        tos::aarch64::isb();
 
         return {};
     } else {
@@ -133,21 +114,18 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
         }
 
         return recursive_allocate(
-            root.table_at(path[0]), perms, allow_user, pop_front(path), palloc);
+            root.table_at(path[0]), pop_front(path), palloc);
     }
 }
 } // namespace
-
 expected<void, mmu_errors> allocate_region(translation_table& root,
-                                           const virtual_segment& virt_seg,
-                                           user_accessible allow_user,
+                                           const virtual_range& virt_range,
                                            physical_page_allocator* palloc) {
-    for (uintptr_t addr = virt_seg.range.base.address();
-         addr != virt_seg.range.end().address();
+    for (uintptr_t addr = virt_range.base.address(); addr != virt_range.end().address();
          addr += 4096) {
         auto path = pt_path_for_addr(addr);
 
-        EXPECTED_TRYV(recursive_allocate(root, virt_seg.perms, allow_user, path, palloc));
+        EXPECTED_TRYV(recursive_allocate(root, path, palloc));
     }
 
     tos::aarch64::dsb();
@@ -157,11 +135,11 @@ expected<void, mmu_errors> allocate_region(translation_table& root,
 }
 
 expected<void, mmu_errors> mark_resident(translation_table& root,
-                                         const virtual_segment& virt_seg,
+                                         const virtual_segment& seg,
                                          memory_types type,
+                                         user_accessible allow_user,
                                          physical_address phys_addr) {
-    for (uintptr_t addr = virt_seg.range.base.address();
-         addr != virt_seg.range.end().address();
+    for (uintptr_t addr = seg.range.base.address(); addr != seg.range.end().address();
          addr += 4096, phys_addr = phys_addr + 4096) {
         auto path = pt_path_for_addr(addr);
 
@@ -171,15 +149,30 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
             table = &table->table_at(path[i]);
         }
 
-        (*table)[path.back()].page_num(address_to_page(phys_addr)).valid(true);
+        auto& leaf = (*table)[path.back()];
+
+        leaf.zero().page(true).accessed(true);
+
+        if (!tos::util::is_flag_set(perms, permissions::write)) {
+            leaf.readonly(true);
+        }
+
+        if (!tos::util::is_flag_set(perms, permissions::execute)) {
+            leaf.noexec(true);
+        }
+
+        if (allow_user == user_accessible::yes) {
+            leaf.allow_user(true);
+        }
+
+        tos::aarch64::dsb();
+        tos::aarch64::isb();
+
+        leaf.page_num(address_to_page(phys_addr)).valid(true);
         if (type == memory_types::device) {
-            (*table)[path.back()]
-                .shareable(tos::aarch64::shareable_values::outer)
-                .mair_index(PT_DEV);
+            leaf.shareable(tos::aarch64::shareable_values::outer).mair_index(PT_DEV);
         } else {
-            (*table)[path.back()]
-                .shareable(tos::aarch64::shareable_values::inner)
-                .mair_index(PT_MEM);
+            leaf.shareable(tos::aarch64::shareable_values::inner).mair_index(PT_MEM);
         }
     }
 

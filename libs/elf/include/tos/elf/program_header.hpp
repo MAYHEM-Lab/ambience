@@ -28,7 +28,7 @@ struct program_header<uint64_t> {
         return tos::virtual_range{virtual_address(), static_cast<ptrdiff_t>(virt_size)};
     }
 
-    constexpr tos::virtual_segment virtual_segment() const {
+    constexpr permissions permissions() const {
         auto perms = permissions::none;
         if (util::is_flag_set(attrs, segment_attrs::read)) {
             perms = util::set_flag(perms, permissions::read);
@@ -39,7 +39,11 @@ struct program_header<uint64_t> {
         if (util::is_flag_set(attrs, segment_attrs::execute)) {
             perms = util::set_flag(perms, permissions::execute);
         }
-        return tos::virtual_segment{virtual_range(), perms};
+        return perms;
+    }
+
+    constexpr tos::virtual_segment virtual_segment() const {
+        return tos::virtual_segment{virtual_range(), permissions()};
     }
 };
 

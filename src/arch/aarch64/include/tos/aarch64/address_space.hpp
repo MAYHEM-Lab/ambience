@@ -10,8 +10,8 @@ struct address_space final : tos::address_space {
                                                physical_page_allocator* palloc) {
         Assert(mapping.vm_segment.range.base.address() % page_size_bytes == 0);
         Assert(mapping.vm_segment.range.size % page_size_bytes == 0);
-        EXPECTED_TRYV(aarch64::allocate_region(
-            *m_table, mapping.vm_segment, mapping.allow_user, palloc));
+        EXPECTED_TRYV(
+            aarch64::allocate_region(*m_table, mapping.vm_segment.range, palloc));
         return {};
     }
 

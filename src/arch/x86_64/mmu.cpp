@@ -20,29 +20,11 @@ using namespace tos::x86_64::detail;
 namespace {
 template<size_t N>
 constexpr expected<void, mmu_errors> recursive_allocate(translation_table& root,
-                                                        permissions perms,
-                                                        user_accessible allow_user,
                                                         const std::array<int, N>& path,
                                                         physical_page_allocator* palloc) {
     if constexpr (N == 1) {
         if (root[path[0]].valid()) {
-            //            tos::debug::error("Page already allocated");
             return unexpected(mmu_errors::already_allocated);
-        }
-
-        root[path[0]].zero();
-        root[path[0]].noexec(true);
-
-        if (tos::util::is_flag_set(perms, permissions::write)) {
-            root[path[0]].writeable(true);
-        }
-
-        if (tos::util::is_flag_set(perms, permissions::execute)) {
-            root[path[0]].noexec(false);
-        }
-
-        if (allow_user == user_accessible::yes) {
-            root[path[0]].allow_user(true);
         }
 
         return {};
@@ -76,31 +58,28 @@ constexpr expected<void, mmu_errors> recursive_allocate(translation_table& root,
                 .allow_user(true);
         }
 
-        return recursive_allocate(
-            root.table_at(path[0]), perms, allow_user, pop_front(path), palloc);
+        return recursive_allocate(root.table_at(path[0]), pop_front(path), palloc);
     }
 }
 } // namespace
 
 expected<void, mmu_errors> allocate_region(translation_table& root,
-                                           const virtual_segment& virt_seg,
-                                           user_accessible allow_user,
+                                           const virtual_range& virt_range,
                                            physical_page_allocator* palloc) {
-    for (auto addr = virt_seg.range.base; addr != virt_seg.range.end();
-         addr += page_size_bytes) {
+    for (auto addr = virt_range.base; addr != virt_range.end(); addr += page_size_bytes) {
         auto path = detail::pt_path_for_addr(addr);
-        //        LOG_TRACE("Address", (void*)addr, path[0], path[1], path[2], path[3]);
-        EXPECTED_TRYV(recursive_allocate(root, virt_seg.perms, allow_user, path, palloc));
+        EXPECTED_TRYV(recursive_allocate(root, path, palloc));
     }
 
     return {};
 }
 
 expected<void, mmu_errors> mark_resident(translation_table& root,
-                                         const virtual_range& range,
+                                         const virtual_segment& seg,
                                          memory_types type,
+                                         user_accessible allow_user,
                                          physical_address phys_addr) {
-    for (auto addr = range.base; addr != range.end();
+    for (auto addr = seg.range.base; addr != seg.range.end();
          addr += page_size_bytes, phys_addr += page_size_bytes) {
         auto path = pt_path_for_addr(addr);
 
@@ -115,18 +94,25 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
             table = &table_at(elem);
         }
 
-        (*table)[path.back()]
-            .page_num(address_to_page(phys_addr) << page_size_log)
-            .valid(true);
-        if (type == memory_types::device) {
-            // (*table)[path.back()]
-            //     .shareable(tos::aarch64::shareable_values::outer)
-            //     .mair_index(PT_DEV);
-        } else {
-            // (*table)[path.back()]
-            //     .shareable(tos::aarch64::shareable_values::inner)
-            //     .mair_index(PT_MEM);
+        auto& leaf = (*table)[path.back()];
+
+        if (tos::util::is_flag_set(seg.perms, permissions::write)) {
+            leaf.writeable(true);
         }
+
+        if (tos::util::is_flag_set(seg.perms, permissions::execute)) {
+            leaf.noexec(false);
+        } else {
+            leaf.noexec(true);
+        }
+
+        if (allow_user == user_accessible::yes) {
+            leaf.allow_user(true);
+        }
+
+        leaf.page_num(address_to_page(phys_addr) << page_size_log);
+
+        leaf.valid(true);
     }
 
     return {};

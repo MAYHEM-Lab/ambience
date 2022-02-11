@@ -5,13 +5,13 @@
 #include "tos/flags.hpp"
 #include "tos/mapping.hpp"
 #include "tos/memory.hpp"
+#include "tos/paging/physical_page_allocator.hpp"
 #include <tos/ae/kernel/loaders/preemptive_elf_group.hpp>
 #include <tos/ae/kernel/runners/preemptive_user_runner.hpp>
 #include <tos/ae/kernel/start_group.hpp>
 #include <tos/ae/kernel/user_group.hpp>
 #include <tos/backing_object.hpp>
 #include <tos/elf.hpp>
-void dump_table(tos::cur_arch::translation_table& table);
 
 namespace tos::ae::kernel {
 namespace {
@@ -39,6 +39,11 @@ struct elf_file_backing : tos::backing_object {
     auto handle_memory_fault(const memory_fault& fault) -> result<void> override {
         for (auto pheader : elf_file.program_headers()) {
             if (contains(pheader.virtual_range(), fault.virt_addr)) {
+                auto perms = pheader.permissions();
+                if (!util::is_flag_set(perms, fault.access_perms)) {
+                    return unexpected(address_space_errors::bad_access);
+                }
+
                 LOG("Found the segment", fault.virt_addr, pheader.virtual_range());
 
                 auto base = elf_file.segment(pheader).data();
@@ -56,7 +61,7 @@ struct elf_file_backing : tos::backing_object {
 
                 EXPECTED_TRYV(fault.map->va->mark_resident(
                     *fault.map,
-                    range,
+                    {range, perms},
                     physical_address{reinterpret_cast<uintptr_t>(base) +
                                      (range.base - fault.map->vm_segment.range.base)}));
 

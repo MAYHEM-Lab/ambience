@@ -23,13 +23,13 @@ void traverse_table_entries(translation_table& table, FnT&& fn) {
 }
 
 expected<void, mmu_errors> allocate_region(translation_table& root,
-                                           const virtual_segment& virt_seg,
-                                           user_accessible allow_user,
+                                           const virtual_range& virt_range,
                                            physical_page_allocator* palloc);
 
 expected<void, mmu_errors> mark_resident(translation_table& root,
-                                         const virtual_range& range,
+                                         const virtual_segment& seg,
                                          memory_types type,
+                                         user_accessible allow_user,
                                          physical_address phys_addr);
 
 expected<void, mmu_errors> mark_nonresident(translation_table& root,
@@ -50,9 +50,9 @@ inline expected<void, mmu_errors> map_region(translation_table& root,
                                              memory_types mem_type,
                                              physical_page_allocator* palloc,
                                              physical_address phys_base) {
-    EXPECTED_TRYV(allocate_region(root, vseg, user_access, palloc));
+    EXPECTED_TRYV(allocate_region(root, vseg.range, palloc));
 
-    EXPECTED_TRYV(mark_resident(root, vseg.range, mem_type, phys_base));
+    EXPECTED_TRYV(mark_resident(root, vseg, mem_type, user_access, phys_base));
 
     return {};
 }

@@ -9,6 +9,7 @@
 namespace tos {
 enum class address_space_errors {
     no_mapping,
+    bad_access,
 };
 
 TOS_ERROR_ENUM(address_space_errors);
