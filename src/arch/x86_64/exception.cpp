@@ -132,8 +132,9 @@ void general_protection_fault_handler([[maybe_unused]] exception_frame* frame,
     //        root = backtrace_next(*root);
     //    }
 
-    while (true)
-        ;
+    while (true) {
+        tos::x86_64::nop();
+    }
 }
 
 void page_fault_handler([[maybe_unused]] exception_frame* frame,
@@ -141,8 +142,6 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
     if ((frame->cs & 0x3) == 0x3) {
         // Fault from user space
     }
-
-    LOG("Failing thread:", tos::self(), get_name(*tos::self()));
 
     LOG("Page fault!",
         (int)num,
@@ -152,11 +151,9 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
         "Fault address:",
         (void*)read_cr2(),
         (void*)read_cr3());
-    dump_registers(*frame);
+    LOG("Failing thread:", tos::self(), get_name(*tos::self()));
 
-    if (tos::global::user_on_error()) {
-        return;
-    }
+    dump_registers(*frame);
 
     if (tos::global::cur_as) {
         if (auto res = tos::global::cur_as->handle_memory_fault(
@@ -166,14 +163,13 @@ void page_fault_handler([[maybe_unused]] exception_frame* frame,
                 return;
             }
         }
+
+        if (tos::global::user_on_error()) {
+            return;
+        }
     }
+
     LOG("Could not handle");
-    //    LOG_ERROR("Call stack:");
-    //    auto root = std::optional<trace_elem>{{.rbp = frame->rbp, .rip = frame->rip}};
-    //    while (root) {
-    //        LOG_ERROR((void*)root->rip);
-    //        root = backtrace_next(*root);
-    //    }
 
     while (true) {
         tos::x86_64::nop();
