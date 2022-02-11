@@ -15,6 +15,14 @@ void dump_table(tos::cur_arch::translation_table& table);
 
 namespace tos::ae::kernel {
 namespace {
+
+enum class elf_errors
+{
+    write_execute_segment,
+};
+
+TOS_ERROR_ENUM(elf_errors);
+
 result<void> map_elf(const tos::elf::elf64& elf,
                      tos::physical_page_allocator& palloc,
                      tos::cur_arch::address_space& root_table) {
