@@ -1,16 +1,17 @@
 #pragma once
 
-#include "tos/error.hpp"
 #include <memory>
 #include <tos/arch.hpp>
 #include <tos/memory.hpp>
+#include <tos/result.hpp>
 
 namespace tos {
 struct memory_fault;
 struct mapping;
 struct job;
 
-enum class memory_errors {
+enum class memory_errors
+{
     out_of_bounds,
     bad_permissions,
 };
