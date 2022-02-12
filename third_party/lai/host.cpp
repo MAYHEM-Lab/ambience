@@ -50,14 +50,14 @@ void* laihost_map(size_t address, size_t count) {
         tos::virtual_segment{.range = {tos::virtual_address(address), ptrdiff_t(count)},
                              .perms = tos::permissions::read_write};
     auto res = tos::x86_64::allocate_region(root,
-                                            segment,
-                                            tos::user_accessible::no,
+                                            segment.range,
                                             tos::physical_page_allocator::instance());
 
     if (res || force_error(res) == tos::x86_64::mmu_errors::already_allocated) {
         res = tos::x86_64::mark_resident(root,
-                                         segment.range,
+                                         segment,
                                          tos::memory_types::normal,
+                                         tos::user_accessible::no,
                                          tos::physical_address{address});
         if (res) {
             LOG_TRACE("returning", (void*)addr_bkp);
