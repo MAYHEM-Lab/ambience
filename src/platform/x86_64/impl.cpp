@@ -251,7 +251,7 @@ void set_up_page_tables() {
             text_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(text_map, nullptr);
         boot_addr_space.mark_resident(
-            text_map, text_map.vm_segment.range, tos::physical_address(text.base));
+            text_map, text_map.vm_segment, tos::physical_address(text.base));
     }
 
     {
@@ -265,7 +265,7 @@ void set_up_page_tables() {
             ro_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(ro_map, nullptr);
         boot_addr_space.mark_resident(
-            ro_map, ro_map.vm_segment.range, tos::physical_address(text.base));
+            ro_map, ro_map.vm_segment, tos::physical_address(text.base));
     }
 
     {
@@ -279,7 +279,7 @@ void set_up_page_tables() {
             data_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(data_map, nullptr);
         boot_addr_space.mark_resident(
-            data_map, data_map.vm_segment.range, tos::physical_address(text.base));
+            data_map, data_map.vm_segment, tos::physical_address(text.base));
     }
 
     {
@@ -293,7 +293,7 @@ void set_up_page_tables() {
             bss_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(bss_map, nullptr);
         boot_addr_space.mark_resident(
-            bss_map, bss_map.vm_segment.range, tos::physical_address(text.base));
+            bss_map, bss_map.vm_segment, tos::physical_address(text.base));
     }
 
     auto is_mapped = [](const tos::virtual_range& region) -> bool {
