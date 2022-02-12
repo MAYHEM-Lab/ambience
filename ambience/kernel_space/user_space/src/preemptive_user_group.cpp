@@ -39,7 +39,7 @@ struct elf_file_backing : tos::backing_object {
     auto handle_memory_fault(const memory_fault& fault) -> result<void> override {
         for (auto pheader : elf_file.program_headers()) {
             if (contains(pheader.virtual_range(), fault.virt_addr)) {
-                auto perms = pheader.permissions();
+                auto perms = pheader.get_permissions();
                 if (!util::is_flag_set(perms, fault.access_perms)) {
                     return unexpected(address_space_errors::bad_access);
                 }
