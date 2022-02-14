@@ -25,7 +25,7 @@ struct address_space final : tos::address_space {
     }
 
     expected<void, mmu_errors>
-    mark_resident(mapping& mapping, virtual_range subrange, physical_address phys_addr);
+    mark_resident(mapping& mapping, virtual_segment subrange, physical_address phys_addr);
 
     friend void activate(address_space& to_activate) {
         tos::global::cur_as = &to_activate;

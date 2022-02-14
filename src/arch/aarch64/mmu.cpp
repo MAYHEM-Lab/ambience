@@ -113,8 +113,7 @@ expected<void, mmu_errors> recursive_allocate(translation_table& root,
             tos::aarch64::isb();
         }
 
-        return recursive_allocate(
-            root.table_at(path[0]), pop_front(path), palloc);
+        return recursive_allocate(root.table_at(path[0]), pop_front(path), palloc);
     }
 }
 } // namespace
@@ -153,11 +152,11 @@ expected<void, mmu_errors> mark_resident(translation_table& root,
 
         leaf.zero().page(true).accessed(true);
 
-        if (!tos::util::is_flag_set(perms, permissions::write)) {
+        if (!tos::util::is_flag_set(seg.perms, permissions::write)) {
             leaf.readonly(true);
         }
 
-        if (!tos::util::is_flag_set(perms, permissions::execute)) {
+        if (!tos::util::is_flag_set(seg.perms, permissions::execute)) {
             leaf.noexec(true);
         }
 
@@ -234,18 +233,16 @@ expected<translation_table*, mmu_errors> clone_level(int level,
         return unexpected(mmu_errors::page_alloc_fail);
     }
 
-    EXPECTED_TRYV(
-        allocate_region(get_current_translation_table(),
-                        identity_map(physical_segment{palloc.range_of(*table_page),
-                                                      permissions::read_write}),
-                        user_accessible::no,
-                        &palloc));
+    EXPECTED_TRYV(allocate_region(get_current_translation_table(),
+                                  identity_map(palloc.range_of(*table_page)),
+                                  &palloc));
 
     EXPECTED_TRYV(
         mark_resident(get_current_translation_table(),
                       identity_map(physical_segment{palloc.range_of(*table_page),
                                                     permissions::read_write}),
                       memory_types::normal,
+                      user_accessible::no,
                       palloc.address_of(*table_page)));
 
     auto table_ptr =

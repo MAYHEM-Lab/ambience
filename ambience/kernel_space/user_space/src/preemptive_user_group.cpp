@@ -61,7 +61,7 @@ struct elf_file_backing : tos::backing_object {
 
                 EXPECTED_TRYV(fault.map->va->mark_resident(
                     *fault.map,
-                    {range, perms},
+                    virtual_segment{range, perms},
                     physical_address{reinterpret_cast<uintptr_t>(base) +
                                      (range.base - fault.map->vm_segment.range.base)}));
 

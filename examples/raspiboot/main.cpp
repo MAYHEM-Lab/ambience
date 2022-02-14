@@ -530,9 +530,7 @@ void raspi_main() {
     using namespace tos::address_literals;
     auto op_res = tos::aarch64::allocate_region(
         level0_table,
-        identity_map(tos::physical_segment{{4096_physical, 4096 * 5},
-                                           tos::permissions::read_write}),
-        tos::user_accessible::no,
+        identity_map(tos::physical_range{4096_physical, 4096 * 5}),
         nullptr);
     if (!op_res) {
         LOG_ERROR("Could not allocate ...");
@@ -543,6 +541,7 @@ void raspi_main() {
         identity_map(tos::physical_segment{{4096_physical, 4096 * 5},
                                            tos::permissions::read_write}),
         tos::memory_types::normal,
+        tos::user_accessible::no,
         4096_physical);
     if (!op_res) {
         LOG_ERROR("Could not mark resident ...");
@@ -591,11 +590,7 @@ void raspi_main() {
     LOG("Address of page:", palloc->address_of(*p));
 
     op_res = tos::aarch64::allocate_region(
-        level0_table,
-        identity_map(
-            tos::physical_segment{palloc->range_of(*p), tos::permissions::read_write}),
-        tos::user_accessible::no,
-        nullptr);
+        level0_table, identity_map(palloc->range_of(*p)), nullptr);
     if (!op_res) {
         LOG_ERROR("Could not allocate ...");
     }
@@ -605,6 +600,7 @@ void raspi_main() {
         identity_map(
             tos::physical_segment{palloc->range_of(*p), tos::permissions::read_write}),
         tos::memory_types::normal,
+        tos::user_accessible::no,
         palloc->address_of(*p));
     if (!op_res) {
         LOG_ERROR("Could not mark resident ...");
