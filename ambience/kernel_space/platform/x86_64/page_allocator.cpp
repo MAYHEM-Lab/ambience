@@ -24,13 +24,14 @@ initialize_page_allocator() {
     LOG("Call allocate", allocator_space, "bytes");
 
     EXPECTED_TRYV(tos::cur_arch::allocate_region(
-        root_table, identity_map(allocator_segment), tos::user_accessible::no, nullptr));
+        root_table, identity_map(allocator_segment).range, nullptr));
     LOG("Allocated", allocator_space, "bytes");
 
     EXPECTED_TRYV(tos::cur_arch::mark_resident(
         root_table,
-        identity_map(allocator_segment.range),
+        identity_map(allocator_segment),
         tos::memory_types::normal,
+        tos::user_accessible::no,
         tos::physical_address{reinterpret_cast<uintptr_t>(vmem_end)}));
     LOG("Marked resident", allocator_space, "bytes");
 
