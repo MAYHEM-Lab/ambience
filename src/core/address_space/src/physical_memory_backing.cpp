@@ -13,8 +13,9 @@ result<void> physical_memory_backing::handle_memory_fault(const memory_fault& fa
     auto fault_fragment =
         fault.map->va->containing_fragment({fault.virt_addr, sizeof(uintmax_t)});
 
-    fault.map->va->mark_resident(
-        *fault.map, fault_fragment, physical_address{fault.map->obj_base});
+    fault.map->va->mark_resident(*fault.map,
+                                 {fault_fragment, fault.map->vm_segment.perms},
+                                 physical_address{fault.map->obj_base});
 
     return {};
 }
