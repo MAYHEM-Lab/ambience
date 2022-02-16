@@ -11,6 +11,7 @@
 #include <memory>
 #include <optional>
 #include <tos/span.hpp>
+#include <tos/utility.hpp>
 
 namespace tos {
 // This type represents an address in a virtual address space.
@@ -170,6 +171,23 @@ struct mem_range {
         return res;
     }
 };
+
+constexpr physical_address align_nearest_down_pow2(physical_address val,
+                                                   size_t alignment) {
+    return physical_address(align_nearest_down_pow2(val.address(), alignment));
+}
+
+constexpr physical_address align_nearest_up_pow2(physical_address val, size_t alignment) {
+    return physical_address(align_nearest_up_pow2(val.address(), alignment));
+}
+
+constexpr virtual_address align_nearest_down_pow2(virtual_address val, size_t alignment) {
+    return virtual_address(align_nearest_down_pow2(val.address(), alignment));
+}
+
+constexpr virtual_address align_nearest_up_pow2(virtual_address val, size_t alignment) {
+    return virtual_address(align_nearest_up_pow2(val.address(), alignment));
+}
 
 namespace address_literals {
 constexpr physical_address operator""_physical(unsigned long long addr) {

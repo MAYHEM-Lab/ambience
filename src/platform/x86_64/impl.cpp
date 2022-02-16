@@ -242,58 +242,50 @@ void set_up_page_tables() {
 
     {
         auto text = tos::default_segments::text();
-        text.base = tos::physical_address(
-            tos::align_nearest_down_pow2(text.base.address(), 4096));
+        text.base = tos::align_nearest_down_pow2(text.base, 4096);
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
             identity_map(tos::physical_segment{text, tos::permissions::read_execute}),
             text.base.address(),
             text_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(text_map, nullptr);
-        boot_addr_space.mark_resident(
-            text_map, text_map.vm_segment, tos::physical_address(text.base));
+        boot_addr_space.mark_resident(text_map, text_map.vm_segment, text.base);
     }
 
     {
         auto text = tos::default_segments::rodata();
-        text.base = tos::physical_address(
-            tos::align_nearest_down_pow2(text.base.address(), 4096));
+        text.base = tos::align_nearest_down_pow2(text.base, 4096);
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
             identity_map(tos::physical_segment{text, tos::permissions::read}),
             text.base.address(),
             ro_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(ro_map, nullptr);
-        boot_addr_space.mark_resident(
-            ro_map, ro_map.vm_segment, tos::physical_address(text.base));
+        boot_addr_space.mark_resident(ro_map, ro_map.vm_segment, text.base);
     }
 
     {
         auto text = tos::default_segments::data();
-        text.base = tos::physical_address(
-            tos::align_nearest_down_pow2(text.base.address(), 4096));
+        text.base = tos::align_nearest_down_pow2(text.base, 4096);
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
             identity_map(tos::physical_segment{text, tos::permissions::read_write}),
             text.base.address(),
             data_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(data_map, nullptr);
-        boot_addr_space.mark_resident(
-            data_map, data_map.vm_segment, tos::physical_address(text.base));
+        boot_addr_space.mark_resident(data_map, data_map.vm_segment, text.base);
     }
 
     {
         auto text = tos::default_segments::bss_map();
-        text.base = tos::physical_address(
-            tos::align_nearest_down_pow2(text.base.address(), 4096));
+        text.base = tos::align_nearest_down_pow2(text.base, 4096);
         text.size = tos::align_nearest_up_pow2(text.size, 4096);
         allmem.create_mapping(
             identity_map(tos::physical_segment{text, tos::permissions::read_write}),
             text.base.address(),
             bss_map);
         [[maybe_unused]] auto map_res = boot_addr_space.do_mapping(bss_map, nullptr);
-        boot_addr_space.mark_resident(
-            bss_map, bss_map.vm_segment, tos::physical_address(text.base));
+        boot_addr_space.mark_resident(bss_map, bss_map.vm_segment, text.base);
     }
 
     auto is_mapped = [](const tos::virtual_range& region) -> bool {
