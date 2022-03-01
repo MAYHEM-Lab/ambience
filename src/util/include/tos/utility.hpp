@@ -131,7 +131,13 @@ constexpr T align_nearest_down_pow2(T val, size_t alignment) {
 #if __has_builtin(__builtin_align_down)
     return __builtin_align_down(val, alignment);
 #else
-    return val & ~(alignment - 1);
+    if constexpr (std::is_pointer_v<T>) {
+        return reinterpret_cast<T>(
+            align_nearest_down_pow2(reinterpret_cast<uintptr_t>(val), alignment)
+        );
+    } else {
+        return val & ~(alignment - 1);
+    }
 #endif
 }
 
@@ -140,7 +146,13 @@ constexpr T align_nearest_up_pow2(T val, size_t alignment) {
 #if __has_builtin(__builtin_align_up)
     return __builtin_align_up(val, alignment);
 #else
-    return (val + alignment - 1) & ~(alignment - 1);
+    if constexpr (std::is_pointer_v<T>) {
+        return reinterpret_cast<T>(
+            align_nearest_up_pow2(reinterpret_cast<uintptr_t>(val), alignment)
+        );
+    } else {
+        return (val + alignment - 1) & ~(alignment - 1);
+    }
 #endif
 }
 
