@@ -155,6 +155,29 @@ page_fault_handler([[maybe_unused]] exception_frame* frame,
         // Fault from user space
     }
 
+    if (tos::global::cur_as) {
+        {
+            auto orig_as = tos::global::cur_as;
+            auto kernel_as = &tos::platform::get_kernel_address_space();
+            activate(*kernel_as);
+            auto restore_as =
+                tos::make_scope_guard([orig_as]() noexcept { activate(*orig_as); });
+            if (auto res = orig_as->handle_memory_fault(*frame,
+                                                        tos::virtual_address(read_cr2()),
+                                                        frame->error_code & 0x02,
+                                                        frame->error_code & 0x10)) {
+                if (res) {
+                    return;
+                }
+            }
+        }
+        if (tos::global::user_on_error()) {
+            return;
+        }
+    }
+
+    dump_registers(*frame);
+
     LOG("Page fault!",
         (int)num,
         (void*)frame,
@@ -164,31 +187,6 @@ page_fault_handler([[maybe_unused]] exception_frame* frame,
         (void*)read_cr2(),
         (void*)read_cr3());
     LOG("Failing thread:", tos::self(), get_name(*tos::self()));
-
-    dump_registers(*frame);
-
-    if (tos::global::cur_as) {
-        {
-            auto orig_as = tos::global::cur_as;
-            auto kernel_as = &tos::platform::get_kernel_address_space();
-            activate(*kernel_as);
-            auto restore_as =
-                tos::make_scope_guard([orig_as]() noexcept { activate(*orig_as); });
-            LOG("Have address space");
-            if (auto res = orig_as->handle_memory_fault(*frame,
-                                                        tos::virtual_address(read_cr2()),
-                                                        frame->error_code & 0x02,
-                                                        frame->error_code & 0x10)) {
-                if (res) {
-                    LOG("Handled correctly");
-                    return;
-                }
-            }
-        }
-        if (tos::global::user_on_error()) {
-            return;
-        }
-    }
 
     LOG("Could not handle");
 

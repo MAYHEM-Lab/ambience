@@ -44,20 +44,20 @@ struct elf_file_backing : tos::backing_object {
                     return unexpected(address_space_errors::bad_access);
                 }
 
-                LOG("Found the segment", fault.virt_addr, pheader.virtual_range());
+                // LOG("Found the segment", fault.virt_addr, pheader.virtual_range());
 
                 auto base = elf_file.segment(pheader).data();
 
                 auto range = fault.map->va->containing_fragment(
                     {fault.virt_addr, static_cast<int>(fault.access_size)});
 
-                LOG(fault.map->va,
-                    fault.map->va->m_table,
-                    (void*)pheader.virt_address,
-                    pheader.virt_size,
-                    (void*)pheader.file_offset,
-                    pheader.file_size,
-                    base);
+                // LOG(fault.map->va,
+                //     fault.map->va->m_table,
+                //     (void*)pheader.virt_address,
+                //     pheader.virt_size,
+                //     (void*)pheader.file_offset,
+                //     pheader.file_size,
+                //     base);
 
                 EXPECTED_TRYV(fault.map->va->mark_resident(
                     *fault.map,
@@ -65,7 +65,7 @@ struct elf_file_backing : tos::backing_object {
                     physical_address{reinterpret_cast<uintptr_t>(base) +
                                      (range.base - fault.map->vm_segment.range.base)}));
 
-                LOG("OK");
+                // LOG("OK");
                 return {};
             }
         }
