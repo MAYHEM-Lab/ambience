@@ -18,6 +18,7 @@ networking_mod = ambictl.LidlModule("//ambience/services/impls/social_media/netw
 weather_sensor_mod = ambictl.LidlModule("//ambience/services/interfaces/weather_sensor.lidl", "weather_sensor_schema")
 dns_mod = ambictl.LidlModule("//ambience/services/interfaces/dns.lidl", "dns_schema")
 group_mod = ambictl.LidlModule("//ambience/services/interfaces/group.lidl", "group_schema")
+poll_mod = ambictl.LidlModule("//ambience/services/interfaces/poll.lidl", "poll_schema")
 
 calc_if = calculator_mod.get_service("tos::ae::services::calculator")
 logger_if = logger_mod.get_service("tos::services::logger")
@@ -37,6 +38,7 @@ udp_socket_if = networking_mod.get_service("tos::services::udp_socket")
 weather_sensor_if = weather_sensor_mod.get_service("tos::ae::services::weather_sensor")
 dns_if = dns_mod.get_service("tos::ae::services::dns")
 user_group_if = group_mod.get_service("tos::ae::user_group")
+poll_if = poll_mod.get_service("tos::ae::services::poll")
 
 user_group = user_group_if.implement(
     name="user_group",
@@ -141,6 +143,14 @@ littlefs = fs_if.implement(
 basic_calc = calc_if.implement(
     name="basic_calc",
     cmake_target="basic_calc",
+    sync=False,
+    deps={
+    }
+)
+
+basic_poll = poll_if.implement(
+    name="basic_poll",
+    cmake_target="basic_poll",
     sync=False,
     deps={
     }

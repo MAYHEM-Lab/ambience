@@ -15,3 +15,4 @@ add_subdirectory(dns)
 add_subdirectory(timestamp)
 
 add_subdirectory(social_media)
+add_subdirectory(basic_poll)
