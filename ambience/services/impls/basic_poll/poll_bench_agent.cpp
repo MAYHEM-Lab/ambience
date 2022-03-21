@@ -12,9 +12,9 @@ namespace {
             auto i = 0;
             uint64_t begin, end = 0;
             begin = tos::ae::timestamp();
-            // for (i = 0; i < num_iterations; i++) {
+            for (i = 0; i < num_iterations; i++) {
                 co_await m_p->fn();
-            // }
+            }
             end = tos::ae::timestamp();
 
             co_return tos::ae::bench_result{end - begin, 0, 0, 0};
