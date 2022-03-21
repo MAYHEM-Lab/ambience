@@ -156,6 +156,15 @@ basic_poll = poll_if.implement(
     }
 )
 
+async_poll_bench_agent = agent_if.implement(
+    name="async_poll_bench_agent",
+    cmake_target="poll_bench_agent",
+    sync=False,
+    deps={
+        "poll": poll_if
+    }
+)
+
 calc_bench_agent = agent_if.implement(
     name="calc_bench_agent",
     cmake_target="calc_bench_agent",

@@ -1,0 +1,11 @@
+node(
+    name="vm",
+    platform="x86_64_pc",
+    exporters=[
+        exporter(
+            network="udp-internet",
+            address="10.0.0.2",
+            native=LwipUdpExporter
+        ),
+    ]
+)
