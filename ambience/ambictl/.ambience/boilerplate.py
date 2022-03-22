@@ -148,8 +148,8 @@ basic_calc = calc_if.implement(
     }
 )
 
-basic_poll = poll_if.implement(
-    name="basic_poll",
+async_basic_poll = poll_if.implement(
+    name="async_basic_poll",
     cmake_target="basic_poll",
     sync=False,
     deps={

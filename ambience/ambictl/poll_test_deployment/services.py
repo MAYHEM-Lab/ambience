@@ -1,6 +1,6 @@
 serv_instance(
     name="poll",
-    serv=basic_poll,
+    serv=async_basic_poll,
     deps={}
 )
 
