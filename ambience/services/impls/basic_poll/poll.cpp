@@ -6,13 +6,13 @@
 namespace {
     struct basic_poll : tos::ae::services::poll::sync_server {
         uint64_t fn() override {
-            return tos::ae::timestamp();;
+            return tos::ae::timestamp();
         }
     };
 
     struct async_basic_poll : tos::ae::services::poll::async_server {
         tos::Task<uint64_t> fn() override {
-            co_return tos::ae::timestamp();;
+            co_return tos::ae::timestamp();
         }
     };
 }
