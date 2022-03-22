@@ -1,16 +1,18 @@
 #include "tos/task.hpp"
+#include <cstdint>
 #include <poll_generated.hpp>
+#include <tos/ae/user_space.hpp>
 
 namespace {
     struct basic_poll : tos::ae::services::poll::sync_server {
-        bool fn() override {
-            return true;
+        uint64_t fn() override {
+            return tos::ae::timestamp();;
         }
     };
 
     struct async_basic_poll : tos::ae::services::poll::async_server {
-        tos::Task<bool> fn() override {
-            co_return true;
+        tos::Task<uint64_t> fn() override {
+            co_return tos::ae::timestamp();;
         }
     };
 }

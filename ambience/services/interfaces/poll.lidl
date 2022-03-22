@@ -1,5 +1,5 @@
 namespace tos::ae::services;
 
 service poll {
-    fn() -> bool;
+    fn() -> u64;
 }
