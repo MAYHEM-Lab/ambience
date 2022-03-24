@@ -9,12 +9,13 @@ namespace {
         async_poll_bench_agent(tos::ae::services::poll::async_server* p) : m_p{p} {}
 
         tos::Task<tos::ae::bench_result> start(const int64_t& num_iterations) override {
+            tos::debug::log("Poll bench agent, num_iterations:", num_iterations);
+            
             auto i = 0;
             uint64_t begin = 0;
             uint64_t end = 0;
             uint64_t before = 0;
             uint64_t after = 0;
-            uint64_t diff = 0;
             uint64_t stamp = 0;
 
             // We want to calculate how long it takes to call and return from a service
@@ -41,11 +42,12 @@ namespace {
                 return_time = after - stamp;
                 return_sum += return_time;
                 return_sq_sum += return_time * return_time;
-
             }
             end = tos::ae::timestamp();
+            auto total = end - begin;
+            tos::debug::log(total, call_sum, call_sq_sum, return_sum, return_sq_sum);
 
-            co_return tos::ae::bench_result{0, 0, 0, 0};
+            co_return tos::ae::bench_result{call_sum, call_sq_sum, return_sum, return_sq_sum};
         }
         tos::ae::services::poll::async_server* m_p;
     };
