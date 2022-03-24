@@ -10,14 +10,42 @@ namespace {
 
         tos::Task<tos::ae::bench_result> start(const int64_t& num_iterations) override {
             auto i = 0;
-            uint64_t begin, end = 0;
+            uint64_t begin = 0;
+            uint64_t end = 0;
+            uint64_t before = 0;
+            uint64_t after = 0;
+            uint64_t diff = 0;
+            uint64_t stamp = 0;
+
+            // We want to calculate how long it takes to call and return from a service
+            uint64_t call_time = 0;
+            uint64_t call_sum = 0;
+            uint64_t call_sq_sum = 0;
+            uint64_t return_time = 0;
+            uint64_t return_sum = 0;
+            uint64_t return_sq_sum = 0;
+
             begin = tos::ae::timestamp();
             for (i = 0; i < num_iterations; i++) {
-                co_await m_p->fn();
+                // Call another service that simply returns a timestamp
+                before = tos::ae::timestamp();
+                stamp = co_await m_p->fn();
+                after = tos::ae::timestamp();
+                
+                // Update the call time variables
+                call_time = stamp - before;
+                call_sum += call_time;
+                call_sq_sum += call_time * call_time;
+
+                // Update the return time variables
+                return_time = after - stamp;
+                return_sum += return_time;
+                return_sq_sum += return_time * return_time;
+
             }
             end = tos::ae::timestamp();
 
-            co_return tos::ae::bench_result{end - begin, 0, 0, 0};
+            co_return tos::ae::bench_result{0, 0, 0, 0};
         }
         tos::ae::services::poll::async_server* m_p;
     };
