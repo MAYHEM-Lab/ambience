@@ -30,7 +30,7 @@ namespace {
             for (i = 0; i < num_iterations; i++) {
                 // Call another service that simply returns a timestamp
                 before = tos::ae::timestamp();
-                stamp = co_await m_p->fn();
+                co_await m_p->fn();
                 after = tos::ae::timestamp();
                 
                 // Update the call time variables
