@@ -236,7 +236,7 @@ void ensure(const expected<T, E>& expect) {
 #define EXPECTED_TRY(...)                                 \
     __extension__({                                       \
         auto&& __res = (__VA_ARGS__);                     \
-        if (!__res)                                       \
+        if (!__res) [[unlikely]]                        \
             return ::tos::unexpected(force_error(__res)); \
         std::move(force_get(__res));                      \
     })
