@@ -147,3 +147,4 @@ add_subdirectory(rtc)
 add_subdirectory(serial)
 
 add_subdirectory(virtio)
+add_subdirectory(net)
