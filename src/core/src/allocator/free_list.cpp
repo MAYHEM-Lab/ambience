@@ -46,6 +46,10 @@ free_list::free_list(tos::span<uint8_t> buffer)
 }
 
 void* free_list::allocate(size_t size) {
+#if defined(TOS_FREE_LIST_VERBOSE)
+    LOG("Init", this, m_buffer.data(), m_buffer.size());
+#endif
+
     size = align_nearest_up_pow2(size, 16);
 #if defined(TOS_FREE_LIST_VERBOSE)
     LOG(this, size);
@@ -70,15 +74,15 @@ void* free_list::allocate(size_t size) {
         sz = first_fit->size;
     }
 #if defined(TOS_FREE_LIST_VERBOSE)
-    LOG("Before", this, m_used);
+    LOG("Before", this, m_used_ctr.get());
 #endif
     m_used_ctr.inc(sz);
     m_peak_memory.max(m_used_ctr.get());
     auto header = new (&*first_fit) allocation_header{sz};
 #if defined(TOS_FREE_LIST_VERBOSE)
-    LOG("After", this, m_used, header + 1);
+    LOG("After", this, m_used_ctr.get(), header + 1);
 #endif
-    return header + 1;
+    return std::launder(header + 1);
 }
 
 void* free_list::realloc(void* oldptr, size_t size) {
@@ -120,7 +124,7 @@ void free_list::free(void* ptr) {
         ptr,
         m_buffer.begin(),
         m_buffer.end(),
-        m_used,
+        m_used_ctr.get(),
         size
 #if defined(TOS_FREE_LIST_CANARY)
         ,
