@@ -75,8 +75,8 @@ void SystemClock_Config() {
     tos::stm32::apb1_clock = 54'000'000;
     tos::stm32::ahb_clock = 108'000'000;
 
-    SCB_EnableICache();
-    SCB_EnableDCache();
+    // SCB_EnableICache();
+    // SCB_EnableDCache();
 }
 #elif defined(STM32L0)
 void SystemClock_Config() {
