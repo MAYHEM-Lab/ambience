@@ -25,8 +25,9 @@ add_library(stm32_hal_drivers
         drivers/src/${HAL_NAME}_hal_ltdc.c
         drivers/src/${HAL_NAME}_ll_fmc.c
         drivers/src/${HAL_NAME}_hal_dma2d.c
+        drivers/src/${HAL_NAME}_hal_eth.c
         )
 target_include_directories(stm32_hal_drivers PUBLIC drivers/include)
 target_include_directories(stm32_hal_drivers PUBLIC soc)
-target_compile_definitions(stm32_hal_drivers PUBLIC ${CPU_NAME} USE_FULL_LL_DRIVER)
+target_compile_definitions(stm32_hal_drivers PUBLIC ${CPU_NAME} USE_FULL_LL_DRIVER USE_HAL_ETH_REGISTER_CALLBACKS=1)
 target_link_libraries(stm32_hal_drivers PUBLIC cmsis::core)
