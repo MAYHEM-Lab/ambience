@@ -7,6 +7,7 @@
 #include <stm32_hal/rcc_ex.hpp>
 #include <stm32f7xx_hal.h>
 #include <stm32f7xx_hal_cortex.h>
+#include <stm32f7xx_hal_eth.h>
 #include <tos/debug/log.hpp>
 #include <tos/periph/stm32f7_eth/driver.hpp>
 
@@ -28,6 +29,9 @@ void ethernet::irq() {
 
 std::unique_ptr<ethernet> ethernet::open(const mac_addr_t& mac_addr) {
     __ETH_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOG_CLK_ENABLE();
 
     /**ETH GPIO Configuration
     PG14     ------> ETH_TXD1
@@ -120,6 +124,10 @@ std::unique_ptr<ethernet> ethernet::open(const mac_addr_t& mac_addr) {
     /* Enable Interrupt on change of link status */
     HAL_ETH_WritePHYRegister(&handle, PHY_MISR, regvalue);
 
+    auto copy = ETH->MACFFR;
+    copy &= ~(ETH_MACFFR_PM_Msk | ETH_MACFFR_DAIF_Msk | ETH_MACFFR_HU_Msk);
+    ETH->MACFFR = copy;
+
     res->add();
     set_default(*res);
     res->up();
@@ -153,6 +161,7 @@ pbuf* ethernet::low_level_input() {
     uint32_t byteslefttocopy = 0;
     uint32_t i = 0;
 
+    // SCB_CleanInvalidateDCache();
 
     /* get received frame */
     if (HAL_ETH_GetReceivedFrame_IT(&m_handle) != HAL_OK)
@@ -178,8 +187,8 @@ pbuf* ethernet::low_level_input() {
              * buffer size*/
             while ((byteslefttocopy + bufferoffset) > ETH_RX_BUF_SIZE) {
                 /* Copy data to pbuf */
-                memcpy((uint8_t*)((uint8_t*)q->payload + payloadoffset),
-                       (uint8_t*)((uint8_t*)buffer + bufferoffset),
+                memcpy((uint8_t*)q->payload + payloadoffset,
+                       (uint8_t*)buffer + bufferoffset,
                        (ETH_RX_BUF_SIZE - bufferoffset));
 
                 /* Point to next descriptor */
@@ -191,8 +200,8 @@ pbuf* ethernet::low_level_input() {
                 bufferoffset = 0;
             }
             /* Copy remaining data in pbuf */
-            memcpy((uint8_t*)((uint8_t*)q->payload + payloadoffset),
-                   (uint8_t*)((uint8_t*)buffer + bufferoffset),
+            memcpy((uint8_t*)q->payload + payloadoffset,
+                   (uint8_t*)buffer + bufferoffset,
                    byteslefttocopy);
             bufferoffset = bufferoffset + byteslefttocopy;
         }
@@ -217,6 +226,8 @@ pbuf* ethernet::low_level_input() {
         /* Resume DMA reception */
         m_handle.Instance->DMARPDR = 0;
     }
+    // SCB_CleanInvalidateDCache();
+
     return p;
 }
 
@@ -234,6 +245,7 @@ err_t ethernet::init() {
     auto& t = launch(tos::alloc_stack,
                      [this] { read_thread(tos::cancellation_token::system()); });
     set_name(t, "LWIP Read Thread");
+    NETIF_SET_CHECKSUM_CTRL(&m_if, NETIF_CHECKSUM_DISABLE_ALL);
     return ERR_OK;
 }
 
@@ -266,19 +278,15 @@ void ethernet::read_thread(tos::cancellation_token& tok) {
 err_t ethernet::link_output(struct pbuf* p) {
     output_ctr.inc();
 
+    // SCB_CleanInvalidateDCache();
     err_t errval;
-    struct pbuf* q;
-    uint8_t* buffer = (uint8_t*)(m_handle.TxDesc->Buffer1Addr);
-    __IO ETH_DMADescTypeDef* DmaTxDesc;
+
+    __IO ETH_DMADescTypeDef* DmaTxDesc = m_handle.TxDesc;
     uint32_t framelength = 0;
     uint32_t bufferoffset = 0;
-    uint32_t byteslefttocopy = 0;
-    uint32_t payloadoffset = 0;
-    DmaTxDesc = m_handle.TxDesc;
-    bufferoffset = 0;
 
     /* copy frame from pbufs to driver buffers */
-    for (q = p; q != NULL; q = q->next) {
+    for (auto q = p; q != NULL; q = q->next) {
         /* Is this buffer available? If not, goto error */
         if ((DmaTxDesc->Status & ETH_DMATXDESC_OWN) != (uint32_t)RESET) {
             errval = ERR_USE;
@@ -286,15 +294,17 @@ err_t ethernet::link_output(struct pbuf* p) {
         }
 
         /* Get bytes in current lwIP buffer */
-        byteslefttocopy = q->len;
-        payloadoffset = 0;
+        uint32_t byteslefttocopy = q->len;
+        uint32_t payloadoffset = 0;
+        auto buffer = (uint8_t*)(m_handle.TxDesc->Buffer1Addr);
 
         /* Check if the length of data to copy is bigger than Tx buffer size*/
         while ((byteslefttocopy + bufferoffset) > ETH_TX_BUF_SIZE) {
+            auto copy_amount = ETH_TX_BUF_SIZE - bufferoffset;
             /* Copy data to Tx buffer*/
-            memcpy((uint8_t*)((uint8_t*)buffer + bufferoffset),
-                   (uint8_t*)((uint8_t*)q->payload + payloadoffset),
-                   (ETH_TX_BUF_SIZE - bufferoffset));
+            memcpy((uint8_t*)buffer + bufferoffset,
+                   (uint8_t*)q->payload + payloadoffset,
+                   copy_amount);
 
             /* Point to next descriptor */
             DmaTxDesc = (ETH_DMADescTypeDef*)(DmaTxDesc->Buffer2NextDescAddr);
@@ -307,18 +317,18 @@ err_t ethernet::link_output(struct pbuf* p) {
 
             buffer = (uint8_t*)(DmaTxDesc->Buffer1Addr);
 
-            byteslefttocopy = byteslefttocopy - (ETH_TX_BUF_SIZE - bufferoffset);
-            payloadoffset = payloadoffset + (ETH_TX_BUF_SIZE - bufferoffset);
-            framelength = framelength + (ETH_TX_BUF_SIZE - bufferoffset);
+            byteslefttocopy -= copy_amount;
+            payloadoffset += copy_amount;
+            framelength += copy_amount;
             bufferoffset = 0;
         }
 
         /* Copy the remaining bytes */
-        memcpy((uint8_t*)((uint8_t*)buffer + bufferoffset),
-               (uint8_t*)((uint8_t*)q->payload + payloadoffset),
+        memcpy((uint8_t*)buffer + bufferoffset,
+               (uint8_t*)q->payload + payloadoffset,
                byteslefttocopy);
-        bufferoffset = bufferoffset + byteslefttocopy;
-        framelength = framelength + byteslefttocopy;
+        bufferoffset += byteslefttocopy;
+        framelength += byteslefttocopy;
     }
 
     /* Prepare transmit descriptors to give to DMA */
