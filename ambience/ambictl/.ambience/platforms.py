@@ -112,6 +112,42 @@ class stm32(Platform):
 
 stm32 = stm32()
 
+
+class stm32f7(Platform):
+    def __init__(self):
+        super().__init__(InMemoryLoader())
+
+    def make_deploy_node(self, node: Node, groups: [Group]):
+        res = DeployNode(node, groups)
+        res.target_name = f"{node.name}_kernel"
+        return res
+
+    def generateBuildDirectories(self, source_dir: str):
+        user_conf_dir = os.path.join(source_dir, f"cmake-build-stm32f7-user")
+        os.makedirs(user_conf_dir, exist_ok=True)
+        args = ["cmake", "-G", "Ninja", f"-DTOS_BOARD=stm32f7_disco", "-DCMAKE_BUILD_TYPE=MinSizeRel",
+                "-DENABLE_LTO=OFF",
+                source_dir]
+        print(args)
+        cmake_proc = subprocess.Popen(args, cwd=user_conf_dir)
+        cmake_proc.wait()
+
+        conf_dir = os.path.join(source_dir, f"cmake-build-stm32f7")
+        os.makedirs(conf_dir, exist_ok=True)
+        args = ["cmake", "-G", "Ninja", f"-DTOS_BOARD=stm32f7_disco", "-DCMAKE_BUILD_TYPE=MinSizeRel",
+                "-DENABLE_LTO=OFF",
+                source_dir]
+        print(args)
+        cmake_proc = subprocess.Popen(args, cwd=conf_dir)
+        if cmake_proc.wait() != 0:
+            raise RuntimeError("Generation failed")
+
+        return (user_conf_dir, conf_dir)
+
+
+stm32f7 = stm32f7()
+
+
 class nrf52840(Platform):
     def __init__(self):
         super().__init__(InMemoryLoader())
@@ -122,7 +158,8 @@ class nrf52840(Platform):
         return res
 
     def generateBuildDirectories(self, source_dir: str):
-        user_conf_dir = os.path.join(source_dir, f"cmake-build-nrf52840_dk-user")
+        user_conf_dir = os.path.join(
+            source_dir, f"cmake-build-nrf52840_dk-user")
         os.makedirs(user_conf_dir, exist_ok=True)
         args = ["cmake", "-G", "Ninja", f"-DTOS_BOARD=nrf52840_dk", "-DCMAKE_BUILD_TYPE=MinSizeRel",
                 "-DENABLE_LTO=ON",
@@ -176,7 +213,8 @@ x86_hosted = x86_hosted()
 
 platform(
     name="common",
-    memories=Memories((0x8000000 + 128 * 1024, 256 * 1024), (0x20000000 + 64 * 1024, 64 * 1024)),
+    memories=Memories((0x8000000 + 128 * 1024, 256 * 1024),
+                      (0x20000000 + 64 * 1024, 64 * 1024)),
     node_services=[
         ExternService("logger", logger_if, sync=True),
         ExternService("alarm", alarm_if, sync=False),
@@ -236,7 +274,8 @@ platform(
 
 platform(
     name="nrf52840",
-    memories=Memories((0x27000 + 128 * 1024, 256 * 1024), (0x20002ae8 + 64 * 1024, 64 * 1024)),
+    memories=Memories((0x27000 + 128 * 1024, 256 * 1024),
+                      (0x20002ae8 + 64 * 1024, 64 * 1024)),
     native=nrf52840,
     importers=[
     ],
@@ -255,6 +294,18 @@ platform(
         importer(
             network="xbee-home",
             native=lambda: XbeeImporter("tos::stm32::usart*")
+        ),
+    ]
+)
+
+platform(
+    name="stm32f7",
+    inherit="common",
+    native=stm32f7,
+    importers=[
+        importer(
+            network="udp-internet",
+            native=LwipUdpImporter
         ),
     ]
 )
