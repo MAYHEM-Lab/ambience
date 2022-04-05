@@ -36,6 +36,10 @@ SECTIONS
     *(.rodata)
     *(.rodata*)
     . = ALIGN(4);
+    PROVIDE(start_group_inits = .);
+    KEEP(*(SORT(.group_init*)))
+    PROVIDE(end_group_inits = .);
+    . = ALIGN(4);
     *(.to_load)
     . = ALIGN(4);
   } >FLASH
