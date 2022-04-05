@@ -248,7 +248,7 @@ void ethernet::read_thread(tos::cancellation_token& tok) {
             if (p == nullptr) {
                 break;
             }
-            LOG("Got packet", p->tot_len);
+            // LOG("Got packet", p->tot_len);
             m_if.input(p, &m_if);
             if (!printed && dhcp_supplied_address(&m_if)) {
                 printed = true;
@@ -338,7 +338,7 @@ error:
         m_handle.Instance->DMATPDR = 0;
     }
 
-    tos::debug::log("Output", p->len, errval);
+    // tos::debug::log("Output", p->len, errval);
 
     return errval;
 }
