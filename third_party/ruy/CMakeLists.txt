@@ -1,0 +1,6 @@
+set(RUY_MINIMAL_BUILD ON)
+add_subdirectory(src)
+target_link_libraries(ruy_platform INTERFACE tos::libcxx)
+target_link_libraries(ruy_apply_multiplier PUBLIC tos::libcxx)
+target_link_libraries(ruy_allocator PUBLIC tos::libcxx)
+target_link_libraries(ruy_system_aligned_alloc PUBLIC tos::libcxx)
