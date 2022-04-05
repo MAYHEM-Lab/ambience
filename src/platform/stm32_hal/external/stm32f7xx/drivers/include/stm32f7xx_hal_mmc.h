@@ -262,8 +262,8 @@ typedef void (*pMMC_CallbackTypeDef)           (MMC_HandleTypeDef *hmmc);
   * @{
   */
 
-#define BLOCKSIZE   ((uint32_t)512U)         /*!< Block size is 512 bytes */
-#define CAPACITY    ((uint32_t)0x80000000U)  /*!< 2 G bytes constant      */
+#define MMC_BLOCKSIZE   ((uint32_t)512U)         /*!< Block size is 512 bytes */
+#define MMC_CAPACITY    ((uint32_t)0x80000000U)  /*!< 2 G bytes constant      */
 
 /** @defgroup MMC_Exported_Constansts_Group1 MMC Error status enumeration Structure definition
   * @{
