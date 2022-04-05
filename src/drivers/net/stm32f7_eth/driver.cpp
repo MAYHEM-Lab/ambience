@@ -242,6 +242,7 @@ void ethernet::read_thread(tos::cancellation_token& tok) {
 
     while (!tok.is_cancelled()) {
         m_rx_sem.down();
+        receive_ctr.inc();
         while (true) {
             auto p = low_level_input();
             if (p == nullptr) {
@@ -263,6 +264,8 @@ void ethernet::read_thread(tos::cancellation_token& tok) {
 }
 
 err_t ethernet::link_output(struct pbuf* p) {
+    output_ctr.inc();
+
     err_t errval;
     struct pbuf* q;
     uint8_t* buffer = (uint8_t*)(m_handle.TxDesc->Buffer1Addr);

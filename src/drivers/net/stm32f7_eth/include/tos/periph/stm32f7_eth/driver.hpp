@@ -12,6 +12,7 @@
 #include <tos/lwip/if_adapter.hpp>
 #include <tos/lwip/lwip.hpp>
 #include <tos/semaphore.hpp>
+#include <tos/debug/trace/metrics/counter.hpp>
 
 namespace tos::periph::stm32f7 {
 struct ethernet
@@ -51,5 +52,8 @@ struct ethernet
     ETH_HandleTypeDef m_handle;
     mac_addr_t m_addr;
     semaphore m_rx_sem{0};
+
+    trace::basic_counter output_ctr;
+    trace::basic_counter receive_ctr;
 };
 } // namespace tos::periph::stm32f7
