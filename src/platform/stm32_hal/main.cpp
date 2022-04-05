@@ -45,15 +45,25 @@ void SystemClock_Config() {
 
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-    RCC_OscInitStruct.HSICalibrationValue = 16;
+    // RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+    // RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+    // RCC_OscInitStruct.HSICalibrationValue = 16;
+    // RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    // RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+    // RCC_OscInitStruct.PLL.PLLM = 8;
+    // RCC_OscInitStruct.PLL.PLLN = 216;
+    // RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+    // RCC_OscInitStruct.PLL.PLLQ = 2;
+    
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-    RCC_OscInitStruct.PLL.PLLM = 8;
-    RCC_OscInitStruct.PLL.PLLN = 216;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    RCC_OscInitStruct.PLL.PLLM = 25;
+    RCC_OscInitStruct.PLL.PLLN = 400;
     RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-    RCC_OscInitStruct.PLL.PLLQ = 2;
+
+    
     if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
         Error_Handler();
     }
@@ -68,14 +78,14 @@ void SystemClock_Config() {
     RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
     RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
     RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_6) != HAL_OK) {
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK) {
         Error_Handler();
     }
 
     tos::stm32::apb1_clock = 54'000'000;
     tos::stm32::ahb_clock = 108'000'000;
 
-    // SCB_EnableICache();
+    SCB_EnableICache();
     // SCB_EnableDCache();
 }
 #elif defined(STM32L0)
