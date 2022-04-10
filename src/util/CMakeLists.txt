@@ -82,6 +82,9 @@ target_link_libraries(tos_packet_transport PUBLIC tos_util_core tos_packets)
 add_library(tos_cancellation_token include/tos/cancellation_token.hpp src/cancellation_token.cpp)
 target_link_libraries(tos_cancellation_token PUBLIC tos_util_core)
 
+add_library(tos_printf src/printf.cpp)
+target_link_libraries(tos_printf PUBLIC tos::libc tos_debug_log)
+
 if(BUILD_TESTS)
   add_executable(uuid_test src/uuid_test.cpp)
   target_link_libraries(uuid_test PUBLIC standalone_tests_main tos_util_core)
