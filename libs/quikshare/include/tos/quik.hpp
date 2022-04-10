@@ -35,14 +35,14 @@ struct sharer<const T*> {
 
 template<lidl::RefObject T>
 struct sharer<const T*> {
-    static size_t compute_size(const T* obj) {
-        auto [extent, pos] = lidl::meta::detail::find_extent_and_position(*obj);
+    static size_t compute_size(const T& obj) {
+        auto [extent, pos] = lidl::meta::detail::find_extent_and_position(obj);
         return extent.size();
     }
 
     template<class ShareT>
-    static const T* do_share(ShareT& share, const T* obj) {
-        auto [extent, pos] = lidl::meta::detail::find_extent_and_position(*obj);
+    static const T* do_share(ShareT& share, const T& obj) {
+        auto [extent, pos] = lidl::meta::detail::find_extent_and_position(obj);
         auto ptr = share.raw_allocate(extent.size(), 1);
         memcpy(ptr.direct_mapped(), extent.data(), extent.size());
         return reinterpret_cast<const T*>(static_cast<const char*>(ptr.direct_mapped()) +
