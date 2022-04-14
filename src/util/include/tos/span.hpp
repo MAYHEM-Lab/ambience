@@ -33,12 +33,12 @@ class span {
 public:
     using iterator = T*;
 
-    constexpr span() : span(nullptr) {}
+    constexpr span() noexcept : span(nullptr) {}
 
     /**
      * Constructs an empty span
      */
-    explicit constexpr span(std::nullptr_t)
+    explicit constexpr span(std::nullptr_t) noexcept
         : span(static_cast<T*>(nullptr), size_t(0)){};
 
     /**
@@ -50,7 +50,7 @@ public:
      * @param base pointer to the beginning of the range
      * @param len size of the range
      */
-    constexpr span(T* base, size_t len)
+    constexpr span(T* base, size_t len) noexcept
         : m_base(base)
         , m_len(len) {
     }
@@ -64,7 +64,7 @@ public:
      * @param base begin iterator
      * @param end end iterator
      */
-    constexpr span(T* base, T* end)
+    constexpr span(T* base, T* end) noexcept
         : m_base{base}
         , m_len{end - base} {
     }
@@ -79,7 +79,7 @@ public:
      * @param arr the array
      */
     template<size_t Sz>
-    constexpr span(T (&arr)[Sz])
+    constexpr span(T (&arr)[Sz]) noexcept
         : m_base(arr)
         , m_len(Sz) {
     }
@@ -91,7 +91,7 @@ public:
      * @param arr the array
      */
     template<size_t Sz>
-    constexpr span(std::array<T, Sz>& arr)
+    constexpr span(std::array<T, Sz>& arr) noexcept
         : m_base(arr.data())
         , m_len(arr.size()) {
     }
@@ -103,7 +103,7 @@ public:
      * @param arr the array
      */
     template<size_t Sz>
-    constexpr span(const std::array<std::remove_const_t<T>, Sz>& arr)
+    constexpr span(const std::array<std::remove_const_t<T>, Sz>& arr) noexcept
         : m_base(arr.data())
         , m_len(arr.size()) {
     }
@@ -113,7 +113,7 @@ public:
      *
      * @param arr the vector
      */
-    constexpr span(std::vector<T>& arr)
+    constexpr span(std::vector<T>& arr) noexcept
         : m_base(arr.data())
         , m_len(arr.size()) {
     }
@@ -122,7 +122,7 @@ public:
      *
      * @param arr the vector
      */
-    constexpr span(const std::vector<std::remove_const_t<T>>& arr)
+    constexpr span(const std::vector<std::remove_const_t<T>>& arr) noexcept
         : m_base(arr.data())
         , m_len(arr.size()) {
     }
@@ -132,7 +132,7 @@ public:
              typename = std::enable_if_t<
                  std::is_same_v<std::remove_const_t<U>, std::string_view::value_type> &&
                  std::is_const_v<U>>>
-    constexpr span(const std::string_view& str)
+    constexpr span(const std::string_view& str) noexcept
         : m_base(str.data())
         , m_len(str.size()) {
     }
@@ -142,7 +142,7 @@ public:
              typename = std::enable_if_t<
                  std::is_same_v<std::remove_const_t<U>, std::string::value_type> &&
                  !std::is_const_v<U>>>
-    constexpr span(std::string& str)
+    constexpr span(std::string& str) noexcept
         : m_base(str.data())
         , m_len(str.size()) {
     }
@@ -151,7 +151,7 @@ public:
              typename = std::enable_if_t<
                  std::is_same_v<std::remove_const_t<U>, std::string::value_type> &&
                  std::is_const_v<U>>>
-    constexpr span(const std::string& str)
+    constexpr span(const std::string& str) noexcept
         : m_base(str.data())
         , m_len(str.size()) {
     }
@@ -160,7 +160,7 @@ public:
      * Returns the number of elements in the span
      * @return tne number of elements
      */
-    constexpr size_t size() const {
+    constexpr size_t size() const noexcept {
         return m_len;
     }
 
@@ -168,7 +168,7 @@ public:
      * Returns the total number bytes occupied by the elements in the spen
      * @return number of bytes
      */
-    constexpr size_t size_bytes() const {
+    constexpr size_t size_bytes() const noexcept {
         return size() * sizeof(T);
     }
 
@@ -176,7 +176,7 @@ public:
      * Returns the pointer to the beginning of the range of the span
      * @return pointer to the beginning of the range
      */
-    constexpr T* data() {
+    constexpr T* data() noexcept {
         return m_base;
     }
 
@@ -184,33 +184,33 @@ public:
      * Returns the pointer to the beginning of the range of the span
      * @return pointer to the beginning of the range
      */
-    constexpr const T* data() const {
+    constexpr const T* data() const noexcept {
         return m_base;
     }
 
-    constexpr T& operator[](size_t ind) {
+    constexpr T& operator[](size_t ind) noexcept {
         return m_base[ind];
     }
 
-    constexpr const T& operator[](size_t ind) const {
+    constexpr const T& operator[](size_t ind) const noexcept {
         return m_base[ind];
     }
 
-    constexpr T* begin() {
+    constexpr T* begin() noexcept {
         return m_base;
     }
-    constexpr T* end() {
+    constexpr T* end() noexcept {
         return m_base + m_len;
     }
 
-    constexpr const T* begin() const {
+    constexpr const T* begin() const noexcept {
         return m_base;
     }
-    constexpr const T* end() const {
+    constexpr const T* end() const noexcept {
         return m_base + m_len;
     }
 
-    constexpr bool empty() const {
+    constexpr bool empty() const noexcept {
         return m_len == 0;
     }
 
@@ -218,7 +218,7 @@ public:
         return span<uint8_t>{reinterpret_cast<uint8_t*>(data()), size() * sizeof(T)};
     }*/
 
-    span<const uint8_t> as_bytes() const {
+    span<const uint8_t> as_bytes() const noexcept {
         return span<const uint8_t>{reinterpret_cast<const uint8_t*>(data()),
                                    size() * sizeof(T)};
     }
@@ -242,7 +242,7 @@ public:
      *
      * @return constant version of this span
      */
-    constexpr operator span<const T>() const {
+    constexpr operator span<const T>() const noexcept {
         return {m_base, size_t(m_len)};
     }
 
