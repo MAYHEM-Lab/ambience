@@ -14,6 +14,7 @@ add_library(tos_libcxx
     src/new.cpp
     src/exception.cpp
     src/stdexcept.cpp
+    src/utility.cpp
 
     include/algorithm
     include/array
