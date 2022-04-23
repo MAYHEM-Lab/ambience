@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "tos/debug/log.hpp"
 #include <algorithm>
 #include <common/inet/tcp_ip.hpp>
 #include <lwip/tcp.h>
@@ -191,12 +192,13 @@ inline tcp_endpoint::tcp_endpoint(tcp_endpoint&& rhs) noexcept
 }
 
 inline tcp_endpoint::~tcp_endpoint() {
-    // LOG_TRACE("tcp dtor called");
+    LOG("tcp dtor called");
     if (!m_conn) {
         return;
     }
-    // LOG_TRACE("closing");
+    LOG("closing");
     tos::lock_guard lg{tos::lwip::lwip_lock};
+    LOG("took lock");
 
     tcp_recv(m_conn, nullptr);
     tcp_err(m_conn, nullptr);
@@ -217,9 +219,9 @@ inline uint16_t tcp_endpoint::send(tos::span<const uint8_t> buf) {
     tos::lock_guard lg{tos::lwip::lwip_lock};
 
     auto write_res = tcp_write(m_conn, buf.data(), buf.size(), 0);
-    //    LOG_TRACE("Write:", write_res);
+    LOG("Write:", write_res);
     if (write_res != ERR_OK) {
-        return 0;
+        return write_res;
     }
     //    auto out_res = tcp_output(m_conn);
     //    LOG_TRACE("Out:", out_res);
@@ -247,16 +249,12 @@ struct ep_handlers {
     template<class CallbackT>
     static err_t
     recv_handler(void* user, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) {
-#ifdef TOS_TCP_VERBOSE
-        tos_debug_print("recv stack: %p\n", tos_get_stack_ptr());
-#endif
-
         auto self = static_cast<tcp_endpoint*>(user);
         auto& handler = *(CallbackT*)self->m_event_handler;
 
         if (err != ERR_OK) {
 #ifdef TOS_TCP_VERBOSE
-            tos_debug_print("recv error\n");
+            LOG_INFO("recv error\n");
 #endif
             handler(lwip::events::discon, *self, lwip::discon_reason::recv_error);
             return ERR_OK;
@@ -267,7 +265,7 @@ struct ep_handlers {
         } else {
             // conn closed
 #ifdef TOS_TCP_VERBOSE
-            tos_debug_print("close received\n");
+            LOG_INFO("close received\n");
 #endif
             handler(lwip::events::discon, *self, lwip::discon_reason::closed);
         }
@@ -276,10 +274,6 @@ struct ep_handlers {
 
     template<class CallbackT>
     static err_t sent_handler(void* user, struct tcp_pcb*, u16_t len) {
-#ifdef TOS_TCP_VERBOSE
-        tos_debug_print("sent stack: %p\n", tos_get_stack_ptr());
-#endif
-
         auto self = static_cast<tcp_endpoint*>(user);
 
         auto& handler = *(CallbackT*)self->m_event_handler;
@@ -290,9 +284,6 @@ struct ep_handlers {
 
     template<class EventHandlerT>
     static void err_handler(void* user, err_t err) {
-#ifdef TOS_TCP_VERBOSE
-        tos_debug_print("err stack: %p\n", tos_get_stack_ptr());
-#endif
         auto self = static_cast<tcp_endpoint*>(user);
 
         auto& handler = *(EventHandlerT*)self->m_event_handler;
@@ -302,7 +293,7 @@ struct ep_handlers {
                                 : lwip::discon_reason::reset);
         self->m_conn = nullptr;
 #ifdef TOS_TCP_VERBOSE
-        tos_debug_print("ok");
+        LOG_INFO("ok");
 #endif
     }
 };

@@ -34,6 +34,7 @@ public:
     expected<span<uint8_t>, read_error> read(span<uint8_t>);
 
     tos::Task<expected<lwip::buffer, read_error>> async_read_buffer();
+    expected<lwip::buffer, read_error> sync_read_buffer();
 
     void operator()(lwip::events::sent_t, BaseEndpointT&, uint16_t);
     void operator()(lwip::events::discon_t, BaseEndpointT&, lwip::discon_reason);
@@ -88,7 +89,7 @@ inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::sent_t,
 #ifdef ESP_TCP_VERBOSE
     tos_debug_print("sent: %d\n", int(len));
 #endif
-    //    LOG_TRACE("Sent:", len);
+       LOG_TRACE("Sent:", len);
     m_sent_bytes += len;
     m_write_sync.up();
     m_write_cv.notify_all();
@@ -102,7 +103,7 @@ inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::discon_t,
     m_write_sync.up();
     m_buffer.eof();
 #ifdef TOS_TCP_VERBOSE
-    tos_debug_print("closed: %d\n", int(r));
+    LOG_FORMAT("closed: {}\n", int(r));
 #endif
 }
 
@@ -136,13 +137,13 @@ tos::Task<int> tcp_stream<BaseEndpointT>::async_write(tos::span<const uint8_t> b
         buf = buf.slice(sending.size());
 
 #ifdef TOS_TCP_VERBOSE
-        tos_debug_print("sending: %d\n", int(to_send));
+        LOG_FORMAT("sending: {}\n", int(to_send));
 #endif
         while (m_sent_bytes < to_send && !m_discon) {
             co_await m_write_cv.async_wait(m_busy);
         }
 #ifdef TOS_TCP_VERBOSE
-        tos_debug_print("sentt: %d\n", int(m_sent_bytes));
+        LOG_FORMAT("sentt: {}\n", int(m_sent_bytes));
 #endif
     }
     co_return sz;
@@ -151,21 +152,23 @@ tos::Task<int> tcp_stream<BaseEndpointT>::async_write(tos::span<const uint8_t> b
 template<class BaseEndpointT>
 int tcp_stream<BaseEndpointT>::write(tos::span<const uint8_t> buf) {
     tos::lock_guard lk{m_busy};
+    LOG(buf.size());
     if (m_discon) {
-        return 0;
+        return -1;
     }
-    auto to_send = m_ep.send(buf) + m_sent_bytes;
-    if (to_send != buf.size()) {
-        return 0;
+    auto send_res = m_ep.send(buf);
+    if (send_res < 0) {
+        return send_res;
     }
+    auto to_send = send_res + m_sent_bytes;
 #ifdef TOS_TCP_VERBOSE
-    tos_debug_print("sending: %d\n", int(to_send));
+    LOG_FORMAT("sending: {}\n", int(to_send));
 #endif
     while (m_sent_bytes != to_send && !m_discon) {
         m_write_sync.down();
     }
 #ifdef TOS_TCP_VERBOSE
-    tos_debug_print("sentt: %d\n", int(m_sent_bytes));
+    LOG_FORMAT("sentt: {}\n", int(m_sent_bytes));
 #endif
     return buf.size();
 }
@@ -175,7 +178,7 @@ inline void tcp_stream<BaseEndpointT>::operator()(lwip::events::recv_t,
                                                   BaseEndpointT&,
                                                   lwip::buffer&& buf) {
 #ifdef TOS_TCP_VERBOSE
-    tos_debug_print("recved %d\n", buf.size());
+    LOG_FORMAT("recved {}\n", buf.size());
 #endif
     if (m_buffer.has_more()) {
         m_buffer.append(std::move(buf));
@@ -217,5 +220,18 @@ tcp_stream<BaseEndpointT>::async_read_buffer() {
     co_await m_buffer_sem;
 
     co_return m_buffer.pop_front();
+}
+
+template<class BaseEndpointT>
+expected<lwip::buffer, read_error>
+tcp_stream<BaseEndpointT>::sync_read_buffer() {
+    if (m_discon && m_buffer.size() == 0) {
+        return unexpected(read_error::disconnected);
+    }
+
+    tos::lock_guard lk{m_busy};
+    m_buffer_sem.down();
+
+    return m_buffer.pop_front();
 }
 } // namespace tos
