@@ -24,6 +24,14 @@ tos::span<const uint8_t> bounding_span(tos::span<const uint8_t> a, T&&... ts) {
     return bounding_span(a, bounding_span(ts...));
 }
 
+inline tos::span<const uint8_t> find_extent(tos::span<const uint8_t> a) {
+    return a;
+}
+
+inline tos::span<const uint8_t> find_extent(std::string_view a) {
+    return tos::span<const uint8_t>(reinterpret_cast<const uint8_t*>(a.data()), a.size());
+}
+
 inline tos::span<const uint8_t> find_extent(const size_t& sz) {
     return tos::raw_cast(tos::monospan(sz));
 }
@@ -42,8 +50,7 @@ tos::span<const uint8_t> find_extent(const lidl::vector<T>& obj);
 tos::span<const uint8_t> find_extent(const lidl::string& str);
 
 template<class T>
-requires std::is_pod_v<T>
-tos::span<const uint8_t> find_extent(const T& t) {
+requires std::is_pod_v<T> tos::span<const uint8_t> find_extent(const T& t) {
     return tos::raw_cast<const uint8_t>(tos::monospan(t));
 }
 
