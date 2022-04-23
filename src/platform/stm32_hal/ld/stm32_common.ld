@@ -52,6 +52,7 @@ SECTIONS
 
   .init_array :
   {
+    . = ALIGN(4);
     PROVIDE_HIDDEN (start_ctors = .);
     KEEP (*(SORT(.init_array.*)))
     KEEP (*(.init_array*))
