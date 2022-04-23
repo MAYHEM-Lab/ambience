@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <tos/ae/detail/handle_req.hpp>
 #include <tos/ae/transport/lwip/host.hpp>
 #include <tos/debug/log.hpp>
@@ -89,7 +90,7 @@ tos::Task<void> lwip_host<ServiceHost>::async_handle_one_req(tos::udp_endpoint_t
     if (buf.size() == buf.cur_bucket().size()) {
         auto req = buf.cur_bucket();
 
-        std::array<uint8_t, 1024> resp;
+        alignas(sizeof(uintptr_t)) std::array<uint8_t, 1024> resp;
         lidl::message_builder response_builder{resp};
 
         [[maybe_unused]] auto now = lwip::global::system_clock->now();
