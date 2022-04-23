@@ -2,4 +2,6 @@ namespace tos::ae::services;
 
 service calculator {
     add(x: i32, y: i32) -> i32;
+    mul(x: f32, y: f32) -> f32;
+    fma(x: f32, y: f32, z: f32) -> f32;
 }

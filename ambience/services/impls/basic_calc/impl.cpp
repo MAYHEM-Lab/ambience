@@ -13,11 +13,23 @@ struct impl : tos::ae::services::calculator::async_server {
     tos::Task<int32_t> add(const int32_t& x, const int32_t& y) override {
         co_return x + y;
     }
+    tos::Task<float> mul(const float& x, const float& y) override {
+        co_return x * y;
+    }
+    tos::Task<float> fma(const float& x, const float& y, const float& z) override {
+        co_return x * y + z;
+    }
 };
 
 struct sync_impl : tos::ae::services::calculator::sync_server {
     int32_t add(const int32_t& x, const int32_t& y) override {
         return x + y;
+    }
+    float mul(const float& x, const float& y) override {
+        return x * y;
+    }
+    float fma(const float& x, const float& y, const float& z) override {
+        return x * y + z;
     }
 };
 } // namespace
