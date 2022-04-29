@@ -394,3 +394,4 @@ def _finalize():
 
 
 network(native=ambictl.Networks.Internet.UDP)
+network(native=ambictl.Networks.Internet.HttpRest)

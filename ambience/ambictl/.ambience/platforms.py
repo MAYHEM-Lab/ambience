@@ -240,6 +240,13 @@ platform(
             network="udp-internet",
             native=LwipUdpImporter
         ),
+    ],
+    exporters=[
+        exporter(
+            network="rest-http",
+            address="",
+            native=RestExporter
+        )
     ]
 )
 

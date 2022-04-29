@@ -1,5 +1,25 @@
 from .defs import *
 
+class RestExporter(Exporter):
+    def __init__(self):
+        super().__init__(self.__class__.__name__, NetworkType.RestHttp)
+
+    def export_service(self, service, config) -> Export:
+        if config is None:
+            config = self.get_port_for_service(service)
+        return Export(self, service, config)
+
+    def export_service_string(self, export):
+        return f"new tos::ae::http_rest_exporter(co_await registry.wait<\"{export.instance.name}\">(), \"{export.config}\");"
+
+    def cxx_includes(self):
+        return ["tos/ae/transport/http/host.hpp"]
+
+    def registry_type(self):
+        return "tos::ae::http_server"
+
+    def cxx_init_call(self):
+        return "tos::ae::create_http_server(80)"
 
 class LwipUdpImporter(Importer):
     def __init__(self):

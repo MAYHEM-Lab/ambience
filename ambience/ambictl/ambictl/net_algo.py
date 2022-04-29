@@ -6,6 +6,7 @@ from .imported_service import ImportedService
 class Networks:
     class Internet:
         UDP = Network("udp-internet", NetworkType.UDP)
+        HttpRest = Network("rest-http", NetworkType.RestHttp)
 
 
 def one_hop_import_exports(node: Node):

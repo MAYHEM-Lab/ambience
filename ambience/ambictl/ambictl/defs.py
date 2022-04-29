@@ -294,6 +294,7 @@ class NetworkType(enum.Enum):
     TCP = 1
     XBee = 2
     UnixDomain = 3
+    RestHttp = 4
 
 
 class Network:
