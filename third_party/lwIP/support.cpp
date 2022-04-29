@@ -13,18 +13,6 @@ void tos_assert(const char* fmt){
     tos::debug::panic(fmt);
 }
 
-int tos_log_printf(const char* fmt, ...) {
-    static char buf[1024];
-
-    va_list myargs;
-    va_start(myargs, fmt);
-    auto ret = vsnprintf(buf, std::size(buf), fmt, myargs);
-    LOG(buf);
-    va_end(myargs);
-
-    return ret;
-}
-
 uint32_t sys_now() {
     using namespace std::chrono;
     auto res = duration_cast<milliseconds>(

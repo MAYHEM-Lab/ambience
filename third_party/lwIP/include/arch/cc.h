@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <stdio.h>
 
 #if defined(__cplusplus)
 extern "C"{
@@ -12,4 +13,4 @@ int tos_log_printf(const char* fmt, ...);
 #endif
 
 #define LWIP_PLATFORM_ASSERT(x) tos_assert(x)
-#define LWIP_PLATFORM_DIAG(x) tos_log_printf x
+#define LWIP_PLATFORM_DIAG(x) printf x

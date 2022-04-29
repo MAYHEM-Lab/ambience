@@ -97,7 +97,7 @@ target_sources(lwip_support PRIVATE
     include/arch/cc.h)
 target_include_directories(lwip_support PUBLIC include)
 target_include_directories(lwip_support PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/src/include)
-target_link_libraries(lwip_support PUBLIC tos::drivers)
+target_link_libraries(lwip_support PUBLIC tos::drivers tos_printf)
 
 if (${TOS_PLATFORM} MATCHES raspi)
     target_compile_definitions(lwip_support PUBLIC __ssize_t_defined)
