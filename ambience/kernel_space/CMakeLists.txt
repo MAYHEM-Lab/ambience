@@ -31,6 +31,7 @@ target_link_libraries(
          httpparser
          jsmn
          fast_float
+         lwipcore
 )
 
 if (NOT ${TOS_PLATFORM} MATCHES "hosted")
