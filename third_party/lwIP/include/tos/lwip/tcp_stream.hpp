@@ -27,6 +27,7 @@ public:
     explicit tcp_stream(BaseEndpointT&& ep);
 
     int write(span<const uint8_t>);
+    int send(span<const uint8_t>);
     tos::Task<int> async_write(span<const uint8_t>);
     tos::Task<int> async_send(span<const uint8_t>);
 
@@ -89,7 +90,7 @@ inline void tcp_stream<BaseEndpointT>::operator()(tos::lwip::events::sent_t,
 #ifdef ESP_TCP_VERBOSE
     tos_debug_print("sent: %d\n", int(len));
 #endif
-       LOG_TRACE("Sent:", len);
+    LOG_TRACE("Sent:", len);
     m_sent_bytes += len;
     m_write_sync.up();
     m_write_cv.notify_all();
@@ -150,9 +151,26 @@ tos::Task<int> tcp_stream<BaseEndpointT>::async_write(tos::span<const uint8_t> b
 }
 
 template<class BaseEndpointT>
+int tcp_stream<BaseEndpointT>::send(tos::span<const uint8_t> buf) {
+    if (m_discon) {
+        return 0;
+    }
+
+    auto to_send = m_ep.send(buf);
+    if (to_send <= 0) {
+        return to_send;
+    }
+
+    m_queued_bytes += to_send;
+    return m_queued_bytes;
+}
+
+template<class BaseEndpointT>
 int tcp_stream<BaseEndpointT>::write(tos::span<const uint8_t> buf) {
     tos::lock_guard lk{m_busy};
+#ifdef TOS_TCP_VERBOSE
     LOG(buf.size());
+#endif
     if (m_discon) {
         return -1;
     }
@@ -223,8 +241,7 @@ tcp_stream<BaseEndpointT>::async_read_buffer() {
 }
 
 template<class BaseEndpointT>
-expected<lwip::buffer, read_error>
-tcp_stream<BaseEndpointT>::sync_read_buffer() {
+expected<lwip::buffer, read_error> tcp_stream<BaseEndpointT>::sync_read_buffer() {
     if (m_discon && m_buffer.size() == 0) {
         return unexpected(read_error::disconnected);
     }

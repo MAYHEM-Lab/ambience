@@ -192,13 +192,13 @@ inline tcp_endpoint::tcp_endpoint(tcp_endpoint&& rhs) noexcept
 }
 
 inline tcp_endpoint::~tcp_endpoint() {
-    LOG("tcp dtor called");
+    // LOG("tcp dtor called");
     if (!m_conn) {
         return;
     }
-    LOG("closing");
+    // LOG("closing");
     tos::lock_guard lg{tos::lwip::lwip_lock};
-    LOG("took lock");
+    // LOG("took lock");
 
     tcp_recv(m_conn, nullptr);
     tcp_err(m_conn, nullptr);
@@ -219,7 +219,7 @@ inline uint16_t tcp_endpoint::send(tos::span<const uint8_t> buf) {
     tos::lock_guard lg{tos::lwip::lwip_lock};
 
     auto write_res = tcp_write(m_conn, buf.data(), buf.size(), 0);
-    LOG("Write:", write_res);
+    // LOG("Write:", write_res);
     if (write_res != ERR_OK) {
         return write_res;
     }
