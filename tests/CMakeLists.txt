@@ -36,6 +36,9 @@ target_link_libraries(timer_multiplexer_tests PUBLIC standalone_tests_main tos_t
 add_executable(functional_tests functional_tests.cpp)
 target_link_libraries(functional_tests PUBLIC standalone_tests_main tos_util_core)
 
+add_executable(jsmn_tests jsmn_tests.cpp)
+target_link_libraries(jsmn_tests PUBLIC standalone_tests_main tos_util_core jsmn_lidl calc_schema echo_schema)
+
 add_test(NAME xbee_tests COMMAND xbee_tests)
 add_test(NAME intrusive_list_tests COMMAND intrusive_tests)
 add_test(NAME utilities_tests COMMAND util_tests)
