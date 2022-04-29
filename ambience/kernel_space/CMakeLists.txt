@@ -12,7 +12,10 @@ target_sources(
         include/tos/ae/transport/caplets/adapter.hpp
         src/transport/xbee/xbee_host.cpp
         src/transport/xbee/xbee_transport.cpp
+        src/transport/http/host.cpp
 )
+
+target_link_libraries(aekernel PRIVATE calc_schema)
 
 target_link_libraries(
   aekernel
@@ -25,6 +28,9 @@ target_link_libraries(
          hana
          tos_xbee
          import_export_schema
+         httpparser
+         jsmn
+         fast_float
 )
 
 if (NOT ${TOS_PLATFORM} MATCHES "hosted")
