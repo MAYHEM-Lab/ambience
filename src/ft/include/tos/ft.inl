@@ -41,7 +41,10 @@ struct mixin_tcb
     using starter_type = Starter;
 
     void destroy() override {
+        std::destroy_at(static_cast<Starter*>(this));
+        std::destroy_at(static_cast<tcb*>(this));
         Deleter::destroy();
+        std::destroy_at(static_cast<Deleter*>(this));
     }
 
     void start() {
