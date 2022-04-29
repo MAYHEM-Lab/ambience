@@ -19,6 +19,8 @@ add_library(tos_ft
         include/tos/suspended_launch.hpp
         src/waitable.cpp
         src/core_waitable.cpp
+        src/condition_variable.cpp 
+        src/shared_mutex.cpp
 )
 
 target_link_libraries(tos_ft PUBLIC tos_util_core tos_coro)

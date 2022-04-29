@@ -4,6 +4,6 @@ if (${TOS_PLATFORM} MATCHES "hosted" OR ${TOS_ARCH} MATCHES "i386")
     return()
 endif()
 
-add_library(tos_pthread threading.cpp condition_variable.cpp shared_mutex.cpp include/sched.h sched.cpp)
+add_library(tos_pthread threading.cpp include/sched.h sched.cpp)
 target_include_directories(tos_pthread PUBLIC include)
 target_link_libraries(tos_pthread PRIVATE tos_ft)
