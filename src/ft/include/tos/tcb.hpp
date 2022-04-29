@@ -23,13 +23,6 @@ namespace tos::kern {
  */
 struct alignas(alignof(std::max_align_t)) tcb : public job, public basic_fiber<tcb> {
     using job::job;
-    
-    /**
-     * The threading subsystem does not know about the concrete time
-     * at the destruction of a task, so the destructor must be virtual
-     * in order to properly destroy the concrete task descriptor.
-     */
-    virtual ~tcb() = default;
 
 #define TOS_FEATURE_TCB_HAVE_LOG_BLOCK_POINT
 #ifdef TOS_FEATURE_TCB_HAVE_LOG_BLOCK_POINT
