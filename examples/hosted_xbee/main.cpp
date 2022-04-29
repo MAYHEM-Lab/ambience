@@ -14,6 +14,12 @@ struct calc : tos::ae::services::calculator::sync_server {
     int32_t add(const int32_t& x, const int32_t& y) override {
         return x + y;
     }
+    float mul(const float& x, const float& y) override {
+        return x * y;
+    }
+    float fma(const float& x, const float& y, const float& z) override {
+        return x * y + z;
+    }
 };
 
 void main_task() {
