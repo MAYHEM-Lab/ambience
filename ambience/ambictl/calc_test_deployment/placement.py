@@ -1,4 +1,4 @@
 deploy(
     node="vm",
-    groups=["", "calc", "bench_agent"]
+    groups=["echo", "calc", "bench_agent"]
 )

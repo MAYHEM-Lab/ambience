@@ -6,10 +6,31 @@ serv_instance(
 )
 
 serv_instance(
+    name="echo",
+    serv=basic_echo,
+    deps={
+    }
+)
+
+serv_instance(
     name="bench_agent",
     serv=async_calc_bench_agent,
     deps={
         "calc": "calc"
+    }
+)
+
+export(
+    service="echo",
+    networks={
+        "rest-http": "/echo"
+    }
+)
+
+export(
+    service="calc",
+    networks={
+        "rest-http": "/calc"
     }
 )
 
