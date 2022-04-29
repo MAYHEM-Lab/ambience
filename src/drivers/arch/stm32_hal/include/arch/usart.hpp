@@ -70,6 +70,7 @@ public:
                    gpio::pin_type tx);
 
     int write(tos::span<const uint8_t> buf);
+    int sync_write(tos::span<const uint8_t> buf);
 
     tos::span<uint8_t> read(tos::span<uint8_t> b);
 
@@ -261,6 +262,17 @@ inline int usart::write(tos::span<const uint8_t> buf) {
     tos::kern::busy();
     tx_s.down();
     tos::kern::unbusy();
+    return buf.size();
+}
+
+inline int usart::sync_write(tos::span<const uint8_t> buf) {
+    if (buf.empty())
+        return 0;
+    auto res =
+        HAL_UART_Transmit(&m_handle, const_cast<uint8_t*>(buf.data()), buf.size(), HAL_MAX_DELAY);
+    if (res != HAL_OK) {
+        return -1;
+    }
     return buf.size();
 }
 } // namespace tos::stm32
