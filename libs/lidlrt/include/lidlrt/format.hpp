@@ -18,25 +18,16 @@ struct formatter<T> {
     struct compile_string_t : fmt::detail::compiled_string {
         static constexpr auto make_fmt_str() {
             constexpr auto names = tos::meta::transform(traits::members, [](auto& mem) {
-                return mem.name;
+                return tos::fixed_string("\"") + mem.name + tos::fixed_string("\"");
             });
             constexpr auto parts = tos::meta::transform(names, [](auto& name) {
-                return name + tos::fixed_string(" = {}, ");
+                return name + tos::fixed_string(": {}, ");
             });
-            constexpr auto total = tos::meta::accumulate(parts, tos::fixed_string("{")) + tos::fixed_string("}");
+            constexpr auto total = tos::meta::accumulate(parts, tos::fixed_string("{{")) + tos::fixed_string("}}");
             
             std::array<char, total.size()> ret{};
             std::copy(std::begin(total.val), std::end(total.val), ret.begin());
             return ret;
-        }
-
-        static constexpr auto make_simple_fmt_str() {
-            std::array<char, 3 * traits::arity> res{};
-            for (size_t i = 0; i < traits::arity; ++i) {
-                std::copy_n("{} ", 3, res.begin() + i);
-            }
-            res.back() = 0;
-            return res;
         }
 
         static constexpr auto fmt_str = make_fmt_str();
@@ -56,7 +47,7 @@ struct formatter<T> {
     template<typename FormatContext>
     constexpr auto format(T const& str, FormatContext& ctx) {
         using lidl::apply;
-        return apply([&](auto&... mems) {
+        return apply([&](const auto&... mems) {
             return fmt::format_to(ctx.out(), format_string(), mems...);
         }, str);
     }

@@ -38,5 +38,6 @@ export(
     service="bench_agent",
     networks={
         "udp-internet": 1234,
+        "rest-http": "/bench_agent",
     }
 )

@@ -51,7 +51,7 @@ TEST_CASE("Jsmn to lidl works") {
         return;
     }
 
-    auto call = tos::ae::detail::try_translate_union<
+    auto call = tos::ae::detail::try_translate<
         tos::ae::services::calculator::wire_types::call_union>(obj_parse, mb, err);
 
     REQUIRE_EQ(tos::ae::services::calculator::wire_types::call_union::alternatives::add,
@@ -81,7 +81,7 @@ TEST_CASE("Jsmn to lidl works with strings") {
         return;
     }
 
-    const auto& call = tos::ae::detail::try_translate_union<
+    const auto& call = tos::ae::detail::try_translate<
         tos::ae::services::echo::wire_types::call_union>(obj_parse, mb, err);
 
     REQUIRE_EQ(tos::ae::services::echo::wire_types::call_union::alternatives::echo_str,

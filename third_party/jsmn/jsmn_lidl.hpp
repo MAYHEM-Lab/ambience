@@ -8,11 +8,14 @@
 namespace tos::ae {
 namespace detail {
 template<class T>
-    requires(std::is_floating_point_v<std::remove_cvref_t<T>> ||
-             std::is_integral_v<std::remove_cvref_t<T>>)
-std::remove_cvref_t<T> try_translate_value(const jsmn::parser& parser,
-                                           lidl::message_builder& mb,
-                                           jmp_buf err_handler) {
+using ReturnT = std::conditional_t<lidl::Value<T>, T, T&>;
+
+template<class T>
+requires(std::is_floating_point_v<std::remove_cvref_t<T>> ||
+         std::is_integral_v<std::remove_cvref_t<T>>)
+    std::remove_cvref_t<T> try_translate(const jsmn::parser& parser,
+                                               lidl::message_builder& mb,
+                                               jmp_buf err_handler) {
     double res;
     const auto text = parser.text(parser.front());
     auto parse_res = fast_float::from_chars(text.data(), text.data() + text.size(), res);
@@ -23,21 +26,32 @@ std::remove_cvref_t<T> try_translate_value(const jsmn::parser& parser,
 }
 
 template<class T>
-    requires(std::is_same_v<std::string_view, std::remove_cvref_t<T>>)
-std::remove_cvref_t<T> try_translate_value(const jsmn::parser& parser,
-                                           lidl::message_builder& mb,
-                                           jmp_buf err_handler) {
+requires(std::is_same_v<std::string_view, std::remove_cvref_t<T>>)
+    std::remove_cvref_t<T> try_translate(const jsmn::parser& parser,
+                                               lidl::message_builder& mb,
+                                               jmp_buf err_handler) {
     return parser.text(parser.front());
 }
 
 template<class T>
-    requires(std::is_same_v<lidl::string, std::remove_cvref_t<T>>)
-lidl::string& try_translate_value(const jsmn::parser& parser,
-                                  lidl::message_builder& mb,
-                                  jmp_buf err_handler) {
+requires(std::is_same_v<lidl::string, std::remove_cvref_t<T>>)
+    lidl::string& try_translate(const jsmn::parser& parser,
+                                      lidl::message_builder& mb,
+                                      jmp_buf err_handler) {
     auto text = parser.text(parser.front());
     return lidl::create_string(mb, text);
 }
+
+
+template<lidl::Struct ParamStructT>
+ReturnT<ParamStructT> try_translate(const jsmn::object_parser& parser,
+                                           lidl::message_builder& mb,
+                                           jmp_buf err_handler);
+
+template<lidl::Union CallUnionT>
+ReturnT<CallUnionT> try_translate(const jsmn::object_parser& parser,
+                                        lidl::message_builder& mb,
+                                        jmp_buf err_handler);
 
 template<class T>
 decltype(auto) try_translate_param(const jsmn::object_parser& parser,
@@ -48,16 +62,16 @@ decltype(auto) try_translate_param(const jsmn::object_parser& parser,
     if (!val_opt) {
         longjmp(err_handler, 4);
     }
-    return try_translate_value<T>(*val_opt, mb, err_handler);
+    return try_translate<T>(*val_opt, mb, err_handler);
 }
 
 template<lidl::Struct ParamStructT>
-decltype(auto) try_translate_struct(const jsmn::object_parser& parser,
-                                    lidl::message_builder& mb,
-                                    jmp_buf err_handler) {
+ReturnT<ParamStructT> try_translate(const jsmn::object_parser& parser,
+                                           lidl::message_builder& mb,
+                                           jmp_buf err_handler) {
     using traits_type = ::lidl::struct_traits<ParamStructT>;
 
-    auto fn = [&]<class... Ts>(const Ts&... mems) -> decltype(auto) {
+    auto fn = [&]<class... Ts>(const Ts&... mems)->decltype(auto) {
         if constexpr (lidl::Value<ParamStructT>) {
             return ParamStructT(try_translate_param<typename lidl::procedure_traits<
                                     decltype(mems.function)>::return_type>(
@@ -75,25 +89,24 @@ decltype(auto) try_translate_struct(const jsmn::object_parser& parser,
 }
 
 template<lidl::Union CallUnionT, lidl::Struct ParamsStructT>
-decltype(auto) wrap_one(const jsmn::object_parser& parser,
-                        lidl::message_builder& mb,
-                        jmp_buf err_handler) {
+ReturnT<CallUnionT> wrap_one(const jsmn::object_parser& parser,
+                             lidl::message_builder& mb,
+                             jmp_buf err_handler) {
     if constexpr (lidl::Value<CallUnionT>) {
-        return CallUnionT(try_translate_struct<ParamsStructT>(parser, mb, err_handler));
+        return CallUnionT(try_translate<ParamsStructT>(parser, mb, err_handler));
     } else {
         return lidl::create<CallUnionT>(
-            mb, try_translate_struct<ParamsStructT>(parser, mb, err_handler));
+            mb, try_translate<ParamsStructT>(parser, mb, err_handler));
     }
 };
 
 template<lidl::Union CallUnionT>
-decltype(auto) try_translate_union(const jsmn::object_parser& parser,
-                                   lidl::message_builder& mb,
-                                   jmp_buf err_handler) {
+ReturnT<CallUnionT> try_translate(const jsmn::object_parser& parser,
+                                        lidl::message_builder& mb,
+                                        jmp_buf err_handler) {
     using traits_type = ::lidl::union_traits<CallUnionT>;
-    using fn_ptr_t =
-        std::conditional_t<lidl::Value<CallUnionT>, CallUnionT, CallUnionT&> (*)(
-            const jsmn::object_parser&, lidl::message_builder& mb, jmp_buf err_handler);
+    using fn_ptr_t = ReturnT<CallUnionT> (*)(
+        const jsmn::object_parser&, lidl::message_builder& mb, jmp_buf err_handler);
 
     constexpr auto make_table = []<class... Ts>(lidl::meta::list<Ts...>) {
         return std::array<fn_ptr_t, sizeof...(Ts)>{&wrap_one<CallUnionT, Ts>...};
@@ -105,7 +118,7 @@ decltype(auto) try_translate_union(const jsmn::object_parser& parser,
         longjmp(err_handler, 1);
     }
 
-    auto index = try_translate_value<int>(*index_opt, mb, err_handler);
+    auto index = try_translate<int>(*index_opt, mb, err_handler);
     if (index > static_cast<int>(jump_table.size()) || index < 0) {
         longjmp(err_handler, 2);
     }

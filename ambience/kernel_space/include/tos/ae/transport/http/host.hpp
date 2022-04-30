@@ -7,6 +7,7 @@
 #include <import_export_generated.hpp>
 #include <jsmn.hpp>
 #include <jsmn_lidl.hpp>
+#include <lidlrt/format.hpp>
 #include <string_view>
 #include <tos/ae/detail/handle_req.hpp>
 #include <tos/function_ref.hpp>
@@ -70,8 +71,9 @@ struct http_rest_exporter : http_endpoint {
             return false;
         }
 
-        decltype(auto) call_union_res = tos::ae::detail::try_translate_union<
-            typename service_type::wire_types::call_union>(body, req_mb, err);
+        decltype(auto) call_union_res =
+            tos::ae::detail::try_translate<typename service_type::wire_types::call_union>(
+                body, req_mb, err);
 
         std::array<uint8_t, 128> buffer;
         lidl::message_builder mb(buffer);
