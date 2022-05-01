@@ -37,10 +37,10 @@ struct fixed_string {
     }
 
     template<size_t M>
-    friend constexpr fixed_string<N + M> operator+(const fixed_string<N>& l,
+    friend constexpr fixed_string<N + M - 1> operator+(const fixed_string<N>& l,
                                                    const fixed_string<M>& r) {
-        fixed_string<N + M> res{};
-        auto end = std::copy(std::begin(l.val), std::end(l.val), std::begin(res.val));
+        fixed_string<N + M - 1> res{};
+        auto end = std::copy(std::begin(l.val), std::end(l.val) - 1, std::begin(res.val));
         std::copy(std::begin(r.val), std::end(r.val), end);
         return res;
     }

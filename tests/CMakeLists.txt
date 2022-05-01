@@ -39,6 +39,10 @@ target_link_libraries(functional_tests PUBLIC standalone_tests_main tos_util_cor
 add_executable(jsmn_tests jsmn_tests.cpp)
 target_link_libraries(jsmn_tests PUBLIC standalone_tests_main tos_util_core jsmn_lidl calc_schema echo_schema)
 
+add_executable(lidl_tests lidl_tests.cpp)
+target_link_libraries(lidl_tests PUBLIC standalone_tests_main tos_util_core 
+    lidl_rt calc_schema echo_schema networking_schema)
+
 add_test(NAME xbee_tests COMMAND xbee_tests)
 add_test(NAME intrusive_list_tests COMMAND intrusive_tests)
 add_test(NAME utilities_tests COMMAND util_tests)
