@@ -1,4 +1,4 @@
-add_library(tos_fiber fiber.cpp)
+add_library(tos_fiber fiber.cpp include/tos/fiber/awaitable_fiber.hpp)
 target_link_libraries(tos_fiber PUBLIC tos_pcontext)
 target_include_directories(tos_fiber PUBLIC include)
 
