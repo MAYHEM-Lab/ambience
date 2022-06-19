@@ -138,6 +138,10 @@ public:
         return m_under;
     }
 
+    auto& get_raw() const {
+        return m_under;
+    }
+    
     [[nodiscard]] size_t size() const {
         return m_under.size();
     }
