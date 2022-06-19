@@ -48,11 +48,8 @@ tos::span<const uint8_t> find_extent(const Union auto& obj);
 template<class T>
 tos::span<const uint8_t> find_extent(const lidl::vector<T>& obj);
 tos::span<const uint8_t> find_extent(const lidl::string& str);
-
 template<class T>
-tos::span<const uint8_t> find_extent(const lidl::ptr<T>& ptr) {
-    return bounding_span(tos::monospan(ptr), ptr.unsafe().get());
-}
+tos::span<const uint8_t> find_extent(const lidl::ptr<T>& ptr);
 
 template<class T>
 requires std::is_pod_v<T> tos::span<const uint8_t> find_extent(const T& t) {
@@ -105,6 +102,11 @@ tos::span<const uint8_t> find_extent(const ObjT& obj) {
 tos::span<const uint8_t> find_extent(const Union auto& obj) {
     auto active = visit([](auto& member) { return find_extent(member); }, obj);
     return bounding_span(tos::raw_cast<const uint8_t>(tos::monospan(obj)), active);
+}
+
+template<class T>
+tos::span<const uint8_t> find_extent(const lidl::ptr<T>& ptr) {
+    return bounding_span(tos::monospan(ptr), find_extent(ptr.unsafe().get()));
 }
 
 template<class ObjT>
