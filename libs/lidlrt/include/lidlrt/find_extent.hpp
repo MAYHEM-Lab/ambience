@@ -106,7 +106,8 @@ tos::span<const uint8_t> find_extent(const Union auto& obj) {
 
 template<class T>
 tos::span<const uint8_t> find_extent(const lidl::ptr<T>& ptr) {
-    return bounding_span(tos::monospan(ptr), find_extent(ptr.unsafe().get()));
+    return bounding_span(tos::raw_cast<const uint8_t>(tos::monospan(ptr)),
+                         find_extent(ptr.unsafe().get()));
 }
 
 template<class ObjT>
