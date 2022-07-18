@@ -1,12 +1,8 @@
 #include "tos/ae/kernel/group.hpp"
 #include <tos/ae/kernel/platform_support.hpp>
-#include <tos/ae/kernel/loaders/preemptive_elf_group.hpp>
+#include <tos/ae/kernel/loaders/in_memory_user.hpp>
 #include <tos/ae/kernel/loading.hpp>
 #include <registry.hpp>
-
-// clang-format off
-#include <{{group_name}}_elf.hpp>
-// clang-format on
 
 tos::Task<void> {{group_name}}_do_exports();
 
@@ -14,7 +10,7 @@ namespace {
 struct descr {
     using loader = tos::ae::kernel::in_memory_group;
     static constexpr std::string_view name = "{{group_name}}";
-    static constexpr auto& elf_body = {{group_name}}_elf;
+    static constexpr auto start_address = {{start_addr}};
     static constexpr auto services = tos::meta::list<{{service_types | join("::service_type, ")}}::service_type > {};
 };
 
