@@ -7,6 +7,8 @@
 
 void low_level_write(tos::span<const uint8_t>);
 
+WEAK void low_level_write(tos::span<const uint8_t>) {}
+
 namespace tos::arm::exception {
 namespace {
 tos::function_ref<bool(const fault_variant&)> fault_handler{
