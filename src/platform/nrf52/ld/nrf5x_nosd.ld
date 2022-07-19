@@ -17,6 +17,9 @@ SECTIONS
         KEEP(*(SORT(.init_array.*)))
         KEEP(*(.init_array))
         PROVIDE(end_ctors = .);
+        PROVIDE(start_group_inits = .);
+        KEEP(*(SORT(.group_init*)))
+        PROVIDE(end_group_inits = .);
 
     _estack = ORIGIN(RAM) + LENGTH(RAM);
         *(.rodata*)
