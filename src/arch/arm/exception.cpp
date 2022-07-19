@@ -1,8 +1,11 @@
+#include "tos/span.hpp"
 #include <tos/arm/assembly.hpp>
 #include <tos/arm/cmsis.hpp>
 #include <tos/arm/exception.hpp>
 #include <tos/debug/debug.hpp>
 #include <tos/utility.hpp>
+
+void low_level_write(tos::span<const uint8_t>);
 
 namespace tos::arm::exception {
 namespace {
@@ -131,6 +134,10 @@ extern "C" {
 
 [[gnu::used]] void in_svc_handler(stack_frame_t* frame) {
     auto addr = reinterpret_cast<const uint16_t*>(frame->return_address - 2);
+    if (frame->r0 == 0xDEADBEEF) {
+        low_level_write(*(tos::span<const uint8_t>*)frame->r1);
+        return;
+    }
     auto svc_num = *addr & 0xFF;
     svc_handler(svc_num, *frame);
 }
