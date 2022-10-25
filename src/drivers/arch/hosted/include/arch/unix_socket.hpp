@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <utility> // work around boost missing include bug
+
 #include <boost/asio.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <common/inet/tcp_ip.hpp>
