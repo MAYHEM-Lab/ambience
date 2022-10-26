@@ -4,6 +4,7 @@
 
 #include "doctest.h"
 
+#include <tos/ft.hpp>
 #include <tos/mutex.hpp>
 
 namespace tos {
