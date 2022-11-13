@@ -52,29 +52,9 @@ function do_bootstrap () {
 		--setopt=install_weak_deps=False \
 		--assumeyes \
 		--nodocs \
-		boost-devel ccache cmake gcc gcc-c++ git ninja-build python3 python3-jinja2 python3-pyelftools python3-toposort python3-pip
+		boost-devel ccache cmake gcc gcc-c++ git ninja-build python3 python3-jinja2 python3-pyelftools python3-toposort python3-pip xorriso
 
 	chroot "${install_root}" /usr/bin/pip3 install "dijkstar==2.6.0"
-
-	local llvm_src_dir="${install_root}/opt/llvm/src"
-	local llvm_build_dir="${install_root}/opt/llvm/src/build"
-	local llvm_install_dir="${install_root}/opt/llvm"
-	mkdir -p "${llvm_src_dir}"
-	mkdir -p "${llvm_build_dir}"
-	mkdir -p "${llvm_install_dir}"
-
-	(
-		cd "${llvm_src_dir}"
-		git init . -b master
-		git pull --depth=1 https://github.com/llvm/llvm-project 1f9140064dfbfb0bbda8e51306ea51080b2f7aac
-		cmake -G Ninja -B "${llvm_build_dir}" -S "${llvm_src_dir}/llvm" \
-			-DCMAKE_BUILD_TYPE=Release \
-			-DCMAKE_INSTALL_PREFIX="${llvm_install_dir}" \
-			-DLLVM_ENABLE_PROJECTS='clang;lld' \
-			-DLLVM_ENABLE_RUNTIMES='libc;libcxx;libcxxabi'
-		cd "${llvm_build_dir}"
-		ninja install
-	)
 
 	mkdir -p "${install_root}/tmp"
 
@@ -85,15 +65,17 @@ function do_bootstrap () {
 
 function do_setup () {
 	#todo check /etc/os-release; assert_fedora_36
-	echo "STARTING SETUP; ASSUMING ROOT OS IS FEDORA WITH REQUISITE PACKAGES" 2>&1
-	local work_dir="${1}"
+	echo "STARTING SETUP; ASSUMING ROOT OS IS FEDORA WITH REQUISITE PACKAGES" 1>&2
+	local repo_dir="${1}"
 
-	if [ ! -d "${work_dir}" ]; then
-		echo "work_dir '${work_dir}' is not a valid directory."
+	if [ ! -d "${repo_dir}" ]; then
+		echo "repo_dir '${repo_dir}' is not a valid directory."
 		exit 1
 	fi
 
-	cd ${work_dir}
+	build_llvm
+
+	cd ${repo_dir}
 
 	# for now
 	set +e
@@ -118,6 +100,31 @@ function do_setup () {
 	)
 }
 
+function build_llvm () {
+	local llvm_src_dir="/opt/llvm/src"
+	local llvm_build_dir="/opt/llvm/src/build"
+	local llvm_install_dir="/opt/llvm"
+
+	mkdir -p "${llvm_src_dir}"
+	mkdir -p "${llvm_build_dir}"
+	mkdir -p "${llvm_install_dir}"
+
+	(
+		cd "${llvm_src_dir}"
+		git init . -b master
+		git pull --depth=1 https://github.com/llvm/llvm-project 1f9140064dfbfb0bbda8e51306ea51080b2f7aac
+
+		cmake -G Ninja -B "${llvm_build_dir}" -S "${llvm_src_dir}/llvm" \
+			-DCMAKE_BUILD_TYPE=Release \
+			-DCMAKE_INSTALL_PREFIX="${llvm_install_dir}" \
+			-DLLVM_ENABLE_PROJECTS='clang;lld' \
+			-DLLVM_ENABLE_RUNTIMES=''
+
+		cd "${llvm_build_dir}"
+		ninja install
+	)
+}
+
 function build_lidl () {
 	git submodule update --init --recursive
 	cmake -G Ninja -B target
@@ -139,7 +146,7 @@ function build_ambience () {
 
 function build_basic_calc () {
 	# why hosted broke?
-	python3 ambience/ambictl/build.py ambience/ambictl/sample_deployment
+	python3 ambience/ambictl/build.py ambience/ambictl/calc_test_deployment
 }
 
 if [ $(id -u) -ne 0 ]; then
