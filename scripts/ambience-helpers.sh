@@ -131,7 +131,7 @@ fi
 
 SCRIPTPATH="${0}"
 SCRIPTNAME="$(basename ${SCRIPTPATH})"
-BUILD_OS_ROOT="${1}"
+BUILD_OS_ROOT="$(realpath "${1}")"
 ACTION="${2}"
 
 if [ -z "${AMBIENCE_HELPER_DID_CHROOT}" ]; then
