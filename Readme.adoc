@@ -45,3 +45,26 @@ Besides bare metal targets, most of tos functionality can run in user space on o
 for ease of development and program portability.
 
 Full list of supported and tested targets <<docs/targets#, can be found here>>.
+
+== Getting Started
+
+There is a helper script to document and ease setting up an Ambience build environment.
+
+The only dependencies of the script are GNU coreutils, bash, and `dnf`, the Fedora package manager.
+The only tested `dnf` version is 4.5.2.
+
+To build and run the calc_test_deployment, run these commands as root on any machine with `dnf`
+installed:
+
+[source,bash]
+----
+wget https://raw.githubusercontent.com/MAYHEM-Lab/ambience/master/scripts/ambience-helpers.sh
+chmod +x ambience-helpers.sh
+mkdir build-env-directory
+./ambience-helpers.sh build-env-directory bootstrap
+./ambience-helpers.sh build-env-directory setup
+./ambience-helpers.sh build-env-directory run-basic-calc
+----
+
+Bootstrap and setup will take quite a long time—most of Fedora must be downloaded and installed and
+clang and lld must be built from source.
