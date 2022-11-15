@@ -2,7 +2,7 @@
 
 # must install dnf first
 # On Debian, you need to:
-# sudo apt install dnf
+# apt install dnf
 
 set -e
 
@@ -38,7 +38,7 @@ function do_bootstrap () {
 	# use hardlink because NetworkManager changes this, and chroot will break symlink
 	ln --force /etc/resolv.conf "${resolv_file}"
 
-	sudo dnf install \
+	dnf install \
 		--config=${BUILD_OS_ROOT}/etc/dnf/dnf.conf \
 		--installroot=${BUILD_OS_ROOT} \
 		--releasever=36 \
