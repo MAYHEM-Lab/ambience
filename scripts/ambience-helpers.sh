@@ -14,8 +14,6 @@ function do_bootstrap () {
 	dnf_config_dir="${BUILD_OS_ROOT}/etc/dnf"
 	dnf_config_file="${dnf_config_dir}/dnf.conf"
 
-	resolv_file="${BUILD_OS_ROOT}/etc/resolv.conf"
-
 	mkdir -p "${dnf_config_dir}"
 
 	cat >"${dnf_config_file}" <<-EOF
@@ -34,9 +32,6 @@ function do_bootstrap () {
 		gpgcheck=0
 		skip_if_unavailable=False
 	EOF
-
-	# use hardlink because NetworkManager changes this, and chroot will break symlink
-	ln --force /etc/resolv.conf "${resolv_file}"
 
 	dnf install \
 		--config=${BUILD_OS_ROOT}/etc/dnf/dnf.conf \
@@ -75,12 +70,15 @@ function do_source_install_llvm () {
 }
 
 function do_source_install_lidl () {
-	cd /root
+	local lidl_commit=42dd6b8c6aafbb9d3acf2fa8c8e8c5cbd3d3ff0c
 
-	git clone https://github.com/MAYHEM-Lab/lidl
+	cd /root
+	if [ ! -e lidl ]; then
+		git clone https://github.com/MAYHEM-Lab/lidl
+	fi
 
 	cd lidl
-	git checkout 42dd6b8c6aafbb9d3acf2fa8c8e8c5cbd3d3ff0c
+	git checkout $lidl_commit
 
 	git submodule update --init --recursive
 	cmake -G Ninja -B target
@@ -92,10 +90,15 @@ function do_source_install_lidl () {
 }
 
 function do_build_ambience () {
+	local ambience_commit=ed8469e4152a602c0270869bfcbedefd45dc3947
+
 	cd /root
-	git clone https://github.com/MAYHEM-Lab/ambience
+	if [ ! -e ambience ]; then
+		git clone https://github.com/MAYHEM-Lab/ambience
+	fi
+
 	cd ambience
-	git checkout ed8469e4152a602c0270869bfcbedefd45dc3947
+	git checkout $ambience_commit
 
 	local build_dir=target
 	cmake -G Ninja -B "${build_dir}" -DTOS_BOARD=x86_64_pc -DBUILD_EXAMPLES=No -DBUILD_TESTS=No
@@ -124,7 +127,7 @@ function do_run_basic_calc () {
 }
 
 if [ $(id -u) -ne 0 ]; then
-	echo "script requires root (for dnf and chroot)" 1>&2
+	echo "script requires root (for dnf, chroot, and mount --bind)" 1>&2
 	exit 1
 fi
 
@@ -144,6 +147,15 @@ if [ -z "${AMBIENCE_HELPER_DID_CHROOT}" ]; then
 		do_bootstrap
 		exit
 	fi
+
+	resolv_file="${BUILD_OS_ROOT}/etc/resolv.conf"
+
+	# - NetworkManager changes resolv.conf
+	# - symlink broken by chroot
+	# - hardlink broken when NetworkManager re-creates file
+	# bind mount is necessary.
+	touch "${resolv_file}"
+	mount --bind /etc/resolv.conf "${resolv_file}"
 
 	mkdir -p "${BUILD_OS_ROOT}/tmp"
 	cp "${SCRIPTPATH}" "${BUILD_OS_ROOT}/tmp/${SCRIPTNAME}"
