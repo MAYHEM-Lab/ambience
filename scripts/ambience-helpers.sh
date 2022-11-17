@@ -145,7 +145,7 @@ function do_query_basic_calc () {
 		ip = "127.0.0.1"
 		port = 1234
 		client = lidlrt.udp_client(tos.ae.agent.agent, (ip, port))
-		res = client.start(param=1000)
+		res = client.start(param=10)
 		print(res)
 	EOF
 }
