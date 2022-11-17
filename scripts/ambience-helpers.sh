@@ -123,7 +123,24 @@ function do_run_basic_calc () {
 		-no-reboot \
 		-no-shutdown \
 		-device virtio-net,netdev=calc-net,mac=66:66:66:66:66:66,host_mtu=65535 \
-		-netdev user,id=calc-net
+		-netdev user,id=calc-net,hostfwd=udp::1234-:1234
+}
+
+function do_query_basic_calc () {
+	cd "$(mktemp -d)"
+	pwd
+	/usr/local/bin/lidlc -g py -f /root/ambience/ambience/services/interfaces/agent.lidl -o .
+	# work around add missing import bug in lidlc generated code
+	sed -i '1iimport tos.ae.bench_result' tos/ae/agent.py
+	PYTHONPATH="/root/lidl/runtime/python:${PWD}" python3 <<-EOF
+		import tos.ae.agent
+		import lidlrt
+		ip = "127.0.0.1"
+		port = 1234
+		client = lidlrt.udp_client(tos.ae.agent.agent, (ip, port))
+		res = client.start(param=1000)
+		print(res)
+	EOF
 }
 
 if [ $(id -u) -ne 0 ]; then
@@ -182,6 +199,9 @@ else
 			;;
 		run-basic-calc )
 			do_run_basic_calc
+			;;
+		query-basic-calc )
+			do_query_basic_calc
 			;;
 		* )
 			echo "must specify action as arg2" 2>&1
