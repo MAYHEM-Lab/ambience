@@ -158,8 +158,8 @@ fi
 
 SCRIPTPATH="${0}"
 SCRIPTNAME="$(basename ${SCRIPTPATH})"
-BUILD_OS_ROOT="$(realpath "${1}")"
-ACTION="${2}"
+ACTION="${1}"
+BUILD_OS_ROOT="$(realpath "${2}")"
 
 if [ -z "${AMBIENCE_HELPER_DID_CHROOT}" ]; then
 	if [ ! -d "${BUILD_OS_ROOT}" ]; then
@@ -202,7 +202,7 @@ else
 			do_query_basic_calc
 			;;
 		* )
-			echo "must specify action as arg2" 2>&1
+			echo "must specify action as arg1" 2>&1
 			;;
 	esac
 fi
