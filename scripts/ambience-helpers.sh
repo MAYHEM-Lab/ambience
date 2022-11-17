@@ -42,6 +42,13 @@ function do_bootstrap () {
 		--nodocs \
 		boost-devel ccache cmake gcc gcc-c++ git ninja-build python3 python3-jinja2 python3-pyelftools python3-toposort python3-pip qemu-system-x86 xorriso
 
+	local resolv_file="${BUILD_OS_ROOT}/etc/resolv.conf"
+
+	cat >"${resolv_file}" <<-EOF
+		nameserver 1.1.1.1
+	EOF
+
+
 	chroot "${BUILD_OS_ROOT}" /usr/bin/pip3 install "dijkstar==2.6.0"
 }
 
@@ -164,15 +171,6 @@ if [ -z "${AMBIENCE_HELPER_DID_CHROOT}" ]; then
 		do_bootstrap
 		exit
 	fi
-
-	resolv_file="${BUILD_OS_ROOT}/etc/resolv.conf"
-
-	# - NetworkManager changes resolv.conf
-	# - symlink broken by chroot
-	# - hardlink broken when NetworkManager re-creates file
-	# bind mount is necessary.
-	touch "${resolv_file}"
-	mount --bind /etc/resolv.conf "${resolv_file}"
 
 	mkdir -p "${BUILD_OS_ROOT}/tmp"
 	cp "${SCRIPTPATH}" "${BUILD_OS_ROOT}/tmp/${SCRIPTNAME}"
