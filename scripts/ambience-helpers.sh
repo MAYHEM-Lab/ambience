@@ -124,7 +124,8 @@ function do_build_basic_calc () {
 }
 
 function do_run_basic_calc () {
-	qemu-system-x86_64 /tmp/root/mydeployment/cmake-build-barex64/iso/vm-iso.iso \
+	qemu-system-x86_64  \
+		-drive file=/tmp/root/mydeployment/cmake-build-barex64/iso/vm-iso.iso,format=raw \
 		-serial stdio \
 		-display none \
 		-no-reboot \
@@ -201,8 +202,37 @@ else
 		query-basic-calc )
 			do_query_basic_calc
 			;;
+		run-and-query-basic-calc )
+			declare -a KILL_PGIDS
+			trap 'kill -- $(for pgid in "${KILL_PGIDS[@]}"; do echo -$pgid; done)' EXIT
+			set -m # so that each background task gets its own pgid, kill will use the pgid
+			coproc do_run_basic_calc
+			KILL_PGIDS+=($!)
+			until [[ "${line}" =~ "Initialized: vm_priv" ]]; do
+				read -u ${COPROC[0]} line
+			done
+
+			do_query_basic_calc &
+			query_pid=$!
+			KILL_PGIDS+=($query_pid)
+
+			sleep 20 &
+			sleep_pid=$!
+			KILL_PGIDS+=($sleep_pid)
+
+			echo wait -n 1 $query_pid $sleep_pid -p finished_pid
+			wait -p finished_pid -n $query_pid $sleep_pid
+
+			if [ $finished_pid -eq $query_pid ]; then
+				echo "query did not time out" 1>&2
+				kill $sleep_pid
+			else
+				echo "query timed out" 1>&2
+				kill $query_pid
+			fi
+			;;
 		* )
-			echo "must specify action as arg1" 2>&1
+			echo "must specify action as arg1" 1>&2
 			;;
 	esac
 fi
