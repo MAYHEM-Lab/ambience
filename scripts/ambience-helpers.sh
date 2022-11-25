@@ -6,6 +6,7 @@
 
 set -e
 
+
 function do_bootstrap () {
 	echo "STARTING BOOTSTRAP"
 	local releasever=36
@@ -40,7 +41,7 @@ function do_bootstrap () {
 		--setopt=install_weak_deps=False \
 		--assumeyes \
 		--nodocs \
-		boost-devel ccache cmake gcc gcc-c++ git ninja-build python3 python3-jinja2 python3-pyelftools python3-toposort python3-pip qemu-system-x86 xorriso
+		boost-devel ccache cmake gcc gcc-c++ git ninja-build procps python3 python3-jinja2 python3-pyelftools python3-toposort python3-pip qemu-system-x86 xorriso
 
 	local resolv_file="${BUILD_OS_ROOT}/etc/resolv.conf"
 
@@ -123,6 +124,8 @@ function do_build_basic_calc () {
 	python3 ambience/ambictl/build.py ambience/ambictl/calc_test_deployment
 }
 
+# todo make constands named better. like each side of hostfwd redirect
+
 function do_run_basic_calc () {
 	qemu-system-x86_64  \
 		-drive file=/tmp/root/mydeployment/cmake-build-barex64/iso/vm-iso.iso,format=raw \
@@ -136,7 +139,6 @@ function do_run_basic_calc () {
 
 function do_query_basic_calc () {
 	cd "$(mktemp -d)"
-	pwd
 	/usr/local/bin/lidlc -g py -f /root/ambience/ambience/services/interfaces/agent.lidl -o .
 	# work around add missing import bug in lidlc generated code
 	sed -i '1iimport tos.ae.bench_result' tos/ae/agent.py
@@ -172,6 +174,9 @@ if [ -z "${AMBIENCE_HELPER_DID_CHROOT}" ]; then
 		do_bootstrap
 		exit
 	fi
+
+	# if [ ! -e "${BUILD_OS_ROOT}/proc" ]; then
+	# 	mount --bind
 
 	mkdir -p "${BUILD_OS_ROOT}/tmp"
 	cp "${SCRIPTPATH}" "${BUILD_OS_ROOT}/tmp/${SCRIPTNAME}"
@@ -224,10 +229,11 @@ else
 			wait -p finished_pid -n $query_pid $sleep_pid
 
 			if [ $finished_pid -eq $query_pid ]; then
-				echo "query did not time out" 1>&2
+				echo SUCCESS
 				kill $sleep_pid
 			else
 				echo "query timed out" 1>&2
+				echo FAILURE
 				kill $query_pid
 			fi
 			;;
