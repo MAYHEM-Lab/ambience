@@ -100,6 +100,7 @@ function do_build_basic_calc () {
 function do_run_basic_calc () {
 	qemu-system-x86_64  \
 		-drive file=/tmp/root/mydeployment/cmake-build-barex64/iso/vm-iso.iso,format=raw \
+		-accel kvm \
 		-serial stdio \
 		-display none \
 		-no-reboot \
@@ -144,6 +145,12 @@ if [ -z "${AMBIENCE_HELPER_DID_CHROOT}" ]; then
 	if [ "${ACTION}" = "bootstrap" ]; then
 		do_bootstrap
 		exit
+	fi
+
+	KVM_NODE="${BUILD_OS_ROOT}/dev/kvm"
+	if [ ! -e "${KVM_NODE}" ]; then
+		touch "${KVM_NODE}"
+		mount --bind "/dev/kvm" "${KVM_NODE}"
 	fi
 
 	mkdir -p "${BUILD_OS_ROOT}/tmp"
