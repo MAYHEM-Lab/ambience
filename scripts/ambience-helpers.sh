@@ -116,7 +116,6 @@ function do_clone_ambience () {
 
 function do_build_basic_calc () {
 	cd /root/ambience
-	# why hosted broke?
 	python3 ambience/ambictl/build.py ambience/ambictl/calc_test_deployment
 }
 
@@ -170,9 +169,6 @@ if [ -z "${AMBIENCE_HELPER_DID_CHROOT}" ]; then
 		do_bootstrap
 		exit
 	fi
-
-	# if [ ! -e "${BUILD_OS_ROOT}/proc" ]; then
-	# 	mount --bind
 
 	mkdir -p "${BUILD_OS_ROOT}/tmp"
 	cp "${SCRIPTPATH}" "${BUILD_OS_ROOT}/tmp/${SCRIPTNAME}"
