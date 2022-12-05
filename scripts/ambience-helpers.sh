@@ -41,7 +41,7 @@ function do_bootstrap () {
 		--setopt=install_weak_deps=False \
 		--assumeyes \
 		--nodocs \
-		boost-devel ccache cmake clang git lld llvm ninja-build procps python3 python3-jinja2 python3-pyelftools python3-toposort python3-pip qemu-system-x86 xorriso
+		boost-devel ccache cmake clang git lld llvm ninja-build python3 python3-jinja2 python3-pyelftools python3-toposort python3-pip qemu-system-x86 xorriso
 
 	local resolv_file="${BUILD_OS_ROOT}/etc/resolv.conf"
 
