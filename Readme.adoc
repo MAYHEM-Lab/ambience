@@ -66,5 +66,3 @@ mkdir build-env-directory
 ./ambience-helpers.sh run-basic-calc build-env-directory
 ----
 
-Bootstrap and setup will take quite a long time—most of Fedora must be downloaded and installed and
-clang and lld must be built from source.
