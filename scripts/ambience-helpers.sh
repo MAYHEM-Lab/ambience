@@ -41,7 +41,7 @@ function do_bootstrap () {
 		--setopt=install_weak_deps=False \
 		--assumeyes \
 		--nodocs \
-		boost-devel ccache cmake gcc gcc-c++ git ninja-build procps python3 python3-jinja2 python3-pyelftools python3-toposort python3-pip qemu-system-x86 xorriso
+		boost-devel ccache cmake clang git lld llvm ninja-build procps python3 python3-jinja2 python3-pyelftools python3-toposort python3-pip qemu-system-x86 xorriso
 
 	local resolv_file="${BUILD_OS_ROOT}/etc/resolv.conf"
 
@@ -51,30 +51,6 @@ function do_bootstrap () {
 
 
 	chroot "${BUILD_OS_ROOT}" /usr/bin/pip3 install "dijkstar==2.6.0"
-}
-
-function do_source_install_llvm () {
-	local llvm_src_dir="/opt/llvm/src"
-	local llvm_build_dir="/opt/llvm/src/build"
-	local llvm_install_dir="/opt/llvm"
-
-	mkdir -p "${llvm_src_dir}"
-	mkdir -p "${llvm_build_dir}"
-	mkdir -p "${llvm_install_dir}"
-
-	cd "${llvm_src_dir}"
-
-	git init . -b master
-	git pull --depth=1 https://github.com/llvm/llvm-project 1f9140064dfbfb0bbda8e51306ea51080b2f7aac
-
-	cmake -G Ninja -B "${llvm_build_dir}" -S "${llvm_src_dir}/llvm" \
-		-DCMAKE_BUILD_TYPE=Release \
-		-DCMAKE_INSTALL_PREFIX="${llvm_install_dir}" \
-		-DLLVM_ENABLE_PROJECTS='clang;lld' \
-		-DLLVM_ENABLE_RUNTIMES=''
-
-	cd "${llvm_build_dir}"
-	ninja install
 }
 
 function do_source_install_lidl () {
@@ -175,9 +151,6 @@ if [ -z "${AMBIENCE_HELPER_DID_CHROOT}" ]; then
 	AMBIENCE_HELPER_DID_CHROOT=1 chroot "${BUILD_OS_ROOT}" "/tmp/${SCRIPTNAME}" $*
 else
 	case "${ACTION}" in
-		source-install-llvm )
-			do_source_install_llvm
-			;;
 		source-install-lidl )
 			do_source_install_lidl
 			;;
@@ -188,7 +161,6 @@ else
 			do_build_basic_calc
 			;;
 		setup )
-			do_source_install_llvm
 			do_source_install_lidl
 			do_clone_ambience
 			do_build_basic_calc
