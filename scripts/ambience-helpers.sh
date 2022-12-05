@@ -162,9 +162,9 @@ fi
 SCRIPTPATH="${0}"
 SCRIPTNAME="$(basename ${SCRIPTPATH})"
 ACTION="${1}"
-BUILD_OS_ROOT="$(realpath "${2}")"
 
 if [ -z "${AMBIENCE_HELPER_DID_CHROOT}" ]; then
+	BUILD_OS_ROOT="$(realpath "${2}")"
 	if [ ! -d "${BUILD_OS_ROOT}" ]; then
 		echo "BUILD_OS_ROOT '${BUILD_OS_ROOT}' is not a valid directory."
 		exit 1
@@ -209,33 +209,34 @@ else
 			;;
 		run-and-query-basic-calc )
 			declare -a KILL_PGIDS
-			trap 'kill -- $(for pgid in "${KILL_PGIDS[@]}"; do echo -$pgid; done)' EXIT
+			trap 'kill -- $(for pgid in "${KILL_PGIDS[@]}"; do echo -$pgid; done); echo $STATUS' EXIT
 			set -m # so that each background task gets its own pgid, kill will use the pgid
 			coproc do_run_basic_calc
 			KILL_PGIDS+=($!)
 			until [[ "${line}" =~ "Initialized: vm_priv" ]]; do
 				read -u ${COPROC[0]} line
 			done
+			# Apparently Ambience does lots of setup after its last log
+			sleep 5
 
 			do_query_basic_calc &
 			query_pid=$!
 			KILL_PGIDS+=($query_pid)
 
-			sleep 20 &
+			sleep 10 &
 			sleep_pid=$!
 			KILL_PGIDS+=($sleep_pid)
 
-			echo wait -n 1 $query_pid $sleep_pid -p finished_pid
+			echo wait -n $query_pid $sleep_pid -p finished_pid
 			wait -p finished_pid -n $query_pid $sleep_pid
 
 			if [ $finished_pid -eq $query_pid ]; then
-				echo SUCCESS
-				kill $sleep_pid
+				STATUS=SUCCESS
 			else
 				echo "query timed out" 1>&2
-				echo FAILURE
-				kill $query_pid
+				STATUS=FAILURE
 			fi
+			exit
 			;;
 		* )
 			echo "must specify action as arg1" 1>&2
