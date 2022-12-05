@@ -205,7 +205,7 @@ else
 			;;
 		run-and-query-basic-calc )
 			declare -a KILL_PGIDS
-			trap 'kill -- $(for pgid in "${KILL_PGIDS[@]}"; do echo -$pgid; done); echo $STATUS' EXIT
+			trap 'kill -- $(for pgid in "${KILL_PGIDS[@]}"; do echo -$pgid; done); echo -e "$STATUS"' EXIT
 			set -m # so that each background task gets its own pgid, kill will use the pgid
 			coproc do_run_basic_calc
 			KILL_PGIDS+=($!)
@@ -227,10 +227,10 @@ else
 			wait -p finished_pid -n $query_pid $sleep_pid
 
 			if [ $finished_pid -eq $query_pid ]; then
-				STATUS=SUCCESS
+				STATUS="\n\n\nSUCCESS\n\n\n"
 			else
 				echo "query timed out" 1>&2
-				STATUS=FAILURE
+				STATUS="\n\n\nFAILURE\n\n\n"
 			fi
 			exit
 			;;
