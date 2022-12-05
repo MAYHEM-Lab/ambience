@@ -97,7 +97,7 @@ function do_source_install_lidl () {
 	install src/tools/lidlc /usr/local/bin
 }
 
-function do_build_ambience () {
+function do_clone_ambience () {
 	local ambience_commit=ed8469e4152a602c0270869bfcbedefd45dc3947
 
 	cd /root
@@ -108,14 +108,10 @@ function do_build_ambience () {
 	cd ambience
 	git checkout $ambience_commit
 
-	local build_dir=target
-	cmake -G Ninja -B "${build_dir}" -DTOS_BOARD=x86_64_pc -DBUILD_EXAMPLES=No -DBUILD_TESTS=No
 	(
 		cd third_party/limine/binaries
 		make limine-install
 	)
-	cd "${build_dir}"
-	ninja all
 }
 
 function do_build_basic_calc () {
@@ -189,8 +185,8 @@ else
 		source-install-lidl )
 			do_source_install_lidl
 			;;
-		build-ambience )
-			do_build_ambience
+		clone-ambience )
+			do_clone_ambience
 			;;
 		build-basic-calc )
 			do_build_basic_calc
@@ -198,7 +194,7 @@ else
 		setup )
 			do_source_install_llvm
 			do_source_install_lidl
-			do_build_ambience
+			do_clone_ambience
 			do_build_basic_calc
 			;;
 		run-basic-calc )
