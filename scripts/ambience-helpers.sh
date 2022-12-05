@@ -180,7 +180,7 @@ else
 			;;
 		run-and-query-basic-calc )
 			declare -a KILL_PGIDS
-			trap 'kill -- $(for pgid in "${KILL_PGIDS[@]}"; do echo -$pgid; done); echo -e "$STATUS"' EXIT
+			trap 'kill -SIGKILL -- $(for pgid in "${KILL_PGIDS[@]}"; do echo -$pgid; done) 2>/dev/null; echo -e "$STATUS"' EXIT
 			set -m # so that each background task gets its own pgid, kill will use the pgid
 			coproc do_run_basic_calc
 			KILL_PGIDS+=($!)
