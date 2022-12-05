@@ -198,7 +198,6 @@ else
 			sleep_pid=$!
 			KILL_PGIDS+=($sleep_pid)
 
-			echo wait -n $query_pid $sleep_pid -p finished_pid
 			wait -p finished_pid -n $query_pid $sleep_pid
 
 			if [ $finished_pid -eq $query_pid ]; then
