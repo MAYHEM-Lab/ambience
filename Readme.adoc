@@ -1,60 +1,26 @@
-= Tos
+= Ambience
 
-image::https://github.com/FatihBAKIR/tos/actions/workflows/build.yml/badge.svg[]
+Ambience is an operating system for the Internet of Things.
 
-**tos** is a multitasking operating system for the Internet of Things. tos focuses on efficiency,
-ease of programming and compile time safety features.
+It's like a https://en.wikipedia.org/wiki/Unikernel[unikernel]. A unikernel is *compiled with its applications* to form *one image* to be run on a machine. To compile Ambience, a deployment must be provided too, which describes where each application (i.e. service) will run. Ambience is *compiled with its applications and deployment* to form *at least one image*.
 
-**tos** provides a modern programming environment even on extremely resource constrained environments.
-It can work on boards with less than 1k of ram and 5k of program flash.
-These numbers are not just the OS, it also includes an application.
+The key abstraction in Ambience is the *service*. A service comprises an interface and implementation. The programmer writes the interface in a custom IDL: lidl, and usually writes the implementation in C++ . He/she can move a service across machines or address spaces (i.e. isolation groups) with a simple change to the deployment. This is a facility not provided by other operating systems.
 
-== In a nutshell
+Services often issue requests to dependent services, which Ambience optimizes novelly. For example, consider a data publishing service that depends on a data cleaning service. Ambience will compile the data publishing service so that it uses the best transport mechanism depending on the deployment. It will use one of three different mechanisms:
 
-- Cooperative multitasking kernel, with optional preemption.
-- Efficient, zero overhead abstraction model.
-- First class C++ support, with extensive standard library support.
-- Written using modern programming practices with focus on
-maintainability, safety and portability.
-- A novel <<docs/contexts#, context>> mechanism to provide high level abstractions.
-- Optional memory protection support on both high end MMUs and low end MPUs.
-- Run the same C++20 program on an 8-bit AVR or a 64-bit aarch64 processor.
-- Power efficient out of the box. **tos** is a tickless kernel, so it will always
-sleep automatically when there isn't anything to run.
+- If the services are on different machines, the request is sent over the network.
+- If the services are on the same machine and in different address spaces, the request is sent via IPC (a protected memcpy)
+- If the services are on the same machine and in the same address space, service requests compile to function calls.
 
-== Modern practices
-
-**tos** follows modern software development practices, including:
-
-. Stay up to date in terms of language and tools.
-.. We use the most recent stable compilers, build tools etc.
-. On every commit, a broad continuous integration suite runs automatically.
-.. Every software target gets built for every hardware target.
-.. All unit tests are checked
-.. Benchmarks are collected for performance regressions
-.. Final program sizes are collected for size regressions
-
-The primary goal with these is to provide a programming environment familiar to experienced software
-developers for them to easily transfer their skills to Internet of Things applications development.
-
-== Supported Targets
-
-**tos** is highly portable and supports new architectures witn only a handful of functions.
-
-Besides bare metal targets, most of tos functionality can run in user space on other operating systems
-for ease of development and program portability.
-
-Full list of supported and tested targets <<docs/targets#, can be found here>>.
+Such optimizations allow Ambience to run even on very small microcontrollers.
 
 == Getting Started
 
 There is a helper script to document and ease setting up an Ambience build environment.
 
-The only dependencies of the script are GNU coreutils, bash, sed, and `dnf`, the Fedora package
-manager. The only tested `dnf` version is 4.5.2.
+The only dependencies of the script are GNU coreutils, `bash`, `sed`, and `dnf`, the Fedora package manager. The only tested `dnf` version is 4.5.2.
 
-To build and run the calc_test_deployment, run these commands as root on any machine with `dnf`
-installed:
+To build, run, and test the `calc_test_deployment`, run these commands as root:
 
 [source,bash]
 ----
@@ -63,6 +29,18 @@ chmod +x ambience-helpers.sh
 mkdir build-env-directory
 ./ambience-helpers.sh bootstrap build-env-directory
 ./ambience-helpers.sh setup build-env-directory
-./ambience-helpers.sh run-basic-calc build-env-directory
+./ambience-helpers.sh run-and-query-basic-calc build-env-directory
 ----
+
+The final line should print `SUCCESS`.
+
+You may use `/` for `build-env-directory` on a Fedora 36 machine to set up the machine for development. Otherwise, you must chrooted into `build-env-directory` to do anything.
+
+== Other Resources
+
+- Ambience paper: link TODO
+- Benchmarking paper comparing Ambience to other systems: https://sites.cs.ucsb.edu/~ckrintz/papers/bench22.pdf
+  - Presentation from that conference: https://www.youtube.com/watch?v=IKR8mt1ZRdQ
+- Class presentation on Ambience and its helper script: https://www.youtube.com/watch?v=Fa61fc1_flk
+- Tutorial on creating a new Ambience service: <<docs/ToolchainNotes#>>
 
