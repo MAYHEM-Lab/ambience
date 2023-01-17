@@ -12,7 +12,7 @@ function do_bootstrap () {
 	local releasever=36
 	local basearch=x86_64
 
-	dnf_config_dir="${BUILD_OS_ROOT}/etc/dnf"
+	dnf_config_dir="${BUILD_OS_ROOT_PREFIX}/etc/dnf"
 	dnf_config_file="${dnf_config_dir}/dnf.conf"
 
 	mkdir -p "${dnf_config_dir}"
@@ -35,15 +35,15 @@ function do_bootstrap () {
 	EOF
 
 	dnf install \
-		--config=${BUILD_OS_ROOT}/etc/dnf/dnf.conf \
-		--installroot=${BUILD_OS_ROOT} \
+		--config="${dnf_config_file}" \
+		--installroot="${BUILD_OS_ROOT}" \
 		--releasever=36 \
 		--setopt=install_weak_deps=False \
 		--assumeyes \
 		--nodocs \
 		boost-devel ccache cmake clang git lld llvm ninja-build python3 python3-jinja2 python3-pyelftools python3-toposort python3-pip qemu-system-x86 xorriso
 
-	local resolv_file="${BUILD_OS_ROOT}/etc/resolv.conf"
+	local resolv_file="${BUILD_OS_ROOT_PREFIX}/etc/resolv.conf"
 
 	cat >"${resolv_file}" <<-EOF
 		nameserver 1.1.1.1
@@ -141,20 +141,23 @@ if [ -z "${AMBIENCE_HELPER_DID_CHROOT}" ]; then
 		echo "BUILD_OS_ROOT '${BUILD_OS_ROOT}' is not a valid directory."
 		exit 1
 	fi
+        if [ "${BUILD_OS_ROOT}" != "/" ]; then
+                BUILD_OS_ROOT_PREFIX="${BUILD_OS_ROOT}"
+        fi
 
 	if [ "${ACTION}" = "bootstrap" ]; then
 		do_bootstrap
 		exit
 	fi
 
-	KVM_NODE="${BUILD_OS_ROOT}/dev/kvm"
+	KVM_NODE="${BUILD_OS_ROOT_PREFIX}/dev/kvm"
 	if [ ! -e "${KVM_NODE}" ]; then
 		touch "${KVM_NODE}"
 		mount --bind "/dev/kvm" "${KVM_NODE}"
 	fi
 
-	mkdir -p "${BUILD_OS_ROOT}/tmp"
-	cp "${SCRIPTPATH}" "${BUILD_OS_ROOT}/tmp/${SCRIPTNAME}"
+	mkdir -p "${BUILD_OS_ROOT_PREFIX}/tmp"
+	cp "${SCRIPTPATH}" "${BUILD_OS_ROOT_PREFIX}/tmp/${SCRIPTNAME}"
 	AMBIENCE_HELPER_DID_CHROOT=1 chroot "${BUILD_OS_ROOT}" "/tmp/${SCRIPTNAME}" $*
 else
 	case "${ACTION}" in
