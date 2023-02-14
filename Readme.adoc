@@ -2,11 +2,41 @@
 
 Ambience is an operating system for the Internet of Things.
 
-It's like a https://en.wikipedia.org/wiki/Unikernel[unikernel]. A unikernel is *compiled with its applications* to form *one image* to be run on a machine. To compile Ambience, a deployment must be provided too, which describes where each application (i.e. service) will run. Ambience is *compiled with its applications and deployment* to form *at least one image*.
+It shares characteristics with systems such as
+https://www.microsoft.com/en-us/research/project/singularity[Singularity] and
+the https://en.wikipedia.org/wiki/Unikernel[unikernel] in that it relies on
+the programming language compilation and runtime system (currently C++) to
+implement some forms of memory safety and optimized interprocess
+communication.  Moreover, Ambience is designed specifically to host
+communicating microservices that, together, form a service mesh to be deployed
+in an Internet of Things setting.
 
-The key abstraction in Ambience is the *service*. A service comprises an interface and implementation. The programmer writes the interface in a custom IDL: lidl, and usually writes the implementation in C++ . He/she can move a service across machines or address spaces (i.e. isolation groups) with a simple change to the deployment. This is a facility not provided by other operating systems.
+The Ambience deployment model requires that the Ambience kernel and the
+microservices it hosts be compiled into an image for the node where they will
+ultimately be deployed.  
 
-Services often issue requests to dependent services, which Ambience optimizes novelly. For example, consider a data publishing service that depends on a data cleaning service. Ambience will compile the data publishing service so that it uses the best transport mechanism depending on the deployment. It will use one of three different mechanisms:
+A full deployment consists of one such image for each
+node and the fully deployed service mesh must be described by a global
+deployment manifest.
+To compile Ambience, a deployment manifest must be provided which describes
+where each application (i.e. service) will run,
+and the networks that interconnect these execution sites.  When a deployment
+is compiled, one image for each node (consisting of an Ambience kernel and
+the microservices to be hosted on the node) is generated along with
+a service-level network overlay to allow for transparent network forwarding.
+
+The key abstraction in Ambience is the *service*. A service comprises an
+interface and implementation. The programmer writes the interface in a custom
+IDL: lidl, and usually writes the implementation in C++ . He/she can move a
+service across machines or address spaces (i.e. isolation groups) with a
+simple change to the deployment. This is a facility not provided by other
+operating systems.
+
+Services often issue requests to dependent services, which Ambience optimizes
+novelly. For example, consider a data publishing service that depends on a
+data cleaning service. Ambience will compile the data publishing service so
+that it uses the best transport mechanism depending on the deployment. It will
+use one of three different mechanisms:
 
 - If the services are on different machines, the request is sent over the network.
 - If the services are on the same machine and in different address spaces, the request is sent via IPC (a protected memcpy)
