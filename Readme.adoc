@@ -14,7 +14,6 @@ in an Internet of Things setting.
 The Ambience deployment model requires that the Ambience kernel and the
 microservices it hosts be compiled into an image for the node where they will
 ultimately be deployed.  
-
 A full deployment consists of one such image for each
 node and the fully deployed service mesh must be described by a global
 deployment manifest.
